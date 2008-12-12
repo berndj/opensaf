@@ -435,6 +435,7 @@ fi
 
 %files tools
 %{_bindir}/hisv_events_demo
+%{_bindir}/power_set_main
 
 %if %is_java
 %files java
