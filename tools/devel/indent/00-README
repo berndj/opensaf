@@ -1,52 +1,70 @@
 OpenSAF Coding Style
 ====================
 
-As of now, the OpenSAF project will use the Linux Kernel Coding Style. It will
-use all the same rules, except the 80-char line wrapping one. This rule is
-flexed to 120-char per line.
+The OpenSAF project uses the Google C++ Style Guide for code written in C++
+(files with file name extension .cc and .h), and the Linux kernel coding style
+for code written in C (files with file name extension .c).
 
-For your reference the coding style document can be found here:
-http://lxr.linux.no/linux/Documentation/CodingStyle
+Before editing the OpenSAF source code, please make sure that you have loaded
+the correct source code formatting setting in your editor. Download the settigns
+from one of the three following links (depending on which editor you are using):
+
+Code formatting settings file for Eclipse:
+
+https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-cpp-google-style.xml
+
+Code formatting settings file for Emacs:
+
+https://raw.githubusercontent.com/google/styleguide/gh-pages/google-c-style.el
+
+Code formatting settings file for Vim:
+
+https://raw.githubusercontent.com/vim-scripts/google.vim/master/indent/google.vim
 
 
-GNU indent for C
+C++ Coding Style
 ================
 
-To automate the task of writing code that complies with the Linux Kernel Coding
-Style, we use GNU indent with the -linux option.
+The Google C++ Style Guide can be found at the following URL:
 
-A helper script has been created to parse C source files and headers, it can be
-found in the current directory (./tools/devel/indent) as 'cindent'.
+https://google.github.io/styleguide/cppguide.html
 
-The script accepts 2 parameters:
+To verify that the C++ code in OpenSAF follows the Google C++ Style Guide, you
+can use the cpplint tool. The cpplint tool is integrated in the OpenSAF build
+system; simply run "make cpplint" at the top of the OpenSAF source code
+reporitory to get the result printed to standard error. The aim is that cpplint
+should produce zero warnings on the OpenSAF code. In case of false positives,
+you can add // NOLINT at the end of a line or // NOLINTNEXTLINE at the end of
+the line before.
 
-        Usage:  cindent {typedefs} {files} [...]
+To correct formatting problems in the code, you can use the tool clang-format
+with the option -style=google. The tool clang-format is included in many Linux
+distributions; you can install it e.g. using the command "sudo apt install
+clang-format" in Ubuntu.
 
-Where 'typedefs' is a dictionary file of all the typedefs found in the OpenSAF
-codebase. This file can be produced by the 'find_typedef' script (./tools/devel)
-
-And where 'file' is the file mask or subdirectory that you want to parse
-recursively.
-
-A pregenerated copy can be found at:
-
-        wget http://planck.opensaf.org/~jfournier/osaf_typedefs
-
-Soon this dictionary will be produced automatically with the nightly builds.
-
-The reason why this typedefs list is needed is to fix a little indent bug when
-parsing typedefs and pointers.
-
-For example:
-
-        -foo(bar_t *bar);       /* would be parsed as */
-        +foo(bar_t * bar);      /* a multiplication like string */
-
-Using this dictionary, the script passes each of the listed typedef as a '-T
-<typedef>' option to 'indent' and instruct it to parse them correctly.
+An alternative way to correct formatting problems in the code is to use the
+formatting function in your text editor, provided that you have loaded the
+correct formatting settings (see links to settings for various editors in the
+first section of this file).
 
 
-astyle for ANSI C++
-===================
+C Coding Style
+==============
 
-A script will be created soon for the C++ code.
+The Linux kernel coding style can be found at the following URL:
+
+https://github.com/torvalds/linux/blob/master/Documentation/process/coding-style.rst
+
+To verify that the C code in OpenSAF follows the Linux kernel coding style, you
+can use the checkpatch tool with the --file option to check individual C source
+code files.  The checkpatch tool is included in the Linux kernel source code
+repository, and can be downloaded from the following URL:
+
+https://raw.githubusercontent.com/torvalds/linux/master/scripts/checkpatch.pl
+
+The checkpatch tool can also be used to correct some problems, using the
+experimental option --fix or --fix-inplace. See "checkpatch.pl --help" for more
+information.
+
+An alternative is to use the indent tool with the -linux option. The indent tool
+is available in most Linux distributios, see "man indent" for more information.

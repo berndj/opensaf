@@ -1,4 +1,5 @@
-#! /bin/sh
+#!/bin/sh
 autoreconf -vi
 
-sed -i "s/^INTERNAL_VERSION_ID=.*\$/INTERNAL_VERSION_ID=$(hg parent --template "{rev}:{node|short}:{branch}")/" configure 
+long_rev=$(git rev-parse HEAD)
+sed -i "s/@OSAF_LONG_GIT_REV@/$long_rev/" configure

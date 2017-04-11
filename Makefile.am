@@ -395,8 +395,10 @@ cpplint:
 	test -z "$$cpplint" && wget -O $(top_builddir)/bin/cpplint.py https://raw.githubusercontent.com/google/styleguide/gh-pages/cpplint/cpplint.py 2>&1 && touch $(top_builddir)/bin/cpplint.py; \
 	builddir=$$(cd $(top_builddir); pwd; cd - > /dev/null); \
 	srcdir=$$(cd $(top_srcdir); pwd; cd - > /dev/null); \
-	cd "$$srcdir"; find src -path '*/.[a-zA-Z0-9]*' -or -path '*/cluster_sim_uml/*' -prune -or \( -name '*.[CH]' -or -name '*.hh' -or -name '*.[ch]pp' -or -name '*.[ch]xx' \) -exec echo "Invalid file name: {}" \; 1>&2 ; \
-	cd "$$srcdir"; find src -path '*/.[a-zA-Z0-9]*' -or -path '*/cluster_sim_uml/*' -or -path '*/saf/*' -or -path 'src/osaf/config*.h' -or -path 'src/libjava/jni_ais*.h' -prune -or \( -name '*.cc' -or -name '*.h' \) -exec python "$$builddir/bin/cpplint.py" --root=src --extensions=cc,h {} \; ; \
+	cd "$$srcdir"; find samples src \( -name '*.[CH]' -o -name '*.hh' -o -name '*.[ch]pp' -o -name '*.[ch]xx' \) -exec echo "Invalid file name: {}" \; 1>&2; \
+	cd "$$srcdir"; find samples src -name '*.h' | grep -v /saf/ | grep -v src/osaf/config > "$$builddir/cpplint_files.txt"; \
+	cd "$$srcdir"; find samples src -name '*.cc' >> "$$builddir/cpplint_files.txt"; \
+	python "$$builddir/bin/cpplint.py" --root=src --extensions=cc,h $$(cat "$$builddir/cpplint_files.txt"); \
 	true
 
 shellcheck:
@@ -407,7 +409,17 @@ shellcheck:
 	fi; \
 	true
 
-.PHONY: cppcheck.xml cppcheck.txt cpplint shellcheck
+checkpatch:
+	@test -d $(top_builddir)/bin || mkdir $(top_builddir)/bin
+	@checkpatch=$$(find $(top_builddir)/bin -name checkpatch.pl -mtime -30); \
+	test -z "$$checkpatch" && wget -O $(top_builddir)/bin/checkpatch.pl https://raw.githubusercontent.com/torvalds/linux/master/scripts/checkpatch.pl 2>&1 && touch $(top_builddir)/bin/checkpatch.pl; \
+	test -z "$$checkpatch" && wget -O $(top_builddir)/bin/spelling.txt https://raw.githubusercontent.com/torvalds/linux/master/scripts/spelling.txt 2>&1 && touch $(top_builddir)/bin/const_structs.checkpatch; \
+	builddir=$$(cd $(top_builddir); pwd; cd - > /dev/null); \
+	cd "$$srcdir"; find samples src -name '*.c' > "$$builddir/checkpatch_files.txt"; \
+	perl "$$builddir/bin/checkpatch.pl" --no-tree --file --ignore SPLIT_STRING --summary-file $$(cat "$$builddir/checkpatch_files.txt") 1>&2; \
+	true
+
+.PHONY: cppcheck.xml cppcheck cpplint shellcheck checkpatch
 
 clean-local:
 	-rm -f $(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.gz

@@ -15,13 +15,13 @@
 # Author(s): Wind River Systems
 #
 
-# This script can be used as a Mercurial hook to enforce functions banning
+# This script can be used as a Git hook to enforce functions banning
 # policy (e.g. ban usage of strcpy, printf etc.)
 # Usage: ./hg-check-banned-func.sh <changeset>
 # Dependency: banned.txt and patch-tokenize.py
 # TODO: Improve the tokeninzer to exclude code comment validation
 
-HG_NODE=$1
+GIT_REV=$1
 BANNED_FUNCTIONS_DICT="banned.txt"
 TOKENIZER="python patch-tokenize.py"
 
@@ -32,8 +32,8 @@ catch_errors() {
 }
 
 # Get a list of changesets in this changegroup
-for rev in $(hg log --template '{rev}\n' -r $HG_NODE); do
-	patch=$(hg log --patch -r $rev)
+for rev in $(git log --pretty='format:%H' "${GIT_REV}^..${GIT_REV}"); do
+	patch=$(git diff "${rev}^..${rev}")
 	echo "$patch" | while read line; do
 		# Sort the line tokens, this is needed for look binary search
 		tokens=$($TOKENIZER "$line" | sort)

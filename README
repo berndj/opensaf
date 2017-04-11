@@ -125,22 +125,21 @@ found here:
 You can find most information concerning the development of `OpenSAF' at this
 site.
 
-`OpenSAF' is using `Mercurial' (hg) as its Source Control Management system
-tool. `Mercurial' is a fast, lightweight Source Control Management system
-designed for efficient handling of very large distributed projects and can be
-obtained from here:
+`OpenSAF' is using `Git' as its Source Control Management system tool. `Git' is
+a fast, lightweight Source Control Management system designed for efficient
+handling of very large distributed projects and can be obtained from here:
 
-    http://mercurial.selenic.com/
+    http://git-scm.com/
 
 
-Building from `Mercurial'
-=========================
+Building from `Git'
+===================
 
 If you don't want to use one of the `OpenSAF' release archive, you can get a
 clone and bootstrap it by doing the following steps:
 
-    % hg clone http://hg.code.sf.net/p/opensaf/staging opensaf-staging
-    % cd opensaf-staging
+    % git clone git://git.code.sf.net/p/opensaf/git opensaf-git
+    % cd opensaf-git
     % ./bootstrap.sh
 
 After bootstraping follow the standard build instructions.
@@ -519,8 +518,8 @@ steps:
 Note: `OpenSAF' can safely be built with parallel jobs using -jX, where X should
       be the number of CPU you want to dedicate + 1
 
-If you are Building from `Mercurial', make sure you followed the required steps
-before trying to `configure' (i.e. bootsrapping).
+If you are Building from `Git', make sure you followed the required steps before
+trying to `configure' (i.e. bootsrapping).
 
     % ./bootstrap.sh
     % ./configure && make
@@ -645,8 +644,8 @@ specific Ant version installed in a non-standard location on your system.
 
 By using `./configure --with-rpm-release', you can change the default release
 token in the generated rpm filename. Predefined values exist like the build
-timestamp, the Mercurial revision used to when building the code, and also you
-can add your own free text token.
+timestamp, the `Git' revision used to when building the code, and also you can
+add your own free text token.
 
 By using `./configure --with-hpi-interface', you can force the HPI interface
 version used. By default it's autodetected by scanning the SaHpi.h header, but
