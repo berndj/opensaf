@@ -26,10 +26,10 @@ EXTRA_DIST += \
 lib_LTLIBRARIES += lib/libSaLog.la
 
 lib_libSaLog_la_SOURCES = \
-	src/log/agent/lga_api.c \
-	src/log/agent/lga_util.c \
-	src/log/agent/lga_mds.c \
-	src/log/agent/lga_state.c
+	src/log/agent/lga_api.cc \
+	src/log/agent/lga_util.cc \
+	src/log/agent/lga_mds.cc \
+	src/log/agent/lga_state.cc
 
 nodist_EXTRA_lib_libSaLog_la_SOURCES = dummy.cc
 
@@ -60,6 +60,10 @@ include_HEADERS += \
 	src/log/saf/saLog.h
 
 noinst_HEADERS += \
+	src/log/agent/lga_api.h \
+	src/log/agent/lga_mds.h \
+	src/log/agent/lga_state.h \
+	src/log/agent/lga_util.h \
 	src/log/agent/lga.h \
 	src/log/agent/lga_state.h \
 	src/log/common/lgsv_defs.h \

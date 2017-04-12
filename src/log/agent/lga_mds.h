@@ -15,20 +15,23 @@
  *
  */
 
-#ifndef SRC_LOG_AGENT_LGA_STATE_H_
-#define SRC_LOG_AGENT_LGA_STATE_H_
+#ifndef SRC_LOG_AGENT_LGA_MDS_H_
+#define SRC_LOG_AGENT_LGA_MDS_H_
 
-#include "log/agent/lga.h"
+#include <stdint.h>
+#include "osaf/saf/saAis.h"
 
-void lga_no_server_state_set(void);
-void lga_serv_recov1state_set(void);
-int lga_recover_one_client(lga_client_hdl_rec_t *p_client);
-void lga_recovery2_lock(void);
-void lga_recovery2_unlock(void);
+struct lga_cb_t;
+struct lgsv_msg_t;
 
-void set_lga_state(lga_state_t state);
-bool is_lga_state(lga_state_t state);
-void recovery2_lock(bool *is_locked);
-void recovery2_unlock(bool *is_locked);
+uint32_t lga_mds_init(lga_cb_t *cb);
+void lga_mds_finalize(lga_cb_t *cb);
+void lga_msg_destroy(lgsv_msg_t *msg);
 
-#endif  // SRC_LOG_AGENT_LGA_STATE_H_
+uint32_t lga_mds_msg_sync_send(lga_cb_t *cb, lgsv_msg_t *i_msg,
+                               lgsv_msg_t **o_msg, SaTimeT timeout,
+                               uint32_t prio);
+uint32_t lga_mds_msg_async_send(lga_cb_t *cb, lgsv_msg_t *i_msg,
+                                uint32_t prio);
+
+#endif  // SRC_LOG_AGENT_LGA_MDS_H_
