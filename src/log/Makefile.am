@@ -26,10 +26,13 @@ EXTRA_DIST += \
 lib_LTLIBRARIES += lib/libSaLog.la
 
 lib_libSaLog_la_SOURCES = \
+	src/log/agent/lga_client.cc \
+	src/log/agent/lga_stream.cc \
 	src/log/agent/lga_api.cc \
 	src/log/agent/lga_util.cc \
 	src/log/agent/lga_mds.cc \
-	src/log/agent/lga_state.cc
+	src/log/agent/lga_state.cc \
+	src/log/agent/lga_agent.cc
 
 nodist_EXTRA_lib_libSaLog_la_SOURCES = dummy.cc
 
@@ -60,11 +63,12 @@ include_HEADERS += \
 	src/log/saf/saLog.h
 
 noinst_HEADERS += \
-	src/log/agent/lga_api.h \
 	src/log/agent/lga_mds.h \
-	src/log/agent/lga_state.h \
+	src/log/agent/lga_common.h \
 	src/log/agent/lga_util.h \
-	src/log/agent/lga.h \
+	src/log/agent/lga_client.h \
+	src/log/agent/lga_agent.h \
+	src/log/agent/lga_stream.h \
 	src/log/agent/lga_state.h \
 	src/log/common/lgsv_defs.h \
 	src/log/common/lgsv_msg.h \
@@ -201,8 +205,8 @@ bin_logtest_SOURCES = \
 	src/log/apitest/tet_log_runtime_cfgobj.c \
 	src/log/apitest/tet_log_longDN.c \
 	src/log/apitest/tet_Log_clm.c \
-	src/log/apitest/tet_cfg_destination.c
-
+	src/log/apitest/tet_cfg_destination.c \
+	src/log/apitest/tet_multiple_thread.c
 
 bin_logtest_LDADD = \
 	lib/libapitest.la \

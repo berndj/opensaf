@@ -18,16 +18,25 @@
 #ifndef SRC_LOG_AGENT_LGA_STATE_H_
 #define SRC_LOG_AGENT_LGA_STATE_H_
 
-#include "log/agent/lga.h"
+// Internal agent recovery states
+enum class RecoveryState {
+  // Server is up and no recovery is ongoing
+  kNormal,
+  // No Server (Server down) state
+  kNoLogServer,
+  // Server is up. Recover clients and streams when request from client.
+  // Recovery1 timer is running
+  kRecovery1,
+  // Auto recover remaining clients and streams after recovery1 timeout
+  kRecovery2
+};
 
-void lga_no_server_state_set(void);
-void lga_serv_recov1state_set(void);
-int lga_recover_one_client(lga_client_hdl_rec_t *p_client);
-void lga_recovery2_lock(void);
-void lga_recovery2_unlock(void);
+void lga_no_server_state_set();
+void lga_serv_recov1state_set();
+void lga_recovery2_lock();
+void lga_recovery2_unlock();
 
-void set_lga_state(lga_state_t state);
-bool is_lga_state(lga_state_t state);
+bool is_lga_recovery_state(RecoveryState state);
 void recovery2_lock(bool *is_locked);
 void recovery2_unlock(bool *is_locked);
 
