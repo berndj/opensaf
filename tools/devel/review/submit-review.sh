@@ -26,17 +26,17 @@ dryrun=0; force=0
 
 usage="Usage: submit-review.sh [-t] [-f] [-d dest]"
 
-while getopts ":tcor:d:" opt; do
+while getopts ":tfd:" opt; do
 	case $opt in
 		t ) dryrun=1 ;;
 		f ) force=1 ;;
 		d ) dest=$OPTARG ;;
-		\?) echo $usage
+		\?) echo "$usage"
 		exit 1 ;;
 	esac
 done
 
-shift $(($OPTIND -1))
+shift $((OPTIND -1))
 
 GIT=$(which git)
 if [[ -z "$GIT" ]]; then
@@ -45,22 +45,19 @@ if [[ -z "$GIT" ]]; then
     exit 1
 fi
 
-"$GIT" send-email --help > /dev/null 2>&1
-if [ $? -ne 0 ]; then
+if ! "$GIT" send-email --help > /dev/null 2>&1; then
         echo "*** ERROR: The git send-email command isn't installed on your system"
         echo "           Please run: sudo apt-get install git-email"
         exit 1
 fi
 
-user_email=$("$GIT" config user.email)
-if [ $? -ne 0 ]; then
+if ! user_email=$("$GIT" config user.email); then
         echo "*** ERROR: No E-mail address has been configured for GIT"
         echo '           Please run: git config --global user.email "your.email@company.com"'
         exit 1
 fi
 
-user_name=$("$GIT" config user.name)
-if [ $? -ne 0 ]; then
+if ! user_name=$("$GIT" config user.name); then
         echo "*** ERROR: No name has been configured for GIT"
         echo '           Please run: git config --global user.name "Your Name"'
         exit 1
@@ -76,7 +73,7 @@ if [[ -z "$OSAF_TEST_WORKDIR" ]]; then
 fi
 
 common_repo="ssh://${OSAF_SOURCEFORGE_USER_ID}@git.code.sf.net/p/opensaf/code"
-private_repo="ssh://${OSAF_SOURCEFORGE_USER_ID}@git.code.sf.net/u/${OSAF_SOURCEFORGE_USER_ID}/review"
+personal_repo="ssh://${OSAF_SOURCEFORGE_USER_ID}@git.code.sf.net/u/${OSAF_SOURCEFORGE_USER_ID}/review"
 
 branch=$("$GIT" symbolic-ref --quiet --short HEAD)
 
@@ -100,17 +97,23 @@ if [[ -n $(echo "$ticket" | tr -d "0-9") ]]; then
     exit 1
 fi
 
+if [[ $("$GIT" status -s | wc -l) -ne 0 ]]; then
+    "$GIT" status -s
+    echo "*** ERROR: Your GIT repository is not clean; please commit or stash any local changes"
+    exit 1
+fi
+
 echo "Fetching the latest from the develop branch at Source Forge"
 "$GIT" fetch "$common_repo" develop || exit 1
 fetch_head=$("$GIT" rev-parse FETCH_HEAD)
-develop_head=$("$GIT" rev-parse develop)
-if [ $? -ne 0 ]; then
+if ! develop_head=$("$GIT" rev-parse develop); then
         echo "No local branch with the name 'develop' exists."
         echo "Please run: git checkout develop"
         exit 1
 fi
 if [[ "$fetch_head" != "$develop_head" ]]; then
-    echo "The develop branch is not up to date - please pull from SourceForge"
+    echo "The develop branch is not up to date"
+    echo "           Please run: git checkout develop && git pull"
     exit 1
 fi
 
@@ -124,23 +127,21 @@ if [[ "$develop_head" != "$fork_point" ]]; then
 fi
 
 if [ -z "$dest" ]; then
-	rr=$(mktemp -d)
-	if [ $? != 0 ]; then
+	if ! rr=$(mktemp -d); then
 		echo "$0: mktemp failed"
 		exit 1
 	fi
 else
 	rr=$dest
 	if [ ! -d "$rr" ]; then
-		mkdir -p "$rr"
-		if [ $? != 0 ]; then
+		if ! mkdir -p "$rr"; then
 			echo "$0: mkdir $rr failed"
 			exit 1
 		fi
 	fi
 fi
 
-rev="$fork_point".."$ticket_head"
+rev=${fork_point}..${ticket_head}
 "$GIT" log "$rev" --pretty='format:%s' > "$rr/shortlog.txt"
 if [[ $(wc -c < "$rr/shortlog.txt") -eq 0 ]]; then
     echo "No revisions on branch $branch to submit for review..exiting."
@@ -174,7 +175,7 @@ if [[ $(wc -l < "$rr/missing_ticket.txt") -gt 0 ]]; then
     exit 1
 fi
 
-summary=$(head -1 "$rr/shortlog.txt")
+summary=$(tail -1 "$rr/shortlog.txt")
 if [ -z "$summary" ]; then
     summary="*** FILL ME ***"
 fi
@@ -190,8 +191,7 @@ if [[ "$email_entries" -ne "$shortlog_entries" ]]; then
     echo "*** ERROR: Missing E-mail address in some commit messages"
     exit 1
 fi
-grep -v -E "^$user_email\$" < "$rr/shortlog.txt"
-if [ $? -eq 0 ]; then
+if grep -v -E "^$user_email\$" < "$rr/shortlog.txt"; then
         echo "*** ERROR: E-mail address $user_email missing in some commit messages"
         exit 1
 fi
@@ -203,28 +203,40 @@ if [[ $(wc -c < "$rr/shortlog.txt") -eq 0 ]]; then
 fi
 echo >> "$rr/shortlog.txt"
 name_entries=$(wc -l < "$rr/shortlog.txt")
-if [[ "$email_entries" -ne "$shortlog_entries" ]]; then
+if [[ "$name_entries" -ne "$shortlog_entries" ]]; then
     echo "*** ERROR: Missing user name address in some commit messages"
     exit 1
 fi
-grep -v -E "^$user_name\$" < "$rr/shortlog.txt"
-if [ $? -eq 0 ]; then
+if grep -v -E "^$user_name\$" < "$rr/shortlog.txt"; then
         echo "*** ERROR: User name $user_name missing in some commit messages"
         exit 1
 fi
 
 git diff --find-renames "$rev" > "$rr/single_patch.txt"
-if $(grep -E '^\+.*[[:space:]]$' "$rr/single_patch.txt"); then
+if grep -E '^\+.*[[:space:]]$' "$rr/single_patch.txt"; then
     echo "*** ERROR: Patch adds trailing whitespace"
     exit 1
 fi
+
+patches_contain_long_lines=0
+sed -i -e 's/\t/        /g' "$rr/single_patch.txt"
+if grep --color=always -E '^\+[^#].{80}' "$rr/single_patch.txt"; then
+    echo "*** ERROR: Patch adds lines exceeding the 80 character width limit"
+    read -r -i no -p "Do you wish to send the patch for review anyway? " send_anyway
+    if [[ "$send_anyway" != "yes" ]]; then
+	exit 1
+    fi
+    patches_contain_long_lines=1
+fi
 rm "$rr/single_patch.txt" "$rr/shortlog.txt" "$rr/missing_ticket.txt" "$rr/missing_component.txt"
 
+patches_are_untested=0
 if [[ -f "$OSAF_TEST_WORKDIR/good_revisions/$ticket_head" ]]; then
     echo "Revision $ticket_head has passed the OpenSAF tests"
 else
     if [[ "$force" -eq 1 ]]; then
 	echo "Revision $ticket_head has NOT passed the OpenSAF tests, but -f flag was used"
+	patches_are_untested=1
 	summary="$summary (untested)"
     else
 	echo "*** ERROR: Revision $ticket_head has NOT passed the OpenSAF tests"
@@ -242,14 +254,15 @@ if [ $dryrun -eq 1 ]; then
 	echo "***** Running in dry-run mode, nothing will be emailed *****"
 fi
 
-echo "Pushing branches $branch and develop to your private SourceForge repository:"
+echo "Pushing branches $branch and develop to your personal SourceForge repository:"
 if [ $dryrun -eq 1 ]; then
-    echo "$GIT" push "$private_repo" "$branch" develop
+    echo "$GIT" push "$personal_repo" "$branch" develop
 else
-    "$GIT" push "$private_repo" "$branch" develop
-    if [ $? -ne 0 ]; then
-        echo "*** ERROR: Could not push to $private_repo"
+    if ! "$GIT" push "$personal_repo" "$branch" develop; then
+        echo "*** ERROR: Could not push to $personal_repo"
         echo "           Please check that you have a GIT repository with the name 'review' at SourceForge"
+	echo "           If $branch already exists because of an earlier review of the same ticket,"
+	echo "           you must delete the branch using: git push --delete $personal_repo $branch"
         exit 1
     fi
 fi
@@ -258,14 +271,15 @@ echo "The review package is exported into $rr"
 
 "$GIT" format-patch --numbered --cover-letter -o "$rr" "$rev"
 
-cat <<ETX >> $rr/rr.patch
+cat <<ETX >> "$rr/rr.patch"
 Summary: $summary
 Review request for Ticket(s): $ticket
 Peer Reviewer(s): *** LIST THE TECH REVIEWER(S) / MAINTAINER(S) HERE ***
 Pull request to: *** LIST THE PERSON WITH PUSH ACCESS HERE ***
 Affected branch(es): develop
 Development branch: $branch
-Private repository: git://git.code.sf.net/u/${OSAF_SOURCEFORGE_USER_ID}/review
+Base revision: $develop_head
+Personal repository: git://git.code.sf.net/u/${OSAF_SOURCEFORGE_USER_ID}/review
 
 --------------------------------
 Impacted area       Impact y/n
@@ -282,44 +296,56 @@ Impacted area       Impact y/n
  Tests                   n
  Other                   n
 
+ETX
+
+if [[ "$patches_contain_long_lines" -ne 0 ]]; then
+	echo "NOTE: Patch(es) contain lines longer than 80 characers" >> "$rr/rr.patch"
+fi
+if [[ "$patches_are_untested" -ne 0 ]]; then
+	echo "NOTE: Patch(es) are UNTESTED" >> "$rr/rr.patch"
+fi
+
+cat <<ETX >> "$rr/rr.patch"
 
 Comments (indicate scope for each "y" above):
 ---------------------------------------------
 *** EXPLAIN/COMMENT THE PATCH SERIES HERE ***
 
 ETX
-"$GIT" log --pretty=format:'revision %H%nAuthor:%x09%cn <%ce>%nDate:%x09%cD%n%n%B%n%n' "$rev" >> "$rr"/rr.patch
-cat <<ETX >> $rr/rr.patch
-ETX
-new=$(egrep -A 3 -s '^new file mode ' $rr/*.patch | grep -s '\+++ b/' | awk -F "b/" '{ print $2 }' | sort -u)
+"$GIT" log --pretty=format:'revision %H%nAuthor:%x09%cn <%ce>%nDate:%x09%cD%n%n%B%n%n' "$rev" >> "$rr/rr.patch"
+
+new=$(grep -E -A 3 -s '^new file mode ' "$rr"/*.patch | grep -s '\+++ b/' | awk -F "b/" '{ print $2 }' | sort -u)
 if [ -n "$new" ]; then
-	echo "" >> $rr/rr.patch
-	echo "Added Files:" >> $rr/rr.patch
-	echo "------------" >> $rr/rr.patch
-	for l in $new; do
-		echo " $l"
-	done >> $rr/rr.patch
-	echo "" >> $rr/rr.patch
+	{
+		echo ""
+		echo "Added Files:"
+		echo "------------"
+		for l in $new; do
+			echo " $l"
+		done
+		echo ""
+	} >> "$rr/rr.patch"
 fi
-cat <<ETX >> $rr/rr.patch
-ETX
-del=$(egrep -A 2 -s '^deleted file mode ' $rr/*.patch | grep -s '\--- a/' | awk -F "a/" '{ print $2 }' | sort -u)
+
+del=$(grep -E -A 2 -s '^deleted file mode ' "$rr"/*.patch | grep -s '\--- a/' | awk -F "a/" '{ print $2 }' | sort -u)
 if [ -n "$del" ]; then
-	echo "" >> $rr/rr.patch
-	echo "Removed Files:" >> $rr/rr.patch
-	echo "--------------" >> $rr/rr.patch
-	for l in $del; do
-		echo " $l"
-	done >> $rr/rr.patch
-	echo "" >> $rr/rr.patch
+	{
+		echo ""
+		echo "Removed Files:"
+		echo "--------------"
+		for l in $del; do
+			echo " $l"
+		done
+		echo ""
+	} >> "$rr/rr.patch"
 fi
-cat <<ETX >> $rr/rr.patch
+cat <<ETX >> "$rr/rr.patch"
 
 Complete diffstat:
 ------------------
 ETX
-"$GIT" diff --stat "$rev" >> $rr/rr.patch
-cat <<ETX >> $rr/rr.patch
+"$GIT" diff --stat "$rev" >> "$rr/rr.patch"
+cat <<ETX >> "$rr/rr.patch"
 
 
 Testing Commands:
@@ -411,21 +437,21 @@ ___ Your changes affect user manual and documentation, your patch series
 
 ETX
 
-"$EDITOR" "$rr"/rr.patch
+"$EDITOR" "$rr/rr.patch"
 
 while [ -z "$subject" ]; do
-        read -p "Subject: Review Request for " -e subject
+        read -r -p "Subject: Review Request for " -e subject
 done
 
 while [ -z "$toline" ]; do
-        read -p "To: " -e toline
+        read -r -p "To: " -e toline
 done
 
 "$GIT" format-patch --numbered --cover-letter --subject="PATCH" --to "$toline" --cc "opensaf-devel@lists.sourceforge.net" -o "$rr" "$rev"
 
-sed -i -e "s/\*\*\* SUBJECT HERE \*\*\*/Review Request for $subject/" "$rr"/0000-cover-letter.patch
-sed -i -e '/^\*\*\* BLURB HERE \*\*\*$/,$d' "$rr"/0000-cover-letter.patch
-cat "$rr"/rr.patch >> "$rr"/0000-cover-letter.patch
+sed -i -e "s/\*\*\* SUBJECT HERE \*\*\*/Review Request for $subject/" "$rr/0000-cover-letter.patch"
+sed -i -e '/^\*\*\* BLURB HERE \*\*\*$/,$d' "$rr/0000-cover-letter.patch"
+cat "$rr/rr.patch" >> "$rr/0000-cover-letter.patch"
 rm -f "$rr"/rr.patch*
 
 if [ $dryrun -eq 1 ]; then

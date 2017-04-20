@@ -58,6 +58,19 @@ git config --global sendemail.smtpserver "smtp.example.com"
 You should replace "John Doe", "john.doe@example.com" and "smtp.example.com" in
 the commands above with appropriate values for you.
 
+Creating a Personal GIT Repository at SourceForge
+=================================================
+
+You also need to create a personal GIT repository at SourceForge, where the code
+will be published by the review script (it will also be sent out to the mailing
+list):
+
+Go to the following URL (replace john-doe with your actual SourceForge User-ID):
+https://sourceforge.net/u/john-doe/activity/ in your web browser
+
+Press "Add New..." at the far right on the toolbar. Select "GIT", give the new
+repository the label "Review" and the URL path "review". Press "Save".
+
 Using the submit-review.sh Helper Script
 ========================================
 
@@ -74,11 +87,13 @@ the develop branch.
 The script will help you create the following work package:
 
    1. Put the revlevant files for the review in a temp directory
-   2. Generate a review template for the [PATCH 0/x]
-   3. Open the generated template in the user's $EDITOR of choice and allow him
+   2. Run some simple sanity checks on your patch(es)
+   3. Push your ticket branch to your personal SourceForge repository
+   4. Generate a review template for the [PATCH 0/x]
+   5. Open the generated template in the user's $EDITOR of choice and allow him
       to add the necessary comments
-   4. Prompt the user for a review subject
-   5. Prompt the user to enter emails of the peer reviewers, the devel list is
+   6. Prompt the user for a review subject
+   7. Prompt the user to enter emails of the peer reviewers, the devel list is
       added on CC automatically
 
 The script currently accepts the following options:
@@ -89,30 +104,64 @@ Usage: submit-review.sh [-t] [-f] [-d dest]
 -f    Force; submit for review even though tests have not passed
 -d    Specifies where the review package gets dumped (default 'mktemp -d')
 
-Sending Patch for Review Manually
-=================================
+Step-by-step Guide to Sending Out Code for Review
+=================================================
 
-Nothing forces the developer to send patches for review using the helper script.
-However some minor rules should be followed to try keeping the review process
-uniform.
+Set the following two environment variables (replace john-doe and 4711 with your
+SourceForge User-ID and the ticket number you are working on). The
+$OSAF_SOURCEFORGE_USER_ID variable is needed by the submit-review.sh script that
+you will run to send out the patches for review. The $ticket variable is not
+needed by the script; it is only needed by the commands on this wiki page.
 
-1. The patch series should be sent inlined, one per email with an introduction
-   email (e.g. [PATCH 0/x] Review Request for ...)
+export OSAF_SOURCEFORGE_USER_ID=john-doe
+export ticket=4711
 
-   No attachment!!!
+Use the following commands to work on the ticket:
 
-   The reason to keep patch inlined is simple, comments for the review can be
-   added in the reply, and attachment is a pain for review using text email
-   client. Also properly inlined patches can be dropped as mbox files to use
-   with git.
+git clone -b develop ssh://${OSAF_SOURCEFORGE_USER_ID}@git.code.sf.net/p/opensaf/code opensaf-code
+git checkout -b ticket-$ticket
+#Work on the ticket and stage the changes
+git commit
+#Optionally work on a second patch for the same ticket
+git commit
+cd tools/devel/review
+#Note: the following script will push the ticket branch to your personal
+#repository that you created earlier, and also send the patches to the OpenSAF
+#devel list.
+./submit-review.sh
 
-      a. Using the 'git send-email' command, patch will be exported with the
-         proper format, given that the proper settings for [diff] are set.
-      b. If not using the 'git send-email' command, or to export a single patch,
-         use the 'git format-patch' command. Preferably export one changeset per
-         patch if the changes are meant for different modules/areas.
+When the review has been ACKed, you push the code as follows:
 
-2. Add the desired reviewers (if any) on the TO: line and the developer mailing
-   list on the CC: line. It's probably better to have the developer on the TO:
-   line and catch his email filter, most developer are subscribed to dozens of
-   development mailing lists...
+git checkout develop
+git pull
+git checkout ticket-$ticket
+git rebase develop
+git checkout develop
+git merge --ff-only ticket-$ticket
+git push origin develop
+
+You should normally only push to the develop branch in the official OpenSAF GIT
+repository. Important bug-fixes can sometimes also be needed on the release
+branch. Once you have pushed an important bug-fix to the develop branch, you can
+cherry-pick it to the release branch using the following commands (replace
+<revision> in the commands below with the actual revision (hexadecimal hash
+number) of the commit you wish to cherry-pick):
+
+git checkout release
+git pull
+git cherry-pick --ff <revision>
+git push origin release
+
+Reviewing code in your local repository
+=======================================
+
+When reviewing code, you can easily fetch the changes from the author's personal
+repository into a separate branch in your own local GIT repository. Use the
+following commands (replace 4711 and john-doe with the acutal ticket number and
+the author's SourceForge user name):
+
+git fetch git://git.code.sf.net/u/john-doe/review ticket-4711
+git checkout FETCH_HEAD
+#Optionally run the following command to create a branch in your local
+#repository:
+git checkout -b ticket-4711
