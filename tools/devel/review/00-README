@@ -116,6 +116,16 @@ needed by the script; it is only needed by the commands on this wiki page.
 export OSAF_SOURCEFORGE_USER_ID=john-doe
 export ticket=4711
 
+In the rare case that your SourceForge profile page uses a different user-id
+than the one you use to log in to SourceForge, you may also have to set
+OSAF_SOURCEFORGE_GIT_REPO_ID to the user ID for your profile page. You can find
+out if this is needed by navigatingh your web browser to your profile page at
+SourceForge (e.g. https://sourceforge.net/u/john-doe/profile) and examining the
+URL of the page. If the user-id part of the URL (john-doe) doesn't change, then
+you don't have to do anything special. If the user-id part changes from john-doe
+to something like userid-1234567 then you need to set
+OSAF_SOURCEFORGE_GIT_REPO_ID to userid-1234567.
+
 Use the following commands to work on the ticket:
 
 git clone -b develop ssh://${OSAF_SOURCEFORGE_USER_ID}@git.code.sf.net/p/opensaf/code opensaf-code

@@ -68,12 +68,16 @@ if [[ -z "$OSAF_SOURCEFORGE_USER_ID" ]]; then
     exit 1
 fi
 
+if [[ -z "$OSAF_SOURCEFORGE_GIT_REPO_ID" ]]; then
+    OSAF_SOURCEFORGE_GIT_REPO_ID=$OSAF_SOURCEFORGE_USER_ID
+fi
+
 if [[ -z "$OSAF_TEST_WORKDIR" ]]; then
     export OSAF_TEST_WORKDIR=$HOME/osaf_test_workdir
 fi
 
 common_repo="ssh://${OSAF_SOURCEFORGE_USER_ID}@git.code.sf.net/p/opensaf/code"
-personal_repo="ssh://${OSAF_SOURCEFORGE_USER_ID}@git.code.sf.net/u/${OSAF_SOURCEFORGE_USER_ID}/review"
+personal_repo="ssh://${OSAF_SOURCEFORGE_USER_ID}@git.code.sf.net/u/${OSAF_SOURCEFORGE_GIT_REPO_ID}/review"
 
 branch=$("$GIT" symbolic-ref --quiet --short HEAD)
 
@@ -279,7 +283,7 @@ Pull request to: *** LIST THE PERSON WITH PUSH ACCESS HERE ***
 Affected branch(es): develop
 Development branch: $branch
 Base revision: $develop_head
-Personal repository: git://git.code.sf.net/u/${OSAF_SOURCEFORGE_USER_ID}/review
+Personal repository: git://git.code.sf.net/u/${OSAF_SOURCEFORGE_GIT_REPO_ID}/review
 
 --------------------------------
 Impacted area       Impact y/n
