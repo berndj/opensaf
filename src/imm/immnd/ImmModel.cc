@@ -5401,6 +5401,9 @@ bool ImmModel::validateNoDanglingRefsModify(CcbInfo* ccb,
               LOG_NO(
                   "ERR_FAILED_OPERATION: NO_DANGLING reference (%s) is dangling (Ccb %u)",
                   av->getValueC_str(), ccb->mId);
+              setCcbErrorString(ccb, "IMM: ERR_FAILED_OPERATION: "
+                                "Object %s has dangling reference (%s)",
+                                omit->first.c_str(), av->getValueC_str());
               TRACE_LEAVE();
               return false;
             }
@@ -5416,6 +5419,10 @@ bool ImmModel::validateNoDanglingRefsModify(CcbInfo* ccb,
                     "ERR_FAILED_OPERATION: NO_DANGLING Reference (%s) "
                     "refers to a non-persistent RTO (Ccb %u)",
                     av->getValueC_str(), ccb->mId);
+                setCcbErrorString(
+                    ccb, "IMM: ERR_FAILED_OPERATION: "
+                    "Object %s refers to a non-persistent RTO (%s)",
+                    omit->first.c_str(), av->getValueC_str());
                 TRACE_LEAVE();
                 return false;
               }
@@ -5429,6 +5436,10 @@ bool ImmModel::validateNoDanglingRefsModify(CcbInfo* ccb,
                     "refers to object flagged for delete by another Ccb: %u, (this Ccb %u)",
                     av->getValueC_str(), omi->second->mCcbId, ccb->mId);
               }
+              setCcbErrorString(
+                  ccb, "IMM: ERR_FAILED_OPERATION: "
+                  "Object %s refers to object flagged for deletion (%s)",
+                  omit->first.c_str(), av->getValueC_str());
               TRACE_LEAVE();
               return false;
             }
@@ -5438,6 +5449,10 @@ bool ImmModel::validateNoDanglingRefsModify(CcbInfo* ccb,
                   "ERR_FAILED_OPERATION: NO_DANGLING reference (%s) "
                   "refers to object flagged for create by another CCB: %u, (this Ccb %u)",
                   av->getValueC_str(), omi->second->mCcbId, ccb->mId);
+              setCcbErrorString(
+                  ccb, "IMM: ERR_FAILED_OPERATION: "
+                  "Object %s refers to object flagged for creation in another CCB (%s)",
+                  omit->first.c_str(), av->getValueC_str());
               TRACE_LEAVE();
               return false;
             }
@@ -5500,6 +5515,10 @@ bool ImmModel::validateNoDanglingRefsDelete(CcbInfo* ccb,
           "ERR_FAILED_OPERATION: Delete of object %s would violate NO_DANGLING reference "
           "from object %s, not scheduled for delete by this Ccb:%u",
           omit->first.c_str(), objName.c_str(), ccb->mId);
+      setCcbErrorString(ccb, "IMM: ERR_FAILED_OPERATION: "
+                        "Object %s is currently reffered by object %s, "
+                        "not scheduled for deletion by this CCB",
+                        omit->first.c_str(), objName.c_str());
       rc = false;
       break;
     }
@@ -5510,6 +5529,10 @@ bool ImmModel::validateNoDanglingRefsDelete(CcbInfo* ccb,
           "ERR_FAILED_OPERATION: Delete of object %s would violate NO_DANGLING reference "
           "from object %s, scheduled for delete by another Ccb:%u (this Ccb:%u)",
           omit->first.c_str(), objName.c_str(), ommi->second->mCcbId, ccb->mId);
+      setCcbErrorString(ccb, "IMM: ERR_FAILED_OPERATION: "
+                        "Object %s is currently reffered by object %s, "
+                        "scheduled for deletion by another CCB",
+                        omit->first.c_str(), objName.c_str());
       rc = false;
       break;
     }
@@ -8437,6 +8460,10 @@ SaAisErrorT ImmModel::ccbObjectCreate(
                         "refers to a non persistent RTO %s (Ccb %u)",
                         objectName.c_str(), i4->first.c_str(),
                         attrVal->getValueC_str(), ccbId);
+                    setCcbErrorString(
+                        ccb, "IMM: ERR_INVALID_PARAM: "
+                        "Object %s refers to a non-persistent RTO (%s)",
+                        objectName.c_str(), attrVal->getValueC_str());
                     err = SA_AIS_ERR_INVALID_PARAM;
                     break;
                   }
@@ -8449,6 +8476,10 @@ SaAisErrorT ImmModel::ccbObjectCreate(
                         "refers to object %s that will be deleted in same Ccb (Ccb %u)",
                         objectName.c_str(), i4->first.c_str(),
                         attrVal->getValueC_str(), ccbId);
+                    setCcbErrorString(
+                        ccb, "IMM: ERR_BAD_OPERATION: "
+                        "Object %s refers to object flagged for deletion in the same CCB (%s)",
+                        objectName.c_str(), attrVal->getValueC_str());
                     err = SA_AIS_ERR_BAD_OPERATION;
                     break;
                   } else {
@@ -8457,6 +8488,10 @@ SaAisErrorT ImmModel::ccbObjectCreate(
                         "object %s flagged for deletion in other Ccb (%u), this (Ccb %u)",
                         objectName.c_str(), i4->first.c_str(),
                         attrVal->getValueC_str(), omi->second->mCcbId, ccbId);
+                    setCcbErrorString(
+                        ccb, "IMM: ERR_BUSY: "
+                        "Object %s refers to object flagged for deletion in another CCB (%s)",
+                        objectName.c_str(), attrVal->getValueC_str());
                     err = SA_AIS_ERR_BUSY;
                     break;
                   }
@@ -8469,6 +8504,10 @@ SaAisErrorT ImmModel::ccbObjectCreate(
                         "object %s flagged for creation in other ccb (%u), this (Ccb %u)",
                         objectName.c_str(), i4->first.c_str(),
                         attrVal->getValueC_str(), omi->second->mCcbId, ccbId);
+                    setCcbErrorString(
+                        ccb, "IMM: ERR_BUSY: "
+                        "Object %s refers to object flagged for creation in another CCB (%s)",
+                        objectName.c_str(), attrVal->getValueC_str());
                     err = SA_AIS_ERR_BUSY;
                     break;
                   }
@@ -10449,6 +10488,10 @@ SaAisErrorT ImmModel::deleteObject(ObjectMap::iterator& oi, SaUint32T reqConn,
                   "ERR_BAD_OPERATION: PRTO %s can't be deleted by Ccb(%u) "
                   "because another object %s has a NO_DANGLING reference to it",
                   oi->first.c_str(), ccb->mId, objName.c_str());
+              setCcbErrorString(ccb, "IMM: ERR_BAD_OPERATION: "
+                                "PRTO %s is referred by object %s "
+                                "not scheduled for deletion by this CCB",
+                                oi->first.c_str(), objName.c_str());
               return SA_AIS_ERR_BAD_OPERATION;
             }
           }
@@ -10474,6 +10517,10 @@ SaAisErrorT ImmModel::deleteObject(ObjectMap::iterator& oi, SaUint32T reqConn,
                 "is scheduled to be deleted in another Ccb(%u), this Ccb(%u)",
                 objName.c_str(), oi->first.c_str(), ommi->second->mCcbId,
                 ccb->mId);
+            setCcbErrorString(ccb, "IMM: ERR_BUSY: "
+                              "Object %s refers to object %s "
+                              "and is flagged for deletion in another CCB",
+                              objName.c_str(), oi->first.c_str());
             return SA_AIS_ERR_BUSY;
           }
         } else if (ommi->second->mObjFlags & IMM_CREATE_LOCK) {
@@ -10484,6 +10531,10 @@ SaAisErrorT ImmModel::deleteObject(ObjectMap::iterator& oi, SaUint32T reqConn,
                 "ERR_BAD_OPERATION: Created object %s with NO_DANGLING reference to object %s "
                 "flagged for deletion in the same Ccb(%u) is not allowed",
                 objName.c_str(), oi->first.c_str(), ccb->mId);
+            setCcbErrorString(ccb, "IMM: ERR_BAD_OPERATION: "
+                              "Object %s refers to object %s "
+                              "and is flagged for creation in this CCB",
+                              objName.c_str(), oi->first.c_str());
             return SA_AIS_ERR_BAD_OPERATION;
           } else {
             LOG_IN(
@@ -10491,6 +10542,10 @@ SaAisErrorT ImmModel::deleteObject(ObjectMap::iterator& oi, SaUint32T reqConn,
                 "flagged for deletion is not created in the same Ccb(%u), this Ccb(%u)",
                 objName.c_str(), oi->first.c_str(), ommi->second->mCcbId,
                 ccb->mId);
+            setCcbErrorString(ccb, "IMM: ERR_BUSY: "
+                              "Object %s refers to object %s "
+                              "and is flagged for creation in another CCB",
+                              objName.c_str(), oi->first.c_str());
             return SA_AIS_ERR_BUSY;
           }
         }
