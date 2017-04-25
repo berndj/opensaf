@@ -86,7 +86,7 @@ GLND_RES_LOCK_LIST_INFO *glnd_resource_master_process_lock_req(
 
 GLND_RES_LOCK_LIST_INFO *glnd_resource_non_master_lock_req(
     GLND_CB *cb, GLND_RESOURCE_INFO *res_info, GLSV_LOCK_REQ_INFO lock_info,
-    SaLckResourceIdT lcl_resource_id, SaLckLockIdT lockid);
+    SaLckResourceIdT lcl_resource_id, SaLckLockIdT lockid, GLSV_GLND_EVT *evt);
 
 GLND_RES_LOCK_LIST_INFO *glnd_resource_master_unlock_req(
     GLND_CB *cb, GLND_RESOURCE_INFO *res_info, GLSV_LOCK_REQ_INFO lock_info,
@@ -124,5 +124,10 @@ bool glnd_deadlock_detect(GLND_CB *glnd_cb, GLND_CLIENT_INFO *client_info,
 
 void glnd_resource_check_lost_unlock_requests(GLND_CB *glnd_cb,
                                               GLND_RESOURCE_INFO *res_node);
+
+void glnd_resource_master_grant_lock_send_notification(
+    GLND_CB *,
+    GLND_RESOURCE_INFO *,
+    GLND_RES_LOCK_LIST_INFO *);
 
 #endif  // LCK_LCKND_GLND_RES_H_

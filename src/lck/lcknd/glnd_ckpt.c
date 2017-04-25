@@ -268,6 +268,8 @@ uint32_t glnd_restart_res_lock_list_ckpt_write(
 	restart_res_lock_list_info.req_mdest_id = res_lock_list->req_mdest_id;
 	restart_res_lock_list_info.glnd_res_lock_mds_ctxt =
 	    res_lock_list->glnd_res_lock_mds_ctxt;
+	restart_res_lock_list_info.lock_rsp_not_sent =
+	    res_lock_list->lock_rsp_not_sent;
 	restart_res_lock_list_info.unlock_req_sent =
 	    res_lock_list->unlock_req_sent;
 	restart_res_lock_list_info.unlock_call_type =
@@ -342,6 +344,8 @@ uint32_t glnd_restart_res_lock_list_ckpt_overwrite(
 	restart_res_lock_list_info.req_mdest_id = res_lock_list->req_mdest_id;
 	restart_res_lock_list_info.glnd_res_lock_mds_ctxt =
 	    res_lock_list->glnd_res_lock_mds_ctxt;
+	restart_res_lock_list_info.lock_rsp_not_sent =
+	    res_lock_list->lock_rsp_not_sent;
 	restart_res_lock_list_info.unlock_req_sent =
 	    res_lock_list->unlock_req_sent;
 	restart_res_lock_list_info.to_which_list = to_which_list;

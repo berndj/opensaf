@@ -247,10 +247,14 @@ static uint32_t glnd_restart_add_res_lock_to_resource_tree(
 			lck_list_info->req_mdest_id =
 			    restart_res_lock_list_info->req_mdest_id;
 		lck_list_info->res_info = res_info;
+    lck_list_info->glnd_res_lock_mds_ctxt =
+	restart_res_lock_list_info->glnd_res_lock_mds_ctxt;
 		lck_list_info->lcl_resource_id =
 		    restart_res_lock_list_info->lcl_resource_id;
 		lck_list_info->unlock_call_type =
 		    restart_res_lock_list_info->unlock_call_type;
+		lck_list_info->lock_rsp_not_sent =
+		    restart_res_lock_list_info->lock_rsp_not_sent;
 		lck_list_info->unlock_req_sent =
 		    restart_res_lock_list_info->unlock_req_sent;
 		lck_list_info->non_master_status =
@@ -353,7 +357,8 @@ static uint32_t glnd_restart_add_res_lock_to_resource_tree(
 			}
 		}
 		/* Add lock_list_info to client_tree */
-		if (client_info != NULL) {
+		if (client_info != NULL &&
+	node_id == m_NCS_NODE_ID_FROM_MDS_DEST(glnd_cb->glnd_mdest_id)) {
 			glnd_client_node_resource_lock_req_add(
 			    client_info, res_info, lck_list_info);
 		}
@@ -383,6 +388,7 @@ glnd_restart_resource_node_add(GLND_CB *glnd_cb,
 	GLND_RESOURCE_INFO *res_info = NULL;
 	int new_node = 0;
 	uint32_t node_id;
+
 	TRACE_ENTER();
 
 	if (restart_res_info == NULL)
@@ -575,6 +581,7 @@ static uint32_t glnd_restart_build_backup_event_tree(GLND_CB *glnd_cb)
 {
 	GLSV_RESTART_BACKUP_EVT_INFO glnd_restart_backup_evt;
 	GLSV_RESTART_BACKUP_EVT_INFO *shm_base_address = NULL;
+
 	;
 	SaAisErrorT rc;
 	uint32_t i;

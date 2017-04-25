@@ -106,6 +106,7 @@ GLND_CLIENT_INFO *glnd_client_node_add(GLND_CB *glnd_cb,
 				       SaLckHandleT app_handle_id)
 {
 	GLND_CLIENT_INFO *client_info = NULL;
+
 	TRACE_ENTER2("agent_mds_dest %" PRIx64, agent_mds_dest);
 
 	/* create new clientt info and put it into the tree */
@@ -158,6 +159,7 @@ uint32_t glnd_client_node_del(GLND_CB *glnd_cb, GLND_CLIENT_INFO *client_info)
 	GLSV_GLD_EVT gld_evt;
 	bool orphan = false;
 	uint32_t rc = NCSCC_RC_SUCCESS;
+
 	TRACE_ENTER();
 
 	/* delete from the tree */
@@ -252,6 +254,7 @@ uint32_t glnd_client_node_resource_add(GLND_CLIENT_INFO *client_info,
 {
 	GLND_CLIENT_LIST_RESOURCE *resource_list;
 	uint32_t rc = NCSCC_RC_FAILURE;
+
 	TRACE_ENTER2("client_info->agent_mds_dest %" PRIx64,
 		     client_info->agent_mds_dest);
 
@@ -328,32 +331,56 @@ uint32_t glnd_client_node_resource_del(GLND_CB *glnd_cb,
 		     lock_req_list != NULL;) {
 			if (resource_list->rsc_info->status ==
 			    GLND_RESOURCE_ACTIVE_NON_MASTER) {
-				/* send request to orphan the lock */
-				m_GLND_RESOURCE_NODE_LCK_INFO_FILL(
-				    glnd_evt, GLSV_GLND_EVT_LCK_REQ_ORPHAN,
-				    resource_list->rsc_info->resource_id,
-				    lock_req_list->lck_req->lcl_resource_id,
-				    lock_req_list->lck_req->lock_info.handleId,
-				    lock_req_list->lck_req->lock_info.lockid,
-				    lock_req_list->lck_req->lock_info.lock_type,
-				    lock_req_list->lck_req->lock_info.lockFlags,
-				    0, 0, 0, 0,
-				    lock_req_list->lck_req->lock_info
-					.lcl_lockid,
-				    0);
-				glnd_evt.info.node_lck_info.glnd_mds_dest =
-				    glnd_cb->glnd_mdest_id;
-				glnd_mds_msg_send_glnd(
-				    glnd_cb, &glnd_evt,
-				    res_info->master_mds_dest);
+	if (lock_req_list->lck_req->lock_info.lockStatus ==
+	      SA_LCK_LOCK_GRANTED) {
+	  TRACE("lock granted: sending orphan request");
+				  /* send request to orphan the lock */
+				  m_GLND_RESOURCE_NODE_LCK_INFO_FILL(
+				      glnd_evt, GLSV_GLND_EVT_LCK_REQ_ORPHAN,
+				      resource_list->rsc_info->resource_id,
+				      lock_req_list->lck_req->lcl_resource_id,
+				      lock_req_list->lck_req->lock_info.handleId,
+				      lock_req_list->lck_req->lock_info.lockid,
+				      lock_req_list->lck_req->lock_info.lock_type,
+				      lock_req_list->lck_req->lock_info.lockFlags,
+				      0, 0, 0, 0,
+				      lock_req_list->lck_req->lock_info.lcl_lockid,
+				      0);
+				  glnd_evt.info.node_lck_info.glnd_mds_dest =
+				      glnd_cb->glnd_mdest_id;
+				  glnd_mds_msg_send_glnd(
+				      glnd_cb, &glnd_evt,
+				      res_info->master_mds_dest);
+	} else {
+	  TRACE("lock still outstanding: sending cancel request");
+	  m_GLND_RESOURCE_NODE_LCK_INFO_FILL(
+	    glnd_evt,
+	    GLSV_GLND_EVT_LCK_REQ_CANCEL,
+	    resource_list->rsc_info->resource_id,
+	    lock_req_list->lck_req->lcl_resource_id,
+	    lock_req_list->lck_req->lock_info.handleId,
+	    lock_req_list->lck_req->lock_info.lockid,
+	    lock_req_list->lck_req->lock_info.lock_type,
+	    lock_req_list->lck_req->lock_info.lockFlags,
+	    0, 0, 0, 0, lock_req_list->lck_req->lock_info.lcl_lockid, 0);
+
+	  glnd_evt.info.node_lck_info.glnd_mds_dest = glnd_cb->glnd_mdest_id;
+
+	  if (res_info->status != GLND_RESOURCE_ELECTION_IN_PROGESS) {
+	    glnd_mds_msg_send_glnd(glnd_cb,
+				   &glnd_evt,
+				   res_info->master_mds_dest);
+	  } else {
+	    glnd_evt_backup_queue_add(glnd_cb, &glnd_evt);
+	  }
+	}
 			} else {
-				/* unset any orphan count */
-				lock_type =
-				    lock_req_list->lck_req->lock_info.lock_type;
-				if ((lock_req_list->lck_req->lock_info
-					 .lockFlags &
-				     SA_LCK_LOCK_ORPHAN) == SA_LCK_LOCK_ORPHAN)
-					local_orphan_lock = true;
+			 /* unset any orphan count */
+			 lock_type =
+			     lock_req_list->lck_req->lock_info.lock_type;
+			if ((lock_req_list->lck_req->lock_info.lockFlags &
+			      SA_LCK_LOCK_ORPHAN) == SA_LCK_LOCK_ORPHAN)
+			  local_orphan_lock = true;
 			}
 			del_req_list = lock_req_list;
 			lock_req_list = lock_req_list->next;
@@ -530,6 +557,7 @@ glnd_client_node_resource_lock_req_add(GLND_CLIENT_INFO *client_info,
 	GLND_CLIENT_LIST_RESOURCE_LOCK_REQ *lock_req_list;
 	GLND_CLIENT_LIST_RESOURCE *resource_list;
 	uint32_t rc = NCSCC_RC_FAILURE;
+
 	TRACE_ENTER2("client_info->agent_mds_dest %" PRIx64,
 		     client_info->agent_mds_dest);
 

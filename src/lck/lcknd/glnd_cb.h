@@ -53,8 +53,8 @@ typedef struct glnd_res_lock_list_info_tag {
   MDS_DEST req_mdest_id; /* requesting node info */
   SaLckResourceIdT lcl_resource_id;
   MDS_SYNC_SND_CTXT glnd_res_lock_mds_ctxt; /* to store the mds context */
+  bool lock_rsp_not_sent;
   bool unlock_req_sent;                     /* To take care of unlock requests that are
-                                                       GLSV_CALL_TYPE          unlock_call_type;
                                                        lost during mastership transistion */
   GLSV_CALL_TYPE unlock_call_type;
   uint32_t non_master_status;
@@ -122,6 +122,7 @@ typedef struct glnd_restart_res_lock_list_info_tag {
   time_t time_stamp;
   MDS_DEST req_mdest_id;                    /* requesting node info */
   MDS_SYNC_SND_CTXT glnd_res_lock_mds_ctxt; /* to store the mds context */
+  bool lock_rsp_not_sent;
   bool unlock_req_sent; /* To take care of unlock requests */
   GLSV_CALL_TYPE unlock_call_type;
   uint32_t non_master_status;
