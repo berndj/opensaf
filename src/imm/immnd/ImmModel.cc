@@ -10789,6 +10789,12 @@ void ImmModel::setCcbErrorString(CcbInfo* ccb, const char* errorString,
   va_list args;
   int isValidationErrString = 0;
 
+  // Only store error strings on originating node where OM client resides.
+  if ((ccb->mAugCcbParent && !ccb->mAugCcbParent->mOriginatingConn) ||
+      (!ccb->mOriginatingConn)) {
+    return;
+  }
+
   va_copy(args, vl);
   len = vsnprintf(fmtError, errLen, errorString, args);
   va_end(args);
@@ -11190,35 +11196,11 @@ void ImmModel::ccbObjDelContinuation(immsv_oi_ccb_upcall_rsp* rsp,
         // imm implementation has the right to veto any ccb at any time.
       }
 
-      if (rsp->errorString.size && ccb->mOriginatingConn) {
+      if (rsp->errorString.size) {
         /*Collect err strings, see: http://devel.opensaf.org/ticket/1904
           Only done at originating node since that is where the OM
           client resides. */
-        unsigned int ix = 0;
-        ImmsvAttrNameList* errStr = ccb->mErrorStrings;
-        ImmsvAttrNameList** errStrTail = &(ccb->mErrorStrings);
-        while (errStr) {
-          if (!strncmp(rsp->errorString.buf, errStr->name.buf,
-                       rsp->errorString.size)) {
-            TRACE_5("Discarding duplicate error string '%s' for ccb id %u",
-                    rsp->errorString.buf, ccbId);
-            return;
-          }
-          ++ix;
-          errStrTail = &(errStr->next);
-          errStr = errStr->next;
-        }
-
-        if (ix >= IMMSV_MAX_ATTRIBUTES) {
-          TRACE_5("Discarding error string '%s' for ccb id %u (too many)",
-                  rsp->errorString.buf, ccbId);
-        } else {
-          (*errStrTail) = (ImmsvAttrNameList*)malloc(sizeof(ImmsvAttrNameList));
-          (*errStrTail)->next = NULL;
-          (*errStrTail)->name.size = rsp->errorString.size;
-          (*errStrTail)->name.buf = rsp->errorString.buf;
-          rsp->errorString.buf = NULL; /* steal */
-        }
+        setCcbErrorString(ccb, rsp->errorString.buf);
       }
     }
   }
@@ -11354,32 +11336,7 @@ void ImmModel::ccbCompletedContinuation(immsv_oi_ccb_upcall_rsp* rsp,
       if (rsp->errorString.size) {
         TRACE("Error string received.");
         /*Collect err strings, see: http://devel.opensaf.org/ticket/1904 */
-        unsigned int ix = 0;
-        ImmsvAttrNameList* errStr = ccb->mErrorStrings;
-        ImmsvAttrNameList** errStrTail = &(ccb->mErrorStrings);
-        while (errStr) {
-          if (!strncmp(rsp->errorString.buf, errStr->name.buf,
-                       rsp->errorString.size)) {
-            TRACE_5("Discarding duplicate error string '%s' for ccb id %u",
-                    rsp->errorString.buf, ccbId);
-            return;
-          }
-          ++ix;
-          errStrTail = &(errStr->next);
-          errStr = errStr->next;
-        }
-
-        if (ix >= IMMSV_MAX_ATTRIBUTES) {
-          TRACE_5("Discarding error string '%s' for ccb id %u (too many)",
-                  rsp->errorString.buf, ccbId);
-        } else {
-          TRACE("Error string added.");
-          (*errStrTail) = (ImmsvAttrNameList*)malloc(sizeof(ImmsvAttrNameList));
-          (*errStrTail)->next = NULL;
-          (*errStrTail)->name.size = rsp->errorString.size;
-          (*errStrTail)->name.buf = rsp->errorString.buf;
-          rsp->errorString.buf = NULL; /* steal */
-        }
+        setCcbErrorString(ccb, rsp->errorString.buf);
       }
     }
   }
