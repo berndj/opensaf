@@ -18,12 +18,14 @@
 #include <poll.h>
 #include <unistd.h>
 #include "base/saf_error.h"
+#include "base/osaf_time.h"
 
 #include "logtest.h"
 
 static SaInvocationT cb_invocation[8];
 static SaAisErrorT cb_error[8];
 static int cb_index;
+const uint64_t kWaitTime = 10*1000; // Wait for timeout is 10 seconds
 
 static void logWriteLogCallbackT(SaInvocationT invocation, SaAisErrorT error)
 {
@@ -35,14 +37,14 @@ static void logWriteLogCallbackT(SaInvocationT invocation, SaAisErrorT error)
 SaAisErrorT logWrite(SaInvocationT invocation, SaLogAckFlagsT ackFlags,
 		     const SaLogRecordT *logRecord)
 {
+	struct timespec timeout_time;
+	osaf_set_millis_timeout(kWaitTime, &timeout_time);
 	SaAisErrorT rc = saLogWriteLogAsync(logStreamHandle, invocation,
 					    ackFlags, logRecord);
-	unsigned int nTries = 1;
-	while (rc == SA_AIS_ERR_TRY_AGAIN && nTries < logProfile.nTries) {
-		usleep(logProfile.retryInterval * 1000);
+	while (rc == SA_AIS_ERR_TRY_AGAIN && !osaf_is_timeout(&timeout_time)) {
+		osaf_nanosleep(&kHundredMilliseconds);
 		rc = saLogWriteLogAsync(logStreamHandle, invocation, ackFlags,
 					logRecord);
-		nTries++;
 	}
 
 	if (rc != SA_AIS_OK)
@@ -76,9 +78,14 @@ void saLogWriteLogCallbackT_01(void)
 		test_validate(rc, SA_AIS_OK);
 		goto done;
 	}
-	cb_index = 0;
 	strcpy((char *)genLogRecord.logBuffer->logBuf, __FUNCTION__);
 	genLogRecord.logBuffer->logBufSize = strlen(__FUNCTION__);
+
+	struct timespec timeout_time;
+	osaf_set_millis_timeout(2 * kWaitTime, &timeout_time);
+
+write_log:
+	cb_index = 0;
 	rc = logWrite(invocation, SA_LOG_RECORD_WRITE_ACK, &genLogRecord);
 	if (rc != SA_AIS_OK) {
 		test_validate(rc, SA_AIS_OK);
@@ -87,7 +94,7 @@ void saLogWriteLogCallbackT_01(void)
 
 	fds[0].fd = (int)selectionObject;
 	fds[0].events = POLLIN;
-	ret = poll(fds, 1, 1000);
+	ret = poll(fds, 1, 6000);
 	if (ret != 1) {
 		fprintf(stderr, " poll log callback failed: %d \n", ret);
 		test_validate(ret, 1);
@@ -98,6 +105,13 @@ void saLogWriteLogCallbackT_01(void)
 		fprintf(stderr, " saLogDispatch failed: %d \n", (int)rc);
 		test_validate(rc, SA_AIS_OK);
 		goto done;
+	}
+
+	if (cb_error[0] == SA_AIS_ERR_TRY_AGAIN &&
+			!osaf_is_timeout(&timeout_time)) {
+	  osaf_nanosleep(&kHundredMilliseconds);
+	  printf("Get try again error, re-write \n");
+	  goto write_log;
 	}
 
 	if (cb_invocation[0] == invocation)
@@ -138,9 +152,13 @@ void saLogWriteLogCallbackT_02(void)
 		goto done;
 	}
 
-	cb_index = 0;
 	strcpy((char *)genLogRecord.logBuffer->logBuf, __FUNCTION__);
 	genLogRecord.logBuffer->logBufSize = strlen(__FUNCTION__);
+
+	struct timespec timeout_time;
+	osaf_set_millis_timeout(2 * kWaitTime, &timeout_time);
+write_log:
+	cb_index = 0;
 	rc = logWrite(invocation[0], SA_LOG_RECORD_WRITE_ACK, &genLogRecord);
 	if (rc == SA_AIS_OK)
 		rc = logWrite(invocation[1], SA_LOG_RECORD_WRITE_ACK,
@@ -157,7 +175,7 @@ void saLogWriteLogCallbackT_02(void)
 	sleep(1); /* Let the writes make it to disk and back */
 	fds[0].fd = (int)selectionObject;
 	fds[0].events = POLLIN;
-	ret = poll(fds, 1, 1000);
+	ret = poll(fds, 1, 6000);
 	if (ret != 1) {
 		fprintf(stderr, " poll log callback failed: %d \n", ret);
 		test_validate(ret, 1);
@@ -171,18 +189,25 @@ void saLogWriteLogCallbackT_02(void)
 	}
 
 	if (cb_index != 3) {
-		printf("cb_index = %u\n", cb_index);
+		printf("cb_index = %d\n", cb_index);
 		test_validate(SA_AIS_ERR_LIBRARY, SA_AIS_OK);
-		return;
+		goto done;
 	}
 
 	for (i = 0; i < 3; i++) {
+		if (cb_error[i] == SA_AIS_ERR_TRY_AGAIN &&
+				!osaf_is_timeout(&timeout_time)) {
+			osaf_nanosleep(&kHundredMilliseconds);
+			printf("Get try again error, re-write \n");
+			goto write_log;
+		}
+
 		if ((cb_invocation[i] != invocation[i]) ||
 		    (cb_error[i] != SA_AIS_OK)) {
-			printf("%llu expected %llu, %u\n", cb_invocation[i],
+			printf("%llu expected %llu, %d\n", cb_invocation[i],
 			       invocation[i], cb_error[i]);
 			test_validate(cb_error[i], SA_AIS_OK);
-			return;
+			goto done;
 		}
 	}
 

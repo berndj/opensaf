@@ -1125,7 +1125,6 @@ extern void saLogWriteLogAsync_18(void);
 extern void saLogWriteLogAsync_19(void);
 extern void saLogWriteLogCallbackT_01(void);
 extern void saLogWriteLogCallbackT_02(void);
-extern void saLogWriteLogCallbackT_03(void);
 extern void saLogStreamClose_01(void);
 
 __attribute__((constructor)) static void saLibraryLifeCycle_constructor(void)
