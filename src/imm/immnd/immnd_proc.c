@@ -494,6 +494,12 @@ uint32_t immnd_introduceMe(IMMND_CB *cb)
 	memset(&send_evt, '\0', sizeof(IMMSV_EVT));
 
 	if (cb->mIntroduced == 2) {
+		/* Skip sending if IMMD is not up */
+		if (!cb->is_immd_up) {
+			TRACE("IMMD is not up, skip sending re-intro message");
+			rc = NCSCC_RC_FAILURE;
+			goto error;
+		}
 		/* Check for syncPid and pbePid, intro message will not be sent
 		 * until they all exit */
 		if (cb->syncPid > 0) {
