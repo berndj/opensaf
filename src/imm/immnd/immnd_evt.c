@@ -2,6 +2,7 @@
  *
  * (C) Copyright 2008 The OpenSAF Foundation
  * Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -7116,9 +7117,6 @@ static void immnd_evt_proc_object_create(IMMND_CB *cb, IMMND_EVT *evt,
 			   should prevent any apply to succeed.
 			*/
 			err = SA_AIS_ERR_FAILED_OPERATION;
-			immModel_setCcbErrorString(
-			    cb, evt->info.objCreate.ccbId,
-			    IMM_RESOURCE_ABORT "PBE is down");
 			immnd_proc_global_abort_ccb(cb,
 						    evt->info.objCreate.ccbId);
 		} else {
@@ -7143,10 +7141,6 @@ static void immnd_evt_proc_object_create(IMMND_CB *cb, IMMND_EVT *evt,
 				LOG_ER("Upcall over MDS for ccbObjectCreate "
 				       "to PBE failed! - aborting");
 				err = SA_AIS_ERR_FAILED_OPERATION;
-				immModel_setCcbErrorString(
-				    cb, evt->info.objCreate.ccbId,
-				    IMM_RESOURCE_ABORT
-				    "Upcall over MDS to PBE failed");
 				immnd_proc_global_abort_ccb(
 				    cb, evt->info.objCreate.ccbId);
 			}
@@ -7169,9 +7163,6 @@ static void immnd_evt_proc_object_create(IMMND_CB *cb, IMMND_EVT *evt,
 				LOG_WA("Client died");
 				err = SA_AIS_ERR_FAILED_OPERATION;
 				delayedReply = false;
-				immModel_setCcbErrorString(
-				    cb, evt->info.objCreate.ccbId,
-				    IMM_RESOURCE_ABORT "Client died");
 			} else {
 				memset(&send_evt, '\0', sizeof(IMMSV_EVT));
 				send_evt.type = IMMSV_EVT_TYPE_IMMA;
@@ -7202,10 +7193,6 @@ static void immnd_evt_proc_object_create(IMMND_CB *cb, IMMND_EVT *evt,
 					LOG_ER(
 					    "Agent upcall over MDS for ccbObjectCreate failed");
 					err = SA_AIS_ERR_FAILED_OPERATION;
-					immModel_setCcbErrorString(
-					    cb, evt->info.objCreate.ccbId,
-					    IMM_RESOURCE_ABORT
-					    "Agent upcall over MDS failed");
 				}
 			}
 		}
@@ -7409,9 +7396,6 @@ static void immnd_evt_proc_object_modify(IMMND_CB *cb, IMMND_EVT *evt,
 			   should prevent any apply to succeed.
 			*/
 			err = SA_AIS_ERR_FAILED_OPERATION;
-			immModel_setCcbErrorString(
-			    cb, evt->info.objModify.ccbId,
-			    IMM_RESOURCE_ABORT "PBE is down");
 			immnd_proc_global_abort_ccb(cb,
 						    evt->info.objModify.ccbId);
 		} else {
@@ -7441,10 +7425,6 @@ static void immnd_evt_proc_object_modify(IMMND_CB *cb, IMMND_EVT *evt,
 				LOG_ER("Upcall over MDS for ccbObjectModify "
 				       "to PBE failed! - aborting");
 				err = SA_AIS_ERR_FAILED_OPERATION;
-				immModel_setCcbErrorString(
-				    cb, evt->info.objModify.ccbId,
-				    IMM_RESOURCE_ABORT
-				    "Upcall over MDS to PBE failed");
 				immnd_proc_global_abort_ccb(
 				    cb, evt->info.objModify.ccbId);
 			}
@@ -7469,9 +7449,6 @@ static void immnd_evt_proc_object_modify(IMMND_CB *cb, IMMND_EVT *evt,
 				    "OI Client went down so no modify upcall");
 				err = SA_AIS_ERR_FAILED_OPERATION;
 				delayedReply = false;
-				immModel_setCcbErrorString(
-				    cb, evt->info.objModify.ccbId,
-				    IMM_RESOURCE_ABORT "OI client went down");
 			} else {
 				memset(&send_evt, '\0', sizeof(IMMSV_EVT));
 				send_evt.type = IMMSV_EVT_TYPE_IMMA;
@@ -7525,10 +7502,6 @@ static void immnd_evt_proc_object_modify(IMMND_CB *cb, IMMND_EVT *evt,
 					LOG_ER(
 					    "Agent upcall over MDS for ccbObjectModify failed");
 					err = SA_AIS_ERR_FAILED_OPERATION;
-					immModel_setCcbErrorString(
-					    cb, evt->info.objModify.ccbId,
-					    IMM_RESOURCE_ABORT
-					    "Agent upcall over MDS failed");
 				}
 			}
 		}
@@ -8320,9 +8293,6 @@ static void immnd_evt_proc_object_delete(IMMND_CB *cb, IMMND_EVT *evt,
 			   should prevent any apply to succeed.
 			*/
 			err = SA_AIS_ERR_FAILED_OPERATION;
-			immModel_setCcbErrorString(
-			    cb, evt->info.objDelete.ccbId,
-			    IMM_RESOURCE_ABORT "PBE is down");
 			immnd_proc_global_abort_ccb(cb,
 						    evt->info.objDelete.ccbId);
 		} else {
@@ -8353,10 +8323,6 @@ static void immnd_evt_proc_object_delete(IMMND_CB *cb, IMMND_EVT *evt,
 					    "to PBE failed! - aborting ccb %u",
 					    evt->info.objDelete.ccbId);
 					err = SA_AIS_ERR_FAILED_OPERATION;
-					immModel_setCcbErrorString(
-					    cb, evt->info.objDelete.ccbId,
-					    IMM_RESOURCE_ABORT
-					    "Upcall over MDS to PBE failed");
 					immnd_proc_global_abort_ccb(
 					    cb, evt->info.objDelete.ccbId);
 				}
@@ -8402,10 +8368,6 @@ static void immnd_evt_proc_object_delete(IMMND_CB *cb, IMMND_EVT *evt,
 					 * to timeout on wait for the reply. */
 					err = SA_AIS_ERR_FAILED_OPERATION;
 					delayedReply = false;
-					immModel_setCcbErrorString(
-					    cb, evt->info.objDelete.ccbId,
-					    IMM_RESOURCE_ABORT
-					    "Client went down");
 				} else {
 					/* Generate an implementer upcall for
 					   each deleted config object. No
@@ -8445,11 +8407,6 @@ static void immnd_evt_proc_object_delete(IMMND_CB *cb, IMMND_EVT *evt,
 						err =
 						    SA_AIS_ERR_FAILED_OPERATION;
 						delayedReply = false;
-						immModel_setCcbErrorString(
-						    cb,
-						    evt->info.objDelete.ccbId,
-						    IMM_RESOURCE_ABORT
-						    "Upcall over MDS failed");
 					}
 				}
 			} /*for */
@@ -9192,10 +9149,6 @@ static void immnd_evt_proc_ccb_apply(IMMND_CB *cb, IMMND_EVT *evt,
 					    "IMMND - Client went down so no response");
 					err = SA_AIS_ERR_FAILED_OPERATION;
 					delayedReply = false;
-					immModel_setCcbErrorString(
-					    cb, evt->info.ccbId,
-					    IMM_RESOURCE_ABORT
-					    "Client went down");
 				} else {
 					send_evt.info.imma.info.ccbCompl.ccbId =
 					    evt->info.ccbId;
@@ -9220,10 +9173,6 @@ static void immnd_evt_proc_ccb_apply(IMMND_CB *cb, IMMND_EVT *evt,
 						/* should abort the entire ccb
 						 */
 						delayedReply = false;
-						immModel_setCcbErrorString(
-						    cb, evt->info.ccbId,
-						    IMM_RESOURCE_ABORT
-						    "Upcall over MDS failed");
 					} else {
 						TRACE_2(
 						    "IMMND UPCALL TO OI, SEND SUCCEEDED");
