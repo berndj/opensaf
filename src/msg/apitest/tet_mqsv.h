@@ -16,8 +16,7 @@
 #ifndef MSG_APITEST_TET_MQSV_H_
 #define MSG_APITEST_TET_MQSV_H_
 
-#include "tet_startup.h"
-#include "ncs_lib.h"
+#include "base/ncs_lib.h"
 #include "saMsg.h"
 
 #define APP_TIMEOUT 10000000000ULL
@@ -719,6 +718,12 @@ typedef struct tet_mqsv_inst {
   SaNameT q_grp_name3;
 } TET_MQSV_INST;
 
+struct tet_testlist {
+  void (*testfunc)();
+  int icref;
+  int tpnum;
+};
+
 extern const char *saMsgQueueOpenFlags_string[];
 extern const char *saMsgQueueCreationFlags_string[];
 extern const char *saMsgAckFlags_string[];
@@ -1130,9 +1135,9 @@ void tet_run_mqsv_dist_cases(void);
 void print_qinfo(SaNameT *qname, SaMsgQueueCreationAttributesT *cr_attr,
                  SaMsgQueueOpenFlagsT op_flgs);
 void print_queueStatus(SaMsgQueueStatusT *queueStatus);
-void mqsv_sendrecv(NCSCONTEXT arg);
-void mqsv_cancel_msg(NCSCONTEXT arg);
-void mqsv_selection_thread_blocking(NCSCONTEXT arg);
+void * mqsv_sendrecv(void *arg);
+void * mqsv_cancel_msg(void *arg);
+void * mqsv_selection_thread_blocking(void *arg);
 void mqsv_selection_thread_one(NCSCONTEXT arg);
 void mqsv_createthread_one(SaMsgHandleT *msgHandle);
 void mqsv_selection_thread_all(NCSCONTEXT arg);

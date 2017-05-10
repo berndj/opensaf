@@ -181,10 +181,7 @@ SaAisErrorT saMsgInitialize(SaMsgHandleT *msgHandle,
 	*msgHandle = 0;
 
 	/* Validate the version */
-	if (!((version->releaseCode == MQA_RELEASE_CODE) &&
-	      (((version->majorVersion == MQA_MAJOR_VERSION)) ||
-	       ((version->majorVersion == MQA_BASE_MAJOR_VERSION) &&
-		(version->minorVersion == MQA_BASE_MINOR_VERSION))))) {
+	if (!m_MQA_VER_IS_VALID(version)) {
 		TRACE_2(
 		    "ERR_VERSION: version only supported for B.01.01 and B.03.01");
 

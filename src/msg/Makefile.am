@@ -202,9 +202,24 @@ bin_osafmsgd_LDADD = \
 
 if ENABLE_TESTS
 
+bin_PROGRAMS += bin/msgtest
+
 noinst_HEADERS += \
+	src/msg/apitest/msgtest.h \
 	src/msg/apitest/tet_mqa_conf.h \
 	src/msg/apitest/tet_mqsv.h
+
+bin_msgtest_SOURCES = \
+  src/msg/apitest/msgtest.c \
+  src/msg/apitest/test_saMsgVersionT.cc \
+  src/msg/apitest/tet_mqa_conf.c \
+  src/msg/apitest/tet_mqsv_util.c \
+  src/msg/apitest/tet_mqa.c
+
+bin_msgtest_LDADD = \
+  lib/libSaMsg.la \
+  lib/libopensaf_core.la \
+  lib/libapitest.la
 
 endif
 

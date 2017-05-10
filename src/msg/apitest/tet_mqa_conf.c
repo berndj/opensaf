@@ -1,7 +1,8 @@
-#if (TET_A == 1)
-
+#include "msgtest.h"
 #include "tet_mqsv.h"
 #include "tet_mqa_conf.h"
+#include "base/ncssysf_tsk.h"
+#include <pthread.h>
 
 #define END_OF_WHILE                                                           \
 	while ((rc == SA_AIS_ERR_TRY_AGAIN) || (rc == SA_AIS_ERR_TIMEOUT))
@@ -33,115 +34,29 @@ int mqsv_test_result(SaAisErrorT rc, SaAisErrorT exp_out, char *test_case,
 		return (result);
 	}
 
+  aisrc_validate(rc, exp_out);
+
 	if (rc == exp_out) {
-		if (flg != TEST_CLEANUP_MODE)
-			m_TET_MQSV_PRINTF("\n SUCCESS         : %s\n",
-					  test_case);
 		result = TET_PASS;
 	} else {
-		m_TET_MQSV_PRINTF("\n FAILED          : %s\n", test_case);
-		if (flg == TEST_CLEANUP_MODE)
-			tet_printf("\n FAILED          : %s\n", test_case);
 		result = TET_FAIL;
 		if (flg == TEST_CONFIG_MODE)
 			result = TET_UNRESOLVED;
 	}
 
-	if (flg != TEST_CLEANUP_MODE ||
-	    (flg == TEST_CLEANUP_MODE && result != TET_PASS)) {
-		m_TET_MQSV_PRINTF(" Return Value    : %s\n",
-				  mqsv_saf_error_string[rc]);
-		if (flg == TEST_CLEANUP_MODE)
-			tet_printf(" Return Value    : %s\n",
-				   mqsv_saf_error_string[rc]);
-	}
-
 	return (result);
-}
-
-void print_qinfo(SaNameT *qname, SaMsgQueueCreationAttributesT *cr_attr,
-		 SaMsgQueueOpenFlagsT op_flgs)
-{
-	if (qname)
-		m_TET_MQSV_PRINTF("\n Queue name      : %s\n", qname->value);
-	else
-		m_TET_MQSV_PRINTF("\n Queue name      : NULL\n");
-
-	if (cr_attr) {
-		m_TET_MQSV_PRINTF(" size            : %llu\n",
-				  cr_attr->size[0]);
-		if (cr_attr->creationFlags < 2)
-			m_TET_MQSV_PRINTF(" creation flags  : %s\n",
-					  saMsgQueueCreationFlags_string
-					      [cr_attr->creationFlags]);
-		else
-			m_TET_MQSV_PRINTF(" creation flags  : %u\n",
-					  cr_attr->creationFlags);
-	} else
-		m_TET_MQSV_PRINTF(" creation attr   : NULL\n");
-
-	if (op_flgs >= 0 && op_flgs < 8)
-		m_TET_MQSV_PRINTF(" open flags      : %s",
-				  saMsgQueueOpenFlags_string[op_flgs]);
-	else
-		m_TET_MQSV_PRINTF(" open flags      : %u", op_flgs);
 }
 
 /* ***************  Print Message Queue Status ***************** */
 
 void print_queueStatus(SaMsgQueueStatusT *queueStatus)
 {
-	int i;
-
-	m_TET_MQSV_PRINTF("\n ******* Queue Status Parameters ******\n");
-	m_TET_MQSV_PRINTF(" Creation Flags  : %u\n",
-			  queueStatus->creationFlags);
-	m_TET_MQSV_PRINTF(" Retention time  : %llu\n",
-			  queueStatus->retentionTime);
-	m_TET_MQSV_PRINTF(" Close Time      : %llu\n", queueStatus->closeTime);
-
-	for (i = 0; i <= 3; i++) {
-		m_TET_MQSV_PRINTF("\n Priority        : %d\n", i);
-		m_TET_MQSV_PRINTF(" Queue Size      : %u\n",
-				  (queueStatus->saMsgQueueUsage[i]).queueSize);
-		m_TET_MQSV_PRINTF(" Queue Used      : %llu\n",
-				  (queueStatus->saMsgQueueUsage[i]).queueUsed);
-		m_TET_MQSV_PRINTF(
-		    " No of messages  : %u\n",
-		    (queueStatus->saMsgQueueUsage[i]).numberOfMessages);
-	}
 }
 
 /* *************** Print Message Queue Group Track Info ***************** */
 
 void groupTrackInfo(SaMsgQueueGroupNotificationBufferT *buffer)
 {
-	int i;
-	SaMsgQueueGroupNotificationT *notification;
-	SaNameT *q_name;
-
-	m_TET_MQSV_PRINTF("\n ******* Track Info *******\n");
-	m_TET_MQSV_PRINTF(" No of Items     : %u\n", buffer->numberOfItems);
-	if (!buffer->notification)
-		m_TET_MQSV_PRINTF(" Notification    : NULL\n");
-	else {
-		notification = buffer->notification;
-		q_name = (SaNameT *)malloc(sizeof(SaNameT));
-		for (i = 0; i < buffer->numberOfItems; i++, notification++) {
-			m_TET_MQSV_PRINTF(" member          : %s\n",
-					  notification->member.queueName.value);
-			m_TET_MQSV_PRINTF(
-			    " change          : %s\n",
-			    saMsgQueueGroupChanges_string[notification
-							      ->change]);
-		}
-		free(q_name);
-	}
-
-	m_TET_MQSV_PRINTF(
-	    " Group Policy    : %s\n",
-	    saMsgQueueGroupPolicy_string[buffer->queueGroupPolicy]);
-	m_TET_MQSV_PRINTF(" **************************\n");
 }
 
 /* *************** Print SaMsgMessageT Structure ***************** */
@@ -257,13 +172,6 @@ int tet_test_msgInitialize(int i, MQSV_CONFIG_FLAG flg)
 	result = mqsv_test_result(rc, API_Mqsv_Initialize[i].exp_output,
 				  API_Mqsv_Initialize_resultstring[i], flg);
 
-	if (rc == SA_AIS_OK && flg != TEST_CLEANUP_MODE)
-		m_TET_MQSV_PRINTF(" Message Handle  : %llu\n",
-				  *API_Mqsv_Initialize[i].msgHandle);
-
-	if (flg != TEST_CLEANUP_MODE)
-		m_TET_MQSV_PRINTF("\n");
-
 	return (result);
 }
 
@@ -343,8 +251,6 @@ int tet_test_msgSelectionObject(int i, MQSV_CONFIG_FLAG flg)
 
 	result = mqsv_test_result(rc, API_Mqsv_Selection[i].exp_output,
 				  API_Mqsv_Selection_resultstring[i], flg);
-
-	m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -443,8 +349,6 @@ int tet_test_msgDispatch(int i, MQSV_CONFIG_FLAG flg)
 	result = mqsv_test_result(rc, API_Mqsv_Dispatch[i].exp_output,
 				  API_Mqsv_Dispatch_resultstring[i], flg);
 
-	m_TET_MQSV_PRINTF("\n");
-
 	return (result);
 }
 
@@ -515,13 +419,6 @@ int tet_test_msgFinalize(int i, MQSV_CONFIG_FLAG flg)
 	rc = saMsgFinalize(*API_Mqsv_Finalize[i].msgHandle);
 	result = mqsv_test_result(rc, API_Mqsv_Finalize[i].exp_output,
 				  API_Mqsv_Finalize_resultstring[i], flg);
-
-	if (rc == SA_AIS_OK && flg != TEST_CLEANUP_MODE)
-		m_TET_MQSV_PRINTF(" Finalized Msg Hdl : %llu\n",
-				  *API_Mqsv_Finalize[i].msgHandle);
-
-	if (flg != TEST_CLEANUP_MODE)
-		m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -894,18 +791,8 @@ int tet_test_msgQueueOpen(int i, MQSV_CONFIG_FLAG flg)
 	    API_Mqsv_QueueOpen[i].openFlags, API_Mqsv_QueueOpen[i].timeout,
 	    API_Mqsv_QueueOpen[i].queueHandle);
 
-	print_qinfo(API_Mqsv_QueueOpen[i].queueName,
-		    API_Mqsv_QueueOpen[i].creationAttributes,
-		    API_Mqsv_QueueOpen[i].openFlags);
-
 	result = mqsv_test_result(rc, API_Mqsv_QueueOpen[i].exp_output,
 				  API_Mqsv_QueueOpen_resultstring[i], flg);
-
-	if (rc == SA_AIS_OK)
-		m_TET_MQSV_PRINTF(" QueueHandle     : %llu\n",
-				  *API_Mqsv_QueueOpen[i].queueHandle);
-
-	m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -924,11 +811,6 @@ int tet_test_red_msgQueueOpen(int i, MQSV_CONFIG_FLAG flg)
 				    API_Mqsv_QueueOpen[i].openFlags,
 				    API_Mqsv_QueueOpen[i].timeout,
 				    API_Mqsv_QueueOpen[i].queueHandle);
-
-		if (rc != SA_AIS_ERR_TRY_AGAIN)
-			print_qinfo(API_Mqsv_QueueOpen[i].queueName,
-				    API_Mqsv_QueueOpen[i].creationAttributes,
-				    API_Mqsv_QueueOpen[i].openFlags);
 
 		result =
 		    mqsv_test_result(rc, API_Mqsv_QueueOpen[i].exp_output,
@@ -1174,18 +1056,8 @@ int tet_test_msgQueueOpenAsync(int i, MQSV_CONFIG_FLAG flg)
 				 API_Mqsv_QueueOpenAsync[i].creationAttributes,
 				 API_Mqsv_QueueOpenAsync[i].openFlags);
 
-	print_qinfo(API_Mqsv_QueueOpenAsync[i].queueName,
-		    API_Mqsv_QueueOpenAsync[i].creationAttributes,
-		    API_Mqsv_QueueOpenAsync[i].openFlags);
-
 	result = mqsv_test_result(rc, API_Mqsv_QueueOpenAsync[i].exp_output,
 				  API_Mqsv_QueueOpenAsync_resultstring[i], flg);
-
-	if (rc == SA_AIS_OK)
-		m_TET_MQSV_PRINTF(" Invocation      : %llu\n",
-				  API_Mqsv_QueueOpenAsync[i].invocation);
-
-	m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -1204,12 +1076,6 @@ int tet_test_red_msgQueueOpenAsync(int i, MQSV_CONFIG_FLAG flg)
 		    API_Mqsv_QueueOpenAsync[i].queueName,
 		    API_Mqsv_QueueOpenAsync[i].creationAttributes,
 		    API_Mqsv_QueueOpenAsync[i].openFlags);
-
-		if (rc != SA_AIS_ERR_TRY_AGAIN)
-			print_qinfo(
-			    API_Mqsv_QueueOpenAsync[i].queueName,
-			    API_Mqsv_QueueOpenAsync[i].creationAttributes,
-			    API_Mqsv_QueueOpenAsync[i].openFlags);
 
 		result = mqsv_test_result(
 		    rc, API_Mqsv_QueueOpenAsync[i].exp_output,
@@ -1280,13 +1146,8 @@ int tet_test_msgQueueClose(int i, MQSV_CONFIG_FLAG flg)
 
 	rc = saMsgQueueClose(*API_Mqsv_QueueClose[i].queueHandle);
 
-	m_TET_MQSV_PRINTF("\n Queue Handle    : %llu",
-			  *API_Mqsv_QueueClose[i].queueHandle);
-
 	result = mqsv_test_result(rc, API_Mqsv_QueueClose[i].exp_output,
 				  API_Mqsv_QueueClose_resultstring[i], flg);
-
-	m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -1415,19 +1276,8 @@ int tet_test_msgQueueStatusGet(int i, MQSV_CONFIG_FLAG flg)
 				 API_Mqsv_QueueStatusGet[i].queueName,
 				 API_Mqsv_QueueStatusGet[i].queueStatus);
 
-	if (API_Mqsv_QueueStatusGet[i].queueName)
-		m_TET_MQSV_PRINTF("\n Queue Name      : %s",
-				  API_Mqsv_QueueStatusGet[i].queueName->value);
-	else
-		m_TET_MQSV_PRINTF("\n Queue Name      : NULL");
-
 	result = mqsv_test_result(rc, API_Mqsv_QueueStatusGet[i].exp_output,
 				  API_Mqsv_QueueStatusGet_resultstring[i], flg);
-
-	if (rc == SA_AIS_OK)
-		print_queueStatus(API_Mqsv_QueueStatusGet[i].queueStatus);
-
-	m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -1534,21 +1384,8 @@ int tet_test_msgQueueUnlink(int i, MQSV_CONFIG_FLAG flg)
 	rc = saMsgQueueUnlink(*API_Mqsv_QueueUnlink[i].msgHandle,
 			      API_Mqsv_QueueUnlink[i].queueName);
 
-	if (flg != TEST_CLEANUP_MODE ||
-	    (flg == TEST_CLEANUP_MODE && rc != SA_AIS_OK)) {
-		if (API_Mqsv_QueueUnlink[i].queueName)
-			m_TET_MQSV_PRINTF(
-			    "\n Queue Name      : %s",
-			    API_Mqsv_QueueUnlink[i].queueName->value);
-		else
-			m_TET_MQSV_PRINTF("\n Queue Name      : NULL");
-	}
-
 	result = mqsv_test_result(rc, API_Mqsv_QueueUnlink[i].exp_output,
 				  API_Mqsv_QueueUnlink_resultstring[i], flg);
-
-	if (flg != TEST_CLEANUP_MODE)
-		m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -1697,27 +1534,8 @@ int tet_test_msgGroupCreate(int i, MQSV_CONFIG_FLAG flg)
 				   API_Mqsv_GroupCreate[i].queueGroupName,
 				   API_Mqsv_GroupCreate[i].queueGroupPolicy);
 
-	if (API_Mqsv_GroupCreate[i].queueGroupName)
-		m_TET_MQSV_PRINTF(
-		    "\n Group Name      : %s",
-		    API_Mqsv_GroupCreate[i].queueGroupName->value);
-	else
-		m_TET_MQSV_PRINTF("\n Group Name      : NULL");
-
-	if (API_Mqsv_GroupCreate[i].queueGroupPolicy > 0 &&
-	    API_Mqsv_GroupCreate[i].queueGroupPolicy < 4)
-		m_TET_MQSV_PRINTF(
-		    "\n Group Policy    : %s",
-		    saMsgQueueGroupPolicy_string[API_Mqsv_GroupCreate[i]
-						     .queueGroupPolicy]);
-	else
-		m_TET_MQSV_PRINTF("\n Group Policy    : %d",
-				  API_Mqsv_GroupCreate[i].queueGroupPolicy);
-
 	result = mqsv_test_result(rc, API_Mqsv_GroupCreate[i].exp_output,
 				  API_Mqsv_GroupCreate_resultstring[i], flg);
-
-	m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -1861,23 +1679,8 @@ int tet_test_msgGroupInsert(int i, MQSV_CONFIG_FLAG flg)
 				   API_Mqsv_GroupInsert[i].queueGroupName,
 				   API_Mqsv_GroupInsert[i].queueName);
 
-	if (API_Mqsv_GroupInsert[i].queueName)
-		m_TET_MQSV_PRINTF("\n Queue Name      : %s\n",
-				  API_Mqsv_GroupInsert[i].queueName->value);
-	else
-		m_TET_MQSV_PRINTF("\n Queue Name      : NULL\n");
-
-	if (API_Mqsv_GroupInsert[i].queueGroupName)
-		m_TET_MQSV_PRINTF(
-		    " Group Name      : %s",
-		    API_Mqsv_GroupInsert[i].queueGroupName->value);
-	else
-		m_TET_MQSV_PRINTF(" Group Name      : NULL");
-
 	result = mqsv_test_result(rc, API_Mqsv_GroupInsert[i].exp_output,
 				  API_Mqsv_GroupInsert_resultstring[i], flg);
-
-	m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -2003,23 +1806,8 @@ int tet_test_msgGroupRemove(int i, MQSV_CONFIG_FLAG flg)
 				   API_Mqsv_GroupRemove[i].queueGroupName,
 				   API_Mqsv_GroupRemove[i].queueName);
 
-	if (API_Mqsv_GroupRemove[i].queueName)
-		m_TET_MQSV_PRINTF("\n Queue Name      : %s\n",
-				  API_Mqsv_GroupRemove[i].queueName->value);
-	else
-		m_TET_MQSV_PRINTF("\n Queue Name      : NULL\n");
-
-	if (API_Mqsv_GroupRemove[i].queueGroupName)
-		m_TET_MQSV_PRINTF(
-		    " Group Name      : %s",
-		    API_Mqsv_GroupRemove[i].queueGroupName->value);
-	else
-		m_TET_MQSV_PRINTF(" Group Name      : NULL");
-
 	result = mqsv_test_result(rc, API_Mqsv_GroupRemove[i].exp_output,
 				  API_Mqsv_GroupRemove_resultstring[i], flg);
-
-	m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -2124,21 +1912,8 @@ int tet_test_msgGroupDelete(int i, MQSV_CONFIG_FLAG flg)
 	rc = saMsgQueueGroupDelete(*API_Mqsv_GroupDelete[i].msgHandle,
 				   API_Mqsv_GroupDelete[i].queueGroupName);
 
-	if (flg != TEST_CLEANUP_MODE ||
-	    (flg == TEST_CLEANUP_MODE && rc != SA_AIS_OK)) {
-		if (API_Mqsv_GroupDelete[i].queueGroupName)
-			m_TET_MQSV_PRINTF(
-			    " Group Name      : %s",
-			    API_Mqsv_GroupDelete[i].queueGroupName->value);
-		else
-			m_TET_MQSV_PRINTF(" Group Name      : NULL");
-	}
-
 	result = mqsv_test_result(rc, API_Mqsv_GroupDelete[i].exp_output,
 				  API_Mqsv_GroupDelete_resultstring[i], flg);
-
-	if (flg != TEST_CLEANUP_MODE)
-		m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -2302,7 +2077,7 @@ struct SafMsgGroupTrack API_Mqsv_GroupTrack[] = {
 					     &gl_mqa_env.qgroup1,
 					     SA_TRACK_CURRENT,
 					     &gl_mqa_env.buffer_null_notif,
-					     SA_AIS_ERR_INIT},
+					     SA_AIS_OK},
 	[MSG_GROUP_TRACK_CHGS_ERR_INIT_T] = {&gl_mqa_env.msg_hdl1,
 					     &gl_mqa_env.qgroup1,
 					     SA_TRACK_CHANGES, NULL,
@@ -2367,49 +2142,15 @@ struct SafMsgGroupTrack API_Mqsv_GroupTrack[] = {
 int tet_test_msgGroupTrack(int i, MQSV_CONFIG_FLAG flg)
 {
 	SaAisErrorT rc;
-	SaUint32T numOfItems = 0;
-	SaMsgQueueGroupNotificationT *notification = NULL;
 	int result;
-
-	if (API_Mqsv_GroupTrack[i].buffer) {
-		numOfItems = API_Mqsv_GroupTrack[i].buffer->numberOfItems;
-		notification = API_Mqsv_GroupTrack[i].buffer->notification;
-	}
 
 	rc = saMsgQueueGroupTrack(*API_Mqsv_GroupTrack[i].msgHandle,
 				  API_Mqsv_GroupTrack[i].queueGroupName,
 				  API_Mqsv_GroupTrack[i].trackFlags,
 				  API_Mqsv_GroupTrack[i].buffer);
 
-	if (API_Mqsv_GroupTrack[i].queueGroupName)
-		m_TET_MQSV_PRINTF("\n Tracked Group   : %s\n",
-				  API_Mqsv_GroupTrack[i].queueGroupName->value);
-	else
-		m_TET_MQSV_PRINTF("\n Group Name      : NULL\n");
-
-	m_TET_MQSV_PRINTF(
-	    " Track Flag      : %s",
-	    saMsgGroupTrackFlags_string[API_Mqsv_GroupTrack[i].trackFlags]);
-
-	if ((API_Mqsv_GroupTrack[i].trackFlags & SA_TRACK_CURRENT) &&
-	    (rc == SA_AIS_OK)) {
-		if (API_Mqsv_GroupTrack[i].buffer) {
-			m_TET_MQSV_PRINTF("\n Notification Buffer \n");
-			m_TET_MQSV_PRINTF(" No of Items     : %u\n",
-					  numOfItems);
-			if (notification)
-				m_TET_MQSV_PRINTF(" Notification    : %p",
-						  notification);
-			else
-				m_TET_MQSV_PRINTF(" Notification    : NULL");
-		} else
-			m_TET_MQSV_PRINTF("\n Notif Buffer    : NULL");
-	}
-
 	result = mqsv_test_result(rc, API_Mqsv_GroupTrack[i].exp_output,
 				  API_Mqsv_GroupTrack_resultstring[i], flg);
-
-	m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -2548,21 +2289,8 @@ int tet_test_msgGroupTrackStop(int i, MQSV_CONFIG_FLAG flg)
 	    saMsgQueueGroupTrackStop(*API_Mqsv_GroupTrackStop[i].msgHandle,
 				     API_Mqsv_GroupTrackStop[i].queueGroupName);
 
-	if (flg != TEST_CLEANUP_MODE ||
-	    (flg == TEST_CLEANUP_MODE && rc != SA_AIS_OK)) {
-		if (API_Mqsv_GroupTrackStop[i].queueGroupName)
-			m_TET_MQSV_PRINTF(
-			    " Group Name      : %s",
-			    API_Mqsv_GroupTrackStop[i].queueGroupName->value);
-		else
-			m_TET_MQSV_PRINTF(" Group Name      : NULL");
-	}
-
 	result = mqsv_test_result(rc, API_Mqsv_GroupTrackStop[i].exp_output,
 				  API_Mqsv_GroupTrackStop_resultstring[i], flg);
-
-	if (flg != TEST_CLEANUP_MODE)
-		m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -2789,22 +2517,8 @@ int tet_test_msgMessageSend(int i, MQSV_CONFIG_FLAG flg)
 			      API_Mqsv_MessageSend[i].message,
 			      API_Mqsv_MessageSend[i].timeout);
 
-	if (API_Mqsv_MessageSend[i].destination)
-		m_TET_MQSV_PRINTF("\n Destination     : %s",
-				  API_Mqsv_MessageSend[i].destination->value);
-	else
-		m_TET_MQSV_PRINTF("\n Destination     : NULL");
-
 	result = mqsv_test_result(rc, API_Mqsv_MessageSend[i].exp_output,
 				  API_Mqsv_MessageSend_resultstring[i], flg);
-
-	if (rc == SA_AIS_OK) {
-		m_TET_MQSV_PRINTF("\n ***** Message Sent ***** ");
-		msgDump(API_Mqsv_MessageSend[i].message);
-		m_TET_MQSV_PRINTF(" ****************************\n");
-	}
-
-	m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -3085,36 +2799,9 @@ int tet_test_msgMessageSendAsync(int i, MQSV_CONFIG_FLAG flg)
 				   API_Mqsv_MessageSendAsync[i].message,
 				   API_Mqsv_MessageSendAsync[i].ackFlags);
 
-	if (API_Mqsv_MessageSendAsync[i].destination)
-		m_TET_MQSV_PRINTF(
-		    "\n Destination     : %s\n",
-		    API_Mqsv_MessageSendAsync[i].destination->value);
-	else
-		m_TET_MQSV_PRINTF("\n Destination     : NULL\n");
-
-	if (API_Mqsv_MessageSendAsync[i].ackFlags >= 0 &&
-	    API_Mqsv_MessageSendAsync[i].ackFlags < 2)
-		m_TET_MQSV_PRINTF(
-		    " AckFlags        : %s",
-		    saMsgAckFlags_string[API_Mqsv_MessageSendAsync[i]
-					     .ackFlags]);
-	else
-		m_TET_MQSV_PRINTF(" AckFlags        : %u",
-				  API_Mqsv_MessageSendAsync[i].ackFlags);
-
 	result =
 	    mqsv_test_result(rc, API_Mqsv_MessageSendAsync[i].exp_output,
 			     API_Mqsv_MessageSendAsync_resultstring[i], flg);
-
-	if (rc == SA_AIS_OK) {
-		m_TET_MQSV_PRINTF(" Invocation      : %llu\n",
-				  API_Mqsv_MessageSendAsync[i].invocation);
-		m_TET_MQSV_PRINTF("\n ***** Message Input ***** ");
-		msgDump(API_Mqsv_MessageSendAsync[i].message);
-		m_TET_MQSV_PRINTF(" ************************* \n");
-	}
-
-	m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -3294,32 +2981,8 @@ int tet_test_msgMessageGet(int i, MQSV_CONFIG_FLAG flg)
 	    API_Mqsv_MessageGet[i].sendTime, API_Mqsv_MessageGet[i].senderId,
 	    API_Mqsv_MessageGet[i].timeout);
 
-	m_TET_MQSV_PRINTF(" Queue Handle    : %llu",
-			  *API_Mqsv_MessageGet[i].queueHandle);
-
 	result = mqsv_test_result(rc, API_Mqsv_MessageGet[i].exp_output,
 				  API_Mqsv_MessageGet_resultstring[i], flg);
-
-	if (rc == SA_AIS_OK) {
-		m_TET_MQSV_PRINTF("\n ***** Message Received ***** ");
-		msgDump(API_Mqsv_MessageGet[i].message);
-		m_TET_MQSV_PRINTF(" **************************** \n");
-		if (API_Mqsv_MessageGet[i].sendTime)
-			m_TET_MQSV_PRINTF(" SendTime        : %llu\n",
-					  *API_Mqsv_MessageGet[i].sendTime);
-		else
-			m_TET_MQSV_PRINTF(" SendTime        : 0\n");
-		m_TET_MQSV_PRINTF(" SenderId        : %llu\n",
-				  *API_Mqsv_MessageGet[i].senderId);
-	}
-
-	if (rc == SA_AIS_ERR_NO_SPACE) {
-		m_TET_MQSV_PRINTF("\n ***** Message Input ***** ");
-		msgDump(API_Mqsv_MessageGet[i].message);
-		m_TET_MQSV_PRINTF(" ************************* \n");
-	}
-
-	m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -3409,22 +3072,17 @@ int tet_test_msgMessageCancel(int i, MQSV_CONFIG_FLAG flg)
 	SaAisErrorT rc;
 	int result;
 
-	m_TET_MQSV_PRINTF(" Queue Handle   : %llu",
-			  *API_Mqsv_MessageCancel[i].queueHandle);
-
 	rc = saMsgMessageCancel(*API_Mqsv_MessageCancel[i].queueHandle);
 
 	result = mqsv_test_result(rc, API_Mqsv_MessageCancel[i].exp_output,
 				  API_Mqsv_MessageCancel_resultstring[i], flg);
-
-	m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
 
 int tet_test_red_msgMessageCancel(int i, MQSV_CONFIG_FLAG flg)
 {
-	SaAisErrorT rc;
+	SaAisErrorT rc = SA_AIS_OK;
 	int result;
 
 	gl_try_again_cnt = 0;
@@ -3634,38 +3292,9 @@ int tet_test_msgMessageSendReceive(int i, MQSV_CONFIG_FLAG flg)
 	    API_Mqsv_MessageSendReceive[i].replySendTime,
 	    API_Mqsv_MessageSendReceive[i].timeout);
 
-	if (API_Mqsv_MessageSendReceive[i].destination)
-		m_TET_MQSV_PRINTF(
-		    "\n Destination     : %s",
-		    API_Mqsv_MessageSendReceive[i].destination->value);
-	else
-		m_TET_MQSV_PRINTF("\n Destination     : NULL");
-
 	result =
 	    mqsv_test_result(rc, API_Mqsv_MessageSendReceive[i].exp_output,
 			     API_Mqsv_MessageSendReceive_resultstring[i], flg);
-
-	if (API_Mqsv_MessageSendReceive[i].sendMessage) {
-		m_TET_MQSV_PRINTF("\n ***** Message Input ***** ");
-		msgDump(API_Mqsv_MessageSendReceive[i].sendMessage);
-		m_TET_MQSV_PRINTF(" **************************** \n");
-	} else
-		m_TET_MQSV_PRINTF("\n Message Input   : NULL");
-
-	if (rc == SA_AIS_OK) {
-		m_TET_MQSV_PRINTF("\n ***** Message Received ***** ");
-		msgDump(API_Mqsv_MessageSendReceive[i].receiveMessage);
-		m_TET_MQSV_PRINTF(" **************************** \n");
-
-		if (API_Mqsv_MessageSendReceive[i].replySendTime)
-			m_TET_MQSV_PRINTF(
-			    " ReplySendTime   : %llu\n",
-			    *API_Mqsv_MessageSendReceive[i].replySendTime);
-		else
-			m_TET_MQSV_PRINTF(" ReplySendTime   : 0\n");
-	}
-
-	m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -3824,22 +3453,8 @@ int tet_test_msgMessageReply(int i, MQSV_CONFIG_FLAG flg)
 			       API_Mqsv_MessageReply[i].senderId,
 			       API_Mqsv_MessageReply[i].timeout);
 
-	if (API_Mqsv_MessageReply[i].senderId)
-		m_TET_MQSV_PRINTF("\n SenderId        : %llu",
-				  *API_Mqsv_MessageReply[i].senderId);
-	else
-		m_TET_MQSV_PRINTF("\n SenderId        : NULL");
-
 	result = mqsv_test_result(rc, API_Mqsv_MessageReply[i].exp_output,
 				  API_Mqsv_MessageReply_resultstring[i], flg);
-
-	if (rc == SA_AIS_OK) {
-		m_TET_MQSV_PRINTF("\n ***** Reply Sent ***** ");
-		msgDump(API_Mqsv_MessageReply[i].replyMessage);
-		m_TET_MQSV_PRINTF(" ************************* \n");
-	}
-
-	m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -4004,35 +3619,9 @@ int tet_test_msgMessageReplyAsync(int i, MQSV_CONFIG_FLAG flg)
 				    API_Mqsv_MessageReplyAsync[i].senderId,
 				    API_Mqsv_MessageReplyAsync[i].ackFlags);
 
-	if (API_Mqsv_MessageReplyAsync[i].senderId)
-		m_TET_MQSV_PRINTF("\n SenderId        : %llu\n",
-				  *API_Mqsv_MessageReplyAsync[i].senderId);
-	else
-		m_TET_MQSV_PRINTF("\n SenderId        : NULL\n");
-
-	if (API_Mqsv_MessageReplyAsync[i].ackFlags >= 0 &&
-	    API_Mqsv_MessageReplyAsync[i].ackFlags < 2)
-		m_TET_MQSV_PRINTF(
-		    " AckFlags        : %s",
-		    saMsgAckFlags_string[API_Mqsv_MessageReplyAsync[i]
-					     .ackFlags]);
-	else
-		m_TET_MQSV_PRINTF(" AckFlags        : %u",
-				  API_Mqsv_MessageReplyAsync[i].ackFlags);
-
 	result =
 	    mqsv_test_result(rc, API_Mqsv_MessageReplyAsync[i].exp_output,
 			     API_Mqsv_MessageReplyAsync_resultstring[i], flg);
-
-	if (rc == SA_AIS_OK) {
-		m_TET_MQSV_PRINTF(" Invocation      : %llu\n",
-				  API_Mqsv_MessageReplyAsync[i].invocation);
-		m_TET_MQSV_PRINTF("\n ***** Message Input ***** ");
-		msgDump(API_Mqsv_MessageReplyAsync[i].replyMessage);
-		m_TET_MQSV_PRINTF(" ************************* \n");
-	}
-
-	m_TET_MQSV_PRINTF("\n");
 
 	return (result);
 }
@@ -4103,41 +3692,29 @@ int tet_test_red_msgMessageReplyAsync(int i, MQSV_CONFIG_FLAG flg)
 
 /* Message SendReceive thread */
 
-void mqsv_sendrecv(NCSCONTEXT arg)
+void * mqsv_sendrecv(void *arg)
 {
 	MSG_MESSAGE_SEND_RECV_TC_TYPE *tc =
 	    (MSG_MESSAGE_SEND_RECV_TC_TYPE *)arg;
-	int result;
 
-	result = tet_test_msgMessageSendReceive(*tc, TEST_CONFIG_MODE);
-	if (result != TET_PASS)
-		m_TET_MQSV_PRINTF("\n Message SendReceive Failed \n");
-	else
-		m_TET_MQSV_PRINTF("\n Message SendReceive Success \n");
+	tet_test_msgMessageSendReceive(*tc, TEST_CONFIG_MODE);
+
+  return 0;
 }
 
 void mqsv_create_sendrecvthread(MSG_MESSAGE_SEND_RECV_TC_TYPE *tc)
 {
-	SaAisErrorT rc;
-	NCSCONTEXT thread_handle;
+	pthread_t thread;
 
-	rc = m_NCS_TASK_CREATE((NCS_OS_CB)mqsv_sendrecv, (NCSCONTEXT)tc,
-			       "mqa_sendrcv_test", 5, 8000, &thread_handle);
-	if (rc != NCSCC_RC_SUCCESS) {
+	if (pthread_create(&thread, 0, mqsv_sendrecv, tc)) {
 		m_TET_MQSV_PRINTF(" Failed to create thread\n");
-		return;
-	}
-
-	rc = m_NCS_TASK_START(thread_handle);
-	if (rc != NCSCC_RC_SUCCESS) {
-		m_TET_MQSV_PRINTF(" Failed to start thread\n");
 		return;
 	}
 }
 
 /* Message Cancel thread */
 
-void mqsv_cancel_msg(NCSCONTEXT arg)
+void * mqsv_cancel_msg(void *arg)
 {
 	SaMsgQueueHandleT *queueHandle = (SaMsgQueueHandleT *)arg;
 	SaAisErrorT rc;
@@ -4149,35 +3726,24 @@ void mqsv_cancel_msg(NCSCONTEXT arg)
 				  mqsv_saf_error_string[rc]);
 		m_TET_MQSV_PRINTF("\n Message Cancel failed \n");
 	} else {
-		m_TET_MQSV_PRINTF("\n Message Cancel Success \n");
 		sleep(5);
 	}
-	return;
+	return 0;
 }
 
 void mqsv_createcancelthread(SaMsgQueueHandleT *queueHandle)
 {
-	SaAisErrorT rc;
-	NCSCONTEXT thread_handle;
+	pthread_t thread;
 
-	rc = m_NCS_TASK_CREATE((NCS_OS_CB)mqsv_cancel_msg,
-			       (NCSCONTEXT)queueHandle, "mqa_cancelest", 5,
-			       8000, &thread_handle);
-	if (rc != NCSCC_RC_SUCCESS) {
+	if (pthread_create(&thread, 0, mqsv_cancel_msg, queueHandle)) {
 		m_TET_MQSV_PRINTF(" Failed to create thread\n");
-		return;
-	}
-
-	rc = m_NCS_TASK_START(thread_handle);
-	if (rc != NCSCC_RC_SUCCESS) {
-		m_TET_MQSV_PRINTF(" Failed to start thread\n");
 		return;
 	}
 }
 
 /* Dispatch Thread - DISPATCH_BLOCKING */
 
-void mqsv_selection_thread_blocking(NCSCONTEXT arg)
+void * mqsv_selection_thread_blocking(void *arg)
 {
 	SaMsgHandleT *msgHandle = (SaMsgHandleT *)arg;
 	uint32_t rc;
@@ -4188,27 +3754,19 @@ void mqsv_selection_thread_blocking(NCSCONTEXT arg)
 				  mqsv_saf_error_string[rc]);
 		pthread_exit(0);
 	}
+
+  return 0;
 }
 
 void mqsv_createthread(SaMsgHandleT *msgHandle)
 {
-	SaAisErrorT rc;
-	NCSCONTEXT thread_handle;
+	pthread_t thread;
 
 	if (gl_msg_thrd_cnt >= 1)
 		return;
 
-	rc = m_NCS_TASK_CREATE((NCS_OS_CB)mqsv_selection_thread_blocking,
-			       (NCSCONTEXT)msgHandle, "mqa_asynctest_blocking",
-			       5, 8000, &thread_handle);
-	if (rc != NCSCC_RC_SUCCESS) {
+	if (pthread_create(&thread, 0, mqsv_selection_thread_blocking, msgHandle)) {
 		m_TET_MQSV_PRINTF(" Failed to create thread\n");
-		return;
-	}
-
-	rc = m_NCS_TASK_START(thread_handle);
-	if (rc != NCSCC_RC_SUCCESS) {
-		m_TET_MQSV_PRINTF(" Failed to start thread\n");
 		return;
 	}
 }
@@ -4236,7 +3794,7 @@ void mqsv_createthread_one(SaMsgHandleT *msgHandle)
 		return;
 
 	rc = m_NCS_TASK_CREATE((NCS_OS_CB)mqsv_selection_thread_one,
-			       (NCSCONTEXT)msgHandle, "mqa_asynctest_one", 5,
+			       (NCSCONTEXT)msgHandle, "mqa_asynctest_one", 20, 5,
 			       8000, &thread_handle);
 	if (rc != NCSCC_RC_SUCCESS) {
 		m_TET_MQSV_PRINTF(" Failed to create thread\n");
@@ -4273,7 +3831,7 @@ void mqsv_createthread_all(SaMsgHandleT *msgHandle)
 		return;
 
 	rc = m_NCS_TASK_CREATE((NCS_OS_CB)mqsv_selection_thread_all,
-			       (NCSCONTEXT)msgHandle, "mqa_asynctest_all", 5,
+			       (NCSCONTEXT)msgHandle, "mqa_asynctest_all", 20, 5,
 			       8000, &thread_handle);
 	if (rc != NCSCC_RC_SUCCESS) {
 		m_TET_MQSV_PRINTF(" Failed to create thread\n");
@@ -4306,7 +3864,7 @@ void mqsv_createthread_all_loop()
 		return;
 
 	rc = m_NCS_TASK_CREATE((NCS_OS_CB)mqsv_selection_thread_all_loop,
-			       (NCSCONTEXT)NULL, "mqa_asynctest_loop", 5, 8000,
+			       (NCSCONTEXT)NULL, "mqa_asynctest_loop", 20, 5, 8000,
 			       &thread_handle);
 	if (rc != NCSCC_RC_SUCCESS) {
 		m_TET_MQSV_PRINTF(" Failed to create thread\n");
@@ -4340,7 +3898,7 @@ void mqsv_restore_params(MQSV_RESTORE_OPT opt)
 
 	case MSG_RESTORE_INIT_BAD_MAJOR_VER_T:
 		mqsv_fill_msg_version(&gl_mqa_env.inv_params.inv_ver_not_supp,
-				      'B', 3, 0);
+				      'B', 4, 0);
 		break;
 
 	/* Restore - Group Track Info */
@@ -4460,7 +4018,7 @@ void mqsv_clean_q_status()
 
 void mqsv_init_cleanup(MQSV_INIT_CLEANUP_OPT opt)
 {
-	int result;
+	int result = TET_FAIL;
 
 	switch (opt) {
 	case MSG_CLEAN_INIT_SUCCESS_T:
@@ -4493,7 +4051,7 @@ void mqsv_init_cleanup(MQSV_INIT_CLEANUP_OPT opt)
 
 void mqsv_init_red_cleanup(MQSV_INIT_CLEANUP_OPT opt)
 {
-	int result;
+	int result = TET_FAIL;
 
 	switch (opt) {
 	case MSG_CLEAN_INIT_SUCCESS_T:
@@ -4528,7 +4086,7 @@ void mqsv_init_red_cleanup(MQSV_INIT_CLEANUP_OPT opt)
 
 void mqsv_q_cleanup(MQSV_Q_CLEANUP_OPT opt)
 {
-	int result;
+	int result = TET_FAIL;
 
 	switch (opt) {
 	case MSG_CLEAN_QUEUE_OPEN_ASYNC_PERS_SUCCESS_T:
@@ -4583,7 +4141,7 @@ void mqsv_q_cleanup(MQSV_Q_CLEANUP_OPT opt)
 
 void mqsv_q_red_cleanup(MQSV_Q_CLEANUP_OPT opt)
 {
-	int result;
+	int result = TET_FAIL;
 
 	switch (opt) {
 	case MSG_CLEAN_QUEUE_OPEN_ASYNC_PERS_SUCCESS_T:
@@ -4640,7 +4198,7 @@ void mqsv_q_red_cleanup(MQSV_Q_CLEANUP_OPT opt)
 
 void mqsv_q_grp_cleanup(MQSV_Q_GRP_CLEANUP_OPT opt)
 {
-	int result;
+	int result = TET_FAIL;
 
 	switch (opt) {
 	case MSG_CLEAN_GROUP_CREATE_SUCCESS_T:
@@ -4665,7 +4223,7 @@ void mqsv_q_grp_cleanup(MQSV_Q_GRP_CLEANUP_OPT opt)
 
 void mqsv_q_grp_red_cleanup(MQSV_Q_GRP_CLEANUP_OPT opt)
 {
-	int result;
+	int result = TET_FAIL;
 
 	switch (opt) {
 	case MSG_CLEAN_GROUP_CREATE_SUCCESS_T:
@@ -4692,7 +4250,7 @@ void mqsv_q_grp_red_cleanup(MQSV_Q_GRP_CLEANUP_OPT opt)
 
 void mqsv_q_grp_track_stop(MQSV_Q_GRP_TRACK_STOP_OPT opt)
 {
-	int result;
+	int result = TET_FAIL;
 
 	switch (opt) {
 	case MSG_STOP_GROUP_TRACK_CHANGES_T:
@@ -4715,5 +4273,3 @@ void mqsv_q_grp_track_stop(MQSV_Q_GRP_TRACK_STOP_OPT opt)
 		m_TET_MQSV_PRINTF(
 		    "\n\n++++++++ FAILED - Stopping Queue Group Tracking +++++++\n\n");
 }
-
-#endif

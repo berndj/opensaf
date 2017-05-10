@@ -1027,7 +1027,7 @@ unsigned int ncs_mqa_startup(void)
 		osaf_mutex_unlock_ordie(&s_agent_startup_mutex);
 		return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
 	} else {
-		printf("\nMQSV:MQA:ON");
+		TRACE("\nMQSV:MQA:ON");
 		mqa_use_count = 1;
 	}
 

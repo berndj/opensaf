@@ -39,8 +39,8 @@
 #define MQA_BASE_MINOR_VERSION 1
 
 #define m_MQA_VER_IS_VALID(ver)                                               \
-  ((ver->releaseCode == 'B') && (ver->major == 0x01 || ver->major == 0xff) && \
-   (ver->minor == 0x01 || ver->minor == 0xff))
+  ((ver->releaseCode == 'B') && \
+  (ver->majorVersion == 0x01 || ver->majorVersion == 0x3))
 
 #define MQA_ASYNC_TIMEOUT_DEFAULT 10             /* timeout in secs  */
 #define MQSV_SENDERID_CLEANUP_INTERVAL 100       /* timeout in s */

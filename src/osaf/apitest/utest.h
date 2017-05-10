@@ -21,6 +21,10 @@
 #include "base/logtrace.h"
 #include "osaf/saf/saAis.h"
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 #define ALL_SUITES -1
 #define ALL_TESTS -1
 
@@ -85,5 +89,9 @@ extern int test_run(unsigned int suite, unsigned int tcase);
  * List all test cases
  */
 extern void test_list(void);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif  // OSAF_APITEST_UTEST_H_
