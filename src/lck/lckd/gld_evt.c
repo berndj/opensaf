@@ -45,6 +45,7 @@ static uint32_t gld_process_send_non_master_status(
 static uint32_t gld_process_send_non_master_info(
     GLSV_GLD_CB *gld_cb, GLSV_GLD_GLND_RSC_REF *glnd_rsc,
     GLSV_GLD_GLND_DETAILS *node_details, uint32_t status);
+static uint32_t gld_clm_glnd_down(GLSV_GLD_EVT *evt);
 
 /* GLD dispatch table */
 static const GLSV_GLD_EVT_HANDLER
@@ -57,7 +58,8 @@ static const GLSV_GLD_EVT_HANDLER
 	gld_debug_dump_cb,
 	gld_process_tmr_resource_reelection_wait_timeout,
 	gld_process_tmr_node_restart_wait_timeout,
-	gld_quisced_process};
+	gld_quisced_process,
+  gld_clm_glnd_down};
 
 /****************************************************************************
  * Name          : gld_process_evt
@@ -683,8 +685,6 @@ end:
 static uint32_t gld_mds_glnd_down(GLSV_GLD_EVT *evt)
 {
 	GLSV_GLD_CB *gld_cb = evt->gld_cb;
-	GLSV_GLD_GLND_DETAILS *node_details = NULL;
-	GLSV_GLD_RSC_INFO *rsc_info;
 	uint32_t node_id;
 	uint32_t rc = NCSCC_RC_FAILURE;
 	TRACE_ENTER2("mds identification %u", gld_cb->my_dest_id);
@@ -692,54 +692,11 @@ static uint32_t gld_mds_glnd_down(GLSV_GLD_EVT *evt)
 	node_id =
 	    m_NCS_NODE_ID_FROM_MDS_DEST(evt->info.glnd_mds_info.mds_dest_id);
 
-	if ((evt == GLSV_GLD_EVT_NULL) || (gld_cb == NULL))
-		goto end;
+  evt->info.glnd_clm_info.nodeId          = node_id;
+  evt->info.glnd_clm_info.isClusterMember = false;
 
-	memcpy(&evt->fr_dest_id, &evt->info.glnd_mds_info.mds_dest_id,
-	       sizeof(MDS_DEST));
+  gld_clm_glnd_down(evt);
 
-	if ((node_details = (GLSV_GLD_GLND_DETAILS *)ncs_patricia_tree_get(
-		 &gld_cb->glnd_details, (uint8_t *)&node_id)) == NULL) {
-		TRACE_1("Resource details is empty for glnd on node_id %u ",
-			node_id);
-		rc = NCSCC_RC_SUCCESS;
-		goto end;
-	}
-	node_details->status = GLND_RESTART_STATE;
-
-	TRACE("EVT Processing MDS GLND DOWN: node_id %u",
-	      node_details->node_id);
-	memcpy(&node_details->restart_timer.mdest_id, &node_details->dest_id,
-	       sizeof(MDS_DEST));
-
-	/* Start GLSV_GLD_GLND_RESTART_TIMEOUT timer */
-	gld_start_tmr(gld_cb, &node_details->restart_timer,
-		      GLD_TMR_NODE_RESTART_TIMEOUT, GLD_NODE_RESTART_TIMEOUT,
-		      0);
-
-	/* Check whether this node is master for any resource, if yes send the
-	   status to all the non master nodes */
-	if (gld_cb->ha_state == SA_AMF_HA_ACTIVE) {
-		/* Check whether this node is master for any resource, if yes
-		 * send the status to all the non master nodes */
-		rsc_info = gld_cb->rsc_info;
-		while (rsc_info != NULL) {
-			if (rsc_info->node_list) {
-				if (rsc_info->node_list->node_id ==
-				    node_details->node_id)
-					gld_snd_master_status(
-					    gld_cb, rsc_info,
-					    GLND_RESOURCE_MASTER_RESTARTED);
-			}
-			rsc_info = rsc_info->next;
-		}
-
-		/* If this node is non master for any resource, then send node
-		 * status to the master */
-		gld_process_send_non_master_status(gld_cb, node_details,
-						   GLND_RESTART_STATE);
-	}
-end:
 	TRACE_LEAVE2("Return value: %u", rc);
 	return rc;
 }
@@ -1073,3 +1030,63 @@ end:
 	TRACE_LEAVE();
 	return res;
 }
+
+/****************************************************************************
+ * Name          : gld_clm_glnd_down
+ *
+ * Description   : CLM indicated that a glnd has gone down
+ *
+ * Arguments     : evt  - Event structure
+ *
+ * Return Values : NCSCC_RC_SUCCESS/ NCSCC_RC_FAILURE
+ *
+ * Notes         : None.
+ *****************************************************************************/
+static uint32_t gld_clm_glnd_down(GLSV_GLD_EVT *evt)
+{
+	GLSV_GLD_CB *gld_cb = evt->gld_cb;
+	GLSV_GLD_GLND_DETAILS *node_details = NULL;
+	GLSV_GLD_RSC_INFO *rsc_info;
+	uint32_t node_id;
+	uint32_t rc = NCSCC_RC_FAILURE;
+	TRACE_ENTER2("mds identification %u",gld_cb->my_dest_id );
+
+	node_id = evt->info.glnd_clm_info.nodeId;
+
+	if ((node_details = (GLSV_GLD_GLND_DETAILS *)ncs_patricia_tree_get(&gld_cb->glnd_details,
+									   (uint8_t *)&node_id)) == NULL) {
+		TRACE_1("Resource details is empty for glnd on node_id %u ", node_id);
+		rc = NCSCC_RC_SUCCESS;
+		goto end;
+	}
+	node_details->status = GLND_RESTART_STATE;
+
+	TRACE("EVT Processing CLM GLND DOWN: node_id %u", node_details->node_id);
+	memcpy(&node_details->restart_timer.mdest_id, &node_details->dest_id, sizeof(MDS_DEST));
+
+	/* Start GLSV_GLD_GLND_RESTART_TIMEOUT timer */
+	gld_start_tmr(gld_cb, &node_details->restart_timer, GLD_TMR_NODE_RESTART_TIMEOUT, GLD_NODE_RESTART_TIMEOUT, 0);
+
+	/* Check whether this node is master for any resource, if yes send the status to all
+	   the
+	   non master nodes */
+	if (gld_cb->ha_state == SA_AMF_HA_ACTIVE) {
+		/* Check whether this node is master for any resource, if yes send the status to all the non master nodes */
+		rsc_info = gld_cb->rsc_info;
+		while (rsc_info != NULL) {
+			if (rsc_info->node_list) {
+				if (rsc_info->node_list->node_id == node_details->node_id)
+					gld_snd_master_status(gld_cb, rsc_info, GLND_RESOURCE_MASTER_RESTARTED);
+			}
+			rsc_info = rsc_info->next;
+		}
+
+		/* If this node is non master for any resource, then send node status to the master */
+		gld_process_send_non_master_status(gld_cb, node_details, GLND_RESTART_STATE);
+
+	}
+ end:
+	TRACE_LEAVE2("Return value: %u", rc);
+	return rc;
+}
+

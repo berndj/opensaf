@@ -89,6 +89,7 @@ noinst_HEADERS += \
 	src/lck/lckd/gld_amf.h \
 	src/lck/lckd/gld_api.h \
 	src/lck/lckd/gld_cb.h \
+	src/lck/lckd/gld_clm.h \
 	src/lck/lckd/gld_dl_api.h \
 	src/lck/lckd/gld_edu.h \
 	src/lck/lckd/gld_evt.h \
@@ -101,6 +102,7 @@ noinst_HEADERS += \
 	src/lck/lcknd/glnd_api.h \
 	src/lck/lcknd/glnd_cb.h \
 	src/lck/lcknd/glnd_client.h \
+	src/lck/lcknd/glnd_clm.h \
 	src/lck/lcknd/glnd_dl_api.h \
 	src/lck/lcknd/glnd_edu.h \
 	src/lck/lcknd/glnd_evt.h \
@@ -152,11 +154,13 @@ bin_osaflcknd_SOURCES = \
 	src/lck/lcknd/glnd_res_req.c \
 	src/lck/lcknd/glnd_restart.c \
 	src/lck/lcknd/glnd_shm.c \
-	src/lck/lcknd/glnd_tmr.c
+	src/lck/lcknd/glnd_tmr.c \
+	src/lck/lcknd/glnd_clm.cc
 
 bin_osaflcknd_LDADD = \
 	lib/liblck_common.la \
 	lib/libSaAmf.la \
+	lib/libSaClm.la \
 	lib/libopensaf_core.la
 
 bin_osaflckd_CPPFLAGS = \
@@ -175,11 +179,13 @@ bin_osaflckd_SOURCES = \
 	src/lck/lckd/gld_red.c \
 	src/lck/lckd/gld_rsc.c \
 	src/lck/lckd/gld_standby.c \
-	src/lck/lckd/gld_tmr.c
+	src/lck/lckd/gld_tmr.c \
+	src/lck/lckd/gld_clm.cc
 
 bin_osaflckd_LDADD = \
 	lib/liblck_common.la \
 	lib/libSaAmf.la \
+	lib/libSaClm.la \
 	lib/libosaf_common.la \
 	lib/libSaImmOi.la \
 	lib/libSaImmOm.la \

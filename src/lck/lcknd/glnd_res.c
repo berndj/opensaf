@@ -1409,6 +1409,10 @@ static void glnd_master_process_lock_initiate_waitercallbk(
 					       lock_list_info->req_mdest_id);
 
 		} else {
+      /* don't send the callback if we are not a cluster member */
+      if (!cb->isClusterMember)
+        break;
+
 			GLSV_GLA_EVT gla_evt;
 			GLND_CLIENT_INFO *client_info;
 			/* send it to the local GLA component */

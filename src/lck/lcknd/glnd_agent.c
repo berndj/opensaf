@@ -55,6 +55,29 @@ GLND_AGENT_INFO *glnd_agent_node_find(GLND_CB *glnd_cb, MDS_DEST agent_mds_dest)
 }
 
 /*****************************************************************************
+  PROCEDURE NAME : glnd_agent_node_find_next
+
+  DESCRIPTION    : Finds the Agent info node from the tree.
+
+  ARGUMENTS      :glnd_cb      - ptr to the GLND control block
+                  mds_handle_id  - vcard id of the agent.
+
+  RETURNS        :The pointer to the agent info node
+
+  NOTES         : None
+*****************************************************************************/
+GLND_AGENT_INFO *glnd_agent_node_find_next(GLND_CB *glnd_cb,
+                                           MDS_DEST agent_mds_dest)
+{
+	GLND_AGENT_INFO *agent_info;
+
+	/* search for the agent id */
+	agent_info = (GLND_AGENT_INFO *)ncs_patricia_tree_getnext(
+    &glnd_cb->glnd_agent_tree, (uint8_t *)&agent_mds_dest);
+
+	return agent_info;
+}
+/*****************************************************************************
   PROCEDURE NAME : glnd_agent_node_add
 
   DESCRIPTION    : Adds the Agent node to the Agent tree.

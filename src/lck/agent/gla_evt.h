@@ -34,6 +34,7 @@
 typedef enum glsv_gla_evt_type {
   GLSV_GLA_CALLBK_EVT,
   GLSV_GLA_API_RESP_EVT,
+  GLSV_GLA_CLM_EVT,
   GLSV_GLA_EVT_MAX
 } GLSV_GLA_EVT_TYPE;
 
@@ -45,7 +46,9 @@ typedef enum glsv_gla_api_resp_evt_type_tag {
   GLSV_GLA_LOCK_SYNC_LOCK,
   GLSV_GLA_LOCK_SYNC_UNLOCK,
   GLSV_GLA_NODE_OPERATIONAL,
-  GLSV_GLA_LOCK_PURGE
+  GLSV_GLA_LOCK_PURGE,
+  GLSV_GLA_NODE_LEFT,
+  GLSV_GLA_NODE_JOINED
 } GLSV_GLA_API_RESP_EVT_TYPE;
 
 typedef struct glsv_gla_evt_lock_initialise_param_tag {
@@ -87,6 +90,11 @@ typedef struct glsv_gla_api_resp_info {
   } param;
 } GLSV_GLA_API_RESP_INFO;
 
+/* CLM param definitions */
+typedef struct glsv_gla_clm_info {
+  bool isClusterMember;
+} GLSV_GLA_CLM_INFO;
+
 /* For GLND to GLA communication */
 typedef struct glsv_gla_evt {
   SaLckHandleT handle;
@@ -95,6 +103,7 @@ typedef struct glsv_gla_evt {
   union {
     GLSV_GLA_CALLBACK_INFO gla_clbk_info; /* callbk info */
     GLSV_GLA_API_RESP_INFO gla_resp_info; /* api response info */
+    GLSV_GLA_CLM_INFO      gla_clm_info;	/* clm info */
   } info;
 } GLSV_GLA_EVT;
 

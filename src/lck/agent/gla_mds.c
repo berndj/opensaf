@@ -60,6 +60,7 @@ static uint32_t glsv_gla_dec_callbk_evt(NCS_UBAID *uba,
 					GLSV_GLA_CALLBACK_INFO *evt);
 static uint32_t glsv_gla_dec_api_resp_evt(NCS_UBAID *uba,
 					  GLSV_GLA_API_RESP_INFO *evt);
+static uint32_t glsv_gla_dec_clm_evt(NCS_UBAID *uba, GLSV_GLA_CLM_INFO *evt);
 
 uint32_t gla_mds_get_handle(GLA_CB *cb);
 
@@ -520,6 +521,10 @@ static uint32_t gla_mds_dec(GLA_CB *cb, MDS_CALLBACK_DEC_INFO *info)
 						  &evt->info.gla_resp_info);
 			break;
 
+    case GLSV_GLA_CLM_EVT:
+			glsv_gla_dec_clm_evt(uba, &evt->info.gla_clm_info);
+			break;
+
 		default:
 			goto end;
 		}
@@ -648,6 +653,21 @@ static uint32_t gla_mds_rcv(GLA_CB *cb, MDS_CALLBACK_RECEIVE_INFO *rcv_info)
 			m_MMGR_FREE_GLA_CALLBACK_INFO(gla_callbk_info);
 		}
 		goto end;
+  } else if (evt->type == GLSV_GLA_CLM_EVT) {
+    cb->isClusterMember = evt->info.gla_clm_info.isClusterMember;
+
+    if (!cb->isClusterMember) {
+      /* tell all clients they are stale now */
+      GLA_CLIENT_INFO *client_info;
+      SaLckHandleT lckHandle = 0;
+      for (client_info = gla_client_tree_find_next(cb, lckHandle);
+           client_info;
+           client_info = gla_client_tree_find_next(
+             cb, client_info->lock_handle_id)) {
+        client_info->isStale = true;
+      }
+    }
+		m_MMGR_FREE_GLA_EVT(evt);
 	} else {
 		if (evt)
 			m_MMGR_FREE_GLA_EVT(evt);
@@ -1459,6 +1479,42 @@ static uint32_t glsv_gla_dec_api_resp_evt(NCS_UBAID *uba,
 	rc = NCSCC_RC_SUCCESS;
 
 end:
+	TRACE_LEAVE();
+	return rc;
+}
+
+/****************************************************************************
+  Name          : glsv_gla_DEC_clm_evt
+
+  Description   : This routine decodes clm info.
+
+  Arguments     : uba , clm info.
+
+  Return Values : NCSCC_RC_SUCCESS/NCSCC_RC_FAILURE
+
+  Notes         : None.
+******************************************************************************/
+static uint32_t glsv_gla_dec_clm_evt(NCS_UBAID *uba, GLSV_GLA_CLM_INFO *evt)
+{
+	uint8_t *p8, local_data[20], size;
+	uint32_t rc = NCSCC_RC_SUCCESS;
+	TRACE_ENTER();
+
+  do {
+    /** decode the type of message **/
+	  size = (4);
+	  p8 = ncs_dec_flatten_space(uba, local_data, size);
+	  if (!p8) {
+		  TRACE_2("GLA mds dec failure");
+	    rc = NCSCC_RC_FAILURE;
+		  break;
+	  }
+
+	  osaf_decode_bool(uba, &evt->isClusterMember);
+
+	  ncs_dec_skip_space(uba, size);
+  } while (false);
+
 	TRACE_LEAVE();
 	return rc;
 }

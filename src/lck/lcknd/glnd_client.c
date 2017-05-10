@@ -139,6 +139,102 @@ GLND_CLIENT_INFO *glnd_client_node_add(GLND_CB *glnd_cb,
 }
 
 /*****************************************************************************
+  PROCEDURE NAME : glnd_client_node_down
+
+  DESCRIPTION    : Sends responses to any waiting calls since the node is down.
+
+  ARGUMENTS      :glnd_cb      - ptr to the GLND control block
+                  agent_mds_dest   - mds dest id for the agent.
+
+
+  RETURNS        :None
+
+  NOTES         : None
+*****************************************************************************/
+void glnd_client_node_down(GLND_CB *glnd_cb, GLND_CLIENT_INFO *client_info)
+{
+  GLND_CLIENT_LIST_RESOURCE *res_list;
+  TRACE_ENTER();
+
+	for (res_list = client_info->res_list;
+       res_list != NULL;
+       res_list = res_list->next) {
+		GLND_CLIENT_LIST_RESOURCE_LOCK_REQ *lckList;
+
+    for (lckList = res_list->lck_list; lckList; lckList = lckList->next) {
+      GLND_RES_LOCK_LIST_INFO *lckListInfo = lckList->lck_req;
+
+      if (lckListInfo) {
+        GLSV_GLA_EVT gla_evt;
+
+        // respond to any blocked unlock calls
+        if (lckListInfo->unlock_call_type == GLSV_SYNC_CALL) {
+          glnd_stop_tmr(&lckListInfo->timeout_tmr);
+
+          gla_evt.error = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+            SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+          gla_evt.handle = lckListInfo->lock_info.handleId;
+          gla_evt.type = GLSV_GLA_API_RESP_EVT;
+          gla_evt.info.gla_resp_info.type = GLSV_GLA_LOCK_SYNC_UNLOCK;
+
+          glnd_mds_msg_send_rsp_gla(glnd_cb,
+                                    &gla_evt,
+                                    lckListInfo->lock_info.agent_mds_dest,
+                                    &lckListInfo->glnd_res_lock_mds_ctxt);
+        } else if (lckListInfo->unlock_call_type == GLSV_ASYNC_CALL) {
+          m_GLND_RESOURCE_ASYNC_LCK_UNLOCK_FILL(
+            gla_evt,
+            m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+              SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY,
+            lckListInfo->lock_info.invocation,
+            lckListInfo->lcl_resource_id,
+            lckListInfo->lock_info.lcl_lockid,
+            0);
+          gla_evt.handle = lckListInfo->lock_info.handleId;
+
+          glnd_mds_msg_send_gla(glnd_cb,
+                                &gla_evt,
+                                lckListInfo->lock_info.agent_mds_dest);
+        }
+
+        // respond to any blocked lock calls
+        if (lckListInfo->lock_info.call_type == GLSV_SYNC_CALL) {
+          glnd_stop_tmr(&lckListInfo->timeout_tmr);
+
+          gla_evt.error = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+            SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+          gla_evt.handle = lckListInfo->lock_info.handleId;
+          gla_evt.type = GLSV_GLA_API_RESP_EVT;
+          gla_evt.info.gla_resp_info.type = GLSV_GLA_LOCK_SYNC_LOCK;
+
+          glnd_mds_msg_send_rsp_gla(glnd_cb,
+                                    &gla_evt,
+                                    lckListInfo->lock_info.agent_mds_dest,
+                                    &lckListInfo->glnd_res_lock_mds_ctxt);
+        } else if (lckListInfo->lock_info.call_type == GLSV_ASYNC_CALL) {
+          m_GLND_RESOURCE_ASYNC_LCK_GRANT_FILL(
+            gla_evt,
+            m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+              SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY,
+            0,
+            lckListInfo->lock_info.lcl_lockid,
+            lckListInfo->lock_info.lock_type,
+            lckListInfo->lcl_resource_id,
+            lckListInfo->lock_info.invocation,
+            0,
+            lckListInfo->lock_info.handleId);
+
+          glnd_mds_msg_send_gla(glnd_cb,
+                                &gla_evt,
+                                lckListInfo->lock_info.agent_mds_dest);
+        }
+      }
+    }
+  }
+
+  TRACE_LEAVE();
+}
+/*****************************************************************************
   PROCEDURE NAME : glnd_client_node_del
 
   DESCRIPTION    : Deletes the client node from the tree.

@@ -27,6 +27,7 @@
 ******************************************************************************/
 
 #include "lck/lcknd/glnd.h"
+#include "lck/lcknd/glnd_clm.h"
 
 uint32_t gl_glnd_hdl;
 NCSCONTEXT gl_glnd_task_hdl;
@@ -119,6 +120,13 @@ GLND_CB *glnd_cb_create(uint32_t pool_id)
 	} else
 		TRACE_1("GLND mds register success");
 
+  /* Initialise with the CLM service */
+	if (glnd_clm_init(glnd_cb) != NCSCC_RC_SUCCESS) {
+		LOG_ER("GLND clm init failed");
+		goto clm_init_err;
+	} else
+		TRACE_1("GLND clm init success");
+
 	/* Initialise with the AMF service */
 	if (glnd_amf_init(glnd_cb) != NCSCC_RC_SUCCESS) {
 		LOG_ER("GLND amf init failed");
@@ -179,6 +187,8 @@ amf_reg_err:
 	glnd_amf_de_init(glnd_cb);
 amf_init_err:
 	glnd_mds_unregister(glnd_cb);
+clm_init_err:
+  glnd_clm_deinit(glnd_cb);
 mds_err:
 	m_NCS_EDU_HDL_FLUSH(&glnd_cb->glnd_edu_hdl);
 	m_NCS_IPC_DETACH(&glnd_cb->glnd_mbx, glnd_cleanup_mbx, glnd_cb);

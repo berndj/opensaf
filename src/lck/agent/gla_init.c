@@ -473,6 +473,33 @@ end:
 }
 
 /****************************************************************************
+  Name          : gla_client_tree_find_next
+
+  Description   : This routine returns the next client
+
+  Arguments     :
+                  gla_cb : pointer to the gla control block.
+                  hdl_id : the handle id.
+
+  Return Values : returns the client_info node.
+
+  Notes         : None
+******************************************************************************/
+GLA_CLIENT_INFO *gla_client_tree_find_next(GLA_CB *gla_cb, SaLckHandleT hdl_id)
+{
+	GLA_CLIENT_INFO *client_info = NULL;
+	TRACE_ENTER();
+
+	/* take the cb lock */
+	m_NCS_LOCK(&gla_cb->cb_lock, NCS_LOCK_READ);
+	client_info = (GLA_CLIENT_INFO *)ncs_patricia_tree_getnext(
+    &gla_cb->gla_client_tree, (uint8_t *)&hdl_id);
+	m_NCS_UNLOCK(&gla_cb->cb_lock, NCS_LOCK_READ);
+
+  return client_info;
+}
+
+/****************************************************************************
   Name          : gla_client_info_send
 
   Description   :

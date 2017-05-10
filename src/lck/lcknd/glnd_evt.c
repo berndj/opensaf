@@ -71,6 +71,7 @@ dump the cb.
 ******************************************************************************/
 
 #include "lck/lcknd/glnd.h"
+#include "lck/common/glsv_defs.h"
 
 /******************************************************************************/
 
@@ -533,6 +534,20 @@ static uint32_t glnd_process_gla_client_initialize(GLND_CB *glnd_cb,
 	memset(&gla_evt, 0, sizeof(GLSV_GLA_EVT));
 	gla_evt.type = GLSV_GLA_API_RESP_EVT;
 
+  if (!glnd_cb->isClusterMember) {
+		TRACE_2("gla client initialize failed, node is not cluster member");
+		/* initialise the gla_evt */
+		gla_evt.error = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+      SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+		gla_evt.type = GLSV_GLA_API_RESP_EVT;
+		gla_evt.info.gla_resp_info.type = GLSV_GLA_LOCK_INITIALIZE;
+
+		/* send the evt */
+		glnd_mds_msg_send_rsp_gla(glnd_cb, &gla_evt, client_info->agent_mds_dest, &evt->mds_context);
+
+		goto end;
+  }
+
 	if (glnd_cb->node_state != GLND_OPERATIONAL_STATE ||
 	    glnd_cb->gld_card_up != true) {
 		TRACE_2("gla client initialize failed, glnd state %d",
@@ -685,6 +700,7 @@ static uint32_t glnd_process_gla_resource_open(GLND_CB *glnd_cb,
 					       GLSV_GLND_EVT *evt)
 {
 	GLSV_EVT_RSC_INFO *rsc_info;
+  GLND_CLIENT_INFO *client_info;
 	GLND_RESOURCE_INFO *resource_node;
 	GLND_RESOURCE_REQ_LIST *res_req_node;
 	GLSV_GLA_EVT gla_evt;
@@ -695,6 +711,54 @@ static uint32_t glnd_process_gla_resource_open(GLND_CB *glnd_cb,
 
 	rsc_info = (GLSV_EVT_RSC_INFO *)&evt->info.rsc_info;
 
+ 	/* get the client handle */
+	client_info = glnd_client_node_find(glnd_cb, rsc_info->client_handle_id);
+	if (!client_info) {
+		/* initialise the gla_evt */
+		memset(&gla_evt, 0, sizeof(GLSV_GLA_EVT));
+
+		gla_evt.error = SA_AIS_ERR_BAD_HANDLE;
+		gla_evt.handle = rsc_info->client_handle_id;
+		gla_evt.type = GLSV_GLA_API_RESP_EVT;
+		gla_evt.info.gla_resp_info.type = GLSV_GLA_LOCK_RES_CLOSE;
+		glnd_mds_msg_send_rsp_gla(glnd_cb, &gla_evt, rsc_info->agent_mds_dest, &evt->mds_context);
+
+		TRACE_2("GLND Client node find failed");
+		rc = NCSCC_RC_FAILURE;
+		goto end;
+	}
+
+  if (!glnd_cb->isClusterMember) {
+		TRACE_2("resource open failed, node is not cluster member");
+		memset(&gla_evt, 0, sizeof(GLSV_GLA_EVT));
+		gla_evt.handle = rsc_info->client_handle_id;
+
+		if (rsc_info->call_type == GLSV_SYNC_CALL) {
+		  /* initialise the gla_evt */
+		  gla_evt.error = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+        SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+		  gla_evt.type = GLSV_GLA_API_RESP_EVT;
+		  gla_evt.info.gla_resp_info.type = GLSV_GLA_LOCK_RES_OPEN;
+
+		  /* send the evt */
+		  glnd_mds_msg_send_rsp_gla(glnd_cb, &gla_evt, rsc_info->agent_mds_dest, &evt->mds_context);
+
+		  goto end;
+    } else {
+			gla_evt.type = GLSV_GLA_CALLBK_EVT;
+			gla_evt.info.gla_clbk_info.callback_type = GLSV_LOCK_RES_OPEN_CBK;
+			gla_evt.info.gla_clbk_info.resourceId = rsc_info->lcl_resource_id;
+			gla_evt.info.gla_clbk_info.params.res_open.resourceId = 0;
+			gla_evt.info.gla_clbk_info.params.res_open.invocation = rsc_info->invocation;
+			gla_evt.info.gla_clbk_info.params.res_open.error =
+        m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+          SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+			/* send the evt */
+			glnd_mds_msg_send_gla(glnd_cb, &gla_evt, rsc_info->agent_mds_dest);
+
+			goto end;
+    }
+  }
 	if (glnd_cb->node_state != GLND_OPERATIONAL_STATE ||
 	    glnd_cb->gld_card_up != true) {
 		TRACE_2("resource open failed, glnd state %d",
@@ -935,23 +999,6 @@ static uint32_t glnd_process_gla_resource_close(GLND_CB *glnd_cb,
 
 	rsc_info = (GLSV_EVT_RSC_INFO *)&evt->info.rsc_info;
 
-	if (glnd_cb->node_state != GLND_OPERATIONAL_STATE ||
-	    glnd_cb->gld_card_up != true) {
-		TRACE_2("resource close failed, glnd state %d",
-			glnd_cb->node_state);
-		/* initialise the gla_evt */
-		memset(&gla_evt, 0, sizeof(GLSV_GLA_EVT));
-
-		gla_evt.error = SA_AIS_ERR_TRY_AGAIN;
-		gla_evt.handle = rsc_info->client_handle_id;
-		gla_evt.type = GLSV_GLA_API_RESP_EVT;
-		gla_evt.info.gla_resp_info.type = GLSV_GLA_LOCK_RES_CLOSE;
-		glnd_mds_msg_send_rsp_gla(glnd_cb, &gla_evt,
-					  rsc_info->agent_mds_dest,
-					  &evt->mds_context);
-		goto end;
-	}
-
 	/* get the client handle */
 	client_info =
 	    glnd_client_node_find(glnd_cb, rsc_info->client_handle_id);
@@ -969,6 +1016,41 @@ static uint32_t glnd_process_gla_resource_close(GLND_CB *glnd_cb,
 
 		TRACE_2("GLND Client node find failed");
 		rc = NCSCC_RC_FAILURE;
+		goto end;
+	}
+
+  if (!glnd_cb->isClusterMember) {
+		TRACE_2("resource close failed, node is not cluster member");
+		/* initialise the gla_evt */
+		gla_evt.error = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+      SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+    gla_evt.handle = rsc_info->client_handle_id;
+		gla_evt.type = GLSV_GLA_API_RESP_EVT;
+		gla_evt.info.gla_resp_info.type = GLSV_GLA_LOCK_RES_CLOSE;
+
+		glnd_mds_msg_send_rsp_gla(glnd_cb,
+                              &gla_evt,
+                              rsc_info->agent_mds_dest,
+                              &evt->mds_context);
+
+		goto end;
+  }
+
+
+	if (glnd_cb->node_state != GLND_OPERATIONAL_STATE ||
+	    glnd_cb->gld_card_up != true) {
+		TRACE_2("resource close failed, glnd state %d",
+			glnd_cb->node_state);
+		/* initialise the gla_evt */
+		memset(&gla_evt, 0, sizeof(GLSV_GLA_EVT));
+
+		gla_evt.error = SA_AIS_ERR_TRY_AGAIN;
+		gla_evt.handle = rsc_info->client_handle_id;
+		gla_evt.type = GLSV_GLA_API_RESP_EVT;
+		gla_evt.info.gla_resp_info.type = GLSV_GLA_LOCK_RES_CLOSE;
+		glnd_mds_msg_send_rsp_gla(glnd_cb, &gla_evt,
+					  rsc_info->agent_mds_dest,
+					  &evt->mds_context);
 		goto end;
 	}
 
@@ -1097,6 +1179,51 @@ static uint32_t glnd_process_gla_resource_lock(GLND_CB *glnd_cb,
 
 	rsc_lock_info = (GLSV_EVT_RSC_LOCK_INFO *)&evt->info.rsc_lock_info;
 
+	/* get the client handle */
+	client_info =
+	    glnd_client_node_find(glnd_cb, rsc_lock_info->client_handle_id);
+	if (!client_info) {
+		LOG_ER("GLND Client node find failed");
+		rc = NCSCC_RC_FAILURE;
+		goto end;
+	}
+
+  if (!glnd_cb->isClusterMember) {
+		TRACE_2("resource lock failed, node is not cluster member");
+		if (rsc_lock_info->call_type == GLSV_SYNC_CALL) {
+		  gla_evt.error = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+        SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+      gla_evt.handle = rsc_lock_info->client_handle_id;
+		  gla_evt.type = GLSV_GLA_API_RESP_EVT;
+		  gla_evt.info.gla_resp_info.type = GLSV_GLA_LOCK_SYNC_LOCK;
+
+		  glnd_mds_msg_send_rsp_gla(glnd_cb,
+                                &gla_evt,
+                                rsc_lock_info->agent_mds_dest,
+                                &evt->mds_context);
+
+			rc = NCSCC_RC_FAILURE;
+		  goto end;
+    } else {
+			m_GLND_RESOURCE_ASYNC_LCK_GRANT_FILL(
+        gla_evt,
+        m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+          SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY,
+				0,
+				rsc_lock_info->lcl_lockid,
+				rsc_lock_info->lock_type,
+				rsc_lock_info->lcl_resource_id,
+				rsc_lock_info->invocation,
+				0,
+        rsc_lock_info->client_handle_id);
+
+			/* send the evt to GLA */
+			glnd_mds_msg_send_gla(glnd_cb, &gla_evt, rsc_lock_info->agent_mds_dest);
+			rc = NCSCC_RC_FAILURE;
+			goto end;
+    }
+  }
+
 	/* check for the resource node  */
 	res_node = glnd_resource_node_find(glnd_cb, rsc_lock_info->resource_id);
 	if (!res_node) {
@@ -1138,15 +1265,6 @@ static uint32_t glnd_process_gla_resource_lock(GLND_CB *glnd_cb,
 			rc = NCSCC_RC_FAILURE;
 			goto end;
 		}
-	}
-
-	/* get the client handle */
-	client_info =
-	    glnd_client_node_find(glnd_cb, rsc_lock_info->client_handle_id);
-	if (!client_info) {
-		LOG_ER("GLND Client node find failed");
-		rc = NCSCC_RC_FAILURE;
-		goto end;
 	}
 
 	gla_evt.handle = rsc_lock_info->client_handle_id;
@@ -1357,6 +1475,44 @@ static uint32_t glnd_process_gla_resource_unlock(GLND_CB *glnd_cb,
 	    (GLSV_EVT_RSC_UNLOCK_INFO *)&evt->info.rsc_unlock_info;
 	memset(&lck_info, 0, sizeof(GLSV_LOCK_REQ_INFO));
 
+	/* get the client handle */
+	client_info =
+	    glnd_client_node_find(glnd_cb, rsc_unlock_info->client_handle_id);
+	if (!client_info) {
+		LOG_ER("GLND Client node find failed");
+		goto end;
+	}
+
+  if (!glnd_cb->isClusterMember) {
+		TRACE_2("resource unlock failed, node is not cluster member");
+		if (rsc_unlock_info->call_type == GLSV_SYNC_CALL) {
+		  gla_evt.error = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+        SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+      gla_evt.handle = rsc_unlock_info->client_handle_id;
+		  gla_evt.type = GLSV_GLA_API_RESP_EVT;
+		  gla_evt.info.gla_resp_info.type = GLSV_GLA_LOCK_SYNC_UNLOCK;
+
+		  glnd_mds_msg_send_rsp_gla(glnd_cb,
+                                &gla_evt,
+                                rsc_unlock_info->agent_mds_dest,
+                                &evt->mds_context);
+
+		  goto end;
+    } else {
+			m_GLND_RESOURCE_ASYNC_LCK_UNLOCK_FILL(gla_evt,
+                    m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+                      SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY,
+							      rsc_unlock_info->invocation,
+							      rsc_unlock_info->lcl_resource_id,
+							      rsc_unlock_info->lcl_lockid, 0);
+			gla_evt.handle = rsc_unlock_info->client_handle_id;
+
+			/* send the evt to GLA */
+			glnd_mds_msg_send_gla(glnd_cb, &gla_evt, rsc_unlock_info->agent_mds_dest);
+			goto end;
+    }
+  }
+
 	/* get the resource node */
 	res_node =
 	    glnd_resource_node_find(glnd_cb, rsc_unlock_info->resource_id);
@@ -1398,14 +1554,6 @@ static uint32_t glnd_process_gla_resource_unlock(GLND_CB *glnd_cb,
 					      rsc_unlock_info->agent_mds_dest);
 			goto end;
 		}
-	}
-
-	/* get the client handle */
-	client_info =
-	    glnd_client_node_find(glnd_cb, rsc_unlock_info->client_handle_id);
-	if (!client_info) {
-		LOG_ER("GLND Client node find failed");
-		goto end;
 	}
 
 	if (res_node->status == GLND_RESOURCE_NOT_INITIALISED) {
@@ -1619,6 +1767,7 @@ static uint32_t glnd_process_gla_resource_purge(GLND_CB *glnd_cb,
 {
 	GLSV_EVT_RSC_INFO *rsc_info;
 	GLND_RESOURCE_INFO *res_node = NULL;
+  GLND_CLIENT_INFO *client_info;
 
 	rsc_info = (GLSV_EVT_RSC_INFO *)&evt->info.rsc_info;
 	GLSV_GLA_EVT gla_evt;
@@ -1629,6 +1778,44 @@ static uint32_t glnd_process_gla_resource_purge(GLND_CB *glnd_cb,
 
 	memset(&gla_evt, 0, sizeof(GLSV_GLA_EVT));
 	gla_evt.type = GLSV_GLA_API_RESP_EVT;
+
+	/* get the client handle */
+	client_info = glnd_client_node_find(glnd_cb, rsc_info->client_handle_id);
+	if (!client_info) {
+		/* initialise the gla_evt */
+		memset(&gla_evt, 0, sizeof(GLSV_GLA_EVT));
+
+		gla_evt.error = SA_AIS_ERR_BAD_HANDLE;
+		gla_evt.handle = rsc_info->client_handle_id;
+		gla_evt.type = GLSV_GLA_API_RESP_EVT;
+		gla_evt.info.gla_resp_info.type = GLSV_GLA_LOCK_RES_CLOSE;
+		glnd_mds_msg_send_rsp_gla(glnd_cb,
+                              &gla_evt,
+                              rsc_info->agent_mds_dest,
+                              &evt->mds_context);
+
+		TRACE_2("GLND Client node find failed");
+		rc = NCSCC_RC_FAILURE;
+		goto end;
+	}
+
+  if (!glnd_cb->isClusterMember) {
+		TRACE_2("resource purge failed, node is not cluster member");
+		/* initialise the gla_evt */
+		gla_evt.error = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+      SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+		gla_evt.handle = rsc_info->client_handle_id;
+		gla_evt.type = GLSV_GLA_API_RESP_EVT;
+		gla_evt.info.gla_resp_info.type = GLSV_GLA_LOCK_INITIALIZE;
+
+		/* send the evt */
+		glnd_mds_msg_send_rsp_gla(glnd_cb,
+                              &gla_evt,
+                              rsc_info->agent_mds_dest,
+                              &evt->mds_context);
+
+		goto end;
+  }
 
 	/* get the resource node */
 	res_node = glnd_resource_node_find(glnd_cb, rsc_info->resource_id);
@@ -2358,6 +2545,14 @@ static uint32_t glnd_process_glnd_lck_waiter_clbk(GLND_CB *glnd_cb,
 	TRACE_ENTER();
 
 	waiter_clbk = (GLSV_EVT_GLND_LCK_INFO *)&evt->info.node_lck_info;
+
+  /* don't send the callback if we are not a cluster member */
+  if (!glnd_cb->isClusterMember) {
+    TRACE("not sending waiter callback because this node is not in the "
+          "cluster");
+		rc = NCSCC_RC_FAILURE;
+    goto end;
+  }
 
 	res_node = glnd_resource_node_find(glnd_cb, waiter_clbk->resource_id);
 	if (!res_node) {

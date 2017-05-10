@@ -30,6 +30,10 @@
 #ifndef LCK_LCKND_GLND_MDS_H_
 #define LCK_LCKND_GLND_MDS_H_
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 /*****************************************************************************/
 
 #define SVC_SUBPART_VER uns32
@@ -174,5 +178,9 @@ typedef uint32_t (*GLSV_GLND_EVT_HANDLER)(struct glnd_cb_tag *,
     (l_evt).info.gla_clbk_info.params.unlock.lockStatus = (l_status);       \
     (l_evt).info.gla_clbk_info.params.unlock.error = (l_err);               \
   } while (0);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif  // LCK_LCKND_GLND_MDS_H_

@@ -42,12 +42,17 @@ typedef unsigned int GLSV_TIMER_ID;
 
 /* Version Constants */
 #define REQUIRED_RELEASECODE 'B'
-#define REQUIRED_MAJORVERSION 01
-#define REQUIRED_MINORVERSION 01
+#define REQUIRED_MAJORVERSION 3
+#define REQUIRED_MINORVERSION 1
 
 #define m_GLA_VER_IS_VALID(ver)                  \
   ((ver->releaseCode == REQUIRED_RELEASECODE) && \
    (ver->majorVersion <= REQUIRED_MAJORVERSION))
+
+#define m_GLA_VER_IS_AT_LEAST_B_3(ver) \
+   ((ver.releaseCode == 'B' && \
+     ver.majorVersion >= 3) || \
+     ver.releaseCode > 'B')
 
 #define MSG_FRMT_VER uint32_t
 /*** Macro used to get the AMF version used ****/

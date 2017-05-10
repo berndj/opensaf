@@ -68,6 +68,7 @@ static uint32_t glsv_gla_enc_callbk_evt(NCS_UBAID *uba,
 					GLSV_GLA_CALLBACK_INFO *evt);
 static uint32_t glsv_gla_enc_api_resp_evt(NCS_UBAID *uba,
 					  GLSV_GLA_API_RESP_INFO *evt);
+static uint32_t glsv_gla_enc_clm_evt(NCS_UBAID *uba, GLSV_GLA_CLM_INFO *evt);
 
 uint32_t glnd_mds_get_handle(GLND_CB *cb);
 
@@ -380,6 +381,10 @@ static uint32_t glnd_mds_enc(GLND_CB *cb, MDS_CALLBACK_ENC_INFO *info)
 			case GLSV_GLA_API_RESP_EVT:
 				rc = glsv_gla_enc_api_resp_evt(
 				    uba, &evt->info.gla_resp_info);
+				break;
+
+      case GLSV_GLA_CLM_EVT:
+				rc = glsv_gla_enc_clm_evt(uba, &evt->info.gla_clm_info);
 				break;
 
 			default:
@@ -1651,4 +1656,38 @@ static uint32_t glsv_gla_enc_api_resp_evt(NCS_UBAID *uba,
 	}
 
 	return NCSCC_RC_SUCCESS;
+}
+
+/****************************************************************************
+  Name          : glsv_gla_enc_clm_evt
+
+  Description   : This routine encodes api response info.
+
+  Arguments     : uba , api response info.
+
+  Return Values : NCSCC_RC_SUCCESS/NCSCC_RC_FAILURE
+
+  Notes         : None.
+******************************************************************************/
+static uint32_t glsv_gla_enc_clm_evt(NCS_UBAID *uba, GLSV_GLA_CLM_INFO *evt)
+{
+	uint8_t *p8, size;
+  uint32_t rc = NCSCC_RC_SUCCESS;
+
+  do {
+	  size = (4);
+   /** encode the type of message **/
+	  p8 = ncs_enc_reserve_space(uba, size);
+	  if (!p8) {
+		  TRACE_2("GLND enc failed");
+		  rc =  NCSCC_RC_FAILURE;
+      break;
+	  }
+
+	  osaf_encode_bool(uba, evt->isClusterMember);
+
+	  ncs_enc_claim_space(uba, size);
+  } while (false);
+
+	return rc;
 }

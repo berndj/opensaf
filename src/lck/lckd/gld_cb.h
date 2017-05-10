@@ -81,7 +81,7 @@ typedef struct glsv_gld_cb_tag {
   uint8_t hm_poolid;  /* For use with handle manager               */
   NCSCONTEXT task_hdl;
   uint32_t my_hdl;  /* Handle manager handle                     */
-  uint32_t clm_hdl; /* Handle manager handle                     */
+  SaClmHandleT clm_hdl; /* CLM handle */
   NCS_MBCSV_HDL mbcsv_handle;
   NCS_MBCSV_CKPT_HDL o_ckpt_hdl;
   SaSelectionObjectT mbcsv_sel_obj;

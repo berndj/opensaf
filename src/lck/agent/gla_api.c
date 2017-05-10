@@ -145,6 +145,9 @@ SaAisErrorT saLckInitialize(SaLckHandleT *lckHandle,
 	}
 	rc = out_evt->error;
 	if (rc == SA_AIS_OK) {
+    /* if the call succeeds we know glnd is a member of the cluster */
+	  gla_cb->isClusterMember = true;
+
 		/* create the client node and populate it */
 		client_info =
 		    gla_client_tree_find_and_add(gla_cb, out_evt->handle, true);
@@ -153,6 +156,9 @@ SaAisErrorT saLckInitialize(SaLckHandleT *lckHandle,
 			rc = SA_AIS_ERR_NO_RESOURCES;
 			goto err;
 		}
+
+    client_info->isStale = false;
+	  memcpy(&client_info->version, version, sizeof(SaVersionT));
 
 		/* copy the callbacks */
 		if (lckCallbacks)
@@ -259,6 +265,13 @@ SaAisErrorT saLckSelectionObjectGet(SaLckHandleT lckHandle,
 		goto done;
 	}
 
+  /* are we a member of the cluster? */
+  if (!gla_cb->isClusterMember || client_info->isStale) {
+    rc = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+      SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+    goto done;
+  }
+
 	/* everything's fine.. pass the sel obj to the appl */
 	*o_sel_obj = (SaSelectionObjectT)m_GET_FD_FROM_SEL_OBJ(
 	    m_NCS_IPC_GET_SEL_OBJ(&client_info->callbk_mbx));
@@ -319,6 +332,13 @@ SaAisErrorT saLckOptionCheck(SaLckHandleT hdl, SaLckOptionsT *lckOptions)
 		goto done;
 	}
 
+  /* are we a member of the cluster? */
+  if (!gla_cb->isClusterMember || client_info->isStale) {
+    rc = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+      SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+    goto done;
+  }
+
 	/* populate the options - as this implementation support both Deadlock
 	   and orphan , set the values */
 	*lckOptions = SA_LCK_OPT_ORPHAN_LOCKS | SA_LCK_OPT_DEADLOCK_DETECTION;
@@ -376,6 +396,13 @@ SaAisErrorT saLckDispatch(SaLckHandleT lckHandle, const SaDispatchFlagsT flags)
 		rc = SA_AIS_ERR_BAD_HANDLE;
 		goto done;
 	}
+
+  /* are we a member of the cluster? */
+  if (!gla_cb->isClusterMember || client_info->isStale) {
+    rc = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+      SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+    goto done;
+  }
 
 	switch (flags) {
 	case SA_DISPATCH_ONE:
@@ -599,6 +626,13 @@ SaAisErrorT saLckResourceOpen(SaLckHandleT lckHandle,
 		goto done;
 	}
 
+  /* are we a member of the cluster? */
+  if (!gla_cb->isClusterMember || client_info->isStale) {
+    rc = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+      SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+    goto done;
+  }
+
 	/* check whether GLND is up or not */
 	if (!gla_cb->glnd_svc_up) {
 		ncshm_give_hdl(client_info->lcl_lock_handle_id);
@@ -763,6 +797,14 @@ SaAisErrorT saLckResourceOpenAsync(SaLckHandleT lckHandle,
 		rc = SA_AIS_ERR_INIT;
 		goto done;
 	}
+
+  /* are we a member of the cluster? */
+  if (!gla_cb->isClusterMember || client_info->isStale) {
+    rc = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+      SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+    goto done;
+  }
+
 	/* check whether GLND is up or not */
 	if (!gla_cb->glnd_svc_up) {
 		ncshm_give_hdl(client_info->lcl_lock_handle_id);
@@ -886,6 +928,13 @@ SaAisErrorT saLckResourceClose(SaLckResourceHandleT lockResourceHandle)
 		rc = SA_AIS_ERR_BAD_HANDLE;
 		goto done;
 	}
+
+  /* are we a member of the cluster? */
+  if (!gla_cb->isClusterMember || client_info->isStale) {
+    rc = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+      SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+    goto done;
+  }
 
 	/* check whether GLND is up or not */
 	if (!gla_cb->glnd_svc_up) {
@@ -1060,6 +1109,14 @@ SaAisErrorT saLckResourceLock(SaLckResourceHandleT lockResourceHandle,
 		rc = SA_AIS_ERR_BAD_HANDLE;
 		goto done;
 	}
+
+  /* are we a member of the cluster? */
+  if (!gla_cb->isClusterMember || client_info->isStale) {
+    rc = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+      SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+    goto done;
+  }
+
 	/* check whether GLND is up or not */
 	if (!gla_cb->glnd_svc_up) {
 		ncshm_give_hdl(lockResourceHandle);
@@ -1252,6 +1309,13 @@ SaAisErrorT saLckResourceLockAsync(SaLckResourceHandleT lockResourceHandle,
 		goto done;
 	}
 
+  /* are we a member of the cluster? */
+  if (!gla_cb->isClusterMember || client_info->isStale) {
+    rc = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+      SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+    goto done;
+  }
+
 	/* check whether GLND is up or not */
 	if (!gla_cb->glnd_svc_up) {
 		ncshm_give_hdl(lockResourceHandle);
@@ -1409,6 +1473,13 @@ SaAisErrorT saLckResourceUnlock(SaLckLockIdT lockId, SaTimeT timeout)
 		goto done;
 	}
 
+  /* are we a member of the cluster? */
+  if (!gla_cb->isClusterMember || client_info->isStale) {
+    rc = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+      SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+    goto done;
+  }
+
 	/* check whether GLND is up or not */
 	if (!gla_cb->glnd_svc_up) {
 		ncshm_give_hdl(lockId);
@@ -1548,6 +1619,13 @@ SaAisErrorT saLckResourceUnlockAsync(SaInvocationT invocation,
 		goto done;
 	}
 
+  /* are we a member of the cluster? */
+  if (!gla_cb->isClusterMember || client_info->isStale) {
+    rc = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+      SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+    goto done;
+  }
+
 	/* check whether GLND is up or not */
 	if (!gla_cb->glnd_svc_up) {
 		ncshm_give_hdl(lockId);
@@ -1670,6 +1748,13 @@ SaAisErrorT saLckLockPurge(SaLckResourceHandleT lockResourceHandle)
 		rc = SA_AIS_ERR_BAD_HANDLE;
 		goto done;
 	}
+
+  /* are we a member of the cluster? */
+  if (!gla_cb->isClusterMember || client_info->isStale) {
+    rc = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
+      SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+    goto done;
+  }
 
 	/* check whether GLND is up or not */
 	if (!gla_cb->glnd_svc_up) {

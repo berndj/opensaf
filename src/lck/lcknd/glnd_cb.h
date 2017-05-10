@@ -23,6 +23,10 @@
 #include "glnd_tmr.h"
 #include "lck/lcknd/glnd_evt.h"
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 /* global variables */
 uint32_t gl_glnd_hdl;
 NCSCONTEXT gl_glnd_task_hdl;
@@ -164,7 +168,6 @@ typedef struct glnd_shm_version_tag {
 typedef struct glnd_cb_tag {
   /* Identification Information about the GLND */
   MDS_DEST glnd_mdest_id;
-  uint32_t glnd_node_id;
   uint32_t cb_hdl_id;
   MDS_HDL glnd_mds_hdl;
   uint32_t pool_id;
@@ -179,6 +182,7 @@ typedef struct glnd_cb_tag {
   /* Information about the GLD */
   MDS_DEST gld_mdest_id;
   bool gld_card_up;
+  bool isClusterMember;
 
   /* GLND data */
   NCS_PATRICIA_TREE glnd_client_tree; /* GLND_CLIENT_INFO - node */
@@ -190,6 +194,7 @@ typedef struct glnd_cb_tag {
   struct glsv_glnd_evt
       *evt_bckup_q; /* backup the events incase of mastership change */
 
+  SaClmHandleT clm_hdl;  	/* CLM handle, obtained thru CLM init        */
   SaAmfHandleT amf_hdl;   /* AMF handle, obtained thru AMF init        */
   SaAmfHAStateT ha_state; /* present AMF HA state of the component     */
   EDU_HDL glnd_edu_hdl;   /* edu handle used for encode/decode         */
@@ -204,6 +209,7 @@ typedef struct glnd_cb_tag {
 /* prototypes */
 GLND_AGENT_INFO *glnd_agent_node_find(GLND_CB *glnd_cb,
                                       MDS_DEST agent_mds_dest);
+GLND_AGENT_INFO *glnd_agent_node_find_next(GLND_CB *, MDS_DEST);
 GLND_AGENT_INFO *glnd_agent_node_add(GLND_CB *glnd_cb, MDS_DEST agent_mds_dest,
                                      uint32_t process_id);
 void glnd_agent_node_del(GLND_CB *glnd_cb, GLND_AGENT_INFO *agent_info);
@@ -220,6 +226,7 @@ GLND_RESOURCE_REQ_LIST *glnd_resource_req_node_add(
     MDS_SYNC_SND_CTXT *mds_ctxt, SaLckResourceIdT lcl_resource_id);
 GLND_RESOURCE_REQ_LIST *glnd_resource_req_node_find(GLND_CB *glnd_cb,
                                                     SaNameT *resource_name);
+void glnd_resource_req_node_down(GLND_CB *glnd_cb);
 void glnd_resource_req_node_del(GLND_CB *glnd_cb, uint32_t res_req_hdl);
 
 /* Amf prototypes */
@@ -244,5 +251,9 @@ void glnd_re_send_evt_backup_queue(GLND_CB *glnd_cb);
 uint8_t glnd_cpsv_initilize(GLND_CB *glnd_cb);
 uint32_t glnd_shm_create(GLND_CB *cb);
 uint32_t glnd_shm_destroy(GLND_CB *cb, char shm_name[]);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif  // LCK_LCKND_GLND_CB_H_

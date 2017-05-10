@@ -29,12 +29,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include "gld_imm.h"
+#include "gld_clm.h"
 
 uint32_t gl_gld_hdl;
 
 void gld_main_process(SYSF_MBX *mbx);
 
-enum { FD_TERM = 0, FD_AMF, FD_MBCSV, FD_MBX, FD_IMM, NUM_FD };
+enum { FD_TERM = 0, FD_AMF, FD_MBCSV, FD_MBX, FD_IMM, FD_CLM, NUM_FD };
 
 static struct pollfd fds[NUM_FD];
 static nfds_t nfds = NUM_FD;
@@ -198,6 +199,13 @@ uint32_t gld_se_lib_init(NCS_LIB_REQ_INFO *req_info)
 		m_MMGR_FREE_GLSV_GLD_CB(gld_cb);
 	} else
 		TRACE_1("AMF Health Check started");
+
+  amf_error = gld_clm_init(gld_cb);
+  if (amf_error != SA_AIS_OK) {
+		LOG_ER("CLM Init Failed %u", amf_error);
+		res = NCSCC_RC_FAILURE;
+		goto end;
+  }
 
 	if ((res = initialize_for_assignment(gld_cb, gld_cb->ha_state)) !=
 	    NCSCC_RC_SUCCESS) {
@@ -501,7 +509,7 @@ void gld_main_process(SYSF_MBX *mbx)
 	SaAisErrorT error = SA_AIS_OK;
 	GLSV_GLD_CB *gld_cb = NULL;
 	NCS_MBCSV_ARG mbcsv_arg;
-	SaSelectionObjectT amf_sel_obj;
+	SaSelectionObjectT amf_sel_obj, clm_sel_obj;
 	int term_fd;
 
 	TRACE_ENTER();
@@ -520,6 +528,13 @@ void gld_main_process(SYSF_MBX *mbx)
 		goto end;
 	}
 
+  error = saClmSelectionObjectGet(gld_cb->clm_hdl, &clm_sel_obj);
+
+	if (error != SA_AIS_OK) {
+		LOG_ER("CLM Selection object get error: %i", error);
+		goto end;
+	}
+
 	daemon_sigterm_install(&term_fd);
 
 	/* Set up all file descriptors to listen to */
@@ -531,6 +546,8 @@ void gld_main_process(SYSF_MBX *mbx)
 	fds[FD_MBX].events = POLLIN;
 	fds[FD_IMM].fd = gld_cb->imm_sel_obj;
 	fds[FD_IMM].events = POLLIN;
+  fds[FD_CLM].fd = clm_sel_obj;
+	fds[FD_CLM].events = POLLIN;
 
 	while (1) {
 		fds[FD_MBCSV].fd = gld_cb->mbcsv_sel_obj;
@@ -622,6 +639,14 @@ void gld_main_process(SYSF_MBX *mbx)
 				break;
 			}
 		}
+
+    if (fds[FD_CLM].revents & POLLIN) {
+      /* dispatch all the CLM pending function */
+      error = saClmDispatch(gld_cb->clm_hdl, SA_DISPATCH_ALL);
+      if (error != SA_AIS_OK) {
+        LOG_ER("CLM dispatch failed: %i", error);
+      }
+    }
 	}
 end:
 	TRACE_LEAVE();

@@ -18,6 +18,10 @@
 #ifndef LCK_LCKD_GLD_EVT_H_
 #define LCK_LCKD_GLD_EVT_H_
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 /*****************************************************************************
  * Message Type of GLND
  *****************************************************************************/
@@ -35,6 +39,8 @@ typedef enum glsv_gld_evt_type {
   GLSV_GLD_EVT_REELECTION_TIMEOUT,
   GLSV_GLD_EVT_RESTART_TIMEOUT,
   GLSV_GLD_EVT_QUISCED_STATE,
+
+  GLSV_GLD_EVT_GLND_DOWN_CLM,
 
   GLSV_GLD_EVT_MAX
 } GLSV_GLD_EVT_TYPE;
@@ -66,6 +72,11 @@ typedef struct gld_evt_tmr_tag {
   uint32_t opq_hdl;
 } GLD_EVT_TMR;
 
+typedef struct gld_evt_node_info {
+  uint32_t nodeId;
+  bool isClusterMember;
+} GLSV_GLD_GLND_NODE_INFO;
+
 /*****************************************************************************
  * GLD msg data structure.
  *****************************************************************************/
@@ -79,6 +90,7 @@ typedef struct glsv_gld_evt_tag {
     GLSV_RSC_DETAILS rsc_details;
     GLSV_GLD_GLND_MDS_INFO glnd_mds_info;
     GLD_EVT_TMR tmr;
+    GLSV_GLD_GLND_NODE_INFO glnd_clm_info;
   } info;
 } GLSV_GLD_EVT;
 
@@ -89,5 +101,9 @@ typedef uint32_t (*GLSV_GLD_EVT_HANDLER)(struct glsv_gld_evt_tag *evt);
 
 void gld_evt_destroy(GLSV_GLD_EVT *evt);
 uint32_t gld_process_evt(GLSV_GLD_EVT *evt);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif  // LCK_LCKD_GLD_EVT_H_

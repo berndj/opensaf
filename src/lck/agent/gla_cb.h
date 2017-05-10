@@ -40,6 +40,8 @@ typedef struct gla_client_info_tag {
   uint32_t client_context_id;
   SaLckCallbacksT lckCallbk;
   SaTimeT lcktimer;
+  bool isStale;
+  SaVersionT version;
   /* Mailbox Queue to store the messages for the clients */
   SYSF_MBX callbk_mbx;
   NCS_PATRICIA_TREE client_res_tree;
@@ -108,6 +110,7 @@ typedef struct gla_cb_tag {
   MDS_DEST glnd_mds_dest;
   bool glnd_svc_up;
   bool glnd_crashed;
+  bool isClusterMember;
 
   /* GLA data */
   NCS_PATRICIA_TREE gla_client_tree; /* GLA_CLIENT_INFO - node */
@@ -134,6 +137,7 @@ void gla_client_tree_destroy(GLA_CB *gla_cb);
 void gla_client_tree_cleanup(GLA_CB *gla_cb);
 GLA_CLIENT_INFO *gla_client_tree_find_and_add(GLA_CB *gla_cb,
                                               SaLckHandleT hdl_id, bool flag);
+GLA_CLIENT_INFO *gla_client_tree_find_next(GLA_CB *gla_cb, SaLckHandleT hdl_id);
 uint32_t gla_client_tree_delete_node(GLA_CB *gla_cb,
                                      GLA_CLIENT_INFO *client_info,
                                      bool give_hdl);

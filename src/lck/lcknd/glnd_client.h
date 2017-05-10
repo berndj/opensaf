@@ -18,6 +18,10 @@
 #ifndef LCK_LCKND_GLND_CLIENT_H_
 #define LCK_LCKND_GLND_CLIENT_H_
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 typedef struct glnd_client_list_resource_lock_req_tag {
   GLND_RES_LOCK_LIST_INFO *lck_req;
   struct glnd_client_list_resource_lock_req_tag *prev, *next;
@@ -53,6 +57,8 @@ GLND_CLIENT_INFO *glnd_client_node_add(GLND_CB *glnd_cb,
                                        MDS_DEST agent_mds_dest,
                                        SaLckHandleT app_handle_id);
 
+void glnd_client_node_down(GLND_CB *glnd_cb, GLND_CLIENT_INFO *client_info);
+
 uint32_t glnd_client_node_del(GLND_CB *glnd_cb, GLND_CLIENT_INFO *client_info);
 
 uint32_t glnd_client_node_resource_add(GLND_CLIENT_INFO *client_info,
@@ -85,5 +91,9 @@ uint32_t glnd_client_node_resource_lock_req_find_and_del(
 uint32_t glnd_client_node_resource_lock_find_duplicate_ex(
     GLND_CLIENT_INFO *client_info, SaLckResourceIdT res_id,
     SaLckResourceIdT lcl_res_id);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif  // LCK_LCKND_GLND_CLIENT_H_
