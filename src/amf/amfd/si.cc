@@ -705,8 +705,11 @@ SaAisErrorT avd_si_config_get(AVD_APP *app) {
     if (avd_csi_config_get(si_str, si) != SA_AIS_OK) goto done2;
   }
 
-  osafassert(rc == SA_AIS_ERR_NOT_EXIST);
-  error = SA_AIS_OK;
+  if (rc == SA_AIS_ERR_NOT_EXIST) {
+    error = SA_AIS_OK;
+  } else {
+    LOG_ER("avd_si_config_get FAILED %u", rc);
+  }
 
 done2:
   (void)immutil_saImmOmSearchFinalize(searchHandle);

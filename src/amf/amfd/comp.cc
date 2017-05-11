@@ -811,8 +811,11 @@ SaAisErrorT avd_comp_config_get(const std::string &su_name, AVD_SU *su) {
     goto done2;
   }
 
-  osafassert(rc == SA_AIS_ERR_NOT_EXIST);
-  error = SA_AIS_OK;
+  if (rc == SA_AIS_ERR_NOT_EXIST) {
+    error = SA_AIS_OK;
+  } else {
+    LOG_ER("avd_comp_config_get FAILED %u", rc);
+  }
 
 done2:
   (void)immutil_saImmOmSearchFinalize(searchHandle);
