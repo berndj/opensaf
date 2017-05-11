@@ -127,8 +127,8 @@ SaAisErrorT glnd_clm_init(GLND_CB *cb) {
   if (rc != SA_AIS_OK && cb->clm_hdl)
     glnd_clm_deinit(cb);
 
-  return rc;
   TRACE_LEAVE();
+  return rc;
 }
 
 SaAisErrorT glnd_clm_deinit(GLND_CB *cb)
