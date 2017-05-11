@@ -750,8 +750,11 @@ SaAisErrorT avd_su_config_get(const std::string &sg_name, AVD_SG *sg) {
     }
   }
 
-  osafassert(rc == SA_AIS_ERR_NOT_EXIST);
-  error = SA_AIS_OK;
+  if (rc == SA_AIS_ERR_NOT_EXIST) {
+    error = SA_AIS_OK;
+  } else {
+    LOG_ER("avd_su_config_get FAILED %u", rc);
+  }
 
 done2:
   (void)immutil_saImmOmSearchFinalize(searchHandle);
