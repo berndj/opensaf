@@ -82,7 +82,6 @@ GLSV_GLD_RSC_INFO *gld_add_rsc_info(GLSV_GLD_CB *gld_cb, SaNameT *rsc_name,
 {
 	GLSV_GLD_RSC_INFO *rsc_info;
 	GLSV_GLD_RSC_MAP_INFO *rsc_map_info;
-	SaAisErrorT err = SA_AIS_OK;
 	SaTimeT creation_time;
 
 	rsc_info = m_MMGR_ALLOC_GLSV_GLD_RSC_INFO;
@@ -157,12 +156,20 @@ GLSV_GLD_RSC_INFO *gld_add_rsc_info(GLSV_GLD_CB *gld_cb, SaNameT *rsc_name,
 
 	/*Add the imm runtime object */
 	if (gld_cb->ha_state == SA_AMF_HA_ACTIVE)
-		err = create_runtime_object((char *)rsc_name->value,
+		*error = create_runtime_object((char *)rsc_name->value,
 					    rsc_info->saf_rsc_creation_time,
 					    gld_cb->immOiHandle);
 
-	if (err != SA_AIS_OK) {
-		LOG_ER("create_runtime_object failed %u\n", err);
+	/*
+	 * We could see this after a failover, where the resource was closed on
+	 * the active, but it crashed before the runtime object could be
+	 * removed.
+	 */
+	if (*error == SA_AIS_ERR_EXIST)
+		*error = SA_AIS_OK;
+
+	if (*error != SA_AIS_OK) {
+		LOG_ER("create_runtime_object failed %u\n", *error);
 		if (ncs_patricia_tree_del(&gld_cb->rsc_map_info,
 					  (NCS_PATRICIA_NODE *)rsc_map_info) !=
 		    NCSCC_RC_SUCCESS) {
@@ -239,7 +246,7 @@ GLSV_GLD_RSC_INFO *gld_find_add_rsc_name(GLSV_GLD_CB *gld_cb, SaNameT *rsc_name,
 					 SaAisErrorT *error)
 {
 	GLSV_GLD_RSC_INFO *rsc_info;
-	SaAisErrorT ret_error;
+	SaAisErrorT ret_error = SA_AIS_OK;
 
 	/* Run through the List to find if rsc is already present */
 	rsc_info = gld_cb->rsc_info;

@@ -482,7 +482,7 @@ uint32_t gld_sb_proc_data_rsp(GLSV_GLD_CB *gld_cb,
 	GLSV_NODE_LIST **tmp2_node_list = NULL;
 	GLSV_GLD_GLND_DETAILS *node_details = NULL;
 	GLSV_GLD_RSC_INFO *rsc_info = NULL;
-	SaAisErrorT ret_error;
+	SaAisErrorT ret_error = SA_AIS_OK;
 	uint32_t node_id;
 	uint32_t rc = NCSCC_RC_SUCCESS;
 	TRACE_ENTER();
