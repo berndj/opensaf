@@ -71,7 +71,7 @@ check_tipc() {
 	unload_tipc
 }
 
-check_env() {
+setup_env() {
 	# Make sure this kernel has POSIX shared memory configured
 	if [ ! -d /dev/shm ]; then
 		logger -s -t $osafprog "POSIX shared memory (/dev/shm) not enabled, exiting."
@@ -196,20 +196,57 @@ check_transport() {
 	fi
 }
 
+# Create a mutex for start/stop on the filesystem. Will use trap if available.
+mutex_create() {
+	timeout=10
+	interval=2
+	while [ $timeout -gt 0 ]; do
+		if mkdir "$lockfile_inprogress"; then
+			trap 'rmdir "$lockfile_inprogress"; exit $?' INT TERM EXIT 2> /dev/null
+			return 0
+		else
+			# lockfile exist, try again until timeout
+			if [ $timeout -eq 10 ]; then  # log only one time
+				log_warning_msg "opensafd start/stop in progress. Waiting for lockfile to be removed"
+				logger -t $osafprog "opensafd start/stop in progress. Waiting for lockfile to be removed"
+			fi
+			sleep $interval
+			timeout=$((timeout-interval))
+		fi
+	done
+
+	log_warning_msg "opensafd start/stop already in progress. Unable to continue"
+	logger -t $osafprog "opensafd start/stop already in progress. Unable to continue"
+	log_warning_msg "To forcefully start/stop OpenSAF remove $lockfile_inprogress"
+	logger -t $osafprog "To forcefully start/stop OpenSAF remove $lockfile_inprogress"
+	return 1
+}
+
+mutex_remove() {
+	rmdir "$lockfile_inprogress" 2> /dev/null
+	trap - INT TERM EXIT 2> /dev/null
+}
+
 start() {
+	setup_env
+
+	if ! mutex_create; then
+		return 1
+	fi
+
 	export LD_LIBRARY_PATH=$pkglibdir:$LD_LIBRARY_PATH
         pidofproc -p $amfnd_pid $amfnd_bin > /dev/null 2>&1
 	lsb_status=$?
 	if [ $lsb_status -eq 0 ]; then
-       		RETVAL=0
+		RETVAL=0
 		log_success_msg
+		mutex_remove
 		return $RETVAL
 	fi
 
 
 	[ -x $daemon ] || exit 5
 
-	check_env
 	check_transport
 
 	logger -t $osafprog "Starting OpenSAF Services($osafversion - $osafcshash) (Using $MDS_TRANSPORT)"
@@ -218,85 +255,69 @@ start() {
 	#enable_coredump
 
 	echo -n "Starting OpenSAF Services (Using $MDS_TRANSPORT):"
-	if [ -e "$lockfile_inprogress" ]; then
-		RETVAL=1
-		log_warning_msg "opensafd start/stop already in progress. Unable to continue"
-		logger -t $osafprog "opensafd start/stop already in progress. Unable to continue"
-		log_warning_msg "To forcefully start/stop OpenSAF remove $lockfile_inprogress"
-		logger -t $osafprog "To forcefully start/stop OpenSAF remove $lockfile_inprogress"
+	start_daemon $binary $args
+	RETVAL=$?
+	if [ $RETVAL -eq 0 ]; then
+		logger -t $osafprog "OpenSAF($osafversion - $osafcshash) services successfully started"
+		touch $lockfile
+		log_success_msg
 	else
-		touch "$lockfile_inprogress"
-		start_daemon $binary $args
-		RETVAL=$?
-		if [ $RETVAL -eq 0 ]; then
-			logger -t $osafprog "OpenSAF($osafversion - $osafcshash) services successfully started"
-			touch $lockfile
-			log_success_msg
+		final_clean
+		log_failure_msg
+		if [ $REBOOT_ON_FAIL_TIMEOUT -ne 0 ]; then
+			logger -t $osafprog "Starting OpenSAF failed, rebooting..."
+			sleep $REBOOT_ON_FAIL_TIMEOUT
+			mutex_remove
+			/sbin/reboot &
 		else
-			final_clean
-			log_failure_msg
-			if [ $REBOOT_ON_FAIL_TIMEOUT -ne 0 ]; then
-				logger -t $osafprog "Starting OpenSAF failed, rebooting..." 
-				sleep $REBOOT_ON_FAIL_TIMEOUT
-				rm -f "$lockfile_inprogress"
-				/sbin/reboot &
-			else
-				logger -t $osafprog "Starting OpenSAF failed"
-			fi
+			logger -t $osafprog "Starting OpenSAF failed"
 		fi
-		rm -f "$lockfile_inprogress"
 	fi
+	mutex_remove
 	return $RETVAL
 }
 
 stop() {
+	if ! mutex_create; then
+		return 1
+	fi
+
 	logger -t $osafprog "Stopping OpenSAF Services"
-
-	if [ -e "$lockfile_inprogress" ]; then
-		RETVAL=1
-		log_warning_msg "opensafd start/stop already in progress. Unable to continue"
-		logger -t $osafprog "opensafd start/stop already in progress. Unable to continue"
-		log_warning_msg "To forcefully start/stop OpenSAF remove $lockfile_inprogress"
-		logger -t $osafprog "To forcefully start/stop OpenSAF remove $lockfile_inprogress"
-	else
-		touch "$lockfile_inprogress"
-		amfpid=`pidofproc -p $amfnd_pid $amfnd_bin`
-		echo -n "Stopping OpenSAF Services: "
-		if [ -n "$amfpid" ]; then
-			kill $amfpid
-			timeout=$TERMTIMEOUT
-			while [ $timeout -gt 0 ]; do
-				sleep 1
-				[ -d /proc/$amfpid ] || break
-				timeout=$((timeout-1))
-			done
-			[ -d /proc/$amfpid ] && RETVAL=1
-			if [ $RETVAL -eq 1 ]; then
-				logger -t $osafprog "amfnd has not yet exited, killing it forcibly."
-				kill -9 $amfpid 
-			fi
-		else
-			pkill -9 osaf* >/dev/null 2>&1
+	amfpid=`pidofproc -p $amfnd_pid $amfnd_bin`
+	echo -n "Stopping OpenSAF Services: "
+	if [ -n "$amfpid" ]; then
+		kill $amfpid
+		timeout=$TERMTIMEOUT
+		while [ $timeout -gt 0 ]; do
+			sleep 1
+			[ -d /proc/$amfpid ] || break
+			timeout=$((timeout-1))
+		done
+		[ -d /proc/$amfpid ] && RETVAL=1
+		if [ $RETVAL -eq 1 ]; then
+			logger -t $osafprog "amfnd has not yet exited, killing it forcibly."
+			kill -9 $amfpid
 		fi
+	else
+		pkill -9 osaf* >/dev/null 2>&1
+	fi
 
-		final_clean
+	final_clean
+	mutex_remove
 
-		rm -f "$lockfile_inprogress"
-
-		if [ $RETVAL -eq 0 ]; then
-			logger -t $osafprog "OpenSAF services successfully stopped"
-			log_success_msg
+	if [ $RETVAL -eq 0 ]; then
+		logger -t $osafprog "OpenSAF services successfully stopped"
+		log_success_msg
+	else
+		log_failure_msg
+		# If AMF fails to terminate its components,
+		# this system is out of control, reboot it now!
+		if [ $REBOOT_ON_FAIL_TIMEOUT -ne 0 ]; then
+			logger -t $osafprog "Stopping OpenSAF failed, rebooting..."
+			sleep $REBOOT_ON_FAIL_TIMEOUT
+			/sbin/shutdown -r now "OpenSAF termination failed (timeout)"
 		else
-			log_failure_msg
-			# If AMF fails to terminate its components,
-			# this system is out of control, reboot it now!
-			if [ $REBOOT_ON_FAIL_TIMEOUT -ne 0 ]; then
-				logger -t $osafprog "Stopping OpenSAF failed, rebooting..."
-				sleep $REBOOT_ON_FAIL_TIMEOUT
-				/sbin/shutdown -r now "OpenSAF termination failed (timeout)"
-			else
-				logger -t $osafprog "Stoping OpenSAF failed"
-			fi
+			logger -t $osafprog "Stoping OpenSAF failed"
 		fi
 	fi
 	return $RETVAL
