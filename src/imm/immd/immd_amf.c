@@ -250,6 +250,11 @@ static void immd_saf_csi_set_cb(SaInvocationT invocation,
 	}
 
 	if (role_change) {
+		if (new_haState == SA_AMF_HA_ACTIVE) {
+			/* Cleanup dead IMMND nodes during coldsync */
+			immd_immnd_info_tree_cleanup(cb, true);
+		}
+
 		if (was_fully_initialized == true) {
 			if ((rc = immd_mds_change_role(cb)) !=
 			    NCSCC_RC_SUCCESS) {
