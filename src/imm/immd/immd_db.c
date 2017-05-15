@@ -218,24 +218,29 @@ uint32_t immd_immnd_info_node_delete(IMMD_CB *cb,
   Arguments     : IMMD_CB *cb - IMMD Control Block.
   Return Values : None
 ****************************************************************************/
-void immd_immnd_info_tree_cleanup(IMMD_CB *cb)
+void immd_immnd_info_tree_cleanup(IMMD_CB *cb, bool dead_only)
 {
 	IMMD_IMMND_INFO_NODE *immnd_info_node;
-	NODE_ID key;
-
-	memset(&key, 0, sizeof(NODE_ID));
 
 	/* Get the First Node */
 	immnd_info_node = (IMMD_IMMND_INFO_NODE *)ncs_patricia_tree_getnext(
-	    &cb->immnd_tree, (uint8_t *)&key);
+	    &cb->immnd_tree, (uint8_t *)NULL);
 	while (immnd_info_node) {
-		key = m_NCS_NODE_ID_FROM_MDS_DEST(immnd_info_node->immnd_dest);
+		NODE_ID key = m_NCS_NODE_ID_FROM_MDS_DEST(
+				immnd_info_node->immnd_dest);
+		NODE_ID* key_pointer = &key;
 
-		immd_immnd_info_node_delete(cb, immnd_info_node);
+		if (!dead_only || !immnd_info_node->isUp) {
+			LOG_NO("Deleting IMMND dest:%" PRIu64,
+			       immnd_info_node->immnd_dest);
+			immd_immnd_info_node_delete(cb, immnd_info_node);
+			/* Reset iteration */
+			key_pointer = NULL;
+		}
 
 		immnd_info_node =
 		    (IMMD_IMMND_INFO_NODE *)ncs_patricia_tree_getnext(
-			&cb->immnd_tree, (uint8_t *)&key);
+			&cb->immnd_tree, (uint8_t *)key_pointer);
 	}
 
 	return;
@@ -253,7 +258,7 @@ void immd_immnd_info_tree_destroy(IMMD_CB *cb)
 		return;
 
 	/* cleanup the client tree */
-	immd_immnd_info_tree_cleanup(cb);
+	immd_immnd_info_tree_cleanup(cb, false);
 
 	/* destroy the tree */
 	ncs_patricia_tree_destroy(&cb->immnd_tree);

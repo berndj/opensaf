@@ -2966,6 +2966,9 @@ static uint32_t immd_evt_proc_rda_callback(IMMD_CB *cb, IMMD_EVT *evt)
 
 		LOG_NO("ACTIVE request");
 
+		/* Cleanup dead IMMND nodes during coldsync */
+		immd_immnd_info_tree_cleanup(cb, true);
+
 		if (was_fully_initialized == true) {
 			if ((rc = immd_mds_change_role(cb)) !=
 			    NCSCC_RC_SUCCESS) {

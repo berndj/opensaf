@@ -171,7 +171,7 @@ void immd_immnd_info_node_getnext(NCS_PATRICIA_TREE *immnd_tree, MDS_DEST *dest,
 uint32_t immd_immnd_info_node_delete(IMMD_CB *cb,
                                      IMMD_IMMND_INFO_NODE *immnd_info_node);
 
-void immd_immnd_info_tree_cleanup(IMMD_CB *cb);
+void immd_immnd_info_tree_cleanup(IMMD_CB *cb, bool dead_only);
 
 void immd_immnd_info_tree_destroy(IMMD_CB *cb);
 
