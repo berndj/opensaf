@@ -13804,6 +13804,7 @@ void ImmModel::discardNode(unsigned int deadNode, IdVector& cv, IdVector& gv,
   CcbVector::iterator i3;
   ConnVector implv;
   ConnVector::iterator i4;
+  ContinuationMap3::iterator ci3;
   TRACE_ENTER();
 
   if (sImmNodeState == IMM_NODE_W_AVAILABLE) {
@@ -13923,6 +13924,29 @@ void ImmModel::discardNode(unsigned int deadNode, IdVector& cv, IdVector& gv,
       osafassert((*i3)->mOriginatingConn == 0);  // Dead node can not be us!!
     }
   }
+
+  /* Discard Adm Impl continuation */
+  for (ci3 = sAdmImplContinuationMap.begin();
+       ci3 != sAdmImplContinuationMap.end();) {
+    if (m_NCS_NODE_ID_FROM_MDS_DEST(ci3->second.mReply_dest) == deadNode) {
+      TRACE_5("Discarding Adm Impl continuation %llu", ci3->first);
+      ci3 = sAdmImplContinuationMap.erase(ci3);
+    } else {
+      ++ci3;
+    }
+  }
+
+  /* Discard Search Impl continuation */
+  for (ci3 = sSearchImplContinuationMap.begin();
+       ci3 != sSearchImplContinuationMap.end();) {
+    if (m_NCS_NODE_ID_FROM_MDS_DEST(ci3->second.mReply_dest) == deadNode) {
+      TRACE_5("Discarding Search Impl continuation %llu", ci3->first);
+      ci3 = sSearchImplContinuationMap.erase(ci3);
+    } else {
+      ++ci3;
+    }
+  }
+
   TRACE_LEAVE();
 }
 
