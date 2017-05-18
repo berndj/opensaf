@@ -1013,6 +1013,8 @@ static uint32_t clms_mds_node_event(struct ncsmds_callback_info *mds_info)
 		 * AF_INET4 before sending it to the CLM clients.
 		 */
 		TRACE("Adding ipinformation to the ip list: %u", node_id);
+		TRACE("addr_family:%u", mds_info->info.node_evt.addr_family);
+		TRACE("ip_addr:%s", mds_info->info.node_evt.ip_addr);
 		node_id = mds_info->info.node_evt.node_id;
 		if ((ip = (IPLIST *)ncs_patricia_tree_get(
 			 &clms_cb->iplist, (uint8_t *)&node_id)) == NULL) {
@@ -1027,6 +1029,7 @@ static uint32_t clms_mds_node_event(struct ncsmds_callback_info *mds_info)
 				    1; /* For backward compatibility */
 				ip->addr.length = 0;
 			} else {
+				memset(&ip->addr, 0, sizeof(SaClmNodeAddressT));
 				if (mds_info->info.node_evt.addr_family ==
 				    AF_INET)
 					ip->addr.family = SA_CLM_AF_INET;
@@ -1035,7 +1038,8 @@ static uint32_t clms_mds_node_event(struct ncsmds_callback_info *mds_info)
 					ip->addr.family = SA_CLM_AF_INET6;
 				else
 					LOG_ER(
-					    "Unsupported address family from MDS: %u",
+					    "Unsupported address"
+                                             "family from MDS: %u",
 					    mds_info->info.node_evt
 						.addr_family);
 
@@ -1060,15 +1064,28 @@ static uint32_t clms_mds_node_event(struct ncsmds_callback_info *mds_info)
 				    1; /* For backward compatibility */
 				ip->addr.length = 0;
 			} else {
-				ip->addr.family =
-				    mds_info->info.node_evt.addr_family;
-				ip->addr.length =
-				    mds_info->info.node_evt.length;
-				if (ip->addr.length) {
-					memcpy(ip->addr.value,
-					       mds_info->info.node_evt.ip_addr,
-					       mds_info->info.node_evt.length);
-				}
+				memset(&ip->addr, 0, sizeof(SaClmNodeAddressT));
+				if (mds_info->info.node_evt.addr_family ==
+                                    AF_INET)
+                                        ip->addr.family = SA_CLM_AF_INET;
+                                else if (mds_info->info.node_evt.addr_family ==
+                                         AF_INET6)
+                                        ip->addr.family = SA_CLM_AF_INET6;
+                                else
+                                        LOG_ER(
+                                            "Unsupported address family"
+                                            " from MDS: %u",
+                                            mds_info->info.node_evt
+                                                .addr_family);
+
+                                ip->addr.length =
+                                    mds_info->info.node_evt.length;
+                                if (ip->addr.length) {
+                                        memcpy(ip->addr.value,
+                                               mds_info->info.node_evt.ip_addr,
+                                               mds_info->info.node_evt.length);
+                                }
+
 			}
 		}
 	}

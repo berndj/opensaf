@@ -668,6 +668,7 @@ uint32_t proc_node_up_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 
 	/* Update the node with ipaddress information */
 	if (ip->addr.length) {
+		memset(&node->node_addr, 0 , sizeof(SaClmNodeAddressT));
 		node->node_addr.family = ip->addr.family;
 		node->node_addr.length = ip->addr.length;
 		memcpy(node->node_addr.value, ip->addr.value, ip->addr.length);

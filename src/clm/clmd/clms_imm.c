@@ -697,16 +697,24 @@ void clms_admin_state_update_rattr(CLMS_CLUSTER_NODE *nd)
  */
 void clms_node_update_rattr(CLMS_CLUSTER_NODE *nd)
 {
-	SaImmAttrModificationT_2 attr_Mod[4];
+	SaImmAttrModificationT_2 attr_Mod[6];
 	SaAisErrorT rc;
+	SaImmAttrValueT address[1];
 	SaImmAttrValueT attrUpdateValue[] = {&nd->member};
 	SaImmAttrValueT attrUpdateValue1[] = {&nd->node_id};
 	SaImmAttrValueT attrUpdateValue2[] = {&nd->boot_time};
 	SaImmAttrValueT attrUpdateValue3[] = {&nd->init_view};
+	SaImmAttrValueT attrUpdateValue4[] = {&nd->node_addr.family};
+	address[0] = &nd->node_addr.value;
+	SaImmAttrValueT attrUpdateValue5[] = {address};
 
-	const SaImmAttrModificationT_2 *attrMods[] = {
-	    &attr_Mod[0], &attr_Mod[1], &attr_Mod[2], &attr_Mod[3], NULL};
+	uint32_t i = 0, size = (nd->node_addr.length == 0) ? 5 : 7;
+	const SaImmAttrModificationT_2 *attrMods[size];
 
+	for (i = 0; i < size-1; i++) {
+		attrMods[i] = &attr_Mod[i];
+	}
+	attrMods[i] = NULL;
 	CLMS_CLUSTER_NODE *node = NULL;
 
 	TRACE_ENTER();
@@ -744,6 +752,18 @@ void clms_node_update_rattr(CLMS_CLUSTER_NODE *nd)
 	attr_Mod[3].modAttr.attrValuesNumber = 1;
 	attr_Mod[3].modAttr.attrValueType = SA_IMM_ATTR_SAUINT64T;
 	attr_Mod[3].modAttr.attrValues = attrUpdateValue3;
+
+	attr_Mod[4].modType = SA_IMM_ATTR_VALUES_REPLACE;
+	attr_Mod[4].modAttr.attrName = "saClmNodeCurrAddressFamily";
+	attr_Mod[4].modAttr.attrValuesNumber = 1;
+	attr_Mod[4].modAttr.attrValueType = SA_IMM_ATTR_SAUINT32T;
+	attr_Mod[4].modAttr.attrValues = attrUpdateValue4;
+
+	attr_Mod[5].modType = SA_IMM_ATTR_VALUES_REPLACE;
+	attr_Mod[5].modAttr.attrName = "saClmNodeCurrAddress";
+	attr_Mod[5].modAttr.attrValuesNumber = 1;
+	attr_Mod[5].modAttr.attrValueType = SA_IMM_ATTR_SASTRINGT;
+	attr_Mod[5].modAttr.attrValues = attrUpdateValue5;
 
 	rc = saImmOiRtObjectUpdate_2(clms_cb->immOiHandle, &nd->node_name,
 				     attrMods);
