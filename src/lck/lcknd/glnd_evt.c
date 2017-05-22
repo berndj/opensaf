@@ -101,6 +101,7 @@ static uint32_t glnd_process_gla_resource_purge(GLND_CB *glnd_cb,
 						GLSV_GLND_EVT *evt);
 static uint32_t glnd_process_gla_client_info(GLND_CB *glnd_cb,
 					     GLSV_GLND_EVT *evt);
+static uint32_t glnd_process_gla_limit_get(GLND_CB *, GLSV_GLND_EVT *);
 static uint32_t glnd_process_glnd_lck_req(GLND_CB *glnd_cb, GLSV_GLND_EVT *evt);
 static uint32_t glnd_process_glnd_unlck_req(GLND_CB *glnd_cb,
 					    GLSV_GLND_EVT *evt);
@@ -186,7 +187,8 @@ const GLSV_GLND_EVT_HANDLER
 	glnd_process_tmr_nm_resource_unlock_req_timeout,
 	glnd_process_tmr_agent_info_timeout,
 	glnd_process_gld_non_master_status,
-	glnd_process_glnd_cb_dump};
+	glnd_process_glnd_cb_dump,
+  glnd_process_gla_limit_get};
 
 /****************************************************************************
  * Name          : glnd_evt_destroy
@@ -333,6 +335,7 @@ static void glnd_retrieve_info_from_evt(GLSV_GLND_EVT *evt, uint32_t *node,
 		*lck_id = evt->info.rsc_unlock_info.lockid;
 		break;
 	case GLSV_GLND_EVT_CLIENT_INFO:
+	case GLSV_GLND_EVT_LIMIT_GET:
 		break;
 
 	case GLSV_GLND_EVT_LCK_REQ:
@@ -857,6 +860,36 @@ static uint32_t glnd_process_gla_resource_open(GLND_CB *glnd_cb,
 		glnd_mds_msg_send_gld(glnd_cb, &gld_evt, glnd_cb->gld_mdest_id);
 
 	} else {
+    if (ncs_patricia_tree_size(&glnd_cb->glnd_res_tree) ==
+        GLND_RESOURCE_INFO_CKPT_MAX_SECTIONS) {
+      TRACE("maximum number of resources already created");
+			memset(&gla_evt, 0, sizeof(GLSV_GLA_EVT));
+
+			gla_evt.error = SA_AIS_ERR_NO_RESOURCES;
+			gla_evt.handle = rsc_info->client_handle_id;
+
+			if (rsc_info->call_type == GLSV_SYNC_CALL) {
+				gla_evt.type = GLSV_GLA_API_RESP_EVT;
+				gla_evt.info.gla_resp_info.type = GLSV_GLA_LOCK_RES_OPEN;
+				glnd_mds_msg_send_rsp_gla(glnd_cb,
+                                  &gla_evt,
+                                  rsc_info->agent_mds_dest,
+                                  &evt->mds_context);
+			} else {
+				gla_evt.type = GLSV_GLA_CALLBK_EVT;
+				gla_evt.info.gla_clbk_info.callback_type = GLSV_LOCK_RES_OPEN_CBK;
+				gla_evt.info.gla_clbk_info.resourceId = rsc_info->lcl_resource_id;
+				gla_evt.info.gla_clbk_info.params.res_open.invocation =
+          rsc_info->invocation;
+				gla_evt.info.gla_clbk_info.params.res_open.error =
+          SA_AIS_ERR_NO_RESOURCES;
+
+				glnd_mds_msg_send_gla(glnd_cb, &gla_evt, rsc_info->agent_mds_dest);
+			}
+
+			goto end;
+    }
+
 		/* create a local copy */
 		/* create the request node */
 		res_req_node = glnd_resource_req_node_add(
@@ -901,8 +934,40 @@ static uint32_t glnd_process_gla_resource_open(GLND_CB *glnd_cb,
 			memcpy(&gld_evt.info.rsc_open_info.rsc_name,
 			       &rsc_info->resource_name, sizeof(SaNameT));
 			gld_evt.info.rsc_open_info.flag = rsc_info->flag;
-			glnd_mds_msg_send_gld(glnd_cb, &gld_evt,
+			rc = glnd_mds_msg_send_gld(glnd_cb, &gld_evt,
 					      glnd_cb->gld_mdest_id);
+      if (rc != NCSCC_RC_SUCCESS) {
+        LOG_ER("failed to send rsc open to director: %i", rc);
+		    glnd_resource_req_node_del(glnd_cb,
+					   res_req_node->res_req_hdl_id);
+
+			  memset(&gla_evt, 0, sizeof(GLSV_GLA_EVT));
+
+			  gla_evt.error = SA_AIS_ERR_TRY_AGAIN;
+			  gla_evt.handle = rsc_info->client_handle_id;
+			  if (rsc_info->call_type == GLSV_SYNC_CALL) {
+				  gla_evt.type = GLSV_GLA_API_RESP_EVT;
+				  gla_evt.info.gla_resp_info.type =
+				      GLSV_GLA_LOCK_RES_OPEN;
+
+				  glnd_mds_msg_send_rsp_gla(
+				      glnd_cb, &gla_evt, rsc_info->agent_mds_dest,
+				      &evt->mds_context);
+			  } else {
+				  gla_evt.type = GLSV_GLA_CALLBK_EVT;
+				  gla_evt.info.gla_clbk_info.callback_type =
+				      GLSV_LOCK_RES_OPEN_CBK;
+				  gla_evt.info.gla_clbk_info.resourceId =
+				      rsc_info->lcl_resource_id;
+				  gla_evt.info.gla_clbk_info.params.res_open
+				      .invocation = rsc_info->invocation;
+				  gla_evt.info.gla_clbk_info.params.res_open
+				      .error = SA_AIS_ERR_TRY_AGAIN;
+
+				  glnd_mds_msg_send_gla(glnd_cb, &gla_evt,
+						        rsc_info->agent_mds_dest);
+			  }
+      }
 		}
 	}
 	rc = NCSCC_RC_SUCCESS;
@@ -968,6 +1033,69 @@ static uint32_t glnd_process_gla_client_info(GLND_CB *glnd_cb,
 end:
 	TRACE_LEAVE();
 	return rc;
+}
+
+/*****************************************************************************
+  PROCEDURE NAME : glnd_process_gla_limit_get
+
+  DESCRIPTION    :
+
+  ARGUMENTS      :
+
+
+  RETURNS       :
+
+*****************************************************************************/
+static uint32_t glnd_process_gla_limit_get(GLND_CB *glnd_cb, GLSV_GLND_EVT *evt)
+{
+  GLND_EVT_GLND_LIMIT_GET *limit_get =
+    (GLND_EVT_GLND_LIMIT_GET *) &evt->info.limit_get;
+  GLSV_GLA_EVT gla_evt;
+	uint32_t rc = NCSCC_RC_SUCCESS;
+	TRACE_ENTER();
+
+  do {
+	  GLND_CLIENT_INFO *client_info;
+
+    memset(&gla_evt, 0, sizeof(GLSV_GLA_EVT));
+    gla_evt.type = GLSV_GLA_API_RESP_EVT;
+    gla_evt.handle = limit_get->handle_id;
+    gla_evt.info.gla_resp_info.type = GLSV_GLA_LIMIT_GET;
+
+    client_info = glnd_client_node_find(glnd_cb, limit_get->handle_id);
+
+    if (!client_info) {
+      TRACE_2("limit get failed, can't find client");
+      gla_evt.error = SA_AIS_ERR_BAD_HANDLE;
+      break;
+    }
+
+    if (!glnd_cb->isClusterMember) {
+      TRACE_2("limit get failed, node is not cluster member");
+      gla_evt.error = SA_AIS_ERR_UNAVAILABLE;
+      break;
+    }
+
+    if (glnd_cb->node_state != GLND_OPERATIONAL_STATE ||
+        glnd_cb->gld_card_up != true) {
+      TRACE_2("limit get failed, glnd state %d", glnd_cb->node_state);
+      gla_evt.error = SA_AIS_ERR_TRY_AGAIN;
+      break;
+    }
+
+    /* XXX get this from gld? */
+    gla_evt.error = SA_AIS_OK;
+    gla_evt.info.gla_resp_info.param.limit_get.maxNumLocks =
+      GLND_RES_LOCK_INFO_CKPT_MAX_SECTIONS;
+  } while (false);
+
+  glnd_mds_msg_send_rsp_gla(glnd_cb,
+                            &gla_evt,
+                            limit_get->agent_mds_dest,
+                            &evt->mds_context);
+
+  TRACE_LEAVE();
+  return rc;
 }
 
 /*****************************************************************************
@@ -1310,6 +1438,36 @@ static uint32_t glnd_process_gla_resource_lock(GLND_CB *glnd_cb,
 		}
 		goto end;
 	}
+
+  if (glnd_cb->numLocks == GLND_RES_LOCK_INFO_CKPT_MAX_SECTIONS) {
+    SaAisErrorT noLocksErr = SA_AIS_OK;
+    SaLckLockStatusT lockStatus = SA_LCK_LOCK_NO_MORE;
+    TRACE("maximum number of locks already created: rejecting lock request");
+    if (m_GLA_VER_IS_AT_LEAST_B_3(client_info->version))
+      noLocksErr = SA_AIS_ERR_NO_RESOURCES;
+
+		if (rsc_lock_info->call_type == GLSV_SYNC_CALL) {
+		  m_GLND_RESOURCE_SYNC_LCK_GRANT_FILL(
+		      gla_evt, noLocksErr, 0, lockStatus,
+		      rsc_lock_info->client_handle_id);
+		  /* send the evt to GLA */
+		  glnd_mds_msg_send_rsp_gla(glnd_cb, &gla_evt,
+					    rsc_lock_info->agent_mds_dest,
+					    &evt->mds_context);
+	  } else {
+		  m_GLND_RESOURCE_ASYNC_LCK_GRANT_FILL(
+		      gla_evt, noLocksErr, 0, rsc_lock_info->lcl_lockid,
+		      rsc_lock_info->lock_type,
+		      rsc_lock_info->lcl_resource_id,
+		      rsc_lock_info->invocation, lockStatus,
+		      rsc_lock_info->client_handle_id);
+
+	  /* send the evt to GLA */
+			glnd_mds_msg_send_gla(glnd_cb, &gla_evt, rsc_lock_info->agent_mds_dest);
+		}
+
+    goto end;
+  }
 
 	lck_info.lcl_lockid = rsc_lock_info->lcl_lockid;
 	lck_info.call_type = rsc_lock_info->call_type;
@@ -1940,6 +2098,26 @@ static uint32_t glnd_process_glnd_lck_req(GLND_CB *glnd_cb, GLSV_GLND_EVT *evt)
     goto end;
 	}
 
+  if (glnd_cb->numLocks == GLND_RES_LOCK_INFO_CKPT_MAX_SECTIONS) {
+    TRACE("maximum number of locks already created: rejecting lock request");
+		/* send the status to the non-master glnd */
+		m_GLND_RESOURCE_NODE_LCK_INFO_FILL(
+		    glnd_evt, GLSV_GLND_EVT_LCK_RSP, res_node->resource_id,
+		    lck_req->lcl_resource_id, lck_req->client_handle_id,
+		    lck_req->lockid, lck_req->lock_type, lck_req->lockFlags,
+        SA_LCK_LOCK_NO_MORE, 0, 0, SA_AIS_ERR_NO_RESOURCES,
+        lck_req->lcl_lockid, 0);
+
+		glnd_evt.info.node_lck_info.glnd_mds_dest =
+		    glnd_cb->glnd_mdest_id;
+
+		/* send the response evt to GLND */
+		glnd_mds_msg_send_glnd(glnd_cb, &glnd_evt,
+				       lck_req->glnd_mds_dest);
+
+    goto end;
+  }
+
 	if (res_node->status == GLND_RESOURCE_NOT_INITIALISED) {
 		/* sleep for relection time and resend the event */
 		uint32_t tm = GLSV_GLND_MASTER_REELECTION_WAIT_TIME / 10000000;
@@ -2257,6 +2435,15 @@ static uint32_t glnd_process_glnd_lck_rsp(GLND_CB *glnd_cb, GLSV_GLND_EVT *evt)
 		rc = NCSCC_RC_SUCCESS;
 		goto end;
 	}
+
+	if (lck_rsp->error == SA_AIS_ERR_NO_RESOURCES) {
+    if (m_GLA_VER_IS_AT_LEAST_B_3(client_info->version)) {
+      return_val = lck_rsp->error;
+    } else {
+      return_val = SA_AIS_OK;
+      lck_list_info->lock_info.lockStatus = SA_LCK_LOCK_NO_MORE;
+    }
+  }
 
 	if (lck_rsp->lockStatus == SA_LCK_LOCK_GRANTED ||
 	    lck_rsp->lockStatus == SA_LCK_LOCK_NOT_QUEUED ||

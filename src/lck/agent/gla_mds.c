@@ -1473,6 +1473,19 @@ static uint32_t glsv_gla_dec_api_resp_evt(NCS_UBAID *uba,
 		ncs_dec_skip_space(uba, size);
 		break;
 
+  case GLSV_GLA_LIMIT_GET:
+    size = 8;
+    p8 = ncs_dec_flatten_space(uba, local_data, size);
+    if (!p8) {
+      TRACE_2("GLA mds dec failure");
+      goto end;
+    }
+
+    evt->param.limit_get.maxNumLocks = ncs_decode_64bit(&p8);
+
+    ncs_dec_skip_space(uba, size);
+    break;
+
 	default:
 		break;
 	}

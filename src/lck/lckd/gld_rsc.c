@@ -146,6 +146,7 @@ GLSV_GLD_RSC_INFO *gld_add_rsc_info(GLSV_GLD_CB *gld_cb, SaNameT *rsc_name,
 		    NCSCC_RC_SUCCESS) {
 			LOG_ER("Patricia tree del failed");
 			m_MMGR_FREE_GLSV_GLD_RSC_MAP_INFO(rsc_map_info);
+			*error = SA_AIS_ERR_LIBRARY;
 			return NULL;
 		}
 		m_MMGR_FREE_GLSV_GLD_RSC_INFO(rsc_info);

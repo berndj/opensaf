@@ -76,9 +76,6 @@ GLND_RES_LOCK_LIST_INFO *glnd_resource_local_lock_req_find(
 void glnd_resource_lock_req_delete(GLND_RESOURCE_INFO *res_info,
                                    GLND_RES_LOCK_LIST_INFO *lck_list_info);
 
-void glnd_resource_lock_req_destroy(GLND_RESOURCE_INFO *res_info,
-                                    GLND_RES_LOCK_LIST_INFO *lck_list_info);
-
 GLND_RES_LOCK_LIST_INFO *glnd_resource_master_process_lock_req(
     GLND_CB *cb, GLND_RESOURCE_INFO *res_info, GLSV_LOCK_REQ_INFO lock_info,
     MDS_DEST req_node_mds_dest, SaLckResourceIdT lcl_resource_id,

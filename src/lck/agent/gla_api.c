@@ -1811,3 +1811,101 @@ end:
 	TRACE_LEAVE2("'%s'", (rc == SA_AIS_OK) ? "SUCCESS" : "FAILURE");
 	return rc;
 }
+
+/****************************************************************************
+  Name          : saLckLimitGet
+
+  Description   : This function obtains the current implementation specific
+                  limit value of the lock service for the following:
+
+                  - max number of granted or queued locks in the cluster
+
+  Arguments     : lckHandle   - LCK handle
+                  limitId     - SaLckLimitIdT enum
+                  *limitValue - output value
+
+  Return Values : Refer to SAI-AIS specification for various return values.
+
+  Notes         : None.
+******************************************************************************/
+SaAisErrorT saLckLimitGet(SaLckHandleT lckHandle,
+                          SaLckLimitIdT limitId,
+                          SaLimitValueT *limitValue)
+{
+  SaAisErrorT rc = SA_AIS_OK;
+  GLA_CB *gla_cb = 0;
+
+  TRACE_ENTER();
+
+  do {
+    GLA_CLIENT_INFO *client_info = NULL;
+    uint32_t mds_rc = NCSCC_RC_SUCCESS;
+    GLSV_GLND_EVT limit_get_evt;
+    GLSV_GLA_EVT *out_evt = NULL;
+
+    gla_cb = (GLA_CB *)m_GLSV_GLA_RETRIEVE_GLA_CB;
+    if (!gla_cb) {
+      rc = SA_AIS_ERR_BAD_HANDLE;
+      TRACE_2("GLA cb retrieval failed");
+      break;
+    }
+
+    client_info = gla_client_tree_find_and_add(gla_cb, lckHandle, false);
+    if (!client_info) {
+      rc = SA_AIS_ERR_BAD_HANDLE;
+      break;
+    }
+
+    if (m_GLA_VER_IS_AT_LEAST_B_3(client_info->version)) {
+      if (!gla_cb->isClusterMember || client_info->isStale) {
+        rc = SA_AIS_ERR_UNAVAILABLE;
+        break;
+      }
+    } else {
+      rc = SA_AIS_ERR_VERSION;
+      TRACE_2("This function is only supported in the B.03.01 version");
+      break;
+    }
+
+    if (limitId != SA_LCK_MAX_NUM_LOCKS_ID || !limitValue) {
+      rc = SA_AIS_ERR_INVALID_PARAM;
+      break;
+    }
+
+    /* send a message to lcknd to get the limits */
+    memset(&limit_get_evt, 0, sizeof(GLSV_GLND_EVT));
+    limit_get_evt.type = GLSV_GLND_EVT_LIMIT_GET;
+    limit_get_evt.info.limit_get.agent_mds_dest = gla_cb->gla_mds_dest;
+    limit_get_evt.info.limit_get.handle_id = lckHandle;
+
+    mds_rc = gla_mds_msg_sync_send(gla_cb,
+                                   &limit_get_evt,
+                                   &out_evt,
+                                   GLA_API_RESP_TIME);
+
+    if (mds_rc == NCSCC_RC_REQ_TIMOUT) {
+      rc = SA_AIS_ERR_TIMEOUT;
+      break;
+    } else if (mds_rc != NCSCC_RC_SUCCESS) {
+      TRACE_2("gla_mds_msg_sync_send returned: %i", mds_rc);
+      rc = SA_AIS_ERR_LIBRARY;
+      break;
+    }
+
+    rc = out_evt->error;
+
+    if (rc == SA_AIS_OK) {
+      limitValue->uint64Value =
+        out_evt->info.gla_resp_info.param.limit_get.maxNumLocks;
+    }
+
+    if (out_evt)
+      m_MMGR_FREE_GLA_EVT(out_evt);
+  } while (false);
+
+  if (gla_cb)
+    m_GLSV_GLA_GIVEUP_GLA_CB;
+
+  TRACE_LEAVE2("%i", rc);
+  return rc;
+}

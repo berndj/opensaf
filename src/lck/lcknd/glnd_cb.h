@@ -185,6 +185,7 @@ typedef struct glnd_cb_tag {
   bool isClusterMember;
 
   /* GLND data */
+  uint32_t numLocks;
   NCS_PATRICIA_TREE glnd_client_tree; /* GLND_CLIENT_INFO - node */
   NCS_PATRICIA_TREE glnd_res_tree;    /* GLND_RESOURCE_INFO - node */
   NCS_PATRICIA_TREE glnd_agent_tree;  /* GLND_AGENT_INFO - node */

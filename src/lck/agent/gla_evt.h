@@ -48,7 +48,8 @@ typedef enum glsv_gla_api_resp_evt_type_tag {
   GLSV_GLA_NODE_OPERATIONAL,
   GLSV_GLA_LOCK_PURGE,
   GLSV_GLA_NODE_LEFT,
-  GLSV_GLA_NODE_JOINED
+  GLSV_GLA_NODE_JOINED,
+  GLSV_GLA_LIMIT_GET
 } GLSV_GLA_API_RESP_EVT_TYPE;
 
 typedef struct glsv_gla_evt_lock_initialise_param_tag {
@@ -76,6 +77,10 @@ typedef struct glsv_gla_evt_lock_sync_unlock_param_tag {
   uint32_t dummy;
 } GLSV_GLA_EVT_LOCK_SYNC_UNLOCK_PARAM;
 
+typedef struct glsv_gla_evt_limit_get_param_tag {
+  SaUint64T maxNumLocks;
+} GLSV_GLA_EVT_LIMIT_GET_PARAM;
+
 /* API Resp param definition */
 typedef struct glsv_gla_api_resp_info {
   uint32_t prc_id;                 /* process id */
@@ -87,6 +92,7 @@ typedef struct glsv_gla_api_resp_info {
     GLSV_GLA_EVT_LOCK_RES_CLOSE_PARAM res_close;
     GLSV_GLA_EVT_LOCK_SYNC_LOCK_PARAM sync_lock;
     GLSV_GLA_EVT_LOCK_SYNC_UNLOCK_PARAM sync_unlock;
+    GLSV_GLA_EVT_LIMIT_GET_PARAM limit_get;
   } param;
 } GLSV_GLA_API_RESP_INFO;
 

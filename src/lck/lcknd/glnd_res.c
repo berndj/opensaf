@@ -36,6 +36,12 @@
 static void glnd_master_process_lock_initiate_waitercallbk(
     GLND_CB * cb, GLND_RESOURCE_INFO * res_info, GLSV_LOCK_REQ_INFO lock_info,
     SaLckLockIdT lockid);
+
+static void glnd_resource_lock_req_destroy(
+  GLND_CB *cb,
+  GLND_RESOURCE_INFO *,
+	GLND_RES_LOCK_LIST_INFO *);
+
 static bool
 glnd_resource_grant_list_exclusive_locks(GLND_RESOURCE_INFO *res_info);
 
@@ -559,7 +565,7 @@ void glnd_resource_lock_req_delete(GLND_RESOURCE_INFO *res_info,
 	    lck_list_info->lock_info.lockStatus != SA_LCK_LOCK_ORPHANED)
 		glnd_lck_shm_section_invalidate(glnd_cb, lck_list_info);
 
-	glnd_resource_lock_req_destroy(res_info, lck_list_info);
+	glnd_resource_lock_req_destroy(glnd_cb, res_info, lck_list_info);
 
 	/* Giveup the handle */
 	m_GLND_GIVEUP_GLND_CB;
@@ -578,8 +584,10 @@ void glnd_resource_lock_req_delete(GLND_RESOURCE_INFO *res_info,
 
   NOTES         : None
 *****************************************************************************/
-void glnd_resource_lock_req_destroy(GLND_RESOURCE_INFO *res_info,
-				    GLND_RES_LOCK_LIST_INFO *lck_list_info)
+static void glnd_resource_lock_req_destroy(
+  GLND_CB *cb,
+  GLND_RESOURCE_INFO *res_info,
+	GLND_RES_LOCK_LIST_INFO *lck_list_info)
 {
 	if (res_info->lcl_lck_req_info == lck_list_info) {
 		res_info->lcl_lck_req_info = lck_list_info->next;
@@ -610,6 +618,7 @@ void glnd_resource_lock_req_destroy(GLND_RESOURCE_INFO *res_info,
 	      (uint32_t)res_info->resource_id,
 	      (uint32_t)lck_list_info->lock_info.lockid);
 	m_MMGR_FREE_GLND_RES_LOCK_LIST_INFO(lck_list_info);
+  cb->numLocks--;
 	return;
 }
 
@@ -730,6 +739,9 @@ GLND_RES_LOCK_LIST_INFO *glnd_resource_master_process_lock_req(
 		    lcl_resource_id, lcl_lock_id, strerror(errno));
 		assert(0);
 	}
+
+  cb->numLocks++;
+
 	memset(lck_list_info, 0, sizeof(GLND_RES_LOCK_LIST_INFO));
 	lck_list_info->lck_info_hdl_id =
 	    ncshm_create_hdl((uint8_t)cb->pool_id, NCS_SERVICE_ID_GLND,
@@ -1099,6 +1111,8 @@ GLND_RES_LOCK_LIST_INFO *glnd_resource_non_master_lock_req(
 		    lcl_resource_id, lcl_lock_id, strerror(errno));
 		assert(0);
 	}
+  cb->numLocks++;
+
 	memset(lck_list_info, 0, sizeof(GLND_RES_LOCK_LIST_INFO));
 	lck_list_info->lock_info = lock_info;
 	lck_list_info->lcl_resource_id = lcl_resource_id;
@@ -1973,6 +1987,8 @@ void glnd_resource_master_process_resend_lock_req(
 		       strerror(errno));
 		assert(0);
 	}
+
+  glnd_cb->numLocks++;
 	TRACE_ENTER();
 
 	memset(lck_list_info, 0, sizeof(GLND_RES_LOCK_LIST_INFO));

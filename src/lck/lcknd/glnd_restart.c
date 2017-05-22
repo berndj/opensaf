@@ -221,6 +221,9 @@ static uint32_t glnd_restart_add_res_lock_to_resource_tree(
 		       strerror(errno));
 		assert(0);
 	}
+
+  glnd_cb->numLocks++;
+
 	node_id = m_NCS_NODE_ID_FROM_MDS_DEST(
 	    restart_res_lock_list_info->req_mdest_id);
 
@@ -362,8 +365,10 @@ static uint32_t glnd_restart_add_res_lock_to_resource_tree(
 			glnd_client_node_resource_lock_req_add(
 			    client_info, res_info, lck_list_info);
 		}
-	} else
+	} else {
 		m_MMGR_FREE_GLND_RES_LOCK_LIST_INFO(lck_list_info);
+    glnd_cb->numLocks--;
+  }
 
 	return NCSCC_RC_SUCCESS;
 }

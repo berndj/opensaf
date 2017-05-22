@@ -67,6 +67,8 @@ typedef enum glsv_glnd_evt_type {
   /* Debug Events */
   GLSV_GLND_EVT_CB_DUMP,
 
+  GLSV_GLND_EVT_LIMIT_GET,
+
   GLSV_GLND_EVT_MAX,
 
 } GLSV_GLND_EVT_TYPE;
@@ -227,6 +229,11 @@ typedef struct glnd_evt_glnd_down_tag {
   uint32_t status;
 } GLND_EVT_GLND_NON_MASTER_STATUS;
 
+typedef struct glnd_evt_limit_get_tag {
+  MDS_DEST agent_mds_dest;
+  SaLckHandleT handle_id;
+} GLND_EVT_GLND_LIMIT_GET;
+
 /*****************************************************************************
  * GLND event data structure.
  *****************************************************************************/
@@ -265,6 +272,7 @@ typedef struct glsv_glnd_evt {
     GLND_EVT_TMR tmr;    /* All the timer events */
     GLND_EVT_GLND_NON_MASTER_STATUS
         non_master_info; /* GLSV_GLND_EVT_NON_MASTER_INFO */
+    GLND_EVT_GLND_LIMIT_GET limit_get;
   } info;
   MDS_SYNC_SND_CTXT mds_context;
   uint32_t shm_index;
