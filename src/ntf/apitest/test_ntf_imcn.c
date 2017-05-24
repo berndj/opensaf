@@ -1625,6 +1625,38 @@ static void delete_rt_test_object(const char *dn)
 	safassert(saImmOiFinalize(immOiHnd), SA_AIS_OK);
 }
 
+static int isLongDnsAllowed()
+{
+	SaImmHandleT immHandle;
+	SaImmAccessorHandleT accessorHandle;
+	SaVersionT immVersion = {'A', 2, 15};
+	SaImmAttrNameT attrName = "longDnsAllowed";
+	SaImmAttrNameT attrNames[2] = {attrName, NULL};
+	SaImmAttrValuesT_2 **attributes = NULL;
+	SaConstStringT immObjectName = "opensafImm=opensafImm,safApp=safImmService";
+	int longDnsAllowed = 0;
+	int i;
+
+	safassert(saImmOmInitialize(&immHandle, NULL, &immVersion), SA_AIS_OK);
+	safassert(saImmOmAccessorInitialize(immHandle, &accessorHandle), SA_AIS_OK);
+	safassert(saImmOmAccessorGet_o3(accessorHandle, immObjectName,
+				attrNames, &attributes), SA_AIS_OK);
+
+	for (i = 0; attributes[i]; ++i) {
+		if (!strcmp(attrName, attributes[i]->attrName) &&
+				attributes[i]->attrValuesNumber == 1 &&
+				attributes[i]->attrValueType == SA_IMM_ATTR_SAUINT32T) {
+			longDnsAllowed = *(int *)attributes[i]->attrValues[0];
+			break;
+		}
+	}
+
+	saImmOmAccessorFinalize(accessorHandle);
+	saImmOmFinalize(immHandle);
+
+	return longDnsAllowed;
+}
+
 /**
  * Create a runtime test object and verify correctness of generated
  * notification.
@@ -6289,23 +6321,23 @@ __attribute__((constructor)) static void ntf_imcn_constructor(void)
 	test_case_add(34, objectDeleteTest_3404,
 		      "DELETE, runtime (OsafNtfCmTestRT1) object");
 
-	test_suite_add(35, "CM notification test for extended name attribute");
-	test_case_add(
-	    35, objectCreateTest_3501,
-	    "CREATE, runtime (OsafNtfCmTestRT) object, extended name attribute");
-	test_case_add(35, objectModifyTest_3502,
-		      "runtime, attr ch, REPLACE (EXTENDED NAME, ANY)");
-	test_case_add(35, objectModifyTest_3503,
-		      "runtime, attr ch, ADD (EXTENDED NAME)");
-	test_case_add(35, objectDeleteTest_19,
-		      "DELETE, runtime (OsafNtfCmTestRT) object");
-	test_case_add(
-	    35, objectCreateTest_3505,
-	    "CREATE, config (OsafNtfCmTestCFG) object, extended name attribute");
-	test_case_add(35, objectModifyTest_3506,
-		      "config, attr ch, REPLACE (EXTENDED NAME, ANY)");
-	test_case_add(35, objectModifyTest_3507,
-		      "config, attr ch, ADD (EXTENDED NAME)");
-	test_case_add(35, objectDeleteTest_40,
-		      "DELETE, config (OsafNtfCmTestCFG) object");
+	if (isLongDnsAllowed()) {
+		test_suite_add(35, "CM notification test for extended name attribute");
+		test_case_add(35, objectCreateTest_3501,
+				"CREATE, runtime (OsafNtfCmTestRT) object, extended name attribute");
+		test_case_add(35, objectModifyTest_3502,
+				"runtime, attr ch, REPLACE (EXTENDED NAME, ANY)");
+		test_case_add(35, objectModifyTest_3503,
+				"runtime, attr ch, ADD (EXTENDED NAME)");
+		test_case_add(35, objectDeleteTest_19,
+				"DELETE, runtime (OsafNtfCmTestRT) object");
+		test_case_add(35, objectCreateTest_3505,
+				"CREATE, config (OsafNtfCmTestCFG) object, extended name attribute");
+		test_case_add(35, objectModifyTest_3506,
+				"config, attr ch, REPLACE (EXTENDED NAME, ANY)");
+		test_case_add(35, objectModifyTest_3507,
+				"config, attr ch, ADD (EXTENDED NAME)");
+		test_case_add(35, objectDeleteTest_40,
+				"DELETE, config (OsafNtfCmTestCFG) object");
+	}
 }
