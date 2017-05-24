@@ -262,6 +262,7 @@ npisu_done:
       AVD_AVND *node = su->su_on_node;
       if ((node->admin_node_pend_cbk.invocation != 0) ||
           ((node->admin_ng != nullptr) &&
+           (su->sg_of_su->sg_ncs_spec == false) &&
            (node->admin_ng->admin_ng_pend_cbk.invocation != 0))) {
         node->su_cnt_admin_oper++;
         TRACE("node:'%s', su_cnt_admin_oper:%u", node->name.c_str(),
