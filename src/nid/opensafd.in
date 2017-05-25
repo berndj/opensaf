@@ -90,7 +90,7 @@ check_env() {
 			getent passwd $OPENSAF_USER > /dev/null && chown $OPENSAF_USER $directory
 		fi
 	done
-
+	rm -f $pkgpiddir/*
 	rm -f $pkglogdir/nid.log
 }
 

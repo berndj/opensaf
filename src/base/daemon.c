@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2010 The OpenSAF Foundation
+ * (C) Copyright 2017 Ericsson AB - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -44,6 +45,7 @@
 #include "base/ncsgl_defs.h"
 #include "base/os_defs.h"
 #include "base/osaf_secutil.h"
+#include "base/osaf_time.h"
 
 #include <sys/types.h>
 #include <time.h>
@@ -87,42 +89,64 @@ static void __print_usage(const char *progname, FILE *stream, int exit_code)
 static int __create_pidfile(const char *pidfile)
 {
 	FILE *file = NULL;
-	int fd, pid, rc = 0;
-
-	/* open the file and associate a stream with it */
-	if (((fd = open(pidfile, O_RDWR | O_CREAT, 0644)) == -1) ||
-	    ((file = fdopen(fd, "r+")) == NULL)) {
-		syslog(LOG_ERR, "open failed, pidfile=%s, errno=%s", pidfile,
-		       strerror(errno));
-		return -1;
-	}
-
-	/* Lock the file */
-	if (flock(fd, LOCK_EX | LOCK_NB) == -1) {
-		syslog(LOG_ERR, "flock failed, pidfile=%s, errno=%s", pidfile,
-		       strerror(errno));
-		fclose(file);
-		return -1;
-	}
+	int fd, rc = 0;
+	char pidfiletmp[NAME_MAX] = {0};
+	pid_t pid;
 
 	pid = getpid();
+	snprintf(pidfiletmp, NAME_MAX, "%s.%u.tmp", pidfile, pid);
+
+	/* open the file and associate a stream with it */
+	if (((fd = open(pidfiletmp, O_RDWR | O_CREAT, 0644)) == -1) ||
+			((file = fdopen(fd, "r+")) == NULL)) {
+		syslog(LOG_ERR, "open failed, pidfiletmp=%s, errno=%s",
+			pidfiletmp, strerror(errno));
+		return -1;
+	}
+
 	if (!fprintf(file, "%d\n", pid)) {
-		syslog(LOG_ERR, "fprintf failed, pidfile=%s, errno=%s", pidfile,
-		       strerror(errno));
+		syslog(LOG_ERR, "fprintf failed, pidfiletmp=%s, errno=%s",
+			pidfiletmp, strerror(errno));
 		fclose(file);
+
 		return -1;
 	}
 	fflush(file);
-
-	if (flock(fd, LOCK_UN) == -1) {
-		syslog(LOG_ERR, "flock failed, pidfile=%s, errno=%s", pidfile,
-		       strerror(errno));
-		fclose(file);
-		return -1;
-	}
 	fclose(file);
 
-	return rc;
+	int retry_cnt = 0;
+	while (link(pidfiletmp, pidfile) != 0) {
+		/* don't expect old pid file pre-existed and being used because
+		 * we removed all before starting OpenSAF (see opensafd script),
+		 * but do 5 retries to unlink and link again.
+		 */
+		if (errno == EEXIST && retry_cnt == 0) {
+			do {
+				rc = unlink(pidfile);
+				if (retry_cnt > 0) {
+					osaf_nanosleep(&kHundredMilliseconds);
+				}
+			} while ((rc != 0) && (++retry_cnt < 5)
+					&& (errno == EBUSY));
+			if (rc != 0) {
+				syslog(LOG_ERR, "unlink failed, pidfile=%s, "
+					"error:%s", pidfile, strerror(errno));
+				return -1;
+			}
+		} else {
+			syslog(LOG_ERR, "link failed, old=%s new=%s, error:%s",
+				pidfiletmp, pidfile, strerror(errno));
+			return -1;
+		}
+	}
+
+	if (unlink(pidfiletmp) != 0) {
+		syslog(LOG_ERR, "unlink failed, pidfiletmp=%s, error:%s",
+			pidfiletmp, strerror(errno));
+		return -1;
+	}
+
+	return 0;
 }
 
 static void create_fifofile(const char *fifofile)
@@ -509,6 +533,7 @@ void daemon_exit(void)
 
 	/* Lets remove any such file if it already exists */
 	unlink(fifo_file);
+	unlink(__pidfile);
 
 	if (__gcov_flush) {
 		__gcov_flush();
