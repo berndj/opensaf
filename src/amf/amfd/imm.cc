@@ -1894,7 +1894,7 @@ void avd_saImmOiRtObjectCreate_sync(const std::string &className,
     rc = saImmOiRtObjectCreate_2(avd_cb->immOiHandle,
         const_cast<SaImmClassNameT>(className.c_str()),
         parent_name, attrValues);
-    if (rc != SA_AIS_OK) {
+    if (rc != SA_AIS_OK && rc != SA_AIS_ERR_EXIST) {
       LOG_WA("saImmOiRtObjectCreate_2 of className:'%s', parentName:'%s',"
           " failed with %u", className.c_str(), parentName.c_str(), rc);
     }
@@ -1947,7 +1947,7 @@ void avd_saImmOiRtObjectDelete_sync(const std::string &dn) {
 
   if (isImmReady == true) {
     rc = saImmOiRtObjectDelete_o3(avd_cb->immOiHandle, dn.c_str());
-    if (rc != SA_AIS_OK) {
+    if (rc != SA_AIS_OK  && rc != SA_AIS_ERR_NOT_EXIST) {
       LOG_WA("saImmOiRtObjectDelete_o3 of '%s' failed with %u", dn.c_str(), rc);
     }
   }
