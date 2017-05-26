@@ -1528,6 +1528,7 @@ fi
 %{_bindir}/logtest
 %{_bindir}/saflogtest
 %{_bindir}/logtestfr
+%{_bindir}/msgtest
 %{_bindir}/ntftest
 %{_bindir}/ntf_search_criteria_test.sh
 %{_bindir}/clmtest
