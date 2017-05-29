@@ -1844,6 +1844,7 @@ static uint32_t immnd_evt_proc_search_next(IMMND_CB *cb, IMMND_EVT *evt,
 			/*Fetch client node for OI ! */
 			immnd_client_node_get(cb, implHandle, &oi_cl_node);
 			if (oi_cl_node == NULL || oi_cl_node->mIsStale) {
+				immModel_clearLastResult(sn->searchOp);
 				LOG_WA(
 				    "ERR_NO_RESOURCES: SearchNext: Implementer died during fetch of pure RTA");
 				error = SA_AIS_ERR_NO_RESOURCES;
@@ -1856,6 +1857,7 @@ static uint32_t immnd_evt_proc_search_next(IMMND_CB *cb, IMMND_EVT *evt,
 					cb, NCSMDS_SVC_ID_IMMA_OI,
 					oi_cl_node->agent_mds_dest,
 					&send_evt) != NCSCC_RC_SUCCESS) {
+					immModel_clearLastResult(sn->searchOp);
 					LOG_WA(
 					    "ERR_NO_RESOURCES: SearchNext - Agent upcall over MDS for rtUpdate failed");
 					error = SA_AIS_ERR_NO_RESOURCES;
@@ -1884,6 +1886,7 @@ static uint32_t immnd_evt_proc_search_next(IMMND_CB *cb, IMMND_EVT *evt,
 			rc = immnd_mds_msg_send(cb, NCSMDS_SVC_ID_IMMND,
 						implDest, &send_evt);
 			if (rc != NCSCC_RC_SUCCESS) {
+				immModel_clearLastResult(sn->searchOp);
 				LOG_ER(
 				    "ERR_NO_RESOURCES: SearchNext - Problem in sending to peer IMMND over MDS. Aborting searchNext.");
 				error = SA_AIS_ERR_NO_RESOURCES;
