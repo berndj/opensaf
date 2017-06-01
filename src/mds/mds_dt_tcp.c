@@ -104,6 +104,7 @@ uint32_t mds_mdtm_init_tcp(NODE_ID nodeid, uint32_t *mds_tcp_ref)
 	mdtm_num_subscriptions = 0;
 	mdtm_handle = 0;
 	mdtm_global_frag_num_tcp = 0;
+	*mds_tcp_ref = 0;
 
 	memset(&server_addr_un, 0, sizeof(struct sockaddr_un));
 	memset(&dhserver_addr_un, 0, sizeof(struct sockaddr_un));

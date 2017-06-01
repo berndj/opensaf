@@ -182,6 +182,7 @@ uint32_t mdtm_tipc_init(NODE_ID nodeid, uint32_t *mds_tipc_ref)
 	socklen_t sz = sizeof(addr);
 
 	memset(&tipc_cb, 0, sizeof(tipc_cb));
+	*mds_tipc_ref = 0;
 
 	/* Added to assist the shutdown bug */
 	mdtm_ref_hdl_list_hdr = NULL;
