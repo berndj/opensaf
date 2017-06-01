@@ -37,11 +37,15 @@ void get_adest_details(MDS_DEST adest, char *adest_details)
 	char *token, *saveptr;
 	struct stat s;
 	uint32_t process_id = 0;
-	SlotSubslotId slot_subslot_id;
+	SlotSubslotId slot_subslot_id = 0;
 	char pid_path[1024];
 	char *pid_name = NULL;
 	char process_name[MDS_MAX_PROCESS_NAME_LEN];
 	bool remote = false;
+
+	memset(adest_details, 0, MDS_MAX_PROCESS_NAME_LEN);
+	memset(process_name, 0, MDS_MAX_PROCESS_NAME_LEN);
+	memset(pid_path, 0, 1024);
 
 	slot_subslot_id =
 	    GetSlotSubslotIdFromNodeId(m_NCS_NODE_ID_FROM_MDS_DEST(adest));
@@ -139,7 +143,7 @@ void get_subtn_adest_details(MDS_PWE_HDL pwe_hdl, MDS_SVC_ID svc_id,
 			     MDS_DEST adest, char *adest_details)
 {
 	uint32_t process_id = 0;
-	SlotSubslotId slot_subslot_id;
+	SlotSubslotId slot_subslot_id = 0;
 	char process_name[MDS_MAX_PROCESS_NAME_LEN];
 	bool remote = false;
 	MDS_SVC_INFO *svc_info = NULL;
@@ -147,6 +151,9 @@ void get_subtn_adest_details(MDS_PWE_HDL pwe_hdl, MDS_SVC_ID svc_id,
 	char *token, *saveptr;
 	char *pid_name = NULL;
 	struct stat s;
+
+	memset(process_name, 0, MDS_MAX_PROCESS_NAME_LEN);
+	memset(pid_path, 0, 1024);
 
 	slot_subslot_id =
 	    GetSlotSubslotIdFromNodeId(m_NCS_NODE_ID_FROM_MDS_DEST(adest));
@@ -2404,6 +2411,7 @@ uint32_t mds_subtn_res_tbl_get(MDS_SVC_HDL svc_hdl, MDS_SVC_ID subscr_svc_id,
 	if (subtn_res_info == NULL) {
 		/* Subscription result entry doesn't exist for active result */
 		m_MDS_LOG_DBG("MDS:DB: Subscription Result not present");
+		*adest = 0;
 		m_MDS_LEAVE();
 		return NCSCC_RC_FAILURE;
 	} else {

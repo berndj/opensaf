@@ -1778,7 +1778,7 @@ uint32_t mds_mcm_svc_up(PW_ENV_ID pwe_id, MDS_SVC_ID svc_id, V_DEST_RL role,
 	uint32_t status = NCSCC_RC_SUCCESS;
 	NCSMDS_SCOPE_TYPE local_subtn_scope;
 	MDS_VIEW local_subtn_view;
-	MDS_DEST active_adest;
+	MDS_DEST active_adest = 0;
 	V_DEST_RL dest_role;
 	bool tmr_running;
 	NCSMDS_CALLBACK_INFO cbinfo;
@@ -1964,6 +1964,7 @@ uint32_t mds_mcm_svc_up(PW_ENV_ID pwe_id, MDS_SVC_ID svc_id, V_DEST_RL role,
 								   present */
 						char to_adest_details
 						    [MDS_MAX_PROCESS_NAME_LEN];
+						memset(to_adest_details, 0, MDS_MAX_PROCESS_NAME_LEN);
 						get_subtn_adest_details(
 						    m_MDS_GET_PWE_HDL_FROM_SVC_HDL(
 							local_svc_hdl),
@@ -4932,6 +4933,7 @@ uint32_t mds_mcm_init(void)
 
 	/* STEP 1: Initialize MCM-CB. */
 	gl_mds_mcm_cb = m_MMGR_ALLOC_MCM_CB;
+	memset(gl_mds_mcm_cb, 0, sizeof(MDS_MCM_CB));
 
 	/* VDEST TREE */
 	memset(&pat_tree_params, 0, sizeof(NCS_PATRICIA_PARAMS));

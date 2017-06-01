@@ -94,6 +94,9 @@ bool MdsLog::Init() {
   char *token, *saveptr;
   char *pid_name = nullptr;
 
+  memset(app_name, 0, MDS_MAX_PROCESS_NAME_LEN);
+  memset(pid_path, 0, 1024);
+
   snprintf(pid_path, sizeof(pid_path), "/proc/%" PRIu32 "/cmdline", process_id);
   FILE *f = fopen(pid_path, "r");
   if (f != nullptr) {
