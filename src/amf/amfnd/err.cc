@@ -707,8 +707,14 @@ uint32_t avnd_err_rcvr_su_restart(AVND_CB *cb, AVND_SU *su,
   uint32_t rc = avnd_comp_oper_state_avd_sync(cb, failed_comp);
   if (NCSCC_RC_SUCCESS != rc) goto done;
 
-  avnd_di_uns32_upd_send(AVSV_SA_AMF_SU, saAmfSUOperState_ID, su->name,
-                         su->oper);
+  /* Keep SURestart recovery not to always report OperState to amfd
+     as legacy recovery. Only report OperState if SU is under SMF maintenance
+     campaign
+   */
+  if (!su->suMaintenanceCampaign.empty()) {
+    avnd_di_uns32_upd_send(AVSV_SA_AMF_SU, saAmfSUOperState_ID, su->name,
+        su->oper);
+  }
 
   set_suRestart_flag(su);
 
