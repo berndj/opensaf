@@ -276,6 +276,7 @@ static void saImmOiLongDn_01(void)
 	pthread_join(threadid, NULL);
 	close_stop_fd();
 
+	safassert(saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
 	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
 
 	config_class_delete(immOmHandle);
@@ -350,6 +351,7 @@ static void saImmOiLongDn_02(void)
 	pthread_join(threadid, NULL);
 	close_stop_fd();
 
+	safassert(saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
 	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
 
 	test_validate(rc, SA_AIS_OK);
@@ -415,6 +417,7 @@ static void saImmOiLongDn_03(void)
 	pthread_join(threadid, NULL);
 	close_stop_fd();
 
+	safassert(saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
 	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
 
 	test_validate(rc, SA_AIS_OK);
@@ -470,6 +473,7 @@ static void saImmOiLongDn_04(void)
 	pthread_join(threadid, NULL);
 	close_stop_fd();
 
+	safassert(saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
 	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
 
 	test_validate(rc, SA_AIS_OK);
@@ -550,6 +554,7 @@ static void saImmOiLongDn_05(void)
 	pthread_join(threadid, NULL);
 	close_stop_fd();
 
+	safassert(saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
 	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
 
 	test_validate(rc, SA_AIS_OK);
@@ -627,6 +632,7 @@ static void saImmOiLongDn_06(void)
 	pthread_join(threadid, NULL);
 	close_stop_fd();
 
+	safassert(saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
 	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
 
 	test_validate(rc, SA_AIS_OK);
@@ -658,6 +664,7 @@ static void saImmOiLongDn_07(void)
 						     SA_IMM_ONE);
 	}
 
+	safassert(saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
 	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
 
 	test_validate(rc, SA_AIS_OK);
