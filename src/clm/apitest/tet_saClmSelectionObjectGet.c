@@ -41,7 +41,7 @@ void saClmSelectionObjectGet_02(void)
 		  SA_AIS_OK);
 	rc = saClmSelectionObjectGet(0, &selectionObject);
 	safassert(saClmFinalize(clmHandle), SA_AIS_OK);
-	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
+	test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
 void saClmSelectionObjectGet_03(void)
