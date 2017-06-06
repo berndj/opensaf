@@ -376,7 +376,7 @@ void saClmClusterTrack_08(void)
 		      clmHandle, notificationBuffer_4.notification),
 		  SA_AIS_OK);
 	safassert(saClmFinalize(clmHandle), SA_AIS_OK);
-	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
+	test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 
 	trackFlags = (SA_TRACK_CURRENT | SA_TRACK_LOCAL);
 	notificationBuffer_4.numberOfItems = 1;
@@ -413,7 +413,7 @@ void saClmClusterTrack_09(void)
 		      clmHandle, notificationBuffer_4.notification),
 		  SA_AIS_OK);
 	safassert(saClmFinalize(clmHandle), SA_AIS_OK);
-	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
+	test_validate(rc, SA_AIS_ERR_BAD_FLAGS);
 }
 
 void saClmClusterTrack_10(void)
