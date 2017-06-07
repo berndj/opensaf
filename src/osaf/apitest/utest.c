@@ -40,13 +40,14 @@ static unsigned int test_failed;
 
 /* Colors for test result output  */
 #define COLOR_RED "\033[1;31m" /* [1 Bold font. [22 if normal font */
-#define COLOR_RESET "\033[0m;"
+#define COLOR_RESET "\033[0m"
 
 static struct test testlist[NO_SUITES][NR_TESTS];
 static const char *suite_name[NO_SUITES];
 static int last_test_status;
 static SaAisErrorT actualStatus, expectedStatus;
 static unsigned int current_test;
+static unsigned int previous_test;
 
 unsigned int testdebug;
 
@@ -61,20 +62,32 @@ unsigned int testdebug;
 void test_validate(SaUint32T rc, SaUint32T expected)
 {
 	/* Save for later use */
-	actualStatus = rc;
-	expectedStatus = expected;
+	if (last_test_status != -1) {
+		actualStatus = rc;
+		expectedStatus = expected;
+	}
 
 	if (rc == expected) {
 		test_passed++;
-		printf("  %3d  PASSED", current_test);
-		last_test_status = 0;
+		if (previous_test != current_test) {
+			printf("  %3d  PASSED", current_test);
+		} else {
+			printf("/PASSED");
+		}
+		last_test_status |= 0;
 	} else {
 		test_failed++;
-		printf("%s  %3d  FAILED", COLOR_RED, current_test);
-		last_test_status = -1;
+		if (previous_test != current_test) {
+			printf("  %3d  %sFAILED%s",
+					current_test, COLOR_RED, COLOR_RESET);
+		} else {
+			printf("/%sFAILED%s", COLOR_RED, COLOR_RESET);
+		}
+		last_test_status |= -1;
 	}
 
 	test_total++;
+	previous_test = current_test;
 }
 
 /**
@@ -160,13 +173,15 @@ static int run_test_case(unsigned int suite, unsigned int tcase)
 {
 	if (testlist[suite][tcase].testfunc != NULL) {
 		current_test = tcase;
+		previous_test = 0;
+		last_test_status = 0;
 		testlist[suite][tcase].testfunc();
 		if (last_test_status == 0)
 			printf("\t%s%s\n", testlist[suite][tcase].slogan,
 			       COLOR_RESET);
 		else
-			printf("\t%s (expected %s, got %s)%s\n",
-			       testlist[suite][tcase].slogan,
+			printf("\t%s %s(expected %s, got %s)%s\n",
+			       testlist[suite][tcase].slogan, COLOR_RED,
 			       get_saf_error(expectedStatus),
 			       get_saf_error(actualStatus), COLOR_RESET);
 		return 0;
