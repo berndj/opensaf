@@ -145,7 +145,7 @@ struct SAFServices {
 
   std::vector<SvcMap> svc_map = {
       {"AMFD", "osafamfd.fifo", -1},   {"TRANSPORT", "osaftransportd.fifo", -1},
-      {"CLMNA", "osafclmna.fifo", -1}, {"RDED", "osafrded.fifo", -1},
+      {"CLMNA", "osafclmna.fifo", -1}, {"RDE", "osafrded.fifo", -1},
       {"HLFM", "osaffmd.fifo", -1},    {"IMMD", "osafimmd.fifo", -1},
       {"IMMND", "osafimmnd.fifo", -1}, {"LOGD", "osaflogd.fifo", -1},
       {"NTFD", "osafntfd.fifo", -1},   {"PLMD", "osafplmd.fifo", -1},
