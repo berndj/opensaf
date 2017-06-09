@@ -2824,6 +2824,7 @@ void immnd_proc_discard_other_nodes(IMMND_CB *cb)
 	while (cl_node) {
 		LOG_NO("Removing client id:%llx sv_id:%u", cl_node->imm_app_hdl,
 		       cl_node->sv_id);
+		cl_node->mIsStale = false;
 		osafassert(
 		    immnd_proc_imma_discard_connection(cb, cl_node, true));
 		osafassert(immnd_client_node_del(cb, cl_node) ==
