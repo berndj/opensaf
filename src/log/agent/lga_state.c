@@ -53,14 +53,11 @@ static int start_recovery2_thread(void);
  * The server returns a client id
  *
  * @param client_id[out]
+ * @param version[in]
  * @return -1 on error (client id not valid)
  */
-static int send_initialize_msg(uint32_t *client_id)
+static int send_initialize_msg(uint32_t *client_id, SaVersionT *version)
 {
-	SaVersionT version = {.releaseCode = LOG_RELEASE_CODE,
-			      .majorVersion = LOG_MAJOR_VERSION,
-			      .minorVersion = LOG_MINOR_VERSION};
-
 	SaAisErrorT ais_rc = SA_AIS_ERR_TRY_AGAIN;
 	uint32_t ncs_rc = NCSCC_RC_SUCCESS;
 	int rc = 0;
@@ -74,7 +71,7 @@ static int send_initialize_msg(uint32_t *client_id)
 	memset(&i_msg, 0, sizeof(lgsv_msg_t));
 	i_msg.type = LGSV_LGA_API_MSG;
 	i_msg.info.api_info.type = LGSV_INITIALIZE_REQ;
-	i_msg.info.api_info.param.init.version = version;
+	i_msg.info.api_info.param.init.version = *version;
 
 	/* Send a message to LGS to obtain a client_id
 	 */
@@ -231,6 +228,7 @@ static int initialize_one_client(lga_client_hdl_rec_t *p_client)
 
 	osaf_mutex_lock_ordie(&lga_cb.cb_lock);
 	bool initialized_flag = p_client->initialized_flag;
+	SaVersionT version = p_client->version;
 	osaf_mutex_unlock_ordie(&lga_cb.cb_lock);
 	if (initialized_flag == true) {
 		/* The client is already initialized */
@@ -238,7 +236,7 @@ static int initialize_one_client(lga_client_hdl_rec_t *p_client)
 		goto done;
 	}
 
-	rc = send_initialize_msg(&client_id);
+	rc = send_initialize_msg(&client_id, &version);
 	if (rc == -1) {
 		TRACE("%s initialize_msg_send Fail", __FUNCTION__);
 	}
