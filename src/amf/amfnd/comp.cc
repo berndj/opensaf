@@ -1617,19 +1617,13 @@ uint32_t avnd_comp_csi_assign_done(AVND_CB *cb, AVND_COMP *comp,
   /* delete any pending cbk rec for csi assignment / removal */
   avnd_comp_cbq_csi_rec_del(cb, comp, (csi) ? csi->name : "");
 
-  /* while restarting, we wont use assign all, so csi will not be null */
-  if (csi && m_AVND_COMP_CSI_CURR_ASSIGN_STATE_IS_RESTARTING(csi)) {
-    m_AVND_COMP_CSI_CURR_ASSIGN_STATE_SET(csi,
-                                          AVND_COMP_CSI_ASSIGN_STATE_ASSIGNED);
-    goto done;
-  }
-
   if (!csi && m_AVND_COMP_IS_ALL_CSI(comp)) {
     m_AVND_COMP_ALL_CSI_RESET(comp);
   }
   /* mark the csi(s) assigned */
   if (csi) {
-    if (m_AVND_COMP_CSI_CURR_ASSIGN_STATE_IS_ASSIGNING(csi)) {
+    if (m_AVND_COMP_CSI_CURR_ASSIGN_STATE_IS_ASSIGNING(csi) ||
+        m_AVND_COMP_CSI_CURR_ASSIGN_STATE_IS_RESTARTING(csi)) {
       m_AVND_COMP_CSI_CURR_ASSIGN_STATE_SET(
           csi, AVND_COMP_CSI_ASSIGN_STATE_ASSIGNED);
     }
