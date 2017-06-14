@@ -1476,16 +1476,18 @@ static SaAisErrorT su_rt_attr_cb(SaImmOiHandleT immOiHandle,
 
   while ((attributeName = attributeNames[i++]) != nullptr) {
     if (!strcmp("saAmfSUAssignedSIs", attributeName)) {
-      if (su->list_of_susi != nullptr) {
-        uint32_t assigned_si =
-            su->saAmfSUNumCurrActiveSIs + su->saAmfSUNumCurrStandbySIs;
+      uint32_t assigned_si = su->count_susi_without_fsm(AVD_SU_SI_STATE_UNASGN);
+      TRACE("assigned_si:%u", assigned_si);
+      if (assigned_si != 0) {
         // int size = (sizeof(SaImmAttrValueT *) * (assigned_si));
         SaImmAttrValueT *attrValues = new SaImmAttrValueT[assigned_si];
         SaNameT *siName = (SaNameT *)new SaNameT[assigned_si];
         SaImmAttrValueT *temp = attrValues;
-        int j = 0;
+        uint32_t j = 0;
         for (AVD_SU_SI_REL *susi = su->list_of_susi; susi != nullptr;
              susi = susi->su_next) {
+          if (susi->fsm == AVD_SU_SI_STATE_UNASGN)
+            continue;
           osaf_extended_name_alloc(susi->si->name.c_str(), (siName + j));
           attrValues[j] = (void *)(siName + j);
           j = j + 1;
@@ -1495,6 +1497,8 @@ static SaAisErrorT su_rt_attr_cb(SaImmOiHandleT immOiHandle,
         j = 0;
         for (AVD_SU_SI_REL *susi = su->list_of_susi; susi != nullptr;
              susi = susi->su_next) {
+          if (susi->fsm == AVD_SU_SI_STATE_UNASGN)
+            continue;
           osaf_extended_name_free(siName + j);
           j = j + 1;
         }
@@ -2767,4 +2771,20 @@ bool AVD_SU::restrict_auto_repair() const
   }
 
   return false;
+}
+
+/**
+ * @brief    Count number of SUSIs of this SU which are not in
+ *           a given @fsm state.
+ * @param    fsm state
+ * @return   count
+ */
+uint32_t AVD_SU::count_susi_without_fsm(uint32_t fsm) {
+  uint32_t count = 0;
+  for (AVD_SU_SI_REL *susi = list_of_susi; susi != nullptr;
+       susi = susi->su_next) {
+    if (susi->fsm != fsm)
+      count++;
+  }
+  return count;
 }
