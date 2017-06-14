@@ -14240,7 +14240,7 @@ void ImmModel::getOldCriticalCcbs(IdVector& cv, SaUint32T* pbeConnPtr,
       }
 
       if ((ccb->mPbeRestartId == 0) &&
-          osaf_timer_is_expired_sec(&now, &ccb->mWaitStartTime,
+          !osaf_timer_is_expired_sec(&now, &ccb->mWaitStartTime,
                                     (DEFAULT_TIMEOUT_SEC + addSecs))) {
         timespec elapsed;
         osaf_timespec_subtract(&now, &ccb->mWaitStartTime, &elapsed);
