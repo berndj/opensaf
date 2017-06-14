@@ -18841,18 +18841,6 @@ SaAisErrorT ImmModel::objectSync(const ImmsvOmObjectSync* req) {
   }
 
 objectSyncExit:
-  sImplsDeadDuringSync.clear();
-  sNodesDeadDuringSync.clear();
-  sAdmosDeadDuringSync.clear();
-  /* Clear the "tombstones" for Implementers and Nodes for each sync message
-     received. The tiny hole that we need to plug only exists after the
-     last sync message, when coord sends the finalizeSync message until
-     everyone receives it. Nodes may receive discardImplementer or
-     discardNode messages over fevs before receiving finalizeSync.
-     These nodes/implementers will still be part of the finalizeSync
-     message, causing apparent verification failure in veterans and
-     incorrectly installed implementers in sync clients.
-   */
   TRACE_LEAVE();
   return err;
 }
