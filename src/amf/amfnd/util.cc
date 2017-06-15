@@ -38,6 +38,9 @@
 #include <unistd.h>
 #include "osaf/configmake.h"
 #include "amf/amfnd/avnd.h"
+#include "base/osaf_time.h"
+
+extern struct ImmutilWrapperProfile immutilWrapperProfile;
 
 const char *presence_state[] = {
     "OUT_OF_RANGE",         "UNINSTANTIATED",     "INSTANTIATING",
@@ -334,6 +337,18 @@ SaAisErrorT amf_saImmOmSearchInitialize_o2(
       rc = immutil_saImmOmSearchInitialize_o2(immHandle, rootName.c_str(),
                                               scope, searchOptions, searchParam,
                                               attributeNames, &searchHandle);
+    }
+  } else if (rc == SA_AIS_ERR_NOT_EXIST) {
+    // it is possible for 'rootName' to be not yet available
+    // at the local immnd. Retry a few times to allow CCB to be propagated.
+    unsigned int nTries = 1;
+    while (rc == SA_AIS_ERR_NOT_EXIST &&
+      nTries < immutilWrapperProfile.nTries) {
+      osaf_nanosleep(&kHundredMilliseconds);
+      rc = immutil_saImmOmSearchInitialize_o2(immHandle, rootName.c_str(),
+        scope, searchOptions, searchParam,
+        attributeNames, &searchHandle);
+      nTries++;
     }
   }
   return rc;
