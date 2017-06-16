@@ -37,8 +37,8 @@ wrapper_LDADD = \
 	@SAF_AIS_AMF_LIBS@
 
 install-data-hook:
-	cp wrapper.sh /usr/local/sbin
+	cp wrapper.sh $(DESTDIR)/usr/local/sbin
 
 uninstall-hook:
-	rm -f /usr/local/sbin/wrapper.sh
+	rm -f $(DESTDIR)/usr/local/sbin/wrapper.sh
 

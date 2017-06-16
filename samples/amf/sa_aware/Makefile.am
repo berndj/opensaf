@@ -37,10 +37,10 @@ amf_demo_LDADD = \
 	@SAF_AIS_AMF_LIBS@
 
 install-data-hook:
-	mkdir -p /opt/amf_demo
-	cp amf_demo /opt/amf_demo
-	cp amf_demo_script /opt/amf_demo
+	$(mkinstalldirs) $(DESTDIR)/opt/amf_demo
+	cp amf_demo $(DESTDIR)/opt/amf_demo
+	cp amf_demo_script $(DESTDIR)/opt/amf_demo
 
 uninstall-hook:
-	rm -rf /opt/amf_demo
+	rm -rf $(DESTDIR)/opt/amf_demo
 

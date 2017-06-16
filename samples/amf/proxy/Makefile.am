@@ -38,9 +38,9 @@ proxy_LDADD = \
 	@SAF_AIS_AMF_LIBS@
 
 install-data-hook:
-	mkdir -p /opt/amf_proxy_demo
-	cp proxy proxy_script proxied_script /opt/amf_proxy_demo
+	$(mkinstalldirs) $(DESTDIR)/opt/amf_proxy_demo
+	cp proxy proxy_script proxied_script $(DESTDIR)/opt/amf_proxy_demo
 
 uninstall-hook:
-	rm -rf /opt/amf_proxy_demo
+	rm -rf $(DESTDIR)/opt/amf_proxy_demo
 
