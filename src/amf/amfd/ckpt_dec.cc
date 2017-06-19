@@ -843,6 +843,9 @@ static uint32_t dec_node_admin_state(AVD_CL_CB *cb, NCS_MBCSV_CB_DEC *dec) {
 
   cb->async_updt_cnt.node_updt++;
 
+  avd_saImmOiRtObjectUpdate(avnd_struct->name, "saAmfNodeAdminState",
+                              SA_IMM_ATTR_SAUINT32T,
+                              &avnd_struct->saAmfNodeAdminState);
   TRACE_LEAVE();
   return NCSCC_RC_SUCCESS;
 }
@@ -886,6 +889,9 @@ static uint32_t dec_node_oper_state(AVD_CL_CB *cb, NCS_MBCSV_CB_DEC *dec) {
   avnd_struct->saAmfNodeOperState = avnd.saAmfNodeOperState;
 
   cb->async_updt_cnt.node_updt++;
+  avd_saImmOiRtObjectUpdate(avnd_struct->name, "saAmfNodeOperState",
+                            SA_IMM_ATTR_SAUINT32T,
+                            &avnd_struct->saAmfNodeOperState);
 
   TRACE_LEAVE();
   return NCSCC_RC_SUCCESS;

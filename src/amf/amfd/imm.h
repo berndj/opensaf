@@ -107,6 +107,7 @@ class ImmObjUpdate : public ImmJob {
   bool csiass_get_attr_value();
   bool comp_get_attr_value();
   bool su_get_attr_value();
+  bool node_get_attr_value();
 
   ~ImmObjUpdate();
 };

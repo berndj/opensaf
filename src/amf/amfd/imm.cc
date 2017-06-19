@@ -1823,7 +1823,8 @@ bool check_to_create_immjob_at_standby_amfd(const std::string &dn) {
   if ((class_type == AVSV_SA_AMF_SU) || (class_type == AVSV_SA_AMF_COMP) ||
       (class_type == AVSV_SA_AMF_SI_ASSIGNMENT) ||
       (class_type == AVSV_SA_AMF_CSI_ASSIGNMENT) ||
-      (class_type == AVSV_SA_AMF_SI) || (class_type == AVSV_SA_AMF_CSI)) {
+      (class_type == AVSV_SA_AMF_SI) || (class_type == AVSV_SA_AMF_CSI) ||
+      (class_type == AVSV_SA_AMF_NODE)) {
     TRACE("Class Type:%s", avd_class_names[class_type]);
     return true;
   }
@@ -2537,6 +2538,32 @@ bool ImmObjUpdate::si_get_attr_value() {
   }
   return true;
 }
+
+bool ImmObjUpdate::node_get_attr_value() {
+  bool ret = true;
+  AVD_AVND *node = node_name_db->find(dn);
+  if (node == nullptr) {
+    TRACE_1("node not found");
+    ret = false;
+    goto done;
+  }
+  if (!strcmp(attributeName_, "saAmfNodeOperState")) {
+    TRACE_1("saAmfNodeOperState old value:%u, new value:%u",
+            *static_cast<SaAmfOperationalStateT *>(value_),
+            node->saAmfNodeOperState);
+    memcpy(value_, &node->saAmfNodeOperState, value_size(attrValueType_));
+  } else if (!strcmp(attributeName_, "saAmfNodeAdminState")) {
+    TRACE_1("saAmfNodeAdminState old value:%u, new value:%u",
+            *static_cast<SaAmfAdminStateT *>(value_), node->saAmfNodeAdminState);
+    memcpy(value_, &node->saAmfNodeAdminState, value_size(attrValueType_));
+  } else {
+    // Other attributes not considered.
+    ret = false;
+  }
+done:
+  return ret;
+}
+
 /**
  * @brief  Fetches latest value of attribute from AMF db before updating it in
  * IMM. Currently, only for SU, Comp, SI, SISU and CSICOMP.
@@ -2558,6 +2585,8 @@ bool ImmObjUpdate::immobj_update_required() {
     ret = siass_get_attr_value();
   } else if (class_type == AVSV_SA_AMF_CSI_ASSIGNMENT) {
     ret = csiass_get_attr_value();
+  } else if (class_type == AVSV_SA_AMF_NODE) {
+    ret = node_get_attr_value();
   } else {
     TRACE_1("Class not considered");
     ret = false;

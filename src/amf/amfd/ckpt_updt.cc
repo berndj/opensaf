@@ -69,6 +69,11 @@ uint32_t avd_ckpt_node(AVD_CL_CB *cb, AVD_AVND *ckpt_node,
   if (nullptr == avd_node_find_nodeid(ckpt_node->node_info.nodeId))
     avd_node_add_nodeid(node);
 
+  avd_saImmOiRtObjectUpdate(node->name, "saAmfNodeOperState",
+                            SA_IMM_ATTR_SAUINT32T, &node->saAmfNodeOperState);
+  avd_saImmOiRtObjectUpdate(node->name, "saAmfNodeAdminState",
+                              SA_IMM_ATTR_SAUINT32T,
+                              &node->saAmfNodeAdminState);
 done:
   TRACE_LEAVE2("%u", rc);
   return rc;
