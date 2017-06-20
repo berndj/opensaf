@@ -218,13 +218,20 @@ void avd_susi_read_headless_cached_rta(AVD_CL_CB *cb) {
         std::string(strstr(osaf_extended_name_borrow(&dn), "safSi"));
     assert(si_name.empty() == false);
     AVD_SI *si = si_db->find(si_name);
-    osafassert(si);
+    if (si == nullptr) {
+      LOG_ER("SI:'%s' does not exist in AMF's sidb", si_name.c_str());
+      continue;
+    }
     SaNameT su_name;
     avsv_sanamet_init_from_association_dn(&dn, &su_name, "safSu",
                                           si->name.c_str());
     AVD_SU *su = su_db->find(Amf::to_string(&su_name));
+    if (su == nullptr) {
+      LOG_ER("SU:'%s' does not exist in AMF's sudb",
+          Amf::to_string(&su_name).c_str());
+      continue;
+    }
     osaf_extended_name_free(&su_name);
-    osafassert(su);
     susi = avd_su_susi_find(cb, su, si->name);
     rc = immutil_getAttr("osafAmfSISUFsmState", attributes, 0, &imm_susi_fsm);
     osafassert(rc == SA_AIS_OK);
@@ -232,10 +239,11 @@ void avd_susi_read_headless_cached_rta(AVD_CL_CB *cb) {
     osafassert(rc == SA_AIS_OK);
 
     if (susi) {  // FOR PRESENT SUSI found in AMFND(s)
-      TRACE("SISU:'%s', old(imm) fsm state: %d, new(sync) fsm state: %d",
-            Amf::to_string(&dn).c_str(), imm_susi_fsm, susi->fsm);
+      TRACE("Check present SUSI:'%s', old(imm) fsm state: %d,"
+          "new(sync) fsm state: %d", Amf::to_string(&dn).c_str(),
+          imm_susi_fsm, susi->fsm);
 
-      if (avd_susi_validate_headless_cached_rta(susi, imm_ha_state,
+      if (avd_susi_validate_present_assignment(susi, imm_ha_state,
                                                 imm_susi_fsm) == false) {
         continue;
       }
@@ -279,38 +287,29 @@ void avd_susi_read_headless_cached_rta(AVD_CL_CB *cb) {
       if (susi->su->su_on_node->admin_ng == nullptr)
         avd_ng_restore_headless_states(cb, susi);
     } else {  // For ABSENT SUSI
-      if (su->sg_of_su->sg_ncs_spec == false &&
-          su->sg_of_su->sg_redundancy_model != SA_AMF_NO_REDUNDANCY_MODEL &&
-          su->sg_of_su->sg_redundancy_model !=
-              SA_AMF_N_WAY_ACTIVE_REDUNDANCY_MODEL &&
-          (su->sg_of_su->any_assignment_in_progress() == true ||
-           su->sg_of_su->any_assignment_assigned() == true)) {
-        TRACE("Absent SUSI, ha_state:'%u', fsm_state:'%u'", imm_ha_state,
-              imm_susi_fsm);
-        if (imm_susi_fsm != AVD_SU_SI_STATE_UNASGN) {
-          absent_susi = avd_susi_create(avd_cb, si, su, imm_ha_state, false,
-                                        AVSV_SUSI_ACT_BASE);
-          // Restore the fsm of this absent SUSI, which is used to determine
-          // whether a SU should be added in SG's SUOperationList
-          // Memorize it in temporary var @absent
-          // The fsm of this SUSI will be changed to AVD_SU_SI_STATE_ABSENT
-          // after restoring SUOperationList
-          absent_susi->fsm = imm_susi_fsm;
-          absent_susi->absent = true;
-          if (absent_susi->si->saAmfSIAdminState == SA_AMF_ADMIN_LOCKED ||
-              absent_susi->si->saAmfSIAdminState ==
-                  SA_AMF_ADMIN_SHUTTING_DOWN) {
-            if (absent_susi->fsm == AVD_SU_SI_STATE_MODIFY &&
-                (absent_susi->state == SA_AMF_HA_QUIESCED ||
-                 absent_susi->state == SA_AMF_HA_QUIESCING)) {
-              m_AVD_SET_SG_ADMIN_SI(cb, si);
-            }
-          }
-        } else {
-          avd_saImmOiRtObjectDelete(Amf::to_string(&dn));
-        }
-      } else {
+      TRACE("Check absent SUSI, ha_state:'%u', fsm_state:'%u'", imm_ha_state,
+            imm_susi_fsm);
+      if (avd_susi_validate_absent_assignment(su, si,
+          imm_ha_state, imm_susi_fsm) == false) {
         avd_saImmOiRtObjectDelete(Amf::to_string(&dn));
+        continue;
+      }
+      absent_susi = avd_susi_create(avd_cb, si, su, imm_ha_state, false,
+          AVSV_SUSI_ACT_BASE);
+      // Restore the fsm of this absent SUSI, which is used to determine
+      // whether a SU should be added in SG's SUOperationList
+      // Memorize it in temporary var @absent
+      // The fsm of this SUSI will be changed to AVD_SU_SI_STATE_ABSENT
+      // after restoring SUOperationList
+      absent_susi->fsm = imm_susi_fsm;
+      absent_susi->absent = true;
+      if (absent_susi->si->saAmfSIAdminState == SA_AMF_ADMIN_LOCKED ||
+          absent_susi->si->saAmfSIAdminState == SA_AMF_ADMIN_SHUTTING_DOWN) {
+        if (absent_susi->fsm == AVD_SU_SI_STATE_MODIFY &&
+            (absent_susi->state == SA_AMF_HA_QUIESCED ||
+                absent_susi->state == SA_AMF_HA_QUIESCING)) {
+          m_AVD_SET_SG_ADMIN_SI(cb, si);
+        }
       }
     }
   }
@@ -321,13 +320,58 @@ done:
   TRACE_LEAVE();
 }
 /**
+ * Validate the creation of absent assignment
+ * @param su: The SU associated with absent assignment
+ * @param si: The SI associated with absent assignment
+ * @return: true of valid, false otherwise
+ */
+bool avd_susi_validate_absent_assignment(AVD_SU *su, AVD_SI *si,
+    SaAmfHAStateT imm_ha_state, AVD_SU_SI_STATE imm_fsm_state) {
+  bool valid = false;
+  TRACE_ENTER();
+  // Must be application sg
+  if (su->sg_of_su->sg_ncs_spec == true) goto done;
+  // skip for removing SUSI assignment
+  if (imm_fsm_state == AVD_SU_SI_STATE_UNASGN) goto done;
+  // Must have present SUSI assignment
+  if (su->sg_of_su->any_assignment_in_progress() == false &&
+      su->sg_of_su->any_assignment_assigned() == false) {
+    goto done;
+  }
+  // Support: 2N, NoRed, NwayActive. Not support: NpM, Nway
+  if (su->sg_of_su->sg_redundancy_model == SA_AMF_NPM_REDUNDANCY_MODEL ||
+      su->sg_of_su->sg_redundancy_model == SA_AMF_N_WAY_REDUNDANCY_MODEL) {
+    LOG_WA("Unsupported SG Redundancy model(%d) for SC Absence",
+        su->sg_of_su->sg_redundancy_model);
+  }
+  // Skip for NoRed and NWayActive
+  if (su->sg_of_su->sg_redundancy_model == SA_AMF_NO_REDUNDANCY_MODEL ||
+        su->sg_of_su->sg_redundancy_model ==
+            SA_AMF_N_WAY_ACTIVE_REDUNDANCY_MODEL) {
+      goto done;
+  }
+  // No need to create absent SUSI assignment for the 2N SI that already has
+  // ACTIVE SUSI
+  if (su->sg_of_su->sg_redundancy_model == SA_AMF_2N_REDUNDANCY_MODEL) {
+    if (si->list_of_sisu != nullptr &&
+        si->list_of_sisu->state == SA_AMF_HA_ACTIVE &&
+        imm_ha_state == SA_AMF_HA_ACTIVE)
+      goto done;
+  }
+
+  valid = true;
+done:
+  TRACE_LEAVE();
+  return valid;
+}
+/**
  * Validate cached RTA read from IMM
  * @param present_susi
  * @param ha_fr_imm: Ha state of @present_susi read from IMM
  * @param fsm_fr_imm: Fsm state of @present susi read from IMM
  * @return: true of valid, false otherwise
  */
-bool avd_susi_validate_headless_cached_rta(AVD_SU_SI_REL *present_susi,
+bool avd_susi_validate_present_assignment(AVD_SU_SI_REL *present_susi,
                                            SaAmfHAStateT ha_fr_imm,
                                            AVD_SU_SI_STATE fsm_fr_imm) {
   std::string dn = present_susi->si->name + "," + present_susi->su->name;
@@ -335,15 +379,8 @@ bool avd_susi_validate_headless_cached_rta(AVD_SU_SI_REL *present_susi,
   bool valid = true;
   // rule 1: valid ha state
   if (ha_fr_imm != present_susi->state) {
-    if (ha_fr_imm == SA_AMF_HA_QUIESCING || ha_fr_imm == SA_AMF_HA_QUIESCED) {
-      // That's fine
-      ;
-    } else {
-      LOG_ER("SISU:'%s', old(imm) ha state: %d, new(sync) ha state: %d",
+      LOG_WA("SISU:'%s', old(imm) ha state: %d, new(sync) ha state: %d",
              dn.c_str(), ha_fr_imm, present_susi->state);
-      valid = false;
-      goto done;
-    }
   }
   // rule 2: if ha_fr_imm is QUIESCING, one of relevant entities must
   // have adminState is SHUTTINGDOWN, otherwise re-adjust if possible
