@@ -53,6 +53,12 @@ void saClmClusterNotificationFree_02(void)
 
 void saClmClusterNotificationFree_03(void)
 {
+	notificationBuffer_4.numberOfItems = 1;
+	notificationBuffer_4.notification =
+	    (SaClmClusterNotificationT_4 *)malloc(
+		sizeof(SaClmClusterNotificationT_4) *
+		notificationBuffer_4.numberOfItems);
+
 	rc = saClmClusterNotificationFree_4(0,
 					    notificationBuffer_4.notification);
 	test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
@@ -62,6 +68,12 @@ void saClmClusterNotificationFree_03(void)
 
 void saClmClusterNotificationFree_04(void)
 {
+	notificationBuffer_4.numberOfItems = 1;
+	notificationBuffer_4.notification =
+	    (SaClmClusterNotificationT_4 *)malloc(
+		sizeof(SaClmClusterNotificationT_4) *
+		notificationBuffer_4.numberOfItems);
+
 	rc = saClmClusterNotificationFree_4(-1,
 					    notificationBuffer_4.notification);
 	test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
