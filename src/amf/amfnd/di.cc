@@ -1290,6 +1290,7 @@ void avnd_di_msg_ack_process(AVND_CB *cb, uint32_t mid) {
 void avnd_diq_rec_check_buffered_msg(AVND_CB *cb) {
   if ((cb->dnd_list.head != nullptr)) {
     AVND_DND_MSG_LIST *rec = 0;
+    AVND_DND_MSG_LIST *tail = cb->dnd_list.tail;
     bool found = true;
     while (found) {
       found = false;
@@ -1318,7 +1319,7 @@ void avnd_diq_rec_check_buffered_msg(AVND_CB *cb) {
                 rec->msg.info.avd->msg_info.n2d_su_si_assign.msg_id);
           }
           m_AVND_DIQ_REC_PUSH(cb, rec);
-          break;
+          if (tail == cb->dnd_list.tail) break;
         } else if (rec->msg.info.avd->msg_type ==
               AVSV_N2D_OPERATION_STATE_MSG) {
           if (rec->msg.info.avd->msg_info.n2d_opr_state.msg_id != 0) {
@@ -1337,11 +1338,12 @@ void avnd_diq_rec_check_buffered_msg(AVND_CB *cb) {
                     .raw);
           }
           m_AVND_DIQ_REC_PUSH(cb, rec);
-          break;
+          if (tail == cb->dnd_list.tail) break;
         } else {
           // delete other messages for now
           avnd_diq_rec_del(cb, rec);
           rec = cb->dnd_list.head;
+          tail = cb->dnd_list.tail;
         }
       }
     }
