@@ -2764,7 +2764,7 @@ static uint32_t immnd_evt_proc_admowner_init(IMMND_CB *cb, IMMND_EVT *evt,
 				&send_evt);
 
 	if (rc != NCSCC_RC_SUCCESS) {
-		LOG_ER("IMMND - AdminOwner Initialize Failed");
+		LOG_WA("IMMND - AdminOwner Initialize Failed");
 		send_evt.info.imma.info.admInitRsp.error = SA_AIS_ERR_TRY_AGAIN;
 		cb->fevs_replies_pending--;
 		goto agent_rsp;
@@ -2942,7 +2942,7 @@ static uint32_t immnd_evt_proc_impl_set(IMMND_CB *cb, IMMND_EVT *evt,
 	    NULL; /*precaution. */
 
 	if (rc != NCSCC_RC_SUCCESS) {
-		LOG_ER("Problem in sending to IMMD over MDS");
+		LOG_WA("Problem in sending to IMMD over MDS");
 		send_evt.info.imma.info.implSetRsp.error = SA_AIS_ERR_TRY_AGAIN;
 		cb->fevs_replies_pending--;
 		goto agent_rsp;
@@ -3058,7 +3058,7 @@ static uint32_t immnd_evt_proc_ccb_init(IMMND_CB *cb, IMMND_EVT *evt,
 				&send_evt);
 
 	if (rc != NCSCC_RC_SUCCESS) {
-		LOG_ER("Problem in sending ro IMMD over MDS");
+		LOG_WA("Problem in sending ro IMMD over MDS");
 		send_evt.info.imma.info.ccbInitRsp.error = SA_AIS_ERR_TRY_AGAIN;
 		cb->fevs_replies_pending--;
 		goto agent_rsp;
@@ -3202,7 +3202,7 @@ static uint32_t immnd_evt_proc_rt_update(IMMND_CB *cb, IMMND_EVT *evt,
 					cb->immd_mdest_id, &send_evt);
 
 		if (rc != NCSCC_RC_SUCCESS) {
-			LOG_ER("Problem in sending to IMMD over MDS");
+			LOG_WA("Problem in sending to IMMD over MDS");
 			err = SA_AIS_ERR_TRY_AGAIN;
 			cb->fevs_replies_pending--;
 			goto agent_rsp;
