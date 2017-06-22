@@ -23,8 +23,8 @@
 #define LOG_COMMON_LGSV_MSG_H_
 
 #include <limits.h>
-#include "log/saf/saLog.h"
-#include "clm/saf/saClm.h"
+#include <saLog.h>
+#include <saClm.h>
 
 /* Message type enums */
 typedef enum {

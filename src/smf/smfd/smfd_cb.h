@@ -19,8 +19,8 @@
 #define SMF_SMFD_SMFD_CB_H_
 
 #include <stdbool.h>
-#include "imm/saf/saImmOm.h"
-#include "imm/saf/saImmOi.h"
+#include <saImmOm.h>
+#include <saImmOi.h>
 #include "smf/smfd/smfd_smfnd.h"
 
 /* Default HA state assigned locally during smfd initialization */

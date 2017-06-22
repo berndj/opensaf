@@ -19,7 +19,7 @@
 #define CKPT_CKPTD_CPD_CB_H_
 
 #include <stdbool.h>
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 #include "cpd_tmr.h"
 
 #define CPSV_CPD_MBCSV_VERSION 2
@@ -50,7 +50,7 @@
 #define CPSV_CPD_MBCSV_VERSION_MIN 1
 #define CPSV_CPD_MBCSV_VERSION_USR_INFO 2
 
-#include "imm/saf/saImmOi.h"
+#include <saImmOi.h>
 
 typedef enum rep_type {
   REP_ACTIVE = 1,

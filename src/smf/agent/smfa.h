@@ -18,8 +18,8 @@
 #ifndef SMF_AGENT_SMFA_H_
 #define SMF_AGENT_SMFA_H_
 
-#include "osaf/saf/saAis.h"
-#include "smf/saf/saSmf.h"
+#include <saAis.h>
+#include <saSmf.h>
 
 #include "base/ncsgl_defs.h"
 #include "base/ncssysf_ipc.h"

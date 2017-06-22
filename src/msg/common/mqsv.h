@@ -56,8 +56,8 @@
 #include "base/ncs_saf_edu.h"
 
 /* SAF defines. */
-#include "osaf/saf/saAis.h"
-#include "msg/saf/saMsg.h"
+#include <saAis.h>
+#include <saMsg.h>
 #include "base/saf_def.h"
 
 /* Common MQSv defines */

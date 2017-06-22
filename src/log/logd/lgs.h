@@ -30,10 +30,10 @@
 #include "mbc/mbcsv_papi.h"
 #include "base/ncs_edu_pub.h"
 #include "base/ncs_util.h"
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/saf_error.h"
-#include "imm/saf/saImmOm.h"
-#include "amf/saf/saAmf.h"
+#include <saImmOm.h>
+#include <saAmf.h>
 
 /* LGS files */
 #include "log/common/lgsv_defs.h"

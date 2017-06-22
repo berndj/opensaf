@@ -21,9 +21,9 @@
 #include <string>
 #include <vector>
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/macros.h"
-#include "imm/saf/saImmOm.h"
+#include <saImmOm.h>
 #include "smf/smfd/SmfUtils.h"
 
 /*

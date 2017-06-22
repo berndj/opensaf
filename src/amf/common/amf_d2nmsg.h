@@ -35,7 +35,7 @@
 #ifndef AMF_COMMON_AMF_D2NMSG_H_
 #define AMF_COMMON_AMF_D2NMSG_H_
 
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 #include "mds/mds_papi.h"
 #include "amf/common/amf_defs.h"
 #include <stdbool.h>

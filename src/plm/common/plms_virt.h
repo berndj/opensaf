@@ -24,7 +24,7 @@
 #ifndef PLM_COMMON_PLMS_VIRT_H_
 #define PLM_COMMON_PLMS_VIRT_H_
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include <libvirt/libvirt.h>
 #include <cstring>
 #include <map>

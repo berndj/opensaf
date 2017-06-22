@@ -24,9 +24,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "osaf/saf/saAis.h"
-#include "imm/saf/saImmOm.h"
-#include "imm/saf/saImmOi.h"
+#include <saAis.h>
+#include <saImmOm.h>
+#include <saImmOi.h>
 #include "base/osaf_time.h"
 
 #include "osaf/configmake.h"

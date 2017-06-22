@@ -19,8 +19,8 @@
 #define SRC_LOG_AGENT_LGA_UTIL_H_
 
 #include <stdint.h>
-#include "osaf/saf/saAis.h"
-#include "log/saf/saLog.h"
+#include <saAis.h>
+#include <saLog.h>
 
 unsigned int lga_startup();
 unsigned int lga_shutdown_after_last_client(void);

@@ -33,7 +33,7 @@
 ******************************************************************************
 */
 
-#include "imm/saf/saImmOm.h"
+#include <saImmOm.h>
 #include "amf/common/amf_util.h"
 #include "osaf/immutil/immutil.h"
 #include "base/logtrace.h"

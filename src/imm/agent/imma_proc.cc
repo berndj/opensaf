@@ -27,7 +27,7 @@
 #include "imm/common/immsv_api.h"
 #include "base/ncssysf_mem.h"
 #include "base/osaf_extended_name.h"
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 
 #include <string.h>
 

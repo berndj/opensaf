@@ -34,8 +34,8 @@
 #ifndef AMF_AMFD_SI_H_
 #define AMF_AMFD_SI_H_
 
-#include "amf/saf/saAmf.h"
-#include "imm/saf/saImm.h"
+#include <saAmf.h>
+#include <saImm.h>
 #include "amf/amfd/app.h"
 #include "amf/amfd/sg.h"
 #include "amf/amfd/su.h"

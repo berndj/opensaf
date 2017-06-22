@@ -20,9 +20,9 @@
 
 #include <string>
 #include <list>
-#include "osaf/saf/saAis.h"
-#include "smf/saf/saSmf.h"
-#include "imm/saf/saImmOi.h"
+#include <saAis.h>
+#include <saSmf.h>
+#include <saImmOi.h>
 
 #include "smf/smfd/SmfCampaignThread.h"
 

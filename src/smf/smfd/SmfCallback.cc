@@ -27,8 +27,8 @@
 #include <string>
 #include "base/ncssysf_ipc.h"
 
-#include "osaf/saf/saAis.h"
-#include "smf/saf/saSmf.h"
+#include <saAis.h>
+#include <saSmf.h>
 #include "smf/smfd/SmfCallback.h"
 #include "smf/smfd/SmfUpgradeStep.h"
 #include "smf/smfd/SmfUpgradeProcedure.h"

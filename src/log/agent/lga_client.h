@@ -23,7 +23,7 @@
 #include <atomic>
 #include "base/mutex.h"
 #include "mds/mds_papi.h"
-#include "log/saf/saLog.h"
+#include <saLog.h>
 #include "log/agent/lga_stream.h"
 #include "log/common/lgsv_msg.h"
 #include "log/common/lgsv_defs.h"

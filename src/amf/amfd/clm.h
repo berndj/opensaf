@@ -15,7 +15,7 @@
  *
  */
 
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 
 #ifndef AMF_AMFD_CLM_H_
 #define AMF_AMFD_CLM_H_

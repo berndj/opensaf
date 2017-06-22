@@ -19,7 +19,7 @@
 #define SRC_LOG_AGENT_LGA_MDS_H_
 
 #include <stdint.h>
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 
 struct lga_cb_t;
 struct lgsv_msg_t;

@@ -31,7 +31,7 @@
 #define IMM_IMMD_IMMD_H_
 
 #include <stdint.h>
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 
 #include "imm/common/immsv.h"
 #include "mbc/mbcsv_papi.h"

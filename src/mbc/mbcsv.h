@@ -54,7 +54,7 @@
 
 #include "mds/mds_papi.h"
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 
 typedef uint64_t MBCSV_ANCHOR;
 

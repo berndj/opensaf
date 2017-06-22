@@ -35,7 +35,7 @@
 #include <pthread.h>
 #include <assert.h>
 #include <limits.h>
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 
 #include "base/ncs_main_papi.h"
 #include "base/ncssysf_ipc.h"

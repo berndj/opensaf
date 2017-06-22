@@ -19,7 +19,7 @@
 #define MSG_MSGND_MQND_IMM_H_
 
 #include "osaf/immutil/immutil.h"
-#include "imm/saf/saImm.h"
+#include <saImm.h>
 
 extern void mqnd_imm_declare_implementer(MQND_CB *cb);
 extern void mqnd_imm_reinit_bg(MQND_CB *cb);

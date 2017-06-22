@@ -25,7 +25,7 @@
 #ifndef NTF_NTFD_NTFFILTER_H_
 #define NTF_NTFD_NTFFILTER_H_
 
-#include "ntf/saf/saNtf.h"
+#include <saNtf.h>
 #include "ntf/ntfd/NtfNotification.h"
 
 class NtfFilter {

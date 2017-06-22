@@ -19,7 +19,7 @@
 #include <set>
 #include <string.h>
 #include "amf/amfd/node.h"
-#include "imm/saf/saImmOm.h"
+#include <saImmOm.h>
 #include "osaf/immutil/immutil.h"
 #include "base/logtrace.h"
 

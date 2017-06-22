@@ -29,7 +29,7 @@
 #include "base/saf_error.h"
 #include "base/logtrace.h"
 #include "base/osaf_utility.h"
-#include "imm/saf/saImmOi.h"
+#include <saImmOi.h>
 #include "osaf/immutil/immutil.h"
 #include "base/time.h"
 #include "base/osaf_poll.h"

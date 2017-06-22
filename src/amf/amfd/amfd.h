@@ -66,6 +66,6 @@
 #include "amf/amfd/ckpt_msg.h"
 #include "ckpt_edu.h"
 #include "ckpt_updt.h"
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 
 #endif  // AMF_AMFD_AMFD_H_

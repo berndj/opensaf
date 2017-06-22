@@ -23,8 +23,8 @@
 #include "base/ncssysf_ipc.h"
 #include <string>
 
-#include "osaf/saf/saAis.h"
-#include "imm/saf/saImmOi.h"
+#include <saAis.h>
+#include <saImmOi.h>
 
 /**** Macro for PROCEDURE task name ****/
 #define m_PROCEDURE_TASKNAME "PROCEDURE"

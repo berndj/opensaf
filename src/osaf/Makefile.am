@@ -18,25 +18,6 @@ noinst_HEADERS += \
 	src/osaf/immutil/immutil.h \
 	src/osaf/saflog/saflog.h
 
-noinst_LTLIBRARIES += lib/libais.la
-
-lib_libais_la_CFLAGS = $(OSAF_LIB_FLAGS) $(AM_CFLAGS)
-
-lib_libais_la_CXXFLAGS = $(OSAF_LIB_FLAGS) $(AM_CXXFLAGS)
-
-lib_libais_la_CPPFLAGS = \
-	-DSA_EXTENDED_NAME_SOURCE \
-	$(AM_CPPFLAGS)
-
-lib_libais_la_LDFLAGS = \
-	$(AM_LDFLAGS) \
-	-static
-
-lib_libais_la_SOURCES = \
-	src/osaf/saf/aisa_api.c
-
-nodist_EXTRA_lib_libais_la_SOURCES = dummy.cc
-
 pkglib_LTLIBRARIES += lib/libosaf_common.la
 
 lib_libosaf_common_la_CFLAGS = $(OSAF_LIB_FLAGS) $(AM_CFLAGS)
@@ -60,12 +41,6 @@ lib_libosaf_common_la_LIBADD = \
 	lib/libSaLog.la \
 	lib/libSaImmOi.la \
 	lib/libSaImmOm.la
-
-include_HEADERS += \
-	src/osaf/saf/saAis_B_5_14.h \
-	src/osaf/saf/saAis.h
-
-CORE_INCLUDES += -I$(top_srcdir)/src/osaf/saf
 
 if ENABLE_IMMXML
 

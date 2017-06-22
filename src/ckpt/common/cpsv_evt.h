@@ -29,7 +29,7 @@
 #ifndef CKPT_COMMON_CPSV_EVT_H_
 #define CKPT_COMMON_CPSV_EVT_H_
 
-#include "ckpt/saf/saCkpt.h"
+#include <saCkpt.h>
 #include <saCkpt_B_02_03.h>
 #include "base/ncssysf_tmr.h"
 

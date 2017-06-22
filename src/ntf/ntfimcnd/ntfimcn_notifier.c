@@ -27,10 +27,10 @@
 #include <stdbool.h>
 
 #include "base/ncsgl_defs.h"
-#include "osaf/saf/saAis.h"
-#include "ntf/saf/saNtf.h"
-#include "amf/saf/saAmf.h"
-#include "imm/saf/saImm.h"
+#include <saAis.h>
+#include <saNtf.h>
+#include <saAmf.h>
+#include <saImm.h>
 #include "base/logtrace.h"
 #include "base/saf_error.h"
 #include "ntf/common/ntfsv_mem.h"

@@ -42,12 +42,12 @@ extern "C" {
 #include "base/ncssysf_lck.h"
 
 #include <SaHpi.h>
-#include "osaf/saf/saAis.h"
-#include "imm/saf/saImmOm.h"
-#include "imm/saf/saImmOi.h"
-#include "imm/saf/saImm.h"
-#include "ntf/saf/saNtf.h"
-#include "plm/saf/saPlm.h"
+#include <saAis.h>
+#include <saImmOm.h>
+#include <saImmOi.h>
+#include <saImm.h>
+#include <saNtf.h>
+#include <saPlm.h>
 #include "base/logtrace.h"
 #include "mbc/mbcsv_papi.h"
 #include "plm/common/plms_hpi.h"

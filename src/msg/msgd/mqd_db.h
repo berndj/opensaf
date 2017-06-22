@@ -32,8 +32,8 @@
 
 /******************** Service Sub part Versions ******************************/
 #include <stdbool.h>
-#include "clm/saf/saClm.h"
-#include "imm/saf/saImmOi.h"
+#include <saClm.h>
+#include <saImmOi.h>
 
 #define MQSV_MQD_MBCSV_VERSION 1
 #define MQSV_MQD_MBCSV_VERSION_MIN 1

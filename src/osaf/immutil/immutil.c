@@ -29,7 +29,7 @@
 #include <syslog.h>
 #include <errno.h>
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/logtrace.h"
 #include "base/osaf_extended_name.h"
 

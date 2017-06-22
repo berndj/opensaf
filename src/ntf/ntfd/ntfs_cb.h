@@ -19,8 +19,8 @@
 #define NTF_NTFD_NTFS_CB_H_
 
 #include <stdbool.h>
-#include "ntf/saf/saNtf.h"
-#include "clm/saf/saClm.h"
+#include <saNtf.h>
+#include <saClm.h>
 
 /* Default HA state assigned locally during ntfs initialization */
 #define NTFS_HA_INIT_STATE 0

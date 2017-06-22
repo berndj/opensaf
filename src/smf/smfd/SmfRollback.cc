@@ -29,10 +29,10 @@
 #include "smf/smfd/SmfCampaignThread.h"
 #include "smf/smfd/SmfUtils.h"
 
-#include "osaf/saf/saAis.h"
-#include "imm/saf/saImmOm.h"
+#include <saAis.h>
+#include <saImmOm.h>
 #include "osaf/immutil/immutil.h"
-#include "imm/saf/saImm.h"
+#include <saImm.h>
 #include "base/saf_error.h"
 
 /* ========================================================================

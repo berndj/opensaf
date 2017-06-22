@@ -20,7 +20,7 @@
 
 #include <string>
 #include <atomic>
-#include "log/saf/saLog.h"
+#include <saLog.h>
 #include "base/mutex.h"
 #include "log/agent/lga_common.h"
 

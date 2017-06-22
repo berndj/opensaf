@@ -25,7 +25,7 @@
 #ifndef AMF_AMFD_SUTCOMPTYPE_H_
 #define AMF_AMFD_SUTCOMPTYPE_H_
 
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 #include "amf/amfd/sutype.h"
 
 typedef struct {

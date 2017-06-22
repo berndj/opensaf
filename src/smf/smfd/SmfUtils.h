@@ -25,8 +25,8 @@
 
 #include <string>
 #include <list>
-#include "imm/saf/saImmOm.h"
-#include "osaf/saf/saAis.h"
+#include <saImmOm.h>
+#include <saAis.h>
 #include "osaf/saflog/saflog.h"
 
 #include "smfd.h"

@@ -20,7 +20,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/logtrace.h"
 #include "base/ncsgl_defs.h"
 

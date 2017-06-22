@@ -21,7 +21,7 @@
 #define LOG_LOGD_LGS_MBCSV_H_
 
 #include <stdint.h>
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 
 /* Version 1: Logservice check-point version older versions than OpenSAF 4.4.
  *            Cannot be configured for split filesystem.

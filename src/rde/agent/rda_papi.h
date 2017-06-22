@@ -35,7 +35,7 @@
 */
 #include <stdio.h>
 #include "base/ncsgl_defs.h"
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -24,7 +24,7 @@
 #define PLM_COMMON_PLMS_HRB_H_
 
 #include <SaHpi.h>
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 
 #if 0
 /* macro definitions */

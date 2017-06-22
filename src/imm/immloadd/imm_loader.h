@@ -23,9 +23,9 @@
 #include <vector>
 #include <string>
 #include <string.h>
-#include "imm/saf/saImmOm.h"
+#include <saImmOm.h>
 #include "imm/common/immsv_api.h"
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 
 struct AttrInfo {
   std::string attrName;

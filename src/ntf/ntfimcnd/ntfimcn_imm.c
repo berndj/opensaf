@@ -25,16 +25,16 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "osaf/saf/saAis.h"
-#include "ntf/saf/saNtf.h"
-#include "amf/saf/saAmf.h"
+#include <saAis.h>
+#include <saNtf.h>
+#include <saAmf.h>
 #include "base/logtrace.h"
 #include "base/saf_error.h"
 #include "base/ncsgl_defs.h"
 #include "base/osaf_extended_name.h"
 
-#include "imm/saf/saImmOm.h"
-#include "imm/saf/saImmOi.h"
+#include <saImmOm.h>
+#include <saImmOi.h>
 #include "osaf/immutil/immutil.h"
 
 #include "ntfimcn_main.h"

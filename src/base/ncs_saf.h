@@ -36,8 +36,8 @@
 extern "C" {
 #endif
 
-#include "osaf/saf/saAis.h"
-#include "amf/saf/saAmf.h"
+#include <saAis.h>
+#include <saAmf.h>
 
 /* Macro for offset of value in the SaNameT structure.*/
 #define m_OFFSET_VAL_SANAMET ((long)((uint8_t *)(((SaNameT *)0)->value)))

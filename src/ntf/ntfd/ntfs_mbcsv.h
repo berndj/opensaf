@@ -18,7 +18,7 @@
 #ifndef NTF_NTFD_NTFS_MBCSV_H_
 #define NTF_NTFD_NTFS_MBCSV_H_
 
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 
 #define NTFS_MBCSV_VERSION 2
 #define NTFS_MBCSV_VERSION_1 1

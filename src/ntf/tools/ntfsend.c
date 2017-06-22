@@ -29,8 +29,8 @@
 #include <sys/un.h>
 #include <time.h>
 #include <fcntl.h>
-#include "osaf/saf/saAis.h"
-#include "ntf/saf/saNtf.h"
+#include <saAis.h>
+#include <saNtf.h>
 #include "ntf/tools/ntfclient.h"
 #include <ctype.h>
 #include <limits.h>

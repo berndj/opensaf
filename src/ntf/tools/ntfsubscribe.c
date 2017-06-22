@@ -34,10 +34,10 @@
 #include <ctype.h>
 #include <poll.h>
 
-#include "osaf/saf/saAis.h"
-#include "amf/saf/saAmf.h"
-#include "clm/saf/saClm.h"
-#include "ntf/saf/saNtf.h"
+#include <saAis.h>
+#include <saAmf.h>
+#include <saClm.h>
+#include <saNtf.h>
 #include "ntf/tools/ntfclient.h"
 #include "ntf/tools/ntfconsumer.h"
 

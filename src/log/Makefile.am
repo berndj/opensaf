@@ -20,7 +20,6 @@ EXTRA_DIST += \
 	src/log/README-HEADLESS \
 	src/log/README_LONGDN \
 	src/log/apitest/README \
-	src/log/saf/libSaLog.map \
 	src/log/tools/README
 
 lib_LTLIBRARIES += lib/libSaLog.la
@@ -49,7 +48,7 @@ lib_libSaLog_la_LDFLAGS = \
 
 if HAVE_LD_VERSION_SCRIPT
 lib_libSaLog_la_LDFLAGS += \
-	-Wl,-version-script=$(top_srcdir)/src/log/saf/libSaLog.map
+	-Wl,-version-script=$(top_srcdir)/src/ais/lib/libSaLog.map
 endif
 
 lib_libSaLog_la_LDFLAGS += \
@@ -58,9 +57,6 @@ lib_libSaLog_la_LDFLAGS += \
 lib_libSaLog_la_LIBADD = \
 	lib/libais.la \
 	lib/libopensaf_core.la
-
-include_HEADERS += \
-	src/log/saf/saLog.h
 
 noinst_HEADERS += \
 	src/log/agent/lga_mds.h \
@@ -98,9 +94,7 @@ noinst_HEADERS += \
 
 bin_PROGRAMS += bin/saflogger
 osaf_execbin_PROGRAMS += bin/osaflogd
-CORE_INCLUDES += -I$(top_srcdir)/src/log/saf
 TESTS += bin/testlogd
-pkgconfig_DATA += src/log/saf/opensaf-log.pc
 
 nodist_pkgclccli_SCRIPTS += \
 	src/log/logd/osaf-logd

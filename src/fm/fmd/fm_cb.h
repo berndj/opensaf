@@ -20,13 +20,13 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 #include "base/ncssysf_tmr.h"
 #include "base/ncssysf_ipc.h"
 #include "mds/mds_papi.h"
 #include "rde/agent/rda_papi.h"
 #include "fm_amf.h"
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 
 #include <stdbool.h>
 #include <stdint.h>

@@ -14,8 +14,6 @@
 # Author(s): Ericsson AB
 #
 
-EXTRA_DIST += src/evt/saf/libSaEvt.map
-
 if ENABLE_AIS_EVT
 
 osaf_lib_LTLIBRARIES += lib/libevt_common.la
@@ -59,7 +57,7 @@ lib_libSaEvt_la_LDFLAGS = \
 
 if HAVE_LD_VERSION_SCRIPT
 lib_libSaEvt_la_LDFLAGS += \
-	-Wl,-version-script=$(top_srcdir)/src/evt/saf/libSaEvt.map
+	-Wl,-version-script=$(top_srcdir)/src/ais/lib/libSaEvt.map
 endif
 
 lib_libSaEvt_la_LDFLAGS += \
@@ -69,9 +67,6 @@ lib_libSaEvt_la_LIBADD = \
 	lib/libevt_common.la \
 	lib/libais.la \
 	lib/libopensaf_core.la
-
-include_HEADERS += \
-	src/evt/saf/saEvt.h
 
 noinst_HEADERS += \
 	src/evt/agent/eda.h \
@@ -94,8 +89,6 @@ noinst_HEADERS += \
 	src/evt/evtd/eds_mem.h
 
 osaf_execbin_PROGRAMS += bin/osafevtd
-CORE_INCLUDES += -I$(top_srcdir)/src/evt/saf
-pkgconfig_DATA += src/evt/saf/opensaf-evt.pc
 
 nodist_pkgclccli_SCRIPTS += \
 	src/evt/evtd/osaf-evtd

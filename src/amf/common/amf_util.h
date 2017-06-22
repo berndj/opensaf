@@ -30,7 +30,7 @@
 #ifndef AMF_COMMON_AMF_UTIL_H_
 #define AMF_COMMON_AMF_UTIL_H_
 
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 #include "base/ncsgl_defs.h"
 #include "amf/common/amf_defs.h"
 

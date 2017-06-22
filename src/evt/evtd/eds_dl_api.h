@@ -33,7 +33,7 @@
 #define EVT_EVTD_EDS_DL_API_H_
 
 #include <stdint.h>
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 #include "eds_cb.h"
 
 uint32_t initialize_for_assignment(EDS_CB *cb, SaAmfHAStateT ha_state);

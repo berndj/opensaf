@@ -16,8 +16,7 @@
 #
 
 EXTRA_DIST += \
-	src/clm/README \
-	src/clm/saf/libSaClm.map
+	src/clm/README
 
 osaf_lib_LTLIBRARIES += lib/libclm_common.la
 
@@ -58,7 +57,7 @@ lib_libSaClm_la_LDFLAGS = \
 
 if HAVE_LD_VERSION_SCRIPT
 lib_libSaClm_la_LDFLAGS += \
-	-Wl,-version-script=$(top_srcdir)/src/clm/saf/libSaClm.map
+	-Wl,-version-script=$(top_srcdir)/src/ais/lib/libSaClm.map
 endif
 
 lib_libSaClm_la_LDFLAGS += \
@@ -68,9 +67,6 @@ lib_libSaClm_la_LIBADD = \
 	lib/libclm_common.la \
 	lib/libais.la \
 	lib/libopensaf_core.la
-
-include_HEADERS += \
-	src/clm/saf/saClm.h
 
 noinst_HEADERS += \
 	src/clm/agent/clma.h \
@@ -90,8 +86,6 @@ noinst_HEADERS += \
 	src/clm/common/clmsv_msg.h
 
 osaf_execbin_PROGRAMS += bin/osafclmd bin/osafclmna
-CORE_INCLUDES += -I$(top_srcdir)/src/clm/saf
-pkgconfig_DATA += src/clm/saf/opensaf-clm.pc
 
 nodist_pkgclccli_SCRIPTS += \
 	src/clm/clmd/osaf-clmd \

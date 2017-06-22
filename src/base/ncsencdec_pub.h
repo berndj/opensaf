@@ -92,8 +92,8 @@
 
 #include "base/ncsgl_defs.h"
 #include "base/ncs_osprm.h"
-#include "osaf/saf/saAis.h"
-#include "clm/saf/saClm.h"
+#include <saAis.h>
+#include <saClm.h>
 #include "base/ncs_ubaid.h"
 #include "base/ncsusrbuf.h"
 #include "base/ncs_svd.h"

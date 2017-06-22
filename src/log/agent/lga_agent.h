@@ -22,9 +22,9 @@
 #include <string>
 #include <vector>
 #include "mds/mds_papi.h"
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/macros.h"
-#include "log/saf/saLog.h"
+#include <saLog.h>
 #include "log/common/lgsv_msg.h"
 #include "log/common/lgsv_defs.h"
 #include "log/agent/lga_common.h"

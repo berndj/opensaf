@@ -45,8 +45,8 @@ name="TestClass"> <category>SA_CONFIG</category> <rdn> <name>rdn</name>
 #include <libgen.h>
 #include <assert.h>
 
-#include "osaf/saf/saAis.h"
-#include "imm/saf/saImmOm.h"
+#include <saAis.h>
+#include <saImmOm.h>
 #include "osaf/immutil/immutil.h"
 #include "base/saf_error.h"
 

@@ -21,8 +21,8 @@
  *
  * @author	GoAhead Software
  *****************************************************************************/
-#include "osaf/saf/saAis.h"
-#include "smf/saf/saSmf.h"
+#include <saAis.h>
+#include <saSmf.h>
 #include "smf/common/smfsv_defs.h"
 #include "smfa.h"
 #include <limits.h>

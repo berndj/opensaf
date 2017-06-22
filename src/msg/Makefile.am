@@ -14,8 +14,6 @@
 # Author(s): Ericsson AB
 #
 
-EXTRA_DIST += src/msg/saf/libSaMsg.map
-
 if ENABLE_AIS_MSG
 
 osaf_lib_LTLIBRARIES += lib/libmsg_common.la
@@ -65,7 +63,7 @@ lib_libSaMsg_la_LDFLAGS = \
 
 if HAVE_LD_VERSION_SCRIPT
 lib_libSaMsg_la_LDFLAGS += \
-	-Wl,-version-script=$(top_srcdir)/src/msg/saf/libSaMsg.map
+	-Wl,-version-script=$(top_srcdir)/src/ais/lib/libSaMsg.map
 endif
 
 lib_libSaMsg_la_LDFLAGS += \
@@ -75,9 +73,6 @@ lib_libSaMsg_la_LIBADD = \
 	lib/libmsg_common.la \
 	lib/libais.la \
 	lib/libopensaf_core.la
-
-include_HEADERS += \
-	src/msg/saf/saMsg.h
 
 noinst_HEADERS += \
 	src/msg/agent/mqa.h \
@@ -119,8 +114,6 @@ noinst_HEADERS += \
 	src/msg/msgnd/mqnd_tmr.h
 
 osaf_execbin_PROGRAMS += bin/osafmsgd bin/osafmsgnd
-CORE_INCLUDES += -I$(top_srcdir)/src/msg/saf
-pkgconfig_DATA += src/msg/saf/opensaf-msg.pc
 
 nodist_pkgclccli_SCRIPTS += \
 	src/msg/msgd/osaf-msgd \

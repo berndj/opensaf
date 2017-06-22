@@ -34,7 +34,7 @@
 #include <sys/stat.h>
 #include <libgen.h>
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/osaf_extended_name.h"
 
 #ifdef HAVE_IMM_PBE

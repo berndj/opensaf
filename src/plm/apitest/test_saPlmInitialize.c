@@ -1,6 +1,6 @@
-#include "osaf/saf/saAis.h"
-#include "ntf/saf/saNtf.h"
-#include "plm/saf/saPlm.h"
+#include <saAis.h>
+#include <saNtf.h>
+#include <saPlm.h>
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"

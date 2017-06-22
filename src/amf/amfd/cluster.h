@@ -24,7 +24,7 @@
 #ifndef AMF_AMFD_CLUSTER_H_
 #define AMF_AMFD_CLUSTER_H_
 
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 #include "amf/amfd/node.h"
 
 typedef struct avd_cluster_tag {

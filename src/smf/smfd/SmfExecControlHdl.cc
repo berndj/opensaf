@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "base/osaf_extended_name.h"
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/saf_error.h"
 #include "osaf/immutil/immutil.h"
 #include "smf/smfd/SmfUtils.h"

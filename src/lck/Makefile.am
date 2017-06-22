@@ -14,8 +14,6 @@
 # Author(s): Ericsson AB
 #
 
-EXTRA_DIST += src/lck/saf/libSaLck.map
-
 if ENABLE_AIS_LCK
 
 osaf_lib_LTLIBRARIES += lib/liblck_common.la
@@ -60,7 +58,7 @@ lib_libSaLck_la_LDFLAGS = \
 
 if HAVE_LD_VERSION_SCRIPT
 lib_libSaLck_la_LDFLAGS += \
-	-Wl,-version-script=$(top_srcdir)/src/lck/saf/libSaLck.map
+	-Wl,-version-script=$(top_srcdir)/src/ais/lib/libSaLck.map
 endif
 
 lib_libSaLck_la_LDFLAGS += \
@@ -70,9 +68,6 @@ lib_libSaLck_la_LIBADD = \
 	lib/liblck_common.la \
 	lib/libais.la \
 	lib/libopensaf_core.la
-
-include_HEADERS += \
-	src/lck/saf/saLck.h
 
 noinst_HEADERS += \
 	src/lck/agent/gla.h \
@@ -113,8 +108,6 @@ noinst_HEADERS += \
 	src/lck/lcknd/glnd_tmr.h
 
 osaf_execbin_PROGRAMS += bin/osaflckd bin/osaflcknd
-CORE_INCLUDES += -I$(top_srcdir)/src/lck/saf
-pkgconfig_DATA += src/lck/saf/opensaf-lck.pc
 
 nodist_pkgclccli_SCRIPTS += \
 	src/lck/lckd/osaf-lckd \

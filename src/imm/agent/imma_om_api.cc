@@ -43,7 +43,7 @@
 
 #include "imma.h"
 #include "imm/common/immsv_api.h"
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/osaf_extended_name.h"
 
 static const char *immLoaderName = IMMSV_LOADERNAME; /*Defined in immsv_evt.h */

@@ -32,7 +32,7 @@
 #include <libxml/globals.h>
 
 #include "base/logtrace.h"
-#include "imm/saf/saImm.h"
+#include <saImm.h>
 #include "base/osaf_extended_name.h"
 
 #include "smf/smfd/SmfUtils.h"

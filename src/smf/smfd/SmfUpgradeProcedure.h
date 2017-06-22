@@ -31,8 +31,8 @@
 #include <map>
 #include <mutex>
 
-#include "smf/saf/saSmf.h"
-#include "imm/saf/saImmOi.h"
+#include <saSmf.h>
+#include <saImmOi.h>
 #include "smf/smfd/SmfImmOperation.h"
 #include "smf/smfd/SmfCampaignThread.h"
 #include "smf/smfd/SmfCallback.h"

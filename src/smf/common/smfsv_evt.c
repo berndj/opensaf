@@ -23,7 +23,7 @@
 *****************************************************************************/
 
 #include <stdint.h>
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/ncsencdec_pub.h"
 #include "base/logtrace.h"
 #include "base/osaf_extended_name.h"

@@ -19,7 +19,7 @@
 #include "imm/immpbed/immpbe.h"
 #include <errno.h>
 #include <signal.h>
-#include "imm/saf/saImmOi.h"
+#include <saImmOi.h>
 #include "osaf/immutil/immutil.h"
 #include <poll.h>
 #include <stdio.h>
@@ -27,7 +27,7 @@
 #include "nid/agent/nid_api.h" /* To define NCS_SEL_OBJ */
 #include "imm/common/immsv_evt_model.h"
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/osaf_extended_name.h"
 
 #define FD_IMM_PBE_OI 0

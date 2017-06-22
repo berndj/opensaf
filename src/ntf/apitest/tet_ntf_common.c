@@ -16,7 +16,7 @@
  */
 #include <stdio.h>
 #include <time.h>
-#include "ntf/saf/saNtf.h"
+#include <saNtf.h>
 #include "osaf/apitest/util.h"
 #include <poll.h>
 #include <unistd.h>

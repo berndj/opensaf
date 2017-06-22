@@ -19,7 +19,7 @@
 #include "ntf/common/ntfsv_enc_dec.h"
 #include "ntf/common/ntfsv_mem.h"
 #include "base/osaf_extended_name.h"
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 
 typedef union {
 	uint32_t uint32_val;

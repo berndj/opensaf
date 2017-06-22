@@ -21,7 +21,7 @@
 #ifndef NTF_TOOLS_NTFCONSUMER_H_
 #define NTF_TOOLS_NTFCONSUMER_H_
 
-#include "ntf/saf/saNtf.h"
+#include <saNtf.h>
 
 /* common for ntfsubscribe and ntfread */
 #define EXIT_IF_FALSE(expr) ntfsvtools_exitIfFalse(__FILE__, __LINE__, expr)

@@ -36,7 +36,7 @@
 #include <errno.h>
 #include "base/ncsgl_defs.h"
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/osaf_extended_name.h"
 
 // Default value of accessControlMode attribute in the OpensafImm class

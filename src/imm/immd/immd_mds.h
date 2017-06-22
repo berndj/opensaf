@@ -18,7 +18,7 @@
 #ifndef IMM_IMMD_IMMD_MDS_H_
 #define IMM_IMMD_IMMD_MDS_H_
 
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 
 uint32_t immd_mds_register(IMMD_CB *cb, SaAmfHAStateT ha_state);
 void immd_mds_unregister(IMMD_CB *cb);

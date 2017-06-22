@@ -20,7 +20,7 @@
 #define CLM_CLMD_CLMS_MBCSV_H_
 
 #include <stdint.h>
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 
 #define CLMS_MBCSV_VERSION 1
 #define CLMS_MBCSV_VERSION_MIN 1

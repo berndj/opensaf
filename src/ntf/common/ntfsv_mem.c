@@ -15,11 +15,11 @@
  *
  */
 
-#include "ntf/saf/saNtf.h"
+#include <saNtf.h>
 #include <stdlib.h>
 #include "ntf/common/ntfsv_mem.h"
 #include "base/osaf_extended_name.h"
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/logtrace.h"
 
 void ntfsv_free_header(const SaNtfNotificationHeaderT *notificationHeader,

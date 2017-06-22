@@ -23,8 +23,8 @@
 #include <sys/poll.h>
 
 #include "base/osaf_utility.h"
-#include "osaf/saf/saAis.h"
-#include "log/saf/saLog.h"
+#include <saAis.h>
+#include <saLog.h>
 #include "ntf/ntfd/NtfAdmin.h"
 #include "ntf/ntfd/NtfLogger.h"
 #include "ntfs_com.h"

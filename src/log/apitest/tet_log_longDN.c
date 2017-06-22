@@ -23,7 +23,7 @@
 #include "logtest.h"
 
 #include "base/osaf_extended_name.h"
-#include "log/saf/saLog.h"
+#include <saLog.h>
 #include "base/saf_error.h"
 
 /* Default format expression for alm/not streams */

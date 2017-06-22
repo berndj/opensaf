@@ -19,8 +19,7 @@ EXTRA_DIST += \
 	src/ntf/README \
 	src/ntf/README_SC_ABSENCE \
 	src/ntf/apitest/README \
-	src/ntf/ntfimcnd/README \
-	src/ntf/saf/libSaNtf.map
+	src/ntf/ntfimcnd/README
 
 osaf_lib_LTLIBRARIES += lib/libntf_common.la lib/libntfclient.la
 
@@ -76,7 +75,7 @@ lib_libSaNtf_la_LDFLAGS = \
 
 if HAVE_LD_VERSION_SCRIPT
 lib_libSaNtf_la_LDFLAGS += \
-	-Wl,-version-script=$(top_srcdir)/src/ntf/saf/libSaNtf.map
+	-Wl,-version-script=$(top_srcdir)/src/ais/lib/libSaNtf.map
 endif
 
 lib_libSaNtf_la_LDFLAGS += \
@@ -86,9 +85,6 @@ lib_libSaNtf_la_LIBADD = \
 	lib/libntf_common.la \
 	lib/libais.la \
 	lib/libopensaf_core.la
-
-include_HEADERS += \
-	src/ntf/saf/saNtf.h
 
 noinst_HEADERS += \
 	src/ntf/agent/ntfa.h \
@@ -117,8 +113,6 @@ noinst_HEADERS += \
 
 bin_PROGRAMS += bin/ntfread bin/ntfsend bin/ntfsubscribe
 osaf_execbin_PROGRAMS += bin/osafntfd
-CORE_INCLUDES += -I$(top_srcdir)/src/ntf/saf
-pkgconfig_DATA += src/ntf/saf/opensaf-ntf.pc
 
 nodist_pkgclccli_SCRIPTS += \
 	src/ntf/ntfd/osaf-ntfd

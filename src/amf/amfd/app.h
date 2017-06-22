@@ -24,8 +24,8 @@
 #ifndef AMF_AMFD_APP_H_
 #define AMF_AMFD_APP_H_
 
-#include "amf/saf/saAmf.h"
-#include "imm/saf/saImm.h"
+#include <saAmf.h>
+#include <saImm.h>
 
 #include "amf/amfd/apptype.h"
 #include "amf/amfd/sg.h"

@@ -49,7 +49,7 @@
 #include "base/ncssysf_def.h"
 #include "base/ncssysf_tsk.h"
 #include "base/ncssysfpool.h"
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 #include "rde/common/rde_rda_common.h"
 
 /*

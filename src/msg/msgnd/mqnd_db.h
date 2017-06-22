@@ -30,8 +30,8 @@
 #ifndef MSG_MSGND_MQND_DB_H_
 #define MSG_MSGND_MQND_DB_H_
 
-#include "clm/saf/saClm.h"
-#include "imm/saf/saImmOi.h"
+#include <saClm.h>
+#include <saImmOi.h>
 /* Decleration for global variable */
 uint32_t gl_mqnd_cb_hdl;
 

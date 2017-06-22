@@ -35,7 +35,7 @@ communication.
 #ifndef EVT_COMMON_EDSV_MSG_H_
 #define EVT_COMMON_EDSV_MSG_H_
 
-#include "evt/saf/saEvt.h"
+#include <saEvt.h>
 
 /* AMF API enums */
 typedef enum edsv_msg_type {

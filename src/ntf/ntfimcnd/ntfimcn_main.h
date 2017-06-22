@@ -18,10 +18,10 @@
 #ifndef NTF_NTFIMCND_NTFIMCN_MAIN_H_
 #define NTF_NTFIMCND_NTFIMCN_MAIN_H_
 
-#include "amf/saf/saAmf.h"
-#include "ntf/saf/saNtf.h"
-#include "imm/saf/saImmOi.h"
-#include "imm/saf/saImmOm.h"
+#include <saAmf.h>
+#include <saNtf.h>
+#include <saImmOi.h>
+#include <saImmOm.h>
 
 #ifdef __cplusplus
 extern "C" {

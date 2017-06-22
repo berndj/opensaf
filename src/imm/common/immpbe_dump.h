@@ -22,7 +22,7 @@
 #include <list>
 #include <map>
 #include <cstring>
-#include "imm/saf/saImmOm.h"
+#include <saImmOm.h>
 #include "imm/common/immsv_api.h"
 #include "base/logtrace.h"
 

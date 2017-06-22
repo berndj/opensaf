@@ -33,7 +33,7 @@
 #include <signal.h>
 #include <time.h>
 #include <stdint.h>
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 
 #include "base/ncsgl_defs.h"
 #include "base/ncs_lib.h"
@@ -45,13 +45,13 @@
 #include "base/ncs_util.h"
 #include "base/logtrace.h"
 #include "osaf/immutil/immutil.h"
-#include "imm/saf/saImmOi.h"
-#include "clm/saf/saClm.h"
+#include <saImmOi.h>
+#include <saClm.h>
 #include "rde/agent/rda_papi.h"
-#include "ntf/saf/saNtf.h"
+#include <saNtf.h>
 #include "base/ncssysf_def.h"
 #ifdef ENABLE_AIS_PLM
-#include "plm/saf/saPlm.h"
+#include <saPlm.h>
 #endif
 #include "osaf/saflog/saflog.h"
 

@@ -19,7 +19,7 @@
 #ifndef CKPT_CKPTND_CPND_CB_H_
 #define CKPT_CKPTND_CPND_CB_H_
 
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 
 #include "base/ncs_queue.h"
 

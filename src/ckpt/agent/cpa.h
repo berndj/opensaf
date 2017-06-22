@@ -36,7 +36,7 @@
 #include "base/osaf_extended_name.h"
 #include "ckpt/common/cpsv.h"
 #include "cpa_dl_api.h"
-#include "cpsv_papi.h"
+#include <opensaf/cpsv_papi.h>
 #include "cpa_def.h"
 #include "ckpt/agent/cpa_tmr.h"
 #include "ckpt/common/cpsv_shm.h"

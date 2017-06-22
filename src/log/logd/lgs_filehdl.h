@@ -23,7 +23,7 @@
 #include <limits.h>
 #include <utmp.h>
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "log/logd/lgs_util.h"
 
 /*****************************************************************************

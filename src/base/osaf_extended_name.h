@@ -28,7 +28,7 @@
 
 #include <stddef.h>
 #include <stdbool.h>
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 
 #ifdef __cplusplus
 extern "C" {

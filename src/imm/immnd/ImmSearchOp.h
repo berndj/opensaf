@@ -18,7 +18,7 @@
 #ifndef IMM_IMMND_IMMSEARCHOP_H_
 #define IMM_IMMND_IMMSEARCHOP_H_ 1
 
-#include "imm/saf/saImmOm.h"
+#include <saImmOm.h>
 #include "imm/immnd/ImmAttrValue.h"
 #include <string>
 #include <list>

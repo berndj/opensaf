@@ -22,7 +22,7 @@
 #include "stdio.h"
 #include "math.h"
 #include "errno.h"
-#include "cpsv_papi.h"
+#include <opensaf/cpsv_papi.h>
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
 

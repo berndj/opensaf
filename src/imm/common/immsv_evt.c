@@ -28,7 +28,7 @@
 #include "imm/common/immsv.h"
 #include "imm/common/immsv_api.h"
 #include "base/osaf_extended_name.h"
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 
 #define IMMSV_RSRV_SPACE_ASSERT(P, B, S)                                       \
 	P = ncs_enc_reserve_space(B, S);                                       \

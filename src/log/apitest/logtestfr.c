@@ -30,13 +30,13 @@
 
 #include "base/saf_error.h"
 #include "osaf/configmake.h"
-#include "osaf/saf/saAis.h"
-#include "log/saf/saLog.h"
+#include <saAis.h>
+#include <saLog.h>
 
-#include "imm/saf/saImmOi.h"
-#include "imm/saf/saImmOm.h"
+#include <saImmOi.h>
+#include <saImmOm.h>
 #include "osaf/immutil/immutil.h"
-#include "imm/saf/saImm.h"
+#include <saImm.h>
 
 /*******************************************************************************
  * Global variables and defines

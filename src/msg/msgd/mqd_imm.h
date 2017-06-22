@@ -21,7 +21,7 @@
 #define MSG_MSGD_MQD_IMM_H_
 
 #include "osaf/immutil/immutil.h"
-#include "imm/saf/saImm.h"
+#include <saImm.h>
 #include "msg/msgd/mqd.h"
 
 SaAisErrorT mqd_imm_initialize(MQD_CB *cb);

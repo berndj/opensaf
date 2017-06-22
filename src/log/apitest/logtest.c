@@ -24,14 +24,14 @@
 #include "osaf/configmake.h"
 #include <ctype.h>
 #include <stdarg.h>
-#include "imm/saf/saImmOm.h"
+#include <saImmOm.h>
 #include "osaf/immutil/immutil.h"
-#include "imm/saf/saImm.h"
+#include <saImm.h>
 #include "base/saf_error.h"
 
 #include "log/apitest/logtest.h"
 #include "base/osaf_extended_name.h"
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 
 #define LLDTEST
 

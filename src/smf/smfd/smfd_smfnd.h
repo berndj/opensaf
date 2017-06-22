@@ -29,7 +29,7 @@
 
 #include "base/ncssysf_ipc.h"
 #include "base/ncsgl_defs.h"
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 
 #ifdef __cplusplus
 extern "C" {

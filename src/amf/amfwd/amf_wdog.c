@@ -45,7 +45,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 #include "base/ncssysf_def.h"
 #include "osaf/configmake.h"
 #include "base/daemon.h"

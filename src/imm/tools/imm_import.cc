@@ -33,8 +33,8 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#include "osaf/saf/saAis.h"
-#include "imm/saf/saImmOm.h"
+#include <saAis.h>
+#include <saImmOm.h>
 #include "osaf/immutil/immutil.h"
 #include "base/saf_error.h"
 #include "base/osaf_extended_name.h"

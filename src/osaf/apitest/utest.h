@@ -19,7 +19,7 @@
 #define OSAF_APITEST_UTEST_H_
 
 #include "base/logtrace.h"
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 
 #ifdef  __cplusplus
 extern "C" {

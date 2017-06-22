@@ -36,7 +36,7 @@
 #include <libgen.h>
 #include <string.h>
 #include <assert.h>
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 
 bool usesyslog = false;
 

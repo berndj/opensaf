@@ -36,7 +36,7 @@
 #include "mbc/mbcsv_papi.h"
 
 /* IMMSV header */
-#include "imm/saf/saImmOi.h"
+#include <saImmOi.h>
 #include "osaf/immutil/immutil.h"
 
 /* EDU header */
@@ -62,10 +62,10 @@
 #include "eds_ckpt.h"
 
 /* CLM header */
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 
 /* IMM Headers */
-#include "imm/saf/saImmOi.h"
+#include <saImmOi.h>
 
 #include "base/ncssysf_def.h"
 

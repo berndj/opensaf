@@ -17,7 +17,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/saf_error.h"
 
 static const char *saf_error_name[] = {

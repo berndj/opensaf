@@ -26,7 +26,7 @@
 #ifndef AMF_COMMON_AMF_SI_ASSIGN_H_
 #define AMF_COMMON_AMF_SI_ASSIGN_H_
 
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 
 struct SaAmfSIAssignment {
  public:

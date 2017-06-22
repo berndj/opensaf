@@ -23,7 +23,7 @@
 #include "smf/smfd/SmfUpgradeCampaign.h"
 #include "smf/smfd/SmfUpgradeMethod.h"
 #include "smf/smfd/SmfUpgradeProcedure.h"
-#include "smf/saf/saSmf.h"
+#include <saSmf.h>
 #include "smf/smfd/SmfUpgradeStep.h"
 #include "smf/smfd/SmfStepTypes.h"
 #include "smf/smfd/SmfUtils.h"

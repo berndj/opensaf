@@ -18,7 +18,7 @@
 #include "rde/rded/rde_amf.h"
 #include "base/logtrace.h"
 #include "nid/agent/nid_start_util.h"
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "rde/rded/rde_cb.h"
 #include "rde/rded/role.h"
 

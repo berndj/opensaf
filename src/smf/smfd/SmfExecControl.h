@@ -22,7 +22,7 @@
 #include "base/macros.h"
 #include "smf/smfd/SmfUpgradeStep.h"
 #include "smf/smfd/SmfUpgradeAction.h"
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 
 /*
  * These set of functions enables the balanced mode feature. This mode changes

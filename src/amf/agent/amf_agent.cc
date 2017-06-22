@@ -30,7 +30,7 @@
 
 ******************************************************************************
 */
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 #include "ava.h"
 #include "amf_agent.h"
 

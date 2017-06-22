@@ -35,8 +35,8 @@
 #include <errno.h>
 #include <string.h>
 
-#include "imm/saf/saImmOm.h"
-#include "imm/saf/saImmOi.h"
+#include <saImmOm.h>
+#include <saImmOi.h>
 
 #include "osaf/immutil/immutil.h"
 #include "base/osaf_time.h"

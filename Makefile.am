@@ -151,6 +151,7 @@ dist_osaf_execbin_SCRIPTS += \
 	$(top_srcdir)/scripts/opensaf_scale_out \
 	$(top_srcdir)/scripts/plm_scale_out
 
+include $(top_srcdir)/src/ais/Makefile.am
 include $(top_srcdir)/src/base/Makefile.am
 include $(top_srcdir)/src/osaf/Makefile.am
 include $(top_srcdir)/src/amf/Makefile.am
@@ -344,7 +345,7 @@ install-exec-hook:
 	srcdir=$$(cd $(top_srcdir); pwd; cd - > /dev/null); \
 	for i in $$libs; do \
 		sofile=$(DESTDIR)$(libdir)/$$i.so; \
-		mapfile=$$(bash -c "ls -1 $$srcdir/src/*/saf/$$i.map"); \
+		mapfile=$$(bash -c "ls -1 $$srcdir/src/ais/lib/$$i.map"); \
 		bash $$srcdir/scripts/create_empty_library "$$sofile" "$$mapfile"; \
 	done
 
@@ -396,7 +397,9 @@ cpplint:
 	builddir=$$(cd $(top_builddir); pwd; cd - > /dev/null); \
 	srcdir=$$(cd $(top_srcdir); pwd; cd - > /dev/null); \
 	cd "$$srcdir"; find samples src \( -name '*.[CH]' -o -name '*.hh' -o -name '*.[ch]pp' -o -name '*.[ch]xx' \) -exec echo "Invalid file name: {}" \; 1>&2; \
-	cd "$$srcdir"; find samples src -name '*.h' | grep -v /saf/ | grep -v src/osaf/config > "$$builddir/cpplint_files.txt"; \
+	cd "$$srcdir"; find samples src -name '*.h' | \
+		grep -v src/ais/include | \
+		grep -v src/osaf/config > "$$builddir/cpplint_files.txt"; \
 	cd "$$srcdir"; find samples src -name '*.cc' >> "$$builddir/cpplint_files.txt"; \
 	python "$$builddir/bin/cpplint.py" --root=src --extensions=cc,h $$(cat "$$builddir/cpplint_files.txt"); \
 	true

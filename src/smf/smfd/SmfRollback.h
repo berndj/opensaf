@@ -26,9 +26,9 @@
 #include <string>
 #include <list>
 
-#include "imm/saf/saImm.h"
-#include "imm/saf/saImmOm.h"
-#include "imm/saf/saImmOi.h"
+#include <saImm.h>
+#include <saImmOm.h>
+#include <saImmOi.h>
 
 /* ========================================================================
  *   DEFINITIONS

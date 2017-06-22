@@ -21,7 +21,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 
 typedef enum {
   LGSF_SUCESS,  /* Operation done successfully */

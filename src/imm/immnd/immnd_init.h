@@ -30,7 +30,7 @@
 #ifndef IMM_IMMND_IMMND_INIT_H_
 #define IMM_IMMND_IMMND_INIT_H_
 
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 #include "imm/common/immsv_evt_model.h"
 #include "imm/common/immsv_api.h"
 

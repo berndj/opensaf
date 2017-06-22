@@ -36,8 +36,8 @@
 #include <stdbool.h>
 #include <time.h>
 
-#include "osaf/saf/saAis.h"
-#include "imm/saf/saImmOm.h"
+#include <saAis.h>
+#include <saImmOm.h>
 #include "imm/common/immsv_api.h"
 
 #include "osaf/immutil/immutil.h"

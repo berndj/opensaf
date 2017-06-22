@@ -18,8 +18,7 @@
 EXTRA_DIST += \
 	src/ckpt/README.HEADLESS \
 	src/ckpt/README.LONGDN \
-	src/ckpt/apitest/README \
-	src/ckpt/saf/libSaCkpt.map
+	src/ckpt/apitest/README
 
 if ENABLE_AIS_CKPT
 
@@ -69,7 +68,7 @@ lib_libSaCkpt_la_LDFLAGS = \
 
 if HAVE_LD_VERSION_SCRIPT
 lib_libSaCkpt_la_LDFLAGS += \
-	-Wl,-version-script=$(top_srcdir)/src/ckpt/saf/libSaCkpt.map
+	-Wl,-version-script=$(top_srcdir)/src/ais/lib/libSaCkpt.map
 endif
 
 lib_libSaCkpt_la_LDFLAGS += \
@@ -79,13 +78,6 @@ lib_libSaCkpt_la_LIBADD = \
 	lib/libckpt_common.la \
 	lib/libais.la \
 	lib/libopensaf_core.la
-
-include_HEADERS += \
-	src/ckpt/saf/saCkpt_B_02_03.h \
-	src/ckpt/saf/saCkpt.h
-
-pkginclude_HEADERS += \
-	src/ckpt/saf/cpsv_papi.h
 
 noinst_HEADERS += \
 	src/ckpt/agent/cpa.h \
@@ -120,8 +112,6 @@ noinst_HEADERS += \
 	src/ckpt/common/cpsv_shm.h
 
 osaf_execbin_PROGRAMS += bin/osafckptd bin/osafckptnd
-CORE_INCLUDES += -I$(top_srcdir)/src/ckpt/saf
-pkgconfig_DATA += src/ckpt/saf/opensaf-ckpt.pc
 
 nodist_pkgclccli_SCRIPTS += \
 	src/ckpt/ckptd/osaf-ckptd \

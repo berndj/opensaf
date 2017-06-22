@@ -26,8 +26,8 @@
 #include <string>
 #include <list>
 
-#include "imm/saf/saImmOm.h"
-#include "imm/saf/saImmOi.h"
+#include <saImmOm.h>
+#include <saImmOi.h>
 
 /* ========================================================================
  *   DEFINITIONS

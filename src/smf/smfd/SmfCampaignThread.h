@@ -21,9 +21,9 @@
 #include <semaphore.h>
 #include "base/ncsgl_defs.h"
 #include "base/ncssysf_ipc.h"
-#include "ntf/saf/saNtf.h"
+#include <saNtf.h>
 #include <string>
-#include "imm/saf/saImmOi.h"
+#include <saImmOi.h>
 
 class SmfUpgradeProcedure;
 

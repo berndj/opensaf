@@ -34,8 +34,8 @@
 #define AMF_AMFD_CB_H_
 
 #include <cstdint>
-#include "imm/saf/saImmOi.h"
-#include "clm/saf/saClm.h"
+#include <saImmOi.h>
+#include <saClm.h>
 
 #include "base/ncssysf_lck.h"
 #include "mds/mds_papi.h"

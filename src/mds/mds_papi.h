@@ -32,8 +32,8 @@
 #include "base/ncs_osprm.h"
 #include "base/ncs_ubaid.h"
 
-#include "osaf/saf/saAis.h"
-#include "amf/saf/saAmf.h"
+#include <saAis.h>
+#include <saAmf.h>
 #include "base/ncs_saf.h"
 #include "base/ncssysf_ipc.h"
 

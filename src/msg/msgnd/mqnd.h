@@ -44,7 +44,7 @@
 #include "mqnd_proc.h"
 #include "mqnd_saf.h"
 #include "base/saf_mem.h"
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 
 #include "base/daemon.h"
 

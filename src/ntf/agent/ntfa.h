@@ -21,7 +21,7 @@
 #include <pthread.h>
 #include <assert.h>
 #include <limits.h>
-#include "ntf/saf/saNtf.h"
+#include <saNtf.h>
 
 #include "base/ncs_main_papi.h"
 #include "base/ncssysf_ipc.h"

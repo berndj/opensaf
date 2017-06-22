@@ -248,6 +248,10 @@ Source Tree Structure
 |       +-- campaigns
 +-- scripts  (OpenSAF scripts)
 +-- src  (C and C++ source code)
+|   +-- ais
+|   |   +-- include  (AIS header files)
+|   |   |   +-- opensaf  (OpenSAF public headers)
+|   |   +-- lib  (AIS shared libraries)
 |   +-- amf
 |   |   +-- agent  (sources for OpenSAF agents)
 |   |   +-- amfd
@@ -256,7 +260,6 @@ Source Tree Structure
 |   |   +-- amfwd
 |   |   +-- common
 |   |   +-- config
-|   |   +-- saf
 |   |   +-- tools
 |   +-- base  (OpenSAF base library)
 |   |   +-- tests
@@ -267,7 +270,6 @@ Source Tree Structure
 |   |   +-- ckptnd
 |   |   +-- common
 |   |   +-- config
-|   |   +-- saf
 |   +-- clm
 |   |   +-- agent  (sources for OpenSAF agents)
 |   |   +-- apitest  (OpenSAF Test suites)
@@ -275,7 +277,6 @@ Source Tree Structure
 |   |   +-- clmnd
 |   |   +-- common
 |   |   +-- config
-|   |   +-- saf
 |   +-- dtm
 |   |   +-- dtmnd
 |   |   +-- transport
@@ -286,7 +287,6 @@ Source Tree Structure
 |   |   +-- common
 |   |   +-- config
 |   |   +-- evtd
-|   |   +-- saf
 |   +-- fm
 |   |   +-- config
 |   |   +-- fmd
@@ -301,7 +301,6 @@ Source Tree Structure
 |   |   +-- immloadd
 |   |   +-- immnd
 |   |   +-- immpbed
-|   |   +-- saf
 |   |   +-- tools  (IMM commandline utilities and IMM XML merge tool)
 |   +-- lck
 |   |   +-- agent  (sources for OpenSAF agents)
@@ -310,7 +309,6 @@ Source Tree Structure
 |   |   +-- config
 |   |   +-- lckd
 |   |   +-- lcknd
-|   |   +-- saf
 |   +-- libjava
 |   +-- log
 |   |   +-- agent  (sources for OpenSAF agents)
@@ -318,7 +316,6 @@ Source Tree Structure
 |   |   +-- common
 |   |   +-- config
 |   |   +-- logd
-|   |   +-- saf
 |   |   +-- tools  (SAFLOG command line utility)
 |   +-- mbc
 |   |   +-- apitest  (OpenSAF Test suites)
@@ -331,7 +328,6 @@ Source Tree Structure
 |   |   +-- config
 |   |   +-- msgd
 |   |   +-- msgnd
-|   |   +-- saf
 |   +-- nid
 |   |   +-- agent  (sources for OpenSAF agents)
 |   +-- ntf
@@ -341,13 +337,11 @@ Source Tree Structure
 |   |   +-- config
 |   |   +-- ntfd
 |   |   +-- ntfimcnd
-|   |   +-- saf
 |   |   +-- tools  (SAFNTF command line utility)
 |   +-- osaf
 |   |   +-- apitest  (OpenSAF Test suites)
 |   |   +-- config
 |   |   +-- immutil
-|   |   +-- saf
 |   |   +-- saflog
 |   +-- plm
 |   |   +-- agent  (sources for OpenSAF agents)
@@ -356,7 +350,6 @@ Source Tree Structure
 |   |   +-- config
 |   |   +-- plmcd
 |   |   +-- plmd
-|   |   +-- saf
 |   +-- rde
 |   |   +-- agent  (sources for OpenSAF agents)
 |   |   +-- common
@@ -367,7 +360,6 @@ Source Tree Structure
 |       +-- agent  (sources for OpenSAF agents)
 |       +-- common
 |       +-- config
-|       +-- saf
 |       +-- scripts
 |       +-- smfd
 |       +-- smfnd

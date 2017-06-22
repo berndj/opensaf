@@ -24,8 +24,8 @@
 #define AMF_AMFD_APPTYPE_H_
 
 #include <vector>
-#include "amf/saf/saAmf.h"
-#include "imm/saf/saImm.h"
+#include <saAmf.h>
+#include <saImm.h>
 
 #include "amf/amfd/sg.h"
 #include "amf/amfd/si.h"

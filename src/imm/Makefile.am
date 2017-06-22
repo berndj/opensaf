@@ -70,7 +70,7 @@ lib_libSaImmOm_la_LDFLAGS = \
 
 if HAVE_LD_VERSION_SCRIPT
 lib_libSaImmOm_la_LDFLAGS += \
-	-Wl,-version-script=$(top_srcdir)/src/imm/saf/libSaImmOm.map
+	-Wl,-version-script=$(top_srcdir)/src/ais/lib/libSaImmOm.map
 endif
 
 lib_libSaImmOm_la_LDFLAGS += \
@@ -103,7 +103,7 @@ lib_libSaImmOi_la_LDFLAGS = \
 
 if HAVE_LD_VERSION_SCRIPT
 lib_libSaImmOi_la_LDFLAGS += \
-	-Wl,-version-script=$(top_srcdir)/src/imm/saf/libSaImmOi.map
+	-Wl,-version-script=$(top_srcdir)/src/ais/lib/libSaImmOi.map
 endif
 
 lib_libSaImmOi_la_LDFLAGS += \
@@ -139,20 +139,6 @@ lib_libimmpbe_dump_la_SOURCES = \
 
 nodist_EXTRA_lib_libimmpbe_dump_la_SOURCES = dummy.cc
 
-include_HEADERS += \
-	src/imm/saf/saImm.h \
-	src/imm/saf/saImmOi_A_2_11.h \
-	src/imm/saf/saImmOi_A_2_15.h \
-	src/imm/saf/saImmOi.h \
-	src/imm/saf/saImmOm_A_2_11.h \
-	src/imm/saf/saImmOm_A_2_12.h \
-	src/imm/saf/saImmOm_A_2_13.h \
-	src/imm/saf/saImmOm_A_2_14.h \
-	src/imm/saf/saImmOm_A_2_15.h \
-	src/imm/saf/saImmOm_A_2_16.h \
-	src/imm/saf/saImmOm_A_2_17.h \
-	src/imm/saf/saImmOm.h
-
 noinst_HEADERS += \
 	src/imm/agent/imma.h \
 	src/imm/agent/imma_cb.h \
@@ -182,9 +168,6 @@ noinst_HEADERS += \
 
 bin_PROGRAMS += bin/immadm bin/immcfg bin/immdump bin/immfind bin/immlist
 osaf_execbin_PROGRAMS += bin/osafimmd bin/osafimmloadd bin/osafimmnd bin/osafimmpbed
-EXTRA_DIST += src/imm/saf/libSaImmOm.map src/imm/saf/libSaImmOi.map
-CORE_INCLUDES += -I$(top_srcdir)/src/imm/saf
-pkgconfig_DATA += src/imm/saf/opensaf-imm.pc
 
 nodist_pkgclccli_SCRIPTS += \
 	src/imm/immd/osaf-immd \

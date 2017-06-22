@@ -21,7 +21,7 @@
 #ifndef NTF_TOOLS_NTFCLIENT_H_
 #define NTF_TOOLS_NTFCLIENT_H_
 
-#include "ntf/saf/saNtf.h"
+#include <saNtf.h>
 #include "ntf/common/ntfsv_msg.h"
 #include "ntf/common/ntfsv_mem.h"
 #include "base/osaf_extended_name.h"

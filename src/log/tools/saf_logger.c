@@ -41,8 +41,8 @@
 #include <stdbool.h>
 #include "base/osaf_extended_name.h"
 
-#include "osaf/saf/saAis.h"
-#include "log/saf/saLog.h"
+#include <saAis.h>
+#include <saLog.h>
 
 #include "base/saf_error.h"
 

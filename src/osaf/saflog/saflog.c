@@ -21,7 +21,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include "osaf/saflog/saflog.h"
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 
 static int initialized;
 static SaLogStreamHandleT logStreamHandle;

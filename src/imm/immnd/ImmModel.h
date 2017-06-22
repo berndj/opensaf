@@ -19,7 +19,7 @@
 #ifndef IMM_IMMND_IMMMODEL_H_
 #define IMM_IMMND_IMMMODEL_H_ 1
 
-#include "imm/saf/saImmOm.h"
+#include <saImmOm.h>
 #include <cstdarg>
 #include <sys/types.h>
 #include <string>

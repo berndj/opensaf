@@ -21,7 +21,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <aio.h>
-#include "log/saf/saLog.h"
+#include <saLog.h>
 #include <poll.h>
 
 #include "logtest.h"

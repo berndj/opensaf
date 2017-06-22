@@ -29,7 +29,7 @@
 #ifndef CKPT_CKPTND_CPND_INIT_H_
 #define CKPT_CKPTND_CPND_INIT_H_
 
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 
 #ifdef __cplusplus
 extern "C" {

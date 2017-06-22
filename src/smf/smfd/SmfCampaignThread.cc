@@ -17,9 +17,9 @@
 
 #include <sched.h>
 #include <poll.h>
-#include "osaf/saf/saAis.h"
-#include "imm/saf/saImmOm.h"
-#include "imm/saf/saImmOi.h"
+#include <saAis.h>
+#include <saImmOm.h>
+#include <saImmOi.h>
 #include "osaf/immutil/immutil.h"
 #include "osaf/saflog/saflog.h"
 #include "base/saf_error.h"

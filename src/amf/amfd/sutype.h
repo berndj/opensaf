@@ -18,7 +18,7 @@
 #ifndef AMF_AMFD_SUTYPE_H_
 #define AMF_AMFD_SUTYPE_H_
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "amf/amfd/su.h"
 #include <vector>
 

@@ -24,13 +24,13 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <assert.h>
-#include "osaf/saf/saAis.h"
-#include "imm/saf/saImmOi.h"
-#include "imm/saf/saImmOm.h"
+#include <saAis.h>
+#include <saImmOi.h>
+#include <saImmOm.h>
 #include "osaf/immutil/immutil.h"
 #include "osaf/apitest/util.h"
 #include "osaf/apitest/utest.h"
-#include "ntf/saf/saNtf.h"
+#include <saNtf.h>
 #include "test_ntf_imcn.h"
 
 /*

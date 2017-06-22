@@ -25,8 +25,8 @@
  */
 #include <string.h>
 
-#include "osaf/saf/saAis.h"
-#include "amf/saf/saAmf.h"
+#include <saAis.h>
+#include <saAmf.h>
 #include <vector>
 #include "lgs_stream.h"
 #include "lgs_evt.h"

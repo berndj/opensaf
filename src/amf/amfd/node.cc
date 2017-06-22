@@ -17,7 +17,7 @@
  *
  */
 
-#include "imm/saf/saImmOm.h"
+#include <saImmOm.h>
 #include "osaf/immutil/immutil.h"
 #include "base/logtrace.h"
 #include "osaf/saflog/saflog.h"

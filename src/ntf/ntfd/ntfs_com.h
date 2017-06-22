@@ -27,9 +27,9 @@
  *   INCLUDE FILES
  * ========================================================================
  */
-#include "osaf/saf/saAis.h"
-#include "ntf/saf/saNtf.h"
-#include "clm/saf/saClm.h"
+#include <saAis.h>
+#include <saNtf.h>
+#include <saClm.h>
 #include "ntf/common/ntfsv_msg.h"
 #include "ntfs.h"
 

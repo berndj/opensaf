@@ -17,9 +17,9 @@
 
 #ifndef IMM_COMMON_IMMSV_EVT_MODEL_H_
 #define IMM_COMMON_IMMSV_EVT_MODEL_H_
-#include "imm/saf/saImm.h"
-#include "imm/saf/saImmOm.h"
-#include "imm/saf/saImmOi.h"
+#include <saImm.h>
+#include <saImmOm.h>
+#include <saImmOi.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -19,7 +19,7 @@
 #ifndef IMM_IMMND_IMMND_CB_H_
 #define IMM_IMMND_IMMND_CB_H_
 
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 
 typedef enum immnd_server_state {
   IMM_SERVER_UNKNOWN = 0,

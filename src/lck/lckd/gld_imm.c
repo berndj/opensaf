@@ -18,7 +18,7 @@
 #include "lck/lckd/gld.h"
 #include "gld_imm.h"
 #include "osaf/immutil/immutil.h"
-#include "imm/saf/saImm.h"
+#include <saImm.h>
 
 #define GLSV_IMM_IMPLEMENTER_NAME (SaImmOiImplementerNameT) "safLckService"
 extern struct ImmutilWrapperProfile immutilWrapperProfile;

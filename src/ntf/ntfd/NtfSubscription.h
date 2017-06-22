@@ -24,7 +24,7 @@
 
 #include "ntf/ntfd/NtfFilter.h"
 #include "ntf/ntfd/NtfNotification.h"
-#include "ntf/saf/saNtf.h"
+#include <saNtf.h>
 
 class NtfClient;
 

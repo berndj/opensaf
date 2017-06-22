@@ -20,7 +20,7 @@
 #include "base/osaf_extended_name.h"
 #include <map>
 #include <string>
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/ncsgl_defs.h"
 
 //

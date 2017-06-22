@@ -18,8 +18,8 @@
 #ifndef LOG_LOGD_LGS_FMT_H_
 #define LOG_LOGD_LGS_FMT_H_
 
-#include "osaf/saf/saAis.h"
-#include "log/saf/saLog.h"
+#include <saAis.h>
+#include <saLog.h>
 
 #define TOKEN_START_SYMBOL '@'
 #define STRING_END_CHARACTER '\0'

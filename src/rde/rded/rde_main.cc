@@ -34,7 +34,7 @@
 #include "mds/mds_papi.h"
 #include "base/ncs_main_papi.h"
 #include "nid/agent/nid_api.h"
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 #include "rde/rded/rde_cb.h"
 #include "rde/rded/role.h"
 

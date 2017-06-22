@@ -19,7 +19,7 @@
 #ifndef AMFD_CONFIG_H_
 #define AMFD_CONFIG_H_
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 
 class Configuration {
   public:

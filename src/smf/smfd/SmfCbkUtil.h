@@ -21,7 +21,7 @@
 #include <semaphore.h>
 #include "base/ncsgl_defs.h"
 #include "base/ncssysf_ipc.h"
-#include "smf/saf/saSmf.h"
+#include <saSmf.h>
 #include <string>
 
 #define SMF_UTIL_LABEL "OsafSmfCbkUtil-"

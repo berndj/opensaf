@@ -18,7 +18,7 @@
 #ifndef NTF_NTFIMCND_NTFIMCN_NOTIFIER_H_
 #define NTF_NTFIMCND_NTFIMCN_NOTIFIER_H_
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "osaf/immutil/immutil.h"
 #include "ntfimcn_main.h"
 

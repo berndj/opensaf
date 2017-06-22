@@ -35,7 +35,7 @@
 */
 
 #include "amf/amfnd/avnd.h"
-#include "imm/saf/saImmOm.h"
+#include <saImmOm.h>
 #include "osaf/immutil/immutil.h"
 #include <string>
 #include "base/osaf_extended_name.h"

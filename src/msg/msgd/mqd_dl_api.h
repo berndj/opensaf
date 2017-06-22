@@ -34,7 +34,7 @@
 #define MSG_MSGD_MQD_DL_API_H_
 
 #include <stdint.h>
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 #include "mqd_db.h"
 #include "base/ncsgl_defs.h"
 #include "base/ncs_lib.h"

@@ -19,9 +19,9 @@
 #include <unistd.h>
 #include <limits.h>
 #include "osaf/configmake.h"
-#include "imm/saf/saImmOm.h"
+#include <saImmOm.h>
 #include "osaf/immutil/immutil.h"
-#include "imm/saf/saImm.h"
+#include <saImm.h>
 #include "mds/mds_papi.h"
 #include "base/ncs_mda_papi.h"
 #include "base/ncs_main_papi.h"

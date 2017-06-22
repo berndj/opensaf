@@ -18,7 +18,7 @@
 #ifndef LOG_LOGD_LGS_CLM_H_
 #define LOG_LOGD_LGS_CLM_H_
 
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 #include <map>
 #include <utility>
 

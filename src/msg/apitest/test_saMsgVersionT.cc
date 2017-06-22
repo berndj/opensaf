@@ -3,7 +3,7 @@
 #include <cstring>
 #include <poll.h>
 #include "msg/apitest/msgtest.h"
-#include "msg/saf/saMsg.h"
+#include <saMsg.h>
 
 static SaVersionT msg1_1 = { 'B', 1, 0 };
 

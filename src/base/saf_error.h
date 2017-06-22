@@ -18,7 +18,7 @@
 #ifndef BASE_SAF_ERROR_H_
 #define BASE_SAF_ERROR_H_
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 
 #ifdef __cplusplus
 extern "C" {

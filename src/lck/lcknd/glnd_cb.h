@@ -18,7 +18,7 @@
 #ifndef LCK_LCKND_GLND_CB_H_
 #define LCK_LCKND_GLND_CB_H_
 
-#include "ckpt/saf/saCkpt.h"
+#include <saCkpt.h>
 
 #include "glnd_tmr.h"
 #include "lck/lcknd/glnd_evt.h"

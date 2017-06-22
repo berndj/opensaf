@@ -55,7 +55,7 @@ typedef enum {
 #include "base/ncssysf_def.h"
 #include "base/ncs_main_papi.h"
 
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 #include "lck/common/glsv_defs.h"
 #include "lck/common/glsv_lck.h"
 #include "gld_cb.h"
@@ -75,7 +75,7 @@ typedef enum {
 #include "ckpt/agent/cpa_mem.h"
 
 /* IMM Headers */
-#include "imm/saf/saImmOi.h"
+#include <saImmOi.h>
 #include "osaf/immutil/immutil.h"
 
 #include "base/daemon.h"

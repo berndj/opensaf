@@ -39,7 +39,7 @@
 #ifndef SA_EXTENDED_NAME_SOURCE
 #define SA_EXTENDED_NAME_SOURCE
 #endif
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include "base/osaf_extended_name.h"

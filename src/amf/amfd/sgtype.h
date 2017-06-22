@@ -25,7 +25,7 @@
 #ifndef AMF_AMFD_SGTYPE_H_
 #define AMF_AMFD_SGTYPE_H_
 
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 #include "amf/common/amf_db_template.h"
 #include <vector>
 

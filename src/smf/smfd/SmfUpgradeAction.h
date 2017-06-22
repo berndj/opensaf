@@ -26,9 +26,9 @@
 #include <string>
 #include <list>
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 
-#include "imm/saf/saImmOm.h"
+#include <saImmOm.h>
 #include "smf/smfd/SmfImmOperation.h"
 #include "smf/smfd/SmfCallback.h"
 

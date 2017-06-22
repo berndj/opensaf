@@ -30,7 +30,7 @@ extern "C" {
 #include "mds/mds_papi.h"
 #include "base/ncs_svd.h"
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/ncs_saf.h"
 
 typedef uint64_t NCS_MBCSV_CLIENT_HDL;

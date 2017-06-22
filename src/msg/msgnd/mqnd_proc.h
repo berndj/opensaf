@@ -18,7 +18,7 @@
 #ifndef MSG_MSGND_MQND_PROC_H_
 #define MSG_MSGND_MQND_PROC_H_
 
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 
 #define m_MQND_IS_SA_MSG_QUEUE_CREATE_SET(openFlags) \
   ((openFlags & SA_MSG_QUEUE_CREATE) == SA_MSG_QUEUE_CREATE)

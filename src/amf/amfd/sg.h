@@ -36,7 +36,7 @@
 #ifndef AMF_AMFD_SG_H_
 #define AMF_AMFD_SG_H_
 
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 #include "amf/amfd/cb.h"
 #include "amf/amfd/def.h"
 #include "amf/amfd/sgtype.h"

@@ -23,7 +23,7 @@
 #include <atomic>
 
 #include "base/macros.h"
-#include "imm/saf/saImmOi.h"
+#include <saImmOi.h>
 
 /**
  * This class creates and handle an IMM applier

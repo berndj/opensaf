@@ -20,7 +20,7 @@
 #define IMM_IMMD_IMMD_CB_H_
 
 #include <stdbool.h>
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 
 #define IMMD_EVT_TIME_OUT 100
 #define IMMSV_WAIT_TIME 100

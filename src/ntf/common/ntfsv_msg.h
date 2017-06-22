@@ -21,7 +21,7 @@
 #ifndef NTF_COMMON_NTFSV_MSG_H_
 #define NTF_COMMON_NTFSV_MSG_H_
 
-#include "ntf/saf/saNtf.h"
+#include <saNtf.h>
 #include "base/ncsgl_defs.h"
 #include "mds/mds_papi.h"
 #ifdef __cplusplus

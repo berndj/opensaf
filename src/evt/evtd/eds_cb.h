@@ -33,9 +33,9 @@
 #define EVT_EVTD_EDS_CB_H_
 
 #include <stdbool.h>
-#include "clm/saf/saClm.h"
-#include "imm/saf/saImmOi.h"
-#include "amf/saf/saAmf.h"
+#include <saClm.h>
+#include <saImmOi.h>
+#include <saAmf.h>
 
 #include "base/ncssysf_tmr.h"
 

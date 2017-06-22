@@ -32,9 +32,9 @@
 #include <vector>
 #include <list>
 
-#include "amf/saf/saAmf.h"
-#include "smf/saf/saSmf.h"
-#include "imm/saf/saImmOi.h"
+#include <saAmf.h>
+#include <saSmf.h>
+#include <saImmOi.h>
 #include "smf/smfd/SmfStepState.h"
 #include "smf/smfd/SmfTargetTemplate.h"
 

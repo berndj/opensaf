@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/osaf_extended_name.h"
 #include "test_cpsv.h"
 #include "test_cpsv_conf.h"

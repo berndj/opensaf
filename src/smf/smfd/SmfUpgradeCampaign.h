@@ -24,7 +24,7 @@
  */
 #include <string>
 #include <vector>
-#include "smf/saf/saSmf.h"
+#include <saSmf.h>
 #include "smf/smfd/SmfCampaignInit.h"
 #include "smf/smfd/SmfCampaignWrapup.h"
 #include "smf/smfd/SmfCampaignThread.h"

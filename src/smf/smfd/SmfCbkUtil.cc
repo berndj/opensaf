@@ -19,8 +19,8 @@
 #include <stdlib.h>
 #include <sched.h>
 #include <poll.h>
-#include "osaf/saf/saAis.h"
-#include "smf/saf/saSmf.h"
+#include <saAis.h>
+#include <saSmf.h>
 
 #include "base/ncssysf_def.h"
 #include "base/ncssysf_ipc.h"

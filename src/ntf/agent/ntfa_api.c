@@ -19,7 +19,7 @@
 #include "ntfa.h"
 #include "ntf/common/ntfsv_mem.h"
 #include "base/osaf_extended_name.h"
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #define NCS_SAF_MIN_ACCEPT_TIME 10
 #define NTFS_WAIT_TIME 1000
 

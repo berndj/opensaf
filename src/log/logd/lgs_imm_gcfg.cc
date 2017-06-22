@@ -25,8 +25,8 @@
 
 #include "base/saf_error.h"
 #include "base/logtrace.h"
-#include "imm/saf/saImmOi.h"
-#include "imm/saf/saImmOm.h"
+#include <saImmOi.h>
+#include <saImmOm.h>
 #include "osaf/immutil/immutil.h"
 #include "base/osaf_time.h"
 #include "base/osaf_poll.h"

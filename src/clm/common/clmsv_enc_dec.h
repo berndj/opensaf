@@ -17,7 +17,7 @@
 #ifndef CLM_COMMON_CLMSV_ENC_DEC_H_
 #define CLM_COMMON_CLMSV_ENC_DEC_H_
 
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 #include "base/ncsgl_defs.h"
 #include "base/ncs_lib.h"
 #include "mds/mds_papi.h"

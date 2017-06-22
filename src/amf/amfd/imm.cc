@@ -28,8 +28,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "imm/saf/saImmOm.h"
-#include "imm/saf/saImmOi.h"
+#include <saImmOm.h>
+#include <saImmOi.h>
 #include "osaf/immutil/immutil.h"
 #include "base/logtrace.h"
 #include "osaf/saflog/saflog.h"

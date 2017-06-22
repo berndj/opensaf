@@ -25,7 +25,7 @@
 #define PLM_COMMON_PLMS_HSM_H_
 
 #include <SaHpi.h>
-#include "ntf/saf/saNtf.h"
+#include <saNtf.h>
 
 #define PLMS_MAX_HPI_SESSION_OPEN_RETRIES 30
 

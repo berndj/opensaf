@@ -21,7 +21,7 @@
  */
 
 #include <algorithm>
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/logtrace.h"
 #include "osaf/immutil/immutil.h"
 #include "base/saf_error.h"

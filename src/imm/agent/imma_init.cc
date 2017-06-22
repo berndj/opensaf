@@ -29,7 +29,7 @@
 #include "imma.h"
 #include "base/osaf_poll.h"
 #include "base/osaf_extended_name.h"
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "mds/mds_dl_api.h"
 
 /*****************************************************************************

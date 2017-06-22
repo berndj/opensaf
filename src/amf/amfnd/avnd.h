@@ -33,7 +33,7 @@
 #ifndef AMF_AMFND_AVND_H_
 #define AMF_AMFND_AVND_H_
 
-#include "imm/saf/saImmOm.h"
+#include <saImmOm.h>
 
 #include "amf/common/amf.h"
 #include "base/ncs_main_papi.h"

@@ -22,8 +22,7 @@ EXTRA_DIST += \
 	src/plm/config/plmsv_objects.xml.hp \
 	src/plm/config/plmsv_objects.xml.pc \
 	src/plm/plmcd/README \
-	src/plm/plmcd/test_lib.c \
-	src/plm/saf/libSaPlm.map
+	src/plm/plmcd/test_lib.c
 
 if ENABLE_AIS_PLM
 
@@ -134,7 +133,7 @@ lib_libSaPlm_la_LDFLAGS = \
 
 if HAVE_LD_VERSION_SCRIPT
 lib_libSaPlm_la_LDFLAGS += \
-	-Wl,-version-script=$(top_srcdir)/src/plm/saf/libSaPlm.map
+	-Wl,-version-script=$(top_srcdir)/src/ais/lib/libSaPlm.map
 endif
 
 lib_libSaPlm_la_LDFLAGS += \
@@ -144,9 +143,6 @@ lib_libSaPlm_la_LIBADD = \
 	lib/libplm_common.la \
 	lib/libais.la \
 	lib/libopensaf_core.la
-
-include_HEADERS += \
-	src/plm/saf/saPlm.h
 
 noinst_HEADERS += \
 	src/plm/agent/plma.h \
@@ -166,8 +162,6 @@ noinst_HEADERS += \
 	src/plm/plmcd/plmc_lib_internal.h
 
 osaf_execbin_PROGRAMS += bin/osafplmd
-CORE_INCLUDES += -I$(top_srcdir)/src/plm/saf
-pkgconfig_DATA += src/plm/saf/opensaf-plm.pc
 
 nodist_pkgclccli_SCRIPTS += \
 	src/plm/plmd/osaf-plmd

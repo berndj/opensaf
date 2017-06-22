@@ -29,9 +29,9 @@
 #include "base/ncssysf_ipc.h"
 #include "base/ncssysf_tsk.h"
 #include "base/logtrace.h"
-#include "osaf/saf/saAis.h"
-#include "imm/saf/saImmOm.h"
-#include "imm/saf/saImmOi.h"
+#include <saAis.h>
+#include <saImmOm.h>
+#include <saImmOi.h>
 #include "osaf/immutil/immutil.h"
 #include "base/saf_error.h"
 #include "base/osaf_extended_name.h"

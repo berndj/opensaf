@@ -18,7 +18,7 @@
 #ifndef OSAF_APITEST_UTIL_H_
 #define OSAF_APITEST_UTIL_H_
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 
 extern SaTimeT getSaTimeT(void);
 extern const char* get_saf_error(SaAisErrorT rc);

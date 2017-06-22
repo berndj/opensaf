@@ -33,7 +33,7 @@
 #include "osaf/configmake.h"
 #include "nid/agent/nid_api.h"
 
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 
 /****************************************************************
  *      MAX limits used for fields in nodeinit.conf entries      *

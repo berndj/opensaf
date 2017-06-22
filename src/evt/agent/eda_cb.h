@@ -27,7 +27,7 @@
 #ifndef EVT_AGENT_EDA_CB_H_
 #define EVT_AGENT_EDA_CB_H_
 
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 
 #include "evt/agent/eda.h"
 

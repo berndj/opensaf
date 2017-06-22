@@ -25,7 +25,7 @@
 #include "base/saf_error.h"
 #include "base/osaf_extended_name.h"
 #include "base/ncs_main_papi.h"
-#include "imm/saf/saImmOm.h"
+#include <saImmOm.h>
 #include "osaf/immutil/immutil.h"
 
 enum {

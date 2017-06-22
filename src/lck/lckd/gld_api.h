@@ -19,7 +19,7 @@
 #define LCK_LCKD_GLD_API_H_
 
 #include <stdint.h>
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 
 uint32_t gld_se_lib_init(NCS_LIB_REQ_INFO *req_info);
 uint32_t initialize_for_assignment(GLSV_GLD_CB *cb, SaAmfHAStateT ha_state);

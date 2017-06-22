@@ -18,7 +18,7 @@
 #ifndef NTF_COMMON_NTFSV_ENC_DEC_H_
 #define NTF_COMMON_NTFSV_ENC_DEC_H_
 
-#include "ntf/saf/saNtf.h"
+#include <saNtf.h>
 #include "base/ncsgl_defs.h"
 #include "base/ncs_lib.h"
 #include "mds/mds_papi.h"

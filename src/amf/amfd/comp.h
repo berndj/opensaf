@@ -36,8 +36,8 @@
 
 #include <vector>
 
-#include "amf/saf/saAmf.h"
-#include "imm/saf/saImm.h"
+#include <saAmf.h>
+#include <saImm.h>
 #include "amf/common/amf_d2nmsg.h"
 #include "amf/amfd/cb.h"
 #include "amf/common/amf_db_template.h"

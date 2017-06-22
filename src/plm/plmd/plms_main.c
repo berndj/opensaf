@@ -32,7 +32,7 @@
 #include "rde/agent/rda_papi.h"
 #include "nid/agent/nid_api.h"
 #include "base/daemon.h"
-#include "plm/saf/saPlm.h"
+#include <saPlm.h>
 
 #include "nid/agent/nid_api.h"
 #include "plm/common/plms.h"

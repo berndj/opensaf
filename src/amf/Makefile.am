@@ -19,8 +19,7 @@ EXTRA_DIST += \
 	src/amf/README \
 	src/amf/README_LONGDN \
 	src/amf/README_NODEGROUP \
-	src/amf/README_SC_ABSENCE \
-	src/amf/saf/libSaAmf.map
+	src/amf/README_SC_ABSENCE
 
 osaf_lib_LTLIBRARIES += lib/libamf_common.la
 
@@ -69,7 +68,7 @@ lib_libSaAmf_la_LDFLAGS = \
 
 if HAVE_LD_VERSION_SCRIPT
 lib_libSaAmf_la_LDFLAGS += \
-	-Wl,-version-script=$(top_srcdir)/src/amf/saf/libSaAmf.map
+	-Wl,-version-script=$(top_srcdir)/src/ais/lib/libSaAmf.map
 endif
 
 lib_libSaAmf_la_LDFLAGS += \
@@ -79,10 +78,6 @@ lib_libSaAmf_la_LIBADD = \
 	lib/libamf_common.la \
 	lib/libais.la \
 	lib/libopensaf_core.la
-
-include_HEADERS += \
-	src/amf/saf/saAmf.h \
-	src/amf/saf/saAmf_B_04_02.h
 
 noinst_HEADERS += \
 	src/amf/agent/amf_agent.h \
@@ -164,9 +159,7 @@ noinst_HEADERS += \
 
 sbin_PROGRAMS += bin/amfpm bin/amfclusterstatus
 osaf_execbin_PROGRAMS += bin/osafamfd bin/osafamfnd bin/osafamfwd
-CORE_INCLUDES += -I$(top_srcdir)/src/amf/saf
 TESTS += bin/testamfd
-pkgconfig_DATA += src/amf/saf/opensaf-amf.pc
 
 nodist_pkgclccli_SCRIPTS += \
 	src/amf/amfnd/osaf-amfnd \

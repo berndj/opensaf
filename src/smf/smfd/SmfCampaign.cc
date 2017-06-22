@@ -36,8 +36,8 @@
 #include "smf/smfd/SmfExecControl.h"
 #include "smf/smfd/smfd_long_dn.h"
 
-#include "osaf/saf/saAis.h"
-#include "smf/saf/saSmf.h"
+#include <saAis.h>
+#include <saSmf.h>
 #include "base/logtrace.h"
 #include "base/saf_error.h"
 #include "base/osaf_extended_name.h"

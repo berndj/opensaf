@@ -33,8 +33,8 @@ agent
 #include "base/ncs_edu_pub.h"
 #include "base/ncssysf_lck.h"
 
-#include "osaf/saf/saAis.h"
-#include "plm/saf/saPlm.h"
+#include <saAis.h>
+#include <saPlm.h>
 
 #include "base/logtrace.h"
 

@@ -48,7 +48,7 @@
 #include "cpd_mds.h"
 #include "ckpt/ckptd/cpd_red.h"
 #include "cpd_sbedu.h"
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 #include "base/ncs_mda_pvt.h"
 #include "base/logtrace.h"
 

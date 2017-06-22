@@ -18,7 +18,7 @@
 #ifndef LCK_COMMON_GLSV_LCK_H_
 #define LCK_COMMON_GLSV_LCK_H_
 
-#include "lck/saf/saLck.h"
+#include <saLck.h>
 
 typedef struct glsv_lock_req_info_tag {
   SaLckLockIdT lockid;     /* index for identifying the lock */

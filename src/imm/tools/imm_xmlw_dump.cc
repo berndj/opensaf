@@ -19,7 +19,7 @@
 #include <iostream>
 #include <libxml/encoding.h>
 #include <unistd.h>
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/osaf_unicode.h"
 #include "base/osaf_extended_name.h"
 #include <set>

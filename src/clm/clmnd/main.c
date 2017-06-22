@@ -29,7 +29,7 @@
 #include "base/ncs_mda_pvt.h"
 #include "base/ncs_util.h"
 #include "base/logtrace.h"
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 #include "osaf/configmake.h"
 #include "clm/common/clmsv_msg.h"
 #include "clm/common/clmsv_enc_dec.h"

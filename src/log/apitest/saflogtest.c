@@ -44,8 +44,8 @@
 #include <limits.h>
 #include "base/saf_error.h"
 
-#include "osaf/saf/saAis.h"
-#include "log/saf/saLog.h"
+#include <saAis.h>
+#include <saLog.h>
 
 #define DEFAULT_FORMAT_EXPRESSION "@Cr @Ch:@Cn:@Cs @Cm/@Cd/@CY @Sv @Sl \"@Cb\""
 #define DEFAULT_APP_LOG_REC_SIZE 150

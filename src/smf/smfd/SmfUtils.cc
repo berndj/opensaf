@@ -21,10 +21,10 @@
  */
 #include <unistd.h>
 
-#include "osaf/saf/saAis.h"
-#include "amf/saf/saAmf.h"
-#include "smf/saf/saSmf.h"
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
+#include <saAmf.h>
+#include <saSmf.h>
+#include <saAis.h>
 #include "base/saf_error.h"
 #include "base/osaf_time.h"
 

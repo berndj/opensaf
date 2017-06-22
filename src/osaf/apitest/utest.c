@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
 

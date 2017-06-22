@@ -18,8 +18,7 @@
 EXTRA_DIST += \
 	src/smf/README \
 	src/smf/README.doxygen \
-	src/smf/README.schema \
-	src/smf/saf/libSaSmf.map
+	src/smf/README.schema
 
 if ENABLE_AIS_SMF
 
@@ -64,7 +63,7 @@ lib_libSaSmf_la_LDFLAGS = \
 
 if HAVE_LD_VERSION_SCRIPT
 lib_libSaSmf_la_LDFLAGS += \
-	-Wl,-version-script=$(top_srcdir)/src/smf/saf/libSaSmf.map
+	-Wl,-version-script=$(top_srcdir)/src/ais/lib/libSaSmf.map
 endif
 
 lib_libSaSmf_la_LDFLAGS += \
@@ -74,9 +73,6 @@ lib_libSaSmf_la_LIBADD = \
 	lib/libsmfsv_common.la \
 	lib/libais.la \
 	lib/libopensaf_core.la
-
-include_HEADERS += \
-	src/smf/saf/saSmf.h
 
 noinst_HEADERS += \
 	src/smf/agent/smfa.h \
@@ -116,8 +112,6 @@ noinst_HEADERS += \
 	src/smf/smfnd/smfnd_evt.h
 
 osaf_execbin_PROGRAMS += bin/osafsmfd bin/osafsmfnd
-CORE_INCLUDES += -I$(top_srcdir)/src/smf/saf
-pkgconfig_DATA += src/smf/saf/opensaf-smf.pc
 
 nodist_pkgclccli_SCRIPTS += \
 	src/smf/smfnd/osaf-smfnd \

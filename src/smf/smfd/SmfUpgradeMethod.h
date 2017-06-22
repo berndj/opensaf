@@ -26,8 +26,8 @@
 #include <string>
 #include <vector>
 #include <set>
-#include "osaf/saf/saAis.h"
-#include "smf/saf/saSmf.h"
+#include <saAis.h>
+#include <saSmf.h>
 #include "smf/smfd/SmfTargetTemplate.h"
 #include "smf/smfd/SmfCallback.h"
 

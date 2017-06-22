@@ -20,7 +20,7 @@
 
 #include <stdbool.h>
 #include "gld_tmr.h"
-#include "imm/saf/saImmOi.h"
+#include <saImmOi.h>
 
 /* typedef enums */
 typedef enum {

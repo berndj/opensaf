@@ -33,7 +33,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/time.h>
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 
 #include "base/ncs_main_papi.h"
 #include "base/ncsgl_defs.h"
@@ -60,8 +60,8 @@
 #include "base/logtrace.h"
 #include "nid/agent/nid_start_util.h"
 /* SAF Include file. */
-#include "osaf/saf/saAis.h"
-#include "amf/saf/saAmf.h"
+#include <saAis.h>
+#include <saAmf.h>
 
 #include "rde/agent/rda_papi.h"
 

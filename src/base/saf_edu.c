@@ -32,11 +32,11 @@
 #include "base/ncspatricia.h"
 #include "base/ncsencdec_pub.h"
 
-#include "osaf/saf/saAis.h"
-#include "amf/saf/saAmf.h"
-#include "clm/saf/saClm.h"
-#include "evt/saf/saEvt.h"
-#include "lck/saf/saLck.h"
+#include <saAis.h>
+#include <saAmf.h>
+#include <saClm.h>
+#include <saEvt.h>
+#include <saLck.h>
 
 #include "base/saf_mem.h"
 #include "base/ncs_edu_pub.h"

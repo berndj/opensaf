@@ -19,7 +19,7 @@
 #include <time.h>
 #include <limits.h>
 
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 
 #include "base/ncs_main_papi.h"
 

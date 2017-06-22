@@ -16,9 +16,9 @@
  * Author(s):  Emerson Network Power
  */
 
+#include <saImmOi.h>
+#include <saImmOm.h>
 #include <stdio.h>
-#include "imm/saf/saImmOm.h"
-#include "imm/saf/saImmOi.h"
 
 #include "clms.h"
 #include "base/osaf_extended_name.h"

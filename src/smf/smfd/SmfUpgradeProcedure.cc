@@ -31,10 +31,10 @@
 #include "base/ncssysf_ipc.h"
 #include "base/ncssysf_tsk.h"
 
-#include "osaf/saf/saAis.h"
-#include "amf/saf/saAmf.h"
-#include "imm/saf/saImmOm.h"
-#include "imm/saf/saImmOi.h"
+#include <saAis.h>
+#include <saAmf.h>
+#include <saImmOm.h>
+#include <saImmOi.h>
 #include "osaf/immutil/immutil.h"
 #include "base/saf_error.h"
 #include "base/osaf_extended_name.h"

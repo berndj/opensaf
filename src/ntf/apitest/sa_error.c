@@ -17,8 +17,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "osaf/saf/saAis.h"
-#include "ntf/saf/saNtf.h"
+#include <saAis.h>
+#include <saNtf.h>
 
 void exitIfFalse(int expression) /* instead of assert */
 {

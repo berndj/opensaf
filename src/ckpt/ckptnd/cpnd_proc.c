@@ -29,9 +29,9 @@
 ******************************************************************************/
 
 #include "ckpt/ckptnd/cpnd.h"
-#include "imm/saf/saImm.h"
-#include "imm/saf/saImmOi.h"
-#include "imm/saf/saImmOm.h"
+#include <saImm.h>
+#include <saImmOi.h>
+#include <saImmOm.h>
 #include "osaf/immutil/immutil.h"
 #include "base/saf_error.h"
 

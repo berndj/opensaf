@@ -63,7 +63,7 @@ G_GLND_MEMFAIL(GLND_RESTART_RSC_LOCK_LIST_ALLOC_FAILED);
 #include "glnd_dl_api.h"
 #include "glnd_restart.h"
 
-#include "ckpt/saf/saCkpt.h"
+#include <saCkpt.h>
 
 /* events includes */
 #include "lck/agent/gla_evt.h"

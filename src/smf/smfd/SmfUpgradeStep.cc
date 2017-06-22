@@ -30,8 +30,8 @@
 #include "base/ncssysf_ipc.h"
 #include "base/ncssysf_tsk.h"
 
-#include "osaf/saf/saAis.h"
-#include "smf/saf/saSmf.h"
+#include <saAis.h>
+#include <saSmf.h>
 #include <stdio.h>
 #include "base/logtrace.h"
 #include <sstream>

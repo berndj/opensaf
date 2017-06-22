@@ -18,7 +18,7 @@
 #ifndef SMF_SMFD_SMFPROCSTATE_H_
 #define SMF_SMFD_SMFPROCSTATE_H_
 
-#include "smf/saf/saSmf.h"
+#include <saSmf.h>
 #include "smf/smfd/SmfCampaignThread.h"
 
 /* ========================================================================

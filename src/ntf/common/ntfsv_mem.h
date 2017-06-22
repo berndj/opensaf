@@ -18,7 +18,7 @@
 #ifndef NTF_COMMON_NTFSV_MEM_H_
 #define NTF_COMMON_NTFSV_MEM_H_
 
-#include "ntf/saf/saNtf.h"
+#include <saNtf.h>
 #include "ntf/common/ntfsv_msg.h"
 
 #ifdef __cplusplus

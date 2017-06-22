@@ -18,7 +18,7 @@
 
 #include "lck/lckd/gld.h"
 #include "osaf/immutil/immutil.h"
-#include "imm/saf/saImm.h"
+#include <saImm.h>
 
 extern void gld_imm_declare_implementer(GLSV_GLD_CB *cb);
 extern void gld_imm_reinit_bg(GLSV_GLD_CB *cb);

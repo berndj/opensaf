@@ -34,8 +34,8 @@
 #ifndef AMF_AMFD_NODE_H_
 #define AMF_AMFD_NODE_H_
 
-#include "amf/saf/saAmf.h"
-#include "imm/saf/saImm.h"
+#include <saAmf.h>
+#include <saImm.h>
 #include "base/ncsdlib.h"
 #include "mds/mds_papi.h"
 #include "amf/amfd/su.h"

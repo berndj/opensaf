@@ -16,8 +16,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include "imm/saf/saImm.h"
-#include "imm/saf/saImmOm.h"
+#include <saImm.h>
+#include <saImmOm.h>
 #include "osaf/immutil/immutil.h"
 #include "base/saf_error.h"
 #include "base/osaf_extended_name.h"

@@ -18,8 +18,8 @@
 #ifndef OSAF_SAFLOG_SAFLOG_H_
 #define OSAF_SAFLOG_SAFLOG_H_
 
-#include "osaf/saf/saAis.h"
-#include "log/saf/saLog.h"
+#include <saAis.h>
+#include <saLog.h>
 
 #ifdef __cplusplus
 extern "C" {

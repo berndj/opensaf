@@ -27,7 +27,7 @@
  */
 
 #include <list>
-#include "log/saf/saLog.h"
+#include <saLog.h>
 
 #include "ntf/ntfd/NtfNotification.h"
 #include "ntf/ntfd/NtfReader.h"

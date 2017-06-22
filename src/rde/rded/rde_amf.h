@@ -36,7 +36,7 @@
  * Includes
  */
 #include <cstdint>
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 
 class Role;
 

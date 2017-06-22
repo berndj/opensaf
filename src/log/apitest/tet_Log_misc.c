@@ -18,8 +18,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <poll.h>
-#include "imm/saf/saImm.h"
-#include "imm/saf/saImmOm.h"
+#include <saImm.h>
+#include <saImmOm.h>
 #include <limits.h>
 #include <unistd.h>
 #include <stdarg.h>

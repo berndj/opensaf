@@ -30,7 +30,7 @@
 #define CKPT_CKPTD_CPD_INIT_H_
 
 #include <stdint.h>
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 #include "cpd_cb.h"
 
 uint32_t gl_cpd_cb_hdl;

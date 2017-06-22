@@ -18,7 +18,7 @@
 #include "ckpt/ckptd/cpd.h"
 #include "ckpt/ckptd/cpd_imm.h"
 #include "osaf/immutil/immutil.h"
-#include "imm/saf/saImm.h"
+#include <saImm.h>
 #include "base/saf_error.h"
 
 extern const SaImmOiImplementerNameT implementer_name;

@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 
 extern unsigned int amf_comp_name_get_set_from_file(const char *env_name,
                                                     SaNameT *dn);

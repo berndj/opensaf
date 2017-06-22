@@ -23,7 +23,7 @@
 
 #include "base/ncsgl_defs.h"
 #include "mds/mds_papi.h"
-#include "smf/saf/saSmf.h"
+#include <saSmf.h>
 
 /* DO NOT CHANGE ANY OF THE NUMBERS BELOW SINCE IT WILL CAUSE
    NONBACKWARD COMPATIBILITY AND MAKE ROLLING UPGRADES IMPOSSIBLE.

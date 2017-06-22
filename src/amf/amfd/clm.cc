@@ -16,7 +16,7 @@
  *
  */
 
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "base/logtrace.h"
 #include "amf/amfd/cb.h"
 #include "amf/amfd/amfd.h"

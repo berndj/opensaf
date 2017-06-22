@@ -21,8 +21,8 @@
  *   comunication layer (c part) mds, mbcsv and amf upcalls.
  *
  */
-#include "osaf/saf/saAis.h"
-#include "ntf/saf/saNtf.h"
+#include <saAis.h>
+#include <saNtf.h>
 #include "ntf/common/ntfsv_msg.h"
 #include "ntfs_com.h"
 #include "ntf/common/ntfsv_enc_dec.h"

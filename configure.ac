@@ -561,50 +561,50 @@ AC_SUBST(OSAF_HARDEN_FLAGS)
 # List the output Makefiles
 #############################################
 AC_CONFIG_FILES([
-        Makefile
-        opensaf.spec
-        Doxyfile
+	src/ais/lib/opensaf-amf.pc
+	src/ais/lib/opensaf-ckpt.pc
+	src/ais/lib/opensaf-clm.pc
+	src/ais/lib/opensaf-evt.pc
+	src/ais/lib/opensaf-imm.pc
+	src/ais/lib/opensaf-lck.pc
+	src/ais/lib/opensaf-log.pc
+	src/ais/lib/opensaf-msg.pc
+	src/ais/lib/opensaf-ntf.pc
+	src/ais/lib/opensaf-plm.pc
+	src/ais/lib/opensaf-smf.pc
 	src/amf/amfd/osaf-amfd
 	src/amf/amfnd/osaf-amfnd
 	src/amf/amfwd/osaf-amfwd
-	src/amf/saf/opensaf-amf.pc
 	src/ckpt/ckptd/osaf-ckptd
 	src/ckpt/ckptnd/osaf-ckptnd
-	src/ckpt/saf/opensaf-ckpt.pc
 	src/clm/clmd/osaf-clmd
 	src/clm/clmnd/osaf-clmna
-	src/clm/saf/opensaf-clm.pc
 	src/dtm/dtmnd/osaf-dtm
+	src/dtm/transport/osaf-transport
 	src/evt/evtd/osaf-evtd
-	src/evt/saf/opensaf-evt.pc
 	src/fm/fmd/osaf-fmd
 	src/imm/immd/osaf-immd
 	src/imm/immnd/osaf-immnd
-	src/imm/saf/opensaf-imm.pc
 	src/lck/lckd/osaf-lckd
 	src/lck/lcknd/osaf-lcknd
-	src/lck/saf/opensaf-lck.pc
 	src/log/logd/osaf-logd
-	src/log/saf/opensaf-log.pc
 	src/msg/msgd/osaf-msgd
 	src/msg/msgnd/osaf-msgnd
-	src/msg/saf/opensaf-msg.pc
 	src/nid/configure_tipc
 	src/nid/opensafd
 	src/nid/opensafd.service
 	src/ntf/ntfd/osaf-ntfd
-	src/ntf/saf/opensaf-ntf.pc
 	src/plm/plmcd/plmcboot
 	src/plm/plmcd/plmcboot.service
 	src/plm/plmcd/plmcd
 	src/plm/plmcd/plmcd.service
 	src/plm/plmd/osaf-plmd
-	src/plm/saf/opensaf-plm.pc
 	src/rde/rded/osaf-rded
-	src/smf/saf/opensaf-smf.pc
 	src/smf/smfd/osaf-smfd
 	src/smf/smfnd/osaf-smfnd
-	src/dtm/transport/osaf-transport
+        Doxyfile
+        Makefile
+        opensaf.spec
         pkgconfig/opensaf.pc])
 
 AC_OUTPUT

@@ -47,8 +47,8 @@
 #include <string>
 #include <vector>
 
-#include "imm/saf/saImmOi.h"
-#include "amf/saf/saAmf.h"
+#include <saImmOi.h>
+#include <saAmf.h>
 
 #define LGS_CFG_RUNTIME_OBJECT "logConfig=currentConfig,safApp=safLogService"
 

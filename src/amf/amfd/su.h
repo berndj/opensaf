@@ -27,7 +27,7 @@
 #ifndef AMF_AMFD_SU_H_
 #define AMF_AMFD_SU_H_
 
-#include "amf/saf/saAmf.h"
+#include <saAmf.h>
 #include "amf/amfd/def.h"
 #include "amf/amfd/cb.h"
 #include "amf/amfd/node.h"

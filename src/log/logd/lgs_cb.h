@@ -20,9 +20,9 @@
 #define LOG_LOGD_LGS_CB_H_
 
 #include <stdbool.h>
-#include "log/saf/saLog.h"
-#include "imm/saf/saImmOi.h"
-#include "clm/saf/saClm.h"
+#include <saLog.h>
+#include <saImmOi.h>
+#include <saClm.h>
 #include "mbc/mbcsv_papi.h"
 #include "base/ncs_edu_pub.h"
 

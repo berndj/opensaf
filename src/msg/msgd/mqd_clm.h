@@ -30,7 +30,7 @@
 #ifndef MSG_MSGD_MQD_CLM_H_
 #define MSG_MSGD_MQD_CLM_H_
 
-#include "clm/saf/saClm.h"
+#include <saClm.h>
 
 void mqd_clm_cluster_track_callback(
     const SaClmClusterNotificationBufferT *notificationBuffer,

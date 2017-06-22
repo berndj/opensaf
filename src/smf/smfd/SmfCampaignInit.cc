@@ -19,7 +19,7 @@
  *   INCLUDE FILES
  * ========================================================================
  */
-#include "osaf/saf/saAis.h"
+#include <saAis.h>
 #include "osaf/immutil/immutil.h"
 #include "base/saf_error.h"
 #include "base/logtrace.h"
