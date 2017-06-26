@@ -495,6 +495,10 @@ SaAisErrorT avd_clm_track_stop(void) {
     if (error == SA_AIS_ERR_TRY_AGAIN || error == SA_AIS_ERR_TIMEOUT ||
         error == SA_AIS_ERR_UNAVAILABLE) {
       LOG_WA("Failed to stop cluster tracking %u", error);
+    } else if (error == SA_AIS_ERR_NOT_EXIST) {
+      /* track changes was not started or stopped successfully */
+      LOG_WA("Failed to stop cluster tracking %u", error);
+      avd_cb->is_clm_track_started = false;
     } else {
       LOG_ER("Failed to stop cluster tracking %u", error);
     }
