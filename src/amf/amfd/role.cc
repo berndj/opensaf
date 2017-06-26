@@ -1105,7 +1105,7 @@ uint32_t amfd_switch_actv_qsd(AVD_CL_CB *cb) {
 
 uint32_t amfd_switch_qsd_stdby(AVD_CL_CB *cb) {
   uint32_t status = NCSCC_RC_SUCCESS;
-
+  SaAisErrorT ais_rc;
   TRACE_ENTER();
   LOG_NO("Switching Quiesced --> StandBy");
 
@@ -1139,7 +1139,8 @@ uint32_t amfd_switch_qsd_stdby(AVD_CL_CB *cb) {
   }
 
   if (cb->is_clm_track_started == true) {
-    if (avd_clm_track_stop() != SA_AIS_OK) {
+    ais_rc = avd_clm_track_stop();
+    if (ais_rc != SA_AIS_OK && ais_rc != SA_AIS_ERR_NOT_EXIST) {
       LOG_ER("Failed to stop cluster tracking after switch over");
     }
   }
