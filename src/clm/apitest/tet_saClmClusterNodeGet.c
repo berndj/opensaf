@@ -126,7 +126,7 @@ void saClmClusterNodeGet_06(void)
 
 void saClmClusterNodeGet_07(void)
 {
-	nodeId = 132623; /*node is non member*/
+	nodeId = 170255; /*node is non member, 0x2990F*/
 	safassert(saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
 		  SA_AIS_OK);
 	rc = saClmClusterNodeGet(clmHandle, nodeId, timeout, &clusterNode_1);
@@ -134,7 +134,7 @@ void saClmClusterNodeGet_07(void)
 	/*test_validate(rc, SA_AIS_ERR_UNAVAILABLE);*/
 	test_validate(rc, SA_AIS_ERR_NOT_EXIST);
 
-	nodeId = 132623;
+	nodeId = 170255;
 	safassert(saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
 		  SA_AIS_OK);
 	rc = saClmClusterNodeGet_4(clmHandle, nodeId, timeout, &clusterNode_4);
