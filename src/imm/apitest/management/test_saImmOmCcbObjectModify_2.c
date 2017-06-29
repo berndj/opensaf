@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2008 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -15,6 +16,7 @@
  *
  */
 
+#include <stdio.h>
 #include "imm/apitest/immtest.h"
 #include <unistd.h>
 
@@ -1439,8 +1441,10 @@ void saImmOmCcbObjectRead_03(void)
 __attribute__((constructor)) static void
 saImmOmCcbObjectModify_2_constructor(void)
 {
-	dnObj1.length = (SaUint16T)sprintf((char *)dnObj1.value, "%s,%s",
-					   rdnObj1.value, rootObj.value);
-	dnObj2.length = (SaUint16T)sprintf((char *)dnObj2.value, "%s,%s",
-					   rdnObj2.value, rootObj.value);
+	dnObj1.length = (SaUint16T)snprintf((char *)dnObj1.value,
+					    sizeof(dnObj1.value), "%s,%s",
+					    rdnObj1.value, rootObj.value);
+	dnObj2.length = (SaUint16T)snprintf((char *)dnObj2.value,
+					    sizeof(dnObj2.value), "%s,%s",
+					    rdnObj2.value, rootObj.value);
 }

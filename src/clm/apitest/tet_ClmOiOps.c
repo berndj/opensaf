@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2008 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -15,6 +16,9 @@
  *
  */
 
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "clmtest.h"
@@ -23,14 +27,15 @@
 void saClmOi_01(void)
 {
 	int rc;
-	char command[256];
+	char command[384];
 
-	sprintf(
-	    command,
+	snprintf(
+	    command, sizeof(command),
 	    "immcfg -a saClmNodeLockCallbackTimeout=4000000000 safNode=%s,safCluster=myClmCluster",
 	    node_name.value);
 
-	assert((rc = system(command)) != -1);
+	rc = system(command);
+	assert(rc != -1);
 	test_validate(WEXITSTATUS(rc), 0);
 }
 
@@ -38,13 +43,14 @@ void saClmOi_01(void)
 void saClmOi_02(void)
 {
 	int rc;
-	char command[256];
+	char command[384];
 
-	sprintf(
-	    command,
+	snprintf(
+	    command, sizeof(command),
 	    "immcfg -a saClmNodeDisableReboot=1 safNode=%s,safCluster=myClmCluster",
 	    node_name.value);
-	assert((rc = system(command)) != -1);
+	rc = system(command);
+	assert(rc != -1);
 	test_validate(WEXITSTATUS(rc), 0);
 }
 
@@ -52,13 +58,14 @@ void saClmOi_02(void)
 void saClmOi_03(void)
 {
 	int rc;
-	char command[256];
+	char command[384];
 
-	sprintf(
-	    command,
+	snprintf(
+	    command, sizeof(command),
 	    "immcfg -a saClmNodeAddressFamily=2 safNode=%s,safCluster=myClmCluster",
 	    node_name.value);
-	assert((rc = system(command)) != -1);
+	rc = system(command);
+	assert(rc != -1);
 	test_validate(WEXITSTATUS(rc), 1);
 }
 
@@ -66,13 +73,14 @@ void saClmOi_03(void)
 void saClmOi_04(void)
 {
 	int rc;
-	char command[256];
+	char command[384];
 
-	sprintf(
-	    command,
+	snprintf(
+	    command, sizeof(command),
 	    "immcfg -a  saClmNodeAddress=10.130.100.186 safNode=%s,safCluster=myClmCluster",
 	    node_name.value);
-	assert((rc = system(command)) != -1);
+	rc = system(command);
+	assert(rc != -1);
 	test_validate(WEXITSTATUS(rc), 1);
 }
 
@@ -80,13 +88,14 @@ void saClmOi_04(void)
 void saClmOi_05(void)
 {
 	int rc;
-	char command[256];
+	char command[384];
 	char new_eename[] = "NewEEName";
 
-	sprintf(command,
+	snprintf(command, sizeof(command),
 		"immcfg -a saClmNodeEE=%s safNode=%s,safCluster=myClmCluster",
 		new_eename, node_name.value);
-	assert((rc = system(command)) != -1);
+	rc = system(command);
+	assert(rc != -1);
 	test_validate(WEXITSTATUS(rc), 1);
 }
 
@@ -94,10 +103,12 @@ void saClmOi_05(void)
 void saClmOi_06(void)
 {
 	int rc;
-	char command[256];
-	sprintf(command, "immcfg -d  safNode=%s,safCluster=myClmCluster",
+	char command[384];
+	snprintf(command, sizeof(command),
+		"immcfg -d  safNode=%s,safCluster=myClmCluster",
 		node_name.value);
-	assert((rc = system(command)) != -1);
+	rc = system(command);
+	assert(rc != -1);
 	test_validate(WEXITSTATUS(rc), 1);
 }
 
@@ -111,10 +122,13 @@ void saClmOi_07(void)
 	char new_obj_name[] = "safNode=node,safCluster=myClmCluster";
 	/*Lets first create the object- for this member will be false*/
 
-	sprintf(command, "immcfg -c SaClmNode safNode=%s", new_obj_name);
-	sprintf(command1, "immcfg -d %s", new_obj_name);
-	assert((rc = system(command)) != -1);
-	assert((rc = system(command1)) != -1);
+	snprintf(command, sizeof(command),
+		 "immcfg -c SaClmNode safNode=%s", new_obj_name);
+	snprintf(command1, sizeof(command1), "immcfg -d %s", new_obj_name);
+	rc = system(command);
+	assert(rc != -1);
+	rc = system(command1);
+	assert(rc != -1);
 	test_validate(WEXITSTATUS(rc), 1);
 }
 
@@ -126,8 +140,10 @@ void saClmOi_08(void)
 	char command[256];
 	char new_obj_name[] = "safNode=new_node,safCluster=myClmCluster";
 
-	sprintf(command, "immcfg -c SaClmNode safNode=%s", new_obj_name);
-	assert((rc = system(command)) != -1);
+	snprintf(command, sizeof(command),
+		 "immcfg -c SaClmNode safNode=%s", new_obj_name);
+	rc = system(command);
+	assert(rc != -1);
 	test_validate(WEXITSTATUS(rc), 0);
 }
 

@@ -2,6 +2,7 @@
  *
  * (C) Copyright 2010 The OpenSAF Foundation
  * Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -15,6 +16,7 @@
  * Author(s):  Emerson Network Power
  */
 
+#include <stdio.h>
 #include "imm/saf/saImmOm.h"
 #include "imm/saf/saImmOi.h"
 
@@ -1695,9 +1697,11 @@ static SaAisErrorT clms_imm_ccb_obj_create_callback(
 					    (strlen(rdnVal) + parentNameLen +
 					     1) < SA_MAX_NAME_LENGTH) {
 						operation->objectName.length =
-						    (SaUint16T)sprintf(
+						    (SaUint16T)snprintf(
 							(char *)operation
 							    ->objectName.value,
+							sizeof(operation
+							    ->objectName.value),
 							"%s,%s", rdnVal,
 							parentName->value);
 					} else {

@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2016 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -15,6 +16,9 @@
  *
  */
 
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <pthread.h>
@@ -211,8 +215,9 @@ static void unlock_node(char *nodename)
 	char command[1024];
 
 	// Unlock the node
-	sprintf(command, "immadm -o 1 %s", nodename);
-	assert(rc = system(command) != -1);
+	snprintf(command, sizeof(command), "immadm -o 1 %s", nodename);
+	rc = system(command);
+	assert(rc != -1);
 }
 
 static void lock_node(char *nodename)
@@ -220,8 +225,9 @@ static void lock_node(char *nodename)
 	int rc;
 	char command[1024];
 	// Lock the node
-	sprintf(command, "immadm -o 2 %s", nodename);
-	assert(rc = system(command) != -1);
+	snprintf(command, sizeof(command), "immadm -o 2 %s", nodename);
+	rc = system(command);
+	assert(rc != -1);
 }
 
 static void remove_node(char *nodename)
@@ -230,12 +236,14 @@ static void remove_node(char *nodename)
 	char command[1024];
 
 	// Lock the node
-	sprintf(command, "immadm -o 2 %s", nodename);
-	assert(rc = system(command) != -1);
+	snprintf(command, sizeof(command), "immadm -o 2 %s", nodename);
+	rc = system(command);
+	assert(rc != -1);
 
 	// Remove the node
-	sprintf(command, "immcfg -d %s", nodename);
-	assert((rc = system(command)) != -1);
+	snprintf(command, sizeof(command), "immcfg -d %s", nodename);
+	rc = system(command);
+	assert(rc != -1);
 }
 
 static void saClmLongRdn_01(void)
