@@ -1,6 +1,7 @@
 /*	  -*- OpenSAF  -*-
  *
  * (C) Copyright 2009 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -14,9 +15,8 @@
  * Author(s): Ericsson AB
  *
  */
-/**
 
- */
+#include <stdio.h>
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
 #include <unistd.h>
@@ -102,15 +102,15 @@ static void getVal(imminfo_t *info)
 	FILE *fp = NULL;
 	attrinfo_t *tmp = NULL;
 	char attrValue[MAX_DATA] = {0};
-	char command[MAX_DATA] = {0};
+	char command[MAX_DATA + 512] = {0};
 	size_t s = info->alist->size;
 
 	tmp = info->alist->attr;
 	while (s) {
-		sprintf(command,
-			"immlist -a %s %s "
-			"| awk -F \"=\" '{print $2}' ",
-			tmp->name, info->dn);
+		snprintf(command, sizeof(command),
+			 "immlist -a %s %s "
+			 "| awk -F \"=\" '{print $2}' ",
+			 tmp->name, info->dn);
 		fp = popen(command, "r");
 		while (fgets(attrValue, sizeof(attrValue) - 1, fp) != NULL) {
 		};
@@ -131,7 +131,7 @@ static int setVal(imminfo_t *info)
 {
 	char *f = NULL;
 	attrinfo_t *tmp = NULL;
-	char command[MAX_DATA] = {0};
+	char command[MAX_DATA + 512] = {0};
 	char format[MAX_DATA] = {0};
 	size_t s = info->alist->size;
 	int rc;
@@ -150,7 +150,7 @@ static int setVal(imminfo_t *info)
 		s--;
 		tmp++;
 	}
-	sprintf(command, "immcfg %s %s", format, info->dn);
+	snprintf(command, sizeof(command), "immcfg %s %s", format, info->dn);
 
 	/* For Debug only*/
 	if (getenv("NTFTEST_DEBUG"))

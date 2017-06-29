@@ -2307,7 +2307,6 @@ bool ImmObjCreate::immobj_update_required() {
   if (class_type == AVSV_SA_AMF_SI_ASSIGNMENT) {
     std::string su_name;
     std::string sisu_name;
-    std::string::size_type pos;
     while ((attribute = attrValues_[i++]) != nullptr) {
       if (!strcmp(attribute->attrName, "safSISU")) {
         sisu_name = Amf::to_string(
@@ -2348,7 +2347,6 @@ bool ImmObjCreate::immobj_update_required() {
   } else if (class_type == AVSV_SA_AMF_CSI_ASSIGNMENT) {
     std::string comp_name;
     std::string csicomp_name;
-    std::string::size_type pos;
     AVD_CSI *csi = nullptr;
     AVD_COMP *comp = nullptr;
     AVD_COMP_CSI_REL *compcsi = nullptr;

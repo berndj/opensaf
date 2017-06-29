@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2008 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -16,6 +17,7 @@
  */
 
 #include <poll.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
 #include "imm/apitest/immtest.h"
@@ -184,7 +186,7 @@ static void *objectImplementerThreadMain(void *arg)
 {
 	struct pollfd fds[2];
 	int ret;
-	char buf[256];
+	char buf[384];
 	const SaImmOiImplementerNameT implementerName = buf;
 	SaSelectionObjectT selObj;
 	SaImmHandleT handle;
@@ -192,7 +194,7 @@ static void *objectImplementerThreadMain(void *arg)
 
 	TRACE_ENTER();
 
-	sprintf(buf, "%s_%s", __FUNCTION__, objectName->value);
+	snprintf(buf, sizeof(buf), "%s_%s", __FUNCTION__, objectName->value);
 	safassert(saImmOiInitialize_2(&handle, &callbacks, &immVersion),
 		  SA_AIS_OK);
 	safassert(saImmOiImplementerSet(handle, implementerName), SA_AIS_OK);
@@ -816,12 +818,15 @@ static void saImmOiCcb_09(void)
 
 __attribute__((constructor)) static void saImmOiCcb_constructor(void)
 {
-	dnObj1.length = (SaUint16T)sprintf((char *)dnObj1.value, "%s,%s",
-					   rdnObj1.value, rootObj.value);
-	dnObj2.length = (SaUint16T)sprintf((char *)dnObj2.value, "%s,%s",
-					   rdnObj2.value, rootObj.value);
-	dnObj3.length = (SaUint16T)sprintf((char *)dnObj3.value, "%s,%s",
-					   rdnObj3.value, rootObj.value);
+	dnObj1.length = (SaUint16T)snprintf((char *)dnObj1.value,
+					    sizeof(dnObj1.value), "%s,%s",
+					    rdnObj1.value, rootObj.value);
+	dnObj2.length = (SaUint16T)snprintf((char *)dnObj2.value,
+					    sizeof(dnObj2.value), "%s,%s",
+					    rdnObj2.value, rootObj.value);
+	dnObj3.length = (SaUint16T)snprintf((char *)dnObj3.value,
+					    sizeof(dnObj3.value), "%s,%s",
+					    rdnObj3.value, rootObj.value);
 
 	test_suite_add(4, "Configuration Objects Implementer");
 	test_case_add(4, saImmOiCcb_01,

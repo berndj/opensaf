@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2010 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -15,6 +16,7 @@
  *
  */
 
+#include <stdio.h>
 #include "clms.h"
 #include "base/osaf_time.h"
 
@@ -146,7 +148,7 @@ sendStateChangeNotificationClms(CLMS_CB *clms_cb, SaNameT node_name,
 void clms_node_join_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node)
 {
 	SaNameT dn;
-	SaUint8T add_text[SA_MAX_NAME_LENGTH];
+	SaUint8T add_text[SA_MAX_NAME_LENGTH + 128];
 
 	memset(dn.value, '\0', SA_MAX_NAME_LENGTH);
 	dn.length = node->node_name.length;
@@ -159,7 +161,8 @@ void clms_node_join_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node)
 	       clms_cb->cluster_view_num);
 
 	memset(&add_text, '\0', sizeof(add_text));
-	sprintf((SaInt8T *)add_text, "CLM node %s Joined", dn.value);
+	snprintf((SaInt8T *)add_text, sizeof(add_text), "CLM node %s Joined",
+		 dn.value);
 
 	sendStateChangeNotificationClms(
 	    clms_cb, dn, add_text, SA_SVC_CLM, SA_CLM_NTFID_NODE_JOIN,
@@ -182,7 +185,7 @@ void clms_node_join_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node)
 void clms_node_exit_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node)
 {
 	SaNameT dn;
-	SaUint8T add_text[SA_MAX_NAME_LENGTH];
+	SaUint8T add_text[SA_MAX_NAME_LENGTH + 128];
 
 	memset(dn.value, '\0', SA_MAX_NAME_LENGTH);
 	dn.length = node->node_name.length;
@@ -195,7 +198,8 @@ void clms_node_exit_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node)
 	       clms_cb->cluster_view_num);
 
 	memset(&add_text, '\0', sizeof(add_text));
-	sprintf((SaInt8T *)add_text, "CLM node %s Exit", dn.value);
+	snprintf((SaInt8T *)add_text, sizeof(add_text), "CLM node %s Exit",
+		 dn.value);
 
 	sendStateChangeNotificationClms(
 	    clms_cb, dn, add_text, SA_SVC_CLM, SA_CLM_NTFID_NODE_LEAVE,
@@ -218,7 +222,7 @@ void clms_node_exit_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node)
 void clms_node_reconfigured_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node)
 {
 	SaNameT dn;
-	SaUint8T add_text[SA_MAX_NAME_LENGTH];
+	SaUint8T add_text[SA_MAX_NAME_LENGTH + 128];
 
 	memset(dn.value, '\0', SA_MAX_NAME_LENGTH);
 	saflog(LOG_NOTICE, clmSvcUsrName,
@@ -229,7 +233,8 @@ void clms_node_reconfigured_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node)
 	(void)memcpy(dn.value, node->node_name.value, dn.length);
 
 	memset(&add_text, '\0', sizeof(add_text));
-	sprintf((SaInt8T *)add_text, "CLM node %s Reconfigured", dn.value);
+	snprintf((SaInt8T *)add_text, sizeof(add_text),
+		 "CLM node %s Reconfigured", dn.value);
 
 	sendStateChangeNotificationClms(
 	    clms_cb, dn, add_text, SA_SVC_CLM, SA_CLM_NTFID_NODE_RECONFIG,
@@ -253,7 +258,7 @@ void clms_node_admin_state_change_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node,
 				      SaUint32T newState)
 {
 	SaNameT dn;
-	SaUint8T add_text[SA_MAX_NAME_LENGTH];
+	SaUint8T add_text[SA_MAX_NAME_LENGTH + 128];
 
 	TRACE_ENTER2("admin state change for node name %s",
 		     node->node_name.value);
@@ -267,8 +272,8 @@ void clms_node_admin_state_change_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node,
 	(void)memcpy(dn.value, node->node_name.value, dn.length);
 
 	memset(&add_text, '\0', sizeof(add_text));
-	sprintf((SaInt8T *)add_text, "CLM node %s Admin State Change",
-		dn.value);
+	snprintf((SaInt8T *)add_text, sizeof(add_text),
+		 "CLM node %s Admin State Change", dn.value);
 
 	sendStateChangeNotificationClms(
 	    clms_cb, dn, add_text, SA_SVC_CLM, SA_CLM_NTFID_NODE_ADMIN_STATE,
