@@ -1471,30 +1471,18 @@ fi
 %{_includedir}/saAis_B_5_14.h
 %{_includedir}/saAmf.h
 %{_includedir}/saAmf_B_04_02.h
-%if %is_ais_ckpt
 %dir %{_includedir}/%{name}
 %{_includedir}/saCkpt.h
 %{_includedir}/saCkpt_B_02_03.h
 %{_includedir}/%{name}/cpsv_papi.h
-%endif
 %{_includedir}/saClm.h
-%if %is_ais_evt
 %{_includedir}/saEvt.h
-%endif
-%if %is_ais_lck
 %{_includedir}/saLck.h
-%endif
 %{_includedir}/saLog.h
-%if %is_ais_msg
 %{_includedir}/saMsg.h
-%endif
 %{_includedir}/saNtf.h
-%if %is_ais_smf
 %{_includedir}/saSmf.h
-%endif
-%if %is_ais_plm
 %{_includedir}/saPlm.h
-%endif
 %{_includedir}/saImm.h
 %{_includedir}/saImmOi.h
 %{_includedir}/saImmOm.h
