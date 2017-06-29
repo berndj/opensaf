@@ -16,7 +16,9 @@
  *
  */
 
-#include "logtest.h"
+#include "base/osaf_time.h"
+#include "base/saf_error.h"
+#include "log/apitest/logtest.h"
 
 extern struct LogProfile logProfile;
 
@@ -856,43 +858,49 @@ void *saLogInitialize_1(void *arg)
 	SaAisErrorT *rt = (SaAisErrorT *)arg;
 	SaLogStreamHandleT logStreamHandle1;
 	SaLogHandleT logHandle1;
+	int time_wait = 10*1000; // Wait for timeout is 10 seconds
 
-	*rt = saLogInitialize(&logHandle1, &logCallbacks, &logVersion);
-	unsigned int nTries = 1;
-	while (*rt == SA_AIS_ERR_TRY_AGAIN && nTries < 50) {
-		usleep(100 * 1000);
+	struct timespec timeout_time;
+	osaf_set_millis_timeout(time_wait, &timeout_time);
+	while (!osaf_is_timeout(&timeout_time)) {
 		*rt = saLogInitialize(&logHandle1, &logCallbacks, &logVersion);
-		nTries++;
+		if (*rt != SA_AIS_ERR_TRY_AGAIN)
+			break;
+		osaf_nanosleep(&kHundredMilliseconds);
 	}
 	if (*rt != SA_AIS_OK) {
+		fprintf(stderr, " Initialize client failed: rc = %s\n",
+			saf_error(*rt));
 		goto done;
 	}
 
-	*rt = saLogStreamOpen_2(
-	    logHandle1, &app1StreamName, &appStream1LogFileCreateAttributes,
-	    SA_LOG_STREAM_CREATE, SA_TIME_ONE_SECOND, &logStreamHandle1);
-	nTries = 1;
-	while (*rt == SA_AIS_ERR_TRY_AGAIN && nTries < 50) {
-		usleep(100 * 1000);
+	osaf_set_millis_timeout(time_wait, &timeout_time);
+	while (!osaf_is_timeout(&timeout_time)) {
 		*rt = saLogStreamOpen_2(logHandle1, &app1StreamName,
 					&appStream1LogFileCreateAttributes,
 					SA_LOG_STREAM_CREATE,
 					SA_TIME_ONE_SECOND, &logStreamHandle1);
-		nTries++;
+		if (*rt != SA_AIS_ERR_TRY_AGAIN)
+			break;
+		osaf_nanosleep(&kHundredMilliseconds);
 	}
 	if (*rt != SA_AIS_OK) {
+		fprintf(stderr, " Open stream failed: rc = %s\n",
+			saf_error(*rt));
 		goto done;
 	}
 
-	*rt = saLogFinalize(logHandle1);
-	nTries = 1;
-	while (*rt == SA_AIS_ERR_TRY_AGAIN && nTries < 50) {
-		usleep(100 * 1000);
+
+	osaf_set_millis_timeout(time_wait, &timeout_time);
+	while (!osaf_is_timeout(&timeout_time)) {
 		*rt = saLogFinalize(logHandle1);
-		nTries++;
+		if (*rt != SA_AIS_ERR_TRY_AGAIN)
+			break;
+		osaf_nanosleep(&kHundredMilliseconds);
 	}
 	if (*rt != SA_AIS_OK) {
-		goto done;
+		fprintf(stderr, " Finalize client failed: rc = %s\n",
+			saf_error(*rt));
 	}
 
 done:
@@ -934,38 +942,48 @@ void saLogMultipleInitialize(void)
  */
 void saLogMultiThreadMultiInit(void)
 {
-	int i, errno, nThreads = 100;
+	int ret, i, errno, nThreads = 50;
 	SaAisErrorT rt[nThreads], rc = SA_AIS_OK;
 	pthread_t threads[nThreads];
+	struct timespec timeout_t;
+	int time_wait = 60;  // Time wait for 60s
 
-	logProfile.nTries = 50;
 	for (i = 0; i < nThreads; i++) {
 		errno = pthread_create(&threads[i], NULL, saLogInitialize_1,
 				       (void *)&rt[i]);
 		if (errno == EAGAIN) {
 			nThreads = i;
-			fprintf(
-			    stderr,
-			    " Insufficient resource or limited system-imposed to create"
-			    " no more than %d threads \n",
-			    nThreads);
+			fprintf(stderr, " Insufficient resource or limited"
+					" system-imposed to create"
+					" no more than %d threads \n",
+					nThreads);
 			break;
 		}
 	}
 
-	/* Wait for all threads terminated */
-	for (i = 0; i < nThreads; i++) {
-		pthread_join(threads[i], NULL);
-	}
+	 osaf_clock_gettime(CLOCK_REALTIME, &timeout_t);
+	 timeout_t.tv_sec += time_wait;
 
+	/* Wait for threads terminated with timeout */
 	for (i = 0; i < nThreads; i++) {
+		ret = pthread_timedjoin_np(threads[i], NULL, &timeout_t);
+		if (ret != 0) {
+			fprintf(stderr, " Thread %d join error: %s\n",
+				i, strerror(ret));
+			for (int j = i + 1; j < nThreads; j++)
+				pthread_cancel(threads[j]);
+			rc_validate(ret, 0);
+			return;
+		}
 		if (rt[i] != SA_AIS_OK) {
+			fprintf(stderr, " Failed at thread %d\n", i);
 			rc = rt[i];
+			for (int j = i + 1; j < nThreads; j++)
+				pthread_cancel(threads[j]);
 			break;
 		}
 	}
 
-	logProfile.nTries = 25;
 	test_validate(rc, SA_AIS_OK);
 }
 
