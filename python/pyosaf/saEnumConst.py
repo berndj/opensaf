@@ -50,14 +50,14 @@ class Enumeration(object):
 
 		i = 0
 		for node in enumlist:
-			if type(node) is tuple:
+			if isinstance(node, tuple):
 				try:
 					node, i = node
 				except ValueError:
 					raise EnumException('%r:' % (node,))
-			if type(node) is not str:
+			if not isinstance(node, str):
 				raise EnumException('Enum name not a string: %r' % (node,))
-			if type(i) is not int:
+			if not isinstance(i, int):
 				raise EnumException('Enum value not integer: %r' % (node,))
 			if node in lookup:
 				raise EnumException('Enum name not unique: %r' % (node,))

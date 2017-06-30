@@ -113,8 +113,8 @@ def _collect_full_transaction(ccb_id):
                 affected_instances = [i for i in all_objects_now if i.dn == dn]
 
                 if len(affected_instances) == 0:
-                    print ('ERROR: Failed to find object %s affected by modify '
-                           'operation' % dn)
+                    print('ERROR: Failed to find object %s affected by modify '
+                          'operation' % dn)
                 else:
                     affected_instance = affected_instances[0]
 
@@ -198,8 +198,8 @@ def admin_operation(oi_handle, c_invocation_id, c_name, c_operation_id, c_params
     try:
         immoi.report_admin_operation_result(invocation_id, result)
     except SafException as err:
-        print "ERROR: Failed to report that %s::%s returned %s (%s)" % \
-            (name, invocation_id, result, err.msg)
+        print("ERROR: Failed to report that %s::%s returned %s (%s)" % \
+            (name, invocation_id, result, err.msg))
 
 def abort_ccb(oi_handle, ccb_id):
     ''' Callback for aborted CCBs.
@@ -275,7 +275,7 @@ def delete_added(oi_handle, ccb_id, c_name):
                                      eSaImmValueTypeT.SA_IMM_ATTR_SANAMET)
 
     # Create a new CCB in the cache if needed
-    if not ccb_id in CCBS.keys():
+    if not ccb_id in list(CCBS.keys()):
         CCBS[ccb_id] = []
 
     # Cache the operation
@@ -318,7 +318,7 @@ def modify_added(oi_handle, c_ccb_id, c_name, c_attr_modification):
             implementer_objection = result
 
     # Create a new CCB in the cache if needed
-    if not ccb_id in CCBS.keys():
+    if not ccb_id in list(CCBS.keys()):
         CCBS[ccb_id] = []
 
     # Store the modifications in the cache
@@ -366,7 +366,7 @@ def create_added(oi_handle, c_ccb_id, c_class_name, c_parent, c_attr_values):
             attributes[attribute.attrName] = None
 
     # Create a new CCB in the cache if needed
-    if not ccb_id in CCBS.keys():
+    if not ccb_id in list(CCBS.keys()):
         CCBS[ccb_id] = []
 
     # Cache the create operation
@@ -531,7 +531,7 @@ class Constraints(object):
                 a child
             '''
 
-            for child_classes in self.containments.values():
+            for child_classes in list(self.containments.values()):
                 if class_name in child_classes:
                     return True
 
@@ -785,8 +785,8 @@ class Implementer(object):
                         operation.execute(object_name, parameters)
                         return eSaAisErrorT.SA_AIS_OK
                     except SafException as err:
-                        print "ERROR: Admin operation %s caused exception %s" %\
-                            (operation_id, err)
+                        print("ERROR: Admin operation %s caused exception %s" %\
+                            (operation_id, err))
                         return err.value
 
         # Scan for AdminOperation-decorated functions in subclasses
@@ -802,8 +802,8 @@ class Implementer(object):
                     function(object_name, parameters)
                     return eSaAisErrorT.SA_AIS_OK
                 except SafException as err:
-                    print "ERROR: Admin operation %s caused exception %s" % \
-                        (operation_id, err)
+                    print("ERROR: Admin operation %s caused exception %s" % \
+                        (operation_id, err))
                     return err.value
 
         # Report that the operation is not supported
@@ -841,8 +841,8 @@ class Implementer(object):
 
                 continue
 
-            print "WARNING: %s is missing in IMM. Not becoming implementer." % \
-                class_name
+            print("WARNING: %s is missing in IMM. Not becoming implementer." % \
+                class_name)
 
     def get_selection_object(self):
         ''' Returns the selection object '''
@@ -855,8 +855,8 @@ class Implementer(object):
         try:
             immoi.update_rt_object(dn, attributes)
         except SafException as err:
-            print "ERROR: Failed to update runtime attributes of %s: %s" % \
-                (dn, err)
+            print("ERROR: Failed to update runtime attributes of %s: %s" % \
+                (dn, err))
 
     def create(self, obj):
         ''' Creates a runtime object '''
@@ -941,5 +941,5 @@ class Applier(Implementer):
                 immoi.implement_class(class_name)
 
             else:
-                print "WARNING: %s is missing in IMM. Not becoming applier." % \
-                    class_name
+                print("WARNING: %s is missing in IMM. Not becoming applier." % \
+                    class_name)

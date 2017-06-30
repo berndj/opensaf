@@ -126,7 +126,7 @@ def create_rt_object(class_name, parent_name, obj):
 
     c_attr_values = []
 
-    for name, (c_attr_type, values) in obj.attrs.iteritems():
+    for name, (c_attr_type, values) in obj.attrs.items():
 
         if values == None:
             values = []
@@ -175,10 +175,10 @@ def update_rt_object(dn, attributes):
     # Create and marshall attribute modifications
     attr_mods = []
 
-    for name, values in attributes.iteritems():
+    for name, values in attributes.items():
 
         if values is None:
-            print "WARNING: Received no values for %s in %s" % (name, dn)
+            print("WARNING: Received no values for %s in %s" % (name, dn))
             continue
 
         if not isinstance(values, list):
@@ -356,7 +356,7 @@ def create_non_existing_imm_object(class_name, parent_name, attributes):
 
     obj = ImmObject(class_name=class_name, dn=dn)
 
-    for name, values in attributes.iteritems():
+    for name, values in attributes.items():
         obj.__setattr__(name, values)
 
     obj.__setattr__('SaImmAttrClassName', class_name)

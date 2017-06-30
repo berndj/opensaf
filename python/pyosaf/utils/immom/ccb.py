@@ -18,6 +18,7 @@
 Class representing an IMM CCB.
 '''
 
+import sys
 from ctypes import c_void_p, pointer, cast
 
 from pyosaf.saAis import eSaAisErrorT, SaNameT, SaStringT, \
@@ -31,9 +32,12 @@ from pyosaf import saAis
 
 from pyosaf.utils import immom
 from pyosaf.utils import SafException
+from functools import reduce
 
 def _value_to_ctype_ptr(value_type, value):
     ''' convert a value to a ctypes value ptr '''
+    if sys.version_info > (3,):
+        long = int
     if value_type is eSaImmValueTypeT.SA_IMM_ATTR_SAINT32T:
         ctypeptr = cast(pointer(SaInt32T(value)), c_void_p)
     elif value_type is eSaImmValueTypeT.SA_IMM_ATTR_SAUINT32T:
@@ -125,7 +129,7 @@ class Ccb(object):
             parent_name = None
 
         attr_values = []
-        for attr_name, type_values in obj.attrs.iteritems():
+        for attr_name, type_values in obj.attrs.items():
             values = type_values[1]
             attr = SaImmAttrValuesT_2()
             attr.attrName = attr_name
@@ -167,7 +171,7 @@ class Ccb(object):
         try:
             obj = immom.get(object_name)
         except SafException as err:
-            print "failed: %s" % err
+            print("failed: %s" % err)
             return
 
         object_names = [SaNameT(object_name)]
@@ -216,7 +220,7 @@ class Ccb(object):
         try:
             obj = immom.get(object_name)
         except SafException as err:
-            print "failed: %s" % err
+            print("failed: %s" % err)
             return
 
         object_names = [SaNameT(object_name)]
@@ -264,7 +268,7 @@ class Ccb(object):
         try:
             obj = immom.get(object_name)
         except SafException as err:
-            print "failed: %s" % err
+            print("failed: %s" % err)
             return
 
         object_names = [SaNameT(object_name)]

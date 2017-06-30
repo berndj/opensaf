@@ -109,7 +109,7 @@ def get(object_name, attr_name_list=None, class_name=None):
     attribs = {}
     attr_list = unmarshalNullArray(attributes)
     for attr in attr_list:
-        attr_range = range(attr.attrValuesNumber)
+        attr_range = list(range(attr.attrValuesNumber))
         attribs[attr.attrName] = [
             attr.attrValueType,
             [unmarshalSaImmValue(
@@ -170,8 +170,8 @@ def admin_op_invoke(dn, op_id, params=None):
         saAis.saAis.SA_TIME_ONE_SECOND * 10)
 
     if retval.value != eSaAisErrorT.SA_AIS_OK:
-        print "saImmOmAdminOperationInvoke_2: %s" % \
-            eSaAisErrorT.whatis(retval.value)
+        print("saImmOmAdminOperationInvoke_2: %s" % \
+            eSaAisErrorT.whatis(retval.value))
         raise SafException(retval.value)
 
     error = saImmOmAdminOwnerFinalize(owner_handle)

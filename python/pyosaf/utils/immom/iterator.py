@@ -33,6 +33,7 @@ from pyosaf import saImmOm
 from pyosaf.utils import immom
 from pyosaf.utils import SafException
 from pyosaf.utils.immom.object import ImmObject
+from __future__ import print_function
 
 
 class SearchIterator(collections.Iterator):
@@ -81,7 +82,7 @@ class SearchIterator(collections.Iterator):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         name = SaNameT()
         attributes = pointer(pointer(SaImmAttrValuesT_2()))
         try:
@@ -96,7 +97,7 @@ class SearchIterator(collections.Iterator):
         attribs = {}
         attr_list = unmarshalNullArray(attributes)
         for attr in attr_list:
-            attr_range = range(attr.attrValuesNumber)
+            attr_range = list(range(attr.attrValuesNumber))
             attribs[attr.attrName] = [attr.attrValueType,
                 [unmarshalSaImmValue(
                     attr.attrValues[val],
@@ -122,8 +123,8 @@ def test():
     ''' test function '''
     it = InstanceIterator(sys.argv[1])
     for dn, attr in it:
-        print dn.split("=")[1]
-        print attr, "\n"
+        print(dn.split("=")[1])
+        print(attr, "\n")
 
 if __name__ == '__main__':
     test()

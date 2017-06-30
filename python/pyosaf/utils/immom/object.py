@@ -107,7 +107,7 @@ class ImmObject(object):
             value = '%s=%s' % (self.rdn_attribute, value)
 
         value_type = self.get_value_type(key)
-        if type(value) is list:
+        if isinstance(value, list):
             attr_value = (value_type, value)
         else:
             attr_value = (value_type, [value])
