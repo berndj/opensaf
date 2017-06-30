@@ -444,13 +444,13 @@ __attribute__((constructor)) static void ntf_clm_constructor(void)
 	// printf("lock_cmd:'%s'\n",lock_cmd);
 	// printf("unlock_cmd:'%s'\n",unlock_cmd);
 
-	// Add these test cases on other than active controller.
+	// The following tests are added only if not running on an Active
+	// controller node
 	int rc = 0;
 	char role[80];
-	rc = system("which rdegetrole");
+	rc = system("rdegetrole");
 	if (rc == 0) {
-		printf("This is a controller node\n");
-		// Command rdegetrole exists means a controller.
+		// Command rdegetrole returning OK means controller node.
 		memset(buffer, '\0', sizeof(buffer));
 		memset(role, '\0', sizeof(role));
 		strcpy(buffer, "rdegetrole");
@@ -459,14 +459,16 @@ __attribute__((constructor)) static void ntf_clm_constructor(void)
 			if ((ptr = strchr(role, '\n')) != NULL)
 				*ptr = '\0';
 			if (!strcmp((char *)role, "ACTIVE")) {
-				// printf("Active controller node\n");
+				printf("Active controller node. "
+					"Do not run CLM tests\n");
 				pclose(fp);
 				return;
 			}
+			printf("Standby controller node. Run CLM tests\n");
 		}
 		pclose(fp);
 	} else {
-		printf("This is a payload node\n");
+		printf("Payload node. Run CLM tests\n");
 	}
 
 	test_suite_add(40, "Ntf CLM Integration test suite\n");
