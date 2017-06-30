@@ -1966,7 +1966,7 @@ bool SmfUpgradeStep::callActivationCmd() {
   TRACE("Get node destination for %s", getSwNode().c_str());
   uint32_t rc;
 
-  if (!getNodeDestination(getSwNode(), &nodeDest, NULL, -1)) {
+  if (!waitForNodeDestination(getSwNode(), &nodeDest)) {
     LOG_NO("no node destination found for node %s", getSwNode().c_str());
     result = false;
     goto done;
