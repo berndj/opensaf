@@ -19,13 +19,22 @@
 #define NTF_NTFIMCND_NTFIMCN_IMM_H_
 
 #include "ntfimcn_main.h"
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/**
+ * Initialize the OI interface, get a selection object and become applier
+ *
+ * @global_param max_waiting_time_ms: Wait max time for each operation.
+ * @global_param applier_name: The name of the "configuration change" applier
+ * @param *cb[out]
+ *
+ * @return (-1) if init fail
+ */
 int ntfimcn_imm_init(ntfimcn_cb_t *cb);
-void ntfimcn_special_applier_clear(void);
 
 #ifdef __cplusplus
 }

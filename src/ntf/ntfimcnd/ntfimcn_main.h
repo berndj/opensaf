@@ -40,8 +40,8 @@ extern "C" {
 #define NTFIMCN_IMM_ATTR "SaImmAttr"
 
 typedef struct {
+  SaImmHandleT immOmHandle; /* Handle form IMM OM Initialize */
   SaImmOiHandleT immOiHandle; /* Handle from IMM OI initialize */
-  SaImmHandleT immOmHandle;   /* Handle from IMM OM initialize */
   SaSelectionObjectT
       immSelectionObject;  /* Selection Object to wait for IMM events */
   SaNtfHandleT ntf_handle; /* Handle from NTF initialize */
