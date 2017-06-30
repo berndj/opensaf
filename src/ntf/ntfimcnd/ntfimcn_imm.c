@@ -32,6 +32,7 @@
 #include "base/saf_error.h"
 #include "base/ncsgl_defs.h"
 #include "base/osaf_extended_name.h"
+#include "base/osaf_time.h"
 
 #include <saImmOm.h>
 #include <saImmOi.h>
@@ -41,13 +42,18 @@
 #include "ntfimcn_notifier.h"
 
 /*
+ * Global variables
+ */
+extern ntfimcn_cb_t ntfimcn_cb; /* See ntfimcn_main.c */
+
+/*
  * Global, scope file
  */
 /* Release code, major version, minor version */
-static SaVersionT imm_version = {'A', 2, 12};
-static const unsigned int sleep_delay_ms = 500;
-static const unsigned int max_waiting_time_7s = (7 * 1000);   /* 7 sec */
-static const unsigned int max_waiting_time_60s = (60 * 1000); /* 60 sec */
+#define IMM_VERSION {'A', 2, 12}
+static const uint64_t sleep_delay_ms = 500;
+static const uint64_t max_waiting_time_7s = (7 * 1000);   /* 7 sec */
+static const uint64_t max_waiting_time_60s = (60 * 1000); /* 60 sec */
 static const SaImmOiImplementerNameT applier_nameA =
     (SaImmOiImplementerNameT) "@OpenSafImmReplicatorA";
 static const SaImmOiImplementerNameT applier_nameB =
@@ -80,14 +86,73 @@ struct {
 
 #define NOTIFYING_OBJECT "safApp=safImmService"
 
-extern ntfimcn_cb_t ntfimcn_cb;
+static bool initializeImmOmHandle(SaImmHandleT* immOmHandle);
+static void finalizeImmOmHandle(SaImmHandleT immOmHandle);
+
+/**
+ * Get a class description for the given className
+ *
+ * Handles SA_AIS_ERR_TRY_AGAIN loop
+ * Also retries once if SA_AIS_ERR_UNAVAILABLE
+ * Note: Uses saImmOmClassDescriptionGet_2() that allocates memory that
+ *       has to be freed by calling saImmOmClassDescriptionMemoryFree_2()
+ *
+ * See AIS saImmOmClassDescriptionGet_2
+ * @param className[in]
+ * @param attrDescr[out]
+ * @return AIS return code
+ */
+static SaAisErrorT getClassDescription(const SaImmClassNameT className,
+	SaImmAttrDefinitionT_2 ***attrDescr)
+{
+	SaImmClassCategoryT classCategory;
+	struct timespec timeout_ts;
+	struct timespec delay_ts;
+	SaAisErrorT ais_rc;
+
+	osaf_millis_to_timespec(sleep_delay_ms, &delay_ts);
+	osaf_set_millis_timeout(max_waiting_time_7s, &timeout_ts);
+
+	for (int i = 0; i <= 1; i++) {
+		while (osaf_is_timeout(&timeout_ts) == false) {
+			ais_rc = saImmOmClassDescriptionGet_2(
+				ntfimcn_cb.immOmHandle,
+				className, &classCategory, attrDescr);
+			if ((ais_rc != SA_AIS_ERR_TRY_AGAIN) &&
+				(ais_rc != SA_AIS_ERR_TIMEOUT)) {
+				break;
+			}
+			osaf_nanosleep(&delay_ts);
+		}
+
+		/*
+		 * If SA_AIS_ERR_UNAVAILABLE we may have left the CLM cluster
+		 * The old handle must be finalized, a new initialized and one
+		 * new attempt to get the class description shall be done.
+		 */
+		if (ais_rc == SA_AIS_ERR_UNAVAILABLE) {
+			finalizeImmOmHandle(ntfimcn_cb.immOmHandle);
+			if (initializeImmOmHandle(&ntfimcn_cb.immOmHandle) ==
+				false) {
+				break; /* Failed to initialize OM handle */
+			}
+		} else 	break;
+	}
+
+	if (ais_rc != SA_AIS_OK) {
+		LOG_NO("%s saImmOmClassDescriptionGet_2 failed %s",
+			__FUNCTION__, saf_error(ais_rc));
+	}
+
+	return ais_rc;
+}
 
 /**
  * Get name of rdn attribute from IMM
  *
  * Note:
- * A valid ntf_cb.immOmHandle must exist
  * Uses in file global struct s_get_rdn_attr_name
+ * Uses global immOmHandle in struct ntfimcn_cb_t
  *
  * @param className[in]
  *
@@ -96,10 +161,8 @@ extern ntfimcn_cb_t ntfimcn_cb;
 static char *get_rdn_attr_name(const SaImmClassNameT className)
 {
 	SaAisErrorT rc;
-	int msecs_waited;
 	int i = 0;
 
-	SaImmClassCategoryT classCategory;
 	SaImmAttrDefinitionT_2 **attrDescr;
 
 	TRACE_ENTER();
@@ -118,18 +181,15 @@ static char *get_rdn_attr_name(const SaImmClassNameT className)
 	memcpy(s_get_rdn_attr_name.saved_className, className,
 	       strlen(className) + 1);
 
-	/* Get class description */
-	msecs_waited = 0;
-	rc = saImmOmClassDescriptionGet_2(ntfimcn_cb.immOmHandle, className,
-					  &classCategory, &attrDescr);
-	while (((rc == SA_AIS_ERR_TRY_AGAIN) || (rc == SA_AIS_ERR_TIMEOUT)) &&
-	       (msecs_waited < max_waiting_time_7s)) {
-		usleep(sleep_delay_ms * 1000);
-		msecs_waited += sleep_delay_ms;
-		rc = saImmOmClassDescriptionGet_2(ntfimcn_cb.immOmHandle,
-						  className, &classCategory,
-						  &attrDescr);
+	/* Get an IMM OM Handle */
+	SaImmHandleT immOmHandle = 0;
+	if (initializeImmOmHandle(&immOmHandle) == false) {
+		LOG_ER("getImmOmHandle() Fail");
+		goto error;
 	}
+
+	/* Get class description */
+	rc = getClassDescription(className, &attrDescr);
 	if (rc != SA_AIS_OK) {
 		LOG_ER("saImmOmClassDescriptionGet_2 failed %s", saf_error(rc));
 		goto error;
@@ -153,18 +213,27 @@ static char *get_rdn_attr_name(const SaImmClassNameT className)
 	}
 
 	/* Free memory allocated for attribute descriptions */
-	rc = saImmOmClassDescriptionMemoryFree_2(ntfimcn_cb.immOmHandle,
+	rc = saImmOmClassDescriptionMemoryFree_2(immOmHandle,
 						 attrDescr);
 	if (rc != SA_AIS_OK) {
-		LOG_ER("saImmOmClassDescriptionMemoryFree_2 failed %s",
-		       saf_error(rc));
+		LOG_NO("saImmOmClassDescriptionMemoryFree_2() Fail %s",
+			saf_error(rc));
 		goto error;
 	}
+
+	/* Release the OM Handle */
+	finalizeImmOmHandle(immOmHandle);
 
 done:
 	TRACE_LEAVE();
 	return s_get_rdn_attr_name.attrName;
 error:
+	/* NOTE: Resources are allocated by this function
+	 *       saImmOmClassDescriptionMemoryFree_2() must be called before
+	 *       returning from this function. Not done here because of
+	 *       osafassert()
+	 */
+	LOG_ER("%s Failed", __FUNCTION__);
 	osafassert(0);
 	return 0; /* Dummy */
 }
@@ -690,15 +759,6 @@ static const SaImmOiCallbacksT_2 callbacks = {
 static const SaImmCallbacksT omCallbacks = {
     .saImmOmAdminOperationInvokeCallback = NULL};
 
-/**
- * Initialize the OI interface, get a selection object and become applier
- *
- * @global_param max_waiting_time_ms: Wait max time for each operation.
- * @global_param applier_name: The name of the "configuration change" applier
- * @param *cb[out]
- *
- * @return (-1) if init fail
- */
 int ntfimcn_imm_init(ntfimcn_cb_t *cb)
 {
 	SaAisErrorT rc;
@@ -724,6 +784,7 @@ int ntfimcn_imm_init(ntfimcn_cb_t *cb)
 			goto done;
 		}
 		cb->immOiHandle = 0;
+		SaVersionT imm_version = IMM_VERSION;
 		rc = saImmOiInitialize_2(&cb->immOiHandle, &callbacks,
 					 &imm_version);
 		while (
@@ -842,40 +903,70 @@ int ntfimcn_imm_init(ntfimcn_cb_t *cb)
 	}
 
 	/*
-	 * Initialize the IMM OM API
-	 * -------------------------
+	 * Initialize an Object Manager
+	 * ----------------------------
 	 */
-	msecs_waited = 0;
 	cb->immOmHandle = 0;
-	rc = saImmOmInitialize(&cb->immOmHandle, &omCallbacks, &imm_version);
-	while ((rc == SA_AIS_ERR_TRY_AGAIN || rc == SA_AIS_ERR_TIMEOUT) &&
-	       msecs_waited < max_waiting_time_60s) {
-		if (rc == SA_AIS_ERR_TIMEOUT) {
-			LOG_WA("%s saImmOmInitialize() returned %s",
-			       __FUNCTION__, saf_error(rc));
-		}
-		usleep(sleep_delay_ms * 1000);
-		msecs_waited += sleep_delay_ms;
-		if (rc == SA_AIS_ERR_TIMEOUT && cb->immOmHandle != 0) {
-			while (saImmOmFinalize(cb->immOmHandle) ==
-				   SA_AIS_ERR_TRY_AGAIN &&
-			       msecs_waited < max_waiting_time_60s) {
-				usleep(sleep_delay_ms * 1000);
-				msecs_waited += sleep_delay_ms;
-			}
-		}
-		cb->immOmHandle = 0;
-		rc = saImmOmInitialize(&cb->immOmHandle, &omCallbacks,
-				       &imm_version);
-	}
-	if (rc != SA_AIS_OK) {
-		LOG_ER("%s saImmOmInitialize failed %s", __FUNCTION__,
-		       saf_error(rc));
+	if (initializeImmOmHandle(&cb->immOmHandle) == false) {
 		internal_rc = NTFIMCN_INTERNAL_ERROR;
-		goto done;
 	}
 
 done:
 	TRACE_LEAVE();
 	return internal_rc;
+}
+
+/**
+ * Initialize an IMM OM Handle
+ *
+ * @param immOmHandle[out] Set to OM Handle or 0 if Fail
+ * @return false if Fail
+ */
+static bool initializeImmOmHandle(SaImmHandleT* immOmHandle) {
+	struct timespec timeout_ts;
+	struct timespec delay_ts;
+	SaAisErrorT ais_rc;
+	bool internal_rc = true;
+	SaVersionT imm_version = IMM_VERSION;
+
+	osaf_millis_to_timespec(sleep_delay_ms, &delay_ts);
+	osaf_set_millis_timeout(max_waiting_time_60s, &timeout_ts);
+
+	while (osaf_is_timeout(&timeout_ts) == false) {
+		ais_rc = saImmOmInitialize(immOmHandle,
+			&omCallbacks, &imm_version);
+		if (ais_rc != SA_AIS_ERR_TRY_AGAIN) {
+			break;
+		}
+		osaf_nanosleep(&delay_ts);
+	}
+
+	if (ais_rc != SA_AIS_OK) {
+		LOG_NO("%s saImmOmInitialize failed %s", __FUNCTION__,
+		       saf_error(ais_rc));
+		internal_rc = false;
+	}
+	return internal_rc;
+}
+
+static void finalizeImmOmHandle(SaImmHandleT immOmHandle) {
+	struct timespec timeout_ts;
+	struct timespec delay_ts;
+	SaAisErrorT ais_rc;
+
+	osaf_millis_to_timespec(sleep_delay_ms, &delay_ts);
+	osaf_set_millis_timeout(max_waiting_time_60s, &timeout_ts);
+
+	while (osaf_is_timeout(&timeout_ts) == false) {
+		ais_rc = saImmOmFinalize(immOmHandle);
+		if (ais_rc != SA_AIS_ERR_TRY_AGAIN) {
+			break;
+		}
+		osaf_nanosleep(&delay_ts);
+	}
+
+	if (ais_rc != SA_AIS_OK) {
+		LOG_NO("%s saImmOmInitialize failed %s", __FUNCTION__,
+		       saf_error(ais_rc));
+	}
 }
