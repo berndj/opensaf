@@ -54,6 +54,7 @@ Use the following commands to set your global git options in ~/.gitconfig:
 git config --global user.name "John Doe"
 git config --global user.email "john.doe@example.com"
 git config --global sendemail.smtpserver "smtp.example.com"
+git config --global push.default simple
 
 You should replace "John Doe", "john.doe@example.com" and "smtp.example.com" in
 the commands above with appropriate values for you.
@@ -145,14 +146,31 @@ When the review has been ACKed, you push the code as follows:
 git checkout develop
 git pull
 git checkout ticket-$ticket
-git rebase develop
+git rebase --ignore-date develop
 git checkout develop
 git merge --ff-only ticket-$ticket
 git push origin develop
 
 You should normally only push to the develop branch in the official OpenSAF GIT
 repository. Important bug-fixes can sometimes also be needed on the release
-branch. Once you have pushed an important bug-fix to the develop branch, you can
+branch. Remember that the purpose of the release branch is to stabilize the code
+before the release, so if your bug-fix is unimportant and/or risky then please
+push it to the develop branch only, so that we minimize the risk of introducing
+new bugs on the release branch. We release OpenSAF once every one or two months,
+so if you push code to the relase branch then it will receive very little
+testing before it goes into a release. If you push it only to the develop branch
+then it will recevie at least one month of testing before going into a release.
+
+* Example of an important bug-fix: a *regression* from the previous
+  release. I.e. something that used to work in the previous release but now has
+  become broken due to some recent change.
+* Example of an **un**important bug-fix: a several-years-old defect ticket that
+  no-one has cared to fix until you finally decided to do it. This fix is
+  probably not very urgent and it might be better to put it only on the develop
+  branch so that the fix receives more testing before it goes into a release.
+
+When you have pushed an important bug-fix to the develop branch and you think it
+is important and risk-free enough to be pushed to the release branch, you can
 cherry-pick it to the release branch using the following commands (replace
 <revision> in the commands below with the actual revision (hexadecimal hash
 number) of the commit you wish to cherry-pick):

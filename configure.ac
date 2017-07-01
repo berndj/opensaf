@@ -449,7 +449,7 @@ AC_PROG_MAKE_SET
 AM_PROG_CC_C_O
 
 if test "$enable_python" = yes; then
-        AM_PATH_PYTHON([2.6])
+        AM_PATH_PYTHON([2.7])
 fi
 
 if test "$enable_java" = yes; then
