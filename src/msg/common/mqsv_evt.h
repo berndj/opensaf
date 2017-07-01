@@ -156,15 +156,23 @@ typedef struct saf_message {
 
 /* saMsgInitialize(): */
 
-typedef struct mqp_init_req { SaVersionT version; } MQP_INIT_REQ;
+typedef struct mqp_init_req {
+  SaVersionT version;
+} MQP_INIT_REQ;
 
-typedef struct mqp_init_rsp { uint32_t dummy; } MQP_INIT_RSP;
+typedef struct mqp_init_rsp {
+  uint32_t dummy;
+} MQP_INIT_RSP;
 
 /* saMsgFinalize(): */
 
-typedef struct mqp_finalize_req { SaMsgHandleT msgHandle; } MQP_FINALIZE_REQ;
+typedef struct mqp_finalize_req {
+  SaMsgHandleT msgHandle;
+} MQP_FINALIZE_REQ;
 
-typedef struct mqp_finalize_rsp { SaMsgHandleT msgHandle; } MQP_FINALIZE_RSP;
+typedef struct mqp_finalize_rsp {
+  SaMsgHandleT msgHandle;
+} MQP_FINALIZE_RSP;
 
 typedef struct mqp_q_ret_time_set_req {
   SaMsgQueueHandleT queueHandle;
@@ -172,7 +180,9 @@ typedef struct mqp_q_ret_time_set_req {
 
 } MQP_Q_RET_TIME_SET_REQ;
 
-typedef struct mqp_clm_req { uint32_t node_joined; } MQP_CLM_NOTIFY;
+typedef struct mqp_clm_req {
+  uint32_t node_joined;
+} MQP_CLM_NOTIFY;
 
 typedef struct mqp_q_ret_time_set_rsp {
   SaMsgQueueHandleT queueHandle;
@@ -232,9 +242,13 @@ typedef struct mqp_openasync_req {
 
 /* saMsgQueueClose(): */
 
-typedef struct mqp_close_req { SaMsgQueueHandleT queueHandle; } MQP_CLOSE_REQ;
+typedef struct mqp_close_req {
+  SaMsgQueueHandleT queueHandle;
+} MQP_CLOSE_REQ;
 
-typedef struct mqp_close_rsp { SaMsgQueueHandleT queueHandle; } MQP_CLOSE_RSP;
+typedef struct mqp_close_rsp {
+  SaMsgQueueHandleT queueHandle;
+} MQP_CLOSE_RSP;
 
 /* saMsgQueueStatusGet(): */
 
@@ -333,7 +347,9 @@ typedef struct mqp_update_stats {
   uint32_t size;
 } MQP_UPDATE_STATS;
 
-typedef struct mqp_stats_rsp { uint32_t dummy; } MQP_STATS_RSP;
+typedef struct mqp_stats_rsp {
+  uint32_t dummy;
+} MQP_STATS_RSP;
 
 /* The format of message to be placed in the queue or sent from MQA to MQND */
 
@@ -350,7 +366,9 @@ typedef struct mqsv_message {
 } MQSV_MESSAGE;
 
 /* To tell mqa that mqnd restarted successfully */
-typedef struct mqp_mqnd_restart_rsp { bool restart_done; } MQP_MQND_RESTART_RSP;
+typedef struct mqp_mqnd_restart_rsp {
+  bool restart_done;
+} MQP_MQND_RESTART_RSP;
 
 /******************************************************************************
  * MQSV_EVT_MQP Messages
@@ -506,7 +524,9 @@ typedef enum mqnd_ctrl_evt_type {
 } MQND_CTRL_EVT_TYPE;
 
 /* Datastructure used to get the queue attributes */
-typedef struct mqsv_qattr_req { SaMsgQueueHandleT qhdl; } MQND_QATTR_REQ;
+typedef struct mqsv_qattr_req {
+  SaMsgQueueHandleT qhdl;
+} MQND_QATTR_REQ;
 
 /* Data Structure carries the Queue attributes */
 typedef struct mqsv_qattr_info {
@@ -521,7 +541,9 @@ typedef struct mqnd_tmr_exp_info {
   tmr_t tmr_id;
 } MQND_TMR_EXP_INFO;
 
-typedef struct mqsv_remove_queue { SaMsgQueueHandleT qhdl; } MQND_REMOVE_QUEUE;
+typedef struct mqsv_remove_queue {
+  SaMsgQueueHandleT qhdl;
+} MQND_REMOVE_QUEUE;
 
 /* Structure for passing MDS info to components */
 typedef struct mqnd_mds_info {

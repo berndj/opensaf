@@ -18,7 +18,7 @@
 #ifndef LCK_LCKND_GLND_CLIENT_H_
 #define LCK_LCKND_GLND_CLIENT_H_
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -42,7 +42,7 @@ typedef struct glnd_client_info_tag {
   SaVersionT version;
   uint16_t cbk_reg_info; /* bit-wise data */
   GLND_CLIENT_LIST_RESOURCE
-      *res_list; /* this list will be used for the deadlock algo */
+  *res_list; /* this list will be used for the deadlock algo */
 } GLND_CLIENT_INFO;
 
 /*prototypes */
@@ -92,7 +92,7 @@ uint32_t glnd_client_node_resource_lock_find_duplicate_ex(
     GLND_CLIENT_INFO *client_info, SaLckResourceIdT res_id,
     SaLckResourceIdT lcl_res_id);
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 }
 #endif
 

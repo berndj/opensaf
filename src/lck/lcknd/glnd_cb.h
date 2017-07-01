@@ -23,7 +23,7 @@
 #include "glnd_tmr.h"
 #include "lck/lcknd/glnd_evt.h"
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -58,8 +58,8 @@ typedef struct glnd_res_lock_list_info_tag {
   SaLckResourceIdT lcl_resource_id;
   MDS_SYNC_SND_CTXT glnd_res_lock_mds_ctxt; /* to store the mds context */
   bool lock_rsp_not_sent;
-  bool unlock_req_sent;                     /* To take care of unlock requests that are
-                                                       lost during mastership transistion */
+  bool unlock_req_sent; /* To take care of unlock requests that are
+                                   lost during mastership transistion */
   GLSV_CALL_TYPE unlock_call_type;
   uint32_t non_master_status;
   uint32_t shm_index;
@@ -195,13 +195,12 @@ typedef struct glnd_cb_tag {
   struct glsv_glnd_evt
       *evt_bckup_q; /* backup the events incase of mastership change */
 
-  SaClmHandleT clm_hdl;  	/* CLM handle, obtained thru CLM init        */
+  SaClmHandleT clm_hdl;   /* CLM handle, obtained thru CLM init        */
   SaAmfHandleT amf_hdl;   /* AMF handle, obtained thru AMF init        */
   SaAmfHAStateT ha_state; /* present AMF HA state of the component     */
   EDU_HDL glnd_edu_hdl;   /* edu handle used for encode/decode         */
-  void
-      *shm_base_addr; /* Stores shared memory starting address, which contains
-                         shared memory version */
+  void *shm_base_addr; /* Stores shared memory starting address, which contains
+                          shared memory version */
   GLND_RESTART_RES_INFO *glnd_res_shm_base_addr;
   GLND_RESTART_RES_LOCK_LIST_INFO *glnd_lck_shm_base_addr;
   GLSV_RESTART_BACKUP_EVT_INFO *glnd_evt_shm_base_addr;
@@ -253,7 +252,7 @@ uint8_t glnd_cpsv_initilize(GLND_CB *glnd_cb);
 uint32_t glnd_shm_create(GLND_CB *cb);
 uint32_t glnd_shm_destroy(GLND_CB *cb, char shm_name[]);
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 }
 #endif
 

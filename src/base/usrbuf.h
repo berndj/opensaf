@@ -71,13 +71,17 @@ typedef struct ub_pool_mgr {
  * NCSMMGR_UB_INIT Put USRBUF pool management svcs in start state
  ***************************************************************************/
 
-typedef struct ncsmmgr_ub_init { void *i_meaningless; } NCSMMGR_UB_INIT;
+typedef struct ncsmmgr_ub_init {
+  void *i_meaningless;
+} NCSMMGR_UB_INIT;
 
 /***************************************************************************
  * NCSMMGR_UB_DELETE  Disengage all USRBUF pools and recover resources
  ***************************************************************************/
 
-typedef struct ncsmmgr_ub_delete { void *i_meaningless; } NCSMMGR_UB_DELETE;
+typedef struct ncsmmgr_ub_delete {
+  void *i_meaningless;
+} NCSMMGR_UB_DELETE;
 
 /***************************************************************************
  * NCSMMGR_UB_REGISTER register pool properties in USRBUF service area.

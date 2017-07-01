@@ -176,13 +176,13 @@ void glnd_resource_req_node_del(GLND_CB *glnd_cb, uint32_t res_req_hdl)
   PROCEDURE NAME : glnd_resource_req_node_down
 
   DESCRIPTION    : Sends callback responses to outstanding requests from node
-                   down
+		   down
 
   ARGUMENTS      :glnd_cb      - ptr to the GLND control block
 
 
   RETURNS        :The pointer to the resource req node info on success.
-                  else returns NULL.
+		  else returns NULL.
 
   NOTES         : Delete the returned pointer immediately.
 *****************************************************************************/
@@ -190,47 +190,51 @@ void glnd_resource_req_node_down(GLND_CB *glnd_cb)
 {
 	GLND_RESOURCE_REQ_LIST *res_req_info;
 
-	for (res_req_info = glnd_cb->res_req_list;
-       res_req_info;
-       res_req_info = res_req_info->next) {
+	for (res_req_info = glnd_cb->res_req_list; res_req_info;
+	     res_req_info = res_req_info->next) {
 		GLSV_GLA_EVT gla_evt;
 
-    GLND_CLIENT_INFO *client_info = glnd_client_node_find(
-      glnd_cb,
-      res_req_info->client_handle_id);
+		GLND_CLIENT_INFO *client_info = glnd_client_node_find(
+		    glnd_cb, res_req_info->client_handle_id);
 
-    if (!client_info) {
-      LOG_ER("no client found for resource req node down");
-      osafassert(false);
-      continue;
-    }
+		if (!client_info) {
+			LOG_ER("no client found for resource req node down");
+			osafassert(false);
+			continue;
+		}
 
-    if (res_req_info->call_type == GLSV_SYNC_CALL) {
-      glnd_stop_tmr(&res_req_info->timeout);
+		if (res_req_info->call_type == GLSV_SYNC_CALL) {
+			glnd_stop_tmr(&res_req_info->timeout);
 
-      gla_evt.error = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
-        SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
-      gla_evt.handle = res_req_info->client_handle_id;
-      gla_evt.type = GLSV_GLA_API_RESP_EVT;
-      gla_evt.info.gla_resp_info.type = GLSV_GLA_LOCK_RES_OPEN;
+			gla_evt.error =
+			    m_GLA_VER_IS_AT_LEAST_B_3(client_info->version)
+				? SA_AIS_ERR_UNAVAILABLE
+				: SA_AIS_ERR_LIBRARY;
+			gla_evt.handle = res_req_info->client_handle_id;
+			gla_evt.type = GLSV_GLA_API_RESP_EVT;
+			gla_evt.info.gla_resp_info.type =
+			    GLSV_GLA_LOCK_RES_OPEN;
 
-      glnd_mds_msg_send_rsp_gla(glnd_cb,
-                                &gla_evt,
-                                res_req_info->agent_mds_dest,
-                                &res_req_info->glnd_res_mds_ctxt);
-    } else if (res_req_info->call_type == GLSV_ASYNC_CALL) {
-      gla_evt.type = GLSV_GLA_CALLBK_EVT;
-      gla_evt.info.gla_clbk_info.callback_type = GLSV_LOCK_RES_OPEN_CBK;
-      gla_evt.info.gla_clbk_info.resourceId = res_req_info->lcl_resource_id;
-      gla_evt.info.gla_clbk_info.params.res_open.resourceId = 0;
-      gla_evt.info.gla_clbk_info.params.res_open.invocation =
-        res_req_info->invocation;
-      gla_evt.info.gla_clbk_info.params.res_open.error =
-        m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
-          SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
+			glnd_mds_msg_send_rsp_gla(
+			    glnd_cb, &gla_evt, res_req_info->agent_mds_dest,
+			    &res_req_info->glnd_res_mds_ctxt);
+		} else if (res_req_info->call_type == GLSV_ASYNC_CALL) {
+			gla_evt.type = GLSV_GLA_CALLBK_EVT;
+			gla_evt.info.gla_clbk_info.callback_type =
+			    GLSV_LOCK_RES_OPEN_CBK;
+			gla_evt.info.gla_clbk_info.resourceId =
+			    res_req_info->lcl_resource_id;
+			gla_evt.info.gla_clbk_info.params.res_open.resourceId =
+			    0;
+			gla_evt.info.gla_clbk_info.params.res_open.invocation =
+			    res_req_info->invocation;
+			gla_evt.info.gla_clbk_info.params.res_open.error =
+			    m_GLA_VER_IS_AT_LEAST_B_3(client_info->version)
+				? SA_AIS_ERR_UNAVAILABLE
+				: SA_AIS_ERR_LIBRARY;
 
-      glnd_mds_msg_send_gla(glnd_cb, &gla_evt, res_req_info->agent_mds_dest);
-    }
-  }
+			glnd_mds_msg_send_gla(glnd_cb, &gla_evt,
+					      res_req_info->agent_mds_dest);
+		}
+	}
 }
-

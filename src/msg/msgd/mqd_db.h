@@ -167,7 +167,7 @@ typedef struct mqd_cb {
   /* For handling the Quisced state */
   SaInvocationT invocation;
   bool is_quisced_set;
-  SaImmOiHandleT immOiHandle; /* IMM OI Handle */
+  SaImmOiHandleT immOiHandle;     /* IMM OI Handle */
   SaSelectionObjectT imm_sel_obj; /*Selection object to wait for
                                      IMM events */
   SaSelectionObjectT clm_sel_obj;

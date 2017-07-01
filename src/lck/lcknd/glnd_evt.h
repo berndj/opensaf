@@ -222,7 +222,9 @@ typedef struct glsv_evt_glnd_new_master_info_tag {
 } GLSV_EVT_GLND_NEW_MAST_INFO;
 
 /* timer event definition */
-typedef struct glnd_evt_tmr_tag { uint32_t opq_hdl; } GLND_EVT_TMR;
+typedef struct glnd_evt_tmr_tag {
+  uint32_t opq_hdl;
+} GLND_EVT_TMR;
 
 typedef struct glnd_evt_glnd_down_tag {
   MDS_DEST dest_id;
@@ -244,34 +246,34 @@ typedef struct glsv_glnd_evt {
   uint32_t glnd_hdl;
   union {
     GLSV_EVT_AGENT_INFO
-        agent_info; /* GLSV_GLND_EVT_REG_AGENT , GLSV_GLND_EVT_UNREG_AGENT  */
+    agent_info; /* GLSV_GLND_EVT_REG_AGENT , GLSV_GLND_EVT_UNREG_AGENT  */
     GLSV_EVT_CLIENT_INFO client_info; /* GLSV_GLND_EVT_INITIALIZE  */
     GLSV_EVT_RESTART_CLIENT_INFO
-        restart_client_info; /*GLSV_GLND_EVT_CLIENT_INFO             */
+    restart_client_info; /*GLSV_GLND_EVT_CLIENT_INFO             */
     GLSV_EVT_RESTART_RES_INFO restart_res_info; /*GLSV_GLND_EVT_RES_INFO */
     GLSV_EVT_FINALIZE_INFO finalize_info;       /* GLSV_GLND_EVT_FINALIZE */
     GLSV_EVT_RSC_INFO
-        rsc_info;                             /* GLSV_GLND_EVT_RSC_OPEN , GLSV_GLND_EVT_RSC_CLOSE,
-                                                 GLSV_GLND_EVT_RSC_PURGE, GLSV_GLND_EVT_LCK_PURGE */
+    rsc_info; /* GLSV_GLND_EVT_RSC_OPEN , GLSV_GLND_EVT_RSC_CLOSE,
+                 GLSV_GLND_EVT_RSC_PURGE, GLSV_GLND_EVT_LCK_PURGE */
     GLSV_EVT_RSC_LOCK_INFO rsc_lock_info;     /* GLSV_GLND_EVT_RSC_LOCK */
     GLSV_EVT_RSC_UNLOCK_INFO rsc_unlock_info; /* GLSV_GLND_EVT_RSC_UNLOCK */
 
     GLSV_EVT_GLND_LCK_INFO
-        node_lck_info; /* GLSV_GLND_EVT_LCK_REQ, GLSV_GLND_EVT_UNLCK_REQ */
+    node_lck_info; /* GLSV_GLND_EVT_LCK_REQ, GLSV_GLND_EVT_UNLCK_REQ */
     /* GLSV_GLND_EVT_LCK_RSP, GLSV_GLND_EVT_LCK_WAITER_CALLBACK,
        GLSV_GLND_EVT_UNLCK_RSP , GLSV_GLND_EVT_LCK_REQ_CANCEL
        GLSV_GLND_EVT_LCK_REQ_ORPHAN */
     GLSV_EVT_GLND_RSC_INFO node_rsc_info; /* GLSV_GLND_EVT_SND_RSC_INFO */
     GLSV_EVT_GLND_DD_PROBE_INFO
-        dd_probe_info; /* GLSV_GLND_EVT_FWD_DD_PROBE, GLSV_GLND_EVT_DD_PROBE */
+    dd_probe_info; /* GLSV_GLND_EVT_FWD_DD_PROBE, GLSV_GLND_EVT_DD_PROBE */
     GLSV_EVT_GLND_RSC_GLD_INFO rsc_gld_info; /* GLSV_GLND_EVT_RSC_GLD_DETAILS */
     GLSV_EVT_GLND_RSC_MASTER_INFO
-        rsc_master_info; /* GLSV_GLND_EVT_RSC_MASTER_INFO */
+    rsc_master_info; /* GLSV_GLND_EVT_RSC_MASTER_INFO */
     GLSV_EVT_GLND_NEW_MAST_INFO
-        new_master_info; /* GLSV_GLND_EVT_RSC_NEW_MASTER */
-    GLND_EVT_TMR tmr;    /* All the timer events */
+    new_master_info;  /* GLSV_GLND_EVT_RSC_NEW_MASTER */
+    GLND_EVT_TMR tmr; /* All the timer events */
     GLND_EVT_GLND_NON_MASTER_STATUS
-        non_master_info; /* GLSV_GLND_EVT_NON_MASTER_INFO */
+    non_master_info; /* GLSV_GLND_EVT_NON_MASTER_INFO */
     GLND_EVT_GLND_LIMIT_GET limit_get;
   } info;
   MDS_SYNC_SND_CTXT mds_context;

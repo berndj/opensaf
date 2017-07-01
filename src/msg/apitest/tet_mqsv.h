@@ -1135,9 +1135,9 @@ void tet_run_mqsv_dist_cases(void);
 void print_qinfo(SaNameT *qname, SaMsgQueueCreationAttributesT *cr_attr,
                  SaMsgQueueOpenFlagsT op_flgs);
 void print_queueStatus(SaMsgQueueStatusT *queueStatus);
-void * mqsv_sendrecv(void *arg);
-void * mqsv_cancel_msg(void *arg);
-void * mqsv_selection_thread_blocking(void *arg);
+void *mqsv_sendrecv(void *arg);
+void *mqsv_cancel_msg(void *arg);
+void *mqsv_selection_thread_blocking(void *arg);
 void mqsv_selection_thread_one(NCSCONTEXT arg);
 void mqsv_createthread_one(SaMsgHandleT *msgHandle);
 void mqsv_selection_thread_all(NCSCONTEXT arg);

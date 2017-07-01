@@ -21,22 +21,22 @@
 
 int main(int argc, char **argv)
 {
-  int suite = ALL_SUITES, tcase = ALL_TESTS;
+	int suite = ALL_SUITES, tcase = ALL_TESTS;
 
-  srandom(getpid());
+	srandom(getpid());
 
-  if (argc > 1) {
-    suite = atoi(argv[1]);
-  }
+	if (argc > 1) {
+		suite = atoi(argv[1]);
+	}
 
-  if (argc > 2) {
-    tcase = atoi(argv[2]);
-  }
+	if (argc > 2) {
+		tcase = atoi(argv[2]);
+	}
 
-  if (suite == 0) {
-    test_list();
-    return 0;
-  }
+	if (suite == 0) {
+		test_list();
+		return 0;
+	}
 
-  return test_run(suite, tcase);
+	return test_run(suite, tcase);
 }

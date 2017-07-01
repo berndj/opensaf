@@ -51,9 +51,9 @@ class ScopeData {
  public:
   struct LogClientData {
     // Alias of @LogClient object.
-    LogClient*&      client;
+    LogClient*& client;
     // True if ref counter needs to be restored
-    bool*            is_updated;
+    bool* is_updated;
     // The increased value if @is_updated set. The aim of using enum instead
     // of `int` type is to force the caller pass either value (1) or value (-1).
     RefCounterDegree value;
@@ -61,9 +61,9 @@ class ScopeData {
 
   struct LogStreamInfoData {
     // Alias of @LogStreamInfo object.
-    LogStreamInfo*&  stream;
+    LogStreamInfo*& stream;
     // True if ref counter needs to be restored
-    bool*            is_updated;
+    bool* is_updated;
     // The increased value if @is_updated set. The aim of using enum instead
     // of `int` type is to force the caller pass either value (1) or value (-1).
     RefCounterDegree value;
@@ -75,14 +75,14 @@ class ScopeData {
 
  private:
   // Data information passed by @LogClient.
-  LogClientData*     client_data_;
+  LogClientData* client_data_;
 
   // Data information passed by @LogStreamInfoData.
   // Do nothing if the pointer is nullptr.
   LogStreamInfoData* stream_data_;
 
   // Do unlock the recovery mutex if true.
-  bool*              is_locked_;
+  bool* is_locked_;
 
   DELETE_COPY_AND_MOVE_OPERATORS(ScopeData);
 };
@@ -90,19 +90,13 @@ class ScopeData {
 // Use this constructor if require restoring @LogClientInfo object
 // and/or unlock recovery mutex.
 ScopeData::ScopeData(LogClientData* client, bool* lock)
-    : client_data_{client}
-    , stream_data_{nullptr}
-    , is_locked_{lock} { }
+    : client_data_{client}, stream_data_{nullptr}, is_locked_{lock} {}
 
 // Use this constructor if require restoring @LogClientInfo,
 // @LogStreamInfo and/or unlock recovery mutex.
-ScopeData::ScopeData(
-    LogClientData* client,
-    LogStreamInfoData* stream,
-    bool* lock)
-    : client_data_{client}
-    , stream_data_{stream}
-    , is_locked_{lock} { }
+ScopeData::ScopeData(LogClientData* client, LogStreamInfoData* stream,
+                     bool* lock)
+    : client_data_{client}, stream_data_{stream}, is_locked_{lock} {}
 
 ScopeData::~ScopeData() {
   // Do release the recovery lock if previous is locked.
@@ -112,13 +106,13 @@ ScopeData::~ScopeData() {
 
   LogAgent::instance().EnterCriticalSection();
   LogClient* client = client_data_->client;
-  bool* is_updated  = client_data_->is_updated;
+  bool* is_updated = client_data_->is_updated;
   RefCounterDegree client_degree = client_data_->value;
   if (client != nullptr) {
     // Do restore the reference counter if the client exists.
     client->RestoreRefCounter(client_degree, *is_updated);
     if (stream_data_ != nullptr) {
-      LogStreamInfo* stream   = stream_data_->stream;
+      LogStreamInfo* stream = stream_data_->stream;
       bool* stream_is_updated = stream_data_->is_updated;
       RefCounterDegree stream_degree = stream_data_->value;
       if (stream != nullptr) {
@@ -126,7 +120,7 @@ ScopeData::~ScopeData() {
         stream->RestoreRefCounter(stream_degree, *stream_is_updated);
       }
     }  // stream_data_
-  }  // client
+  }    // client
   LogAgent::instance().LeaveCriticalSection();
 }
 
@@ -153,8 +147,7 @@ LogAgent::LogAgent() {
 }
 
 void LogAgent::PopulateOpenParams(
-    const char* dn,
-    uint32_t client_id,
+    const char* dn, uint32_t client_id,
     SaLogFileCreateAttributesT_2* logFileCreateAttributes,
     SaLogStreamOpenFlagsT logStreamOpenFlags,
     lgsv_stream_open_req_t* open_param) {
@@ -166,23 +159,23 @@ void LogAgent::PopulateOpenParams(
   osaf_extended_name_lend(dn, &open_param->lstr_name);
 
   if (logFileCreateAttributes == nullptr || is_well_known_stream(dn) == true) {
-    open_param->logFileFmt        = nullptr;
-    open_param->logFileFmtLength  = 0;
-    open_param->maxLogFileSize    = 0;
-    open_param->maxLogRecordSize  = 0;
-    open_param->haProperty        = SA_FALSE;
+    open_param->logFileFmt = nullptr;
+    open_param->logFileFmtLength = 0;
+    open_param->maxLogFileSize = 0;
+    open_param->maxLogRecordSize = 0;
+    open_param->haProperty = SA_FALSE;
     open_param->logFileFullAction = SA_LOG_FULL_ACTION_BEGIN;
-    open_param->maxFilesRotated   = 0;
-    open_param->lstr_open_flags   = 0;
+    open_param->maxFilesRotated = 0;
+    open_param->lstr_open_flags = 0;
   } else {
     // Server will assign a def fmt string if needed (logFileFmt = nullptr)
-    open_param->logFileFmt        = logFileCreateAttributes->logFileFmt;
-    open_param->maxLogFileSize    = logFileCreateAttributes->maxLogFileSize;
-    open_param->maxLogRecordSize  = logFileCreateAttributes->maxLogRecordSize;
-    open_param->haProperty        = logFileCreateAttributes->haProperty;
+    open_param->logFileFmt = logFileCreateAttributes->logFileFmt;
+    open_param->maxLogFileSize = logFileCreateAttributes->maxLogFileSize;
+    open_param->maxLogRecordSize = logFileCreateAttributes->maxLogRecordSize;
+    open_param->haProperty = logFileCreateAttributes->haProperty;
     open_param->logFileFullAction = logFileCreateAttributes->logFileFullAction;
-    open_param->maxFilesRotated   = logFileCreateAttributes->maxFilesRotated;
-    open_param->lstr_open_flags   = logStreamOpenFlags;
+    open_param->maxFilesRotated = logFileCreateAttributes->maxFilesRotated;
+    open_param->lstr_open_flags = logStreamOpenFlags;
   }
 }
 
@@ -285,20 +278,19 @@ void LogAgent::NoLogServer() {
   ScopeLock scopeLock(mutex_);
   // When SC is absent, surely, no active SC.
   // Then reset LOG server destination address.
-  atomic_data_.lgs_mds_dest     = 0;
+  atomic_data_.lgs_mds_dest = 0;
   atomic_data_.log_server_state = LogServerState::kNoLogServer;
   // Inform SC absence to all its clients.
   // Each client takes responsible to inform to its own log streams.
   for (auto& client : client_list_) {
     if (client == nullptr) continue;
     client->NoLogServer();
-    }
+  }
 }
 
-SaAisErrorT LogAgent::saLogInitialize(
-    SaLogHandleT* logHandle,
-    const SaLogCallbacksT* callbacks,
-    SaVersionT* version) {
+SaAisErrorT LogAgent::saLogInitialize(SaLogHandleT* logHandle,
+                                      const SaLogCallbacksT* callbacks,
+                                      SaVersionT* version) {
   LogClient* client;
   lgsv_msg_t i_msg, *o_msg;
   SaAisErrorT ais_rc = SA_AIS_OK;
@@ -330,7 +322,7 @@ SaAisErrorT LogAgent::saLogInitialize(
     TRACE("Version FAILED, required: %c.%u.%u, supported: %c.%u.%u\n",
           version->releaseCode, version->majorVersion, version->minorVersion,
           LOG_RELEASE_CODE, LOG_MAJOR_VERSION, LOG_MINOR_VERSION);
-    version->releaseCode  = LOG_RELEASE_CODE;
+    version->releaseCode = LOG_RELEASE_CODE;
     version->majorVersion = LOG_MAJOR_VERSION;
     version->minorVersion = LOG_MINOR_VERSION;
     ais_rc = SA_AIS_ERR_VERSION;
@@ -365,8 +357,8 @@ SaAisErrorT LogAgent::saLogInitialize(
 
   // Send a message to LGS to obtain a client_id/server ref id which is cluster
   // wide unique.
-  rc = lga_mds_msg_sync_send(&i_msg, &o_msg,
-                             LGS_WAIT_TIME, MDS_SEND_PRIORITY_HIGH);
+  rc = lga_mds_msg_sync_send(&i_msg, &o_msg, LGS_WAIT_TIME,
+                             MDS_SEND_PRIORITY_HIGH);
   if (rc != NCSCC_RC_SUCCESS) {
     lga_msg_destroy(o_msg);
     lga_shutdown_after_last_client();
@@ -385,7 +377,7 @@ SaAisErrorT LogAgent::saLogInitialize(
   if (SA_AIS_OK != ais_rc) {
     TRACE("%s LGS error response %s", __func__, saf_error(ais_rc));
     if (ais_rc == SA_AIS_ERR_VERSION) {
-      version->releaseCode  = LOG_RELEASE_CODE_1;
+      version->releaseCode = LOG_RELEASE_CODE_1;
       version->majorVersion = LOG_RELEASE_CODE_1;
       version->minorVersion = LOG_RELEASE_CODE_1;
     }
@@ -416,8 +408,7 @@ SaAisErrorT LogAgent::saLogInitialize(
 }
 
 SaAisErrorT LogAgent::saLogSelectionObjectGet(
-    SaLogHandleT logHandle,
-    SaSelectionObjectT* selectionObject) {
+    SaLogHandleT logHandle, SaSelectionObjectT* selectionObject) {
   SaAisErrorT ais_rc = SA_AIS_OK;
   LogClient* client = nullptr;
   bool updated;
@@ -427,8 +418,8 @@ SaAisErrorT LogAgent::saLogSelectionObjectGet(
   // Use scope data to avoid missing data restore when running out of scope
   // such as Restore the reference counter after fetching & updating.
   // or unlock recovery mutex.
-  ScopeData::LogClientData
-      client_data{client, &updated, RefCounterDegree::kIncOne};
+  ScopeData::LogClientData client_data{client, &updated,
+                                       RefCounterDegree::kIncOne};
   ScopeData data{&client_data};
 
   if (selectionObject == nullptr) {
@@ -467,9 +458,8 @@ SaAisErrorT LogAgent::saLogSelectionObjectGet(
   return ais_rc;
 }
 
-SaAisErrorT LogAgent::saLogDispatch(
-    SaLogHandleT logHandle,
-    SaDispatchFlagsT dispatchFlags) {
+SaAisErrorT LogAgent::saLogDispatch(SaLogHandleT logHandle,
+                                    SaDispatchFlagsT dispatchFlags) {
   LogClient* client = nullptr;
   bool updated;
   SaAisErrorT ais_rc;
@@ -479,8 +469,8 @@ SaAisErrorT LogAgent::saLogDispatch(
   // Use scope data to avoid missing data restore when running out of scope
   // such as Restore the reference counter fetching & updating.
   // or unlock recovery mutex.
-  ScopeData::LogClientData
-      client_data{client, &updated, RefCounterDegree::kIncOne};
+  ScopeData::LogClientData client_data{client, &updated,
+                                       RefCounterDegree::kIncOne};
   ScopeData data{&client_data};
 
   if (is_dispatch_flag_valid(dispatchFlags) == false) {
@@ -533,11 +523,8 @@ SaAisErrorT LogAgent::SendFinalizeMsg(uint32_t client_id) {
   msg.info.api_info.type = LGSV_FINALIZE_REQ;
   msg.info.api_info.param.finalize.client_id = client_id;
 
-  mds_rc = lga_mds_msg_sync_send(
-      &msg,
-      &o_msg,
-      LGS_WAIT_TIME,
-      MDS_SEND_PRIORITY_MEDIUM);
+  mds_rc = lga_mds_msg_sync_send(&msg, &o_msg, LGS_WAIT_TIME,
+                                 MDS_SEND_PRIORITY_MEDIUM);
   switch (mds_rc) {
     case NCSCC_RC_SUCCESS:
       break;
@@ -576,8 +563,8 @@ SaAisErrorT LogAgent::saLogFinalize(SaLogHandleT logHandle) {
   // Use scope data to avoid missing data restore when running out of scope
   // such as Restore the reference counter after fetching & updating.
   // or unlock recovery mutex.
-  ScopeData::LogClientData
-      client_data{client, &updated, RefCounterDegree::kDecOne};
+  ScopeData::LogClientData client_data{client, &updated,
+                                       RefCounterDegree::kDecOne};
   ScopeData data{&client_data, &is_locked};
 
   if (true) {
@@ -658,11 +645,10 @@ SaAisErrorT LogAgent::saLogFinalize(SaLogHandleT logHandle) {
 }
 
 SaAisErrorT LogAgent::ValidateOpenParams(
-    const char *logStreamName,
-    const SaLogFileCreateAttributesT_2 *logFileCreateAttributes,
+    const char* logStreamName,
+    const SaLogFileCreateAttributesT_2* logFileCreateAttributes,
     SaLogStreamOpenFlagsT logStreamOpenFlags,
-    SaLogStreamHandleT *logStreamHandle,
-    SaLogHeaderTypeT *header_type) {
+    SaLogStreamHandleT* logStreamHandle, SaLogHeaderTypeT* header_type) {
   SaAisErrorT ais_rc = SA_AIS_OK;
 
   TRACE_ENTER();
@@ -699,16 +685,16 @@ SaAisErrorT LogAgent::ValidateOpenParams(
       return SA_AIS_ERR_BAD_FLAGS;
     }
 
-    if ((logStreamOpenFlags == SA_LOG_STREAM_CREATE)
-        && (logFileCreateAttributes == nullptr)) {
+    if ((logStreamOpenFlags == SA_LOG_STREAM_CREATE) &&
+        (logFileCreateAttributes == nullptr)) {
       TRACE("logFileCreateAttributes == nullptr, when create");
       return SA_AIS_ERR_INVALID_PARAM;
     }
 
     // SA_AIS_ERR_INVALID_PARAM, bullet 2 in SAI-AIS-LOG-A.02.01
     // Section 3.6.1, Return Values
-    if ((logStreamOpenFlags != SA_LOG_STREAM_CREATE)
-        && (logFileCreateAttributes != nullptr)) {
+    if ((logStreamOpenFlags != SA_LOG_STREAM_CREATE) &&
+        (logFileCreateAttributes != nullptr)) {
       TRACE("logFileCreateAttributes defined when create");
       return SA_AIS_ERR_INVALID_PARAM;
     }
@@ -739,8 +725,8 @@ SaAisErrorT LogAgent::ValidateOpenParams(
         return SA_AIS_ERR_INVALID_PARAM;
       }
 
-      if ((logFileCreateAttributes->logFileFullAction
-          < SA_LOG_FILE_FULL_ACTION_WRAP) ||
+      if ((logFileCreateAttributes->logFileFullAction <
+           SA_LOG_FILE_FULL_ACTION_WRAP) ||
           (logFileCreateAttributes->logFileFullAction >
            SA_LOG_FILE_FULL_ACTION_ROTATE)) {
         TRACE("logFileFullAction");
@@ -753,15 +739,16 @@ SaAisErrorT LogAgent::ValidateOpenParams(
       }
 
       if (logFileCreateAttributes->maxLogRecordSize >
-         logFileCreateAttributes->maxLogFileSize) {
+          logFileCreateAttributes->maxLogFileSize) {
         TRACE("maxLogRecordSize is greater than the maxLogFileSize");
         return SA_AIS_ERR_INVALID_PARAM;
       }
 
       // Verify that the fixedLogRecordSize is in valid range
       if ((logFileCreateAttributes->maxLogRecordSize != 0) &&
-          ((logFileCreateAttributes->maxLogRecordSize < SA_LOG_MIN_RECORD_SIZE)
-           || (is_logrecord_size_valid(
+          ((logFileCreateAttributes->maxLogRecordSize <
+            SA_LOG_MIN_RECORD_SIZE) ||
+           (is_logrecord_size_valid(
                logFileCreateAttributes->maxLogRecordSize)))) {
         TRACE("maxLogRecordSize is invalid");
         return SA_AIS_ERR_INVALID_PARAM;
@@ -769,8 +756,8 @@ SaAisErrorT LogAgent::ValidateOpenParams(
 
       // Validate maxFilesRotated just in case of
       // SA_LOG_FILE_FULL_ACTION_ROTATE type
-      if ((logFileCreateAttributes->logFileFullAction
-           == SA_LOG_FILE_FULL_ACTION_ROTATE) &&
+      if ((logFileCreateAttributes->logFileFullAction ==
+           SA_LOG_FILE_FULL_ACTION_ROTATE) &&
           ((logFileCreateAttributes->maxFilesRotated < 1) ||
            (logFileCreateAttributes->maxFilesRotated > 127))) {
         TRACE("Invalid maxFilesRotated. Valid range = [1-127]");
@@ -802,16 +789,14 @@ SaAisErrorT LogAgent::ValidateOpenParams(
 }
 
 SaAisErrorT LogAgent::saLogStreamOpen_2(
-    SaLogHandleT logHandle,
-    const SaNameT *logStreamName,
-    const SaLogFileCreateAttributesT_2 *logFileCreateAttributes,
-    SaLogStreamOpenFlagsT logStreamOpenFlags,
-    SaTimeT timeOut,
-    SaLogStreamHandleT *logStreamHandle) {
+    SaLogHandleT logHandle, const SaNameT* logStreamName,
+    const SaLogFileCreateAttributesT_2* logFileCreateAttributes,
+    SaLogStreamOpenFlagsT logStreamOpenFlags, SaTimeT timeOut,
+    SaLogStreamHandleT* logStreamHandle) {
   LogStreamInfo* stream;
   LogClient* client = nullptr;
   lgsv_msg_t msg, *o_msg = nullptr;
-  lgsv_stream_open_req_t *open_param;
+  lgsv_stream_open_req_t* open_param;
   SaAisErrorT ais_rc;
   uint32_t ncs_rc;
   SaTimeT timeout;
@@ -826,8 +811,8 @@ SaAisErrorT LogAgent::saLogStreamOpen_2(
   // Use scope data to avoid missing data restore when running out of scope
   // such as Restore the reference counter after fetching & updating.
   // or unlock recovery mutex.
-  ScopeData::LogClientData
-      client_data{client, &updated, RefCounterDegree::kIncOne};
+  ScopeData::LogClientData client_data{client, &updated,
+                                       RefCounterDegree::kIncOne};
   ScopeData data{&client_data, &is_locked};
 
   if (lga_is_extended_name_valid(logStreamName) == false) {
@@ -837,11 +822,9 @@ SaAisErrorT LogAgent::saLogStreamOpen_2(
   }
 
   streamName = osaf_extended_name_borrow(logStreamName);
-  ais_rc = ValidateOpenParams(streamName,
-                              logFileCreateAttributes,
-                              logStreamOpenFlags,
-                              logStreamHandle,
-                              &log_header_type);
+  ais_rc =
+      ValidateOpenParams(streamName, logFileCreateAttributes,
+                         logStreamOpenFlags, logStreamHandle, &log_header_type);
   if (ais_rc != SA_AIS_OK) return ais_rc;
 
   if (true) {
@@ -912,30 +895,31 @@ SaAisErrorT LogAgent::saLogStreamOpen_2(
   open_param = &msg.info.api_info.param.lstr_open_sync;
 
   // Make it safe for free
-  open_param->logFileName     = nullptr;
+  open_param->logFileName = nullptr;
   open_param->logFilePathName = nullptr;
 
   PopulateOpenParams(
       streamName, client->GetClientId(),
-      const_cast<SaLogFileCreateAttributesT_2 *>(logFileCreateAttributes),
+      const_cast<SaLogFileCreateAttributesT_2*>(logFileCreateAttributes),
       logStreamOpenFlags, open_param);
   if (logFileCreateAttributes != nullptr) {
     // Construct the logFileName
     size_t length = strlen(logFileCreateAttributes->logFileName);
-    open_param->logFileName = static_cast<char *>(malloc(length + 1));
+    open_param->logFileName = static_cast<char*>(malloc(length + 1));
     if (open_param->logFileName == nullptr) {
       ais_rc = SA_AIS_ERR_NO_MEMORY;
       return ais_rc;
     }
-    strncpy(open_param->logFileName,
-            logFileCreateAttributes->logFileName, length + 1);
+    strncpy(open_param->logFileName, logFileCreateAttributes->logFileName,
+            length + 1);
 
     // Construct the logFilePathName
     // A nullptr pointer refers to impl defined directory
-    size_t len = (logFileCreateAttributes->logFilePathName == nullptr) ? (2) :
-                 (strlen(logFileCreateAttributes->logFilePathName) + 1);
+    size_t len = (logFileCreateAttributes->logFilePathName == nullptr)
+                     ? (2)
+                     : (strlen(logFileCreateAttributes->logFilePathName) + 1);
 
-    open_param->logFilePathName = static_cast<char *>(malloc(len));
+    open_param->logFilePathName = static_cast<char*>(malloc(len));
     if (open_param->logFilePathName == nullptr) {
       free(open_param->logFileName);
       ais_rc = SA_AIS_ERR_NO_MEMORY;
@@ -961,9 +945,7 @@ SaAisErrorT LogAgent::saLogStreamOpen_2(
   }
 
   // Send a sync MDS message to obtain a log stream id
-  ncs_rc = lga_mds_msg_sync_send(
-      &msg, &o_msg,
-      timeout, MDS_SEND_PRIORITY_HIGH);
+  ncs_rc = lga_mds_msg_sync_send(&msg, &o_msg, timeout, MDS_SEND_PRIORITY_HIGH);
   if (ncs_rc != NCSCC_RC_SUCCESS) {
     free(open_param->logFileName);
     free(open_param->logFilePathName);
@@ -1007,20 +989,17 @@ SaAisErrorT LogAgent::saLogStreamOpen_2(
 }
 
 SaAisErrorT LogAgent::saLogStreamOpenAsync_2(
-    SaLogHandleT logHandle,
-    const SaNameT* logStreamName,
+    SaLogHandleT logHandle, const SaNameT* logStreamName,
     const SaLogFileCreateAttributesT_2* logFileCreateAttributes,
-    SaLogStreamOpenFlagsT logstreamOpenFlags,
-    SaInvocationT invocation) {
+    SaLogStreamOpenFlagsT logstreamOpenFlags, SaInvocationT invocation) {
   TRACE_ENTER();
   return SA_AIS_ERR_NOT_SUPPORTED;
 }
 
-SaAisErrorT LogAgent::HandleLogRecord(
-    const SaLogRecordT *logRecord,
-    char *logSvcUsrName,
-    lgsv_write_log_async_req_t *write_param,
-    SaTimeT *const logTimeStamp) {
+SaAisErrorT LogAgent::HandleLogRecord(const SaLogRecordT* logRecord,
+                                      char* logSvcUsrName,
+                                      lgsv_write_log_async_req_t* write_param,
+                                      SaTimeT* const logTimeStamp) {
   SaAisErrorT ais_rc = SA_AIS_OK;
 
   TRACE_ENTER();
@@ -1063,8 +1042,7 @@ SaAisErrorT LogAgent::HandleLogRecord(
     *logTimeStamp = SetLogTime();
     write_param->logTimeStamp = logTimeStamp;
   } else {
-    write_param->logTimeStamp = const_cast<SaTimeT *>(
-        &logRecord->logTimeStamp);
+    write_param->logTimeStamp = const_cast<SaTimeT*>(&logRecord->logTimeStamp);
   }
 
   // SA_AIS_ERR_INVALID_PARAM, bullet 2 in SAI-AIS-LOG-A.02.01
@@ -1072,7 +1050,7 @@ SaAisErrorT LogAgent::HandleLogRecord(
   if (logRecord->logHdrType == SA_LOG_GENERIC_HEADER) {
     if (logRecord->logHeader.genericHdr.logSvcUsrName == nullptr) {
       TRACE("logSvcUsrName == nullptr");
-      char *logSvcUsrChars = getenv("SA_AMF_COMPONENT_NAME");
+      char* logSvcUsrChars = getenv("SA_AMF_COMPONENT_NAME");
       if (logSvcUsrChars == nullptr) {
         ais_rc = SA_AIS_ERR_INVALID_PARAM;
         return ais_rc;
@@ -1091,9 +1069,10 @@ SaAisErrorT LogAgent::HandleLogRecord(
         ais_rc = SA_AIS_ERR_INVALID_PARAM;
         return ais_rc;
       }
-      osaf_extended_name_lend(osaf_extended_name_borrow(
-          logRecord->logHeader.genericHdr.logSvcUsrName),
-                              write_param->logSvcUsrName);
+      osaf_extended_name_lend(
+          osaf_extended_name_borrow(
+              logRecord->logHeader.genericHdr.logSvcUsrName),
+          write_param->logSvcUsrName);
     }
   }
 
@@ -1116,24 +1095,22 @@ SaAisErrorT LogAgent::HandleLogRecord(
   return ais_rc;
 }
 
-SaAisErrorT LogAgent::saLogWriteLog(
-    SaLogStreamHandleT logStreamHandle,
-    SaTimeT timeOut,
-    const SaLogRecordT *logRecord) {
+SaAisErrorT LogAgent::saLogWriteLog(SaLogStreamHandleT logStreamHandle,
+                                    SaTimeT timeOut,
+                                    const SaLogRecordT* logRecord) {
   TRACE_ENTER();
   return SA_AIS_ERR_NOT_SUPPORTED;
 }
 
-SaAisErrorT LogAgent::saLogWriteLogAsync(
-    SaLogStreamHandleT logStreamHandle,
-    SaInvocationT invocation,
-    SaLogAckFlagsT ackFlags,
-    const SaLogRecordT* logRecord) {
+SaAisErrorT LogAgent::saLogWriteLogAsync(SaLogStreamHandleT logStreamHandle,
+                                         SaInvocationT invocation,
+                                         SaLogAckFlagsT ackFlags,
+                                         const SaLogRecordT* logRecord) {
   LogStreamInfo* stream = nullptr;
   LogClient* client = nullptr;
   lgsv_msg_t msg;
   SaAisErrorT ais_rc = SA_AIS_OK;
-  lgsv_write_log_async_req_t *write_param;
+  lgsv_write_log_async_req_t* write_param;
   char logSvcUsrName[kOsafMaxDnLength] = {0};
   bool is_locked = false;
   SaNameT tmpSvcUsrName;
@@ -1144,10 +1121,10 @@ SaAisErrorT LogAgent::saLogWriteLogAsync(
   // Use scope data to avoid missing data restore when running out of scope
   // such as Restore the reference counter after fetching & updating.
   // or unlock recovery mutex.
-  ScopeData::LogClientData
-      client_data{client, &cUpdated, RefCounterDegree::kIncOne};
-  ScopeData::LogStreamInfoData
-      stream_data{stream, &sUpdated, RefCounterDegree::kIncOne};
+  ScopeData::LogClientData client_data{client, &cUpdated,
+                                       RefCounterDegree::kIncOne};
+  ScopeData::LogStreamInfoData stream_data{stream, &sUpdated,
+                                           RefCounterDegree::kIncOne};
   ScopeData data{&client_data, &stream_data, &is_locked};
 
   if (true) {
@@ -1194,10 +1171,8 @@ SaAisErrorT LogAgent::saLogWriteLogAsync(
   // Validate the log record and if generic header add
   // logSvcUsrName from environment variable SA_AMF_COMPONENT_NAME
   SaTimeT logTimeStamp;
-  ais_rc = HandleLogRecord(logRecord,
-                           logSvcUsrName,
-                           write_param,
-                           &logTimeStamp);
+  ais_rc =
+      HandleLogRecord(logRecord, logSvcUsrName, write_param, &logTimeStamp);
   if (ais_rc != SA_AIS_OK) {
     TRACE("%s: Validate Log record Fail", __func__);
     return ais_rc;
@@ -1207,8 +1182,9 @@ SaAisErrorT LogAgent::saLogWriteLogAsync(
       logRecord->logBuffer->logBuf != nullptr) {
     SaSizeT size = logRecord->logBuffer->logBufSize;
     if (is_well_known_stream(stream->GetStreamName().c_str()) == true) {
-      bool sizeOver = size > strlen(reinterpret_cast<char *>(
-          logRecord->logBuffer->logBuf)) + 1;
+      bool sizeOver =
+          size >
+          strlen(reinterpret_cast<char*>(logRecord->logBuffer->logBuf)) + 1;
       // Prevent log client accidently assign too big number to logBufSize.
       if (sizeOver == true) {
         TRACE("logBufSize > strlen(logBuf) + 1");
@@ -1288,14 +1264,13 @@ SaAisErrorT LogAgent::saLogWriteLogAsync(
   msg.info.api_info.type = LGSV_WRITE_LOG_ASYNC_REQ;
 
   write_param->invocation = invocation;
-  write_param->ack_flags  = ackFlags;
-  write_param->client_id  = client->GetClientId();
-  write_param->lstr_id    = stream->GetStreamId();
-  write_param->logRecord  = const_cast<SaLogRecordT *>(logRecord);
+  write_param->ack_flags = ackFlags;
+  write_param->client_id = client->GetClientId();
+  write_param->lstr_id = stream->GetStreamId();
+  write_param->logRecord = const_cast<SaLogRecordT*>(logRecord);
   // Send the message out to the LGS
-  if (NCSCC_RC_SUCCESS != lga_mds_msg_async_send(
-          &msg,
-          MDS_SEND_PRIORITY_MEDIUM)) {
+  if (NCSCC_RC_SUCCESS !=
+      lga_mds_msg_async_send(&msg, MDS_SEND_PRIORITY_MEDIUM)) {
     ais_rc = SA_AIS_ERR_TRY_AGAIN;
   }
 
@@ -1316,10 +1291,10 @@ SaAisErrorT LogAgent::saLogStreamClose(SaLogStreamHandleT logStreamHandle) {
   // Use scope data to avoid missing data restore when running out of scope
   // such as Restore the reference counter after fetching & updating.
   // or unlock recovery mutex.
-  ScopeData::LogClientData
-      client_data{client, &cUpdated, RefCounterDegree::kIncOne};
-  ScopeData::LogStreamInfoData
-      stream_data{stream, &sUpdated, RefCounterDegree::kDecOne};
+  ScopeData::LogClientData client_data{client, &cUpdated,
+                                       RefCounterDegree::kIncOne};
+  ScopeData::LogStreamInfoData stream_data{stream, &sUpdated,
+                                           RefCounterDegree::kDecOne};
   ScopeData data{&client_data, &stream_data, &is_locked};
 
   if (true) {
@@ -1409,10 +1384,9 @@ SaAisErrorT LogAgent::saLogStreamClose(SaLogStreamHandleT logStreamHandle) {
   msg.type = LGSV_LGA_API_MSG;
   msg.info.api_info.type = LGSV_STREAM_CLOSE_REQ;
   msg.info.api_info.param.lstr_close.client_id = client->GetClientId();
-  msg.info.api_info.param.lstr_close.lstr_id   = stream->GetStreamId();
-  mds_rc = lga_mds_msg_sync_send(
-      &msg, &o_msg,
-      LGS_WAIT_TIME, MDS_SEND_PRIORITY_MEDIUM);
+  msg.info.api_info.param.lstr_close.lstr_id = stream->GetStreamId();
+  mds_rc = lga_mds_msg_sync_send(&msg, &o_msg, LGS_WAIT_TIME,
+                                 MDS_SEND_PRIORITY_MEDIUM);
   switch (mds_rc) {
     case NCSCC_RC_SUCCESS:
       break;
@@ -1445,10 +1419,9 @@ SaAisErrorT LogAgent::saLogStreamClose(SaLogStreamHandleT logStreamHandle) {
   return ais_rc;
 }
 
-SaAisErrorT LogAgent::saLogLimitGet(
-    SaLogHandleT logHandle,
-    SaLogLimitIdT limitId,
-    SaLimitValueT *limitValue) {
+SaAisErrorT LogAgent::saLogLimitGet(SaLogHandleT logHandle,
+                                    SaLogLimitIdT limitId,
+                                    SaLimitValueT* limitValue) {
   TRACE_ENTER();
   return SA_AIS_ERR_NOT_SUPPORTED;
 }

@@ -48,6 +48,8 @@ typedef struct mqsv_create_info {
 /*****************************************************************************
  * structure which holds the destroy information.
  *****************************************************************************/
-typedef struct mqsv_destroy_info { MDS_VDEST_ID i_vcard_id; } MQSV_DESTROY_INFO;
+typedef struct mqsv_destroy_info {
+  MDS_VDEST_ID i_vcard_id;
+} MQSV_DESTROY_INFO;
 
 #endif  // MSG_COMMON_MQSV_INIT_H_

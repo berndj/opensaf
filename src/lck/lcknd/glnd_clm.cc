@@ -2,7 +2,7 @@
 #include "lck/lcknd/glnd_clm.h"
 #include "base/osaf_time.h"
 
-static void handleClmNodeUpdate(GLND_CB& cb, bool isClusterMember) {
+static void handleClmNodeUpdate(GLND_CB &cb, bool isClusterMember) {
   TRACE_ENTER();
   cb.isClusterMember = isClusterMember;
 
@@ -12,23 +12,20 @@ static void handleClmNodeUpdate(GLND_CB& cb, bool isClusterMember) {
   gla_evt.type = GLSV_GLA_CLM_EVT;
   gla_evt.info.gla_clm_info.isClusterMember = isClusterMember;
 
-
   if (!isClusterMember) {
     // send replies to outstanding callbacks first, then notify all the agents
     glnd_resource_req_node_down(&cb);
   }
 
-  for (GLND_AGENT_INFO *agentInfo(glnd_agent_node_find_next(&cb, 0));
-       agentInfo;
+  for (GLND_AGENT_INFO *agentInfo(glnd_agent_node_find_next(&cb, 0)); agentInfo;
        agentInfo = glnd_agent_node_find_next(&cb, agentInfo->agent_mds_id)) {
     if (!isClusterMember) {
       // behave internally as if all clients went down
       for (GLND_CLIENT_INFO *clientInfo(
-             glnd_client_node_find_next(&cb, 0, agentInfo->agent_mds_id));
+               glnd_client_node_find_next(&cb, 0, agentInfo->agent_mds_id));
            clientInfo;
-           clientInfo = glnd_client_node_find_next(&cb,
-                                                   clientInfo->app_handle_id,
-                                                   agentInfo->agent_mds_id)) {
+           clientInfo = glnd_client_node_find_next(
+               &cb, clientInfo->app_handle_id, agentInfo->agent_mds_id)) {
         glnd_client_node_down(&cb, clientInfo);
         glnd_client_node_del(&cb, clientInfo);
       }
@@ -41,15 +38,10 @@ static void handleClmNodeUpdate(GLND_CB& cb, bool isClusterMember) {
 }
 
 static void clusterTrackCallback(
-  const SaClmClusterNotificationBufferT_4 *notificationBuffer,
-  SaUint32T numberOfMembers,
-  SaInvocationT invocation,
-  const SaNameT *rootCauseEntity,
-  const SaNtfCorrelationIdsT *correlationIds,
-  SaClmChangeStepT step,
-  SaTimeT timeSupervision,
-  SaAisErrorT error) {
-
+    const SaClmClusterNotificationBufferT_4 *notificationBuffer,
+    SaUint32T numberOfMembers, SaInvocationT invocation,
+    const SaNameT *rootCauseEntity, const SaNtfCorrelationIdsT *correlationIds,
+    SaClmChangeStepT step, SaTimeT timeSupervision, SaAisErrorT error) {
   TRACE_ENTER();
 
   do {
@@ -68,13 +60,15 @@ static void clusterTrackCallback(
     TRACE("number of items: %i", notificationBuffer->numberOfItems);
 
     for (SaUint32T i(0); i < notificationBuffer->numberOfItems; i++) {
-      TRACE("cluster change: %i", notificationBuffer->notification[i].clusterChange);
-      if (notificationBuffer->notification[i].clusterChange == SA_CLM_NODE_LEFT) {
+      TRACE("cluster change: %i",
+            notificationBuffer->notification[i].clusterChange);
+      if (notificationBuffer->notification[i].clusterChange ==
+          SA_CLM_NODE_LEFT) {
         handleClmNodeUpdate(*cb, false);
       } else if (notificationBuffer->notification[i].clusterChange ==
-                   SA_CLM_NODE_JOINED ||
+                     SA_CLM_NODE_JOINED ||
                  notificationBuffer->notification[i].clusterChange ==
-                   SA_CLM_NODE_NO_CHANGE) {
+                     SA_CLM_NODE_NO_CHANGE) {
         handleClmNodeUpdate(*cb, true);
       }
     }
@@ -92,12 +86,9 @@ SaAisErrorT glnd_clm_init(GLND_CB *cb) {
   SaAisErrorT rc(SA_AIS_OK);
 
   do {
-    SaClmCallbacksT_4 callbacks = {
-      0,
-      clusterTrackCallback
-    };
+    SaClmCallbacksT_4 callbacks = {0, clusterTrackCallback};
 
-    SaVersionT version = { 'B', 4, 0 };
+    SaVersionT version = {'B', 4, 0};
 
     while (true) {
       rc = saClmInitialize_4(&cb->clm_hdl, &callbacks, &version);
@@ -113,10 +104,8 @@ SaAisErrorT glnd_clm_init(GLND_CB *cb) {
       }
     }
 
-    rc = saClmClusterTrack_4(cb->clm_hdl,
-                             SA_TRACK_CURRENT | SA_TRACK_CHANGES |
-                               SA_TRACK_LOCAL,
-                             0);
+    rc = saClmClusterTrack_4(
+        cb->clm_hdl, SA_TRACK_CURRENT | SA_TRACK_CHANGES | SA_TRACK_LOCAL, 0);
 
     if (rc != SA_AIS_OK) {
       LOG_ER("saClmClusterTrack failed: %i", rc);
@@ -124,19 +113,16 @@ SaAisErrorT glnd_clm_init(GLND_CB *cb) {
     }
   } while (false);
 
-  if (rc != SA_AIS_OK && cb->clm_hdl)
-    glnd_clm_deinit(cb);
+  if (rc != SA_AIS_OK && cb->clm_hdl) glnd_clm_deinit(cb);
 
   TRACE_LEAVE();
   return rc;
 }
 
-SaAisErrorT glnd_clm_deinit(GLND_CB *cb)
-{
+SaAisErrorT glnd_clm_deinit(GLND_CB *cb) {
   SaAisErrorT rc(saClmFinalize(cb->clm_hdl));
 
-  if (rc != SA_AIS_OK)
-    LOG_ER("saClmFinalize failed: %i", rc);
+  if (rc != SA_AIS_OK) LOG_ER("saClmFinalize failed: %i", rc);
 
   cb->clm_hdl = 0;
 

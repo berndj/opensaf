@@ -50,9 +50,7 @@ typedef unsigned int GLSV_TIMER_ID;
    (ver->majorVersion <= REQUIRED_MAJORVERSION))
 
 #define m_GLA_VER_IS_AT_LEAST_B_3(ver) \
-   ((ver.releaseCode == 'B' && \
-     ver.majorVersion >= 3) || \
-     ver.releaseCode > 'B')
+  ((ver.releaseCode == 'B' && ver.majorVersion >= 3) || ver.releaseCode > 'B')
 
 #define MSG_FRMT_VER uint32_t
 /*** Macro used to get the AMF version used ****/

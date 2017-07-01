@@ -22,18 +22,19 @@
 #include <saAis.h>
 
 class Configuration {
-  public:
-    Configuration();
-    ~Configuration();
-    SaAisErrorT get_config(void);
-    bool restrict_auto_repair_enabled();
-    void restrict_auto_repair(bool enable);
-  private:
-    bool restrict_auto_repair_;
-    Configuration(const Configuration&) = delete;
-    Configuration& operator=(const Configuration&) = delete;
+ public:
+  Configuration();
+  ~Configuration();
+  SaAisErrorT get_config(void);
+  bool restrict_auto_repair_enabled();
+  void restrict_auto_repair(bool enable);
+
+ private:
+  bool restrict_auto_repair_;
+  Configuration(const Configuration&) = delete;
+  Configuration& operator=(const Configuration&) = delete;
 };
 
-extern Configuration *configuration;
+extern Configuration* configuration;
 
 #endif

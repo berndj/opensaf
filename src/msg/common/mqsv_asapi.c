@@ -608,8 +608,8 @@ static uint32_t asapi_cache_update(ASAPi_OBJECT_INFO *pInfo,
 		pObject = &pInfo->qparam->name; /* Queue request */
 
 	pCache = asapi_object_find(pObject);
-	if (pCache) {					    /* Node exist with us, we olny need to update the
-							       information */
+	if (pCache) { /* Node exist with us, we olny need to update the
+			 information */
 		m_NCS_LOCK(&pCache->clock, NCS_LOCK_WRITE); /* Lock the cache */
 
 		if (ASAPi_OBJ_QUEUE ==

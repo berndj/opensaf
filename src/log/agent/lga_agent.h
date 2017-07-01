@@ -85,44 +85,26 @@ class LogAgent {
   //<
   // C++ APIs wrapper for corresponding C LOG Agent APIs
   //>
-  SaAisErrorT saLogInitialize(
-      SaLogHandleT*,
-      const SaLogCallbacksT*,
-      SaVersionT*);
+  SaAisErrorT saLogInitialize(SaLogHandleT*, const SaLogCallbacksT*,
+                              SaVersionT*);
 
-  SaAisErrorT saLogSelectionObjectGet(
-      SaLogHandleT,
-      SaSelectionObjectT*);
+  SaAisErrorT saLogSelectionObjectGet(SaLogHandleT, SaSelectionObjectT*);
 
-  SaAisErrorT saLogStreamOpen_2(
-      SaLogHandleT,
-      const SaNameT*,
-      const SaLogFileCreateAttributesT_2*,
-      SaLogStreamOpenFlagsT,
-      SaTimeT,
-      SaLogStreamHandleT*);
+  SaAisErrorT saLogStreamOpen_2(SaLogHandleT, const SaNameT*,
+                                const SaLogFileCreateAttributesT_2*,
+                                SaLogStreamOpenFlagsT, SaTimeT,
+                                SaLogStreamHandleT*);
 
-  SaAisErrorT saLogStreamOpenAsync_2(
-      SaLogHandleT,
-      const SaNameT*,
-      const SaLogFileCreateAttributesT_2*,
-      SaLogStreamOpenFlagsT, SaInvocationT);
+  SaAisErrorT saLogStreamOpenAsync_2(SaLogHandleT, const SaNameT*,
+                                     const SaLogFileCreateAttributesT_2*,
+                                     SaLogStreamOpenFlagsT, SaInvocationT);
 
-  SaAisErrorT saLogWriteLog(
-      SaLogStreamHandleT,
-      SaTimeT,
-      const SaLogRecordT*);
+  SaAisErrorT saLogWriteLog(SaLogStreamHandleT, SaTimeT, const SaLogRecordT*);
 
-  SaAisErrorT saLogWriteLogAsync(
-      SaLogStreamHandleT,
-      SaInvocationT,
-      SaLogAckFlagsT,
-      const SaLogRecordT*);
+  SaAisErrorT saLogWriteLogAsync(SaLogStreamHandleT, SaInvocationT,
+                                 SaLogAckFlagsT, const SaLogRecordT*);
 
-  SaAisErrorT saLogLimitGet(
-      SaLogHandleT,
-      SaLogLimitIdT,
-      SaLimitValueT*);
+  SaAisErrorT saLogLimitGet(SaLogHandleT, SaLogLimitIdT, SaLimitValueT*);
 
   SaAisErrorT saLogStreamClose(SaLogStreamHandleT);
   SaAisErrorT saLogDispatch(SaLogHandleT, SaDispatchFlagsT);
@@ -204,27 +186,20 @@ class LogAgent {
   SaAisErrorT SendFinalizeMsg(uint32_t client_id);
 
   // Validate open parameter passed by LOG client
-  SaAisErrorT ValidateOpenParams(
-      const char*,
-      const SaLogFileCreateAttributesT_2*,
-      SaLogStreamOpenFlagsT,
-      SaLogStreamHandleT*,
-      SaLogHeaderTypeT*);
+  SaAisErrorT ValidateOpenParams(const char*,
+                                 const SaLogFileCreateAttributesT_2*,
+                                 SaLogStreamOpenFlagsT, SaLogStreamHandleT*,
+                                 SaLogHeaderTypeT*);
 
   // Form @lgsv_stream_open_req_t parameter based on inputs
-  void PopulateOpenParams(
-      const char*,
-      uint32_t,
-      SaLogFileCreateAttributesT_2*,
-      SaLogStreamOpenFlagsT,
-      lgsv_stream_open_req_t*);
+  void PopulateOpenParams(const char*, uint32_t, SaLogFileCreateAttributesT_2*,
+                          SaLogStreamOpenFlagsT, lgsv_stream_open_req_t*);
 
   // Validate and form Log record
-  SaAisErrorT HandleLogRecord(
-      const SaLogRecordT* logRecord,
-      char* logSvcUsrName,
-      lgsv_write_log_async_req_t* write_param,
-      SaTimeT *const logTimeStamp);
+  SaAisErrorT HandleLogRecord(const SaLogRecordT* logRecord,
+                              char* logSvcUsrName,
+                              lgsv_write_log_async_req_t* write_param,
+                              SaTimeT* const logTimeStamp);
 
   // True if the stream has well-known distinguish name
   static bool is_well_known_stream(const std::string&);
@@ -241,7 +216,7 @@ class LogAgent {
   // Constant values used by @LogAgent only
   enum {
     kSafMinAcceptTime = 10,
-    kNanoSecondToLeapTm = 10*1000*1000,
+    kNanoSecondToLeapTm = 10 * 1000 * 1000,
     // Temporary maximum log file name length. Used to avoid LOG client
     // sends too long (big data) file name to LOG service.
     // The real limit check will be done on LOG service side.
@@ -266,11 +241,12 @@ class LogAgent {
     std::atomic<SaClmClusterChangesT> clm_node_state;
 
     // Constructor with default values
-    AtomicData() : log_server_state{LogServerState::kHasActiveLogServer}
-                 , waiting_log_server_up{false}
-                 , mds_hdl{0}
-                 , lgs_mds_dest{0}
-                 , clm_node_state{SA_CLM_NODE_JOINED} {}
+    AtomicData()
+        : log_server_state{LogServerState::kHasActiveLogServer},
+          waiting_log_server_up{false},
+          mds_hdl{0},
+          lgs_mds_dest{0},
+          clm_node_state{SA_CLM_NODE_JOINED} {}
   };
 
   // Hold all atomic attributes
@@ -313,7 +289,6 @@ inline void LogAgent::HasActiveLogServer(MDS_DEST lgs_dest) {
   atomic_data_.log_server_state = LogServerState::kHasActiveLogServer;
 }
 
-
 inline void LogAgent::NoActiveLogServer() {
   atomic_data_.log_server_state = LogServerState::kNoActiveLogServer;
   // Reset the LOG server destination address
@@ -321,8 +296,8 @@ inline void LogAgent::NoActiveLogServer() {
 }
 
 inline bool LogAgent::is_dispatch_flag_valid(SaDispatchFlagsT flag) {
-  return ((SA_DISPATCH_ONE == flag) || (SA_DISPATCH_ALL == flag)
-          || (SA_DISPATCH_BLOCKING == flag));
+  return ((SA_DISPATCH_ONE == flag) || (SA_DISPATCH_ALL == flag) ||
+          (SA_DISPATCH_BLOCKING == flag));
 }
 
 inline bool LogAgent::is_well_known_stream(const std::string& dn) {
@@ -338,9 +313,8 @@ inline bool LogAgent::is_logrecord_size_valid(SaUint32T size) {
 
 inline bool LogAgent::is_log_version_valid(const SaVersionT* ver) {
   assert(ver != nullptr);
-  return ((ver->releaseCode  == LOG_RELEASE_CODE) &&
-          (ver->majorVersion <= LOG_MAJOR_VERSION) &&
-          (ver->majorVersion > 0) &&
+  return ((ver->releaseCode == LOG_RELEASE_CODE) &&
+          (ver->majorVersion <= LOG_MAJOR_VERSION) && (ver->majorVersion > 0) &&
           (ver->minorVersion <= LOG_MINOR_VERSION));
 }
 
@@ -349,25 +323,22 @@ inline SaTimeT LogAgent::SetLogTime() {
   SaTimeT logTime;
   // Fetch current system time for time stamp value
   gettimeofday(&currentTime, 0);
-  logTime = ((static_cast<SaTimeT>(currentTime.tv_sec) * 1000000000ULL)
-             + (static_cast<SaTimeT>(currentTime.tv_usec) * 1000ULL));
+  logTime = ((static_cast<SaTimeT>(currentTime.tv_sec) * 1000000000ULL) +
+             (static_cast<SaTimeT>(currentTime.tv_usec) * 1000ULL));
   return logTime;
 }
 
 // This is a poor/insecure/lazy form. Go with this as an trade-off
 // with convenience for caller.
-inline std::atomic<MDS_HDL>&
-LogAgent::atomic_get_mds_hdl() {
+inline std::atomic<MDS_HDL>& LogAgent::atomic_get_mds_hdl() {
   return atomic_data_.mds_hdl;
 }
 
-inline std::atomic<MDS_DEST>&
-LogAgent::atomic_get_lgs_mds_dest() {
+inline std::atomic<MDS_DEST>& LogAgent::atomic_get_lgs_mds_dest() {
   return atomic_data_.lgs_mds_dest;
 }
 
-inline std::atomic<bool>&
-LogAgent::atomic_get_lgs_sync_wait() {
+inline std::atomic<bool>& LogAgent::atomic_get_lgs_sync_wait() {
   return atomic_data_.waiting_log_server_up;
 }
 
@@ -377,19 +348,15 @@ LogAgent::atomic_get_clm_node_state() {
 }
 
 inline bool LogAgent::no_active_log_server() const {
-  return (atomic_data_.log_server_state !=
-          LogServerState::kHasActiveLogServer);
+  return (atomic_data_.log_server_state != LogServerState::kHasActiveLogServer);
 }
 
-inline bool
-LogAgent::no_active_log_server_but_not_headless() const {
-  return (atomic_data_.log_server_state ==
-          LogServerState::kNoActiveLogServer);
+inline bool LogAgent::no_active_log_server_but_not_headless() const {
+  return (atomic_data_.log_server_state == LogServerState::kNoActiveLogServer);
 }
 
 inline bool LogAgent::is_no_log_server() const {
-  return (atomic_data_.log_server_state ==
-          LogServerState::kNoLogServer);
+  return (atomic_data_.log_server_state == LogServerState::kNoLogServer);
 }
 
 inline bool LogAgent::waiting_log_server_up() const {

@@ -32,22 +32,23 @@
 #define MSG_MSGD_MQD_RED_H_
 
 #ifndef MQD_ND_EXPIRY_TIME_STANDBY
-#define MQD_ND_EXPIRY_TIME_STANDBY 20000000000LL /* 20 * (10^9) - 20 seconds \
-                                                  */
+#define MQD_ND_EXPIRY_TIME_STANDBY          \
+  20000000000LL /* 20 * (10^9) - 20 seconds \
+                 */
 #endif
 #ifndef MAX_NO_MQD_MSGS_A2S
 #define MAX_NO_MQD_MSGS_A2S 10
 #endif
 /* Message type of Active to standby message */
 typedef enum mqd_a2s_msg_type {
-  MQD_A2S_MSG_TYPE_BASE = 0x00,       /* Base for indexing */
-  MQD_A2S_MSG_TYPE_REG,               /* ASAPi Registration Message */
-  MQD_A2S_MSG_TYPE_DEREG,             /* ASAPi Deregistration Message */
-  MQD_A2S_MSG_TYPE_TRACK,             /* ASAPi Track Message */
-  MQD_A2S_MSG_TYPE_QINFO,             /* Cold/Warm Sync Qeue Info Message */
-  MQD_A2S_MSG_TYPE_USEREVT,           /* User event to delete the node from tracklist
-                                         Message */
-  MQD_A2S_MSG_TYPE_MQND_STATEVT,      /* MQND is down or up */
+  MQD_A2S_MSG_TYPE_BASE = 0x00,  /* Base for indexing */
+  MQD_A2S_MSG_TYPE_REG,          /* ASAPi Registration Message */
+  MQD_A2S_MSG_TYPE_DEREG,        /* ASAPi Deregistration Message */
+  MQD_A2S_MSG_TYPE_TRACK,        /* ASAPi Track Message */
+  MQD_A2S_MSG_TYPE_QINFO,        /* Cold/Warm Sync Qeue Info Message */
+  MQD_A2S_MSG_TYPE_USEREVT,      /* User event to delete the node from tracklist
+                                    Message */
+  MQD_A2S_MSG_TYPE_MQND_STATEVT, /* MQND is down or up */
   MQD_A2S_MSG_TYPE_MQND_TIMER_EXPEVT, /* MQND expiry timer got expired */
   MQD_A2S_MSG_TYPE_MAX                /* Max for indexing */
 } MQD_A2S_MSG_TYPE;

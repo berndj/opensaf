@@ -123,8 +123,6 @@ void glnd_resource_check_lost_unlock_requests(GLND_CB *glnd_cb,
                                               GLND_RESOURCE_INFO *res_node);
 
 void glnd_resource_master_grant_lock_send_notification(
-    GLND_CB *,
-    GLND_RESOURCE_INFO *,
-    GLND_RES_LOCK_LIST_INFO *);
+    GLND_CB *, GLND_RESOURCE_INFO *, GLND_RES_LOCK_LIST_INFO *);
 
 #endif  // LCK_LCKND_GLND_RES_H_

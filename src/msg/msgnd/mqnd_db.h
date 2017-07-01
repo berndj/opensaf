@@ -142,7 +142,7 @@ typedef struct mqnd_queue_ckpt_info {
   NCS_OS_MQ_KEY q_key;      /* key that uniquely identify the msg queue */
   uint32_t shm_queue_index; /*Index of queue info in shared memory */
   MQND_QUEUE_STATS_SHM
-      QueueStatsShm; /* Structure to store queue stats in shared memory */
+  QueueStatsShm; /* Structure to store queue stats in shared memory */
   MQND_TMR qtransfer_complete_tmr; /* Q Transfer Complete Timer */
   uint32_t valid; /* To verify whether the checkpoint info is valid or not */
 } MQND_QUEUE_CKPT_INFO;
@@ -172,10 +172,10 @@ typedef struct mqnd_cb {
   SYSF_MBX mbx;        /* Mail box of this Service Part */
   NCSCONTEXT task_hdl; /* Task Handle */
   uint32_t cb_hdl;     /* CB Struct Handle */
-  uint8_t hm_pool; /* Handle Manager Pool ID for this
-              Service Part */
-  MDS_HDL my_mds_hdl; /* MDS PWE handle   */
-  MDS_DEST my_dest;   /* MDS Destination ID of self */
+  uint8_t hm_pool;     /* Handle Manager Pool ID for this
+                  Service Part */
+  MDS_HDL my_mds_hdl;  /* MDS PWE handle   */
+  MDS_DEST my_dest;    /* MDS Destination ID of self */
 
   MDS_DEST mqd_dest; /* MDS Destination ID of MQD */
   bool is_mqd_up;    /* true/false) */
@@ -197,7 +197,7 @@ typedef struct mqnd_cb {
   SaNameT comp_name;
   NCS_DB_LINK_LIST mqa_list_info; /* List of MQAs which are up */
   MQA_RSP_CNTXT
-      *mqa_dfrd_evt_rsp_list_head; /* List of Deferred Event responses to mqa */
+  *mqa_dfrd_evt_rsp_list_head; /* List of Deferred Event responses to mqa */
   bool is_restart_done;
   MDS_DEST up_mqa_dest;
   MQND_TMR mqa_timer;

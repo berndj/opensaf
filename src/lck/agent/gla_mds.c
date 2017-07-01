@@ -521,7 +521,7 @@ static uint32_t gla_mds_dec(GLA_CB *cb, MDS_CALLBACK_DEC_INFO *info)
 						  &evt->info.gla_resp_info);
 			break;
 
-    case GLSV_GLA_CLM_EVT:
+		case GLSV_GLA_CLM_EVT:
 			glsv_gla_dec_clm_evt(uba, &evt->info.gla_clm_info);
 			break;
 
@@ -653,20 +653,21 @@ static uint32_t gla_mds_rcv(GLA_CB *cb, MDS_CALLBACK_RECEIVE_INFO *rcv_info)
 			m_MMGR_FREE_GLA_CALLBACK_INFO(gla_callbk_info);
 		}
 		goto end;
-  } else if (evt->type == GLSV_GLA_CLM_EVT) {
-    cb->isClusterMember = evt->info.gla_clm_info.isClusterMember;
+	} else if (evt->type == GLSV_GLA_CLM_EVT) {
+		cb->isClusterMember = evt->info.gla_clm_info.isClusterMember;
 
-    if (!cb->isClusterMember) {
-      /* tell all clients they are stale now */
-      GLA_CLIENT_INFO *client_info;
-      SaLckHandleT lckHandle = 0;
-      for (client_info = gla_client_tree_find_next(cb, lckHandle);
-           client_info;
-           client_info = gla_client_tree_find_next(
-             cb, client_info->lock_handle_id)) {
-        client_info->isStale = true;
-      }
-    }
+		if (!cb->isClusterMember) {
+			/* tell all clients they are stale now */
+			GLA_CLIENT_INFO *client_info;
+			SaLckHandleT lckHandle = 0;
+			for (client_info =
+				 gla_client_tree_find_next(cb, lckHandle);
+			     client_info;
+			     client_info = gla_client_tree_find_next(
+				 cb, client_info->lock_handle_id)) {
+				client_info->isStale = true;
+			}
+		}
 		m_MMGR_FREE_GLA_EVT(evt);
 	} else {
 		if (evt)
@@ -1473,18 +1474,18 @@ static uint32_t glsv_gla_dec_api_resp_evt(NCS_UBAID *uba,
 		ncs_dec_skip_space(uba, size);
 		break;
 
-  case GLSV_GLA_LIMIT_GET:
-    size = 8;
-    p8 = ncs_dec_flatten_space(uba, local_data, size);
-    if (!p8) {
-      TRACE_2("GLA mds dec failure");
-      goto end;
-    }
+	case GLSV_GLA_LIMIT_GET:
+		size = 8;
+		p8 = ncs_dec_flatten_space(uba, local_data, size);
+		if (!p8) {
+			TRACE_2("GLA mds dec failure");
+			goto end;
+		}
 
-    evt->param.limit_get.maxNumLocks = ncs_decode_64bit(&p8);
+		evt->param.limit_get.maxNumLocks = ncs_decode_64bit(&p8);
 
-    ncs_dec_skip_space(uba, size);
-    break;
+		ncs_dec_skip_space(uba, size);
+		break;
 
 	default:
 		break;
@@ -1513,20 +1514,20 @@ static uint32_t glsv_gla_dec_clm_evt(NCS_UBAID *uba, GLSV_GLA_CLM_INFO *evt)
 	uint32_t rc = NCSCC_RC_SUCCESS;
 	TRACE_ENTER();
 
-  do {
-    /** decode the type of message **/
-	  size = (4);
-	  p8 = ncs_dec_flatten_space(uba, local_data, size);
-	  if (!p8) {
-		  TRACE_2("GLA mds dec failure");
-	    rc = NCSCC_RC_FAILURE;
-		  break;
-	  }
+	do {
+		/** decode the type of message **/
+		size = (4);
+		p8 = ncs_dec_flatten_space(uba, local_data, size);
+		if (!p8) {
+			TRACE_2("GLA mds dec failure");
+			rc = NCSCC_RC_FAILURE;
+			break;
+		}
 
-	  osaf_decode_bool(uba, &evt->isClusterMember);
+		osaf_decode_bool(uba, &evt->isClusterMember);
 
-	  ncs_dec_skip_space(uba, size);
-  } while (false);
+		ncs_dec_skip_space(uba, size);
+	} while (false);
 
 	TRACE_LEAVE();
 	return rc;

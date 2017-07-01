@@ -156,8 +156,8 @@ typedef struct ncsvda_vdest_chg_role_info {
 */
 typedef struct ncsvda_vdest_destroy_info {
   NCSVDA_VDEST_CREATE_TYPE
-      i_create_type; /* The way that this VDEST was created */
-  SaNameT i_name;    /* Required iff i_create_type == NCSVDA_VDEST_NAMED */
+  i_create_type;  /* The way that this VDEST was created */
+  SaNameT i_name; /* Required iff i_create_type == NCSVDA_VDEST_NAMED */
   MDS_DEST i_vdest;
   bool i_make_vdest_non_persistent;
 } NCSVDA_VDEST_DESTROY_INFO;

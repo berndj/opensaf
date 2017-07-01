@@ -155,21 +155,18 @@ class LogStreamInfo {
 };
 
 // Set stream open flags @open_flags_
-inline LogStreamInfo&
-LogStreamInfo::SetOpenFlags(SaLogStreamOpenFlagsT flags) {
+inline LogStreamInfo& LogStreamInfo::SetOpenFlags(SaLogStreamOpenFlagsT flags) {
   open_flags_ = flags;
   return *this;
 }
 
 // Set stream header type @header_type_
-inline LogStreamInfo&
-LogStreamInfo::SetHeaderType(SaLogHeaderTypeT type) {
+inline LogStreamInfo& LogStreamInfo::SetHeaderType(SaLogHeaderTypeT type) {
   header_type_ = type;
   return *this;
 }
 
-inline LogStreamInfo&
-LogStreamInfo::SetClientHandle(uint32_t h) {
+inline LogStreamInfo& LogStreamInfo::SetClientHandle(uint32_t h) {
   client_handle_ = h;
   return *this;
 }

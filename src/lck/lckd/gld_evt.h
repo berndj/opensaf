@@ -18,7 +18,7 @@
 #ifndef LCK_LCKD_GLD_EVT_H_
 #define LCK_LCKD_GLD_EVT_H_
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -102,7 +102,7 @@ typedef uint32_t (*GLSV_GLD_EVT_HANDLER)(struct glsv_gld_evt_tag *evt);
 void gld_evt_destroy(GLSV_GLD_EVT *evt);
 uint32_t gld_process_evt(GLSV_GLD_EVT *evt);
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 }
 #endif
 

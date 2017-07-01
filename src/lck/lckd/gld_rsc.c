@@ -158,8 +158,8 @@ GLSV_GLD_RSC_INFO *gld_add_rsc_info(GLSV_GLD_CB *gld_cb, SaNameT *rsc_name,
 	/*Add the imm runtime object */
 	if (gld_cb->ha_state == SA_AMF_HA_ACTIVE)
 		*error = create_runtime_object((char *)rsc_name->value,
-					    rsc_info->saf_rsc_creation_time,
-					    gld_cb->immOiHandle);
+					       rsc_info->saf_rsc_creation_time,
+					       gld_cb->immOiHandle);
 
 	/*
 	 * We could see this after a failover, where the resource was closed on

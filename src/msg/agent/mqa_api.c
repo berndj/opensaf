@@ -560,7 +560,7 @@ SaAisErrorT saMsgFinalize(SaMsgHandleT msgHandle)
 
 	/* scan the entire handle db & close queue opening by this client */
 	while ((queue_info = (MQA_QUEUE_INFO *)ncs_patricia_tree_getnext(
-		    &mqa_cb->mqa_queue_tree, (uint8_t * const) temp_ptr))) {
+		    &mqa_cb->mqa_queue_tree, (uint8_t *const)temp_ptr))) {
 		temp_hdl = queue_info->queueHandle;
 		temp_ptr = &temp_hdl;
 

@@ -458,7 +458,7 @@ uint32_t ncs_edu_run_edp(EDU_HDL *edu_hdl, EDU_TKN *edu_tkn, EDU_INST_SET *rule,
 #if (NCS_EDU_VERBOSE_PRINT == 1)
 	    || (optype == EDP_OP_TYPE_PP)
 #endif
-		) {
+	) {
 		uint32_t cnt = 0;
 		/* Lookup data-type attributes, and if it's a linked-list/array,
 		   run the loop here. */
@@ -1918,8 +1918,8 @@ EDU_LABEL ncs_edu_run_rules_for_enc(EDU_HDL *edu_hdl, EDU_TKN *edu_tkn,
 				continue; /* The new "cur_inst_indx" value wil
 					     be retrieved from "select_index" in
 					     the next iteration. */
-					  /* Note that, the EDU_TEST instruction is not
-					   * honoured in this "select" operation */
+				/* Note that, the EDU_TEST instruction is not
+				 * honoured in this "select" operation */
 			}
 
 			if ((prog[cur_inst_indx].instr == EDU_VER_GE) ||
@@ -2100,8 +2100,8 @@ EDU_LABEL ncs_edu_run_rules_for_dec(EDU_HDL *edu_hdl, EDU_TKN *edu_tkn,
 				continue; /* The new "cur_inst_indx" value wil
 					     be retrieved from "select_index" in
 					     the next iteration. */
-					  /* Note that, the EDU_TEST instruction is not
-					   * honoured in this "select" operation */
+				/* Note that, the EDU_TEST instruction is not
+				 * honoured in this "select" operation */
 			}
 
 			if ((prog[cur_inst_indx].instr == EDU_VER_GE) ||
@@ -2263,8 +2263,8 @@ EDU_LABEL ncs_edu_run_rules_for_pp(EDU_HDL *edu_hdl, EDU_TKN *edu_tkn,
 				continue; /* The new "cur_inst_indx" value wil
 					     be retrieved from "select_index" in
 					     the next iteration. */
-					  /* Note that, the EDU_TEST instruction is not
-					   * honoured in this "select" operation */
+				/* Note that, the EDU_TEST instruction is not
+				 * honoured in this "select" operation */
 			}
 
 			if ((prog[cur_inst_indx].instr == EDU_VER_GE) ||

@@ -34,7 +34,7 @@ int mqsv_test_result(SaAisErrorT rc, SaAisErrorT exp_out, char *test_case,
 		return (result);
 	}
 
-  aisrc_validate(rc, exp_out);
+	aisrc_validate(rc, exp_out);
 
 	if (rc == exp_out) {
 		result = TET_PASS;
@@ -49,15 +49,11 @@ int mqsv_test_result(SaAisErrorT rc, SaAisErrorT exp_out, char *test_case,
 
 /* ***************  Print Message Queue Status ***************** */
 
-void print_queueStatus(SaMsgQueueStatusT *queueStatus)
-{
-}
+void print_queueStatus(SaMsgQueueStatusT *queueStatus) {}
 
 /* *************** Print Message Queue Group Track Info ***************** */
 
-void groupTrackInfo(SaMsgQueueGroupNotificationBufferT *buffer)
-{
-}
+void groupTrackInfo(SaMsgQueueGroupNotificationBufferT *buffer) {}
 
 /* *************** Print SaMsgMessageT Structure ***************** */
 
@@ -86,78 +82,73 @@ void msgDump(SaMsgMessageT *msg)
 /* ***************  Message Initialization Test cases  ***************** */
 
 char *API_Mqsv_Initialize_resultstring[] = {
-	[MSG_INIT_NULL_HANDLE_T] = "saMsgInitialize with null handle",
-	[MSG_INIT_NULL_VERSION_T] =
-	    "saMsgInitialize with null version and callbacks",
-	[MSG_INIT_NULL_PARAMS_T] = "saMsgInitialize with all null parameters",
-	[MSG_INIT_NULL_CLBK_PARAM_T] =
-	    "saMsgInitialize with null callback parameter",
-	[MSG_INIT_NULL_VERSION_CBKS_T] =
-	    "saMsgInitialize with null version and callbacks",
-	[MSG_INIT_BAD_VERSION_T] = "saMsgInitialize with invalid version",
-	[MSG_INIT_BAD_REL_CODE_T] =
-	    "saMsgInitialize with version with invalid release code",
-	[MSG_INIT_BAD_MAJOR_VER_T] =
-	    "saMsgInitialize with version with invalid major version",
-	[MSG_INIT_SUCCESS_T] = "saMsgInitialize with all valid parameters",
-	[MSG_INIT_SUCCESS_HDL2_T] = "saMsgInitialize with all valid parameters",
-	[MSG_INIT_NULL_CBKS_T] = "saMsgInitialize with null callbacks",
-	[MSG_INIT_NULL_CBKS2_T] = "saMsgInitialize with null callbacks",
-	[MSG_INIT_NULL_DEL_CBK_T] =
-	    "saMsgInitialize with null Delivered callback",
-	[MSG_INIT_NULL_RCV_CBK_T] =
-	    "saMsgInitialize with null Received callback",
-	[MSG_INIT_SUCCESS_RECV_T] =
-	    "saMsgInitialize with Message get in Received Clbk",
-	[MSG_INIT_SUCCESS_REPLY_T] =
-	    "saMsgInitialize with Reply in Received Clbk",
-	[MSG_INIT_ERR_TRY_AGAIN_T] =
-	    "saMsgInitialize when service is not available",
+    [MSG_INIT_NULL_HANDLE_T] = "saMsgInitialize with null handle",
+    [MSG_INIT_NULL_VERSION_T] =
+	"saMsgInitialize with null version and callbacks",
+    [MSG_INIT_NULL_PARAMS_T] = "saMsgInitialize with all null parameters",
+    [MSG_INIT_NULL_CLBK_PARAM_T] =
+	"saMsgInitialize with null callback parameter",
+    [MSG_INIT_NULL_VERSION_CBKS_T] =
+	"saMsgInitialize with null version and callbacks",
+    [MSG_INIT_BAD_VERSION_T] = "saMsgInitialize with invalid version",
+    [MSG_INIT_BAD_REL_CODE_T] =
+	"saMsgInitialize with version with invalid release code",
+    [MSG_INIT_BAD_MAJOR_VER_T] =
+	"saMsgInitialize with version with invalid major version",
+    [MSG_INIT_SUCCESS_T] = "saMsgInitialize with all valid parameters",
+    [MSG_INIT_SUCCESS_HDL2_T] = "saMsgInitialize with all valid parameters",
+    [MSG_INIT_NULL_CBKS_T] = "saMsgInitialize with null callbacks",
+    [MSG_INIT_NULL_CBKS2_T] = "saMsgInitialize with null callbacks",
+    [MSG_INIT_NULL_DEL_CBK_T] = "saMsgInitialize with null Delivered callback",
+    [MSG_INIT_NULL_RCV_CBK_T] = "saMsgInitialize with null Received callback",
+    [MSG_INIT_SUCCESS_RECV_T] =
+	"saMsgInitialize with Message get in Received Clbk",
+    [MSG_INIT_SUCCESS_REPLY_T] = "saMsgInitialize with Reply in Received Clbk",
+    [MSG_INIT_ERR_TRY_AGAIN_T] =
+	"saMsgInitialize when service is not available",
 };
 
 struct SafMsgInitialize API_Mqsv_Initialize[] = {
-	[MSG_INIT_NULL_HANDLE_T] = {NULL, &gl_mqa_env.version,
-				    &gl_mqa_env.gen_clbks,
-				    SA_AIS_ERR_INVALID_PARAM},
-	[MSG_INIT_NULL_VERSION_T] = {&gl_mqa_env.msg_hdl1, NULL,
-				     &gl_mqa_env.gen_clbks,
-				     SA_AIS_ERR_INVALID_PARAM},
-	[MSG_INIT_NULL_PARAMS_T] = {NULL, NULL, NULL, SA_AIS_ERR_INVALID_PARAM},
-	[MSG_INIT_NULL_CLBK_PARAM_T] = {&gl_mqa_env.msg_hdl1,
-					&gl_mqa_env.version, NULL, SA_AIS_OK},
-	[MSG_INIT_NULL_VERSION_CBKS_T] = {&gl_mqa_env.msg_hdl1, NULL, NULL,
-					  SA_AIS_ERR_INVALID_PARAM},
-	[MSG_INIT_BAD_VERSION_T] = {&gl_mqa_env.msg_hdl2,
-				    &gl_mqa_env.inv_params.inv_version,
-				    &gl_mqa_env.gen_clbks, SA_AIS_ERR_VERSION},
-	[MSG_INIT_BAD_REL_CODE_T] =
-	    {&gl_mqa_env.msg_hdl2, &gl_mqa_env.inv_params.inv_ver_bad_rel_code,
-	     &gl_mqa_env.gen_clbks, SA_AIS_ERR_VERSION},
-	[MSG_INIT_BAD_MAJOR_VER_T] = {&gl_mqa_env.msg_hdl2,
-				      &gl_mqa_env.inv_params.inv_ver_not_supp,
-				      &gl_mqa_env.gen_clbks,
-				      SA_AIS_ERR_VERSION},
-	[MSG_INIT_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.version,
-				&gl_mqa_env.gen_clbks, SA_AIS_OK},
-	[MSG_INIT_SUCCESS_HDL2_T] = {&gl_mqa_env.msg_hdl2, &gl_mqa_env.version,
-				     &gl_mqa_env.gen_clbks, SA_AIS_OK},
-	[MSG_INIT_NULL_CBKS_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.version,
-				  &gl_mqa_env.null_clbks, SA_AIS_OK},
-	[MSG_INIT_NULL_CBKS2_T] = {&gl_mqa_env.null_clbks_msg_hdl,
-				   &gl_mqa_env.version, &gl_mqa_env.null_clbks,
-				   SA_AIS_OK},
-	[MSG_INIT_NULL_DEL_CBK_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.version,
-				     &gl_mqa_env.null_del_clbks, SA_AIS_OK},
-	[MSG_INIT_NULL_RCV_CBK_T] = {&gl_mqa_env.null_rcv_clbk_msg_hdl,
-				     &gl_mqa_env.version,
-				     &gl_mqa_env.null_rcv_clbks, SA_AIS_OK},
-	[MSG_INIT_SUCCESS_RECV_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.version,
-				     &gl_mqa_env.gen_clbks, SA_AIS_OK},
-	[MSG_INIT_SUCCESS_REPLY_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.version,
-				      &gl_mqa_env.gen_clbks, SA_AIS_OK},
-	[MSG_INIT_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.version,
-				      &gl_mqa_env.gen_clbks,
-				      SA_AIS_ERR_TRY_AGAIN},
+    [MSG_INIT_NULL_HANDLE_T] = {NULL, &gl_mqa_env.version,
+				&gl_mqa_env.gen_clbks,
+				SA_AIS_ERR_INVALID_PARAM},
+    [MSG_INIT_NULL_VERSION_T] = {&gl_mqa_env.msg_hdl1, NULL,
+				 &gl_mqa_env.gen_clbks,
+				 SA_AIS_ERR_INVALID_PARAM},
+    [MSG_INIT_NULL_PARAMS_T] = {NULL, NULL, NULL, SA_AIS_ERR_INVALID_PARAM},
+    [MSG_INIT_NULL_CLBK_PARAM_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.version,
+				    NULL, SA_AIS_OK},
+    [MSG_INIT_NULL_VERSION_CBKS_T] = {&gl_mqa_env.msg_hdl1, NULL, NULL,
+				      SA_AIS_ERR_INVALID_PARAM},
+    [MSG_INIT_BAD_VERSION_T] = {&gl_mqa_env.msg_hdl2,
+				&gl_mqa_env.inv_params.inv_version,
+				&gl_mqa_env.gen_clbks, SA_AIS_ERR_VERSION},
+    [MSG_INIT_BAD_REL_CODE_T] = {&gl_mqa_env.msg_hdl2,
+				 &gl_mqa_env.inv_params.inv_ver_bad_rel_code,
+				 &gl_mqa_env.gen_clbks, SA_AIS_ERR_VERSION},
+    [MSG_INIT_BAD_MAJOR_VER_T] = {&gl_mqa_env.msg_hdl2,
+				  &gl_mqa_env.inv_params.inv_ver_not_supp,
+				  &gl_mqa_env.gen_clbks, SA_AIS_ERR_VERSION},
+    [MSG_INIT_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.version,
+			    &gl_mqa_env.gen_clbks, SA_AIS_OK},
+    [MSG_INIT_SUCCESS_HDL2_T] = {&gl_mqa_env.msg_hdl2, &gl_mqa_env.version,
+				 &gl_mqa_env.gen_clbks, SA_AIS_OK},
+    [MSG_INIT_NULL_CBKS_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.version,
+			      &gl_mqa_env.null_clbks, SA_AIS_OK},
+    [MSG_INIT_NULL_CBKS2_T] = {&gl_mqa_env.null_clbks_msg_hdl,
+			       &gl_mqa_env.version, &gl_mqa_env.null_clbks,
+			       SA_AIS_OK},
+    [MSG_INIT_NULL_DEL_CBK_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.version,
+				 &gl_mqa_env.null_del_clbks, SA_AIS_OK},
+    [MSG_INIT_NULL_RCV_CBK_T] = {&gl_mqa_env.null_rcv_clbk_msg_hdl,
+				 &gl_mqa_env.version,
+				 &gl_mqa_env.null_rcv_clbks, SA_AIS_OK},
+    [MSG_INIT_SUCCESS_RECV_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.version,
+				 &gl_mqa_env.gen_clbks, SA_AIS_OK},
+    [MSG_INIT_SUCCESS_REPLY_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.version,
+				  &gl_mqa_env.gen_clbks, SA_AIS_OK},
+    [MSG_INIT_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.version,
+				  &gl_mqa_env.gen_clbks, SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgInitialize(int i, MQSV_CONFIG_FLAG flg)
@@ -213,32 +204,28 @@ int tet_test_red_msgInitialize(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Selection Object Test cases  ***************** */
 
 char *API_Mqsv_Selection_resultstring[] = {
-	[MSG_SEL_OBJ_BAD_HANDLE_T] =
-	    "saMsgSelectionObjGet with invalid Message Handle",
-	[MSG_SEL_OBJ_NULL_SEL_OBJ_T] =
-	    "saMsgSelectionObjGet with Null selection object parameter",
-	[MSG_SEL_OBJ_SUCCESS_T] =
-	    "saMsgSelectionObjGet with all valid parameters",
-	[MSG_SEL_OBJ_FINALIZED_HDL_T] =
-	    "saMsgSelectionObjGet with finalized message handle",
-	[MSG_SEL_OBJ_ERR_TRY_AGAIN_T] =
-	    "saMsgSelectionObjGet when service is not available",
+    [MSG_SEL_OBJ_BAD_HANDLE_T] =
+	"saMsgSelectionObjGet with invalid Message Handle",
+    [MSG_SEL_OBJ_NULL_SEL_OBJ_T] =
+	"saMsgSelectionObjGet with Null selection object parameter",
+    [MSG_SEL_OBJ_SUCCESS_T] = "saMsgSelectionObjGet with all valid parameters",
+    [MSG_SEL_OBJ_FINALIZED_HDL_T] =
+	"saMsgSelectionObjGet with finalized message handle",
+    [MSG_SEL_OBJ_ERR_TRY_AGAIN_T] =
+	"saMsgSelectionObjGet when service is not available",
 };
 
 struct SafMsgSelectionObject API_Mqsv_Selection[] = {
-	[MSG_SEL_OBJ_BAD_HANDLE_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
-				      &gl_mqa_env.sel_obj,
-				      SA_AIS_ERR_BAD_HANDLE},
-	[MSG_SEL_OBJ_NULL_SEL_OBJ_T] = {&gl_mqa_env.msg_hdl1, NULL,
-					SA_AIS_ERR_INVALID_PARAM},
-	[MSG_SEL_OBJ_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.sel_obj,
-				   SA_AIS_OK},
-	[MSG_SEL_OBJ_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
-					 &gl_mqa_env.sel_obj,
-					 SA_AIS_ERR_BAD_HANDLE},
-	[MSG_SEL_OBJ_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
-					 &gl_mqa_env.sel_obj,
-					 SA_AIS_ERR_TRY_AGAIN},
+    [MSG_SEL_OBJ_BAD_HANDLE_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+				  &gl_mqa_env.sel_obj, SA_AIS_ERR_BAD_HANDLE},
+    [MSG_SEL_OBJ_NULL_SEL_OBJ_T] = {&gl_mqa_env.msg_hdl1, NULL,
+				    SA_AIS_ERR_INVALID_PARAM},
+    [MSG_SEL_OBJ_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.sel_obj,
+			       SA_AIS_OK},
+    [MSG_SEL_OBJ_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.sel_obj,
+				     SA_AIS_ERR_BAD_HANDLE},
+    [MSG_SEL_OBJ_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.sel_obj,
+				     SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgSelectionObject(int i, MQSV_CONFIG_FLAG flg)
@@ -285,57 +272,55 @@ int tet_test_red_msgSelectionObject(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Dispatch Test cases  ***************** */
 
 char *API_Mqsv_Dispatch_resultstring[] = {
-	[MSG_DISPATCH_ONE_BAD_HDL_T] =
-	    "saMsgDispatch with invalid Message Handle - DISPATCH_ONE",
-	[MSG_DISPATCH_ONE_FINALIZED_HDL_T] =
-	    "saMsgDispatch with finalized Message Handle - DISPATCH_ONE",
-	[MSG_DISPATCH_ALL_BAD_HDL_T] =
-	    "saMsgDispatch with invalid Message Handle - DISPATCH_ALL",
-	[MSG_DISPATCH_ALL_FINALIZED_HDL_T] =
-	    "saMsgDispatch with finalized Message Handle - DISPATCH_ALL",
-	[MSG_DISPATCH_BLKING_BAD_HDL_T] =
-	    "saMsgDispatch with invalid Message Handle - DISPATCH_BLOCKING",
-	[MSG_DISPATCH_BLKING_FINALIZED_HDL_T] =
-	    "saMsgDispatch with finalized Message Handle - DISPATCH_BLOCKING",
-	[MSG_DISPATCH_BAD_FLAGS_T] = "saMsgDispatch with Bad Flags",
-	[MSG_DISPATCH_DISPATCH_ONE_SUCCESS_T] =
-	    "saMsgDispatch with valid params and DISPATCH_ONE flag",
-	[MSG_DISPATCH_DISPATCH_ALL_SUCCESS_T] =
-	    "saMsgDispatch with valid params and DISPATCH_ALL flag",
-	[MSG_DISPATCH_DISPATCH_BLOCKING_SUCCESS_T] =
-	    "saMsgDispatch with valid params and DISPATCH_BLOCKING flag",
-	[MSG_DISPATCH_ERR_TRY_AGAIN_T] =
-	    "saMsgDispatch when service is not available",
+    [MSG_DISPATCH_ONE_BAD_HDL_T] =
+	"saMsgDispatch with invalid Message Handle - DISPATCH_ONE",
+    [MSG_DISPATCH_ONE_FINALIZED_HDL_T] =
+	"saMsgDispatch with finalized Message Handle - DISPATCH_ONE",
+    [MSG_DISPATCH_ALL_BAD_HDL_T] =
+	"saMsgDispatch with invalid Message Handle - DISPATCH_ALL",
+    [MSG_DISPATCH_ALL_FINALIZED_HDL_T] =
+	"saMsgDispatch with finalized Message Handle - DISPATCH_ALL",
+    [MSG_DISPATCH_BLKING_BAD_HDL_T] =
+	"saMsgDispatch with invalid Message Handle - DISPATCH_BLOCKING",
+    [MSG_DISPATCH_BLKING_FINALIZED_HDL_T] =
+	"saMsgDispatch with finalized Message Handle - DISPATCH_BLOCKING",
+    [MSG_DISPATCH_BAD_FLAGS_T] = "saMsgDispatch with Bad Flags",
+    [MSG_DISPATCH_DISPATCH_ONE_SUCCESS_T] =
+	"saMsgDispatch with valid params and DISPATCH_ONE flag",
+    [MSG_DISPATCH_DISPATCH_ALL_SUCCESS_T] =
+	"saMsgDispatch with valid params and DISPATCH_ALL flag",
+    [MSG_DISPATCH_DISPATCH_BLOCKING_SUCCESS_T] =
+	"saMsgDispatch with valid params and DISPATCH_BLOCKING flag",
+    [MSG_DISPATCH_ERR_TRY_AGAIN_T] =
+	"saMsgDispatch when service is not available",
 };
 
 struct SafMsgDispatch API_Mqsv_Dispatch[] = {
-	[MSG_DISPATCH_ONE_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
-					SA_DISPATCH_ONE, SA_AIS_ERR_BAD_HANDLE},
-	[MSG_DISPATCH_ONE_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
-					      SA_DISPATCH_ONE,
-					      SA_AIS_ERR_BAD_HANDLE},
-	[MSG_DISPATCH_ALL_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
-					SA_DISPATCH_ALL, SA_AIS_ERR_BAD_HANDLE},
-	[MSG_DISPATCH_ALL_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
-					      SA_DISPATCH_ALL,
-					      SA_AIS_ERR_BAD_HANDLE},
-	[MSG_DISPATCH_BLKING_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
-					   SA_DISPATCH_BLOCKING,
-					   SA_AIS_ERR_BAD_HANDLE},
-	[MSG_DISPATCH_BLKING_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
-						 SA_DISPATCH_BLOCKING,
-						 SA_AIS_ERR_BAD_HANDLE},
-	[MSG_DISPATCH_BAD_FLAGS_T] = {&gl_mqa_env.msg_hdl1, -1,
-				      SA_AIS_ERR_INVALID_PARAM},
-	[MSG_DISPATCH_DISPATCH_ONE_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
-						 SA_DISPATCH_ONE, SA_AIS_OK},
-	[MSG_DISPATCH_DISPATCH_ALL_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
-						 SA_DISPATCH_ALL, SA_AIS_OK},
-	[MSG_DISPATCH_DISPATCH_BLOCKING_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
-						      SA_DISPATCH_BLOCKING,
-						      SA_AIS_OK},
-	[MSG_DISPATCH_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1, SA_DISPATCH_ONE,
-					  SA_AIS_ERR_TRY_AGAIN},
+    [MSG_DISPATCH_ONE_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+				    SA_DISPATCH_ONE, SA_AIS_ERR_BAD_HANDLE},
+    [MSG_DISPATCH_ONE_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1, SA_DISPATCH_ONE,
+					  SA_AIS_ERR_BAD_HANDLE},
+    [MSG_DISPATCH_ALL_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+				    SA_DISPATCH_ALL, SA_AIS_ERR_BAD_HANDLE},
+    [MSG_DISPATCH_ALL_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1, SA_DISPATCH_ALL,
+					  SA_AIS_ERR_BAD_HANDLE},
+    [MSG_DISPATCH_BLKING_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+				       SA_DISPATCH_BLOCKING,
+				       SA_AIS_ERR_BAD_HANDLE},
+    [MSG_DISPATCH_BLKING_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
+					     SA_DISPATCH_BLOCKING,
+					     SA_AIS_ERR_BAD_HANDLE},
+    [MSG_DISPATCH_BAD_FLAGS_T] = {&gl_mqa_env.msg_hdl1, -1,
+				  SA_AIS_ERR_INVALID_PARAM},
+    [MSG_DISPATCH_DISPATCH_ONE_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
+					     SA_DISPATCH_ONE, SA_AIS_OK},
+    [MSG_DISPATCH_DISPATCH_ALL_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
+					     SA_DISPATCH_ALL, SA_AIS_OK},
+    [MSG_DISPATCH_DISPATCH_BLOCKING_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
+						  SA_DISPATCH_BLOCKING,
+						  SA_AIS_OK},
+    [MSG_DISPATCH_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1, SA_DISPATCH_ONE,
+				      SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgDispatch(int i, MQSV_CONFIG_FLAG flg)
@@ -382,33 +367,29 @@ int tet_test_red_msgDispatch(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Finalize Test cases  ***************** */
 
 char *API_Mqsv_Finalize_resultstring[] = {
-	[MSG_FINALIZE_BAD_HDL_T] = "saMsgFinalize with invalid Message Handle",
-	[MSG_FINALIZE_SUCCESS_T] = "saMsgFinalize with all valid parameters",
-	[MSG_FINALIZE_SUCCESS_HDL2_T] =
-	    "saMsgFinalize with all valid parameters",
-	[MSG_FINALIZE_SUCCESS_HDL3_T] =
-	    "saMsgFinalize with all valid parameters",
-	[MSG_FINALIZE_SUCCESS_HDL4_T] =
-	    "saMsgFinalize with all valid parameters",
-	[MSG_FINALIZE_FINALIZED_HDL_T] =
-	    "saMsgFinalize with finalized Message Handle",
-	[MSG_FINALIZE_ERR_TRY_AGAIN_T] =
-	    "saMsgFinalize when service is not available",
+    [MSG_FINALIZE_BAD_HDL_T] = "saMsgFinalize with invalid Message Handle",
+    [MSG_FINALIZE_SUCCESS_T] = "saMsgFinalize with all valid parameters",
+    [MSG_FINALIZE_SUCCESS_HDL2_T] = "saMsgFinalize with all valid parameters",
+    [MSG_FINALIZE_SUCCESS_HDL3_T] = "saMsgFinalize with all valid parameters",
+    [MSG_FINALIZE_SUCCESS_HDL4_T] = "saMsgFinalize with all valid parameters",
+    [MSG_FINALIZE_FINALIZED_HDL_T] =
+	"saMsgFinalize with finalized Message Handle",
+    [MSG_FINALIZE_ERR_TRY_AGAIN_T] =
+	"saMsgFinalize when service is not available",
 };
 
 struct SafMsgFinalize API_Mqsv_Finalize[] = {
-	[MSG_FINALIZE_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
-				    SA_AIS_ERR_BAD_HANDLE},
-	[MSG_FINALIZE_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, SA_AIS_OK},
-	[MSG_FINALIZE_SUCCESS_HDL2_T] = {&gl_mqa_env.msg_hdl2, SA_AIS_OK},
-	[MSG_FINALIZE_SUCCESS_HDL3_T] = {&gl_mqa_env.null_clbks_msg_hdl,
-					 SA_AIS_OK},
-	[MSG_FINALIZE_SUCCESS_HDL4_T] = {&gl_mqa_env.null_rcv_clbk_msg_hdl,
-					 SA_AIS_OK},
-	[MSG_FINALIZE_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
-					  SA_AIS_ERR_BAD_HANDLE},
-	[MSG_FINALIZE_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
-					  SA_AIS_ERR_TRY_AGAIN},
+    [MSG_FINALIZE_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+				SA_AIS_ERR_BAD_HANDLE},
+    [MSG_FINALIZE_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, SA_AIS_OK},
+    [MSG_FINALIZE_SUCCESS_HDL2_T] = {&gl_mqa_env.msg_hdl2, SA_AIS_OK},
+    [MSG_FINALIZE_SUCCESS_HDL3_T] = {&gl_mqa_env.null_clbks_msg_hdl, SA_AIS_OK},
+    [MSG_FINALIZE_SUCCESS_HDL4_T] = {&gl_mqa_env.null_rcv_clbk_msg_hdl,
+				     SA_AIS_OK},
+    [MSG_FINALIZE_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
+				      SA_AIS_ERR_BAD_HANDLE},
+    [MSG_FINALIZE_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
+				      SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgFinalize(int i, MQSV_CONFIG_FLAG flg)
@@ -458,326 +439,320 @@ int tet_test_red_msgFinalize(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Queue Open Test cases  ***************** */
 
 char *API_Mqsv_QueueOpen_resultstring[] = {
-	[MSG_QUEUE_OPEN_BAD_HANDLE_T] =
-	    "saMsgQueueOpen with invalid Message Handle",
-	[MSG_QUEUE_OPEN_FINALIZED_HDL_T] =
-	    "saMsgQueueOpen with finalized Message Handle",
-	[MSG_QUEUE_OPEN_NULL_Q_HDL_T] = "saMsgQueueOpen with Null Queue Handle",
-	[MSG_QUEUE_OPEN_NULL_NAME_T] = "saMsgQueueOpen with Null queue name",
-	[MSG_QUEUE_OPEN_BAD_TIMEOUT_T] =
-	    "saMsgQueueOpen with bad timeout value",
-	[MSG_QUEUE_OPEN_INVALID_PARAM_T] =
-	    "saMsgQueueOpen with Null attributes and Create flag",
-	[MSG_QUEUE_OPEN_INVALID_PARAM_EMPTY_T] =
-	    "saMsgQueueOpen with Null attributes and Create | Empty flag",
-	[MSG_QUEUE_OPEN_INVALID_PARAM2_EMPTY_T] =
-	    "saMsgQueueOpen with creation attributes and empty open flag",
-	[MSG_QUEUE_OPEN_INVALID_PARAM2_ZERO_T] =
-	    "saMsgQueueOpen with creation attributes and zero open flag",
-	[MSG_QUEUE_OPEN_INVALID_PARAM2_RC_CBK_T] =
-	    "saMsgQueueOpen with creation attributes and rcv clbk open flag",
-	[MSG_QUEUE_OPEN_BAD_FLAGS_T] = "saMsgQueueOpen with bad open flags",
-	[MSG_QUEUE_OPEN_BAD_FLAGS2_T] =
-	    "saMsgQueueOpen with bad creation flags",
-	[MSG_QUEUE_OPEN_PERS_ERR_EXIST_T] =
-	    "Open a queue that already exists with Create flag - Persistent",
-	[MSG_QUEUE_OPEN_NPERS_ERR_EXIST_T] =
-	    "Open a queue that already exists with Create flag - Non Persistent",
-	[MSG_QUEUE_OPEN_PERS_ER_NOT_EXIST_T] =
-	    "Open a queue that does not exist - NULL attr and zero flg - Persistent",
-	[MSG_QUEUE_OPEN_PERS_ER_NOT_EXIST2_T] =
-	    "Open a queue that does not exist - non_NULL attr and empty flg",
-	[MSG_QUEUE_OPEN_NPERS_ER_NOT_EXIST_T] =
-	    "Open a queue that does not exist - Non Persistent",
-	[MSG_QUEUE_OPEN_ZERO_TIMEOUT_T] = "saMsgQueueOpen with zero timeout",
-	[MSG_QUEUE_OPEN_EMPTY_CREATE_T] =
-	    "saMsgQueueOpen with Empty and Create open flags",
-	[MSG_QUEUE_OPEN_ZERO_RET_T] = "saMsgQueueOpen with zero retention time",
-	[MSG_QUEUE_OPEN_ZERO_SIZE_T] =
-	    "saMsgQueueOpen with zero size in creation attributes",
-	[MSG_QUEUE_OPEN_PERS_SUCCESS_T] =
-	    "saMsgQueueOpen with valid params - Persistent queue",
-	[MSG_QUEUE_OPEN_NON_PERS_SUCCESS_T] =
-	    "saMsgQueueOpen with valid params - Non Persistent",
-	[MSG_QUEUE_OPEN_PERS_SUCCESS2_T] =
-	    "saMsgQueueOpen with valid params - Persistent queue",
-	[MSG_QUEUE_OPEN_NON_PERS_SUCCESS2_T] =
-	    "saMsgQueueOpen with valid params - Non Persistent",
-	[MSG_QUEUE_OPEN_PERS_EXIST_SUCCESS_T] =
-	    "Open a queue that already exists - Persistent",
-	[MSG_QUEUE_OPEN_NPERS_EXIST_SUCCESS_T] =
-	    "Open a queue that already exists - Non Persistent",
-	[MSG_QUEUE_OPEN_ERR_BUSY_T] = "saMsgQueueOpen ERR_BUSY case",
-	[MSG_QUEUE_OPEN_EXIST_ERR_BUSY_T] = "Open a queue that is already open",
-	[MSG_QUEUE_OPEN_NPERS_EMPTY_SUCCESS_T] =
-	    "Open a closed queue with Empty flag",
-	[MSG_QUEUE_OPEN_PERS_EMPTY_SUCCESS_T] =
-	    "Open a closed queue with Empty flag",
-	[MSG_QUEUE_OPEN_ERR_INIT_T] =
-	    "saMsgQueueOpen - ERR_INIT case for Received callback",
-	[MSG_QUEUE_OPEN_SMALL_SIZE_ATTR_T] =
-	    "Open a queue with small size creation attributes",
-	[MSG_QUEUE_OPEN_SMALL_SIZE_ATTR2_T] =
-	    "Open a queue with small size creation attributes",
-	[MSG_QUEUE_OPEN_BIG_SIZE_ATTR_T] =
-	    "Open a queue with big size creation attributes",
-	[MSG_QUEUE_OPEN_PERS_RECV_CLBK_SUCCESS_T] =
-	    "Open a queue with Recv Clbk flag - Persistent",
-	[MSG_QUEUE_OPEN_NON_PERS_RECV_CLBK_SUCCESS_T] =
-	    "Open a queue with Recv Clbk flag - Non Persistent",
-	[MSG_QUEUE_OPEN_EXIST_RECV_CLBK_SUCCESS_T] =
-	    "Open an existing queue with Recv Clbk flag",
-	[MSG_QUEUE_OPEN_NPERS_RECV_CLBK_T] =
-	    "saMsgQueueOpen a queue with Recv Clbk and Create flgs - Non Persistent",
-	[MSG_QUEUE_OPEN_PERS_RECV_CLBK2_T] =
-	    "saMsgQueueOpen a queue with Recv Clbk and Create flgs - Persistent",
-	[MSG_QUEUE_OPEN_NPERS_RECV_CLBK2_T] =
-	    "saMsgQueueOpen a queue with Recv Clbk and Create flgs - Non Persistent",
-	[MSG_QUEUE_OPEN_EXISTING_PERS_T] =
-	    "Open a queue that already exists with Rcv Clbk flg - Persistent",
-	[MSG_QUEUE_OPEN_EXISTING_NPERS_T] =
-	    "Open a queue that already exists with Rcv Clbk flg - Non Persistent",
-	[MSG_QUEUE_OPEN_EXISTING_PERS2_T] =
-	    "Open a queue that already exists with Rcv Clbk flg - Persistent",
-	[MSG_QUEUE_OPEN_EXISTING_NPERS2_T] =
-	    "Open a queue that already exists with Rcv Clbk flg - Non Persistent",
-	[MSG_QUEUE_OPEN_ERR_TRY_AGAIN_T] =
-	    "saMsgQueueOpen when service is not available",
+    [MSG_QUEUE_OPEN_BAD_HANDLE_T] =
+	"saMsgQueueOpen with invalid Message Handle",
+    [MSG_QUEUE_OPEN_FINALIZED_HDL_T] =
+	"saMsgQueueOpen with finalized Message Handle",
+    [MSG_QUEUE_OPEN_NULL_Q_HDL_T] = "saMsgQueueOpen with Null Queue Handle",
+    [MSG_QUEUE_OPEN_NULL_NAME_T] = "saMsgQueueOpen with Null queue name",
+    [MSG_QUEUE_OPEN_BAD_TIMEOUT_T] = "saMsgQueueOpen with bad timeout value",
+    [MSG_QUEUE_OPEN_INVALID_PARAM_T] =
+	"saMsgQueueOpen with Null attributes and Create flag",
+    [MSG_QUEUE_OPEN_INVALID_PARAM_EMPTY_T] =
+	"saMsgQueueOpen with Null attributes and Create | Empty flag",
+    [MSG_QUEUE_OPEN_INVALID_PARAM2_EMPTY_T] =
+	"saMsgQueueOpen with creation attributes and empty open flag",
+    [MSG_QUEUE_OPEN_INVALID_PARAM2_ZERO_T] =
+	"saMsgQueueOpen with creation attributes and zero open flag",
+    [MSG_QUEUE_OPEN_INVALID_PARAM2_RC_CBK_T] =
+	"saMsgQueueOpen with creation attributes and rcv clbk open flag",
+    [MSG_QUEUE_OPEN_BAD_FLAGS_T] = "saMsgQueueOpen with bad open flags",
+    [MSG_QUEUE_OPEN_BAD_FLAGS2_T] = "saMsgQueueOpen with bad creation flags",
+    [MSG_QUEUE_OPEN_PERS_ERR_EXIST_T] =
+	"Open a queue that already exists with Create flag - Persistent",
+    [MSG_QUEUE_OPEN_NPERS_ERR_EXIST_T] =
+	"Open a queue that already exists with Create flag - Non Persistent",
+    [MSG_QUEUE_OPEN_PERS_ER_NOT_EXIST_T] =
+	"Open a queue that does not exist - NULL attr and zero flg - Persistent",
+    [MSG_QUEUE_OPEN_PERS_ER_NOT_EXIST2_T] =
+	"Open a queue that does not exist - non_NULL attr and empty flg",
+    [MSG_QUEUE_OPEN_NPERS_ER_NOT_EXIST_T] =
+	"Open a queue that does not exist - Non Persistent",
+    [MSG_QUEUE_OPEN_ZERO_TIMEOUT_T] = "saMsgQueueOpen with zero timeout",
+    [MSG_QUEUE_OPEN_EMPTY_CREATE_T] =
+	"saMsgQueueOpen with Empty and Create open flags",
+    [MSG_QUEUE_OPEN_ZERO_RET_T] = "saMsgQueueOpen with zero retention time",
+    [MSG_QUEUE_OPEN_ZERO_SIZE_T] =
+	"saMsgQueueOpen with zero size in creation attributes",
+    [MSG_QUEUE_OPEN_PERS_SUCCESS_T] =
+	"saMsgQueueOpen with valid params - Persistent queue",
+    [MSG_QUEUE_OPEN_NON_PERS_SUCCESS_T] =
+	"saMsgQueueOpen with valid params - Non Persistent",
+    [MSG_QUEUE_OPEN_PERS_SUCCESS2_T] =
+	"saMsgQueueOpen with valid params - Persistent queue",
+    [MSG_QUEUE_OPEN_NON_PERS_SUCCESS2_T] =
+	"saMsgQueueOpen with valid params - Non Persistent",
+    [MSG_QUEUE_OPEN_PERS_EXIST_SUCCESS_T] =
+	"Open a queue that already exists - Persistent",
+    [MSG_QUEUE_OPEN_NPERS_EXIST_SUCCESS_T] =
+	"Open a queue that already exists - Non Persistent",
+    [MSG_QUEUE_OPEN_ERR_BUSY_T] = "saMsgQueueOpen ERR_BUSY case",
+    [MSG_QUEUE_OPEN_EXIST_ERR_BUSY_T] = "Open a queue that is already open",
+    [MSG_QUEUE_OPEN_NPERS_EMPTY_SUCCESS_T] =
+	"Open a closed queue with Empty flag",
+    [MSG_QUEUE_OPEN_PERS_EMPTY_SUCCESS_T] =
+	"Open a closed queue with Empty flag",
+    [MSG_QUEUE_OPEN_ERR_INIT_T] =
+	"saMsgQueueOpen - ERR_INIT case for Received callback",
+    [MSG_QUEUE_OPEN_SMALL_SIZE_ATTR_T] =
+	"Open a queue with small size creation attributes",
+    [MSG_QUEUE_OPEN_SMALL_SIZE_ATTR2_T] =
+	"Open a queue with small size creation attributes",
+    [MSG_QUEUE_OPEN_BIG_SIZE_ATTR_T] =
+	"Open a queue with big size creation attributes",
+    [MSG_QUEUE_OPEN_PERS_RECV_CLBK_SUCCESS_T] =
+	"Open a queue with Recv Clbk flag - Persistent",
+    [MSG_QUEUE_OPEN_NON_PERS_RECV_CLBK_SUCCESS_T] =
+	"Open a queue with Recv Clbk flag - Non Persistent",
+    [MSG_QUEUE_OPEN_EXIST_RECV_CLBK_SUCCESS_T] =
+	"Open an existing queue with Recv Clbk flag",
+    [MSG_QUEUE_OPEN_NPERS_RECV_CLBK_T] =
+	"saMsgQueueOpen a queue with Recv Clbk and Create flgs - Non Persistent",
+    [MSG_QUEUE_OPEN_PERS_RECV_CLBK2_T] =
+	"saMsgQueueOpen a queue with Recv Clbk and Create flgs - Persistent",
+    [MSG_QUEUE_OPEN_NPERS_RECV_CLBK2_T] =
+	"saMsgQueueOpen a queue with Recv Clbk and Create flgs - Non Persistent",
+    [MSG_QUEUE_OPEN_EXISTING_PERS_T] =
+	"Open a queue that already exists with Rcv Clbk flg - Persistent",
+    [MSG_QUEUE_OPEN_EXISTING_NPERS_T] =
+	"Open a queue that already exists with Rcv Clbk flg - Non Persistent",
+    [MSG_QUEUE_OPEN_EXISTING_PERS2_T] =
+	"Open a queue that already exists with Rcv Clbk flg - Persistent",
+    [MSG_QUEUE_OPEN_EXISTING_NPERS2_T] =
+	"Open a queue that already exists with Rcv Clbk flg - Non Persistent",
+    [MSG_QUEUE_OPEN_ERR_TRY_AGAIN_T] =
+	"saMsgQueueOpen when service is not available",
 };
 
 struct SafMsgQueueOpen API_Mqsv_QueueOpen[] = {
-	[MSG_QUEUE_OPEN_BAD_HANDLE_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
-					 &gl_mqa_env.non_pers_q,
-					 &gl_mqa_env.npers_cr_attribs,
-					 SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
-					 &gl_mqa_env.npers_q_hdl,
-					 SA_AIS_ERR_BAD_HANDLE},
-	[MSG_QUEUE_OPEN_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
-					    &gl_mqa_env.non_pers_q,
-					    &gl_mqa_env.npers_cr_attribs,
-					    SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
-					    &gl_mqa_env.npers_q_hdl,
-					    SA_AIS_ERR_BAD_HANDLE},
-	[MSG_QUEUE_OPEN_NULL_Q_HDL_T] = {&gl_mqa_env.msg_hdl1,
-					 &gl_mqa_env.non_pers_q,
-					 &gl_mqa_env.npers_cr_attribs,
-					 SA_MSG_QUEUE_CREATE, APP_TIMEOUT, NULL,
-					 SA_AIS_ERR_INVALID_PARAM},
-	[MSG_QUEUE_OPEN_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
-					&gl_mqa_env.pers_cr_attribs,
+    [MSG_QUEUE_OPEN_BAD_HANDLE_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+				     &gl_mqa_env.non_pers_q,
+				     &gl_mqa_env.npers_cr_attribs,
+				     SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
+				     &gl_mqa_env.npers_q_hdl,
+				     SA_AIS_ERR_BAD_HANDLE},
+    [MSG_QUEUE_OPEN_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
+					&gl_mqa_env.non_pers_q,
+					&gl_mqa_env.npers_cr_attribs,
+					SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
+					&gl_mqa_env.npers_q_hdl,
+					SA_AIS_ERR_BAD_HANDLE},
+    [MSG_QUEUE_OPEN_NULL_Q_HDL_T] = {&gl_mqa_env.msg_hdl1,
+				     &gl_mqa_env.non_pers_q,
+				     &gl_mqa_env.npers_cr_attribs,
+				     SA_MSG_QUEUE_CREATE, APP_TIMEOUT, NULL,
+				     SA_AIS_ERR_INVALID_PARAM},
+    [MSG_QUEUE_OPEN_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
+				    &gl_mqa_env.pers_cr_attribs,
+				    SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
+				    &gl_mqa_env.npers_q_hdl,
+				    SA_AIS_ERR_INVALID_PARAM},
+    [MSG_QUEUE_OPEN_BAD_TIMEOUT_T] = {&gl_mqa_env.msg_hdl1,
+				      &gl_mqa_env.non_pers_q,
+				      &gl_mqa_env.npers_cr_attribs,
+				      SA_MSG_QUEUE_CREATE, -1,
+				      &gl_mqa_env.npers_q_hdl,
+				      SA_AIS_ERR_INVALID_PARAM},
+    [MSG_QUEUE_OPEN_INVALID_PARAM_T] = {&gl_mqa_env.msg_hdl1,
+					&gl_mqa_env.non_pers_q, NULL,
 					SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
 					&gl_mqa_env.npers_q_hdl,
 					SA_AIS_ERR_INVALID_PARAM},
-	[MSG_QUEUE_OPEN_BAD_TIMEOUT_T] = {&gl_mqa_env.msg_hdl1,
-					  &gl_mqa_env.non_pers_q,
-					  &gl_mqa_env.npers_cr_attribs,
-					  SA_MSG_QUEUE_CREATE, -1,
-					  &gl_mqa_env.npers_q_hdl,
-					  SA_AIS_ERR_INVALID_PARAM},
-	[MSG_QUEUE_OPEN_INVALID_PARAM_T] = {&gl_mqa_env.msg_hdl1,
-					    &gl_mqa_env.non_pers_q, NULL,
-					    SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
-					    &gl_mqa_env.npers_q_hdl,
-					    SA_AIS_ERR_INVALID_PARAM},
-	[MSG_QUEUE_OPEN_INVALID_PARAM_EMPTY_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.non_pers_q, NULL,
-	     SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_EMPTY, APP_TIMEOUT,
-	     &gl_mqa_env.npers_q_hdl, SA_AIS_ERR_INVALID_PARAM},
-	[MSG_QUEUE_OPEN_INVALID_PARAM2_EMPTY_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.non_pers_q,
-	     &gl_mqa_env.npers_cr_attribs, SA_MSG_QUEUE_EMPTY, APP_TIMEOUT,
-	     &gl_mqa_env.npers_q_hdl, SA_AIS_ERR_INVALID_PARAM},
-	[MSG_QUEUE_OPEN_INVALID_PARAM2_ZERO_T] = {&gl_mqa_env.msg_hdl1,
-						  &gl_mqa_env.non_pers_q,
-						  &gl_mqa_env.npers_cr_attribs,
-						  0, APP_TIMEOUT,
-						  &gl_mqa_env.npers_q_hdl,
-						  SA_AIS_ERR_INVALID_PARAM},
-	[MSG_QUEUE_OPEN_INVALID_PARAM2_RC_CBK_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.non_pers_q,
-	     &gl_mqa_env.npers_cr_attribs, SA_MSG_QUEUE_RECEIVE_CALLBACK,
-	     APP_TIMEOUT, &gl_mqa_env.npers_q_hdl, SA_AIS_ERR_INVALID_PARAM},
-	[MSG_QUEUE_OPEN_BAD_FLAGS_T] = {&gl_mqa_env.msg_hdl1,
-					&gl_mqa_env.non_pers_q,
-					&gl_mqa_env.pers_cr_attribs, 0x0008,
-					APP_TIMEOUT, &gl_mqa_env.npers_q_hdl,
-					SA_AIS_ERR_BAD_FLAGS},
-	[MSG_QUEUE_OPEN_BAD_FLAGS2_T] = {&gl_mqa_env.msg_hdl1,
-					 &gl_mqa_env.non_pers_q,
-					 &gl_mqa_env.inv_params.inv_cr_attribs,
-					 SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
-					 &gl_mqa_env.npers_q_hdl,
-					 SA_AIS_ERR_BAD_FLAGS},
-	[MSG_QUEUE_OPEN_PERS_ERR_EXIST_T] = {&gl_mqa_env.msg_hdl1,
-					     &gl_mqa_env.pers_q,
-					     &gl_mqa_env.npers_cr_attribs,
-					     SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
-					     &gl_mqa_env.pers_q_hdl,
-					     SA_AIS_ERR_EXIST},
-	[MSG_QUEUE_OPEN_NPERS_ERR_EXIST_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.non_pers_q,
-					      &gl_mqa_env.pers_cr_attribs,
-					      SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
-					      &gl_mqa_env.npers_q_hdl,
-					      SA_AIS_ERR_EXIST},
-	[MSG_QUEUE_OPEN_PERS_ER_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1,
-						&gl_mqa_env.pers_q, NULL, 0,
-						APP_TIMEOUT,
-						&gl_mqa_env.pers_q_hdl,
-						SA_AIS_ERR_NOT_EXIST},
-	[MSG_QUEUE_OPEN_PERS_ER_NOT_EXIST2_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, NULL, SA_MSG_QUEUE_EMPTY,
-	     APP_TIMEOUT, &gl_mqa_env.pers_q_hdl, SA_AIS_ERR_NOT_EXIST},
-	[MSG_QUEUE_OPEN_NPERS_ER_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1,
-						 &gl_mqa_env.non_pers_q, NULL,
-						 0, APP_TIMEOUT,
-						 &gl_mqa_env.npers_q_hdl,
-						 SA_AIS_ERR_NOT_EXIST},
-	[MSG_QUEUE_OPEN_ZERO_TIMEOUT_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.non_pers_q,
-					   &gl_mqa_env.pers_cr_attribs,
-					   SA_MSG_QUEUE_CREATE, 0,
-					   &gl_mqa_env.npers_q_hdl,
-					   SA_AIS_ERR_TIMEOUT},
-	[MSG_QUEUE_OPEN_EMPTY_CREATE_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.pers_q,
-					   &gl_mqa_env.pers_cr_attribs,
-					   SA_MSG_QUEUE_CREATE |
-					       SA_MSG_QUEUE_EMPTY,
-					   APP_TIMEOUT, &gl_mqa_env.pers_q_hdl,
-					   SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ZERO_RET_T] = {&gl_mqa_env.msg_hdl1,
-				       &gl_mqa_env.non_pers_q2,
-				       &gl_mqa_env.zero_ret_time_cr_attribs,
-				       SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
-				       &gl_mqa_env.npers_q_hdl2, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ZERO_SIZE_T] = {&gl_mqa_env.msg_hdl1,
-					&gl_mqa_env.zero_q,
-					&gl_mqa_env.zero_size_cr_attribs,
-					SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
-					&gl_mqa_env.pers_q_hdl, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_PERS_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.pers_q,
-					   &gl_mqa_env.pers_cr_attribs,
-					   SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
-					   &gl_mqa_env.pers_q_hdl, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_NON_PERS_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
+    [MSG_QUEUE_OPEN_INVALID_PARAM_EMPTY_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.non_pers_q, NULL,
+	 SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_EMPTY, APP_TIMEOUT,
+	 &gl_mqa_env.npers_q_hdl, SA_AIS_ERR_INVALID_PARAM},
+    [MSG_QUEUE_OPEN_INVALID_PARAM2_EMPTY_T] = {&gl_mqa_env.msg_hdl1,
 					       &gl_mqa_env.non_pers_q,
 					       &gl_mqa_env.npers_cr_attribs,
-					       SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
+					       SA_MSG_QUEUE_EMPTY, APP_TIMEOUT,
 					       &gl_mqa_env.npers_q_hdl,
-					       SA_AIS_OK},
-	[MSG_QUEUE_OPEN_PERS_SUCCESS2_T] = {&gl_mqa_env.msg_hdl2,
-					    &gl_mqa_env.pers_q,
-					    &gl_mqa_env.pers_cr_attribs,
-					    SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
-					    &gl_mqa_env.pers_q_hdl, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_NON_PERS_SUCCESS2_T] =
-	    {&gl_mqa_env.msg_hdl2, &gl_mqa_env.non_pers_q,
-	     &gl_mqa_env.npers_cr_attribs, SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
-	     &gl_mqa_env.npers_q_hdl, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_PERS_EXIST_SUCCESS_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, NULL, 0, APP_TIMEOUT,
-	     &gl_mqa_env.pers_q_hdl, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_NPERS_EXIST_SUCCESS_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.non_pers_q, NULL, 0, APP_TIMEOUT,
-	     &gl_mqa_env.npers_q_hdl, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ERR_BUSY_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q,
+					       SA_AIS_ERR_INVALID_PARAM},
+    [MSG_QUEUE_OPEN_INVALID_PARAM2_ZERO_T] = {&gl_mqa_env.msg_hdl1,
+					      &gl_mqa_env.non_pers_q,
+					      &gl_mqa_env.npers_cr_attribs, 0,
+					      APP_TIMEOUT,
+					      &gl_mqa_env.npers_q_hdl,
+					      SA_AIS_ERR_INVALID_PARAM},
+    [MSG_QUEUE_OPEN_INVALID_PARAM2_RC_CBK_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.non_pers_q,
+	 &gl_mqa_env.npers_cr_attribs, SA_MSG_QUEUE_RECEIVE_CALLBACK,
+	 APP_TIMEOUT, &gl_mqa_env.npers_q_hdl, SA_AIS_ERR_INVALID_PARAM},
+    [MSG_QUEUE_OPEN_BAD_FLAGS_T] = {&gl_mqa_env.msg_hdl1,
+				    &gl_mqa_env.non_pers_q,
+				    &gl_mqa_env.pers_cr_attribs, 0x0008,
+				    APP_TIMEOUT, &gl_mqa_env.npers_q_hdl,
+				    SA_AIS_ERR_BAD_FLAGS},
+    [MSG_QUEUE_OPEN_BAD_FLAGS2_T] = {&gl_mqa_env.msg_hdl1,
+				     &gl_mqa_env.non_pers_q,
+				     &gl_mqa_env.inv_params.inv_cr_attribs,
+				     SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
+				     &gl_mqa_env.npers_q_hdl,
+				     SA_AIS_ERR_BAD_FLAGS},
+    [MSG_QUEUE_OPEN_PERS_ERR_EXIST_T] = {&gl_mqa_env.msg_hdl1,
+					 &gl_mqa_env.pers_q,
+					 &gl_mqa_env.npers_cr_attribs,
+					 SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
+					 &gl_mqa_env.pers_q_hdl,
+					 SA_AIS_ERR_EXIST},
+    [MSG_QUEUE_OPEN_NPERS_ERR_EXIST_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.non_pers_q,
+					  &gl_mqa_env.pers_cr_attribs,
+					  SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
+					  &gl_mqa_env.npers_q_hdl,
+					  SA_AIS_ERR_EXIST},
+    [MSG_QUEUE_OPEN_PERS_ER_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1,
+					    &gl_mqa_env.pers_q, NULL, 0,
+					    APP_TIMEOUT, &gl_mqa_env.pers_q_hdl,
+					    SA_AIS_ERR_NOT_EXIST},
+    [MSG_QUEUE_OPEN_PERS_ER_NOT_EXIST2_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, NULL, SA_MSG_QUEUE_EMPTY,
+	 APP_TIMEOUT, &gl_mqa_env.pers_q_hdl, SA_AIS_ERR_NOT_EXIST},
+    [MSG_QUEUE_OPEN_NPERS_ER_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1,
+					     &gl_mqa_env.non_pers_q, NULL, 0,
+					     APP_TIMEOUT,
+					     &gl_mqa_env.npers_q_hdl,
+					     SA_AIS_ERR_NOT_EXIST},
+    [MSG_QUEUE_OPEN_ZERO_TIMEOUT_T] = {&gl_mqa_env.msg_hdl1,
+				       &gl_mqa_env.non_pers_q,
+				       &gl_mqa_env.pers_cr_attribs,
+				       SA_MSG_QUEUE_CREATE, 0,
+				       &gl_mqa_env.npers_q_hdl,
+				       SA_AIS_ERR_TIMEOUT},
+    [MSG_QUEUE_OPEN_EMPTY_CREATE_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q,
+				       &gl_mqa_env.pers_cr_attribs,
+				       SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_EMPTY,
+				       APP_TIMEOUT, &gl_mqa_env.pers_q_hdl,
+				       SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ZERO_RET_T] = {&gl_mqa_env.msg_hdl1,
+				   &gl_mqa_env.non_pers_q2,
+				   &gl_mqa_env.zero_ret_time_cr_attribs,
+				   SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
+				   &gl_mqa_env.npers_q_hdl2, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ZERO_SIZE_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.zero_q,
+				    &gl_mqa_env.zero_size_cr_attribs,
+				    SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
+				    &gl_mqa_env.pers_q_hdl, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_PERS_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q,
 				       &gl_mqa_env.pers_cr_attribs,
 				       SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
-				       &gl_mqa_env.pers_q_hdl, SA_AIS_ERR_BUSY},
-	[MSG_QUEUE_OPEN_EXIST_ERR_BUSY_T] = {&gl_mqa_env.msg_hdl1,
+				       &gl_mqa_env.pers_q_hdl, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_NON_PERS_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
+					   &gl_mqa_env.non_pers_q,
+					   &gl_mqa_env.npers_cr_attribs,
+					   SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
+					   &gl_mqa_env.npers_q_hdl, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_PERS_SUCCESS2_T] = {&gl_mqa_env.msg_hdl2,
+					&gl_mqa_env.pers_q,
+					&gl_mqa_env.pers_cr_attribs,
+					SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
+					&gl_mqa_env.pers_q_hdl, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_NON_PERS_SUCCESS2_T] = {&gl_mqa_env.msg_hdl2,
+					    &gl_mqa_env.non_pers_q,
+					    &gl_mqa_env.npers_cr_attribs,
+					    SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
+					    &gl_mqa_env.npers_q_hdl, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_PERS_EXIST_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
 					     &gl_mqa_env.pers_q, NULL, 0,
 					     APP_TIMEOUT,
-					     &gl_mqa_env.npers_q_hdl,
-					     SA_AIS_ERR_BUSY},
-	[MSG_QUEUE_OPEN_NPERS_EMPTY_SUCCESS_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.non_pers_q, NULL,
-	     SA_MSG_QUEUE_EMPTY, APP_TIMEOUT, &gl_mqa_env.npers_q_hdl,
-	     SA_AIS_OK},
-	[MSG_QUEUE_OPEN_PERS_EMPTY_SUCCESS_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, NULL, SA_MSG_QUEUE_EMPTY,
-	     APP_TIMEOUT, &gl_mqa_env.pers_q_hdl, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ERR_INIT_T] = {&gl_mqa_env.null_rcv_clbk_msg_hdl,
-				       &gl_mqa_env.pers_q,
-				       &gl_mqa_env.pers_cr_attribs,
-				       SA_MSG_QUEUE_CREATE |
-					   SA_MSG_QUEUE_RECEIVE_CALLBACK,
-				       APP_TIMEOUT, &gl_mqa_env.pers_q_hdl,
-				       SA_AIS_ERR_INIT},
-	[MSG_QUEUE_OPEN_SMALL_SIZE_ATTR_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q,
-	     &gl_mqa_env.small_cr_attribs, SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
-	     &gl_mqa_env.pers_q_hdl, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_SMALL_SIZE_ATTR2_T] = {&gl_mqa_env.msg_hdl1,
-					       &gl_mqa_env.non_pers_q,
-					       &gl_mqa_env.small_cr_attribs,
-					       SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
-					       &gl_mqa_env.npers_q_hdl,
-					       SA_AIS_OK},
-	[MSG_QUEUE_OPEN_BIG_SIZE_ATTR_T] = {&gl_mqa_env.msg_hdl1,
-					    &gl_mqa_env.pers_q,
-					    &gl_mqa_env.big_cr_attribs,
-					    SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
-					    &gl_mqa_env.pers_q_hdl, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_PERS_RECV_CLBK_SUCCESS_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q,
-	     &gl_mqa_env.pers_cr_attribs,
-	     SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_RECEIVE_CALLBACK, APP_TIMEOUT,
-	     &gl_mqa_env.pers_q_hdl, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_NON_PERS_RECV_CLBK_SUCCESS_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.non_pers_q,
-	     &gl_mqa_env.npers_cr_attribs,
-	     SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_RECEIVE_CALLBACK, APP_TIMEOUT,
-	     &gl_mqa_env.npers_q_hdl, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_EXIST_RECV_CLBK_SUCCESS_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, NULL,
-	     SA_MSG_QUEUE_RECEIVE_CALLBACK, APP_TIMEOUT, &gl_mqa_env.pers_q_hdl,
-	     SA_AIS_OK},
-	[MSG_QUEUE_OPEN_NPERS_RECV_CLBK_T] =
-	    {&gl_mqa_env.msg_hdl2, &gl_mqa_env.non_pers_q,
-	     &gl_mqa_env.npers_cr_attribs,
-	     SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_RECEIVE_CALLBACK, APP_TIMEOUT,
-	     &gl_mqa_env.npers_q_hdl, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_PERS_RECV_CLBK2_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q2,
-	     &gl_mqa_env.pers_cr_attribs,
-	     SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_RECEIVE_CALLBACK, APP_TIMEOUT,
-	     &gl_mqa_env.pers_q_hdl2, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_NPERS_RECV_CLBK2_T] =
-	    {&gl_mqa_env.msg_hdl2, &gl_mqa_env.non_pers_q2,
-	     &gl_mqa_env.npers_cr_attribs,
-	     SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_RECEIVE_CALLBACK, APP_TIMEOUT,
-	     &gl_mqa_env.npers_q_hdl2, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_EXISTING_PERS_T] = {&gl_mqa_env.msg_hdl1,
-					    &gl_mqa_env.pers_q, NULL,
-					    SA_MSG_QUEUE_RECEIVE_CALLBACK,
-					    APP_TIMEOUT, &gl_mqa_env.pers_q_hdl,
-					    SA_AIS_OK},
-	[MSG_QUEUE_OPEN_EXISTING_NPERS_T] = {&gl_mqa_env.msg_hdl2,
-					     &gl_mqa_env.non_pers_q, NULL,
-					     SA_MSG_QUEUE_RECEIVE_CALLBACK,
-					     APP_TIMEOUT,
-					     &gl_mqa_env.npers_q_hdl,
-					     SA_AIS_OK},
-	[MSG_QUEUE_OPEN_EXISTING_PERS2_T] = {&gl_mqa_env.msg_hdl1,
-					     &gl_mqa_env.pers_q2, NULL,
-					     SA_MSG_QUEUE_RECEIVE_CALLBACK,
-					     APP_TIMEOUT,
-					     &gl_mqa_env.pers_q_hdl2,
-					     SA_AIS_OK},
-	[MSG_QUEUE_OPEN_EXISTING_NPERS2_T] = {&gl_mqa_env.msg_hdl2,
-					      &gl_mqa_env.non_pers_q2, NULL,
+					     &gl_mqa_env.pers_q_hdl, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_NPERS_EXIST_SUCCESS_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.non_pers_q, NULL, 0, APP_TIMEOUT,
+	 &gl_mqa_env.npers_q_hdl, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ERR_BUSY_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q,
+				   &gl_mqa_env.pers_cr_attribs,
+				   SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
+				   &gl_mqa_env.pers_q_hdl, SA_AIS_ERR_BUSY},
+    [MSG_QUEUE_OPEN_EXIST_ERR_BUSY_T] = {&gl_mqa_env.msg_hdl1,
+					 &gl_mqa_env.pers_q, NULL, 0,
+					 APP_TIMEOUT, &gl_mqa_env.npers_q_hdl,
+					 SA_AIS_ERR_BUSY},
+    [MSG_QUEUE_OPEN_NPERS_EMPTY_SUCCESS_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.non_pers_q, NULL, SA_MSG_QUEUE_EMPTY,
+	 APP_TIMEOUT, &gl_mqa_env.npers_q_hdl, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_PERS_EMPTY_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
+					     &gl_mqa_env.pers_q, NULL,
+					     SA_MSG_QUEUE_EMPTY, APP_TIMEOUT,
+					     &gl_mqa_env.pers_q_hdl, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ERR_INIT_T] = {&gl_mqa_env.null_rcv_clbk_msg_hdl,
+				   &gl_mqa_env.pers_q,
+				   &gl_mqa_env.pers_cr_attribs,
+				   SA_MSG_QUEUE_CREATE |
+				       SA_MSG_QUEUE_RECEIVE_CALLBACK,
+				   APP_TIMEOUT, &gl_mqa_env.pers_q_hdl,
+				   SA_AIS_ERR_INIT},
+    [MSG_QUEUE_OPEN_SMALL_SIZE_ATTR_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, &gl_mqa_env.small_cr_attribs,
+	 SA_MSG_QUEUE_CREATE, APP_TIMEOUT, &gl_mqa_env.pers_q_hdl, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_SMALL_SIZE_ATTR2_T] = {&gl_mqa_env.msg_hdl1,
+					   &gl_mqa_env.non_pers_q,
+					   &gl_mqa_env.small_cr_attribs,
+					   SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
+					   &gl_mqa_env.npers_q_hdl, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_BIG_SIZE_ATTR_T] = {&gl_mqa_env.msg_hdl1,
+					&gl_mqa_env.pers_q,
+					&gl_mqa_env.big_cr_attribs,
+					SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
+					&gl_mqa_env.pers_q_hdl, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_PERS_RECV_CLBK_SUCCESS_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, &gl_mqa_env.pers_cr_attribs,
+	 SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_RECEIVE_CALLBACK, APP_TIMEOUT,
+	 &gl_mqa_env.pers_q_hdl, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_NON_PERS_RECV_CLBK_SUCCESS_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.non_pers_q,
+	 &gl_mqa_env.npers_cr_attribs,
+	 SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_RECEIVE_CALLBACK, APP_TIMEOUT,
+	 &gl_mqa_env.npers_q_hdl, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_EXIST_RECV_CLBK_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
+						  &gl_mqa_env.pers_q, NULL,
+						  SA_MSG_QUEUE_RECEIVE_CALLBACK,
+						  APP_TIMEOUT,
+						  &gl_mqa_env.pers_q_hdl,
+						  SA_AIS_OK},
+    [MSG_QUEUE_OPEN_NPERS_RECV_CLBK_T] = {&gl_mqa_env.msg_hdl2,
+					  &gl_mqa_env.non_pers_q,
+					  &gl_mqa_env.npers_cr_attribs,
+					  SA_MSG_QUEUE_CREATE |
 					      SA_MSG_QUEUE_RECEIVE_CALLBACK,
-					      APP_TIMEOUT,
-					      &gl_mqa_env.npers_q_hdl2,
-					      SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
-					    &gl_mqa_env.pers_q,
-					    &gl_mqa_env.pers_cr_attribs,
-					    SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
-					    &gl_mqa_env.pers_q_hdl,
-					    SA_AIS_ERR_TRY_AGAIN},
+					  APP_TIMEOUT, &gl_mqa_env.npers_q_hdl,
+					  SA_AIS_OK},
+    [MSG_QUEUE_OPEN_PERS_RECV_CLBK2_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q2, &gl_mqa_env.pers_cr_attribs,
+	 SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_RECEIVE_CALLBACK, APP_TIMEOUT,
+	 &gl_mqa_env.pers_q_hdl2, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_NPERS_RECV_CLBK2_T] = {&gl_mqa_env.msg_hdl2,
+					   &gl_mqa_env.non_pers_q2,
+					   &gl_mqa_env.npers_cr_attribs,
+					   SA_MSG_QUEUE_CREATE |
+					       SA_MSG_QUEUE_RECEIVE_CALLBACK,
+					   APP_TIMEOUT,
+					   &gl_mqa_env.npers_q_hdl2, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_EXISTING_PERS_T] = {&gl_mqa_env.msg_hdl1,
+					&gl_mqa_env.pers_q, NULL,
+					SA_MSG_QUEUE_RECEIVE_CALLBACK,
+					APP_TIMEOUT, &gl_mqa_env.pers_q_hdl,
+					SA_AIS_OK},
+    [MSG_QUEUE_OPEN_EXISTING_NPERS_T] = {&gl_mqa_env.msg_hdl2,
+					 &gl_mqa_env.non_pers_q, NULL,
+					 SA_MSG_QUEUE_RECEIVE_CALLBACK,
+					 APP_TIMEOUT, &gl_mqa_env.npers_q_hdl,
+					 SA_AIS_OK},
+    [MSG_QUEUE_OPEN_EXISTING_PERS2_T] = {&gl_mqa_env.msg_hdl1,
+					 &gl_mqa_env.pers_q2, NULL,
+					 SA_MSG_QUEUE_RECEIVE_CALLBACK,
+					 APP_TIMEOUT, &gl_mqa_env.pers_q_hdl2,
+					 SA_AIS_OK},
+    [MSG_QUEUE_OPEN_EXISTING_NPERS2_T] = {&gl_mqa_env.msg_hdl2,
+					  &gl_mqa_env.non_pers_q2, NULL,
+					  SA_MSG_QUEUE_RECEIVE_CALLBACK,
+					  APP_TIMEOUT, &gl_mqa_env.npers_q_hdl2,
+					  SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
+					&gl_mqa_env.pers_q,
+					&gl_mqa_env.pers_cr_attribs,
+					SA_MSG_QUEUE_CREATE, APP_TIMEOUT,
+					&gl_mqa_env.pers_q_hdl,
+					SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgQueueOpen(int i, MQSV_CONFIG_FLAG flg)
@@ -835,214 +810,210 @@ int tet_test_red_msgQueueOpen(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Queue Open Async Test cases  ***************** */
 
 char *API_Mqsv_QueueOpenAsync_resultstring[] = {
-	[MSG_QUEUE_OPEN_ASYNC_BAD_HANDLE_T] =
-	    "saMsgQueueOpenAsync with invalid Message Handle",
-	[MSG_QUEUE_OPEN_ASYNC_FINALIZED_HDL_T] =
-	    "saMsgQueueOpenAsync with invalid Message Handle",
-	[MSG_QUEUE_OPEN_ASYNC_NULL_NAME_T] =
-	    "saMsgQueueOpenAsync with Null queue name",
-	[MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM_T] =
-	    "saMsgQueueOpenAsync with Null attributes and Create flag",
-	[MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM_EMPTY_T] =
-	    "saMsgQueueOpenAsync with Null attributes and Create | Empty flag",
-	[MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM2_EMPTY_T] =
-	    "saMsgQueueOpenAsync with creation attributes and Empty flag",
-	[MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM2_ZERO_T] =
-	    "saMsgQueueOpenAsync with creation attributes and zero flag",
-	[MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM2_RC_CBK_T] =
-	    "saMsgQueueOpenAsync with creation attributes and rcv clbk flag",
-	[MSG_QUEUE_OPEN_ASYNC_BAD_FLGS_T] =
-	    "saMsgQueueOpenAsync with bad open flags",
-	[MSG_QUEUE_OPEN_ASYNC_BAD_FLGS2_T] =
-	    "saMsgQueueOpenAsync with bad creation flags",
-	[MSG_QUEUE_OPEN_ASYNC_ERR_INIT_T] =
-	    "saMsgQueueOpenAsync - ERR_INIT case for Open Callback",
-	[MSG_QUEUE_OPEN_ASYNC_ERR_INIT2_T] =
-	    "saMsgQueueOpenAsync - ERR_INIT case for Receive Callback",
-	[MSG_QUEUE_OPEN_ASYNC_ERR_NOT_EXIST_T] =
-	    "Open a queue that does not exist - Null attr and zero open flag",
-	[MSG_QUEUE_OPEN_ASYNC_ERR_NOT_EXIST2_T] =
-	    "Open a queue that does not exist - non-NULL attr and Rcv clbk flag",
-	[MSG_QUEUE_OPEN_ASYNC_ERR_BUSY_T] =
-	    "saMsgQueueOpenAsync - ERR_BUSY case",
-	[MSG_QUEUE_OPEN_ASYNC_PERS_SUCCESS_T] =
-	    "saMsgQueueOpenAsync with valid parameters - Persistent",
-	[MSG_QUEUE_OPEN_ASYNC_NPERS_SUCCESS_T] =
-	    "saMsgQueueOpenAsync with valid parameters - Non Persistent",
-	[MSG_QUEUE_OPEN_ASYNC_EMPTY_CREATE_T] =
-	    "saMsgQueueOpenAsync with valid parameters - Empty flag",
-	[MSG_QUEUE_OPEN_ASYNC_ERR_EXIST_T] =
-	    "Open a queue that already exists with Create flag - Persistent",
-	[MSG_QUEUE_OPEN_ASYNC_ERR_EXIST2_T] =
-	    "Open a queue that already exists with Create flag - Non Persistent",
-	[MSG_QUEUE_OPEN_ASYNC_EXIST_SUCCESS_T] =
-	    "Open a queue that already exists",
-	[MSG_QUEUE_OPEN_ASYNC_EXIST_SUCCESS2_T] =
-	    "Open a queue that already exists",
-	[MSG_QUEUE_OPEN_ASYNC_NPERS_EMPTY_SUCCESS_T] =
-	    "Open a queue with Empty open flag",
-	[MSG_QUEUE_OPEN_ASYNC_SMALL_SIZE_ATTR_T] =
-	    "Open a queue with small size attributes",
-	[MSG_QUEUE_OPEN_ASYNC_PERS_RECV_CLBK_SUCCESS_T] =
-	    "Open a queue with Recv Clbk - Persistent",
-	[MSG_QUEUE_OPEN_ASYNC_PERS_RECV_CLBK_SUCCESS2_T] =
-	    "Open a queue with Recv Clbk - Persistent",
-	[MSG_QUEUE_OPEN_ASYNC_NPERS_RECV_CLBK_SUCCESS_T] =
-	    "Open a queue with Recv Clbk - Non Persistent",
-	[MSG_QUEUE_OPEN_ASYNC_EXIST_RECV_CLBK_SUCCESS_T] =
-	    "Open an existing queue with Recv Clbk open flag",
-	[MSG_QUEUE_OPEN_ASYNC_ZERO_RET_T] =
-	    "saMsgQueueOpenAsync with zero retention time creation attributes",
-	[MSG_QUEUE_OPEN_ASYNC_ZERO_SIZE_T] =
-	    "saMsgQueueOpenAsync with zero size creation attributes",
-	[MSG_QUEUE_OPEN_ASYNC_EXIST_ERR_BUSY_T] =
-	    "Open a queue that is already open with NULL attr and non-create open flag",
-	[MSG_QUEUE_OPEN_ASYNC_EXIST_ERR_BUSY2_T] =
-	    "Open a queue that is already open with NULL attr and non-create open flag",
-	[MSG_QUEUE_OPEN_ASYNC_PERS_EMPTY_SUCCESS_T] =
-	    "Open a queue with Empty open flag",
-	[MSG_QUEUE_OPEN_ASYNC_ERR_TRY_AGAIN_T] =
-	    "saMsgQueueOpenAsync when service is not available",
+    [MSG_QUEUE_OPEN_ASYNC_BAD_HANDLE_T] =
+	"saMsgQueueOpenAsync with invalid Message Handle",
+    [MSG_QUEUE_OPEN_ASYNC_FINALIZED_HDL_T] =
+	"saMsgQueueOpenAsync with invalid Message Handle",
+    [MSG_QUEUE_OPEN_ASYNC_NULL_NAME_T] =
+	"saMsgQueueOpenAsync with Null queue name",
+    [MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM_T] =
+	"saMsgQueueOpenAsync with Null attributes and Create flag",
+    [MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM_EMPTY_T] =
+	"saMsgQueueOpenAsync with Null attributes and Create | Empty flag",
+    [MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM2_EMPTY_T] =
+	"saMsgQueueOpenAsync with creation attributes and Empty flag",
+    [MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM2_ZERO_T] =
+	"saMsgQueueOpenAsync with creation attributes and zero flag",
+    [MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM2_RC_CBK_T] =
+	"saMsgQueueOpenAsync with creation attributes and rcv clbk flag",
+    [MSG_QUEUE_OPEN_ASYNC_BAD_FLGS_T] =
+	"saMsgQueueOpenAsync with bad open flags",
+    [MSG_QUEUE_OPEN_ASYNC_BAD_FLGS2_T] =
+	"saMsgQueueOpenAsync with bad creation flags",
+    [MSG_QUEUE_OPEN_ASYNC_ERR_INIT_T] =
+	"saMsgQueueOpenAsync - ERR_INIT case for Open Callback",
+    [MSG_QUEUE_OPEN_ASYNC_ERR_INIT2_T] =
+	"saMsgQueueOpenAsync - ERR_INIT case for Receive Callback",
+    [MSG_QUEUE_OPEN_ASYNC_ERR_NOT_EXIST_T] =
+	"Open a queue that does not exist - Null attr and zero open flag",
+    [MSG_QUEUE_OPEN_ASYNC_ERR_NOT_EXIST2_T] =
+	"Open a queue that does not exist - non-NULL attr and Rcv clbk flag",
+    [MSG_QUEUE_OPEN_ASYNC_ERR_BUSY_T] = "saMsgQueueOpenAsync - ERR_BUSY case",
+    [MSG_QUEUE_OPEN_ASYNC_PERS_SUCCESS_T] =
+	"saMsgQueueOpenAsync with valid parameters - Persistent",
+    [MSG_QUEUE_OPEN_ASYNC_NPERS_SUCCESS_T] =
+	"saMsgQueueOpenAsync with valid parameters - Non Persistent",
+    [MSG_QUEUE_OPEN_ASYNC_EMPTY_CREATE_T] =
+	"saMsgQueueOpenAsync with valid parameters - Empty flag",
+    [MSG_QUEUE_OPEN_ASYNC_ERR_EXIST_T] =
+	"Open a queue that already exists with Create flag - Persistent",
+    [MSG_QUEUE_OPEN_ASYNC_ERR_EXIST2_T] =
+	"Open a queue that already exists with Create flag - Non Persistent",
+    [MSG_QUEUE_OPEN_ASYNC_EXIST_SUCCESS_T] = "Open a queue that already exists",
+    [MSG_QUEUE_OPEN_ASYNC_EXIST_SUCCESS2_T] =
+	"Open a queue that already exists",
+    [MSG_QUEUE_OPEN_ASYNC_NPERS_EMPTY_SUCCESS_T] =
+	"Open a queue with Empty open flag",
+    [MSG_QUEUE_OPEN_ASYNC_SMALL_SIZE_ATTR_T] =
+	"Open a queue with small size attributes",
+    [MSG_QUEUE_OPEN_ASYNC_PERS_RECV_CLBK_SUCCESS_T] =
+	"Open a queue with Recv Clbk - Persistent",
+    [MSG_QUEUE_OPEN_ASYNC_PERS_RECV_CLBK_SUCCESS2_T] =
+	"Open a queue with Recv Clbk - Persistent",
+    [MSG_QUEUE_OPEN_ASYNC_NPERS_RECV_CLBK_SUCCESS_T] =
+	"Open a queue with Recv Clbk - Non Persistent",
+    [MSG_QUEUE_OPEN_ASYNC_EXIST_RECV_CLBK_SUCCESS_T] =
+	"Open an existing queue with Recv Clbk open flag",
+    [MSG_QUEUE_OPEN_ASYNC_ZERO_RET_T] =
+	"saMsgQueueOpenAsync with zero retention time creation attributes",
+    [MSG_QUEUE_OPEN_ASYNC_ZERO_SIZE_T] =
+	"saMsgQueueOpenAsync with zero size creation attributes",
+    [MSG_QUEUE_OPEN_ASYNC_EXIST_ERR_BUSY_T] =
+	"Open a queue that is already open with NULL attr and non-create open flag",
+    [MSG_QUEUE_OPEN_ASYNC_EXIST_ERR_BUSY2_T] =
+	"Open a queue that is already open with NULL attr and non-create open flag",
+    [MSG_QUEUE_OPEN_ASYNC_PERS_EMPTY_SUCCESS_T] =
+	"Open a queue with Empty open flag",
+    [MSG_QUEUE_OPEN_ASYNC_ERR_TRY_AGAIN_T] =
+	"saMsgQueueOpenAsync when service is not available",
 };
 
 struct SafMsgQueueOpenAsync API_Mqsv_QueueOpenAsync[] = {
-	[MSG_QUEUE_OPEN_ASYNC_BAD_HANDLE_T] =
-	    {&gl_mqa_env.inv_params.inv_msg_hdl, 100, &gl_mqa_env.non_pers_q,
-	     &gl_mqa_env.npers_cr_attribs, SA_MSG_QUEUE_CREATE,
-	     SA_AIS_ERR_BAD_HANDLE},
-	[MSG_QUEUE_OPEN_ASYNC_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1, 101,
-						  &gl_mqa_env.non_pers_q,
-						  &gl_mqa_env.npers_cr_attribs,
-						  SA_MSG_QUEUE_CREATE,
-						  SA_AIS_ERR_BAD_HANDLE},
-	[MSG_QUEUE_OPEN_ASYNC_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, 102, NULL,
-					      &gl_mqa_env.pers_cr_attribs,
+    [MSG_QUEUE_OPEN_ASYNC_BAD_HANDLE_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+					   100, &gl_mqa_env.non_pers_q,
+					   &gl_mqa_env.npers_cr_attribs,
+					   SA_MSG_QUEUE_CREATE,
+					   SA_AIS_ERR_BAD_HANDLE},
+    [MSG_QUEUE_OPEN_ASYNC_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1, 101,
+					      &gl_mqa_env.non_pers_q,
+					      &gl_mqa_env.npers_cr_attribs,
+					      SA_MSG_QUEUE_CREATE,
+					      SA_AIS_ERR_BAD_HANDLE},
+    [MSG_QUEUE_OPEN_ASYNC_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, 102, NULL,
+					  &gl_mqa_env.pers_cr_attribs,
+					  SA_MSG_QUEUE_CREATE,
+					  SA_AIS_ERR_INVALID_PARAM},
+    [MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM_T] = {&gl_mqa_env.msg_hdl1, 103,
+					      &gl_mqa_env.non_pers_q, NULL,
 					      SA_MSG_QUEUE_CREATE,
 					      SA_AIS_ERR_INVALID_PARAM},
-	[MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM_T] = {&gl_mqa_env.msg_hdl1, 103,
-						  &gl_mqa_env.non_pers_q, NULL,
-						  SA_MSG_QUEUE_CREATE,
-						  SA_AIS_ERR_INVALID_PARAM},
-	[MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM_EMPTY_T] =
-	    {&gl_mqa_env.msg_hdl1, 103, &gl_mqa_env.non_pers_q, NULL,
-	     SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_EMPTY,
-	     SA_AIS_ERR_INVALID_PARAM},
-	[MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM2_EMPTY_T] =
-	    {&gl_mqa_env.msg_hdl1, 104, &gl_mqa_env.non_pers_q,
-	     &gl_mqa_env.npers_cr_attribs, SA_MSG_QUEUE_EMPTY,
-	     SA_AIS_ERR_INVALID_PARAM},
-	[MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM2_ZERO_T] =
-	    {&gl_mqa_env.msg_hdl1, 105, &gl_mqa_env.non_pers_q,
-	     &gl_mqa_env.npers_cr_attribs, 0, SA_AIS_ERR_INVALID_PARAM},
-	[MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM2_RC_CBK_T] =
-	    {&gl_mqa_env.msg_hdl1, 106, &gl_mqa_env.non_pers_q,
-	     &gl_mqa_env.npers_cr_attribs, SA_MSG_QUEUE_RECEIVE_CALLBACK,
-	     SA_AIS_ERR_INVALID_PARAM},
-	[MSG_QUEUE_OPEN_ASYNC_BAD_FLGS_T] = {&gl_mqa_env.msg_hdl1, 107,
-					     &gl_mqa_env.non_pers_q,
-					     &gl_mqa_env.npers_cr_attribs,
-					     0x0008, SA_AIS_ERR_BAD_FLAGS},
-	[MSG_QUEUE_OPEN_ASYNC_BAD_FLGS2_T] =
-	    {&gl_mqa_env.msg_hdl1, 108, &gl_mqa_env.non_pers_q,
-	     &gl_mqa_env.inv_params.inv_cr_attribs, SA_MSG_QUEUE_CREATE,
-	     SA_AIS_ERR_BAD_FLAGS},
-	[MSG_QUEUE_OPEN_ASYNC_ERR_INIT_T] = {&gl_mqa_env.null_clbks_msg_hdl,
-					     109, &gl_mqa_env.pers_q,
-					     &gl_mqa_env.pers_cr_attribs,
-					     SA_MSG_QUEUE_CREATE,
-					     SA_AIS_ERR_INIT},
-	[MSG_QUEUE_OPEN_ASYNC_ERR_INIT2_T] = {&gl_mqa_env.null_rcv_clbk_msg_hdl,
-					      110, &gl_mqa_env.pers_q,
-					      &gl_mqa_env.pers_cr_attribs,
-					      SA_MSG_QUEUE_CREATE |
-						  SA_MSG_QUEUE_RECEIVE_CALLBACK,
-					      SA_AIS_ERR_INIT},
-	[MSG_QUEUE_OPEN_ASYNC_ERR_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1, 111,
-						  &gl_mqa_env.non_pers_q, NULL,
-						  0, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_ERR_NOT_EXIST2_T] =
-	    {&gl_mqa_env.msg_hdl1, 112, &gl_mqa_env.non_pers_q, NULL,
-	     SA_MSG_QUEUE_RECEIVE_CALLBACK, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_ERR_BUSY_T] = {&gl_mqa_env.msg_hdl1, 113,
+    [MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM_EMPTY_T] =
+	{&gl_mqa_env.msg_hdl1, 103, &gl_mqa_env.non_pers_q, NULL,
+	 SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_EMPTY, SA_AIS_ERR_INVALID_PARAM},
+    [MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM2_EMPTY_T] =
+	{&gl_mqa_env.msg_hdl1, 104, &gl_mqa_env.non_pers_q,
+	 &gl_mqa_env.npers_cr_attribs, SA_MSG_QUEUE_EMPTY,
+	 SA_AIS_ERR_INVALID_PARAM},
+    [MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM2_ZERO_T] =
+	{&gl_mqa_env.msg_hdl1, 105, &gl_mqa_env.non_pers_q,
+	 &gl_mqa_env.npers_cr_attribs, 0, SA_AIS_ERR_INVALID_PARAM},
+    [MSG_QUEUE_OPEN_ASYNC_INVALID_PARAM2_RC_CBK_T] =
+	{&gl_mqa_env.msg_hdl1, 106, &gl_mqa_env.non_pers_q,
+	 &gl_mqa_env.npers_cr_attribs, SA_MSG_QUEUE_RECEIVE_CALLBACK,
+	 SA_AIS_ERR_INVALID_PARAM},
+    [MSG_QUEUE_OPEN_ASYNC_BAD_FLGS_T] = {&gl_mqa_env.msg_hdl1, 107,
+					 &gl_mqa_env.non_pers_q,
+					 &gl_mqa_env.npers_cr_attribs, 0x0008,
+					 SA_AIS_ERR_BAD_FLAGS},
+    [MSG_QUEUE_OPEN_ASYNC_BAD_FLGS2_T] = {&gl_mqa_env.msg_hdl1, 108,
+					  &gl_mqa_env.non_pers_q,
+					  &gl_mqa_env.inv_params.inv_cr_attribs,
+					  SA_MSG_QUEUE_CREATE,
+					  SA_AIS_ERR_BAD_FLAGS},
+    [MSG_QUEUE_OPEN_ASYNC_ERR_INIT_T] = {&gl_mqa_env.null_clbks_msg_hdl, 109,
+					 &gl_mqa_env.pers_q,
+					 &gl_mqa_env.pers_cr_attribs,
+					 SA_MSG_QUEUE_CREATE, SA_AIS_ERR_INIT},
+    [MSG_QUEUE_OPEN_ASYNC_ERR_INIT2_T] = {&gl_mqa_env.null_rcv_clbk_msg_hdl,
+					  110, &gl_mqa_env.pers_q,
+					  &gl_mqa_env.pers_cr_attribs,
+					  SA_MSG_QUEUE_CREATE |
+					      SA_MSG_QUEUE_RECEIVE_CALLBACK,
+					  SA_AIS_ERR_INIT},
+    [MSG_QUEUE_OPEN_ASYNC_ERR_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1, 111,
+					      &gl_mqa_env.non_pers_q, NULL, 0,
+					      SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ASYNC_ERR_NOT_EXIST2_T] = {&gl_mqa_env.msg_hdl1, 112,
+					       &gl_mqa_env.non_pers_q, NULL,
+					       SA_MSG_QUEUE_RECEIVE_CALLBACK,
+					       SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ASYNC_ERR_BUSY_T] = {&gl_mqa_env.msg_hdl1, 113,
+					 &gl_mqa_env.pers_q,
+					 &gl_mqa_env.pers_cr_attribs,
+					 SA_MSG_QUEUE_CREATE, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ASYNC_PERS_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, 114,
 					     &gl_mqa_env.pers_q,
 					     &gl_mqa_env.pers_cr_attribs,
 					     SA_MSG_QUEUE_CREATE, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_PERS_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, 114,
-						 &gl_mqa_env.pers_q,
-						 &gl_mqa_env.pers_cr_attribs,
-						 SA_MSG_QUEUE_CREATE,
-						 SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_NPERS_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, 115,
-						  &gl_mqa_env.non_pers_q,
-						  &gl_mqa_env.npers_cr_attribs,
-						  SA_MSG_QUEUE_CREATE,
-						  SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_EMPTY_CREATE_T] = {&gl_mqa_env.msg_hdl1, 116,
-						 &gl_mqa_env.pers_q,
-						 &gl_mqa_env.pers_cr_attribs,
-						 SA_MSG_QUEUE_CREATE |
-						     SA_MSG_QUEUE_EMPTY,
-						 SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_ERR_EXIST_T] = {&gl_mqa_env.msg_hdl1, 117,
-					      &gl_mqa_env.pers_q,
+    [MSG_QUEUE_OPEN_ASYNC_NPERS_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, 115,
+					      &gl_mqa_env.non_pers_q,
 					      &gl_mqa_env.npers_cr_attribs,
 					      SA_MSG_QUEUE_CREATE, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_ERR_EXIST2_T] = {&gl_mqa_env.msg_hdl1, 118,
-					       &gl_mqa_env.non_pers_q,
-					       &gl_mqa_env.pers_cr_attribs,
-					       SA_MSG_QUEUE_CREATE, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_EXIST_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, 119,
-						  &gl_mqa_env.pers_q, NULL, 0,
-						  SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_NPERS_EMPTY_SUCCESS_T] =
-	    {&gl_mqa_env.msg_hdl1, 120, &gl_mqa_env.non_pers_q, NULL,
-	     SA_MSG_QUEUE_EMPTY, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_SMALL_SIZE_ATTR_T] =
-	    {&gl_mqa_env.msg_hdl1, 121, &gl_mqa_env.pers_q,
-	     &gl_mqa_env.small_cr_attribs,
-	     SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_RECEIVE_CALLBACK, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_PERS_RECV_CLBK_SUCCESS_T] =
-	    {&gl_mqa_env.msg_hdl1, 122, &gl_mqa_env.pers_q,
-	     &gl_mqa_env.pers_cr_attribs,
-	     SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_RECEIVE_CALLBACK, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_PERS_RECV_CLBK_SUCCESS2_T] =
-	    {&gl_mqa_env.msg_hdl1, 123, &gl_mqa_env.pers_q2,
-	     &gl_mqa_env.pers_cr_attribs,
-	     SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_RECEIVE_CALLBACK, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_NPERS_RECV_CLBK_SUCCESS_T] =
-	    {&gl_mqa_env.msg_hdl1, 124, &gl_mqa_env.non_pers_q,
-	     &gl_mqa_env.npers_cr_attribs,
-	     SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_RECEIVE_CALLBACK, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_EXIST_RECV_CLBK_SUCCESS_T] =
-	    {&gl_mqa_env.msg_hdl1, 125, &gl_mqa_env.pers_q, NULL,
-	     SA_MSG_QUEUE_RECEIVE_CALLBACK, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_ZERO_RET_T] =
-	    {&gl_mqa_env.msg_hdl1, 126, &gl_mqa_env.non_pers_q2,
-	     &gl_mqa_env.zero_ret_time_cr_attribs, SA_MSG_QUEUE_CREATE,
-	     SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_ZERO_SIZE_T] =
-	    {&gl_mqa_env.msg_hdl1, 127, &gl_mqa_env.zero_q,
-	     &gl_mqa_env.zero_size_cr_attribs, SA_MSG_QUEUE_CREATE, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_EXIST_ERR_BUSY_T] = {&gl_mqa_env.msg_hdl1, 128,
-						   &gl_mqa_env.non_pers_q, NULL,
+    [MSG_QUEUE_OPEN_ASYNC_EMPTY_CREATE_T] = {&gl_mqa_env.msg_hdl1, 116,
+					     &gl_mqa_env.pers_q,
+					     &gl_mqa_env.pers_cr_attribs,
+					     SA_MSG_QUEUE_CREATE |
+						 SA_MSG_QUEUE_EMPTY,
+					     SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ASYNC_ERR_EXIST_T] = {&gl_mqa_env.msg_hdl1, 117,
+					  &gl_mqa_env.pers_q,
+					  &gl_mqa_env.npers_cr_attribs,
+					  SA_MSG_QUEUE_CREATE, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ASYNC_ERR_EXIST2_T] = {&gl_mqa_env.msg_hdl1, 118,
+					   &gl_mqa_env.non_pers_q,
+					   &gl_mqa_env.pers_cr_attribs,
+					   SA_MSG_QUEUE_CREATE, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ASYNC_EXIST_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, 119,
+					      &gl_mqa_env.pers_q, NULL, 0,
+					      SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ASYNC_NPERS_EMPTY_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, 120,
+						    &gl_mqa_env.non_pers_q,
+						    NULL, SA_MSG_QUEUE_EMPTY,
+						    SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ASYNC_SMALL_SIZE_ATTR_T] =
+	{&gl_mqa_env.msg_hdl1, 121, &gl_mqa_env.pers_q,
+	 &gl_mqa_env.small_cr_attribs,
+	 SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_RECEIVE_CALLBACK, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ASYNC_PERS_RECV_CLBK_SUCCESS_T] =
+	{&gl_mqa_env.msg_hdl1, 122, &gl_mqa_env.pers_q,
+	 &gl_mqa_env.pers_cr_attribs,
+	 SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_RECEIVE_CALLBACK, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ASYNC_PERS_RECV_CLBK_SUCCESS2_T] =
+	{&gl_mqa_env.msg_hdl1, 123, &gl_mqa_env.pers_q2,
+	 &gl_mqa_env.pers_cr_attribs,
+	 SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_RECEIVE_CALLBACK, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ASYNC_NPERS_RECV_CLBK_SUCCESS_T] =
+	{&gl_mqa_env.msg_hdl1, 124, &gl_mqa_env.non_pers_q,
+	 &gl_mqa_env.npers_cr_attribs,
+	 SA_MSG_QUEUE_CREATE | SA_MSG_QUEUE_RECEIVE_CALLBACK, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ASYNC_EXIST_RECV_CLBK_SUCCESS_T] =
+	{&gl_mqa_env.msg_hdl1, 125, &gl_mqa_env.pers_q, NULL,
+	 SA_MSG_QUEUE_RECEIVE_CALLBACK, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ASYNC_ZERO_RET_T] = {&gl_mqa_env.msg_hdl1, 126,
+					 &gl_mqa_env.non_pers_q2,
+					 &gl_mqa_env.zero_ret_time_cr_attribs,
+					 SA_MSG_QUEUE_CREATE, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ASYNC_ZERO_SIZE_T] =
+	{&gl_mqa_env.msg_hdl1, 127, &gl_mqa_env.zero_q,
+	 &gl_mqa_env.zero_size_cr_attribs, SA_MSG_QUEUE_CREATE, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ASYNC_EXIST_ERR_BUSY_T] = {&gl_mqa_env.msg_hdl1, 128,
+					       &gl_mqa_env.non_pers_q, NULL,
+					       SA_MSG_QUEUE_EMPTY, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ASYNC_EXIST_SUCCESS2_T] = {&gl_mqa_env.msg_hdl1, 129,
+					       &gl_mqa_env.non_pers_q, NULL, 0,
+					       SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ASYNC_PERS_EMPTY_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, 130,
+						   &gl_mqa_env.pers_q, NULL,
 						   SA_MSG_QUEUE_EMPTY,
 						   SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_EXIST_SUCCESS2_T] = {&gl_mqa_env.msg_hdl1, 129,
-						   &gl_mqa_env.non_pers_q, NULL,
-						   0, SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_PERS_EMPTY_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
-						       130, &gl_mqa_env.pers_q,
-						       NULL, SA_MSG_QUEUE_EMPTY,
-						       SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_EXIST_ERR_BUSY2_T] = {&gl_mqa_env.msg_hdl1, 131,
-						    &gl_mqa_env.pers_q, NULL,
-						    SA_MSG_QUEUE_EMPTY,
-						    SA_AIS_OK},
-	[MSG_QUEUE_OPEN_ASYNC_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1, 132,
-						  &gl_mqa_env.pers_q,
-						  &gl_mqa_env.pers_cr_attribs,
-						  SA_MSG_QUEUE_CREATE,
-						  SA_AIS_ERR_TRY_AGAIN},
+    [MSG_QUEUE_OPEN_ASYNC_EXIST_ERR_BUSY2_T] = {&gl_mqa_env.msg_hdl1, 131,
+						&gl_mqa_env.pers_q, NULL,
+						SA_MSG_QUEUE_EMPTY, SA_AIS_OK},
+    [MSG_QUEUE_OPEN_ASYNC_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1, 132,
+					      &gl_mqa_env.pers_q,
+					      &gl_mqa_env.pers_cr_attribs,
+					      SA_MSG_QUEUE_CREATE,
+					      SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgQueueOpenAsync(int i, MQSV_CONFIG_FLAG flg)
@@ -1101,42 +1072,33 @@ int tet_test_red_msgQueueOpenAsync(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Queue Close Test cases  ***************** */
 
 char *API_Mqsv_QueueClose_resultstring[] = {
-	[MSG_QUEUE_CLOSE_INV_HANDLE_T] =
-	    "saMsgQueueClose with invalid Queue Handle",
-	[MSG_QUEUE_CLOSE_SUCCESS_HDL1_T] =
-	    "saMsgQueueClose with valid parameters",
-	[MSG_QUEUE_CLOSE_SUCCESS_HDL2_T] =
-	    "saMsgQueueClose with valid parameters",
-	[MSG_QUEUE_CLOSE_SUCCESS_HDL3_T] =
-	    "saMsgQueueClose with valid parameters",
-	[MSG_QUEUE_CLOSE_SUCCESS_HDL4_T] =
-	    "saMsgQueueClose with valid parameters",
-	[MSG_QUEUE_CLOSE_BAD_HANDLE1_T] =
-	    "saMsgQueueClose with Bad Queue Handle",
-	[MSG_QUEUE_CLOSE_BAD_HANDLE2_T] =
-	    "saMsgQueueClose with Bad Queue Handle",
-	[MSG_QUEUE_CLOSE_SUCCESS_HDL5_T] =
-	    "saMsgQueueClose with valid parameters",
-	[MSG_QUEUE_CLOSE_ERR_TRY_AGAIN_T] =
-	    "saMsgQueueClose when service is not available",
+    [MSG_QUEUE_CLOSE_INV_HANDLE_T] =
+	"saMsgQueueClose with invalid Queue Handle",
+    [MSG_QUEUE_CLOSE_SUCCESS_HDL1_T] = "saMsgQueueClose with valid parameters",
+    [MSG_QUEUE_CLOSE_SUCCESS_HDL2_T] = "saMsgQueueClose with valid parameters",
+    [MSG_QUEUE_CLOSE_SUCCESS_HDL3_T] = "saMsgQueueClose with valid parameters",
+    [MSG_QUEUE_CLOSE_SUCCESS_HDL4_T] = "saMsgQueueClose with valid parameters",
+    [MSG_QUEUE_CLOSE_BAD_HANDLE1_T] = "saMsgQueueClose with Bad Queue Handle",
+    [MSG_QUEUE_CLOSE_BAD_HANDLE2_T] = "saMsgQueueClose with Bad Queue Handle",
+    [MSG_QUEUE_CLOSE_SUCCESS_HDL5_T] = "saMsgQueueClose with valid parameters",
+    [MSG_QUEUE_CLOSE_ERR_TRY_AGAIN_T] =
+	"saMsgQueueClose when service is not available",
 };
 
 struct SafMsgQueueClose API_Mqsv_QueueClose[] = {
-	[MSG_QUEUE_CLOSE_INV_HANDLE_T] = {&gl_mqa_env.inv_params.inv_q_hdl,
-					  SA_AIS_ERR_BAD_HANDLE},
-	[MSG_QUEUE_CLOSE_SUCCESS_HDL1_T] = {&gl_mqa_env.pers_q_hdl, SA_AIS_OK},
-	[MSG_QUEUE_CLOSE_SUCCESS_HDL2_T] = {&gl_mqa_env.npers_q_hdl, SA_AIS_OK},
-	[MSG_QUEUE_CLOSE_SUCCESS_HDL3_T] = {&gl_mqa_env.pers_q_hdl2, SA_AIS_OK},
-	[MSG_QUEUE_CLOSE_SUCCESS_HDL4_T] = {&gl_mqa_env.npers_q_hdl2,
-					    SA_AIS_OK},
-	[MSG_QUEUE_CLOSE_BAD_HANDLE1_T] = {&gl_mqa_env.pers_q_hdl,
-					   SA_AIS_ERR_BAD_HANDLE},
-	[MSG_QUEUE_CLOSE_BAD_HANDLE2_T] = {&gl_mqa_env.npers_q_hdl,
-					   SA_AIS_ERR_BAD_HANDLE},
-	[MSG_QUEUE_CLOSE_SUCCESS_HDL5_T] = {&gl_mqa_env.open_clbk_qhdl,
-					    SA_AIS_OK},
-	[MSG_QUEUE_CLOSE_ERR_TRY_AGAIN_T] = {&gl_mqa_env.pers_q_hdl,
-					     SA_AIS_ERR_TRY_AGAIN},
+    [MSG_QUEUE_CLOSE_INV_HANDLE_T] = {&gl_mqa_env.inv_params.inv_q_hdl,
+				      SA_AIS_ERR_BAD_HANDLE},
+    [MSG_QUEUE_CLOSE_SUCCESS_HDL1_T] = {&gl_mqa_env.pers_q_hdl, SA_AIS_OK},
+    [MSG_QUEUE_CLOSE_SUCCESS_HDL2_T] = {&gl_mqa_env.npers_q_hdl, SA_AIS_OK},
+    [MSG_QUEUE_CLOSE_SUCCESS_HDL3_T] = {&gl_mqa_env.pers_q_hdl2, SA_AIS_OK},
+    [MSG_QUEUE_CLOSE_SUCCESS_HDL4_T] = {&gl_mqa_env.npers_q_hdl2, SA_AIS_OK},
+    [MSG_QUEUE_CLOSE_BAD_HANDLE1_T] = {&gl_mqa_env.pers_q_hdl,
+				       SA_AIS_ERR_BAD_HANDLE},
+    [MSG_QUEUE_CLOSE_BAD_HANDLE2_T] = {&gl_mqa_env.npers_q_hdl,
+				       SA_AIS_ERR_BAD_HANDLE},
+    [MSG_QUEUE_CLOSE_SUCCESS_HDL5_T] = {&gl_mqa_env.open_clbk_qhdl, SA_AIS_OK},
+    [MSG_QUEUE_CLOSE_ERR_TRY_AGAIN_T] = {&gl_mqa_env.pers_q_hdl,
+					 SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgQueueClose(int i, MQSV_CONFIG_FLAG flg)
@@ -1185,86 +1147,84 @@ int tet_test_red_msgQueueClose(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Queue Status Get Test cases  ***************** */
 
 char *API_Mqsv_QueueStatusGet_resultstring[] = {
-	[MSG_QUEUE_STATUS_BAD_HANDLE_T] =
-	    "saMsgQueueStatusGet with invalid Message Handle",
-	[MSG_QUEUE_STATUS_FINALIZED_HDL_T] =
-	    "saMsgQueueStatusGet with finalized Message Handle",
-	[MSG_QUEUE_STATUS_NULL_STATUS_T] =
-	    "saMsgQueueStatusGet with Null status parameter",
-	[MSG_QUEUE_STATUS_NULL_NAME_T] =
-	    "saMsgQueueStatusGet with Null Queue name",
-	[MSG_QUEUE_STATUS_GET_SUCCESS_T] =
-	    "saMsgQueueStatusGet with valid parameters",
-	[MSG_QUEUE_STATUS_GET_SUCCESS_Q2_T] =
-	    "saMsgQueueStatusGet with valid parameters",
-	[MSG_QUEUE_STATUS_GET_SUCCESS_Q3_T] =
-	    "saMsgQueueStatusGet with valid parameters",
-	[MSG_QUEUE_STATUS_GET_SUCCESS_Q4_T] =
-	    "saMsgQueueStatusGet with valid parameters",
-	[MSG_QUEUE_STATUS_GET_SUCCESS_Q5_T] =
-	    "saMsgQueueStatusGet with valid parameters",
-	[MSG_QUEUE_STATUS_NOT_EXIST_Q1_T] =
-	    "saMsgQueueStatusGet for a queue that does not exist",
-	[MSG_QUEUE_STATUS_NOT_EXIST_Q2_T] =
-	    "saMsgQueueStatusGet for a queue that does not exist",
-	[MSG_QUEUE_STATUS_NOT_EXIST_Q3_T] =
-	    "saMsgQueueStatusGet for a queue that does not exist",
-	[MSG_QUEUE_STATUS_NOT_EXIST_Q4_T] =
-	    "saMsgQueueStatusGet for a queue that does not exist",
-	[MSG_QUEUE_STATUS_ERR_TRY_AGAIN_T] =
-	    "saMsgQueueStatusGet when service is not available",
+    [MSG_QUEUE_STATUS_BAD_HANDLE_T] =
+	"saMsgQueueStatusGet with invalid Message Handle",
+    [MSG_QUEUE_STATUS_FINALIZED_HDL_T] =
+	"saMsgQueueStatusGet with finalized Message Handle",
+    [MSG_QUEUE_STATUS_NULL_STATUS_T] =
+	"saMsgQueueStatusGet with Null status parameter",
+    [MSG_QUEUE_STATUS_NULL_NAME_T] = "saMsgQueueStatusGet with Null Queue name",
+    [MSG_QUEUE_STATUS_GET_SUCCESS_T] =
+	"saMsgQueueStatusGet with valid parameters",
+    [MSG_QUEUE_STATUS_GET_SUCCESS_Q2_T] =
+	"saMsgQueueStatusGet with valid parameters",
+    [MSG_QUEUE_STATUS_GET_SUCCESS_Q3_T] =
+	"saMsgQueueStatusGet with valid parameters",
+    [MSG_QUEUE_STATUS_GET_SUCCESS_Q4_T] =
+	"saMsgQueueStatusGet with valid parameters",
+    [MSG_QUEUE_STATUS_GET_SUCCESS_Q5_T] =
+	"saMsgQueueStatusGet with valid parameters",
+    [MSG_QUEUE_STATUS_NOT_EXIST_Q1_T] =
+	"saMsgQueueStatusGet for a queue that does not exist",
+    [MSG_QUEUE_STATUS_NOT_EXIST_Q2_T] =
+	"saMsgQueueStatusGet for a queue that does not exist",
+    [MSG_QUEUE_STATUS_NOT_EXIST_Q3_T] =
+	"saMsgQueueStatusGet for a queue that does not exist",
+    [MSG_QUEUE_STATUS_NOT_EXIST_Q4_T] =
+	"saMsgQueueStatusGet for a queue that does not exist",
+    [MSG_QUEUE_STATUS_ERR_TRY_AGAIN_T] =
+	"saMsgQueueStatusGet when service is not available",
 };
 
 struct SafMsgQueueStatusGet API_Mqsv_QueueStatusGet[] = {
-	[MSG_QUEUE_STATUS_BAD_HANDLE_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
-					   &gl_mqa_env.pers_q,
-					   &gl_mqa_env.q_status,
-					   SA_AIS_ERR_BAD_HANDLE},
-	[MSG_QUEUE_STATUS_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.pers_q,
-					      &gl_mqa_env.q_status,
-					      SA_AIS_ERR_BAD_HANDLE},
-	[MSG_QUEUE_STATUS_NULL_STATUS_T] = {&gl_mqa_env.msg_hdl1,
-					    &gl_mqa_env.pers_q, NULL,
-					    SA_AIS_ERR_INVALID_PARAM},
-	[MSG_QUEUE_STATUS_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
+    [MSG_QUEUE_STATUS_BAD_HANDLE_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+				       &gl_mqa_env.pers_q, &gl_mqa_env.q_status,
+				       SA_AIS_ERR_BAD_HANDLE},
+    [MSG_QUEUE_STATUS_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.pers_q,
 					  &gl_mqa_env.q_status,
-					  SA_AIS_ERR_INVALID_PARAM},
-	[MSG_QUEUE_STATUS_GET_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
-					    &gl_mqa_env.pers_q,
-					    &gl_mqa_env.q_status, SA_AIS_OK},
-	[MSG_QUEUE_STATUS_GET_SUCCESS_Q2_T] = {&gl_mqa_env.msg_hdl1,
-					       &gl_mqa_env.non_pers_q,
-					       &gl_mqa_env.q_status, SA_AIS_OK},
-	[MSG_QUEUE_STATUS_GET_SUCCESS_Q3_T] = {&gl_mqa_env.msg_hdl1,
-					       &gl_mqa_env.pers_q2,
-					       &gl_mqa_env.q_status, SA_AIS_OK},
-	[MSG_QUEUE_STATUS_GET_SUCCESS_Q4_T] = {&gl_mqa_env.msg_hdl1,
-					       &gl_mqa_env.non_pers_q2,
-					       &gl_mqa_env.q_status, SA_AIS_OK},
-	[MSG_QUEUE_STATUS_GET_SUCCESS_Q5_T] = {&gl_mqa_env.msg_hdl1,
-					       &gl_mqa_env.zero_q,
-					       &gl_mqa_env.q_status, SA_AIS_OK},
-	[MSG_QUEUE_STATUS_NOT_EXIST_Q1_T] = {&gl_mqa_env.msg_hdl1,
-					     &gl_mqa_env.pers_q,
-					     &gl_mqa_env.q_status,
-					     SA_AIS_ERR_NOT_EXIST},
-	[MSG_QUEUE_STATUS_NOT_EXIST_Q2_T] = {&gl_mqa_env.msg_hdl1,
-					     &gl_mqa_env.non_pers_q,
-					     &gl_mqa_env.q_status,
-					     SA_AIS_ERR_NOT_EXIST},
-	[MSG_QUEUE_STATUS_NOT_EXIST_Q3_T] = {&gl_mqa_env.msg_hdl1,
-					     &gl_mqa_env.pers_q2,
-					     &gl_mqa_env.q_status,
-					     SA_AIS_ERR_NOT_EXIST},
-	[MSG_QUEUE_STATUS_NOT_EXIST_Q4_T] = {&gl_mqa_env.msg_hdl1,
-					     &gl_mqa_env.non_pers_q2,
-					     &gl_mqa_env.q_status,
-					     SA_AIS_ERR_NOT_EXIST},
-	[MSG_QUEUE_STATUS_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.pers_q,
-					      &gl_mqa_env.q_status,
-					      SA_AIS_ERR_TRY_AGAIN},
+					  SA_AIS_ERR_BAD_HANDLE},
+    [MSG_QUEUE_STATUS_NULL_STATUS_T] = {&gl_mqa_env.msg_hdl1,
+					&gl_mqa_env.pers_q, NULL,
+					SA_AIS_ERR_INVALID_PARAM},
+    [MSG_QUEUE_STATUS_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
+				      &gl_mqa_env.q_status,
+				      SA_AIS_ERR_INVALID_PARAM},
+    [MSG_QUEUE_STATUS_GET_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
+					&gl_mqa_env.pers_q,
+					&gl_mqa_env.q_status, SA_AIS_OK},
+    [MSG_QUEUE_STATUS_GET_SUCCESS_Q2_T] = {&gl_mqa_env.msg_hdl1,
+					   &gl_mqa_env.non_pers_q,
+					   &gl_mqa_env.q_status, SA_AIS_OK},
+    [MSG_QUEUE_STATUS_GET_SUCCESS_Q3_T] = {&gl_mqa_env.msg_hdl1,
+					   &gl_mqa_env.pers_q2,
+					   &gl_mqa_env.q_status, SA_AIS_OK},
+    [MSG_QUEUE_STATUS_GET_SUCCESS_Q4_T] = {&gl_mqa_env.msg_hdl1,
+					   &gl_mqa_env.non_pers_q2,
+					   &gl_mqa_env.q_status, SA_AIS_OK},
+    [MSG_QUEUE_STATUS_GET_SUCCESS_Q5_T] = {&gl_mqa_env.msg_hdl1,
+					   &gl_mqa_env.zero_q,
+					   &gl_mqa_env.q_status, SA_AIS_OK},
+    [MSG_QUEUE_STATUS_NOT_EXIST_Q1_T] = {&gl_mqa_env.msg_hdl1,
+					 &gl_mqa_env.pers_q,
+					 &gl_mqa_env.q_status,
+					 SA_AIS_ERR_NOT_EXIST},
+    [MSG_QUEUE_STATUS_NOT_EXIST_Q2_T] = {&gl_mqa_env.msg_hdl1,
+					 &gl_mqa_env.non_pers_q,
+					 &gl_mqa_env.q_status,
+					 SA_AIS_ERR_NOT_EXIST},
+    [MSG_QUEUE_STATUS_NOT_EXIST_Q3_T] = {&gl_mqa_env.msg_hdl1,
+					 &gl_mqa_env.pers_q2,
+					 &gl_mqa_env.q_status,
+					 SA_AIS_ERR_NOT_EXIST},
+    [MSG_QUEUE_STATUS_NOT_EXIST_Q4_T] = {&gl_mqa_env.msg_hdl1,
+					 &gl_mqa_env.non_pers_q2,
+					 &gl_mqa_env.q_status,
+					 SA_AIS_ERR_NOT_EXIST},
+    [MSG_QUEUE_STATUS_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.pers_q,
+					  &gl_mqa_env.q_status,
+					  SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgQueueStatusGet(int i, MQSV_CONFIG_FLAG flg)
@@ -1327,53 +1287,47 @@ int tet_test_red_msgQueueStatusGet(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Queue Unlink Test cases  ***************** */
 
 char *API_Mqsv_QueueUnlink_resultstring[] = {
-	[MSG_QUEUE_UNLINK_BAD_HANDLE_T] =
-	    "saMsgQueueUnlink with invalid Message Handle",
-	[MSG_QUEUE_UNLINK_FINALIZED_HDL_T] =
-	    "saMsgQueueUnlink with finalized Message Handle",
-	[MSG_QUEUE_UNLINK_NULL_NAME_T] =
-	    "saMsgQueueUnlink with Null Queue name",
-	[MSG_QUEUE_UNLINK_ERR_NOT_EXIST_T] =
-	    "saMsgQueueUnlink for a queue that does not exist",
-	[MSG_QUEUE_UNLINK_SUCCESS_Q1_T] =
-	    "saMsgQueueUnlink with valid parameters",
-	[MSG_QUEUE_UNLINK_SUCCESS_Q2_T] =
-	    "saMsgQueueUnlink with valid parameters",
-	[MSG_QUEUE_UNLINK_SUCCESS_Q3_T] =
-	    "saMsgQueueUnlink with valid parameters",
-	[MSG_QUEUE_UNLINK_SUCCESS_Q4_T] =
-	    "saMsgQueueUnlink with valid parameters",
-	[MSG_QUEUE_UNLINK_SUCCESS_Q5_T] =
-	    "saMsgQueueUnlink with valid parameters",
-	[MSG_QUEUE_UNLINK_ERR_TRY_AGAIN_T] =
-	    "saMsgQueueUnlink when service is not available",
+    [MSG_QUEUE_UNLINK_BAD_HANDLE_T] =
+	"saMsgQueueUnlink with invalid Message Handle",
+    [MSG_QUEUE_UNLINK_FINALIZED_HDL_T] =
+	"saMsgQueueUnlink with finalized Message Handle",
+    [MSG_QUEUE_UNLINK_NULL_NAME_T] = "saMsgQueueUnlink with Null Queue name",
+    [MSG_QUEUE_UNLINK_ERR_NOT_EXIST_T] =
+	"saMsgQueueUnlink for a queue that does not exist",
+    [MSG_QUEUE_UNLINK_SUCCESS_Q1_T] = "saMsgQueueUnlink with valid parameters",
+    [MSG_QUEUE_UNLINK_SUCCESS_Q2_T] = "saMsgQueueUnlink with valid parameters",
+    [MSG_QUEUE_UNLINK_SUCCESS_Q3_T] = "saMsgQueueUnlink with valid parameters",
+    [MSG_QUEUE_UNLINK_SUCCESS_Q4_T] = "saMsgQueueUnlink with valid parameters",
+    [MSG_QUEUE_UNLINK_SUCCESS_Q5_T] = "saMsgQueueUnlink with valid parameters",
+    [MSG_QUEUE_UNLINK_ERR_TRY_AGAIN_T] =
+	"saMsgQueueUnlink when service is not available",
 };
 
 struct SafMsgQueueUnlink API_Mqsv_QueueUnlink[] = {
-	[MSG_QUEUE_UNLINK_BAD_HANDLE_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
-					   &gl_mqa_env.pers_q,
-					   SA_AIS_ERR_BAD_HANDLE},
-	[MSG_QUEUE_UNLINK_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.pers_q,
-					      SA_AIS_ERR_BAD_HANDLE},
-	[MSG_QUEUE_UNLINK_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
-					  SA_AIS_ERR_INVALID_PARAM},
-	[MSG_QUEUE_UNLINK_ERR_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.pers_q,
-					      SA_AIS_ERR_NOT_EXIST},
-	[MSG_QUEUE_UNLINK_SUCCESS_Q1_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.pers_q, SA_AIS_OK},
-	[MSG_QUEUE_UNLINK_SUCCESS_Q2_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.non_pers_q, SA_AIS_OK},
-	[MSG_QUEUE_UNLINK_SUCCESS_Q3_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.pers_q2, SA_AIS_OK},
-	[MSG_QUEUE_UNLINK_SUCCESS_Q4_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.non_pers_q2, SA_AIS_OK},
-	[MSG_QUEUE_UNLINK_SUCCESS_Q5_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.zero_q, SA_AIS_OK},
-	[MSG_QUEUE_UNLINK_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.pers_q,
-					      SA_AIS_ERR_TRY_AGAIN},
+    [MSG_QUEUE_UNLINK_BAD_HANDLE_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+				       &gl_mqa_env.pers_q,
+				       SA_AIS_ERR_BAD_HANDLE},
+    [MSG_QUEUE_UNLINK_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.pers_q,
+					  SA_AIS_ERR_BAD_HANDLE},
+    [MSG_QUEUE_UNLINK_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
+				      SA_AIS_ERR_INVALID_PARAM},
+    [MSG_QUEUE_UNLINK_ERR_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.pers_q,
+					  SA_AIS_ERR_NOT_EXIST},
+    [MSG_QUEUE_UNLINK_SUCCESS_Q1_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q,
+				       SA_AIS_OK},
+    [MSG_QUEUE_UNLINK_SUCCESS_Q2_T] = {&gl_mqa_env.msg_hdl1,
+				       &gl_mqa_env.non_pers_q, SA_AIS_OK},
+    [MSG_QUEUE_UNLINK_SUCCESS_Q3_T] = {&gl_mqa_env.msg_hdl1,
+				       &gl_mqa_env.pers_q2, SA_AIS_OK},
+    [MSG_QUEUE_UNLINK_SUCCESS_Q4_T] = {&gl_mqa_env.msg_hdl1,
+				       &gl_mqa_env.non_pers_q2, SA_AIS_OK},
+    [MSG_QUEUE_UNLINK_SUCCESS_Q5_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.zero_q,
+				       SA_AIS_OK},
+    [MSG_QUEUE_UNLINK_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.pers_q,
+					  SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgQueueUnlink(int i, MQSV_CONFIG_FLAG flg)
@@ -1433,96 +1387,88 @@ int tet_test_red_msgQueueUnlink(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Queue Group Create Test cases  ***************** */
 
 char *API_Mqsv_GroupCreate_resultstring[] = {
-	[MSG_GROUP_CREATE_BAD_HDL_T] =
-	    "saMsgQueueGroupCreate with invalid Message Handle",
-	[MSG_GROUP_CREATE_FINALIZED_HDL_T] =
-	    "saMsgQueueGroupCreate with finalized Message Handle",
-	[MSG_GROUP_CREATE_NULL_NAME_T] =
-	    "saMsgQueueGroupCreate with Null Group Name",
-	[MSG_GROUP_CREATE_BAD_POL_T] = "saMsgQueueGroupCreate with Bad Policy",
-	[MSG_GROUP_CREATE_LOCAL_RR_T] =
-	    "saMsgQueueGroupCreate with Policy not supported - Local Round Robin",
-	[MSG_GROUP_CREATE_LCL_BSTQ_NOT_SUPP_T] =
-	    "saMsgQueueGroupCreate with Policy not supported - Local Best Queue",
-	[MSG_GROUP_CREATE_BROADCAST_T] =
-	    "saMsgQueueGroupCreate with Policy not supported - Broadcast",
-	[MSG_GROUP_CREATE_SUCCESS_T] =
-	    "saMsgQueueGroupCreate with valid parameters",
-	[MSG_GROUP_CREATE_ERR_EXIST_T] =
-	    "saMsgQueueGroupCreate for a group that already exists",
-	[MSG_GROUP_CREATE_ERR_EXIST2_T] =
-	    "saMsgQueueGroupCreate for a group that exists with different policy",
-	[MSG_GROUP_CREATE_ERR_EXIST3_T] =
-	    "saMsgQueueGroupCreate for a group that exists with different policy",
-	[MSG_GROUP_CREATE_ERR_EXIST4_T] =
-	    "saMsgQueueGroupCreate for a group that exists with different policy",
-	[MSG_GROUP_CREATE_SUCCESS_GR2_T] =
-	    "saMsgQueueGroupCreate with valid parameters",
-	[MSG_GROUP_CREATE_BROADCAST2_T] =
-	    "saMsgQueueGroupCreate with Policy not supported - Broadcast",
-	[MSG_GROUP_CREATE_ERR_TRY_AGAIN_T] =
-	    "saMsgQueueGroupCreate when service is not available",
+    [MSG_GROUP_CREATE_BAD_HDL_T] =
+	"saMsgQueueGroupCreate with invalid Message Handle",
+    [MSG_GROUP_CREATE_FINALIZED_HDL_T] =
+	"saMsgQueueGroupCreate with finalized Message Handle",
+    [MSG_GROUP_CREATE_NULL_NAME_T] =
+	"saMsgQueueGroupCreate with Null Group Name",
+    [MSG_GROUP_CREATE_BAD_POL_T] = "saMsgQueueGroupCreate with Bad Policy",
+    [MSG_GROUP_CREATE_LOCAL_RR_T] =
+	"saMsgQueueGroupCreate with Policy not supported - Local Round Robin",
+    [MSG_GROUP_CREATE_LCL_BSTQ_NOT_SUPP_T] =
+	"saMsgQueueGroupCreate with Policy not supported - Local Best Queue",
+    [MSG_GROUP_CREATE_BROADCAST_T] =
+	"saMsgQueueGroupCreate with Policy not supported - Broadcast",
+    [MSG_GROUP_CREATE_SUCCESS_T] =
+	"saMsgQueueGroupCreate with valid parameters",
+    [MSG_GROUP_CREATE_ERR_EXIST_T] =
+	"saMsgQueueGroupCreate for a group that already exists",
+    [MSG_GROUP_CREATE_ERR_EXIST2_T] =
+	"saMsgQueueGroupCreate for a group that exists with different policy",
+    [MSG_GROUP_CREATE_ERR_EXIST3_T] =
+	"saMsgQueueGroupCreate for a group that exists with different policy",
+    [MSG_GROUP_CREATE_ERR_EXIST4_T] =
+	"saMsgQueueGroupCreate for a group that exists with different policy",
+    [MSG_GROUP_CREATE_SUCCESS_GR2_T] =
+	"saMsgQueueGroupCreate with valid parameters",
+    [MSG_GROUP_CREATE_BROADCAST2_T] =
+	"saMsgQueueGroupCreate with Policy not supported - Broadcast",
+    [MSG_GROUP_CREATE_ERR_TRY_AGAIN_T] =
+	"saMsgQueueGroupCreate when service is not available",
 };
 
 struct SafMsgGroupCreate API_Mqsv_GroupCreate[] = {
-	[MSG_GROUP_CREATE_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
-					&gl_mqa_env.qgroup1,
-					SA_MSG_QUEUE_GROUP_ROUND_ROBIN,
-					SA_AIS_ERR_BAD_HANDLE},
-	[MSG_GROUP_CREATE_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.qgroup1,
-					      SA_MSG_QUEUE_GROUP_ROUND_ROBIN,
-					      SA_AIS_ERR_BAD_HANDLE},
-	[MSG_GROUP_CREATE_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
-					  SA_MSG_QUEUE_GROUP_ROUND_ROBIN,
-					  SA_AIS_ERR_INVALID_PARAM},
-	[MSG_GROUP_CREATE_BAD_POL_T] = {&gl_mqa_env.msg_hdl1,
-					&gl_mqa_env.qgroup1,
-					!SA_MSG_QUEUE_GROUP_ROUND_ROBIN,
-					SA_AIS_ERR_INVALID_PARAM},
-	[MSG_GROUP_CREATE_LOCAL_RR_T] = {&gl_mqa_env.msg_hdl1,
-					 &gl_mqa_env.qgroup1,
-					 SA_MSG_QUEUE_GROUP_LOCAL_ROUND_ROBIN,
-					 SA_AIS_OK},
-	[MSG_GROUP_CREATE_LCL_BSTQ_NOT_SUPP_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
-	     SA_MSG_QUEUE_GROUP_LOCAL_BEST_QUEUE, SA_AIS_ERR_NOT_SUPPORTED},
-	[MSG_GROUP_CREATE_BROADCAST_T] = {&gl_mqa_env.msg_hdl1,
+    [MSG_GROUP_CREATE_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+				    &gl_mqa_env.qgroup1,
+				    SA_MSG_QUEUE_GROUP_ROUND_ROBIN,
+				    SA_AIS_ERR_BAD_HANDLE},
+    [MSG_GROUP_CREATE_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
 					  &gl_mqa_env.qgroup1,
-					  SA_MSG_QUEUE_GROUP_BROADCAST,
-					  SA_AIS_OK},
-	[MSG_GROUP_CREATE_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
-					&gl_mqa_env.qgroup1,
+					  SA_MSG_QUEUE_GROUP_ROUND_ROBIN,
+					  SA_AIS_ERR_BAD_HANDLE},
+    [MSG_GROUP_CREATE_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
+				      SA_MSG_QUEUE_GROUP_ROUND_ROBIN,
+				      SA_AIS_ERR_INVALID_PARAM},
+    [MSG_GROUP_CREATE_BAD_POL_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				    !SA_MSG_QUEUE_GROUP_ROUND_ROBIN,
+				    SA_AIS_ERR_INVALID_PARAM},
+    [MSG_GROUP_CREATE_LOCAL_RR_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				     SA_MSG_QUEUE_GROUP_LOCAL_ROUND_ROBIN,
+				     SA_AIS_OK},
+    [MSG_GROUP_CREATE_LCL_BSTQ_NOT_SUPP_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+	 SA_MSG_QUEUE_GROUP_LOCAL_BEST_QUEUE, SA_AIS_ERR_NOT_SUPPORTED},
+    [MSG_GROUP_CREATE_BROADCAST_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				      SA_MSG_QUEUE_GROUP_BROADCAST, SA_AIS_OK},
+    [MSG_GROUP_CREATE_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				    SA_MSG_QUEUE_GROUP_ROUND_ROBIN, SA_AIS_OK},
+    [MSG_GROUP_CREATE_ERR_EXIST_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				      SA_MSG_QUEUE_GROUP_ROUND_ROBIN,
+				      SA_AIS_ERR_EXIST},
+    [MSG_GROUP_CREATE_ERR_EXIST2_T] = {&gl_mqa_env.msg_hdl1,
+				       &gl_mqa_env.qgroup1,
+				       SA_MSG_QUEUE_GROUP_LOCAL_ROUND_ROBIN,
+				       SA_AIS_ERR_EXIST},
+    [MSG_GROUP_CREATE_ERR_EXIST3_T] = {&gl_mqa_env.msg_hdl1,
+				       &gl_mqa_env.qgroup1,
+				       SA_MSG_QUEUE_GROUP_LOCAL_BEST_QUEUE,
+				       SA_AIS_ERR_NOT_SUPPORTED},
+    [MSG_GROUP_CREATE_ERR_EXIST4_T] = {&gl_mqa_env.msg_hdl1,
+				       &gl_mqa_env.qgroup1,
+				       SA_MSG_QUEUE_GROUP_BROADCAST,
+				       SA_AIS_ERR_EXIST},
+    [MSG_GROUP_CREATE_SUCCESS_GR2_T] = {&gl_mqa_env.msg_hdl1,
+					&gl_mqa_env.qgroup2,
 					SA_MSG_QUEUE_GROUP_ROUND_ROBIN,
 					SA_AIS_OK},
-	[MSG_GROUP_CREATE_ERR_EXIST_T] = {&gl_mqa_env.msg_hdl1,
+    [MSG_GROUP_CREATE_BROADCAST2_T] = {&gl_mqa_env.msg_hdl1,
+				       &gl_mqa_env.qgroup2,
+				       SA_MSG_QUEUE_GROUP_BROADCAST, SA_AIS_OK},
+    [MSG_GROUP_CREATE_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
 					  &gl_mqa_env.qgroup1,
 					  SA_MSG_QUEUE_GROUP_ROUND_ROBIN,
-					  SA_AIS_ERR_EXIST},
-	[MSG_GROUP_CREATE_ERR_EXIST2_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.qgroup1,
-					   SA_MSG_QUEUE_GROUP_LOCAL_ROUND_ROBIN,
-					   SA_AIS_ERR_EXIST},
-	[MSG_GROUP_CREATE_ERR_EXIST3_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.qgroup1,
-					   SA_MSG_QUEUE_GROUP_LOCAL_BEST_QUEUE,
-					   SA_AIS_ERR_NOT_SUPPORTED},
-	[MSG_GROUP_CREATE_ERR_EXIST4_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.qgroup1,
-					   SA_MSG_QUEUE_GROUP_BROADCAST,
-					   SA_AIS_ERR_EXIST},
-	[MSG_GROUP_CREATE_SUCCESS_GR2_T] = {&gl_mqa_env.msg_hdl1,
-					    &gl_mqa_env.qgroup2,
-					    SA_MSG_QUEUE_GROUP_ROUND_ROBIN,
-					    SA_AIS_OK},
-	[MSG_GROUP_CREATE_BROADCAST2_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.qgroup2,
-					   SA_MSG_QUEUE_GROUP_BROADCAST,
-					   SA_AIS_OK},
-	[MSG_GROUP_CREATE_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.qgroup1,
-					      SA_MSG_QUEUE_GROUP_ROUND_ROBIN,
-					      SA_AIS_ERR_TRY_AGAIN},
+					  SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgGroupCreate(int i, MQSV_CONFIG_FLAG flg)
@@ -1592,82 +1538,74 @@ int tet_test_red_msgGroupCreate(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Queue Group Insert Test cases  ***************** */
 
 char *API_Mqsv_GroupInsert_resultstring[] = {
-	[MSG_GROUP_INSERT_BAD_HDL_T] =
-	    "saMsgQueueGroupInsert with invalid Message Handle",
-	[MSG_GROUP_INSERT_FINALIZED_HDL_T] =
-	    "saMsgQueueGroupInsert with finalized Message Handle",
-	[MSG_GROUP_INSERT_NULL_GR_NAME_T] =
-	    "saMsgQueueGroupInsert with Null Group name",
-	[MSG_GROUP_INSERT_NULL_Q_NAME_T] =
-	    "saMsgQueueGroupInsert with Null Queue name",
-	[MSG_GROUP_INSERT_BAD_GR_T] =
-	    "saMsgQueueGroupInsert with group that not exists",
-	[MSG_GROUP_INSERT_BAD_QUEUE_T] =
-	    "saMsgQueueGroupInsert with queue that not exists",
-	[MSG_GROUP_INSERT_SUCCESS_T] =
-	    "saMsgQueueGroupInsert with valid parameters",
-	[MSG_GROUP_INSERT_SUCCESS_Q2_T] =
-	    "saMsgQueueGroupInsert with valid parameters",
-	[MSG_GROUP_INSERT_SUCCESS_Q3_T] =
-	    "saMsgQueueGroupInsert with valid parameters",
-	[MSG_GROUP_INSERT_SUCCESS_ZEROQ_T] =
-	    "saMsgQueueGroupInsert with valid parameters",
-	[MSG_GROUP_INSERT_ERR_EXIST_T] =
-	    "Insert a queue into a group that already contains the queue",
-	[MSG_GROUP_INSERT_Q1_GROUP2_T] =
-	    "Insert the same queue into another group",
-	[MSG_GROUP_INSERT_Q2_GROUP2_T] =
-	    "saMsgQueueGroupInsert with valid parameters",
-	[MSG_GROUP_INSERT_ERR_TRY_AGAIN_T] =
-	    "saMsgQueueGroupInsert when service is not available",
+    [MSG_GROUP_INSERT_BAD_HDL_T] =
+	"saMsgQueueGroupInsert with invalid Message Handle",
+    [MSG_GROUP_INSERT_FINALIZED_HDL_T] =
+	"saMsgQueueGroupInsert with finalized Message Handle",
+    [MSG_GROUP_INSERT_NULL_GR_NAME_T] =
+	"saMsgQueueGroupInsert with Null Group name",
+    [MSG_GROUP_INSERT_NULL_Q_NAME_T] =
+	"saMsgQueueGroupInsert with Null Queue name",
+    [MSG_GROUP_INSERT_BAD_GR_T] =
+	"saMsgQueueGroupInsert with group that not exists",
+    [MSG_GROUP_INSERT_BAD_QUEUE_T] =
+	"saMsgQueueGroupInsert with queue that not exists",
+    [MSG_GROUP_INSERT_SUCCESS_T] =
+	"saMsgQueueGroupInsert with valid parameters",
+    [MSG_GROUP_INSERT_SUCCESS_Q2_T] =
+	"saMsgQueueGroupInsert with valid parameters",
+    [MSG_GROUP_INSERT_SUCCESS_Q3_T] =
+	"saMsgQueueGroupInsert with valid parameters",
+    [MSG_GROUP_INSERT_SUCCESS_ZEROQ_T] =
+	"saMsgQueueGroupInsert with valid parameters",
+    [MSG_GROUP_INSERT_ERR_EXIST_T] =
+	"Insert a queue into a group that already contains the queue",
+    [MSG_GROUP_INSERT_Q1_GROUP2_T] = "Insert the same queue into another group",
+    [MSG_GROUP_INSERT_Q2_GROUP2_T] =
+	"saMsgQueueGroupInsert with valid parameters",
+    [MSG_GROUP_INSERT_ERR_TRY_AGAIN_T] =
+	"saMsgQueueGroupInsert when service is not available",
 };
 
 struct SafMsgGroupInsert API_Mqsv_GroupInsert[] = {
-	[MSG_GROUP_INSERT_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
-					&gl_mqa_env.qgroup1, &gl_mqa_env.pers_q,
-					SA_AIS_ERR_BAD_HANDLE},
-	[MSG_GROUP_INSERT_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.qgroup1,
-					      &gl_mqa_env.pers_q,
-					      SA_AIS_ERR_BAD_HANDLE},
-	[MSG_GROUP_INSERT_NULL_GR_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
-					     &gl_mqa_env.pers_q,
-					     SA_AIS_ERR_INVALID_PARAM},
-	[MSG_GROUP_INSERT_NULL_Q_NAME_T] = {&gl_mqa_env.msg_hdl1,
-					    &gl_mqa_env.qgroup1, NULL,
-					    SA_AIS_ERR_INVALID_PARAM},
-	[MSG_GROUP_INSERT_BAD_GR_T] = {&gl_mqa_env.msg_hdl1,
-				       &gl_mqa_env.qgroup1, &gl_mqa_env.pers_q,
-				       SA_AIS_ERR_NOT_EXIST},
-	[MSG_GROUP_INSERT_BAD_QUEUE_T] = {&gl_mqa_env.msg_hdl1,
+    [MSG_GROUP_INSERT_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+				    &gl_mqa_env.qgroup1, &gl_mqa_env.pers_q,
+				    SA_AIS_ERR_BAD_HANDLE},
+    [MSG_GROUP_INSERT_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
 					  &gl_mqa_env.qgroup1,
 					  &gl_mqa_env.pers_q,
-					  SA_AIS_ERR_NOT_EXIST},
-	[MSG_GROUP_INSERT_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
-					&gl_mqa_env.qgroup1, &gl_mqa_env.pers_q,
-					SA_AIS_OK},
-	[MSG_GROUP_INSERT_SUCCESS_Q2_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.qgroup1,
-					   &gl_mqa_env.non_pers_q, SA_AIS_OK},
-	[MSG_GROUP_INSERT_SUCCESS_Q3_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.qgroup1,
-					   &gl_mqa_env.pers_q2, SA_AIS_OK},
-	[MSG_GROUP_INSERT_SUCCESS_ZEROQ_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.qgroup1,
-					      &gl_mqa_env.zero_q, SA_AIS_OK},
-	[MSG_GROUP_INSERT_ERR_EXIST_T] = {&gl_mqa_env.msg_hdl1,
+					  SA_AIS_ERR_BAD_HANDLE},
+    [MSG_GROUP_INSERT_NULL_GR_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
+					 &gl_mqa_env.pers_q,
+					 SA_AIS_ERR_INVALID_PARAM},
+    [MSG_GROUP_INSERT_NULL_Q_NAME_T] = {&gl_mqa_env.msg_hdl1,
+					&gl_mqa_env.qgroup1, NULL,
+					SA_AIS_ERR_INVALID_PARAM},
+    [MSG_GROUP_INSERT_BAD_GR_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				   &gl_mqa_env.pers_q, SA_AIS_ERR_NOT_EXIST},
+    [MSG_GROUP_INSERT_BAD_QUEUE_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				      &gl_mqa_env.pers_q, SA_AIS_ERR_NOT_EXIST},
+    [MSG_GROUP_INSERT_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				    &gl_mqa_env.pers_q, SA_AIS_OK},
+    [MSG_GROUP_INSERT_SUCCESS_Q2_T] = {&gl_mqa_env.msg_hdl1,
+				       &gl_mqa_env.qgroup1,
+				       &gl_mqa_env.non_pers_q, SA_AIS_OK},
+    [MSG_GROUP_INSERT_SUCCESS_Q3_T] = {&gl_mqa_env.msg_hdl1,
+				       &gl_mqa_env.qgroup1, &gl_mqa_env.pers_q2,
+				       SA_AIS_OK},
+    [MSG_GROUP_INSERT_SUCCESS_ZEROQ_T] = {&gl_mqa_env.msg_hdl1,
 					  &gl_mqa_env.qgroup1,
-					  &gl_mqa_env.pers_q, SA_AIS_ERR_EXIST},
-	[MSG_GROUP_INSERT_Q1_GROUP2_T] = {&gl_mqa_env.msg_hdl1,
-					  &gl_mqa_env.qgroup2,
-					  &gl_mqa_env.pers_q, SA_AIS_OK},
-	[MSG_GROUP_INSERT_Q2_GROUP2_T] = {&gl_mqa_env.msg_hdl1,
-					  &gl_mqa_env.qgroup2,
-					  &gl_mqa_env.non_pers_q, SA_AIS_OK},
-	[MSG_GROUP_INSERT_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.qgroup1,
-					      &gl_mqa_env.pers_q,
-					      SA_AIS_ERR_TRY_AGAIN},
+					  &gl_mqa_env.zero_q, SA_AIS_OK},
+    [MSG_GROUP_INSERT_ERR_EXIST_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				      &gl_mqa_env.pers_q, SA_AIS_ERR_EXIST},
+    [MSG_GROUP_INSERT_Q1_GROUP2_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup2,
+				      &gl_mqa_env.pers_q, SA_AIS_OK},
+    [MSG_GROUP_INSERT_Q2_GROUP2_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup2,
+				      &gl_mqa_env.non_pers_q, SA_AIS_OK},
+    [MSG_GROUP_INSERT_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.qgroup1,
+					  &gl_mqa_env.pers_q,
+					  SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgGroupInsert(int i, MQSV_CONFIG_FLAG flg)
@@ -1734,67 +1672,60 @@ int tet_test_red_msgGroupInsert(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Queue Group Remove Test cases  ***************** */
 
 char *API_Mqsv_GroupRemove_resultstring[] = {
-	[MSG_GROUP_REMOVE_BAD_HDL_T] =
-	    "saMsgQueueGroupRemove with invalid Message Handle",
-	[MSG_GROUP_REMOVE_FINALIZED_HDL_T] =
-	    "saMsgQueueGroupRemove with finalized Message Handle",
-	[MSG_GROUP_REMOVE_NULL_GR_NAME_T] =
-	    "saMsgQueueGroupRemove with Null Group name",
-	[MSG_GROUP_REMOVE_NULL_Q_NAME_T] =
-	    "saMsgQueueGroupRemove with Null Queue name",
-	[MSG_GROUP_REMOVE_BAD_GROUP_T] = "saMsgQueueGroupRemove with Bad Group",
-	[MSG_GROUP_REMOVE_BAD_QUEUE_T] = "saMsgQueueGroupRemove with Bad Queue",
-	[MSG_GROUP_REMOVE_SUCCESS_T] =
-	    "saMsgGroupQueueRemove with valid parameters",
-	[MSG_GROUP_REMOVE_SUCCESS_Q2_T] =
-	    "saMsgGroupQueueRemove with valid parameters",
-	[MSG_GROUP_REMOVE_SUCCESS_Q3_T] =
-	    "saMsgGroupQueueRemove with valid parameters",
-	[MSG_GROUP_REMOVE_NOT_EXIST_T] =
-	    "Remove a queue from a group that does not contain that queue",
-	[MSG_GROUP_REMOVE_ERR_TRY_AGAIN_T] =
-	    "saMsgGroupQueueRemove when service is not available",
+    [MSG_GROUP_REMOVE_BAD_HDL_T] =
+	"saMsgQueueGroupRemove with invalid Message Handle",
+    [MSG_GROUP_REMOVE_FINALIZED_HDL_T] =
+	"saMsgQueueGroupRemove with finalized Message Handle",
+    [MSG_GROUP_REMOVE_NULL_GR_NAME_T] =
+	"saMsgQueueGroupRemove with Null Group name",
+    [MSG_GROUP_REMOVE_NULL_Q_NAME_T] =
+	"saMsgQueueGroupRemove with Null Queue name",
+    [MSG_GROUP_REMOVE_BAD_GROUP_T] = "saMsgQueueGroupRemove with Bad Group",
+    [MSG_GROUP_REMOVE_BAD_QUEUE_T] = "saMsgQueueGroupRemove with Bad Queue",
+    [MSG_GROUP_REMOVE_SUCCESS_T] =
+	"saMsgGroupQueueRemove with valid parameters",
+    [MSG_GROUP_REMOVE_SUCCESS_Q2_T] =
+	"saMsgGroupQueueRemove with valid parameters",
+    [MSG_GROUP_REMOVE_SUCCESS_Q3_T] =
+	"saMsgGroupQueueRemove with valid parameters",
+    [MSG_GROUP_REMOVE_NOT_EXIST_T] =
+	"Remove a queue from a group that does not contain that queue",
+    [MSG_GROUP_REMOVE_ERR_TRY_AGAIN_T] =
+	"saMsgGroupQueueRemove when service is not available",
 };
 
 struct SafMsgGroupRemove API_Mqsv_GroupRemove[] = {
-	[MSG_GROUP_REMOVE_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
-					&gl_mqa_env.qgroup1, &gl_mqa_env.pers_q,
-					SA_AIS_ERR_BAD_HANDLE},
-	[MSG_GROUP_REMOVE_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.qgroup1,
-					      &gl_mqa_env.pers_q,
-					      SA_AIS_ERR_BAD_HANDLE},
-	[MSG_GROUP_REMOVE_NULL_GR_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
-					     &gl_mqa_env.pers_q,
-					     SA_AIS_ERR_INVALID_PARAM},
-	[MSG_GROUP_REMOVE_NULL_Q_NAME_T] = {&gl_mqa_env.msg_hdl1,
-					    &gl_mqa_env.qgroup1, NULL,
-					    SA_AIS_ERR_INVALID_PARAM},
-	[MSG_GROUP_REMOVE_BAD_GROUP_T] = {&gl_mqa_env.msg_hdl1,
+    [MSG_GROUP_REMOVE_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+				    &gl_mqa_env.qgroup1, &gl_mqa_env.pers_q,
+				    SA_AIS_ERR_BAD_HANDLE},
+    [MSG_GROUP_REMOVE_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
 					  &gl_mqa_env.qgroup1,
 					  &gl_mqa_env.pers_q,
-					  SA_AIS_ERR_NOT_EXIST},
-	[MSG_GROUP_REMOVE_BAD_QUEUE_T] = {&gl_mqa_env.msg_hdl1,
+					  SA_AIS_ERR_BAD_HANDLE},
+    [MSG_GROUP_REMOVE_NULL_GR_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
+					 &gl_mqa_env.pers_q,
+					 SA_AIS_ERR_INVALID_PARAM},
+    [MSG_GROUP_REMOVE_NULL_Q_NAME_T] = {&gl_mqa_env.msg_hdl1,
+					&gl_mqa_env.qgroup1, NULL,
+					SA_AIS_ERR_INVALID_PARAM},
+    [MSG_GROUP_REMOVE_BAD_GROUP_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				      &gl_mqa_env.pers_q, SA_AIS_ERR_NOT_EXIST},
+    [MSG_GROUP_REMOVE_BAD_QUEUE_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				      &gl_mqa_env.pers_q, SA_AIS_ERR_NOT_EXIST},
+    [MSG_GROUP_REMOVE_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				    &gl_mqa_env.pers_q, SA_AIS_OK},
+    [MSG_GROUP_REMOVE_SUCCESS_Q2_T] = {&gl_mqa_env.msg_hdl1,
+				       &gl_mqa_env.qgroup1,
+				       &gl_mqa_env.non_pers_q, SA_AIS_OK},
+    [MSG_GROUP_REMOVE_SUCCESS_Q3_T] = {&gl_mqa_env.msg_hdl1,
+				       &gl_mqa_env.qgroup1, &gl_mqa_env.pers_q2,
+				       SA_AIS_OK},
+    [MSG_GROUP_REMOVE_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				      &gl_mqa_env.pers_q, SA_AIS_ERR_NOT_EXIST},
+    [MSG_GROUP_REMOVE_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
 					  &gl_mqa_env.qgroup1,
 					  &gl_mqa_env.pers_q,
-					  SA_AIS_ERR_NOT_EXIST},
-	[MSG_GROUP_REMOVE_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
-					&gl_mqa_env.qgroup1, &gl_mqa_env.pers_q,
-					SA_AIS_OK},
-	[MSG_GROUP_REMOVE_SUCCESS_Q2_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.qgroup1,
-					   &gl_mqa_env.non_pers_q, SA_AIS_OK},
-	[MSG_GROUP_REMOVE_SUCCESS_Q3_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.qgroup1,
-					   &gl_mqa_env.pers_q2, SA_AIS_OK},
-	[MSG_GROUP_REMOVE_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1,
-					  &gl_mqa_env.qgroup1,
-					  &gl_mqa_env.pers_q,
-					  SA_AIS_ERR_NOT_EXIST},
-	[MSG_GROUP_REMOVE_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.qgroup1,
-					      &gl_mqa_env.pers_q,
-					      SA_AIS_ERR_TRY_AGAIN},
+					  SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgGroupRemove(int i, MQSV_CONFIG_FLAG flg)
@@ -1861,47 +1792,45 @@ int tet_test_red_msgGroupRemove(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Queue Group Delete Test cases  ***************** */
 
 char *API_Mqsv_GroupDelete_resultstring[] = {
-	[MSG_GROUP_DELETE_BAD_HDL_T] =
-	    "saMsgQueueGroupDelete with invalid Message Handle",
-	[MSG_GROUP_DELETE_FINALIZED_HDL_T] =
-	    "saMsgQueueGroupDelete with finalized Message Handle",
-	[MSG_GROUP_DELETE_NULL_NAME_T] =
-	    "saMsgQueueGroupDelete with Null Group name",
-	[MSG_GROUP_DELETE_BAD_GROUP_T] =
-	    "saMsgQueueGroupDelete with Bad Group name",
-	[MSG_GROUP_DELETE_WITH_MEM_T] = "Delete a Group with members",
-	[MSG_GROUP_DELETE_WO_MEM_T] = "Delete a Group without members",
-	[MSG_GROUP_DELETE_SUCCESS_T] =
-	    "saMsgQueueGroupDelete with valid parameters",
-	[MSG_GROUP_DELETE_SUCCESS_GR2_T] =
-	    "saMsgQueueGroupDelete with valid parameters",
-	[MSG_GROUP_DELETE_ERR_TRY_AGAIN_T] =
-	    "saMsgQueueGroupDelete when service is not available",
+    [MSG_GROUP_DELETE_BAD_HDL_T] =
+	"saMsgQueueGroupDelete with invalid Message Handle",
+    [MSG_GROUP_DELETE_FINALIZED_HDL_T] =
+	"saMsgQueueGroupDelete with finalized Message Handle",
+    [MSG_GROUP_DELETE_NULL_NAME_T] =
+	"saMsgQueueGroupDelete with Null Group name",
+    [MSG_GROUP_DELETE_BAD_GROUP_T] =
+	"saMsgQueueGroupDelete with Bad Group name",
+    [MSG_GROUP_DELETE_WITH_MEM_T] = "Delete a Group with members",
+    [MSG_GROUP_DELETE_WO_MEM_T] = "Delete a Group without members",
+    [MSG_GROUP_DELETE_SUCCESS_T] =
+	"saMsgQueueGroupDelete with valid parameters",
+    [MSG_GROUP_DELETE_SUCCESS_GR2_T] =
+	"saMsgQueueGroupDelete with valid parameters",
+    [MSG_GROUP_DELETE_ERR_TRY_AGAIN_T] =
+	"saMsgQueueGroupDelete when service is not available",
 };
 
 struct SafMsgGroupDelete API_Mqsv_GroupDelete[] = {
-	[MSG_GROUP_DELETE_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
-					&gl_mqa_env.qgroup1,
-					SA_AIS_ERR_BAD_HANDLE},
-	[MSG_GROUP_DELETE_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.qgroup1,
-					      SA_AIS_ERR_BAD_HANDLE},
-	[MSG_GROUP_DELETE_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
-					  SA_AIS_ERR_INVALID_PARAM},
-	[MSG_GROUP_DELETE_BAD_GROUP_T] = {&gl_mqa_env.msg_hdl1,
+    [MSG_GROUP_DELETE_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+				    &gl_mqa_env.qgroup1, SA_AIS_ERR_BAD_HANDLE},
+    [MSG_GROUP_DELETE_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
 					  &gl_mqa_env.qgroup1,
-					  SA_AIS_ERR_NOT_EXIST},
-	[MSG_GROUP_DELETE_WITH_MEM_T] = {&gl_mqa_env.msg_hdl1,
-					 &gl_mqa_env.qgroup1, SA_AIS_OK},
-	[MSG_GROUP_DELETE_WO_MEM_T] = {&gl_mqa_env.msg_hdl1,
-				       &gl_mqa_env.qgroup2, SA_AIS_OK},
-	[MSG_GROUP_DELETE_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
-					&gl_mqa_env.qgroup1, SA_AIS_OK},
-	[MSG_GROUP_DELETE_SUCCESS_GR2_T] = {&gl_mqa_env.msg_hdl1,
-					    &gl_mqa_env.qgroup2, SA_AIS_OK},
-	[MSG_GROUP_DELETE_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.qgroup1,
-					      SA_AIS_ERR_TRY_AGAIN},
+					  SA_AIS_ERR_BAD_HANDLE},
+    [MSG_GROUP_DELETE_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
+				      SA_AIS_ERR_INVALID_PARAM},
+    [MSG_GROUP_DELETE_BAD_GROUP_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				      SA_AIS_ERR_NOT_EXIST},
+    [MSG_GROUP_DELETE_WITH_MEM_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				     SA_AIS_OK},
+    [MSG_GROUP_DELETE_WO_MEM_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup2,
+				   SA_AIS_OK},
+    [MSG_GROUP_DELETE_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				    SA_AIS_OK},
+    [MSG_GROUP_DELETE_SUCCESS_GR2_T] = {&gl_mqa_env.msg_hdl1,
+					&gl_mqa_env.qgroup2, SA_AIS_OK},
+    [MSG_GROUP_DELETE_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.qgroup1,
+					  SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgGroupDelete(int i, MQSV_CONFIG_FLAG flg)
@@ -1962,181 +1891,166 @@ int tet_test_red_msgGroupDelete(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Queue Group Track Test cases  ***************** */
 
 char *API_Mqsv_GroupTrack_resultstring[] = {
-	[MSG_GROUP_TRACK_BAD_HDL_T] =
-	    "saMsgQueueGroupTrack with invalid Message Handle",
-	[MSG_GROUP_TRACK_FINALIZED_HDL_T] =
-	    "saMsgQueueGroupTrack with finalized Message Handle",
-	[MSG_GROUP_TRACK_NULL_NAME_T] =
-	    "saMsgQueueGroupTrack with Null Group name",
-	[MSG_GROUP_TRACK_INV_PARAM_T] = "saMsgQueueGroupTrack with Bad buffer",
-	[MSG_GROUP_TRACK_BAD_GROUP_T] =
-	    "saMsgQueueGroupTrack with Group name that does not exist",
-	[MSG_GROUP_TRACK_BAD_FLAGS_T] =
-	    "saMsgQueueGroupTrack with Bad Track Flags",
-	[MSG_GROUP_TRACK_WRONG_FLGS_T] =
-	    "saMsgQueueGroupTrack with Wrong Track Flags",
-	[MSG_GROUP_TRACK_NULL_BUF_T] =
-	    "saMsgQueueGroupTrack with Null Notification Buffer",
-	[MSG_GROUP_TRACK_CH_BAD_BUF_T] =
-	    "saMsgQueueGroupTrack with Track changes Bad Buffer",
-	[MSG_GROUP_TRACK_CHONLY_BAD_BUF_T] =
-	    "saMsgQueueGroupTrack with Track changes only Bad Buffer",
-	[MSG_GROUP_TRACK_CUR_CH_BAD_BUF_T] =
-	    "saMsgQueueGroupTrack with Track CURRENT | CHANGES Bad Buffer",
-	[MSG_GROUP_TRACK_CUR_CHONLY_BAD_BUF_T] =
-	    "saMsgQueueGroupTrack with Track CURRENT | CHANGES_ONLY Bad Buffer",
-	[MSG_GROUP_TRACK_CURR_NULBUF_ERINIT_T] =
-	    "saMsgQueueGroupTrack with Track Current with NULL buffer ERR_INIT case",
-	[MSG_GROUP_TRACK_CURR_ERR_INIT_T] =
-	    "saMsgQueueGroupTrack with Track Current ERR_INIT case",
-	[MSG_GROUP_TRACK_CHGS_ERR_INIT_T] =
-	    "saMsgQueueGroupTrack with Track Changes ERR_INIT case",
-	[MSG_GROUP_TRACK_CHONLY_ERR_INIT_T] =
-	    "saMsgQueueGroupTrack with Track Changes Only ERR_INIT case",
-	[MSG_GROUP_TRACK_CURRENT_T] =
-	    "Track with non-NULL Buffer NULL Notification - CURRENT",
-	[MSG_GROUP_TRACK_CURRENT_NON_NULL_NOTIF_T] =
-	    "Track with non-NULL Buffer non-NULL Notification - CURRENT",
-	[MSG_GROUP_TRACK_CUR_NO_SPACE_T] =
-	    "saMsgQueueGroupTrack with Track Current Insufficient Buffer",
-	[MSG_GROUP_TRACK_CHANGES_T] =
-	    "saMsgQueueGroupTrack with valid parameters - Track Changes",
-	[MSG_GROUP_TRACK_CHANGES_GR2_T] =
-	    "saMsgQueueGroupTrack with valid parameters - Track Changes",
-	[MSG_GROUP_TRACK_CHGS_ONLY_T] =
-	    "saMsgQueueGroupTrack with valid parameters - Track Changes Only",
-	[MSG_GROUP_TRACK_CUR_CH_T] =
-	    "saMsgQueueGroupTrack with valid params - Current and Changes",
-	[MSG_GROUP_TRACK_CUR_CHLY_T] =
-	    "saMsgQueueGroupTrack with valid params - Current and Changes only",
-	[MSG_GROUP_TRACK_CUR_CH_NUL_BUF_T] =
-	    "saMsgQueueGroupTrack with valid params - Current and Changes Null Buffer",
-	[MSG_GROUP_TRACK_CUR_CHLY_NUL_BUF_T] =
-	    "saMsgQueueGroupTrack with valid params - Current and Changes Only Null Buffer",
-	[MSG_GROUP_TRACK_CUR_CHLY_NUL_BUF_GR2_T] =
-	    "saMsgQueueGroupTrack with valid params - Current and Changes Only Null Buffer",
-	[MSG_GROUP_TRACK_ERR_TRY_AGAIN_T] =
-	    "saMsgQueueGroupTrack when service is not available",
+    [MSG_GROUP_TRACK_BAD_HDL_T] =
+	"saMsgQueueGroupTrack with invalid Message Handle",
+    [MSG_GROUP_TRACK_FINALIZED_HDL_T] =
+	"saMsgQueueGroupTrack with finalized Message Handle",
+    [MSG_GROUP_TRACK_NULL_NAME_T] = "saMsgQueueGroupTrack with Null Group name",
+    [MSG_GROUP_TRACK_INV_PARAM_T] = "saMsgQueueGroupTrack with Bad buffer",
+    [MSG_GROUP_TRACK_BAD_GROUP_T] =
+	"saMsgQueueGroupTrack with Group name that does not exist",
+    [MSG_GROUP_TRACK_BAD_FLAGS_T] = "saMsgQueueGroupTrack with Bad Track Flags",
+    [MSG_GROUP_TRACK_WRONG_FLGS_T] =
+	"saMsgQueueGroupTrack with Wrong Track Flags",
+    [MSG_GROUP_TRACK_NULL_BUF_T] =
+	"saMsgQueueGroupTrack with Null Notification Buffer",
+    [MSG_GROUP_TRACK_CH_BAD_BUF_T] =
+	"saMsgQueueGroupTrack with Track changes Bad Buffer",
+    [MSG_GROUP_TRACK_CHONLY_BAD_BUF_T] =
+	"saMsgQueueGroupTrack with Track changes only Bad Buffer",
+    [MSG_GROUP_TRACK_CUR_CH_BAD_BUF_T] =
+	"saMsgQueueGroupTrack with Track CURRENT | CHANGES Bad Buffer",
+    [MSG_GROUP_TRACK_CUR_CHONLY_BAD_BUF_T] =
+	"saMsgQueueGroupTrack with Track CURRENT | CHANGES_ONLY Bad Buffer",
+    [MSG_GROUP_TRACK_CURR_NULBUF_ERINIT_T] =
+	"saMsgQueueGroupTrack with Track Current with NULL buffer ERR_INIT case",
+    [MSG_GROUP_TRACK_CURR_ERR_INIT_T] =
+	"saMsgQueueGroupTrack with Track Current ERR_INIT case",
+    [MSG_GROUP_TRACK_CHGS_ERR_INIT_T] =
+	"saMsgQueueGroupTrack with Track Changes ERR_INIT case",
+    [MSG_GROUP_TRACK_CHONLY_ERR_INIT_T] =
+	"saMsgQueueGroupTrack with Track Changes Only ERR_INIT case",
+    [MSG_GROUP_TRACK_CURRENT_T] =
+	"Track with non-NULL Buffer NULL Notification - CURRENT",
+    [MSG_GROUP_TRACK_CURRENT_NON_NULL_NOTIF_T] =
+	"Track with non-NULL Buffer non-NULL Notification - CURRENT",
+    [MSG_GROUP_TRACK_CUR_NO_SPACE_T] =
+	"saMsgQueueGroupTrack with Track Current Insufficient Buffer",
+    [MSG_GROUP_TRACK_CHANGES_T] =
+	"saMsgQueueGroupTrack with valid parameters - Track Changes",
+    [MSG_GROUP_TRACK_CHANGES_GR2_T] =
+	"saMsgQueueGroupTrack with valid parameters - Track Changes",
+    [MSG_GROUP_TRACK_CHGS_ONLY_T] =
+	"saMsgQueueGroupTrack with valid parameters - Track Changes Only",
+    [MSG_GROUP_TRACK_CUR_CH_T] =
+	"saMsgQueueGroupTrack with valid params - Current and Changes",
+    [MSG_GROUP_TRACK_CUR_CHLY_T] =
+	"saMsgQueueGroupTrack with valid params - Current and Changes only",
+    [MSG_GROUP_TRACK_CUR_CH_NUL_BUF_T] =
+	"saMsgQueueGroupTrack with valid params - Current and Changes Null Buffer",
+    [MSG_GROUP_TRACK_CUR_CHLY_NUL_BUF_T] =
+	"saMsgQueueGroupTrack with valid params - Current and Changes Only Null Buffer",
+    [MSG_GROUP_TRACK_CUR_CHLY_NUL_BUF_GR2_T] =
+	"saMsgQueueGroupTrack with valid params - Current and Changes Only Null Buffer",
+    [MSG_GROUP_TRACK_ERR_TRY_AGAIN_T] =
+	"saMsgQueueGroupTrack when service is not available",
 };
 
 struct SafMsgGroupTrack API_Mqsv_GroupTrack[] = {
-	[MSG_GROUP_TRACK_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
-				       &gl_mqa_env.qgroup1, SA_TRACK_CURRENT,
-				       &gl_mqa_env.buffer_null_notif,
-				       SA_AIS_ERR_BAD_HANDLE},
-	[MSG_GROUP_TRACK_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
-					     &gl_mqa_env.qgroup1,
-					     SA_TRACK_CURRENT,
-					     &gl_mqa_env.buffer_null_notif,
-					     SA_AIS_ERR_BAD_HANDLE},
-	[MSG_GROUP_TRACK_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
-					 SA_TRACK_CURRENT,
-					 &gl_mqa_env.buffer_null_notif,
-					 SA_AIS_ERR_INVALID_PARAM},
-	[MSG_GROUP_TRACK_INV_PARAM_T] = {&gl_mqa_env.msg_hdl1,
-					 &gl_mqa_env.qgroup1, SA_TRACK_CURRENT,
-					 &gl_mqa_env.inv_params.inv_notif_buf,
-					 SA_AIS_ERR_INVALID_PARAM},
-	[MSG_GROUP_TRACK_BAD_GROUP_T] = {&gl_mqa_env.msg_hdl1,
+    [MSG_GROUP_TRACK_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+				   &gl_mqa_env.qgroup1, SA_TRACK_CURRENT,
+				   &gl_mqa_env.buffer_null_notif,
+				   SA_AIS_ERR_BAD_HANDLE},
+    [MSG_GROUP_TRACK_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
 					 &gl_mqa_env.qgroup1, SA_TRACK_CURRENT,
 					 &gl_mqa_env.buffer_null_notif,
-					 SA_AIS_ERR_NOT_EXIST},
-	[MSG_GROUP_TRACK_BAD_FLAGS_T] = {&gl_mqa_env.msg_hdl1,
-					 &gl_mqa_env.qgroup1, !SA_TRACK_CURRENT,
-					 &gl_mqa_env.buffer_null_notif,
-					 SA_AIS_ERR_BAD_FLAGS},
-	[MSG_GROUP_TRACK_WRONG_FLGS_T] = {&gl_mqa_env.msg_hdl1,
+					 SA_AIS_ERR_BAD_HANDLE},
+    [MSG_GROUP_TRACK_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
+				     SA_TRACK_CURRENT,
+				     &gl_mqa_env.buffer_null_notif,
+				     SA_AIS_ERR_INVALID_PARAM},
+    [MSG_GROUP_TRACK_INV_PARAM_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				     SA_TRACK_CURRENT,
+				     &gl_mqa_env.inv_params.inv_notif_buf,
+				     SA_AIS_ERR_INVALID_PARAM},
+    [MSG_GROUP_TRACK_BAD_GROUP_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				     SA_TRACK_CURRENT,
+				     &gl_mqa_env.buffer_null_notif,
+				     SA_AIS_ERR_NOT_EXIST},
+    [MSG_GROUP_TRACK_BAD_FLAGS_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				     !SA_TRACK_CURRENT,
+				     &gl_mqa_env.buffer_null_notif,
+				     SA_AIS_ERR_BAD_FLAGS},
+    [MSG_GROUP_TRACK_WRONG_FLGS_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				      SA_TRACK_CHANGES | SA_TRACK_CHANGES_ONLY,
+				      &gl_mqa_env.buffer_null_notif,
+				      SA_AIS_ERR_BAD_FLAGS},
+    [MSG_GROUP_TRACK_NULL_BUF_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				    SA_TRACK_CURRENT, NULL, SA_AIS_OK},
+    [MSG_GROUP_TRACK_CH_BAD_BUF_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				      SA_TRACK_CHANGES,
+				      &gl_mqa_env.inv_params.inv_notif_buf,
+				      SA_AIS_OK},
+    [MSG_GROUP_TRACK_CHONLY_BAD_BUF_T] = {&gl_mqa_env.msg_hdl1,
 					  &gl_mqa_env.qgroup1,
-					  SA_TRACK_CHANGES |
-					      SA_TRACK_CHANGES_ONLY,
-					  &gl_mqa_env.buffer_null_notif,
-					  SA_AIS_ERR_BAD_FLAGS},
-	[MSG_GROUP_TRACK_NULL_BUF_T] = {&gl_mqa_env.msg_hdl1,
-					&gl_mqa_env.qgroup1, SA_TRACK_CURRENT,
-					NULL, SA_AIS_OK},
-	[MSG_GROUP_TRACK_CH_BAD_BUF_T] = {&gl_mqa_env.msg_hdl1,
-					  &gl_mqa_env.qgroup1, SA_TRACK_CHANGES,
+					  SA_TRACK_CHANGES_ONLY,
 					  &gl_mqa_env.inv_params.inv_notif_buf,
 					  SA_AIS_OK},
-	[MSG_GROUP_TRACK_CHONLY_BAD_BUF_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1, SA_TRACK_CHANGES_ONLY,
-	     &gl_mqa_env.inv_params.inv_notif_buf, SA_AIS_OK},
-	[MSG_GROUP_TRACK_CUR_CH_BAD_BUF_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
-	     SA_TRACK_CURRENT | SA_TRACK_CHANGES,
-	     &gl_mqa_env.inv_params.inv_notif_buf, SA_AIS_ERR_INVALID_PARAM},
-	[MSG_GROUP_TRACK_CUR_CHONLY_BAD_BUF_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
-	     SA_TRACK_CURRENT | SA_TRACK_CHANGES_ONLY,
-	     &gl_mqa_env.inv_params.inv_notif_buf, SA_AIS_ERR_INVALID_PARAM},
-	[MSG_GROUP_TRACK_CURR_NULBUF_ERINIT_T] = {&gl_mqa_env.msg_hdl1,
-						  &gl_mqa_env.qgroup1,
-						  SA_TRACK_CURRENT, NULL,
-						  SA_AIS_ERR_INIT},
-	[MSG_GROUP_TRACK_CURR_ERR_INIT_T] = {&gl_mqa_env.msg_hdl1,
-					     &gl_mqa_env.qgroup1,
-					     SA_TRACK_CURRENT,
-					     &gl_mqa_env.buffer_null_notif,
-					     SA_AIS_OK},
-	[MSG_GROUP_TRACK_CHGS_ERR_INIT_T] = {&gl_mqa_env.msg_hdl1,
-					     &gl_mqa_env.qgroup1,
-					     SA_TRACK_CHANGES, NULL,
-					     SA_AIS_ERR_INIT},
-	[MSG_GROUP_TRACK_CHONLY_ERR_INIT_T] = {&gl_mqa_env.msg_hdl1,
-					       &gl_mqa_env.qgroup1,
-					       SA_TRACK_CHANGES_ONLY, NULL,
-					       SA_AIS_ERR_INIT},
-	[MSG_GROUP_TRACK_CURRENT_T] = {&gl_mqa_env.msg_hdl1,
-				       &gl_mqa_env.qgroup1, SA_TRACK_CURRENT,
-				       &gl_mqa_env.buffer_null_notif,
-				       SA_AIS_OK},
-	[MSG_GROUP_TRACK_CURRENT_NON_NULL_NOTIF_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1, SA_TRACK_CURRENT,
-	     &gl_mqa_env.buffer_non_null_notif, SA_AIS_OK},
-	[MSG_GROUP_TRACK_CUR_NO_SPACE_T] = {&gl_mqa_env.msg_hdl1,
-					    &gl_mqa_env.qgroup1,
-					    SA_TRACK_CURRENT,
-					    &gl_mqa_env.no_space_notif_buf,
-					    SA_AIS_ERR_NO_SPACE},
-	[MSG_GROUP_TRACK_CHANGES_T] = {&gl_mqa_env.msg_hdl1,
-				       &gl_mqa_env.qgroup1, SA_TRACK_CHANGES,
-				       &gl_mqa_env.buffer_null_notif,
-				       SA_AIS_OK},
-	[MSG_GROUP_TRACK_CHANGES_GR2_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup2, SA_TRACK_CHANGES,
-	     &gl_mqa_env.buffer_null_notif, SA_AIS_OK},
-	[MSG_GROUP_TRACK_CHGS_ONLY_T] = {&gl_mqa_env.msg_hdl1,
-					 &gl_mqa_env.qgroup1,
-					 SA_TRACK_CHANGES_ONLY,
+    [MSG_GROUP_TRACK_CUR_CH_BAD_BUF_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.qgroup1,
+					  SA_TRACK_CURRENT | SA_TRACK_CHANGES,
+					  &gl_mqa_env.inv_params.inv_notif_buf,
+					  SA_AIS_ERR_INVALID_PARAM},
+    [MSG_GROUP_TRACK_CUR_CHONLY_BAD_BUF_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+	 SA_TRACK_CURRENT | SA_TRACK_CHANGES_ONLY,
+	 &gl_mqa_env.inv_params.inv_notif_buf, SA_AIS_ERR_INVALID_PARAM},
+    [MSG_GROUP_TRACK_CURR_NULBUF_ERINIT_T] = {&gl_mqa_env.msg_hdl1,
+					      &gl_mqa_env.qgroup1,
+					      SA_TRACK_CURRENT, NULL,
+					      SA_AIS_ERR_INIT},
+    [MSG_GROUP_TRACK_CURR_ERR_INIT_T] = {&gl_mqa_env.msg_hdl1,
+					 &gl_mqa_env.qgroup1, SA_TRACK_CURRENT,
 					 &gl_mqa_env.buffer_null_notif,
 					 SA_AIS_OK},
-	[MSG_GROUP_TRACK_CUR_CH_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
-				      SA_TRACK_CURRENT | SA_TRACK_CHANGES,
-				      &gl_mqa_env.buffer_null_notif, SA_AIS_OK},
-	[MSG_GROUP_TRACK_CUR_CHLY_T] = {&gl_mqa_env.msg_hdl1,
-					&gl_mqa_env.qgroup1,
-					SA_TRACK_CURRENT |
-					    SA_TRACK_CHANGES_ONLY,
-					&gl_mqa_env.buffer_null_notif,
-					SA_AIS_OK},
-	[MSG_GROUP_TRACK_CUR_CH_NUL_BUF_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.qgroup1,
-					      SA_TRACK_CURRENT |
-						  SA_TRACK_CHANGES,
-					      NULL, SA_AIS_OK},
-	[MSG_GROUP_TRACK_CUR_CHLY_NUL_BUF_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
-	     SA_TRACK_CURRENT | SA_TRACK_CHANGES_ONLY, NULL, SA_AIS_OK},
-	[MSG_GROUP_TRACK_CUR_CHLY_NUL_BUF_GR2_T] = {&gl_mqa_env.msg_hdl1,
-						    &gl_mqa_env.qgroup2,
-						    SA_TRACK_CURRENT |
-							SA_TRACK_CHANGES_ONLY,
-						    NULL, SA_AIS_OK},
-	[MSG_GROUP_TRACK_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
-					     &gl_mqa_env.qgroup1,
-					     SA_TRACK_CURRENT,
-					     &gl_mqa_env.buffer_null_notif,
-					     SA_AIS_ERR_TRY_AGAIN},
+    [MSG_GROUP_TRACK_CHGS_ERR_INIT_T] = {&gl_mqa_env.msg_hdl1,
+					 &gl_mqa_env.qgroup1, SA_TRACK_CHANGES,
+					 NULL, SA_AIS_ERR_INIT},
+    [MSG_GROUP_TRACK_CHONLY_ERR_INIT_T] = {&gl_mqa_env.msg_hdl1,
+					   &gl_mqa_env.qgroup1,
+					   SA_TRACK_CHANGES_ONLY, NULL,
+					   SA_AIS_ERR_INIT},
+    [MSG_GROUP_TRACK_CURRENT_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				   SA_TRACK_CURRENT,
+				   &gl_mqa_env.buffer_null_notif, SA_AIS_OK},
+    [MSG_GROUP_TRACK_CURRENT_NON_NULL_NOTIF_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1, SA_TRACK_CURRENT,
+	 &gl_mqa_env.buffer_non_null_notif, SA_AIS_OK},
+    [MSG_GROUP_TRACK_CUR_NO_SPACE_T] = {&gl_mqa_env.msg_hdl1,
+					&gl_mqa_env.qgroup1, SA_TRACK_CURRENT,
+					&gl_mqa_env.no_space_notif_buf,
+					SA_AIS_ERR_NO_SPACE},
+    [MSG_GROUP_TRACK_CHANGES_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				   SA_TRACK_CHANGES,
+				   &gl_mqa_env.buffer_null_notif, SA_AIS_OK},
+    [MSG_GROUP_TRACK_CHANGES_GR2_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup2, SA_TRACK_CHANGES,
+	 &gl_mqa_env.buffer_null_notif, SA_AIS_OK},
+    [MSG_GROUP_TRACK_CHGS_ONLY_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				     SA_TRACK_CHANGES_ONLY,
+				     &gl_mqa_env.buffer_null_notif, SA_AIS_OK},
+    [MSG_GROUP_TRACK_CUR_CH_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				  SA_TRACK_CURRENT | SA_TRACK_CHANGES,
+				  &gl_mqa_env.buffer_null_notif, SA_AIS_OK},
+    [MSG_GROUP_TRACK_CUR_CHLY_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				    SA_TRACK_CURRENT | SA_TRACK_CHANGES_ONLY,
+				    &gl_mqa_env.buffer_null_notif, SA_AIS_OK},
+    [MSG_GROUP_TRACK_CUR_CH_NUL_BUF_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.qgroup1,
+					  SA_TRACK_CURRENT | SA_TRACK_CHANGES,
+					  NULL, SA_AIS_OK},
+    [MSG_GROUP_TRACK_CUR_CHLY_NUL_BUF_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+	 SA_TRACK_CURRENT | SA_TRACK_CHANGES_ONLY, NULL, SA_AIS_OK},
+    [MSG_GROUP_TRACK_CUR_CHLY_NUL_BUF_GR2_T] = {&gl_mqa_env.msg_hdl1,
+						&gl_mqa_env.qgroup2,
+						SA_TRACK_CURRENT |
+						    SA_TRACK_CHANGES_ONLY,
+						NULL, SA_AIS_OK},
+    [MSG_GROUP_TRACK_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
+					 &gl_mqa_env.qgroup1, SA_TRACK_CURRENT,
+					 &gl_mqa_env.buffer_null_notif,
+					 SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgGroupTrack(int i, MQSV_CONFIG_FLAG flg)
@@ -2233,51 +2147,51 @@ int tet_test_red_msgGroupTrack(int i, MQSV_CONFIG_FLAG flg)
  */
 
 char *API_Mqsv_GroupTrackStop_resultstring[] = {
-	[MSG_GROUP_TRACK_STOP_BAD_HDL_T] =
-	    "saMsgQueueGroupTrackStop with invalid Message Handle",
-	[MSG_GROUP_TRACK_STOP_FINALIZED_HDL_T] =
-	    "saMsgQueueGroupTrackStop with finalized Message Handle",
-	[MSG_GROUP_TRACK_STOP_NULL_NAME_T] =
-	    "saMsgQueueGroupTrackStop with Null Group name",
-	[MSG_GROUP_TRACK_STOP_BAD_NAME_T] =
-	    "saMsgQueueGroupTrackStop with Group that does not exist",
-	[MSG_GROUP_TRACK_STOP_SUCCESS_T] =
-	    "saMsgQueueGroupTrackStop with valid parameters",
-	[MSG_GROUP_TRACK_STOP_SUCCESS_GR2_T] =
-	    "saMsgQueueGroupTrackStop with valid parameters",
-	[MSG_GROUP_TRACK_STOP_UNTRACKED_T] =
-	    "saMsgQueueGroupTrackStop an untracked group",
-	[MSG_GROUP_TRACK_STOP_UNTRACKED2_T] =
-	    "saMsgQueueGroupTrackStop an untracked group",
-	[MSG_GROUP_TRACK_STOP_ERR_TRY_AGAIN_T] =
-	    "saMsgQueueGroupTrackStop when service is not available",
+    [MSG_GROUP_TRACK_STOP_BAD_HDL_T] =
+	"saMsgQueueGroupTrackStop with invalid Message Handle",
+    [MSG_GROUP_TRACK_STOP_FINALIZED_HDL_T] =
+	"saMsgQueueGroupTrackStop with finalized Message Handle",
+    [MSG_GROUP_TRACK_STOP_NULL_NAME_T] =
+	"saMsgQueueGroupTrackStop with Null Group name",
+    [MSG_GROUP_TRACK_STOP_BAD_NAME_T] =
+	"saMsgQueueGroupTrackStop with Group that does not exist",
+    [MSG_GROUP_TRACK_STOP_SUCCESS_T] =
+	"saMsgQueueGroupTrackStop with valid parameters",
+    [MSG_GROUP_TRACK_STOP_SUCCESS_GR2_T] =
+	"saMsgQueueGroupTrackStop with valid parameters",
+    [MSG_GROUP_TRACK_STOP_UNTRACKED_T] =
+	"saMsgQueueGroupTrackStop an untracked group",
+    [MSG_GROUP_TRACK_STOP_UNTRACKED2_T] =
+	"saMsgQueueGroupTrackStop an untracked group",
+    [MSG_GROUP_TRACK_STOP_ERR_TRY_AGAIN_T] =
+	"saMsgQueueGroupTrackStop when service is not available",
 };
 
 struct SafMsgGroupTrackStop API_Mqsv_GroupTrackStop[] = {
-	[MSG_GROUP_TRACK_STOP_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
-					    &gl_mqa_env.qgroup1,
-					    SA_AIS_ERR_BAD_HANDLE},
-	[MSG_GROUP_TRACK_STOP_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
-						  &gl_mqa_env.qgroup1,
-						  SA_AIS_ERR_BAD_HANDLE},
-	[MSG_GROUP_TRACK_STOP_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
-					      SA_AIS_ERR_INVALID_PARAM},
-	[MSG_GROUP_TRACK_STOP_BAD_NAME_T] = {&gl_mqa_env.msg_hdl1,
-					     &gl_mqa_env.qgroup1,
-					     SA_AIS_ERR_NOT_EXIST},
-	[MSG_GROUP_TRACK_STOP_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
-					    &gl_mqa_env.qgroup1, SA_AIS_OK},
-	[MSG_GROUP_TRACK_STOP_SUCCESS_GR2_T] = {&gl_mqa_env.msg_hdl1,
-						&gl_mqa_env.qgroup2, SA_AIS_OK},
-	[MSG_GROUP_TRACK_STOP_UNTRACKED_T] = {&gl_mqa_env.msg_hdl1,
+    [MSG_GROUP_TRACK_STOP_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+					&gl_mqa_env.qgroup1,
+					SA_AIS_ERR_BAD_HANDLE},
+    [MSG_GROUP_TRACK_STOP_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
 					      &gl_mqa_env.qgroup1,
-					      SA_AIS_ERR_NOT_EXIST},
-	[MSG_GROUP_TRACK_STOP_UNTRACKED2_T] = {&gl_mqa_env.msg_hdl1,
-					       &gl_mqa_env.qgroup2,
-					       SA_AIS_ERR_NOT_EXIST},
-	[MSG_GROUP_TRACK_STOP_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
-						  &gl_mqa_env.qgroup1,
-						  SA_AIS_ERR_TRY_AGAIN},
+					      SA_AIS_ERR_BAD_HANDLE},
+    [MSG_GROUP_TRACK_STOP_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
+					  SA_AIS_ERR_INVALID_PARAM},
+    [MSG_GROUP_TRACK_STOP_BAD_NAME_T] = {&gl_mqa_env.msg_hdl1,
+					 &gl_mqa_env.qgroup1,
+					 SA_AIS_ERR_NOT_EXIST},
+    [MSG_GROUP_TRACK_STOP_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
+					&gl_mqa_env.qgroup1, SA_AIS_OK},
+    [MSG_GROUP_TRACK_STOP_SUCCESS_GR2_T] = {&gl_mqa_env.msg_hdl1,
+					    &gl_mqa_env.qgroup2, SA_AIS_OK},
+    [MSG_GROUP_TRACK_STOP_UNTRACKED_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.qgroup1,
+					  SA_AIS_ERR_NOT_EXIST},
+    [MSG_GROUP_TRACK_STOP_UNTRACKED2_T] = {&gl_mqa_env.msg_hdl1,
+					   &gl_mqa_env.qgroup2,
+					   SA_AIS_ERR_NOT_EXIST},
+    [MSG_GROUP_TRACK_STOP_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
+					      &gl_mqa_env.qgroup1,
+					      SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgGroupTrackStop(int i, MQSV_CONFIG_FLAG flg)
@@ -2336,175 +2250,170 @@ int tet_test_red_msgGroupTrackStop(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Send Test cases  ***************** */
 
 char *API_Mqsv_MessageSend_resultstring[] = {
-	[MSG_MESSAGE_SEND_BAD_HDL_T] =
-	    "saMsgMessageSend with invalid Message Handle",
-	[MSG_MESSAGE_SEND_FINALIZED_HDL_T] =
-	    "saMsgMessageSend with finalized Message Handle",
-	[MSG_MESSAGE_SEND_NULL_NAME_T] =
-	    "saMsgMessageSend with Null destination",
-	[MSG_MESSAGE_SEND_NULL_MSG_T] = "saMsgMessageSend with Null message",
-	[MSG_MESSAGE_SEND_ERR_TIMEOUT_T] =
-	    "saMsgMessageSend - ERR_TIMEOUT case",
-	[MSG_MESSAGE_SEND_NOT_EXIST_T] =
-	    "saMsgMessageSend to a queue that does not exist",
-	[MSG_MESSAGE_SEND_BAD_GROUP_T] =
-	    "saMsgMessageSend to a queue group that does not exist",
+    [MSG_MESSAGE_SEND_BAD_HDL_T] =
+	"saMsgMessageSend with invalid Message Handle",
+    [MSG_MESSAGE_SEND_FINALIZED_HDL_T] =
+	"saMsgMessageSend with finalized Message Handle",
+    [MSG_MESSAGE_SEND_NULL_NAME_T] = "saMsgMessageSend with Null destination",
+    [MSG_MESSAGE_SEND_NULL_MSG_T] = "saMsgMessageSend with Null message",
+    [MSG_MESSAGE_SEND_ERR_TIMEOUT_T] = "saMsgMessageSend - ERR_TIMEOUT case",
+    [MSG_MESSAGE_SEND_NOT_EXIST_T] =
+	"saMsgMessageSend to a queue that does not exist",
+    [MSG_MESSAGE_SEND_BAD_GROUP_T] =
+	"saMsgMessageSend to a queue group that does not exist",
 
-	[MSG_MESSAGE_SEND_SUCCESS_NAME1_T] =
-	    "saMsgMessageSend with valid parameters - Persistent",
-	[MSG_MESSAGE_SEND_SUCCESS_NAME2_T] =
-	    "saMsgMessageSend with valid parameters - Non Persistent",
-	[MSG_MESSAGE_SEND_SUCCESS_NAME3_T] =
-	    "saMsgMessageSend with valid parameters",
-	[MSG_MESSAGE_SEND_SUCCESS_NAME4_T] =
-	    "saMsgMessageSend with valid parameters",
-	[MSG_MESSAGE_SEND_SUCCESS_HDL2_NAME1_T] =
-	    "saMsgMessageSend with valid parameters",
-	[MSG_MESSAGE_SEND_SUCCESS_HDL2_NAME2_T] =
-	    "saMsgMessageSend with valid parameters",
-	[MSG_MESSAGE_SEND_SUCCESS_HDL2_NAME3_T] =
-	    "saMsgMessageSend with valid parameters",
-	[MSG_MESSAGE_SEND_SUCCESS_HDL2_NAME4_T] =
-	    "saMsgMessageSend with valid parameters",
+    [MSG_MESSAGE_SEND_SUCCESS_NAME1_T] =
+	"saMsgMessageSend with valid parameters - Persistent",
+    [MSG_MESSAGE_SEND_SUCCESS_NAME2_T] =
+	"saMsgMessageSend with valid parameters - Non Persistent",
+    [MSG_MESSAGE_SEND_SUCCESS_NAME3_T] =
+	"saMsgMessageSend with valid parameters",
+    [MSG_MESSAGE_SEND_SUCCESS_NAME4_T] =
+	"saMsgMessageSend with valid parameters",
+    [MSG_MESSAGE_SEND_SUCCESS_HDL2_NAME1_T] =
+	"saMsgMessageSend with valid parameters",
+    [MSG_MESSAGE_SEND_SUCCESS_HDL2_NAME2_T] =
+	"saMsgMessageSend with valid parameters",
+    [MSG_MESSAGE_SEND_SUCCESS_HDL2_NAME3_T] =
+	"saMsgMessageSend with valid parameters",
+    [MSG_MESSAGE_SEND_SUCCESS_HDL2_NAME4_T] =
+	"saMsgMessageSend with valid parameters",
 
-	[MSG_MESSAGE_SEND_SUCCESS_MSG2_T] = "Send a message to a queue",
-	[MSG_MESSAGE_SEND_SUCCESS_Q2_MSG2_T] = "Send a message to a queue",
-	[MSG_MESSAGE_SEND_TO_ZERO_QUEUE_T] = "Message Send to zero size queue",
-	[MSG_MESSAGE_SEND_QUEUE_FULL_T] = "saMsgMessageSend - QUEUE FULL case",
-	[MSG_MESSAGE_SEND_BIG_MSG_T] = "saMsgMessageSend with big message",
-	[MSG_MESSAGE_SEND_ERR_NOT_EXIST_T] =
-	    "Message Send to an unavailable queue",
-	[MSG_MESSAGE_SEND_ERR_NOT_EXIST2_T] =
-	    "Message Send to an unavailable queue",
-	[MSG_MESSAGE_SEND_WITH_BAD_PR_T] =
-	    "Message Send with Bad priority value",
-	[MSG_MESSAGE_SEND_UNAVAILABLE_T] =
-	    "Message Send to an empty queue group",
-	[MSG_MESSAGE_SEND_GR_SUCCESS_T] = "Message Send to a group",
-	[MSG_MESSAGE_SEND_GR_SUCCESS_MSG2_T] = "Message Send to a group",
-	[MSG_MESSAGE_SEND_GR_QUEUE_FULL_T] =
-	    "Message Send to a group - QUEUE FULL case",
-	[MSG_MESSAGE_SEND_ZERO_SIZE_MSG_T] =
-	    "Send a message with zero message size",
-	[MSG_MESSAGE_SEND_MULTI_CAST_GR_FULL_T] =
-	    "Message Send to a group - QUEUE FULL case",
-	[MSG_MESSAGE_SEND_ERR_TRY_AGAIN_T] =
-	    "saMsgMessageSend when service is not available",
+    [MSG_MESSAGE_SEND_SUCCESS_MSG2_T] = "Send a message to a queue",
+    [MSG_MESSAGE_SEND_SUCCESS_Q2_MSG2_T] = "Send a message to a queue",
+    [MSG_MESSAGE_SEND_TO_ZERO_QUEUE_T] = "Message Send to zero size queue",
+    [MSG_MESSAGE_SEND_QUEUE_FULL_T] = "saMsgMessageSend - QUEUE FULL case",
+    [MSG_MESSAGE_SEND_BIG_MSG_T] = "saMsgMessageSend with big message",
+    [MSG_MESSAGE_SEND_ERR_NOT_EXIST_T] = "Message Send to an unavailable queue",
+    [MSG_MESSAGE_SEND_ERR_NOT_EXIST2_T] =
+	"Message Send to an unavailable queue",
+    [MSG_MESSAGE_SEND_WITH_BAD_PR_T] = "Message Send with Bad priority value",
+    [MSG_MESSAGE_SEND_UNAVAILABLE_T] = "Message Send to an empty queue group",
+    [MSG_MESSAGE_SEND_GR_SUCCESS_T] = "Message Send to a group",
+    [MSG_MESSAGE_SEND_GR_SUCCESS_MSG2_T] = "Message Send to a group",
+    [MSG_MESSAGE_SEND_GR_QUEUE_FULL_T] =
+	"Message Send to a group - QUEUE FULL case",
+    [MSG_MESSAGE_SEND_ZERO_SIZE_MSG_T] =
+	"Send a message with zero message size",
+    [MSG_MESSAGE_SEND_MULTI_CAST_GR_FULL_T] =
+	"Message Send to a group - QUEUE FULL case",
+    [MSG_MESSAGE_SEND_ERR_TRY_AGAIN_T] =
+	"saMsgMessageSend when service is not available",
 };
 
 struct SafMsgMessageSend API_Mqsv_MessageSend[] = {
-	[MSG_MESSAGE_SEND_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
-					&gl_mqa_env.pers_q,
-					&gl_mqa_env.send_msg, APP_TIMEOUT,
-					SA_AIS_ERR_BAD_HANDLE},
-	[MSG_MESSAGE_SEND_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.pers_q,
-					      &gl_mqa_env.send_msg, APP_TIMEOUT,
-					      SA_AIS_ERR_BAD_HANDLE},
-	[MSG_MESSAGE_SEND_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
+    [MSG_MESSAGE_SEND_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+				    &gl_mqa_env.pers_q, &gl_mqa_env.send_msg,
+				    APP_TIMEOUT, SA_AIS_ERR_BAD_HANDLE},
+    [MSG_MESSAGE_SEND_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.pers_q,
 					  &gl_mqa_env.send_msg, APP_TIMEOUT,
-					  SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_SEND_NULL_MSG_T] = {&gl_mqa_env.msg_hdl1,
-					 &gl_mqa_env.pers_q, NULL, APP_TIMEOUT,
-					 SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_SEND_ERR_TIMEOUT_T] = {&gl_mqa_env.msg_hdl1,
-					    &gl_mqa_env.pers_q,
-					    &gl_mqa_env.send_msg, 0,
-					    SA_AIS_ERR_TIMEOUT},
-	[MSG_MESSAGE_SEND_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1,
+					  SA_AIS_ERR_BAD_HANDLE},
+    [MSG_MESSAGE_SEND_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
+				      &gl_mqa_env.send_msg, APP_TIMEOUT,
+				      SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_SEND_NULL_MSG_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q,
+				     NULL, APP_TIMEOUT,
+				     SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_SEND_ERR_TIMEOUT_T] = {&gl_mqa_env.msg_hdl1,
+					&gl_mqa_env.pers_q,
+					&gl_mqa_env.send_msg, 0,
+					SA_AIS_ERR_TIMEOUT},
+    [MSG_MESSAGE_SEND_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q,
+				      &gl_mqa_env.send_msg, APP_TIMEOUT,
+				      SA_AIS_ERR_NOT_EXIST},
+    [MSG_MESSAGE_SEND_BAD_GROUP_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
+				      &gl_mqa_env.send_msg, APP_TIMEOUT,
+				      SA_AIS_ERR_NOT_EXIST},
+
+    [MSG_MESSAGE_SEND_SUCCESS_NAME1_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.pers_q,
+					  &gl_mqa_env.send_msg, APP_TIMEOUT,
+					  SA_AIS_OK},
+    [MSG_MESSAGE_SEND_SUCCESS_NAME2_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.non_pers_q,
+					  &gl_mqa_env.send_msg, APP_TIMEOUT,
+					  SA_AIS_OK},
+    [MSG_MESSAGE_SEND_SUCCESS_NAME3_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.pers_q2,
+					  &gl_mqa_env.send_msg_null_sndr_name,
+					  APP_TIMEOUT, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_SUCCESS_NAME4_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.non_pers_q2,
+					  &gl_mqa_env.send_msg_null_sndr_name,
+					  APP_TIMEOUT, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_SUCCESS_HDL2_NAME1_T] = {&gl_mqa_env.msg_hdl2,
+					       &gl_mqa_env.pers_q,
+					       &gl_mqa_env.send_msg,
+					       APP_TIMEOUT, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_SUCCESS_HDL2_NAME2_T] =
+	{&gl_mqa_env.msg_hdl2, &gl_mqa_env.non_pers_q,
+	 &gl_mqa_env.send_msg_null_sndr_name, APP_TIMEOUT, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_SUCCESS_HDL2_NAME3_T] = {&gl_mqa_env.msg_hdl2,
+					       &gl_mqa_env.pers_q2,
+					       &gl_mqa_env.send_msg,
+					       APP_TIMEOUT, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_SUCCESS_HDL2_NAME4_T] =
+	{&gl_mqa_env.msg_hdl2, &gl_mqa_env.non_pers_q2,
+	 &gl_mqa_env.send_msg_null_sndr_name, APP_TIMEOUT, SA_AIS_OK},
+
+    [MSG_MESSAGE_SEND_SUCCESS_MSG2_T] = {&gl_mqa_env.msg_hdl1,
+					 &gl_mqa_env.pers_q,
+					 &gl_mqa_env.send_msg_null_sndr_name,
+					 APP_TIMEOUT, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_SUCCESS_Q2_MSG2_T] = {&gl_mqa_env.msg_hdl1,
+					    &gl_mqa_env.non_pers_q,
+					    &gl_mqa_env.send_msg_null_sndr_name,
+					    APP_TIMEOUT, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_TO_ZERO_QUEUE_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.zero_q,
+					  &gl_mqa_env.send_msg, APP_TIMEOUT,
+					  SA_AIS_ERR_QUEUE_FULL},
+    [MSG_MESSAGE_SEND_QUEUE_FULL_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q,
+				       &gl_mqa_env.send_msg, APP_TIMEOUT,
+				       SA_AIS_ERR_QUEUE_FULL},
+    [MSG_MESSAGE_SEND_BIG_MSG_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q,
+				    &gl_mqa_env.send_big_msg, APP_TIMEOUT,
+				    SA_AIS_ERR_QUEUE_FULL},
+    [MSG_MESSAGE_SEND_ERR_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1,
 					  &gl_mqa_env.pers_q,
 					  &gl_mqa_env.send_msg, APP_TIMEOUT,
 					  SA_AIS_ERR_NOT_EXIST},
-	[MSG_MESSAGE_SEND_BAD_GROUP_T] = {&gl_mqa_env.msg_hdl1,
+    [MSG_MESSAGE_SEND_ERR_NOT_EXIST2_T] = {&gl_mqa_env.msg_hdl1,
+					   &gl_mqa_env.non_pers_q,
+					   &gl_mqa_env.send_msg,
+					   APP_TIMEOUT, SA_AIS_ERR_NOT_EXIST},
+    [MSG_MESSAGE_SEND_WITH_BAD_PR_T] = {&gl_mqa_env.msg_hdl1,
+					&gl_mqa_env.pers_q,
+					&gl_mqa_env.send_msg_bad_pr,
+					APP_TIMEOUT, SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_SEND_UNAVAILABLE_T] = {&gl_mqa_env.msg_hdl1,
+					&gl_mqa_env.qgroup1,
+					&gl_mqa_env.send_msg, APP_TIMEOUT,
+					SA_AIS_ERR_QUEUE_NOT_AVAILABLE},
+    [MSG_MESSAGE_SEND_GR_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
+				       &gl_mqa_env.qgroup1,
+				       &gl_mqa_env.send_msg, APP_TIMEOUT,
+				       SA_AIS_OK},
+    [MSG_MESSAGE_SEND_GR_SUCCESS_MSG2_T] = {&gl_mqa_env.msg_hdl1,
+					    &gl_mqa_env.qgroup1,
+					    &gl_mqa_env.send_msg_null_sndr_name,
+					    APP_TIMEOUT, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_GR_QUEUE_FULL_T] = {&gl_mqa_env.msg_hdl1,
 					  &gl_mqa_env.qgroup1,
 					  &gl_mqa_env.send_msg, APP_TIMEOUT,
-					  SA_AIS_ERR_NOT_EXIST},
-
-	[MSG_MESSAGE_SEND_SUCCESS_NAME1_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.pers_q,
-					      &gl_mqa_env.send_msg, APP_TIMEOUT,
-					      SA_AIS_OK},
-	[MSG_MESSAGE_SEND_SUCCESS_NAME2_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.non_pers_q,
-					      &gl_mqa_env.send_msg, APP_TIMEOUT,
-					      SA_AIS_OK},
-	[MSG_MESSAGE_SEND_SUCCESS_NAME3_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q2,
-	     &gl_mqa_env.send_msg_null_sndr_name, APP_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_SUCCESS_NAME4_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.non_pers_q2,
-	     &gl_mqa_env.send_msg_null_sndr_name, APP_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_SUCCESS_HDL2_NAME1_T] = {&gl_mqa_env.msg_hdl2,
-						   &gl_mqa_env.pers_q,
-						   &gl_mqa_env.send_msg,
-						   APP_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_SUCCESS_HDL2_NAME2_T] =
-	    {&gl_mqa_env.msg_hdl2, &gl_mqa_env.non_pers_q,
-	     &gl_mqa_env.send_msg_null_sndr_name, APP_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_SUCCESS_HDL2_NAME3_T] = {&gl_mqa_env.msg_hdl2,
-						   &gl_mqa_env.pers_q2,
-						   &gl_mqa_env.send_msg,
-						   APP_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_SUCCESS_HDL2_NAME4_T] =
-	    {&gl_mqa_env.msg_hdl2, &gl_mqa_env.non_pers_q2,
-	     &gl_mqa_env.send_msg_null_sndr_name, APP_TIMEOUT, SA_AIS_OK},
-
-	[MSG_MESSAGE_SEND_SUCCESS_MSG2_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q,
-	     &gl_mqa_env.send_msg_null_sndr_name, APP_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_SUCCESS_Q2_MSG2_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.non_pers_q,
-	     &gl_mqa_env.send_msg_null_sndr_name, APP_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_TO_ZERO_QUEUE_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.zero_q,
-					      &gl_mqa_env.send_msg, APP_TIMEOUT,
-					      SA_AIS_ERR_QUEUE_FULL},
-	[MSG_MESSAGE_SEND_QUEUE_FULL_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.pers_q,
-					   &gl_mqa_env.send_msg, APP_TIMEOUT,
-					   SA_AIS_ERR_QUEUE_FULL},
-	[MSG_MESSAGE_SEND_BIG_MSG_T] = {&gl_mqa_env.msg_hdl1,
-					&gl_mqa_env.pers_q,
-					&gl_mqa_env.send_big_msg, APP_TIMEOUT,
-					SA_AIS_ERR_QUEUE_FULL},
-	[MSG_MESSAGE_SEND_ERR_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.pers_q,
-					      &gl_mqa_env.send_msg, APP_TIMEOUT,
-					      SA_AIS_ERR_NOT_EXIST},
-	[MSG_MESSAGE_SEND_ERR_NOT_EXIST2_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.non_pers_q, &gl_mqa_env.send_msg,
-	     APP_TIMEOUT, SA_AIS_ERR_NOT_EXIST},
-	[MSG_MESSAGE_SEND_WITH_BAD_PR_T] = {&gl_mqa_env.msg_hdl1,
-					    &gl_mqa_env.pers_q,
-					    &gl_mqa_env.send_msg_bad_pr,
-					    APP_TIMEOUT,
-					    SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_SEND_UNAVAILABLE_T] = {&gl_mqa_env.msg_hdl1,
-					    &gl_mqa_env.qgroup1,
-					    &gl_mqa_env.send_msg, APP_TIMEOUT,
-					    SA_AIS_ERR_QUEUE_NOT_AVAILABLE},
-	[MSG_MESSAGE_SEND_GR_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.qgroup1,
-					   &gl_mqa_env.send_msg, APP_TIMEOUT,
-					   SA_AIS_OK},
-	[MSG_MESSAGE_SEND_GR_SUCCESS_MSG2_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
-	     &gl_mqa_env.send_msg_null_sndr_name, APP_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_GR_QUEUE_FULL_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.qgroup1,
-					      &gl_mqa_env.send_msg, APP_TIMEOUT,
-					      SA_AIS_ERR_QUEUE_FULL},
-	[MSG_MESSAGE_SEND_ZERO_SIZE_MSG_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.pers_q,
-					      &gl_mqa_env.send_msg_zero_size,
-					      APP_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_MULTI_CAST_GR_FULL_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1,
-	     &gl_mqa_env.send_big_msg, APP_TIMEOUT, SA_AIS_ERR_QUEUE_FULL},
-	[MSG_MESSAGE_SEND_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.pers_q,
-					      &gl_mqa_env.send_msg, APP_TIMEOUT,
-					      SA_AIS_ERR_TRY_AGAIN},
+					  SA_AIS_ERR_QUEUE_FULL},
+    [MSG_MESSAGE_SEND_ZERO_SIZE_MSG_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.pers_q,
+					  &gl_mqa_env.send_msg_zero_size,
+					  APP_TIMEOUT, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_MULTI_CAST_GR_FULL_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1, &gl_mqa_env.send_big_msg,
+	 APP_TIMEOUT, SA_AIS_ERR_QUEUE_FULL},
+    [MSG_MESSAGE_SEND_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.pers_q,
+					  &gl_mqa_env.send_msg, APP_TIMEOUT,
+					  SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgMessageSend(int i, MQSV_CONFIG_FLAG flg)
@@ -2570,222 +2479,227 @@ int tet_test_red_msgMessageSend(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Send Async Test cases  ***************** */
 
 char *API_Mqsv_MessageSendAsync_resultstring[] = {
-	[MSG_MESSAGE_SEND_ASYNC_BAD_HDL_T] =
-	    "saMsgMessageSendAsync with invalid Message Handle",
-	[MSG_MESSAGE_SEND_ASYNC_FINALIZED_HDL_T] =
-	    "saMsgMessageSendAsync with finalized Message Handle",
-	[MSG_MESSAGE_SEND_ASYNC_NULL_NAME_T] =
-	    "saMsgMessageSendAsync with Null Queue name",
-	[MSG_MESSAGE_SEND_ASYNC_NULL_MSG_T] =
-	    "saMsgMessageSendAsync with Null Message",
-	[MSG_MESSAGE_SEND_ASYNC_NOT_EXIST_T] =
-	    "saMsgMessageSendAsync to a queue that does not exist",
-	[MSG_MESSAGE_SEND_ASYNC_BAD_GROUP_T] =
-	    "saMsgMessageSendAsync to a group that does not exist",
-	[MSG_MESSAGE_SEND_ASYNC_BAD_FLAGS_T] =
-	    "saMsgMessageSendAsync with Bad Ack Flags",
-	[MSG_MESSAGE_SEND_ASYNC_NO_ACK_SUCCESS_T] =
-	    "Message SendAsync without ack",
+    [MSG_MESSAGE_SEND_ASYNC_BAD_HDL_T] =
+	"saMsgMessageSendAsync with invalid Message Handle",
+    [MSG_MESSAGE_SEND_ASYNC_FINALIZED_HDL_T] =
+	"saMsgMessageSendAsync with finalized Message Handle",
+    [MSG_MESSAGE_SEND_ASYNC_NULL_NAME_T] =
+	"saMsgMessageSendAsync with Null Queue name",
+    [MSG_MESSAGE_SEND_ASYNC_NULL_MSG_T] =
+	"saMsgMessageSendAsync with Null Message",
+    [MSG_MESSAGE_SEND_ASYNC_NOT_EXIST_T] =
+	"saMsgMessageSendAsync to a queue that does not exist",
+    [MSG_MESSAGE_SEND_ASYNC_BAD_GROUP_T] =
+	"saMsgMessageSendAsync to a group that does not exist",
+    [MSG_MESSAGE_SEND_ASYNC_BAD_FLAGS_T] =
+	"saMsgMessageSendAsync with Bad Ack Flags",
+    [MSG_MESSAGE_SEND_ASYNC_NO_ACK_SUCCESS_T] = "Message SendAsync without ack",
 
-	[MSG_MESSAGE_SEND_ASYNC_NAME1_T] =
-	    "saMsgMessageSendAsync with valid parameters - Persistent",
-	[MSG_MESSAGE_SEND_ASYNC_NAME2_T] =
-	    "saMsgMessageSendAsync with valid parameters - Non Persistent",
-	[MSG_MESSAGE_SEND_ASYNC_NAME3_T] =
-	    "saMsgMessageSendAsync with valid parameters",
-	[MSG_MESSAGE_SEND_ASYNC_NAME4_T] =
-	    "saMsgMessageSendAsync with valid parameters",
-	[MSG_MESSAGE_SEND_ASYNC_HDL2_NAME1_T] =
-	    "saMsgMessageSendAsync with valid parameters",
-	[MSG_MESSAGE_SEND_ASYNC_HDL2_NAME2_T] =
-	    "saMsgMessageSendAsync with valid parameters",
-	[MSG_MESSAGE_SEND_ASYNC_HDL2_NAME3_T] =
-	    "saMsgMessageSendAsync with valid parameters",
-	[MSG_MESSAGE_SEND_ASYNC_HDL2_NAME4_T] =
-	    "saMsgMessageSendAsync with valid parameters",
+    [MSG_MESSAGE_SEND_ASYNC_NAME1_T] =
+	"saMsgMessageSendAsync with valid parameters - Persistent",
+    [MSG_MESSAGE_SEND_ASYNC_NAME2_T] =
+	"saMsgMessageSendAsync with valid parameters - Non Persistent",
+    [MSG_MESSAGE_SEND_ASYNC_NAME3_T] =
+	"saMsgMessageSendAsync with valid parameters",
+    [MSG_MESSAGE_SEND_ASYNC_NAME4_T] =
+	"saMsgMessageSendAsync with valid parameters",
+    [MSG_MESSAGE_SEND_ASYNC_HDL2_NAME1_T] =
+	"saMsgMessageSendAsync with valid parameters",
+    [MSG_MESSAGE_SEND_ASYNC_HDL2_NAME2_T] =
+	"saMsgMessageSendAsync with valid parameters",
+    [MSG_MESSAGE_SEND_ASYNC_HDL2_NAME3_T] =
+	"saMsgMessageSendAsync with valid parameters",
+    [MSG_MESSAGE_SEND_ASYNC_HDL2_NAME4_T] =
+	"saMsgMessageSendAsync with valid parameters",
 
-	[MSG_MESSAGE_SEND_ASYNC_ERR_INIT_T] =
-	    "saMsgMessageSendAsync - ERR_INIT case",
-	[MSG_MESSAGE_SEND_ASYNC_ERR_INIT2_T] =
-	    "saMsgMessageSendAsync - ERR_INIT case2",
-	[MSG_MESSAGE_SEND_ASYNC_ERR_NOT_EXIST_T] =
-	    "saMsgMessageSendAsync to an unavailable queue",
-	[MSG_MESSAGE_SEND_ASYNC_ERR_NOT_EXIST2_T] =
-	    "saMsgMessageSendAsync to an unavailable queue",
-	[MSG_MESSAGE_SEND_ASYNC_ZERO_QUEUE_T] = "Send to a zero size queue",
-	[MSG_MESSAGE_SEND_ASYNC_QUEUE_FULL_T] =
-	    "saMsgMessageSendAsync - QUEUE FULL case",
-	[MSG_MESSAGE_SEND_ASYNC_WITH_BAD_PR_T] =
-	    "saMsgMessageSendAsync with a message with bad priority",
-	[MSG_MESSAGE_SEND_ASYNC_BIG_MSG_T] = "Send a big message to the queue",
-	[MSG_MESSAGE_SEND_ASYNC_UNAVAILABLE_T] =
-	    "saMsgMessageSendAsync to an empty Queue Group",
-	[MSG_MESSAGE_SEND_ASYNC_SUCCESS_Q1_MSG2_T] =
-	    "Send a message to a queue",
-	[MSG_MESSAGE_SEND_ASYNC_SUCCESS_Q2_MSG2_T] =
-	    "Send a message to a queue",
-	[MSG_MESSAGE_SEND_ASYNC_GR_SUCCESS_T] =
-	    "saMsgMessageSendAsync to a Queue Group",
-	[MSG_MESSAGE_SEND_ASYNC_GR_SUCCESS_MSG2_T] =
-	    "saMsgMessageSendAsync to a Queue Group",
-	[MSG_MESSAGE_SEND_ASYNC_GR_QUEUE_FULL_T] =
-	    "saMsgMessageSendAsync to a Queue Group - QUEUE FULL case",
-	[MSG_MESSAGE_SEND_ASYNC_ZERO_SIZE_MSG_T] =
-	    "Send a message with zero message size",
-	[MSG_MESSAGE_SEND_ASYNC_MULTI_CAST_GR_FULL_T] =
-	    "saMsgMessageSendAsync to a Queue Group - QUEUE FULL case",
-	[MSG_MESSAGE_SEND_ASYNC_ERR_TRY_AGAIN_T] =
-	    "saMsgMessageSendAsync when service is not available",
+    [MSG_MESSAGE_SEND_ASYNC_ERR_INIT_T] =
+	"saMsgMessageSendAsync - ERR_INIT case",
+    [MSG_MESSAGE_SEND_ASYNC_ERR_INIT2_T] =
+	"saMsgMessageSendAsync - ERR_INIT case2",
+    [MSG_MESSAGE_SEND_ASYNC_ERR_NOT_EXIST_T] =
+	"saMsgMessageSendAsync to an unavailable queue",
+    [MSG_MESSAGE_SEND_ASYNC_ERR_NOT_EXIST2_T] =
+	"saMsgMessageSendAsync to an unavailable queue",
+    [MSG_MESSAGE_SEND_ASYNC_ZERO_QUEUE_T] = "Send to a zero size queue",
+    [MSG_MESSAGE_SEND_ASYNC_QUEUE_FULL_T] =
+	"saMsgMessageSendAsync - QUEUE FULL case",
+    [MSG_MESSAGE_SEND_ASYNC_WITH_BAD_PR_T] =
+	"saMsgMessageSendAsync with a message with bad priority",
+    [MSG_MESSAGE_SEND_ASYNC_BIG_MSG_T] = "Send a big message to the queue",
+    [MSG_MESSAGE_SEND_ASYNC_UNAVAILABLE_T] =
+	"saMsgMessageSendAsync to an empty Queue Group",
+    [MSG_MESSAGE_SEND_ASYNC_SUCCESS_Q1_MSG2_T] = "Send a message to a queue",
+    [MSG_MESSAGE_SEND_ASYNC_SUCCESS_Q2_MSG2_T] = "Send a message to a queue",
+    [MSG_MESSAGE_SEND_ASYNC_GR_SUCCESS_T] =
+	"saMsgMessageSendAsync to a Queue Group",
+    [MSG_MESSAGE_SEND_ASYNC_GR_SUCCESS_MSG2_T] =
+	"saMsgMessageSendAsync to a Queue Group",
+    [MSG_MESSAGE_SEND_ASYNC_GR_QUEUE_FULL_T] =
+	"saMsgMessageSendAsync to a Queue Group - QUEUE FULL case",
+    [MSG_MESSAGE_SEND_ASYNC_ZERO_SIZE_MSG_T] =
+	"Send a message with zero message size",
+    [MSG_MESSAGE_SEND_ASYNC_MULTI_CAST_GR_FULL_T] =
+	"saMsgMessageSendAsync to a Queue Group - QUEUE FULL case",
+    [MSG_MESSAGE_SEND_ASYNC_ERR_TRY_AGAIN_T] =
+	"saMsgMessageSendAsync when service is not available",
 };
 
 struct SafMsgMessageSendAsync API_Mqsv_MessageSendAsync[] = {
-	[MSG_MESSAGE_SEND_ASYNC_BAD_HDL_T] =
-	    {&gl_mqa_env.inv_params.inv_msg_hdl, 300, &gl_mqa_env.pers_q,
-	     &gl_mqa_env.send_msg, SA_MSG_MESSAGE_DELIVERED_ACK,
-	     SA_AIS_ERR_BAD_HANDLE},
-	[MSG_MESSAGE_SEND_ASYNC_FINALIZED_HDL_T] =
-	    {&gl_mqa_env.msg_hdl1, 301, &gl_mqa_env.pers_q,
-	     &gl_mqa_env.send_msg, SA_MSG_MESSAGE_DELIVERED_ACK,
-	     SA_AIS_ERR_BAD_HANDLE},
-	[MSG_MESSAGE_SEND_ASYNC_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, 302, NULL,
-						&gl_mqa_env.send_msg,
-						SA_MSG_MESSAGE_DELIVERED_ACK,
-						SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_SEND_ASYNC_NULL_MSG_T] = {&gl_mqa_env.msg_hdl1, 303,
-					       &gl_mqa_env.pers_q, NULL,
-					       SA_MSG_MESSAGE_DELIVERED_ACK,
-					       SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_SEND_ASYNC_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1, 304,
+    [MSG_MESSAGE_SEND_ASYNC_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+					  300, &gl_mqa_env.pers_q,
+					  &gl_mqa_env.send_msg,
+					  SA_MSG_MESSAGE_DELIVERED_ACK,
+					  SA_AIS_ERR_BAD_HANDLE},
+    [MSG_MESSAGE_SEND_ASYNC_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1, 301,
 						&gl_mqa_env.pers_q,
 						&gl_mqa_env.send_msg,
 						SA_MSG_MESSAGE_DELIVERED_ACK,
-						SA_AIS_ERR_NOT_EXIST},
-	[MSG_MESSAGE_SEND_ASYNC_BAD_GROUP_T] = {&gl_mqa_env.msg_hdl1, 305,
-						&gl_mqa_env.qgroup1,
-						&gl_mqa_env.send_msg,
-						SA_MSG_MESSAGE_DELIVERED_ACK,
-						SA_AIS_ERR_NOT_EXIST},
-	[MSG_MESSAGE_SEND_ASYNC_BAD_FLAGS_T] = {&gl_mqa_env.msg_hdl1, 306,
-						&gl_mqa_env.pers_q,
-						&gl_mqa_env.send_msg, 2,
-						SA_AIS_ERR_BAD_FLAGS},
-	[MSG_MESSAGE_SEND_ASYNC_NO_ACK_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, 307,
-						     &gl_mqa_env.pers_q,
-						     &gl_mqa_env.send_msg, 0,
-						     SA_AIS_OK},
-
-	[MSG_MESSAGE_SEND_ASYNC_NAME1_T] = {&gl_mqa_env.msg_hdl1, 308,
+						SA_AIS_ERR_BAD_HANDLE},
+    [MSG_MESSAGE_SEND_ASYNC_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, 302, NULL,
+					    &gl_mqa_env.send_msg,
+					    SA_MSG_MESSAGE_DELIVERED_ACK,
+					    SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_SEND_ASYNC_NULL_MSG_T] = {&gl_mqa_env.msg_hdl1, 303,
+					   &gl_mqa_env.pers_q, NULL,
+					   SA_MSG_MESSAGE_DELIVERED_ACK,
+					   SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_SEND_ASYNC_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1, 304,
 					    &gl_mqa_env.pers_q,
 					    &gl_mqa_env.send_msg,
 					    SA_MSG_MESSAGE_DELIVERED_ACK,
-					    SA_AIS_OK},
-	[MSG_MESSAGE_SEND_ASYNC_NAME2_T] = {&gl_mqa_env.msg_hdl1, 309,
-					    &gl_mqa_env.non_pers_q,
+					    SA_AIS_ERR_NOT_EXIST},
+    [MSG_MESSAGE_SEND_ASYNC_BAD_GROUP_T] = {&gl_mqa_env.msg_hdl1, 305,
+					    &gl_mqa_env.qgroup1,
 					    &gl_mqa_env.send_msg,
 					    SA_MSG_MESSAGE_DELIVERED_ACK,
-					    SA_AIS_OK},
-	[MSG_MESSAGE_SEND_ASYNC_NAME3_T] = {&gl_mqa_env.msg_hdl1, 310,
-					    &gl_mqa_env.pers_q2,
-					    &gl_mqa_env.send_msg,
-					    SA_MSG_MESSAGE_DELIVERED_ACK,
-					    SA_AIS_OK},
-	[MSG_MESSAGE_SEND_ASYNC_NAME4_T] = {&gl_mqa_env.msg_hdl1, 311,
-					    &gl_mqa_env.non_pers_q2,
-					    &gl_mqa_env.send_msg,
-					    SA_MSG_MESSAGE_DELIVERED_ACK,
-					    SA_AIS_OK},
-	[MSG_MESSAGE_SEND_ASYNC_HDL2_NAME1_T] = {&gl_mqa_env.msg_hdl2, 312,
+					    SA_AIS_ERR_NOT_EXIST},
+    [MSG_MESSAGE_SEND_ASYNC_BAD_FLAGS_T] = {&gl_mqa_env.msg_hdl1, 306,
+					    &gl_mqa_env.pers_q,
+					    &gl_mqa_env.send_msg, 2,
+					    SA_AIS_ERR_BAD_FLAGS},
+    [MSG_MESSAGE_SEND_ASYNC_NO_ACK_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, 307,
 						 &gl_mqa_env.pers_q,
-						 &gl_mqa_env.send_msg,
-						 SA_MSG_MESSAGE_DELIVERED_ACK,
-						 SA_AIS_OK},
-	[MSG_MESSAGE_SEND_ASYNC_HDL2_NAME2_T] = {&gl_mqa_env.msg_hdl2, 313,
-						 &gl_mqa_env.non_pers_q,
-						 &gl_mqa_env.send_msg,
-						 SA_MSG_MESSAGE_DELIVERED_ACK,
-						 SA_AIS_OK},
-	[MSG_MESSAGE_SEND_ASYNC_HDL2_NAME3_T] = {&gl_mqa_env.msg_hdl2, 314,
-						 &gl_mqa_env.pers_q2,
-						 &gl_mqa_env.send_msg,
-						 SA_MSG_MESSAGE_DELIVERED_ACK,
-						 SA_AIS_OK},
-	[MSG_MESSAGE_SEND_ASYNC_HDL2_NAME4_T] = {&gl_mqa_env.msg_hdl2, 315,
-						 &gl_mqa_env.non_pers_q2,
-						 &gl_mqa_env.send_msg,
-						 SA_MSG_MESSAGE_DELIVERED_ACK,
+						 &gl_mqa_env.send_msg, 0,
 						 SA_AIS_OK},
 
-	[MSG_MESSAGE_SEND_ASYNC_ERR_INIT_T] = {&gl_mqa_env.msg_hdl1, 316,
-					       &gl_mqa_env.pers_q,
-					       &gl_mqa_env.send_msg, 0,
-					       SA_AIS_OK},
-	[MSG_MESSAGE_SEND_ASYNC_ERR_INIT2_T] = {&gl_mqa_env.msg_hdl1, 317,
+    [MSG_MESSAGE_SEND_ASYNC_NAME1_T] = {&gl_mqa_env.msg_hdl1, 308,
+					&gl_mqa_env.pers_q,
+					&gl_mqa_env.send_msg,
+					SA_MSG_MESSAGE_DELIVERED_ACK,
+					SA_AIS_OK},
+    [MSG_MESSAGE_SEND_ASYNC_NAME2_T] = {&gl_mqa_env.msg_hdl1, 309,
+					&gl_mqa_env.non_pers_q,
+					&gl_mqa_env.send_msg,
+					SA_MSG_MESSAGE_DELIVERED_ACK,
+					SA_AIS_OK},
+    [MSG_MESSAGE_SEND_ASYNC_NAME3_T] = {&gl_mqa_env.msg_hdl1, 310,
+					&gl_mqa_env.pers_q2,
+					&gl_mqa_env.send_msg,
+					SA_MSG_MESSAGE_DELIVERED_ACK,
+					SA_AIS_OK},
+    [MSG_MESSAGE_SEND_ASYNC_NAME4_T] = {&gl_mqa_env.msg_hdl1, 311,
+					&gl_mqa_env.non_pers_q2,
+					&gl_mqa_env.send_msg,
+					SA_MSG_MESSAGE_DELIVERED_ACK,
+					SA_AIS_OK},
+    [MSG_MESSAGE_SEND_ASYNC_HDL2_NAME1_T] = {&gl_mqa_env.msg_hdl2, 312,
+					     &gl_mqa_env.pers_q,
+					     &gl_mqa_env.send_msg,
+					     SA_MSG_MESSAGE_DELIVERED_ACK,
+					     SA_AIS_OK},
+    [MSG_MESSAGE_SEND_ASYNC_HDL2_NAME2_T] = {&gl_mqa_env.msg_hdl2, 313,
+					     &gl_mqa_env.non_pers_q,
+					     &gl_mqa_env.send_msg,
+					     SA_MSG_MESSAGE_DELIVERED_ACK,
+					     SA_AIS_OK},
+    [MSG_MESSAGE_SEND_ASYNC_HDL2_NAME3_T] = {&gl_mqa_env.msg_hdl2, 314,
+					     &gl_mqa_env.pers_q2,
+					     &gl_mqa_env.send_msg,
+					     SA_MSG_MESSAGE_DELIVERED_ACK,
+					     SA_AIS_OK},
+    [MSG_MESSAGE_SEND_ASYNC_HDL2_NAME4_T] = {&gl_mqa_env.msg_hdl2, 315,
+					     &gl_mqa_env.non_pers_q2,
+					     &gl_mqa_env.send_msg,
+					     SA_MSG_MESSAGE_DELIVERED_ACK,
+					     SA_AIS_OK},
+
+    [MSG_MESSAGE_SEND_ASYNC_ERR_INIT_T] = {&gl_mqa_env.msg_hdl1, 316,
+					   &gl_mqa_env.pers_q,
+					   &gl_mqa_env.send_msg, 0, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_ASYNC_ERR_INIT2_T] = {&gl_mqa_env.msg_hdl1, 317,
+					    &gl_mqa_env.pers_q,
+					    &gl_mqa_env.send_msg,
+					    SA_MSG_MESSAGE_DELIVERED_ACK,
+					    SA_AIS_ERR_INIT},
+    [MSG_MESSAGE_SEND_ASYNC_ERR_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1, 318,
 						&gl_mqa_env.pers_q,
 						&gl_mqa_env.send_msg,
 						SA_MSG_MESSAGE_DELIVERED_ACK,
-						SA_AIS_ERR_INIT},
-	[MSG_MESSAGE_SEND_ASYNC_ERR_NOT_EXIST_T] =
-	    {&gl_mqa_env.msg_hdl1, 318, &gl_mqa_env.pers_q,
-	     &gl_mqa_env.send_msg, SA_MSG_MESSAGE_DELIVERED_ACK,
-	     SA_AIS_ERR_NOT_EXIST},
-	[MSG_MESSAGE_SEND_ASYNC_ERR_NOT_EXIST2_T] =
-	    {&gl_mqa_env.msg_hdl1, 319, &gl_mqa_env.non_pers_q,
-	     &gl_mqa_env.send_msg, SA_MSG_MESSAGE_DELIVERED_ACK,
-	     SA_AIS_ERR_NOT_EXIST},
-	[MSG_MESSAGE_SEND_ASYNC_ZERO_QUEUE_T] = {&gl_mqa_env.msg_hdl1, 320,
-						 &gl_mqa_env.zero_q,
+						SA_AIS_ERR_NOT_EXIST},
+    [MSG_MESSAGE_SEND_ASYNC_ERR_NOT_EXIST2_T] = {&gl_mqa_env.msg_hdl1, 319,
+						 &gl_mqa_env.non_pers_q,
 						 &gl_mqa_env.send_msg,
 						 SA_MSG_MESSAGE_DELIVERED_ACK,
-						 SA_AIS_OK},
-	[MSG_MESSAGE_SEND_ASYNC_QUEUE_FULL_T] = {&gl_mqa_env.msg_hdl1, 321,
-						 &gl_mqa_env.pers_q,
-						 &gl_mqa_env.send_msg,
-						 SA_MSG_MESSAGE_DELIVERED_ACK,
-						 SA_AIS_OK},
-	[MSG_MESSAGE_SEND_ASYNC_WITH_BAD_PR_T] = {&gl_mqa_env.msg_hdl1, 322,
-						  &gl_mqa_env.pers_q,
-						  &gl_mqa_env.send_msg_bad_pr,
-						  SA_MSG_MESSAGE_DELIVERED_ACK,
-						  SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_SEND_ASYNC_BIG_MSG_T] = {&gl_mqa_env.msg_hdl1, 323,
+						 SA_AIS_ERR_NOT_EXIST},
+    [MSG_MESSAGE_SEND_ASYNC_ZERO_QUEUE_T] = {&gl_mqa_env.msg_hdl1, 320,
+					     &gl_mqa_env.zero_q,
+					     &gl_mqa_env.send_msg,
+					     SA_MSG_MESSAGE_DELIVERED_ACK,
+					     SA_AIS_OK},
+    [MSG_MESSAGE_SEND_ASYNC_QUEUE_FULL_T] = {&gl_mqa_env.msg_hdl1, 321,
+					     &gl_mqa_env.pers_q,
+					     &gl_mqa_env.send_msg,
+					     SA_MSG_MESSAGE_DELIVERED_ACK,
+					     SA_AIS_OK},
+    [MSG_MESSAGE_SEND_ASYNC_WITH_BAD_PR_T] = {&gl_mqa_env.msg_hdl1, 322,
 					      &gl_mqa_env.pers_q,
-					      &gl_mqa_env.send_big_msg,
+					      &gl_mqa_env.send_msg_bad_pr,
 					      SA_MSG_MESSAGE_DELIVERED_ACK,
-					      SA_AIS_OK},
-	[MSG_MESSAGE_SEND_ASYNC_SUCCESS_Q1_MSG2_T] =
-	    {&gl_mqa_env.msg_hdl1, 324, &gl_mqa_env.pers_q,
-	     &gl_mqa_env.send_msg_null_sndr_name, SA_MSG_MESSAGE_DELIVERED_ACK,
-	     SA_AIS_OK},
-	[MSG_MESSAGE_SEND_ASYNC_SUCCESS_Q2_MSG2_T] =
-	    {&gl_mqa_env.msg_hdl1, 325, &gl_mqa_env.non_pers_q,
-	     &gl_mqa_env.send_msg_null_sndr_name, 0, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_ASYNC_UNAVAILABLE_T] =
-	    {&gl_mqa_env.msg_hdl1, 326, &gl_mqa_env.qgroup1,
-	     &gl_mqa_env.send_msg, SA_MSG_MESSAGE_DELIVERED_ACK,
-	     SA_AIS_ERR_QUEUE_NOT_AVAILABLE},
-	[MSG_MESSAGE_SEND_ASYNC_GR_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, 327,
-						 &gl_mqa_env.qgroup1,
-						 &gl_mqa_env.send_msg,
-						 SA_MSG_MESSAGE_DELIVERED_ACK,
-						 SA_AIS_OK},
-	[MSG_MESSAGE_SEND_ASYNC_GR_SUCCESS_MSG2_T] =
-	    {&gl_mqa_env.msg_hdl1, 328, &gl_mqa_env.qgroup1,
-	     &gl_mqa_env.send_msg_null_sndr_name, SA_MSG_MESSAGE_DELIVERED_ACK,
-	     SA_AIS_OK},
-	[MSG_MESSAGE_SEND_ASYNC_GR_QUEUE_FULL_T] =
-	    {&gl_mqa_env.msg_hdl1, 329, &gl_mqa_env.qgroup1,
-	     &gl_mqa_env.send_msg, SA_MSG_MESSAGE_DELIVERED_ACK, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_ASYNC_ZERO_SIZE_MSG_T] =
-	    {&gl_mqa_env.msg_hdl1, 330, &gl_mqa_env.pers_q,
-	     &gl_mqa_env.send_msg_zero_size, SA_MSG_MESSAGE_DELIVERED_ACK,
-	     SA_AIS_OK},
-	[MSG_MESSAGE_SEND_ASYNC_MULTI_CAST_GR_FULL_T] =
-	    {&gl_mqa_env.msg_hdl1, 331, &gl_mqa_env.qgroup1,
-	     &gl_mqa_env.send_big_msg, SA_MSG_MESSAGE_DELIVERED_ACK, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_ASYNC_ERR_TRY_AGAIN_T] =
-	    {&gl_mqa_env.msg_hdl1, 332, &gl_mqa_env.pers_q,
-	     &gl_mqa_env.send_msg, SA_MSG_MESSAGE_DELIVERED_ACK,
-	     SA_AIS_ERR_TRY_AGAIN},
+					      SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_SEND_ASYNC_BIG_MSG_T] = {&gl_mqa_env.msg_hdl1, 323,
+					  &gl_mqa_env.pers_q,
+					  &gl_mqa_env.send_big_msg,
+					  SA_MSG_MESSAGE_DELIVERED_ACK,
+					  SA_AIS_OK},
+    [MSG_MESSAGE_SEND_ASYNC_SUCCESS_Q1_MSG2_T] =
+	{&gl_mqa_env.msg_hdl1, 324, &gl_mqa_env.pers_q,
+	 &gl_mqa_env.send_msg_null_sndr_name, SA_MSG_MESSAGE_DELIVERED_ACK,
+	 SA_AIS_OK},
+    [MSG_MESSAGE_SEND_ASYNC_SUCCESS_Q2_MSG2_T] =
+	{&gl_mqa_env.msg_hdl1, 325, &gl_mqa_env.non_pers_q,
+	 &gl_mqa_env.send_msg_null_sndr_name, 0, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_ASYNC_UNAVAILABLE_T] = {&gl_mqa_env.msg_hdl1, 326,
+					      &gl_mqa_env.qgroup1,
+					      &gl_mqa_env.send_msg,
+					      SA_MSG_MESSAGE_DELIVERED_ACK,
+					      SA_AIS_ERR_QUEUE_NOT_AVAILABLE},
+    [MSG_MESSAGE_SEND_ASYNC_GR_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, 327,
+					     &gl_mqa_env.qgroup1,
+					     &gl_mqa_env.send_msg,
+					     SA_MSG_MESSAGE_DELIVERED_ACK,
+					     SA_AIS_OK},
+    [MSG_MESSAGE_SEND_ASYNC_GR_SUCCESS_MSG2_T] =
+	{&gl_mqa_env.msg_hdl1, 328, &gl_mqa_env.qgroup1,
+	 &gl_mqa_env.send_msg_null_sndr_name, SA_MSG_MESSAGE_DELIVERED_ACK,
+	 SA_AIS_OK},
+    [MSG_MESSAGE_SEND_ASYNC_GR_QUEUE_FULL_T] = {&gl_mqa_env.msg_hdl1, 329,
+						&gl_mqa_env.qgroup1,
+						&gl_mqa_env.send_msg,
+						SA_MSG_MESSAGE_DELIVERED_ACK,
+						SA_AIS_OK},
+    [MSG_MESSAGE_SEND_ASYNC_ZERO_SIZE_MSG_T] = {&gl_mqa_env.msg_hdl1, 330,
+						&gl_mqa_env.pers_q,
+						&gl_mqa_env.send_msg_zero_size,
+						SA_MSG_MESSAGE_DELIVERED_ACK,
+						SA_AIS_OK},
+    [MSG_MESSAGE_SEND_ASYNC_MULTI_CAST_GR_FULL_T] =
+	{&gl_mqa_env.msg_hdl1, 331, &gl_mqa_env.qgroup1,
+	 &gl_mqa_env.send_big_msg, SA_MSG_MESSAGE_DELIVERED_ACK, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_ASYNC_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1, 332,
+						&gl_mqa_env.pers_q,
+						&gl_mqa_env.send_msg,
+						SA_MSG_MESSAGE_DELIVERED_ACK,
+						SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgMessageSendAsync(int i, MQSV_CONFIG_FLAG flg)
@@ -2871,104 +2785,96 @@ int tet_test_red_msgMessageSendAsync(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Get Test cases  ***************** */
 
 char *API_Mqsv_MessageGet_resultstring[] = {
-	[MSG_MESSAGE_GET_BAD_HDL_T] =
-	    "saMsgMessageGet with invalid Queue Handle",
-	[MSG_MESSAGE_GET_CLOSED_Q_HDL_T] =
-	    "saMsgMessageGet with closed Queue Handle",
-	[MSG_MESSAGE_GET_NULL_MSG_T] = "saMsgMessageGet with Null Message",
-	[MSG_MESSAGE_GET_NULL_SENDER_ID_T] =
-	    "saMsgMessageGet with Null SenderId",
-	[MSG_MESSAGE_GET_ZERO_TIMEOUT_T] =
-	    "saMsgMessageGet with zero timeout value (message exists in the queue)",
-	[MSG_MESSAGE_GET_NULL_SEND_TIME_T] =
-	    "saMsgMessageGet with Null Sendtime",
-	[MSG_MESSAGE_GET_SUCCESS_T] = "saMsgMessageGet with valid parameters",
-	[MSG_MESSAGE_GET_NULL_SNDR_NAME_T] =
-	    "saMsgMessageGet with null sender name",
-	[MSG_MESSAGE_GET_SUCCESS_HDL2_T] =
-	    "saMsgMessageGet with valid parameters",
-	[MSG_MESSAGE_GET_BAD_HDL2_T] = "Message Get with Bad Queue Handle",
-	[MSG_MESSAGE_GET_ERR_NO_SPACE_T] =
-	    "Message Get with insufficient message buffer",
-	[MSG_MESSAGE_GET_ERR_TIMEOUT_T] = "saMsgMessageGet with small timeout",
-	[MSG_MESSAGE_GET_ERR_INTERRUPT_T] = "saMsgMessageGet that is cancelled",
-	[MSG_MESSAGE_GET_RECV_SUCCESS_T] = "Receive message from the queue",
-	[MSG_MESSAGE_GET_ERR_TRY_AGAIN_T] =
-	    "saMsgMessageGet when service is not available",
+    [MSG_MESSAGE_GET_BAD_HDL_T] = "saMsgMessageGet with invalid Queue Handle",
+    [MSG_MESSAGE_GET_CLOSED_Q_HDL_T] =
+	"saMsgMessageGet with closed Queue Handle",
+    [MSG_MESSAGE_GET_NULL_MSG_T] = "saMsgMessageGet with Null Message",
+    [MSG_MESSAGE_GET_NULL_SENDER_ID_T] = "saMsgMessageGet with Null SenderId",
+    [MSG_MESSAGE_GET_ZERO_TIMEOUT_T] =
+	"saMsgMessageGet with zero timeout value (message exists in the queue)",
+    [MSG_MESSAGE_GET_NULL_SEND_TIME_T] = "saMsgMessageGet with Null Sendtime",
+    [MSG_MESSAGE_GET_SUCCESS_T] = "saMsgMessageGet with valid parameters",
+    [MSG_MESSAGE_GET_NULL_SNDR_NAME_T] =
+	"saMsgMessageGet with null sender name",
+    [MSG_MESSAGE_GET_SUCCESS_HDL2_T] = "saMsgMessageGet with valid parameters",
+    [MSG_MESSAGE_GET_BAD_HDL2_T] = "Message Get with Bad Queue Handle",
+    [MSG_MESSAGE_GET_ERR_NO_SPACE_T] =
+	"Message Get with insufficient message buffer",
+    [MSG_MESSAGE_GET_ERR_TIMEOUT_T] = "saMsgMessageGet with small timeout",
+    [MSG_MESSAGE_GET_ERR_INTERRUPT_T] = "saMsgMessageGet that is cancelled",
+    [MSG_MESSAGE_GET_RECV_SUCCESS_T] = "Receive message from the queue",
+    [MSG_MESSAGE_GET_ERR_TRY_AGAIN_T] =
+	"saMsgMessageGet when service is not available",
 };
 
 struct SafMsgMessageGet API_Mqsv_MessageGet[] = {
-	[MSG_MESSAGE_GET_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_q_hdl,
-				       &gl_mqa_env.rcv_msg,
-				       &gl_mqa_env.send_time,
-				       &gl_mqa_env.sender_id, APP_TIMEOUT,
-				       SA_AIS_ERR_BAD_HANDLE},
-	[MSG_MESSAGE_GET_CLOSED_Q_HDL_T] = {&gl_mqa_env.pers_q_hdl,
-					    &gl_mqa_env.rcv_msg,
-					    &gl_mqa_env.send_time,
-					    &gl_mqa_env.sender_id, APP_TIMEOUT,
-					    SA_AIS_ERR_BAD_HANDLE},
-	[MSG_MESSAGE_GET_NULL_MSG_T] = {&gl_mqa_env.pers_q_hdl, NULL,
-					&gl_mqa_env.send_time,
-					&gl_mqa_env.sender_id, 0,
-					SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_GET_NULL_SENDER_ID_T] = {&gl_mqa_env.pers_q_hdl,
-					      &gl_mqa_env.rcv_msg,
-					      &gl_mqa_env.send_time, NULL, 0,
-					      SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_GET_ZERO_TIMEOUT_T] = {&gl_mqa_env.pers_q_hdl,
-					    &gl_mqa_env.rcv_msg,
-					    &gl_mqa_env.send_time,
-					    &gl_mqa_env.sender_id, 0,
-					    SA_AIS_OK},
-	[MSG_MESSAGE_GET_NULL_SEND_TIME_T] = {&gl_mqa_env.pers_q_hdl,
-					      &gl_mqa_env.rcv_msg, NULL,
-					      &gl_mqa_env.sender_id,
-					      APP_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_GET_SUCCESS_T] = {&gl_mqa_env.pers_q_hdl,
-				       &gl_mqa_env.rcv_msg,
-				       &gl_mqa_env.send_time,
-				       &gl_mqa_env.sender_id, APP_TIMEOUT,
-				       SA_AIS_OK},
-	[MSG_MESSAGE_GET_NULL_SNDR_NAME_T] =
-	    {&gl_mqa_env.pers_q_hdl, &gl_mqa_env.rcv_msg_null_sndr_name,
-	     &gl_mqa_env.send_time, &gl_mqa_env.sender_id, APP_TIMEOUT,
-	     SA_AIS_OK},
-	[MSG_MESSAGE_GET_SUCCESS_HDL2_T] = {&gl_mqa_env.npers_q_hdl,
-					    &gl_mqa_env.rcv_msg,
-					    &gl_mqa_env.send_time,
-					    &gl_mqa_env.sender_id, APP_TIMEOUT,
-					    SA_AIS_OK},
-	[MSG_MESSAGE_GET_BAD_HDL2_T] = {&gl_mqa_env.npers_q_hdl,
+    [MSG_MESSAGE_GET_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_q_hdl,
+				   &gl_mqa_env.rcv_msg, &gl_mqa_env.send_time,
+				   &gl_mqa_env.sender_id, APP_TIMEOUT,
+				   SA_AIS_ERR_BAD_HANDLE},
+    [MSG_MESSAGE_GET_CLOSED_Q_HDL_T] = {&gl_mqa_env.pers_q_hdl,
 					&gl_mqa_env.rcv_msg,
 					&gl_mqa_env.send_time,
 					&gl_mqa_env.sender_id, APP_TIMEOUT,
 					SA_AIS_ERR_BAD_HANDLE},
-	[MSG_MESSAGE_GET_ERR_NO_SPACE_T] = {&gl_mqa_env.pers_q_hdl,
-					    &gl_mqa_env.no_space_rcv_msg,
-					    &gl_mqa_env.send_time,
-					    &gl_mqa_env.sender_id, APP_TIMEOUT,
-					    SA_AIS_ERR_NO_SPACE},
-	[MSG_MESSAGE_GET_ERR_TIMEOUT_T] = {&gl_mqa_env.pers_q_hdl,
-					   &gl_mqa_env.rcv_msg,
-					   &gl_mqa_env.send_time,
-					   &gl_mqa_env.sender_id, 100,
-					   SA_AIS_ERR_TIMEOUT},
-	[MSG_MESSAGE_GET_ERR_INTERRUPT_T] = {&gl_mqa_env.pers_q_hdl,
-					     &gl_mqa_env.rcv_msg,
-					     &gl_mqa_env.send_time,
-					     &gl_mqa_env.sender_id, APP_TIMEOUT,
-					     SA_AIS_ERR_INTERRUPT},
-	[MSG_MESSAGE_GET_RECV_SUCCESS_T] = {&gl_mqa_env.rcv_clbk_qhdl,
-					    &gl_mqa_env.rcv_msg,
-					    &gl_mqa_env.send_time,
-					    &gl_mqa_env.sender_id, APP_TIMEOUT,
-					    SA_AIS_OK},
-	[MSG_MESSAGE_GET_ERR_TRY_AGAIN_T] = {&gl_mqa_env.pers_q_hdl,
-					     &gl_mqa_env.rcv_msg,
-					     &gl_mqa_env.send_time,
-					     &gl_mqa_env.sender_id, APP_TIMEOUT,
-					     SA_AIS_ERR_TRY_AGAIN},
+    [MSG_MESSAGE_GET_NULL_MSG_T] = {&gl_mqa_env.pers_q_hdl, NULL,
+				    &gl_mqa_env.send_time,
+				    &gl_mqa_env.sender_id, 0,
+				    SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_GET_NULL_SENDER_ID_T] = {&gl_mqa_env.pers_q_hdl,
+					  &gl_mqa_env.rcv_msg,
+					  &gl_mqa_env.send_time, NULL, 0,
+					  SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_GET_ZERO_TIMEOUT_T] = {&gl_mqa_env.pers_q_hdl,
+					&gl_mqa_env.rcv_msg,
+					&gl_mqa_env.send_time,
+					&gl_mqa_env.sender_id, 0, SA_AIS_OK},
+    [MSG_MESSAGE_GET_NULL_SEND_TIME_T] = {&gl_mqa_env.pers_q_hdl,
+					  &gl_mqa_env.rcv_msg, NULL,
+					  &gl_mqa_env.sender_id, APP_TIMEOUT,
+					  SA_AIS_OK},
+    [MSG_MESSAGE_GET_SUCCESS_T] = {&gl_mqa_env.pers_q_hdl, &gl_mqa_env.rcv_msg,
+				   &gl_mqa_env.send_time, &gl_mqa_env.sender_id,
+				   APP_TIMEOUT, SA_AIS_OK},
+    [MSG_MESSAGE_GET_NULL_SNDR_NAME_T] = {&gl_mqa_env.pers_q_hdl,
+					  &gl_mqa_env.rcv_msg_null_sndr_name,
+					  &gl_mqa_env.send_time,
+					  &gl_mqa_env.sender_id, APP_TIMEOUT,
+					  SA_AIS_OK},
+    [MSG_MESSAGE_GET_SUCCESS_HDL2_T] = {&gl_mqa_env.npers_q_hdl,
+					&gl_mqa_env.rcv_msg,
+					&gl_mqa_env.send_time,
+					&gl_mqa_env.sender_id, APP_TIMEOUT,
+					SA_AIS_OK},
+    [MSG_MESSAGE_GET_BAD_HDL2_T] = {&gl_mqa_env.npers_q_hdl,
+				    &gl_mqa_env.rcv_msg, &gl_mqa_env.send_time,
+				    &gl_mqa_env.sender_id, APP_TIMEOUT,
+				    SA_AIS_ERR_BAD_HANDLE},
+    [MSG_MESSAGE_GET_ERR_NO_SPACE_T] = {&gl_mqa_env.pers_q_hdl,
+					&gl_mqa_env.no_space_rcv_msg,
+					&gl_mqa_env.send_time,
+					&gl_mqa_env.sender_id, APP_TIMEOUT,
+					SA_AIS_ERR_NO_SPACE},
+    [MSG_MESSAGE_GET_ERR_TIMEOUT_T] = {&gl_mqa_env.pers_q_hdl,
+				       &gl_mqa_env.rcv_msg,
+				       &gl_mqa_env.send_time,
+				       &gl_mqa_env.sender_id, 100,
+				       SA_AIS_ERR_TIMEOUT},
+    [MSG_MESSAGE_GET_ERR_INTERRUPT_T] = {&gl_mqa_env.pers_q_hdl,
+					 &gl_mqa_env.rcv_msg,
+					 &gl_mqa_env.send_time,
+					 &gl_mqa_env.sender_id, APP_TIMEOUT,
+					 SA_AIS_ERR_INTERRUPT},
+    [MSG_MESSAGE_GET_RECV_SUCCESS_T] = {&gl_mqa_env.rcv_clbk_qhdl,
+					&gl_mqa_env.rcv_msg,
+					&gl_mqa_env.send_time,
+					&gl_mqa_env.sender_id, APP_TIMEOUT,
+					SA_AIS_OK},
+    [MSG_MESSAGE_GET_ERR_TRY_AGAIN_T] = {&gl_mqa_env.pers_q_hdl,
+					 &gl_mqa_env.rcv_msg,
+					 &gl_mqa_env.send_time,
+					 &gl_mqa_env.sender_id, APP_TIMEOUT,
+					 SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgMessageGet(int i, MQSV_CONFIG_FLAG flg)
@@ -3044,27 +2950,26 @@ int tet_test_red_msgMessageGet(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Cancel Test cases  ***************** */
 
 char *API_Mqsv_MessageCancel_resultstring[] = {
-	[MSG_MESSAGE_CANCEL_BAD_HDL_T] =
-	    "Message Cancel with invalid Queue Handle",
-	[MSG_MESSAGE_CANCEL_CLOSED_Q_HDL_T] =
-	    "Message Cancel with closed Queue Handle",
-	[MSG_MESSAGE_CANCEL_NO_BLKING_T] =
-	    "Message Cancel without any blocking calls",
-	[MSG_MESSAGE_CANCEL_SUCCESS_T] = "Successful Message Cancel",
-	[MSG_MESSAGE_CANCEL_ERR_TRY_AGAIN_T] =
-	    "saMsgMessageGet when service is not available",
+    [MSG_MESSAGE_CANCEL_BAD_HDL_T] = "Message Cancel with invalid Queue Handle",
+    [MSG_MESSAGE_CANCEL_CLOSED_Q_HDL_T] =
+	"Message Cancel with closed Queue Handle",
+    [MSG_MESSAGE_CANCEL_NO_BLKING_T] =
+	"Message Cancel without any blocking calls",
+    [MSG_MESSAGE_CANCEL_SUCCESS_T] = "Successful Message Cancel",
+    [MSG_MESSAGE_CANCEL_ERR_TRY_AGAIN_T] =
+	"saMsgMessageGet when service is not available",
 };
 
 struct SafMsgMessageCancel API_Mqsv_MessageCancel[] = {
-	[MSG_MESSAGE_CANCEL_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_q_hdl,
-					  SA_AIS_ERR_BAD_HANDLE},
-	[MSG_MESSAGE_CANCEL_CLOSED_Q_HDL_T] = {&gl_mqa_env.pers_q_hdl,
-					       SA_AIS_ERR_BAD_HANDLE},
-	[MSG_MESSAGE_CANCEL_NO_BLKING_T] = {&gl_mqa_env.npers_q_hdl,
-					    SA_AIS_ERR_NOT_EXIST},
-	[MSG_MESSAGE_CANCEL_SUCCESS_T] = {&gl_mqa_env.pers_q_hdl, SA_AIS_OK},
-	[MSG_MESSAGE_CANCEL_ERR_TRY_AGAIN_T] = {&gl_mqa_env.pers_q_hdl,
-						SA_AIS_ERR_TRY_AGAIN},
+    [MSG_MESSAGE_CANCEL_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_q_hdl,
+				      SA_AIS_ERR_BAD_HANDLE},
+    [MSG_MESSAGE_CANCEL_CLOSED_Q_HDL_T] = {&gl_mqa_env.pers_q_hdl,
+					   SA_AIS_ERR_BAD_HANDLE},
+    [MSG_MESSAGE_CANCEL_NO_BLKING_T] = {&gl_mqa_env.npers_q_hdl,
+					SA_AIS_ERR_NOT_EXIST},
+    [MSG_MESSAGE_CANCEL_SUCCESS_T] = {&gl_mqa_env.pers_q_hdl, SA_AIS_OK},
+    [MSG_MESSAGE_CANCEL_ERR_TRY_AGAIN_T] = {&gl_mqa_env.pers_q_hdl,
+					    SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgMessageCancel(int i, MQSV_CONFIG_FLAG flg)
@@ -3114,169 +3019,170 @@ int tet_test_red_msgMessageCancel(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Send Receive Test cases  ***************** */
 
 char *API_Mqsv_MessageSendReceive_resultstring[] = {
-	[MSG_MESSAGE_SEND_RECV_BAD_HDL_T] =
-	    "saMsgMessageSendReceive with invalid Message Handle",
-	[MSG_MESSAGE_SEND_RECV_FINALIZED_HDL_T] =
-	    "saMsgMessageSendReceive with finalized Message Handle",
-	[MSG_MESSAGE_SEND_RECV_NULL_NAME_T] =
-	    "saMsgMessageSendReceive with Null Queue Name",
-	[MSG_MESSAGE_SEND_RECV_NULL_MSG_T] =
-	    "saMsgMessageSendReceive with Null send message",
-	[MSG_MESSAGE_SEND_RECV_NULL_STIME_T] =
-	    "saMsgMessageSendReceive with Null SendTime",
-	[MSG_MESSAGE_SEND_RECV_ERR_TIMEOUT_T] =
-	    "saMsgMessageSendReceive - ERR_TIMEOUT case",
-	[MSG_MESSAGE_SEND_RECV_NULL_RMSG_T] =
-	    "saMsgMessageSendReceive with Null receive message",
-	[MSG_MESSAGE_SEND_RECV_ERR_NOT_EXIST_T] =
-	    "saMsgMessageSendReceive to a queue that does not exist",
-	[MSG_MESSAGE_SEND_RECV_NOT_EXIST_GR_T] =
-	    "saMsgMessageSendReceive to a group that does not exist",
-	[MSG_MESSAGE_SEND_RECV_ERR_NO_SPACE_T] =
-	    "saMsgMessageSendReceive with insufficient buffer",
-	[MSG_MESSAGE_SEND_RECV_QUEUE_FULL_T] =
-	    "saMsgMessageSendReceive - QUEUE FULL case",
-	[MSG_MESSAGE_SEND_RECV_ZERO_Q_T] =
-	    "saMsgMessageSendReceive to a zero size queue",
-	[MSG_MESSAGE_SEND_RECV_BAD_PR_T] =
-	    "saMsgMessageSendReceive a queue with a message with invalid priority",
-	[MSG_MESSAGE_SEND_RECV_SUCCESS_T] =
-	    "saMsgMessageSendReceive with valid parameters",
-	[MSG_MESSAGE_SEND_RECV_SUCCESS_Q2_T] =
-	    "saMsgMessageSendReceive with valid parameters",
-	[MSG_MESSAGE_SEND_RECV_SUCCESS_Q3_T] =
-	    "saMsgMessageSendReceive with valid parameters",
-	[MSG_MESSAGE_SEND_RECV_SUCCESS_MSG2_T] =
-	    "saMsgMessageSendReceive with null sender name in send msg",
-	[MSG_MESSAGE_SEND_RECV_NULL_SNAME_T] =
-	    "saMsgMessageSendReceive with null sender name in recv msg",
-	[MSG_MESSAGE_SEND_RECV_UNAVALABLE_T] =
-	    "saMsgMessageSendReceive to an empty group",
-	[MSG_MESSAGE_SEND_RECV_SUCCESS_GR_T] =
-	    "saMsgMessageSendReceive to a queue group",
-	[MSG_MESSAGE_SEND_RECV_GR_QUEUE_FULL_T] =
-	    "saMsgMessageSendReceive to a queue group - QUEUE FULL case",
-	[MSG_MESSAGE_SEND_RECV_ZERO_SIZE_MSG_T] =
-	    "saMsgMessageSendReceive with zero size message",
-	[MSG_MESSAGE_SEND_RECV_MULTI_CAST_GR_T] =
-	    "saMsgMessageSendReceive to a multicast message queue group",
-	[MSG_MESSAGE_SEND_RECV_ERR_TRY_AGAIN_T] =
-	    "saMsgMessageSendReceive when service is not available",
+    [MSG_MESSAGE_SEND_RECV_BAD_HDL_T] =
+	"saMsgMessageSendReceive with invalid Message Handle",
+    [MSG_MESSAGE_SEND_RECV_FINALIZED_HDL_T] =
+	"saMsgMessageSendReceive with finalized Message Handle",
+    [MSG_MESSAGE_SEND_RECV_NULL_NAME_T] =
+	"saMsgMessageSendReceive with Null Queue Name",
+    [MSG_MESSAGE_SEND_RECV_NULL_MSG_T] =
+	"saMsgMessageSendReceive with Null send message",
+    [MSG_MESSAGE_SEND_RECV_NULL_STIME_T] =
+	"saMsgMessageSendReceive with Null SendTime",
+    [MSG_MESSAGE_SEND_RECV_ERR_TIMEOUT_T] =
+	"saMsgMessageSendReceive - ERR_TIMEOUT case",
+    [MSG_MESSAGE_SEND_RECV_NULL_RMSG_T] =
+	"saMsgMessageSendReceive with Null receive message",
+    [MSG_MESSAGE_SEND_RECV_ERR_NOT_EXIST_T] =
+	"saMsgMessageSendReceive to a queue that does not exist",
+    [MSG_MESSAGE_SEND_RECV_NOT_EXIST_GR_T] =
+	"saMsgMessageSendReceive to a group that does not exist",
+    [MSG_MESSAGE_SEND_RECV_ERR_NO_SPACE_T] =
+	"saMsgMessageSendReceive with insufficient buffer",
+    [MSG_MESSAGE_SEND_RECV_QUEUE_FULL_T] =
+	"saMsgMessageSendReceive - QUEUE FULL case",
+    [MSG_MESSAGE_SEND_RECV_ZERO_Q_T] =
+	"saMsgMessageSendReceive to a zero size queue",
+    [MSG_MESSAGE_SEND_RECV_BAD_PR_T] =
+	"saMsgMessageSendReceive a queue with a message with invalid priority",
+    [MSG_MESSAGE_SEND_RECV_SUCCESS_T] =
+	"saMsgMessageSendReceive with valid parameters",
+    [MSG_MESSAGE_SEND_RECV_SUCCESS_Q2_T] =
+	"saMsgMessageSendReceive with valid parameters",
+    [MSG_MESSAGE_SEND_RECV_SUCCESS_Q3_T] =
+	"saMsgMessageSendReceive with valid parameters",
+    [MSG_MESSAGE_SEND_RECV_SUCCESS_MSG2_T] =
+	"saMsgMessageSendReceive with null sender name in send msg",
+    [MSG_MESSAGE_SEND_RECV_NULL_SNAME_T] =
+	"saMsgMessageSendReceive with null sender name in recv msg",
+    [MSG_MESSAGE_SEND_RECV_UNAVALABLE_T] =
+	"saMsgMessageSendReceive to an empty group",
+    [MSG_MESSAGE_SEND_RECV_SUCCESS_GR_T] =
+	"saMsgMessageSendReceive to a queue group",
+    [MSG_MESSAGE_SEND_RECV_GR_QUEUE_FULL_T] =
+	"saMsgMessageSendReceive to a queue group - QUEUE FULL case",
+    [MSG_MESSAGE_SEND_RECV_ZERO_SIZE_MSG_T] =
+	"saMsgMessageSendReceive with zero size message",
+    [MSG_MESSAGE_SEND_RECV_MULTI_CAST_GR_T] =
+	"saMsgMessageSendReceive to a multicast message queue group",
+    [MSG_MESSAGE_SEND_RECV_ERR_TRY_AGAIN_T] =
+	"saMsgMessageSendReceive when service is not available",
 };
 
 struct SafMsgMessageSendReceive API_Mqsv_MessageSendReceive[] = {
-	[MSG_MESSAGE_SEND_RECV_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
-					     &gl_mqa_env.pers_q,
-					     &gl_mqa_env.send_msg,
-					     &gl_mqa_env.reply_msg,
-					     &gl_mqa_env.reply_send_time,
-					     MSG_SEND_RCV_TIMEOUT,
-					     SA_AIS_ERR_BAD_HANDLE},
-	[MSG_MESSAGE_SEND_RECV_FINALIZED_HDL_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
-	     MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_BAD_HANDLE},
-	[MSG_MESSAGE_SEND_RECV_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
-					       &gl_mqa_env.send_msg,
-					       &gl_mqa_env.reply_msg,
-					       &gl_mqa_env.reply_send_time,
-					       MSG_SEND_RCV_TIMEOUT,
-					       SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_SEND_RECV_NULL_MSG_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.pers_q, NULL,
-					      &gl_mqa_env.reply_msg,
-					      &gl_mqa_env.reply_send_time,
-					      MSG_SEND_RCV_TIMEOUT,
-					      SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_SEND_RECV_NULL_STIME_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.reply_msg, NULL, MSG_SEND_RCV_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_RECV_ERR_TIMEOUT_T] = {&gl_mqa_env.msg_hdl1,
-						 &gl_mqa_env.pers_q,
-						 &gl_mqa_env.send_msg,
-						 &gl_mqa_env.reply_msg, NULL,
-						 MSG_SEND_RCV_TIMEOUT,
-						 SA_AIS_ERR_TIMEOUT},
-	[MSG_MESSAGE_SEND_RECV_NULL_RMSG_T] = {&gl_mqa_env.msg_hdl1,
-					       &gl_mqa_env.pers_q,
-					       &gl_mqa_env.send_msg, NULL,
-					       &gl_mqa_env.reply_send_time,
-					       MSG_SEND_RCV_TIMEOUT,
-					       SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_SEND_RECV_ERR_NOT_EXIST_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
-	     MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_NOT_EXIST},
-	[MSG_MESSAGE_SEND_RECV_NOT_EXIST_GR_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
-	     MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_NOT_EXIST},
-	[MSG_MESSAGE_SEND_RECV_ERR_NO_SPACE_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.no_space_reply_msg, &gl_mqa_env.reply_send_time,
-	     MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_NO_SPACE},
-	[MSG_MESSAGE_SEND_RECV_QUEUE_FULL_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
-	     MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_QUEUE_FULL},
-	[MSG_MESSAGE_SEND_RECV_ZERO_Q_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.zero_q, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
-	     MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_QUEUE_FULL},
-	[MSG_MESSAGE_SEND_RECV_BAD_PR_T] = {&gl_mqa_env.msg_hdl1,
+    [MSG_MESSAGE_SEND_RECV_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+					 &gl_mqa_env.pers_q,
+					 &gl_mqa_env.send_msg,
+					 &gl_mqa_env.reply_msg,
+					 &gl_mqa_env.reply_send_time,
+					 MSG_SEND_RCV_TIMEOUT,
+					 SA_AIS_ERR_BAD_HANDLE},
+    [MSG_MESSAGE_SEND_RECV_FINALIZED_HDL_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, &gl_mqa_env.send_msg,
+	 &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
+	 MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_BAD_HANDLE},
+    [MSG_MESSAGE_SEND_RECV_NULL_NAME_T] = {&gl_mqa_env.msg_hdl1, NULL,
+					   &gl_mqa_env.send_msg,
+					   &gl_mqa_env.reply_msg,
+					   &gl_mqa_env.reply_send_time,
+					   MSG_SEND_RCV_TIMEOUT,
+					   SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_SEND_RECV_NULL_MSG_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.pers_q, NULL,
+					  &gl_mqa_env.reply_msg,
+					  &gl_mqa_env.reply_send_time,
+					  MSG_SEND_RCV_TIMEOUT,
+					  SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_SEND_RECV_NULL_STIME_T] = {&gl_mqa_env.msg_hdl1,
 					    &gl_mqa_env.pers_q,
-					    &gl_mqa_env.send_msg_bad_pr,
+					    &gl_mqa_env.send_msg,
+					    &gl_mqa_env.reply_msg, NULL,
+					    MSG_SEND_RCV_TIMEOUT, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_RECV_ERR_TIMEOUT_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, &gl_mqa_env.send_msg,
+	 &gl_mqa_env.reply_msg, NULL, MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_TIMEOUT},
+    [MSG_MESSAGE_SEND_RECV_NULL_RMSG_T] = {&gl_mqa_env.msg_hdl1,
+					   &gl_mqa_env.pers_q,
+					   &gl_mqa_env.send_msg, NULL,
+					   &gl_mqa_env.reply_send_time,
+					   MSG_SEND_RCV_TIMEOUT,
+					   SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_SEND_RECV_ERR_NOT_EXIST_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, &gl_mqa_env.send_msg,
+	 &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
+	 MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_NOT_EXIST},
+    [MSG_MESSAGE_SEND_RECV_NOT_EXIST_GR_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1, &gl_mqa_env.send_msg,
+	 &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
+	 MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_NOT_EXIST},
+    [MSG_MESSAGE_SEND_RECV_ERR_NO_SPACE_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, &gl_mqa_env.send_msg,
+	 &gl_mqa_env.no_space_reply_msg, &gl_mqa_env.reply_send_time,
+	 MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_NO_SPACE},
+    [MSG_MESSAGE_SEND_RECV_QUEUE_FULL_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, &gl_mqa_env.send_msg,
+	 &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
+	 MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_QUEUE_FULL},
+    [MSG_MESSAGE_SEND_RECV_ZERO_Q_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.zero_q, &gl_mqa_env.send_msg,
+	 &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
+	 MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_QUEUE_FULL},
+    [MSG_MESSAGE_SEND_RECV_BAD_PR_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, &gl_mqa_env.send_msg_bad_pr,
+	 &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
+	 MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_SEND_RECV_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
+					 &gl_mqa_env.pers_q,
+					 &gl_mqa_env.send_msg,
+					 &gl_mqa_env.reply_msg,
+					 &gl_mqa_env.reply_send_time,
+					 MSG_SEND_RCV_TIMEOUT, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_RECV_SUCCESS_Q2_T] = {&gl_mqa_env.msg_hdl1,
+					    &gl_mqa_env.non_pers_q,
+					    &gl_mqa_env.send_msg,
 					    &gl_mqa_env.reply_msg,
 					    &gl_mqa_env.reply_send_time,
-					    MSG_SEND_RCV_TIMEOUT,
-					    SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_SEND_RECV_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
-					     &gl_mqa_env.pers_q,
-					     &gl_mqa_env.send_msg,
-					     &gl_mqa_env.reply_msg,
-					     &gl_mqa_env.reply_send_time,
-					     MSG_SEND_RCV_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_RECV_SUCCESS_Q2_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.non_pers_q, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
-	     MSG_SEND_RCV_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_RECV_SUCCESS_Q3_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q2, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
-	     MSG_SEND_RCV_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_RECV_SUCCESS_MSG2_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q,
-	     &gl_mqa_env.send_msg_null_sndr_name, &gl_mqa_env.reply_msg,
-	     &gl_mqa_env.reply_send_time, MSG_SEND_RCV_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_RECV_NULL_SNAME_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.reply_msg_null_sndr_name, &gl_mqa_env.reply_send_time,
-	     MSG_SEND_RCV_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_RECV_UNAVALABLE_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
-	     MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_QUEUE_NOT_AVAILABLE},
-	[MSG_MESSAGE_SEND_RECV_SUCCESS_GR_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
-	     MSG_SEND_RCV_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_SEND_RECV_GR_QUEUE_FULL_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
-	     MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_QUEUE_FULL},
-	[MSG_MESSAGE_SEND_RECV_ZERO_SIZE_MSG_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q,
-	     &gl_mqa_env.send_msg_zero_size, &gl_mqa_env.reply_msg,
-	     &gl_mqa_env.reply_send_time, MSG_SEND_RCV_TIMEOUT,
-	     SA_AIS_ERR_TIMEOUT},
-	[MSG_MESSAGE_SEND_RECV_MULTI_CAST_GR_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
-	     MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_SEND_RECV_ERR_TRY_AGAIN_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
-	     MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_TRY_AGAIN},
+					    MSG_SEND_RCV_TIMEOUT, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_RECV_SUCCESS_Q3_T] = {&gl_mqa_env.msg_hdl1,
+					    &gl_mqa_env.pers_q2,
+					    &gl_mqa_env.send_msg,
+					    &gl_mqa_env.reply_msg,
+					    &gl_mqa_env.reply_send_time,
+					    MSG_SEND_RCV_TIMEOUT, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_RECV_SUCCESS_MSG2_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q,
+	 &gl_mqa_env.send_msg_null_sndr_name, &gl_mqa_env.reply_msg,
+	 &gl_mqa_env.reply_send_time, MSG_SEND_RCV_TIMEOUT, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_RECV_NULL_SNAME_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, &gl_mqa_env.send_msg,
+	 &gl_mqa_env.reply_msg_null_sndr_name, &gl_mqa_env.reply_send_time,
+	 MSG_SEND_RCV_TIMEOUT, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_RECV_UNAVALABLE_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1, &gl_mqa_env.send_msg,
+	 &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
+	 MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_QUEUE_NOT_AVAILABLE},
+    [MSG_MESSAGE_SEND_RECV_SUCCESS_GR_T] = {&gl_mqa_env.msg_hdl1,
+					    &gl_mqa_env.qgroup1,
+					    &gl_mqa_env.send_msg,
+					    &gl_mqa_env.reply_msg,
+					    &gl_mqa_env.reply_send_time,
+					    MSG_SEND_RCV_TIMEOUT, SA_AIS_OK},
+    [MSG_MESSAGE_SEND_RECV_GR_QUEUE_FULL_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1, &gl_mqa_env.send_msg,
+	 &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
+	 MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_QUEUE_FULL},
+    [MSG_MESSAGE_SEND_RECV_ZERO_SIZE_MSG_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q,
+	 &gl_mqa_env.send_msg_zero_size, &gl_mqa_env.reply_msg,
+	 &gl_mqa_env.reply_send_time, MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_TIMEOUT},
+    [MSG_MESSAGE_SEND_RECV_MULTI_CAST_GR_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.qgroup1, &gl_mqa_env.send_msg,
+	 &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
+	 MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_SEND_RECV_ERR_TRY_AGAIN_T] =
+	{&gl_mqa_env.msg_hdl1, &gl_mqa_env.pers_q, &gl_mqa_env.send_msg,
+	 &gl_mqa_env.reply_msg, &gl_mqa_env.reply_send_time,
+	 MSG_SEND_RCV_TIMEOUT, SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgMessageSendReceive(int i, MQSV_CONFIG_FLAG flg)
@@ -3369,78 +3275,74 @@ int tet_test_red_msgMessageSendReceive(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Send Reply Test cases  ***************** */
 
 char *API_Mqsv_MessageReply_resultstring[] = {
-	[MSG_MESSAGE_REPLY_BAD_HANDLE_T] =
-	    "saMsgMessageReply with invalid Message Handle",
-	[MSG_MESSAGE_REPLY_FINALIZED_HDL_T] =
-	    "saMsgMessageReply with finalized Message Handle",
-	[MSG_MESSAGE_REPLY_NULL_MSG_T] = "saMsgMessageReply with Null message",
-	[MSG_MESSAGE_REPLY_NULL_SID_T] = "saMsgMessageReply with Null SenderId",
-	[MSG_MESSAGE_REPLY_ERR_NOT_EXIST_T] =
-	    "saMsgMessageReply with SenderId that does not exist",
-	[MSG_MESSAGE_REPLY_SUCCESS_T] =
-	    "saMsgMessageReply with valid parameters",
-	[MSG_MESSAGE_REPLY_ERR_NO_SPACE_T] =
-	    "saMsgMessageReply - ERR_NO_SPACE case",
-	[MSG_MESSAGE_REPLY_NOT_EXIST_T] =
-	    "saMsgMessageReply without any thread waiting for reply",
-	[MSG_MESSAGE_REPLY_NULL_SNDR_NAME_T] =
-	    "saMsgMessageReply with NULL sender name",
-	[MSG_MESSAGE_REPLY_ZERO_SIZE_MSG_T] = "Reply with zero size message",
-	[MSG_MESSAGE_REPLY_INV_PARAM_T] =
-	    "Reply to a message that was not sent using saMsgMessageSendReceive",
-	[MSG_MESSAGE_REPLY_ERR_TRY_AGAIN_T] =
-	    "saMsgMessageReply when service is not available",
+    [MSG_MESSAGE_REPLY_BAD_HANDLE_T] =
+	"saMsgMessageReply with invalid Message Handle",
+    [MSG_MESSAGE_REPLY_FINALIZED_HDL_T] =
+	"saMsgMessageReply with finalized Message Handle",
+    [MSG_MESSAGE_REPLY_NULL_MSG_T] = "saMsgMessageReply with Null message",
+    [MSG_MESSAGE_REPLY_NULL_SID_T] = "saMsgMessageReply with Null SenderId",
+    [MSG_MESSAGE_REPLY_ERR_NOT_EXIST_T] =
+	"saMsgMessageReply with SenderId that does not exist",
+    [MSG_MESSAGE_REPLY_SUCCESS_T] = "saMsgMessageReply with valid parameters",
+    [MSG_MESSAGE_REPLY_ERR_NO_SPACE_T] =
+	"saMsgMessageReply - ERR_NO_SPACE case",
+    [MSG_MESSAGE_REPLY_NOT_EXIST_T] =
+	"saMsgMessageReply without any thread waiting for reply",
+    [MSG_MESSAGE_REPLY_NULL_SNDR_NAME_T] =
+	"saMsgMessageReply with NULL sender name",
+    [MSG_MESSAGE_REPLY_ZERO_SIZE_MSG_T] = "Reply with zero size message",
+    [MSG_MESSAGE_REPLY_INV_PARAM_T] =
+	"Reply to a message that was not sent using saMsgMessageSendReceive",
+    [MSG_MESSAGE_REPLY_ERR_TRY_AGAIN_T] =
+	"saMsgMessageReply when service is not available",
 };
 
 struct SafMsgMessageReply API_Mqsv_MessageReply[] = {
-	[MSG_MESSAGE_REPLY_BAD_HANDLE_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
-					    &gl_mqa_env.send_msg,
-					    &gl_mqa_env.sender_id, APP_TIMEOUT,
-					    SA_AIS_ERR_BAD_HANDLE},
-	[MSG_MESSAGE_REPLY_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
-					       &gl_mqa_env.send_msg,
-					       &gl_mqa_env.sender_id,
-					       APP_TIMEOUT,
-					       SA_AIS_ERR_BAD_HANDLE},
-	[MSG_MESSAGE_REPLY_NULL_MSG_T] = {&gl_mqa_env.msg_hdl1, NULL,
+    [MSG_MESSAGE_REPLY_BAD_HANDLE_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+					&gl_mqa_env.send_msg,
+					&gl_mqa_env.sender_id, APP_TIMEOUT,
+					SA_AIS_ERR_BAD_HANDLE},
+    [MSG_MESSAGE_REPLY_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1,
+					   &gl_mqa_env.send_msg,
+					   &gl_mqa_env.sender_id, APP_TIMEOUT,
+					   SA_AIS_ERR_BAD_HANDLE},
+    [MSG_MESSAGE_REPLY_NULL_MSG_T] = {&gl_mqa_env.msg_hdl1, NULL,
+				      &gl_mqa_env.sender_id, APP_TIMEOUT,
+				      SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_REPLY_NULL_SID_T] = {&gl_mqa_env.msg_hdl1,
+				      &gl_mqa_env.send_msg, NULL, APP_TIMEOUT,
+				      SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_REPLY_ERR_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1,
+					   &gl_mqa_env.send_msg,
+					   &gl_mqa_env.inv_params.inv_sender_id,
+					   APP_TIMEOUT, SA_AIS_ERR_NOT_EXIST},
+    [MSG_MESSAGE_REPLY_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, &gl_mqa_env.send_msg,
+				     &gl_mqa_env.sender_id, APP_TIMEOUT,
+				     SA_AIS_OK},
+    [MSG_MESSAGE_REPLY_ERR_NO_SPACE_T] = {&gl_mqa_env.msg_hdl1,
+					  &gl_mqa_env.send_msg,
 					  &gl_mqa_env.sender_id, APP_TIMEOUT,
-					  SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_REPLY_NULL_SID_T] = {&gl_mqa_env.msg_hdl1,
-					  &gl_mqa_env.send_msg, NULL,
-					  APP_TIMEOUT,
-					  SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_REPLY_ERR_NOT_EXIST_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.inv_params.inv_sender_id, APP_TIMEOUT,
-	     SA_AIS_ERR_NOT_EXIST},
-	[MSG_MESSAGE_REPLY_SUCCESS_T] = {&gl_mqa_env.msg_hdl1,
-					 &gl_mqa_env.send_msg,
-					 &gl_mqa_env.sender_id, APP_TIMEOUT,
-					 SA_AIS_OK},
-	[MSG_MESSAGE_REPLY_ERR_NO_SPACE_T] = {&gl_mqa_env.msg_hdl1,
-					      &gl_mqa_env.send_msg,
-					      &gl_mqa_env.sender_id,
-					      APP_TIMEOUT, SA_AIS_ERR_NO_SPACE},
-	[MSG_MESSAGE_REPLY_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1,
+					  SA_AIS_ERR_NO_SPACE},
+    [MSG_MESSAGE_REPLY_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1,
+				       &gl_mqa_env.send_msg,
+				       &gl_mqa_env.sender_id, APP_TIMEOUT,
+				       SA_AIS_ERR_NOT_EXIST},
+    [MSG_MESSAGE_REPLY_NULL_SNDR_NAME_T] = {&gl_mqa_env.msg_hdl1,
+					    &gl_mqa_env.send_msg_null_sndr_name,
+					    &gl_mqa_env.sender_id, APP_TIMEOUT,
+					    SA_AIS_OK},
+    [MSG_MESSAGE_REPLY_ZERO_SIZE_MSG_T] = {&gl_mqa_env.msg_hdl1,
+					   &gl_mqa_env.send_msg_zero_size,
+					   &gl_mqa_env.sender_id, APP_TIMEOUT,
+					   SA_AIS_OK},
+    [MSG_MESSAGE_REPLY_INV_PARAM_T] = {&gl_mqa_env.msg_hdl1,
+				       &gl_mqa_env.send_msg,
+				       &gl_mqa_env.sender_id, APP_TIMEOUT,
+				       SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_REPLY_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
 					   &gl_mqa_env.send_msg,
 					   &gl_mqa_env.sender_id, APP_TIMEOUT,
-					   SA_AIS_ERR_NOT_EXIST},
-	[MSG_MESSAGE_REPLY_NULL_SNDR_NAME_T] =
-	    {&gl_mqa_env.msg_hdl1, &gl_mqa_env.send_msg_null_sndr_name,
-	     &gl_mqa_env.sender_id, APP_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_REPLY_ZERO_SIZE_MSG_T] = {&gl_mqa_env.msg_hdl1,
-					       &gl_mqa_env.send_msg_zero_size,
-					       &gl_mqa_env.sender_id,
-					       APP_TIMEOUT, SA_AIS_OK},
-	[MSG_MESSAGE_REPLY_INV_PARAM_T] = {&gl_mqa_env.msg_hdl1,
-					   &gl_mqa_env.send_msg,
-					   &gl_mqa_env.sender_id, APP_TIMEOUT,
-					   SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_REPLY_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1,
-					       &gl_mqa_env.send_msg,
-					       &gl_mqa_env.sender_id,
-					       APP_TIMEOUT,
-					       SA_AIS_ERR_TRY_AGAIN},
+					   SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgMessageReply(int i, MQSV_CONFIG_FLAG flg)
@@ -3506,106 +3408,113 @@ int tet_test_red_msgMessageReply(int i, MQSV_CONFIG_FLAG flg)
 /* ***************  Message Send Reply Async Test cases  ***************** */
 
 char *API_Mqsv_MessageReplyAsync_resultstring[] = {
-	[MSG_MESSAGE_REPLY_ASYNC_BAD_HDL_T] =
-	    "saMsgMessageReplyAsync with invalid Message Handle",
-	[MSG_MESSAGE_REPLY_ASYNC_FINALIZED_HDL_T] =
-	    "saMsgMessageReplyAsync with finalized Message Handle",
-	[MSG_MESSAGE_REPLY_ASYNC_NULL_MSG_T] =
-	    "saMsgMessageReplyAsync with Null message",
-	[MSG_MESSAGE_REPLY_ASYNC_NULL_SID_T] =
-	    "saMsgMessageReplyAsync with Null SenderId",
-	[MSG_MESSAGE_REPLY_ASYNC_BAD_FLAGS_T] =
-	    "saMsgMessageReplyAsync with bad ackFlags",
-	[MSG_MESSAGE_REPLY_ASYNC_ERR_NOT_EXIST_T] =
-	    "saMsgMessageReplyAsync with invalid senderId",
-	[MSG_MESSAGE_REPLY_ASYNC_SUCCESS_T] =
-	    "saMsgMessageReplyAsync with valid parameters",
-	[MSG_MESSAGE_REPLY_ASYNC_SUCCESS2_T] =
-	    "saMsgMessageReplyAsync without Deliverd callback",
-	[MSG_MESSAGE_REPLY_ASYNC_ERR_INIT_T] =
-	    "saMsgMessageReplyAsync - ERR_INIT case (zero ackFlags)",
-	[MSG_MESSAGE_REPLY_ASYNC_ERR_INIT2_T] =
-	    "saMsgMessageReplyAsync - ERR_INIT case (non-zero ackFlags)",
-	[MSG_MESSAGE_REPLY_ASYNC_NOT_EXIST_T] =
-	    "saMsgMessageReplyAsync with no thread waiting for reply",
-	[MSG_MESSAGE_REPLY_ASYNC_ERR_NO_SPACE_T] =
-	    "saMsgMessageReplyAsync - ERR_NO_SPACE case",
-	[MSG_MESSAGE_REPLY_ASYNC_NULL_SNDR_NAME_T] =
-	    "saMsgMessageReplyAsync with NULL sender name",
-	[MSG_MESSAGE_REPLY_ASYNC_ZERO_SIZE_MSG_T] =
-	    "saMsgMessageReplyAsync with zero size message",
-	[MSG_MESSAGE_REPLY_ASYNC_INV_PARAM_T] =
-	    "Reply to a message that was not sent using saMsgMessageSendReceive",
-	[MSG_MESSAGE_REPLY_ASYNC_ERR_TRY_AGAIN_T] =
-	    "saMsgMessageReplyAsyncwhen service is not available",
+    [MSG_MESSAGE_REPLY_ASYNC_BAD_HDL_T] =
+	"saMsgMessageReplyAsync with invalid Message Handle",
+    [MSG_MESSAGE_REPLY_ASYNC_FINALIZED_HDL_T] =
+	"saMsgMessageReplyAsync with finalized Message Handle",
+    [MSG_MESSAGE_REPLY_ASYNC_NULL_MSG_T] =
+	"saMsgMessageReplyAsync with Null message",
+    [MSG_MESSAGE_REPLY_ASYNC_NULL_SID_T] =
+	"saMsgMessageReplyAsync with Null SenderId",
+    [MSG_MESSAGE_REPLY_ASYNC_BAD_FLAGS_T] =
+	"saMsgMessageReplyAsync with bad ackFlags",
+    [MSG_MESSAGE_REPLY_ASYNC_ERR_NOT_EXIST_T] =
+	"saMsgMessageReplyAsync with invalid senderId",
+    [MSG_MESSAGE_REPLY_ASYNC_SUCCESS_T] =
+	"saMsgMessageReplyAsync with valid parameters",
+    [MSG_MESSAGE_REPLY_ASYNC_SUCCESS2_T] =
+	"saMsgMessageReplyAsync without Deliverd callback",
+    [MSG_MESSAGE_REPLY_ASYNC_ERR_INIT_T] =
+	"saMsgMessageReplyAsync - ERR_INIT case (zero ackFlags)",
+    [MSG_MESSAGE_REPLY_ASYNC_ERR_INIT2_T] =
+	"saMsgMessageReplyAsync - ERR_INIT case (non-zero ackFlags)",
+    [MSG_MESSAGE_REPLY_ASYNC_NOT_EXIST_T] =
+	"saMsgMessageReplyAsync with no thread waiting for reply",
+    [MSG_MESSAGE_REPLY_ASYNC_ERR_NO_SPACE_T] =
+	"saMsgMessageReplyAsync - ERR_NO_SPACE case",
+    [MSG_MESSAGE_REPLY_ASYNC_NULL_SNDR_NAME_T] =
+	"saMsgMessageReplyAsync with NULL sender name",
+    [MSG_MESSAGE_REPLY_ASYNC_ZERO_SIZE_MSG_T] =
+	"saMsgMessageReplyAsync with zero size message",
+    [MSG_MESSAGE_REPLY_ASYNC_INV_PARAM_T] =
+	"Reply to a message that was not sent using saMsgMessageSendReceive",
+    [MSG_MESSAGE_REPLY_ASYNC_ERR_TRY_AGAIN_T] =
+	"saMsgMessageReplyAsyncwhen service is not available",
 };
 
 struct SafMsgMessageReplyAsync API_Mqsv_MessageReplyAsync[] = {
-	[MSG_MESSAGE_REPLY_ASYNC_BAD_HDL_T] =
-	    {&gl_mqa_env.inv_params.inv_msg_hdl, 500, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.sender_id, SA_MSG_MESSAGE_DELIVERED_ACK,
-	     SA_AIS_ERR_BAD_HANDLE},
-	[MSG_MESSAGE_REPLY_ASYNC_FINALIZED_HDL_T] =
-	    {&gl_mqa_env.msg_hdl1, 501, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.sender_id, SA_MSG_MESSAGE_DELIVERED_ACK,
-	     SA_AIS_ERR_BAD_HANDLE},
-	[MSG_MESSAGE_REPLY_ASYNC_NULL_MSG_T] = {&gl_mqa_env.msg_hdl1, 502, NULL,
+    [MSG_MESSAGE_REPLY_ASYNC_BAD_HDL_T] = {&gl_mqa_env.inv_params.inv_msg_hdl,
+					   500, &gl_mqa_env.send_msg,
+					   &gl_mqa_env.sender_id,
+					   SA_MSG_MESSAGE_DELIVERED_ACK,
+					   SA_AIS_ERR_BAD_HANDLE},
+    [MSG_MESSAGE_REPLY_ASYNC_FINALIZED_HDL_T] = {&gl_mqa_env.msg_hdl1, 501,
+						 &gl_mqa_env.send_msg,
+						 &gl_mqa_env.sender_id,
+						 SA_MSG_MESSAGE_DELIVERED_ACK,
+						 SA_AIS_ERR_BAD_HANDLE},
+    [MSG_MESSAGE_REPLY_ASYNC_NULL_MSG_T] = {&gl_mqa_env.msg_hdl1, 502, NULL,
+					    &gl_mqa_env.sender_id,
+					    SA_MSG_MESSAGE_DELIVERED_ACK,
+					    SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_REPLY_ASYNC_NULL_SID_T] = {&gl_mqa_env.msg_hdl1, 503,
+					    &gl_mqa_env.send_msg, NULL,
+					    SA_MSG_MESSAGE_DELIVERED_ACK,
+					    SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_REPLY_ASYNC_BAD_FLAGS_T] = {&gl_mqa_env.msg_hdl1, 504,
+					     &gl_mqa_env.send_msg,
+					     &gl_mqa_env.sender_id, 2,
+					     SA_AIS_ERR_BAD_FLAGS},
+    [MSG_MESSAGE_REPLY_ASYNC_ERR_NOT_EXIST_T] =
+	{&gl_mqa_env.msg_hdl1, 505, &gl_mqa_env.send_msg,
+	 &gl_mqa_env.inv_params.inv_sender_id, SA_MSG_MESSAGE_DELIVERED_ACK,
+	 SA_AIS_ERR_NOT_EXIST},
+    [MSG_MESSAGE_REPLY_ASYNC_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, 506,
+					   &gl_mqa_env.send_msg,
+					   &gl_mqa_env.sender_id,
+					   SA_MSG_MESSAGE_DELIVERED_ACK,
+					   SA_AIS_OK},
+    [MSG_MESSAGE_REPLY_ASYNC_SUCCESS2_T] = {&gl_mqa_env.msg_hdl1, 507,
+					    &gl_mqa_env.send_msg,
+					    &gl_mqa_env.sender_id, 0,
+					    SA_AIS_OK},
+    [MSG_MESSAGE_REPLY_ASYNC_ERR_INIT_T] = {&gl_mqa_env.msg_hdl1, 508,
+					    &gl_mqa_env.send_msg,
+					    &gl_mqa_env.sender_id, 0,
+					    SA_AIS_OK},
+    [MSG_MESSAGE_REPLY_ASYNC_ERR_INIT2_T] = {&gl_mqa_env.msg_hdl1, 509,
+					     &gl_mqa_env.send_msg,
+					     &gl_mqa_env.sender_id,
+					     SA_MSG_MESSAGE_DELIVERED_ACK,
+					     SA_AIS_ERR_INIT},
+    [MSG_MESSAGE_REPLY_ASYNC_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1, 510,
+					     &gl_mqa_env.send_msg,
+					     &gl_mqa_env.sender_id,
+					     SA_MSG_MESSAGE_DELIVERED_ACK,
+					     SA_AIS_ERR_NOT_EXIST},
+    [MSG_MESSAGE_REPLY_ASYNC_ERR_NO_SPACE_T] = {&gl_mqa_env.msg_hdl1, 511,
+						&gl_mqa_env.send_msg,
 						&gl_mqa_env.sender_id,
 						SA_MSG_MESSAGE_DELIVERED_ACK,
-						SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_REPLY_ASYNC_NULL_SID_T] = {&gl_mqa_env.msg_hdl1, 503,
-						&gl_mqa_env.send_msg, NULL,
-						SA_MSG_MESSAGE_DELIVERED_ACK,
-						SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_REPLY_ASYNC_BAD_FLAGS_T] = {&gl_mqa_env.msg_hdl1, 504,
-						 &gl_mqa_env.send_msg,
-						 &gl_mqa_env.sender_id, 2,
-						 SA_AIS_ERR_BAD_FLAGS},
-	[MSG_MESSAGE_REPLY_ASYNC_ERR_NOT_EXIST_T] =
-	    {&gl_mqa_env.msg_hdl1, 505, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.inv_params.inv_sender_id, SA_MSG_MESSAGE_DELIVERED_ACK,
-	     SA_AIS_ERR_NOT_EXIST},
-	[MSG_MESSAGE_REPLY_ASYNC_SUCCESS_T] = {&gl_mqa_env.msg_hdl1, 506,
-					       &gl_mqa_env.send_msg,
-					       &gl_mqa_env.sender_id,
-					       SA_MSG_MESSAGE_DELIVERED_ACK,
-					       SA_AIS_OK},
-	[MSG_MESSAGE_REPLY_ASYNC_SUCCESS2_T] = {&gl_mqa_env.msg_hdl1, 507,
-						&gl_mqa_env.send_msg,
-						&gl_mqa_env.sender_id, 0,
 						SA_AIS_OK},
-	[MSG_MESSAGE_REPLY_ASYNC_ERR_INIT_T] = {&gl_mqa_env.msg_hdl1, 508,
-						&gl_mqa_env.send_msg,
-						&gl_mqa_env.sender_id, 0,
-						SA_AIS_OK},
-	[MSG_MESSAGE_REPLY_ASYNC_ERR_INIT2_T] = {&gl_mqa_env.msg_hdl1, 509,
+    [MSG_MESSAGE_REPLY_ASYNC_NULL_SNDR_NAME_T] =
+	{&gl_mqa_env.msg_hdl1, 512, &gl_mqa_env.send_msg_null_sndr_name,
+	 &gl_mqa_env.sender_id, SA_MSG_MESSAGE_DELIVERED_ACK, SA_AIS_OK},
+    [MSG_MESSAGE_REPLY_ASYNC_ZERO_SIZE_MSG_T] = {&gl_mqa_env.msg_hdl1, 513,
+						 &gl_mqa_env.send_msg_zero_size,
+						 &gl_mqa_env.sender_id,
+						 SA_MSG_MESSAGE_DELIVERED_ACK,
+						 SA_AIS_OK},
+    [MSG_MESSAGE_REPLY_ASYNC_INV_PARAM_T] = {&gl_mqa_env.msg_hdl1, 514,
+					     &gl_mqa_env.send_msg,
+					     &gl_mqa_env.sender_id,
+					     SA_MSG_MESSAGE_DELIVERED_ACK,
+					     SA_AIS_ERR_INVALID_PARAM},
+    [MSG_MESSAGE_REPLY_ASYNC_ERR_TRY_AGAIN_T] = {&gl_mqa_env.msg_hdl1, 515,
 						 &gl_mqa_env.send_msg,
 						 &gl_mqa_env.sender_id,
 						 SA_MSG_MESSAGE_DELIVERED_ACK,
-						 SA_AIS_ERR_INIT},
-	[MSG_MESSAGE_REPLY_ASYNC_NOT_EXIST_T] = {&gl_mqa_env.msg_hdl1, 510,
-						 &gl_mqa_env.send_msg,
-						 &gl_mqa_env.sender_id,
-						 SA_MSG_MESSAGE_DELIVERED_ACK,
-						 SA_AIS_ERR_NOT_EXIST},
-	[MSG_MESSAGE_REPLY_ASYNC_ERR_NO_SPACE_T] =
-	    {&gl_mqa_env.msg_hdl1, 511, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.sender_id, SA_MSG_MESSAGE_DELIVERED_ACK, SA_AIS_OK},
-	[MSG_MESSAGE_REPLY_ASYNC_NULL_SNDR_NAME_T] =
-	    {&gl_mqa_env.msg_hdl1, 512, &gl_mqa_env.send_msg_null_sndr_name,
-	     &gl_mqa_env.sender_id, SA_MSG_MESSAGE_DELIVERED_ACK, SA_AIS_OK},
-	[MSG_MESSAGE_REPLY_ASYNC_ZERO_SIZE_MSG_T] =
-	    {&gl_mqa_env.msg_hdl1, 513, &gl_mqa_env.send_msg_zero_size,
-	     &gl_mqa_env.sender_id, SA_MSG_MESSAGE_DELIVERED_ACK, SA_AIS_OK},
-	[MSG_MESSAGE_REPLY_ASYNC_INV_PARAM_T] = {&gl_mqa_env.msg_hdl1, 514,
-						 &gl_mqa_env.send_msg,
-						 &gl_mqa_env.sender_id,
-						 SA_MSG_MESSAGE_DELIVERED_ACK,
-						 SA_AIS_ERR_INVALID_PARAM},
-	[MSG_MESSAGE_REPLY_ASYNC_ERR_TRY_AGAIN_T] =
-	    {&gl_mqa_env.msg_hdl1, 515, &gl_mqa_env.send_msg,
-	     &gl_mqa_env.sender_id, SA_MSG_MESSAGE_DELIVERED_ACK,
-	     SA_AIS_ERR_TRY_AGAIN},
+						 SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_msgMessageReplyAsync(int i, MQSV_CONFIG_FLAG flg)
@@ -3692,14 +3601,14 @@ int tet_test_red_msgMessageReplyAsync(int i, MQSV_CONFIG_FLAG flg)
 
 /* Message SendReceive thread */
 
-void * mqsv_sendrecv(void *arg)
+void *mqsv_sendrecv(void *arg)
 {
 	MSG_MESSAGE_SEND_RECV_TC_TYPE *tc =
 	    (MSG_MESSAGE_SEND_RECV_TC_TYPE *)arg;
 
 	tet_test_msgMessageSendReceive(*tc, TEST_CONFIG_MODE);
 
-  return 0;
+	return 0;
 }
 
 void mqsv_create_sendrecvthread(MSG_MESSAGE_SEND_RECV_TC_TYPE *tc)
@@ -3714,7 +3623,7 @@ void mqsv_create_sendrecvthread(MSG_MESSAGE_SEND_RECV_TC_TYPE *tc)
 
 /* Message Cancel thread */
 
-void * mqsv_cancel_msg(void *arg)
+void *mqsv_cancel_msg(void *arg)
 {
 	SaMsgQueueHandleT *queueHandle = (SaMsgQueueHandleT *)arg;
 	SaAisErrorT rc;
@@ -3743,7 +3652,7 @@ void mqsv_createcancelthread(SaMsgQueueHandleT *queueHandle)
 
 /* Dispatch Thread - DISPATCH_BLOCKING */
 
-void * mqsv_selection_thread_blocking(void *arg)
+void *mqsv_selection_thread_blocking(void *arg)
 {
 	SaMsgHandleT *msgHandle = (SaMsgHandleT *)arg;
 	uint32_t rc;
@@ -3755,7 +3664,7 @@ void * mqsv_selection_thread_blocking(void *arg)
 		pthread_exit(0);
 	}
 
-  return 0;
+	return 0;
 }
 
 void mqsv_createthread(SaMsgHandleT *msgHandle)
@@ -3765,7 +3674,8 @@ void mqsv_createthread(SaMsgHandleT *msgHandle)
 	if (gl_msg_thrd_cnt >= 1)
 		return;
 
-	if (pthread_create(&thread, 0, mqsv_selection_thread_blocking, msgHandle)) {
+	if (pthread_create(&thread, 0, mqsv_selection_thread_blocking,
+			   msgHandle)) {
 		m_TET_MQSV_PRINTF(" Failed to create thread\n");
 		return;
 	}
@@ -3794,8 +3704,8 @@ void mqsv_createthread_one(SaMsgHandleT *msgHandle)
 		return;
 
 	rc = m_NCS_TASK_CREATE((NCS_OS_CB)mqsv_selection_thread_one,
-			       (NCSCONTEXT)msgHandle, "mqa_asynctest_one", 20, 5,
-			       8000, &thread_handle);
+			       (NCSCONTEXT)msgHandle, "mqa_asynctest_one", 20,
+			       5, 8000, &thread_handle);
 	if (rc != NCSCC_RC_SUCCESS) {
 		m_TET_MQSV_PRINTF(" Failed to create thread\n");
 		return;
@@ -3831,8 +3741,8 @@ void mqsv_createthread_all(SaMsgHandleT *msgHandle)
 		return;
 
 	rc = m_NCS_TASK_CREATE((NCS_OS_CB)mqsv_selection_thread_all,
-			       (NCSCONTEXT)msgHandle, "mqa_asynctest_all", 20, 5,
-			       8000, &thread_handle);
+			       (NCSCONTEXT)msgHandle, "mqa_asynctest_all", 20,
+			       5, 8000, &thread_handle);
 	if (rc != NCSCC_RC_SUCCESS) {
 		m_TET_MQSV_PRINTF(" Failed to create thread\n");
 		return;
@@ -3864,8 +3774,8 @@ void mqsv_createthread_all_loop()
 		return;
 
 	rc = m_NCS_TASK_CREATE((NCS_OS_CB)mqsv_selection_thread_all_loop,
-			       (NCSCONTEXT)NULL, "mqa_asynctest_loop", 20, 5, 8000,
-			       &thread_handle);
+			       (NCSCONTEXT)NULL, "mqa_asynctest_loop", 20, 5,
+			       8000, &thread_handle);
 	if (rc != NCSCC_RC_SUCCESS) {
 		m_TET_MQSV_PRINTF(" Failed to create thread\n");
 		return;

@@ -31,12 +31,13 @@ static void ccb_apply_modify_hdlr(struct CcbUtilOperationData *opdata) {
   int i = 0;
 
   while ((attr_mod = opdata->param.modify.attrMods[i++]) != nullptr) {
-    if (!strcmp(attr_mod->modAttr.attrName, "osafAmfRestrictAutoRepairEnable")) {
-      bool enabled = false; // set to disabled if attribute is blank
+    if (!strcmp(attr_mod->modAttr.attrName,
+                "osafAmfRestrictAutoRepairEnable")) {
+      bool enabled = false;  // set to disabled if attribute is blank
       if (attr_mod->modType != SA_IMM_ATTR_VALUES_DELETE &&
-        attr_mod->modAttr.attrValues != nullptr) {
+          attr_mod->modAttr.attrValues != nullptr) {
         enabled =
-          static_cast<bool>(*((SaUint32T *)attr_mod->modAttr.attrValues[0]));
+            static_cast<bool>(*((SaUint32T *)attr_mod->modAttr.attrValues[0]));
       }
       TRACE("osafAmfRestrictAutoRepairEnable changed to '%d'", enabled);
       configuration->restrict_auto_repair(enabled);
@@ -53,7 +54,7 @@ static SaAisErrorT ccb_completed_modify_hdlr(CcbUtilOperationData_t *opdata) {
 }
 
 static SaAisErrorT configuration_ccb_completed_cb(
-  CcbUtilOperationData_t *opdata) {
+    CcbUtilOperationData_t *opdata) {
   SaAisErrorT rc = SA_AIS_ERR_BAD_OPERATION;
 
   TRACE_ENTER2("CCB ID %llu, '%s'", opdata->ccbId,
@@ -101,10 +102,9 @@ static void configuration_ccb_apply_cb(CcbUtilOperationData_t *opdata) {
   TRACE_LEAVE();
 }
 
-static void configuration_admin_op_cb(SaImmOiHandleT immOiHandle,
-    SaInvocationT invocation,
-    const SaNameT *object_name,
-    SaImmAdminOperationIdT op_id,
+static void configuration_admin_op_cb(
+    SaImmOiHandleT immOiHandle, SaInvocationT invocation,
+    const SaNameT *object_name, SaImmAdminOperationIdT op_id,
     const SaImmAdminOperationParamsT_2 **params) {
   TRACE_ENTER();
   switch (op_id) {
@@ -143,18 +143,19 @@ SaAisErrorT Configuration::get_config(void) {
   }
 
   while (immutil_saImmOmSearchNext_2(searchHandle, &dn,
-    (SaImmAttrValuesT_2 ***)&attributes) == SA_AIS_OK) {
+                                     (SaImmAttrValuesT_2 ***)&attributes) ==
+         SA_AIS_OK) {
     uint32_t value;
     TRACE("reading configuration '%s'", osaf_extended_name_borrow(&dn));
-    if (immutil_getAttr("osafAmfRestrictAutoRepairEnable", attributes, 0, &value)
-      == SA_AIS_OK) {
+    if (immutil_getAttr("osafAmfRestrictAutoRepairEnable", attributes, 0,
+                        &value) == SA_AIS_OK) {
       configuration->restrict_auto_repair(static_cast<bool>(value));
     }
   }
 
   error = SA_AIS_OK;
   TRACE("osafAmfRestrictAutoRepairEnable set to '%d'",
-    restrict_auto_repair_enabled());
+        restrict_auto_repair_enabled());
 
   (void)immutil_saImmOmSearchFinalize(searchHandle);
 done1:
@@ -162,18 +163,17 @@ done1:
   return error;
 }
 
-Configuration::Configuration() : restrict_auto_repair_(false) // default
+Configuration::Configuration()
+    : restrict_auto_repair_(false)  // default
 {
   avd_class_impl_set("OpenSafAmfConfig", nullptr, configuration_admin_op_cb,
-    configuration_ccb_completed_cb, configuration_ccb_apply_cb);
+                     configuration_ccb_completed_cb,
+                     configuration_ccb_apply_cb);
 }
 
-Configuration::~Configuration()
-{
-}
+Configuration::~Configuration() {}
 
-void Configuration::restrict_auto_repair(bool enable)
-{
+void Configuration::restrict_auto_repair(bool enable) {
   TRACE_ENTER();
   restrict_auto_repair_ = enable;
 
@@ -182,16 +182,15 @@ void Configuration::restrict_auto_repair(bool enable)
     AVD_AVND *avnd = value.second;
     osafassert(avnd != nullptr);
     for (const auto &su : avnd->list_of_ncs_su) {
-        su->set_su_maintenance_campaign();
+      su->set_su_maintenance_campaign();
     }
     for (const auto &su : avnd->list_of_su) {
-        su->set_su_maintenance_campaign();
+      su->set_su_maintenance_campaign();
     }
   }
   TRACE_LEAVE();
 }
 
-bool Configuration::restrict_auto_repair_enabled()
-{
+bool Configuration::restrict_auto_repair_enabled() {
   return restrict_auto_repair_;
 }

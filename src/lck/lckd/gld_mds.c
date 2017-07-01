@@ -385,9 +385,9 @@ static uint32_t gld_mds_enc_flat(GLSV_GLD_CB *cb,
 			if (evt->type == GLSV_GLND_EVT_RSC_MASTER_INFO) {
 				if (evt->info.rsc_master_info.no_of_res > 0) {
 					GLSV_GLND_RSC_MASTER_INFO_LIST
-					    *rsc_master_list =
-						evt->info.rsc_master_info
-						    .rsc_master_list;
+					*rsc_master_list =
+					    evt->info.rsc_master_info
+						.rsc_master_list;
 					ncs_encode_n_octets_in_uba(
 					    uba, (uint8_t *)rsc_master_list,
 					    (sizeof(

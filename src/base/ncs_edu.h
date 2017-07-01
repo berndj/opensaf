@@ -89,11 +89,11 @@ typedef struct ncs_edu_admin_op_tag {
   union {
     NCS_EDU_ADMIN_COMPILE_INFO compile_info;
     NCS_EDU_ADMIN_GET_ATTRB_INFO
-        get_attrb; /* Get attributes of program,
-                      like PTR | ARR | LINKEDLIST, etc. */
+    get_attrb; /* Get attributes of program,
+                  like PTR | ARR | LINKEDLIST, etc. */
     NCS_EDU_ADMIN_GET_LL_NEXT_OFFSET
-        get_ll_offset; /* Location of "next" pointer of
-                          linked list. */
+    get_ll_offset; /* Location of "next" pointer of
+                      linked list. */
   } info;
 } NCS_EDU_ADMIN_OP_INFO;
 

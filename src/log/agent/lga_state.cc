@@ -71,8 +71,8 @@ static void *recovery2_thread(void *dummy) {
   // Create a random timeout time in msec within an interval
   // Set seed. Use nanoseconds from clock */
   osaf_clock_gettime(CLOCK_MONOTONIC, &seed_ts);
-  srandom((unsigned int) seed_ts.tv_nsec);
-  timeout_ms = (int64_t) (random() % 100 + 400) * 1000;
+  srandom((unsigned int)seed_ts.tv_nsec);
+  timeout_ms = (int64_t)(random() % 100 + 400) * 1000;
 
   // Wait for timeout or a signal to terminate
   rc = osaf_poll_one_fd(state2_terminate_sel_obj.rmv_obj, timeout_ms);
@@ -106,7 +106,7 @@ static void *recovery2_thread(void *dummy) {
 
 done:
   // Cleanup and Exit thread
-  (void) ncs_sel_obj_destroy(&state2_terminate_sel_obj);
+  (void)ncs_sel_obj_destroy(&state2_terminate_sel_obj);
   pthread_exit(nullptr);
 
   TRACE_LEAVE();
@@ -135,11 +135,11 @@ static int start_recovery2_thread(void) {
     goto done;
   }
 
-  if (pthread_create(&recovery2_thread_id,
-                     &attr, recovery2_thread, nullptr) != 0) {
+  if (pthread_create(&recovery2_thread_id, &attr, recovery2_thread, nullptr) !=
+      0) {
     TRACE("\t pthread_create FAILED: %s", strerror(errno));
     rc = -1;
-    (void) ncs_sel_obj_destroy(&state2_terminate_sel_obj);
+    (void)ncs_sel_obj_destroy(&state2_terminate_sel_obj);
     goto done;
   }
   pthread_attr_destroy(&attr);
@@ -176,8 +176,7 @@ static void stop_recovery2_thread(void) {
   // Join thread to wait for thread termination
   rc = pthread_join(recovery2_thread_id, nullptr);
   if (rc != 0) {
-    LOG_NO("%s: Could not join recovery2 thread %s", __func__,
-           strerror(rc));
+    LOG_NO("%s: Could not join recovery2 thread %s", __func__, strerror(rc));
   }
 
 done:
@@ -251,23 +250,17 @@ void lga_serv_recov1state_set(void) {
  */
 static pthread_mutex_t lga_recov2_lock = PTHREAD_MUTEX_INITIALIZER;
 
-void lga_recovery2_lock(void) {
-  osaf_mutex_lock_ordie(&lga_recov2_lock);
-}
+void lga_recovery2_lock(void) { osaf_mutex_lock_ordie(&lga_recov2_lock); }
 
-void lga_recovery2_unlock(void) {
-  osaf_mutex_unlock_ordie(&lga_recov2_lock);
-}
+void lga_recovery2_unlock(void) { osaf_mutex_unlock_ordie(&lga_recov2_lock); }
 
 typedef struct {
   RecoveryState state;
   pthread_mutex_t lock;
 } lga_state_s;
 
-static lga_state_s lga_state = {
-  .state = RecoveryState::kNormal,
-  .lock = PTHREAD_MUTEX_INITIALIZER
-};
+static lga_state_s lga_state = {.state = RecoveryState::kNormal,
+                                .lock = PTHREAD_MUTEX_INITIALIZER};
 
 static void set_lga_recovery_state(RecoveryState state) {
   ScopeLock lock(lga_state.lock);
@@ -277,8 +270,7 @@ static void set_lga_recovery_state(RecoveryState state) {
 bool is_lga_recovery_state(RecoveryState state) {
   bool rc = false;
   ScopeLock lock(lga_state.lock);
-  if (state == lga_state.state)
-    rc = true;
+  if (state == lga_state.state) rc = true;
   return rc;
 }
 
@@ -290,8 +282,8 @@ bool is_lga_recovery_state(RecoveryState state) {
  * call lga_recovery2_unlock() also if no previous call to lock is done
  */
 void recovery2_lock(bool *is_locked) {
-  if (is_lga_recovery_state(RecoveryState::kRecovery1)
-      || is_lga_recovery_state(RecoveryState::kRecovery2)) {
+  if (is_lga_recovery_state(RecoveryState::kRecovery1) ||
+      is_lga_recovery_state(RecoveryState::kRecovery2)) {
     lga_recovery2_lock();
     *is_locked = true;
   }

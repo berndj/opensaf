@@ -80,7 +80,7 @@ typedef struct glsv_gld_cb_tag {
   MDS_HDL mds_handle; /* PWE handle used for interacting with NDs  */
   uint8_t hm_poolid;  /* For use with handle manager               */
   NCSCONTEXT task_hdl;
-  uint32_t my_hdl;  /* Handle manager handle                     */
+  uint32_t my_hdl;      /* Handle manager handle                     */
   SaClmHandleT clm_hdl; /* CLM handle */
   NCS_MBCSV_HDL mbcsv_handle;
   NCS_MBCSV_CKPT_HDL o_ckpt_hdl;
@@ -108,7 +108,7 @@ typedef struct glsv_gld_cb_tag {
   SaInvocationT invocation;
   uint32_t is_quiasced;
 
-  SaImmOiHandleT immOiHandle; /* IMM OI Handle */
+  SaImmOiHandleT immOiHandle;     /* IMM OI Handle */
   SaSelectionObjectT imm_sel_obj; /*Selection object to wait for
                                      IMM events */
   bool is_impl_set;

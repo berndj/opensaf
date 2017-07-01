@@ -29,15 +29,16 @@ extern struct LogProfile logProfile;
 // If you care of seeing the return value of APIs, set the environment
 // variable @LOGTEST_DEBUG
 static int g_debug = 0;
-#define OUTPUT(str, rc)							   \
-	do {								   \
-		if (g_debug) printf("%s(%s) rc: %d\n", __func__, str, rc); \
+#define OUTPUT(str, rc)                                                        \
+	do {                                                                   \
+		if (g_debug)                                                   \
+			printf("%s(%s) rc: %d\n", __func__, str, rc);          \
 	} while (0);
 
 //
 // Multiple threads on same log handle
 //
-void* create_and_close_log_stream(void* thread_num)
+void *create_and_close_log_stream(void *thread_num)
 {
 	char filename[100] = {0};
 	char data[100] = {0};
@@ -46,20 +47,19 @@ void* create_and_close_log_stream(void* thread_num)
 	genLogRecord.logBuffer->logBufSize = 1000;
 
 	SaLogFileCreateAttributesT_2 appStreamLogFileCreateAttributes_me = {
-		.logFilePathName = DEFAULT_APP_FILE_PATH_NAME,
-		.maxLogFileSize = 4096,
-		.maxLogRecordSize = 1024,
-		.haProperty = SA_TRUE,
-		.logFileFullAction = SA_LOG_FILE_FULL_ACTION_ROTATE,
-		.maxFilesRotated = DEFAULT_MAX_FILE_ROTATED,
-		.logFileFmt = DEFAULT_FORMAT_EXPRESSION
-	};
+	    .logFilePathName = DEFAULT_APP_FILE_PATH_NAME,
+	    .maxLogFileSize = 4096,
+	    .maxLogRecordSize = 1024,
+	    .haProperty = SA_TRUE,
+	    .logFileFullAction = SA_LOG_FILE_FULL_ACTION_ROTATE,
+	    .maxFilesRotated = DEFAULT_MAX_FILE_ROTATED,
+	    .logFileFmt = DEFAULT_FORMAT_EXPRESSION};
 
-	sprintf(filename, "thread_num_%d", *(int*)thread_num);
+	sprintf(filename, "thread_num_%d", *(int *)thread_num);
 	appStreamLogFileCreateAttributes_me.logFileName = filename;
 	SaNameT appStreamName_me;
 	SaAisErrorT rc_me = SA_AIS_OK;
-	sprintf(data, "safLgStr=data_thread_num_%d", *(int*)thread_num);
+	sprintf(data, "safLgStr=data_thread_num_%d", *(int *)thread_num);
 	saAisNameLend(data, &appStreamName_me);
 
 	rc_me = logAppStreamOpen(&appStreamName_me,
@@ -82,7 +82,7 @@ done:
 	return NULL;
 }
 
-void* read_log_stream(void* thread_num)
+void *read_log_stream(void *thread_num)
 {
 	SaAisErrorT rc_me = SA_AIS_OK;
 	SaSelectionObjectT obj;
@@ -125,14 +125,9 @@ void delete_and_access_log_stream_on_multiple_threads(void)
 
 	logProfile.nTries = 50;
 	for (i = 0; i < nThreads; i++) {
-		pthread_create(
-			&threads[i], NULL,
-			create_and_close_log_stream,
-			&i);
-		pthread_create(
-			&threads2[i], NULL,
-			read_log_stream,
-			&i);
+		pthread_create(&threads[i], NULL, create_and_close_log_stream,
+			       &i);
+		pthread_create(&threads2[i], NULL, read_log_stream, &i);
 	}
 
 	// Wait for all threads terminated
@@ -157,7 +152,7 @@ void delete_and_access_log_stream_on_multiple_threads(void)
 // Test race condition on log client database
 //
 static SaLogHandleT logHandle_me = 0;
-void* create_and_close_log_handle(void* thread_num)
+void *create_and_close_log_handle(void *thread_num)
 {
 	SaAisErrorT rc_me = SA_AIS_OK;
 	unsigned int nTries = 1;
@@ -165,8 +160,8 @@ void* create_and_close_log_handle(void* thread_num)
 	rc_me = saLogInitialize(&logHandle_me, &logCallbacks, &logVersion);
 	while (rc_me == SA_AIS_ERR_TRY_AGAIN && nTries < 50) {
 		usleep(100 * 1000);
-		rc_me = saLogInitialize(&logHandle_me,
-					&logCallbacks, &logVersion);
+		rc_me =
+		    saLogInitialize(&logHandle_me, &logCallbacks, &logVersion);
 		nTries++;
 	}
 	if (rc_me != SA_AIS_OK) {
@@ -192,7 +187,7 @@ done:
 	return NULL;
 }
 
-void* read_log_handle(void* thread_num)
+void *read_log_handle(void *thread_num)
 {
 	char filename[100] = {0};
 	char data[100] = {0};
@@ -208,34 +203,31 @@ void* read_log_handle(void* thread_num)
 	}
 
 	SaLogFileCreateAttributesT_2 appStreamLogFileCreateAttributes_me = {
-		.logFilePathName = DEFAULT_APP_FILE_PATH_NAME,
-		.maxLogFileSize = 4096,
-		.maxLogRecordSize = 1024,
-		.haProperty = SA_TRUE,
-		.logFileFullAction = SA_LOG_FILE_FULL_ACTION_ROTATE,
-		.maxFilesRotated = DEFAULT_MAX_FILE_ROTATED,
-		.logFileFmt = DEFAULT_FORMAT_EXPRESSION
-	};
-	sprintf(filename, "diff_handle_thread_num_%d", *(int*)thread_num);
+	    .logFilePathName = DEFAULT_APP_FILE_PATH_NAME,
+	    .maxLogFileSize = 4096,
+	    .maxLogRecordSize = 1024,
+	    .haProperty = SA_TRUE,
+	    .logFileFullAction = SA_LOG_FILE_FULL_ACTION_ROTATE,
+	    .maxFilesRotated = DEFAULT_MAX_FILE_ROTATED,
+	    .logFileFmt = DEFAULT_FORMAT_EXPRESSION};
+	sprintf(filename, "diff_handle_thread_num_%d", *(int *)thread_num);
 	appStreamLogFileCreateAttributes_me.logFileName = filename;
 	SaNameT appStreamName_me;
 	sprintf(data, "safLgStr=diff_handle_data_thread_num_%d",
-		*(int*)thread_num);
+		*(int *)thread_num);
 	saAisNameLend(data, &appStreamName_me);
 
-	rc_me = saLogStreamOpen_2(
-		logHandle_me, &appStreamName_me,
-		&appStreamLogFileCreateAttributes_me,
-		SA_LOG_STREAM_CREATE, SA_TIME_ONE_SECOND,
-		&logStreamHandle_me);
+	rc_me = saLogStreamOpen_2(logHandle_me, &appStreamName_me,
+				  &appStreamLogFileCreateAttributes_me,
+				  SA_LOG_STREAM_CREATE, SA_TIME_ONE_SECOND,
+				  &logStreamHandle_me);
 	nTries = 1;
 	while (rc_me == SA_AIS_ERR_TRY_AGAIN && nTries < 50) {
 		usleep(100 * 1000);
 		rc_me = saLogStreamOpen_2(
-			logHandle_me, &appStreamName_me,
-			&appStreamLogFileCreateAttributes_me,
-			SA_LOG_STREAM_CREATE,
-			SA_TIME_ONE_SECOND, &logStreamHandle_me);
+		    logHandle_me, &appStreamName_me,
+		    &appStreamLogFileCreateAttributes_me, SA_LOG_STREAM_CREATE,
+		    SA_TIME_ONE_SECOND, &logStreamHandle_me);
 		nTries++;
 	}
 	if (rc_me != SA_AIS_OK) {
@@ -245,8 +237,8 @@ void* read_log_handle(void* thread_num)
 
 	strcpy((char *)genLogRecord.logBuffer->logBuf, __FUNCTION__);
 	genLogRecord.logBuffer->logBufSize = strlen(__FUNCTION__);
-	rc_me = saLogWriteLogAsync(logStreamHandle_me,
-				   invocation, 0, &genLogRecord);
+	rc_me = saLogWriteLogAsync(logStreamHandle_me, invocation, 0,
+				   &genLogRecord);
 	if (rc_me != SA_AIS_OK) {
 		OUTPUT("saLogWriteLogAsync", rc_me);
 		goto done;
@@ -284,12 +276,9 @@ void delete_and_access_log_handle_on_multiple_threads(void)
 
 	logProfile.nTries = 50;
 	for (i = 0; i < nThreads; i++) {
-		pthread_create(
-			&threads[i], NULL,
-			create_and_close_log_handle, &i);
-		pthread_create(
-			&threads2[i], NULL,
-			read_log_handle, &i);
+		pthread_create(&threads[i], NULL, create_and_close_log_handle,
+			       &i);
+		pthread_create(&threads2[i], NULL, read_log_handle, &i);
 	}
 
 	// Wait for all threads terminated
@@ -304,14 +293,12 @@ void delete_and_access_log_handle_on_multiple_threads(void)
 __attribute__((constructor)) static void multiple_thread_testsuite(void)
 {
 	/* Tests for create */
-	if (getenv("LOGTEST_DEBUG") != NULL) { g_debug = 1; }
-	test_suite_add(19,"Multiple thread");
-	test_case_add(
-		19,
-		delete_and_access_log_stream_on_multiple_threads,
-		"Delete and access log stream on multiple theads");
-	test_case_add(
-		19,
-		delete_and_access_log_handle_on_multiple_threads,
-		"Delete and access log handle on multiple threads");
+	if (getenv("LOGTEST_DEBUG") != NULL) {
+		g_debug = 1;
+	}
+	test_suite_add(19, "Multiple thread");
+	test_case_add(19, delete_and_access_log_stream_on_multiple_threads,
+		      "Delete and access log stream on multiple theads");
+	test_case_add(19, delete_and_access_log_handle_on_multiple_threads,
+		      "Delete and access log handle on multiple threads");
 }

@@ -144,7 +144,7 @@ GLND_CLIENT_INFO *glnd_client_node_add(GLND_CB *glnd_cb,
   DESCRIPTION    : Sends responses to any waiting calls since the node is down.
 
   ARGUMENTS      :glnd_cb      - ptr to the GLND control block
-                  agent_mds_dest   - mds dest id for the agent.
+		  agent_mds_dest   - mds dest id for the agent.
 
 
   RETURNS        :None
@@ -153,86 +153,112 @@ GLND_CLIENT_INFO *glnd_client_node_add(GLND_CB *glnd_cb,
 *****************************************************************************/
 void glnd_client_node_down(GLND_CB *glnd_cb, GLND_CLIENT_INFO *client_info)
 {
-  GLND_CLIENT_LIST_RESOURCE *res_list;
-  TRACE_ENTER();
+	GLND_CLIENT_LIST_RESOURCE *res_list;
+	TRACE_ENTER();
 
-	for (res_list = client_info->res_list;
-       res_list != NULL;
-       res_list = res_list->next) {
+	for (res_list = client_info->res_list; res_list != NULL;
+	     res_list = res_list->next) {
 		GLND_CLIENT_LIST_RESOURCE_LOCK_REQ *lckList;
 
-    for (lckList = res_list->lck_list; lckList; lckList = lckList->next) {
-      GLND_RES_LOCK_LIST_INFO *lckListInfo = lckList->lck_req;
+		for (lckList = res_list->lck_list; lckList;
+		     lckList = lckList->next) {
+			GLND_RES_LOCK_LIST_INFO *lckListInfo = lckList->lck_req;
 
-      if (lckListInfo) {
-        GLSV_GLA_EVT gla_evt;
+			if (lckListInfo) {
+				GLSV_GLA_EVT gla_evt;
 
-        // respond to any blocked unlock calls
-        if (lckListInfo->unlock_call_type == GLSV_SYNC_CALL) {
-          glnd_stop_tmr(&lckListInfo->timeout_tmr);
+				// respond to any blocked unlock calls
+				if (lckListInfo->unlock_call_type ==
+				    GLSV_SYNC_CALL) {
+					glnd_stop_tmr(
+					    &lckListInfo->timeout_tmr);
 
-          gla_evt.error = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
-            SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
-          gla_evt.handle = lckListInfo->lock_info.handleId;
-          gla_evt.type = GLSV_GLA_API_RESP_EVT;
-          gla_evt.info.gla_resp_info.type = GLSV_GLA_LOCK_SYNC_UNLOCK;
+					gla_evt.error =
+					    m_GLA_VER_IS_AT_LEAST_B_3(
+						client_info->version)
+						? SA_AIS_ERR_UNAVAILABLE
+						: SA_AIS_ERR_LIBRARY;
+					gla_evt.handle =
+					    lckListInfo->lock_info.handleId;
+					gla_evt.type = GLSV_GLA_API_RESP_EVT;
+					gla_evt.info.gla_resp_info.type =
+					    GLSV_GLA_LOCK_SYNC_UNLOCK;
 
-          glnd_mds_msg_send_rsp_gla(glnd_cb,
-                                    &gla_evt,
-                                    lckListInfo->lock_info.agent_mds_dest,
-                                    &lckListInfo->glnd_res_lock_mds_ctxt);
-        } else if (lckListInfo->unlock_call_type == GLSV_ASYNC_CALL) {
-          m_GLND_RESOURCE_ASYNC_LCK_UNLOCK_FILL(
-            gla_evt,
-            m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
-              SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY,
-            lckListInfo->lock_info.invocation,
-            lckListInfo->lcl_resource_id,
-            lckListInfo->lock_info.lcl_lockid,
-            0);
-          gla_evt.handle = lckListInfo->lock_info.handleId;
+					glnd_mds_msg_send_rsp_gla(
+					    glnd_cb, &gla_evt,
+					    lckListInfo->lock_info
+						.agent_mds_dest,
+					    &lckListInfo
+						 ->glnd_res_lock_mds_ctxt);
+				} else if (lckListInfo->unlock_call_type ==
+					   GLSV_ASYNC_CALL) {
+					m_GLND_RESOURCE_ASYNC_LCK_UNLOCK_FILL(
+					    gla_evt,
+					    m_GLA_VER_IS_AT_LEAST_B_3(
+						client_info->version)
+						? SA_AIS_ERR_UNAVAILABLE
+						: SA_AIS_ERR_LIBRARY,
+					    lckListInfo->lock_info.invocation,
+					    lckListInfo->lcl_resource_id,
+					    lckListInfo->lock_info.lcl_lockid,
+					    0);
+					gla_evt.handle =
+					    lckListInfo->lock_info.handleId;
 
-          glnd_mds_msg_send_gla(glnd_cb,
-                                &gla_evt,
-                                lckListInfo->lock_info.agent_mds_dest);
-        }
+					glnd_mds_msg_send_gla(
+					    glnd_cb, &gla_evt,
+					    lckListInfo->lock_info
+						.agent_mds_dest);
+				}
 
-        // respond to any blocked lock calls
-        if (lckListInfo->lock_info.call_type == GLSV_SYNC_CALL) {
-          glnd_stop_tmr(&lckListInfo->timeout_tmr);
+				// respond to any blocked lock calls
+				if (lckListInfo->lock_info.call_type ==
+				    GLSV_SYNC_CALL) {
+					glnd_stop_tmr(
+					    &lckListInfo->timeout_tmr);
 
-          gla_evt.error = m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
-            SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY;
-          gla_evt.handle = lckListInfo->lock_info.handleId;
-          gla_evt.type = GLSV_GLA_API_RESP_EVT;
-          gla_evt.info.gla_resp_info.type = GLSV_GLA_LOCK_SYNC_LOCK;
+					gla_evt.error =
+					    m_GLA_VER_IS_AT_LEAST_B_3(
+						client_info->version)
+						? SA_AIS_ERR_UNAVAILABLE
+						: SA_AIS_ERR_LIBRARY;
+					gla_evt.handle =
+					    lckListInfo->lock_info.handleId;
+					gla_evt.type = GLSV_GLA_API_RESP_EVT;
+					gla_evt.info.gla_resp_info.type =
+					    GLSV_GLA_LOCK_SYNC_LOCK;
 
-          glnd_mds_msg_send_rsp_gla(glnd_cb,
-                                    &gla_evt,
-                                    lckListInfo->lock_info.agent_mds_dest,
-                                    &lckListInfo->glnd_res_lock_mds_ctxt);
-        } else if (lckListInfo->lock_info.call_type == GLSV_ASYNC_CALL) {
-          m_GLND_RESOURCE_ASYNC_LCK_GRANT_FILL(
-            gla_evt,
-            m_GLA_VER_IS_AT_LEAST_B_3(client_info->version) ?
-              SA_AIS_ERR_UNAVAILABLE : SA_AIS_ERR_LIBRARY,
-            0,
-            lckListInfo->lock_info.lcl_lockid,
-            lckListInfo->lock_info.lock_type,
-            lckListInfo->lcl_resource_id,
-            lckListInfo->lock_info.invocation,
-            0,
-            lckListInfo->lock_info.handleId);
+					glnd_mds_msg_send_rsp_gla(
+					    glnd_cb, &gla_evt,
+					    lckListInfo->lock_info
+						.agent_mds_dest,
+					    &lckListInfo
+						 ->glnd_res_lock_mds_ctxt);
+				} else if (lckListInfo->lock_info.call_type ==
+					   GLSV_ASYNC_CALL) {
+					m_GLND_RESOURCE_ASYNC_LCK_GRANT_FILL(
+					    gla_evt,
+					    m_GLA_VER_IS_AT_LEAST_B_3(
+						client_info->version)
+						? SA_AIS_ERR_UNAVAILABLE
+						: SA_AIS_ERR_LIBRARY,
+					    0,
+					    lckListInfo->lock_info.lcl_lockid,
+					    lckListInfo->lock_info.lock_type,
+					    lckListInfo->lcl_resource_id,
+					    lckListInfo->lock_info.invocation,
+					    0, lckListInfo->lock_info.handleId);
 
-          glnd_mds_msg_send_gla(glnd_cb,
-                                &gla_evt,
-                                lckListInfo->lock_info.agent_mds_dest);
-        }
-      }
-    }
-  }
+					glnd_mds_msg_send_gla(
+					    glnd_cb, &gla_evt,
+					    lckListInfo->lock_info
+						.agent_mds_dest);
+				}
+			}
+		}
+	}
 
-  TRACE_LEAVE();
+	TRACE_LEAVE();
 }
 /*****************************************************************************
   PROCEDURE NAME : glnd_client_node_del
@@ -427,56 +453,81 @@ uint32_t glnd_client_node_resource_del(GLND_CB *glnd_cb,
 		     lock_req_list != NULL;) {
 			if (resource_list->rsc_info->status ==
 			    GLND_RESOURCE_ACTIVE_NON_MASTER) {
-	if (lock_req_list->lck_req->lock_info.lockStatus ==
-	      SA_LCK_LOCK_GRANTED) {
-	  TRACE("lock granted: sending orphan request");
-				  /* send request to orphan the lock */
-				  m_GLND_RESOURCE_NODE_LCK_INFO_FILL(
-				      glnd_evt, GLSV_GLND_EVT_LCK_REQ_ORPHAN,
-				      resource_list->rsc_info->resource_id,
-				      lock_req_list->lck_req->lcl_resource_id,
-				      lock_req_list->lck_req->lock_info.handleId,
-				      lock_req_list->lck_req->lock_info.lockid,
-				      lock_req_list->lck_req->lock_info.lock_type,
-				      lock_req_list->lck_req->lock_info.lockFlags,
-				      0, 0, 0, 0,
-				      lock_req_list->lck_req->lock_info.lcl_lockid,
-				      0);
-				  glnd_evt.info.node_lck_info.glnd_mds_dest =
-				      glnd_cb->glnd_mdest_id;
-				  glnd_mds_msg_send_glnd(
-				      glnd_cb, &glnd_evt,
-				      res_info->master_mds_dest);
-	} else {
-	  TRACE("lock still outstanding: sending cancel request");
-	  m_GLND_RESOURCE_NODE_LCK_INFO_FILL(
-	    glnd_evt,
-	    GLSV_GLND_EVT_LCK_REQ_CANCEL,
-	    resource_list->rsc_info->resource_id,
-	    lock_req_list->lck_req->lcl_resource_id,
-	    lock_req_list->lck_req->lock_info.handleId,
-	    lock_req_list->lck_req->lock_info.lockid,
-	    lock_req_list->lck_req->lock_info.lock_type,
-	    lock_req_list->lck_req->lock_info.lockFlags,
-	    0, 0, 0, 0, lock_req_list->lck_req->lock_info.lcl_lockid, 0);
+				if (lock_req_list->lck_req->lock_info
+					.lockStatus == SA_LCK_LOCK_GRANTED) {
+					TRACE(
+					    "lock granted: sending orphan request");
+					/* send request to orphan the lock */
+					m_GLND_RESOURCE_NODE_LCK_INFO_FILL(
+					    glnd_evt,
+					    GLSV_GLND_EVT_LCK_REQ_ORPHAN,
+					    resource_list->rsc_info
+						->resource_id,
+					    lock_req_list->lck_req
+						->lcl_resource_id,
+					    lock_req_list->lck_req->lock_info
+						.handleId,
+					    lock_req_list->lck_req->lock_info
+						.lockid,
+					    lock_req_list->lck_req->lock_info
+						.lock_type,
+					    lock_req_list->lck_req->lock_info
+						.lockFlags,
+					    0, 0, 0, 0,
+					    lock_req_list->lck_req->lock_info
+						.lcl_lockid,
+					    0);
+					glnd_evt.info.node_lck_info
+					    .glnd_mds_dest =
+					    glnd_cb->glnd_mdest_id;
+					glnd_mds_msg_send_glnd(
+					    glnd_cb, &glnd_evt,
+					    res_info->master_mds_dest);
+				} else {
+					TRACE(
+					    "lock still outstanding: sending cancel request");
+					m_GLND_RESOURCE_NODE_LCK_INFO_FILL(
+					    glnd_evt,
+					    GLSV_GLND_EVT_LCK_REQ_CANCEL,
+					    resource_list->rsc_info
+						->resource_id,
+					    lock_req_list->lck_req
+						->lcl_resource_id,
+					    lock_req_list->lck_req->lock_info
+						.handleId,
+					    lock_req_list->lck_req->lock_info
+						.lockid,
+					    lock_req_list->lck_req->lock_info
+						.lock_type,
+					    lock_req_list->lck_req->lock_info
+						.lockFlags,
+					    0, 0, 0, 0,
+					    lock_req_list->lck_req->lock_info
+						.lcl_lockid,
+					    0);
 
-	  glnd_evt.info.node_lck_info.glnd_mds_dest = glnd_cb->glnd_mdest_id;
+					glnd_evt.info.node_lck_info
+					    .glnd_mds_dest =
+					    glnd_cb->glnd_mdest_id;
 
-	  if (res_info->status != GLND_RESOURCE_ELECTION_IN_PROGESS) {
-	    glnd_mds_msg_send_glnd(glnd_cb,
-				   &glnd_evt,
-				   res_info->master_mds_dest);
-	  } else {
-	    glnd_evt_backup_queue_add(glnd_cb, &glnd_evt);
-	  }
-	}
+					if (res_info->status !=
+					    GLND_RESOURCE_ELECTION_IN_PROGESS) {
+						glnd_mds_msg_send_glnd(
+						    glnd_cb, &glnd_evt,
+						    res_info->master_mds_dest);
+					} else {
+						glnd_evt_backup_queue_add(
+						    glnd_cb, &glnd_evt);
+					}
+				}
 			} else {
-			 /* unset any orphan count */
-			 lock_type =
-			     lock_req_list->lck_req->lock_info.lock_type;
-			if ((lock_req_list->lck_req->lock_info.lockFlags &
-			      SA_LCK_LOCK_ORPHAN) == SA_LCK_LOCK_ORPHAN)
-			  local_orphan_lock = true;
+				/* unset any orphan count */
+				lock_type =
+				    lock_req_list->lck_req->lock_info.lock_type;
+				if ((lock_req_list->lck_req->lock_info
+					 .lockFlags &
+				     SA_LCK_LOCK_ORPHAN) == SA_LCK_LOCK_ORPHAN)
+					local_orphan_lock = true;
 			}
 			del_req_list = lock_req_list;
 			lock_req_list = lock_req_list->next;

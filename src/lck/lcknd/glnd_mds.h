@@ -30,7 +30,7 @@
 #ifndef LCK_LCKND_GLND_MDS_H_
 #define LCK_LCKND_GLND_MDS_H_
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -135,25 +135,24 @@ typedef uint32_t (*GLSV_GLND_EVT_HANDLER)(struct glnd_cb_tag *,
     (m).handle = (c_handle);                                              \
   } while (0);
 
-#define m_GLND_RESOURCE_NODE_LCK_INFO_FILL(evt, evt_type, resid, lcl_resid, \
-                                           hdl_id, lock_id, l_type, l_flag, \
-                                           l_status, waiter_sig, l_held,    \
-                                           l_err, l_lockid, l_invocation)   \
-  do {                                                                      \
-    memset(&(evt), 0, sizeof(GLSV_GLND_EVT));                               \
-    (evt).type = evt_type;                                                  \
-    (evt).info.node_lck_info.resource_id = (resid);                         \
-    (evt).info.node_lck_info.lcl_resource_id = (lcl_resid);                 \
-    (evt).info.node_lck_info.client_handle_id = (hdl_id);                   \
-    (evt).info.node_lck_info.lockid = (lock_id);                            \
-    (evt).info.node_lck_info.lcl_lockid = (l_lockid);                       \
-    (evt).info.node_lck_info.lock_type = (l_type);                          \
-    (evt).info.node_lck_info.lockFlags = (l_flag);                          \
-    (evt).info.node_lck_info.lockStatus = (l_status);                       \
-    (evt).info.node_lck_info.waiter_signal = (waiter_sig);                  \
-    (evt).info.node_lck_info.mode_held = (l_held);                          \
-    (evt).info.node_lck_info.error = (l_err);                               \
-    (evt).info.node_lck_info.invocation = (l_invocation);                   \
+#define m_GLND_RESOURCE_NODE_LCK_INFO_FILL(                           \
+    evt, evt_type, resid, lcl_resid, hdl_id, lock_id, l_type, l_flag, \
+    l_status, waiter_sig, l_held, l_err, l_lockid, l_invocation)      \
+  do {                                                                \
+    memset(&(evt), 0, sizeof(GLSV_GLND_EVT));                         \
+    (evt).type = evt_type;                                            \
+    (evt).info.node_lck_info.resource_id = (resid);                   \
+    (evt).info.node_lck_info.lcl_resource_id = (lcl_resid);           \
+    (evt).info.node_lck_info.client_handle_id = (hdl_id);             \
+    (evt).info.node_lck_info.lockid = (lock_id);                      \
+    (evt).info.node_lck_info.lcl_lockid = (l_lockid);                 \
+    (evt).info.node_lck_info.lock_type = (l_type);                    \
+    (evt).info.node_lck_info.lockFlags = (l_flag);                    \
+    (evt).info.node_lck_info.lockStatus = (l_status);                 \
+    (evt).info.node_lck_info.waiter_signal = (waiter_sig);            \
+    (evt).info.node_lck_info.mode_held = (l_held);                    \
+    (evt).info.node_lck_info.error = (l_err);                         \
+    (evt).info.node_lck_info.invocation = (l_invocation);             \
   } while (0);
 
 #define m_GLND_RESOURCE_LCK_FILL(l_evt, l_evt_type, rid, is_orphan, l_mode) \
@@ -179,7 +178,7 @@ typedef uint32_t (*GLSV_GLND_EVT_HANDLER)(struct glnd_cb_tag *,
     (l_evt).info.gla_clbk_info.params.unlock.error = (l_err);               \
   } while (0);
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 }
 #endif
 

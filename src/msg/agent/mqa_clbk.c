@@ -551,16 +551,15 @@ static uint32_t mqa_notify_clients(ASAPi_MSG_INFO *asapi_msg)
 		m_MQSV_MQA_GIVEUP_MQA_CB;
 		return NCSCC_RC_FAILURE;
 	}
-	while (
-	    (client_info = (MQA_CLIENT_INFO *)ncs_patricia_tree_getnext(
-		 &mqa_cb->mqa_client_tree, (uint8_t * const) temp_hdl_ptr))) {
+	while ((client_info = (MQA_CLIENT_INFO *)ncs_patricia_tree_getnext(
+		    &mqa_cb->mqa_client_tree, (uint8_t *const)temp_hdl_ptr))) {
 		temp_hdl = client_info->msgHandle;
 		temp_hdl_ptr = &temp_hdl;
 		/* scan the entire group track db & delete each record */
 		while (
 		    (track_info = (MQA_TRACK_INFO *)ncs_patricia_tree_getnext(
 			 &client_info->mqa_track_tree,
-			 (uint8_t * const) temp_name_ptr))) {
+			 (uint8_t *const)temp_name_ptr))) {
 			/* delete the track info */
 			temp_name = track_info->queueGroupName;
 			temp_name_ptr = temp_name.value;

@@ -33,21 +33,21 @@
 //------------------------------------------------------------------------------
 LogClient::LogClient(const SaLogCallbacksT* cb, uint32_t id, SaVersionT ver)
     : client_id_{id}, ref_counter_{0} {
-      TRACE_ENTER();
+  TRACE_ENTER();
   // Reset registered callback info
   memset(&callbacks_, 0, sizeof(callbacks_));
   stream_list_.clear();
 
-  handle_    = 0;
-  version_   = ver;
+  handle_ = 0;
+  version_ = ver;
 
   if (cb != nullptr) {
     memcpy(&callbacks_, cb, sizeof(SaLogCallbacksT));
   }
 
   // Initialize @handle_ for this client
-  if ((handle_ = ncshm_create_hdl(NCS_HM_POOL_ID_COMMON,
-                                  NCS_SERVICE_ID_LGA, this)) == 0) {
+  if ((handle_ = ncshm_create_hdl(NCS_HM_POOL_ID_COMMON, NCS_SERVICE_ID_LGA,
+                                  this)) == 0) {
     assert(handle_ != 0 && "ncshm_create_hdl failed");
   }
 
@@ -143,7 +143,7 @@ bool LogClient::ClearMailBox(NCSCONTEXT arg, NCSCONTEXT msg) {
   TRACE_ENTER();
   lgsv_msg_t *cbk, *pnext;
 
-  pnext = cbk = static_cast<lgsv_msg_t *>(msg);
+  pnext = cbk = static_cast<lgsv_msg_t*>(msg);
   while (pnext) {
     pnext = cbk->next;
     lga_msg_destroy(cbk);
@@ -163,30 +163,27 @@ SaSelectionObjectT LogClient::GetSelectionObject() {
 void LogClient::InvokeCallback(const lgsv_msg_t* msg) {
   TRACE_ENTER();
   assert(msg != nullptr);
-  const lgsv_cbk_info_t *cbk_info = &msg->info.cbk_info;
+  const lgsv_cbk_info_t* cbk_info = &msg->info.cbk_info;
 
   // Invoke the corresponding callback
   switch (cbk_info->type) {
     case LGSV_WRITE_LOG_CALLBACK_IND: {
-        if (callbacks_.saLogWriteLogCallback)
-          callbacks_.saLogWriteLogCallback(
-              cbk_info->inv, cbk_info->write_cbk.error);
-      }
-      break;
+      if (callbacks_.saLogWriteLogCallback)
+        callbacks_.saLogWriteLogCallback(cbk_info->inv,
+                                         cbk_info->write_cbk.error);
+    } break;
 
     case LGSV_SEVERITY_FILTER_CALLBACK: {
-        if (callbacks_.saLogFilterSetCallback) {
-          LogStreamInfo* stream;
-          stream = SearchLogStreamInfoById(cbk_info->lgs_stream_id);
-          ScopeLock scopeLock(mutex_);
-          if (stream != nullptr) {
-            callbacks_.saLogFilterSetCallback(
-                stream->GetHandle(),
-                cbk_info->serverity_filter_cbk.log_severity);
-          }
+      if (callbacks_.saLogFilterSetCallback) {
+        LogStreamInfo* stream;
+        stream = SearchLogStreamInfoById(cbk_info->lgs_stream_id);
+        ScopeLock scopeLock(mutex_);
+        if (stream != nullptr) {
+          callbacks_.saLogFilterSetCallback(
+              stream->GetHandle(), cbk_info->serverity_filter_cbk.log_severity);
         }
       }
-      break;
+    } break;
 
     default:
       TRACE("Unknown callback type: %d", cbk_info->type);
@@ -220,12 +217,12 @@ SaAisErrorT LogClient::Dispatch(SaDispatchFlagsT flag) {
 
 SaAisErrorT LogClient::DispatchOne() {
   TRACE_ENTER();
-  lgsv_msg_t *cbk_msg;
+  lgsv_msg_t* cbk_msg;
   SaAisErrorT rc = SA_AIS_OK;
 
   // Nonblk receive to obtain the message from priority queue
-  while (nullptr != (cbk_msg = reinterpret_cast<lgsv_msg_t *>(
-             m_NCS_IPC_NON_BLK_RECEIVE(&mailbox_, cbk_msg)))) {
+  while (nullptr != (cbk_msg = reinterpret_cast<lgsv_msg_t*>(
+                         m_NCS_IPC_NON_BLK_RECEIVE(&mailbox_, cbk_msg)))) {
     if (cbk_msg->info.cbk_info.type == LGSV_WRITE_LOG_CALLBACK_IND ||
         cbk_msg->info.cbk_info.type == LGSV_SEVERITY_FILTER_CALLBACK) {
       InvokeCallback(cbk_msg);
@@ -242,13 +239,13 @@ SaAisErrorT LogClient::DispatchOne() {
 
 SaAisErrorT LogClient::DispatchAll() {
   TRACE_ENTER();
-  lgsv_msg_t *cbk_msg;
+  lgsv_msg_t* cbk_msg;
   SaAisErrorT rc = SA_AIS_OK;
 
   // Recv all the cbk notifications from the queue & process them
   do {
-    cbk_msg = reinterpret_cast<lgsv_msg_t *>(m_NCS_IPC_NON_BLK_RECEIVE(
-        &mailbox_, cbk_msg));
+    cbk_msg = reinterpret_cast<lgsv_msg_t*>(
+        m_NCS_IPC_NON_BLK_RECEIVE(&mailbox_, cbk_msg));
     if (cbk_msg == nullptr) return rc;
 
     if (cbk_msg->info.cbk_info.type == LGSV_WRITE_LOG_CALLBACK_IND ||
@@ -267,12 +264,12 @@ SaAisErrorT LogClient::DispatchAll() {
 
 SaAisErrorT LogClient::DispatchBlocking() {
   TRACE_ENTER();
-  lgsv_msg_t *cbk_msg;
+  lgsv_msg_t* cbk_msg;
   SaAisErrorT rc = SA_AIS_OK;
 
   for (;;) {
-    if (nullptr != (cbk_msg = reinterpret_cast<lgsv_msg_t *>(
-            m_NCS_IPC_RECEIVE(&mailbox_, cbk_msg)))) {
+    if (nullptr != (cbk_msg = reinterpret_cast<lgsv_msg_t*>(
+                        m_NCS_IPC_RECEIVE(&mailbox_, cbk_msg)))) {
       if (cbk_msg->info.cbk_info.type == LGSV_WRITE_LOG_CALLBACK_IND ||
           cbk_msg->info.cbk_info.type == LGSV_SEVERITY_FILTER_CALLBACK) {
         TRACE_2("LGSV_LGS_DELIVER_EVENT");
@@ -291,10 +288,9 @@ SaAisErrorT LogClient::DispatchBlocking() {
 
 // Add @stream from @stream_list_ and should be called
 // when getting @saLogStreamOpen()
-void LogClient::AddLogStreamInfo(
-    LogStreamInfo* stream,
-    SaLogStreamOpenFlagsT flag,
-    SaLogHeaderTypeT htype) {
+void LogClient::AddLogStreamInfo(LogStreamInfo* stream,
+                                 SaLogStreamOpenFlagsT flag,
+                                 SaLogHeaderTypeT htype) {
   TRACE_ENTER();
   ScopeLock scopeLock(mutex_);
   assert(stream != nullptr);
@@ -348,12 +344,11 @@ bool LogClient::SendInitializeMsg() {
   // Send a message to Log server to obtain @client_id_
   //<
   // Default wait time for retries (30s)
-  const uint64_t kWaitTime = 30*1000;
+  const uint64_t kWaitTime = 30 * 1000;
   base::Timer wtime(kWaitTime);
   while (wtime.is_timeout() == false) {
-    ncs_rc = lga_mds_msg_sync_send(
-        &i_msg, &o_msg,
-        LGS_WAIT_TIME, MDS_SEND_PRIORITY_HIGH);
+    ncs_rc = lga_mds_msg_sync_send(&i_msg, &o_msg, LGS_WAIT_TIME,
+                                   MDS_SEND_PRIORITY_HIGH);
     if (ncs_rc != NCSCC_RC_SUCCESS) {
       LOG_NO("%s lga_mds_msg_sync_send() fail %d", __func__, ncs_rc);
       return false;
@@ -400,8 +395,8 @@ bool LogClient::RecoverMe() {
   ScopeLock scopeLock(mutex_);
   for (const auto& stream : stream_list_) {
     if (stream == nullptr) continue;
-    TRACE("Recover client = %d, stream = %d",
-          client_id_, stream->GetStreamId());
+    TRACE("Recover client = %d, stream = %d", client_id_,
+          stream->GetStreamId());
     if (stream->RecoverMeForClientId(client_id_) == false) {
       TRACE("RecoverMeForClientId failed: client id (%d), stream id (%d)",
             client_id_, stream->GetStreamId());
@@ -428,7 +423,7 @@ void LogClient::NoLogServer() {
   ScopeLock scopeLock(mutex_);
   // No SCs, no valid client id.
   client_id_ = 0;
-  atomic_data_.recovered_flag   = false;
+  atomic_data_.recovered_flag = false;
   atomic_data_.initialized_flag = false;
 
   // Inform the SCs absence to all its log streams.
@@ -440,14 +435,10 @@ void LogClient::NoLogServer() {
   }
 }
 
-uint32_t LogClient::SendMsgToMbx(
-    lgsv_msg_t* msg,
-    MDS_SEND_PRIORITY_TYPE prio) {
+uint32_t LogClient::SendMsgToMbx(lgsv_msg_t* msg, MDS_SEND_PRIORITY_TYPE prio) {
   TRACE_ENTER();
-  if (NCSCC_RC_SUCCESS != m_NCS_IPC_SEND(
-          &mailbox_,
-          msg,
-          static_cast<NCS_IPC_PRIORITY>(prio))) {
+  if (NCSCC_RC_SUCCESS !=
+      m_NCS_IPC_SEND(&mailbox_, msg, static_cast<NCS_IPC_PRIORITY>(prio))) {
     TRACE("IPC SEND FAILED");
     lga_msg_destroy(msg);
     return NCSCC_RC_FAILURE;

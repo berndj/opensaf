@@ -98,15 +98,15 @@ static int __create_pidfile(const char *pidfile)
 
 	/* open the file and associate a stream with it */
 	if (((fd = open(pidfiletmp, O_RDWR | O_CREAT, 0644)) == -1) ||
-			((file = fdopen(fd, "r+")) == NULL)) {
+	    ((file = fdopen(fd, "r+")) == NULL)) {
 		syslog(LOG_ERR, "open failed, pidfiletmp=%s, errno=%s",
-			pidfiletmp, strerror(errno));
+		       pidfiletmp, strerror(errno));
 		return -1;
 	}
 
 	if (!fprintf(file, "%d\n", pid)) {
 		syslog(LOG_ERR, "fprintf failed, pidfiletmp=%s, errno=%s",
-			pidfiletmp, strerror(errno));
+		       pidfiletmp, strerror(errno));
 		fclose(file);
 
 		return -1;
@@ -126,23 +126,25 @@ static int __create_pidfile(const char *pidfile)
 				if (retry_cnt > 0) {
 					osaf_nanosleep(&kHundredMilliseconds);
 				}
-			} while ((rc != 0) && (++retry_cnt < 5)
-					&& (errno == EBUSY));
+			} while ((rc != 0) && (++retry_cnt < 5) &&
+				 (errno == EBUSY));
 			if (rc != 0) {
-				syslog(LOG_ERR, "unlink failed, pidfile=%s, "
-					"error:%s", pidfile, strerror(errno));
+				syslog(LOG_ERR,
+				       "unlink failed, pidfile=%s, "
+				       "error:%s",
+				       pidfile, strerror(errno));
 				return -1;
 			}
 		} else {
 			syslog(LOG_ERR, "link failed, old=%s new=%s, error:%s",
-				pidfiletmp, pidfile, strerror(errno));
+			       pidfiletmp, pidfile, strerror(errno));
 			return -1;
 		}
 	}
 
 	if (unlink(pidfiletmp) != 0) {
 		syslog(LOG_ERR, "unlink failed, pidfiletmp=%s, error:%s",
-			pidfiletmp, strerror(errno));
+		       pidfiletmp, strerror(errno));
 		return -1;
 	}
 

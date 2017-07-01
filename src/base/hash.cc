@@ -136,7 +136,7 @@ void HashLibrary::PthreadOnceInitRoutine() {
   instance_ = new HashLibrary();
   if (instance_ == nullptr) osaf_abort(0);
 }
-}
+}  // namespace
 
 namespace base {
 

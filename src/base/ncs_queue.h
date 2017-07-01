@@ -54,7 +54,9 @@ extern "C" {
  ** Note: this queue element exists to force the requirement that the first
  ** field of the object to be queued must be "next" (void *).
  **/
-typedef struct ncs_qelem { struct ncs_qelem *next; } NCS_QELEM;
+typedef struct ncs_qelem {
+  struct ncs_qelem *next;
+} NCS_QELEM;
 
 #define NCS_QELEM_NULL ((NCS_QELEM *)0)
 
@@ -71,7 +73,9 @@ typedef struct ncs_queue {
 /** H&J Queue Iterator, for walking the list
  **/
 
-typedef struct ncs_q_itr { void *state; } NCS_Q_ITR;
+typedef struct ncs_q_itr {
+  void *state;
+} NCS_Q_ITR;
 
 #define NCS_QUEUE_NULL ((NCS_QUEUE *)0)
 

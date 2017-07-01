@@ -50,9 +50,9 @@ typedef struct ncs_rp_tmr_cb_tag {
   uint32_t tmr_ganularity; /* minimum granularity is 1 sec */
   tmr_t tmr_id;            /* Maps to OS timer ID */
   TMR_CALLBACK
-      tmr_callback;      /* call back which will be used to registered with the OS
-                            timer */
-  void *callback_arg;    /* argument for the above call back */
+  tmr_callback;       /* call back which will be used to registered with the OS
+                         timer */
+  void *callback_arg; /* argument for the above call back */
   NCS_SERVICE_ID svc_id; /* service id of the RP */
   uint32_t svc_sub_id;   /* sub id for the above service ID */
   struct ncs_rp_tmr_info_tag
@@ -69,13 +69,12 @@ typedef struct ncs_rp_tmr_info_tag {
   RP_TMR_CALLBACK rp_tmr_callback; /* this is the timer call back which the RP
                                       has to register, which will be invoked
                                       when the particular timer expires */
-  void *callback_arg;              /* this is the argument, which is used by the above
-                                      callback */
+  void *callback_arg; /* this is the argument, which is used by the above
+                         callback */
   int64_t
       tmr_value; /* this is the tmr value which the RP needs to register for */
-  time_t
-      tmr_trig_at; /* this is the system timer, exactly when it has trigered
-                      this timer */
+  time_t tmr_trig_at; /* this is the system timer, exactly when it has trigered
+                         this timer */
 } NCS_RP_TMR_INFO;
 
 typedef struct ncs_rp_tmr_init_tag {

@@ -222,7 +222,7 @@ static uint32_t glnd_restart_add_res_lock_to_resource_tree(
 		assert(0);
 	}
 
-  glnd_cb->numLocks++;
+	glnd_cb->numLocks++;
 
 	node_id = m_NCS_NODE_ID_FROM_MDS_DEST(
 	    restart_res_lock_list_info->req_mdest_id);
@@ -250,8 +250,8 @@ static uint32_t glnd_restart_add_res_lock_to_resource_tree(
 			lck_list_info->req_mdest_id =
 			    restart_res_lock_list_info->req_mdest_id;
 		lck_list_info->res_info = res_info;
-    lck_list_info->glnd_res_lock_mds_ctxt =
-	restart_res_lock_list_info->glnd_res_lock_mds_ctxt;
+		lck_list_info->glnd_res_lock_mds_ctxt =
+		    restart_res_lock_list_info->glnd_res_lock_mds_ctxt;
 		lck_list_info->lcl_resource_id =
 		    restart_res_lock_list_info->lcl_resource_id;
 		lck_list_info->unlock_call_type =
@@ -361,14 +361,15 @@ static uint32_t glnd_restart_add_res_lock_to_resource_tree(
 		}
 		/* Add lock_list_info to client_tree */
 		if (client_info != NULL &&
-	node_id == m_NCS_NODE_ID_FROM_MDS_DEST(glnd_cb->glnd_mdest_id)) {
+		    node_id ==
+			m_NCS_NODE_ID_FROM_MDS_DEST(glnd_cb->glnd_mdest_id)) {
 			glnd_client_node_resource_lock_req_add(
 			    client_info, res_info, lck_list_info);
 		}
 	} else {
 		m_MMGR_FREE_GLND_RES_LOCK_LIST_INFO(lck_list_info);
-    glnd_cb->numLocks--;
-  }
+		glnd_cb->numLocks--;
+	}
 
 	return NCSCC_RC_SUCCESS;
 }

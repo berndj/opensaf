@@ -79,8 +79,8 @@ typedef enum {
   EDU_TEST_LL_PTR, /* test if linked-list ptr is non-NULL,
                       and invoke another program. */
   EDU_TEST,        /* "test" statement */
-  EDU_VER_USR,     /*to execute an user-provided .chk_ver_usr. function app ver info
-                    */
+  EDU_VER_USR, /*to execute an user-provided .chk_ver_usr. function app ver info
+                */
   EDU_VER_GE,
   EDU_END, /* exit program */
   EDU_MAX
@@ -194,7 +194,7 @@ typedef struct edu_ppdb {
 /* Key to the EDU_PPDB database. */
 typedef struct edu_ppdb_key {
   EDU_PROG_HANDLER
-      parent_edp;            /* EDP of parent structure containing this field */
+  parent_edp;                /* EDP of parent structure containing this field */
   EDU_PROG_HANDLER self_edp; /* EDP of the data type of this field */
   uint32_t field_offset;     /* Offset of the field in the parent structure */
 } EDU_PPDB_KEY;
@@ -207,8 +207,8 @@ typedef struct edu_ppdb_node_info {
                           memory is malloc'ed by EDU
                           while Pretty-printing. */
   uint32_t data_size;  /* Size of the data present. */
-  uint8_t refcount; /* Number of instructions
-                       referencing this node. */
+  uint8_t refcount;    /* Number of instructions
+                          referencing this node. */
 } EDU_PPDB_NODE_INFO;
 #endif
 
@@ -220,8 +220,8 @@ typedef struct edu_tkn_tag {
                              encoding/decoding. */
 
   EDU_PROG_HANDLER parent_edp; /* EDP of the parent message envelope */
-  uint8_t var_cnt;             /* Variable number of "selected-rules"(user-provided) for
-                                  performing encode/decode operation. */
+  uint8_t var_cnt; /* Variable number of "selected-rules"(user-provided) for
+                      performing encode/decode operation. */
 
   int *var_array; /* Alloc'ed Array of "selected-rules"(user-provided) */
 

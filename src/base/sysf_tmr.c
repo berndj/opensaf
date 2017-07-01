@@ -312,10 +312,9 @@ static bool sysfTmrExpiry(SYSF_TMR_PAT_NODE *tmp)
 					    getpid());
 				}
 #endif
-				now_tmr
-				    ->tmrCB(
-					now_tmr->tmrUarg); /* OK this is it!
-							      Expire ! */
+				now_tmr->tmrCB(
+				    now_tmr->tmrUarg); /* OK this is it!
+							  Expire ! */
 			}
 
 			dead_tmr = now_tmr; /* move on to next one */
@@ -790,9 +789,10 @@ tmr_t ncs_tmr_start(tmr_t tid,
 
 	if (ts_start.tv_sec == 0 && ts_start.tv_nsec == 0) {
 		if (clock_gettime(CLOCK_MONOTONIC, &ts_start)) {
-		syslog(LOG_ERR, "clock_gettime with MONOTONIC Failed \n");
-		m_NCS_UNLOCK(&gl_tcb.safe.enter_lock, NCS_LOCK_WRITE);
-		return NULL;
+			syslog(LOG_ERR,
+			       "clock_gettime with MONOTONIC Failed \n");
+			m_NCS_UNLOCK(&gl_tcb.safe.enter_lock, NCS_LOCK_WRITE);
+			return NULL;
 		}
 	}
 

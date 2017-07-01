@@ -383,8 +383,9 @@ static uint32_t glnd_mds_enc(GLND_CB *cb, MDS_CALLBACK_ENC_INFO *info)
 				    uba, &evt->info.gla_resp_info);
 				break;
 
-      case GLSV_GLA_CLM_EVT:
-				rc = glsv_gla_enc_clm_evt(uba, &evt->info.gla_clm_info);
+			case GLSV_GLA_CLM_EVT:
+				rc = glsv_gla_enc_clm_evt(
+				    uba, &evt->info.gla_clm_info);
 				break;
 
 			default:
@@ -761,7 +762,7 @@ static uint32_t glnd_mds_dec_flat(GLND_CB *cb, MDS_CALLBACK_DEC_FLAT_INFO *info)
 			if (evt->type == GLSV_GLND_EVT_RSC_MASTER_INFO) {
 				if (evt->info.rsc_master_info.no_of_res > 0) {
 					GLSV_GLND_RSC_MASTER_INFO_LIST
-					    *rsc_master_list = NULL;
+					*rsc_master_list = NULL;
 					rsc_master_list =
 					    m_MMGR_ALLOC_GLND_RES_MASTER_LIST_INFO(
 						evt->info.rsc_master_info
@@ -1672,22 +1673,22 @@ static uint32_t glsv_gla_enc_api_resp_evt(NCS_UBAID *uba,
 static uint32_t glsv_gla_enc_clm_evt(NCS_UBAID *uba, GLSV_GLA_CLM_INFO *evt)
 {
 	uint8_t *p8, size;
-  uint32_t rc = NCSCC_RC_SUCCESS;
+	uint32_t rc = NCSCC_RC_SUCCESS;
 
-  do {
-	  size = (4);
-   /** encode the type of message **/
-	  p8 = ncs_enc_reserve_space(uba, size);
-	  if (!p8) {
-		  TRACE_2("GLND enc failed");
-		  rc =  NCSCC_RC_FAILURE;
-      break;
-	  }
+	do {
+		size = (4);
+		/** encode the type of message **/
+		p8 = ncs_enc_reserve_space(uba, size);
+		if (!p8) {
+			TRACE_2("GLND enc failed");
+			rc = NCSCC_RC_FAILURE;
+			break;
+		}
 
-	  osaf_encode_bool(uba, evt->isClusterMember);
+		osaf_encode_bool(uba, evt->isClusterMember);
 
-	  ncs_enc_claim_space(uba, size);
-  } while (false);
+		ncs_enc_claim_space(uba, size);
+	} while (false);
 
 	return rc;
 }

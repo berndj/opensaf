@@ -328,7 +328,9 @@ typedef struct asapi_bind_info {
 /*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*\
                   A S A Pi - U N B I N D  I N F O
 \*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
-typedef struct asapi_unbind_info { uint32_t dummy; } ASAPi_UNBIND_INFO;
+typedef struct asapi_unbind_info {
+  uint32_t dummy;
+} ASAPi_UNBIND_INFO;
 
 /*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*\
                   A S A Pi - D E S T I N A T I O N  I N F O

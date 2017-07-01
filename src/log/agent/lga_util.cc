@@ -103,7 +103,7 @@ unsigned int lga_startup() {
   lga_use_count++;
 
 done:
-   TRACE_LEAVE2("rc: %u, lga_use_count: %u", rc, lga_use_count);
+  TRACE_LEAVE2("rc: %u, lga_use_count: %u", rc, lga_use_count);
   return rc;
 }
 
@@ -152,9 +152,8 @@ bool lga_is_extended_name_valid(const SaNameT* name) {
 /*
  * To enable tracing early in saLogInitialize, use a GCC constructor
  */
-__attribute__((constructor))
-void logtrace_init_constructor(void) {
-  char *value;
+__attribute__((constructor)) void logtrace_init_constructor(void) {
+  char* value;
 
   // Initialize trace system first of all so we can see what is going.
   if ((value = getenv("LOGSV_TRACE_PATHNAME")) != nullptr) {

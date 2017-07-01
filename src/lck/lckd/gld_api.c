@@ -200,12 +200,12 @@ uint32_t gld_se_lib_init(NCS_LIB_REQ_INFO *req_info)
 	} else
 		TRACE_1("AMF Health Check started");
 
-  amf_error = gld_clm_init(gld_cb);
-  if (amf_error != SA_AIS_OK) {
+	amf_error = gld_clm_init(gld_cb);
+	if (amf_error != SA_AIS_OK) {
 		LOG_ER("CLM Init Failed %u", amf_error);
 		res = NCSCC_RC_FAILURE;
 		goto end;
-  }
+	}
 
 	if ((res = initialize_for_assignment(gld_cb, gld_cb->ha_state)) !=
 	    NCSCC_RC_SUCCESS) {
@@ -528,7 +528,7 @@ void gld_main_process(SYSF_MBX *mbx)
 		goto end;
 	}
 
-  error = saClmSelectionObjectGet(gld_cb->clm_hdl, &clm_sel_obj);
+	error = saClmSelectionObjectGet(gld_cb->clm_hdl, &clm_sel_obj);
 
 	if (error != SA_AIS_OK) {
 		LOG_ER("CLM Selection object get error: %i", error);
@@ -546,7 +546,7 @@ void gld_main_process(SYSF_MBX *mbx)
 	fds[FD_MBX].events = POLLIN;
 	fds[FD_IMM].fd = gld_cb->imm_sel_obj;
 	fds[FD_IMM].events = POLLIN;
-  fds[FD_CLM].fd = clm_sel_obj;
+	fds[FD_CLM].fd = clm_sel_obj;
 	fds[FD_CLM].events = POLLIN;
 
 	while (1) {
@@ -640,13 +640,13 @@ void gld_main_process(SYSF_MBX *mbx)
 			}
 		}
 
-    if (fds[FD_CLM].revents & POLLIN) {
-      /* dispatch all the CLM pending function */
-      error = saClmDispatch(gld_cb->clm_hdl, SA_DISPATCH_ALL);
-      if (error != SA_AIS_OK) {
-        LOG_ER("CLM dispatch failed: %i", error);
-      }
-    }
+		if (fds[FD_CLM].revents & POLLIN) {
+			/* dispatch all the CLM pending function */
+			error = saClmDispatch(gld_cb->clm_hdl, SA_DISPATCH_ALL);
+			if (error != SA_AIS_OK) {
+				LOG_ER("CLM dispatch failed: %i", error);
+			}
+		}
 	}
 end:
 	TRACE_LEAVE();

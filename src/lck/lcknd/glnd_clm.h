@@ -3,14 +3,14 @@
 
 #include "lck/lcknd/glnd.h"
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
 SaAisErrorT glnd_clm_init(GLND_CB *);
 SaAisErrorT glnd_clm_deinit(GLND_CB *);
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 }
 #endif
 

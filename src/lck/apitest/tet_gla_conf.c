@@ -102,64 +102,62 @@ void print_lock_info(SaLckResourceHandleT *res_hdl, SaLckLockModeT lck_mode,
 /* ***************  Lock Initialization Test cases  ***************** */
 
 char *API_Glsv_Initialize_resultstring[] = {
-	[LCK_INIT_NULL_HANDLE_T] = "saLckInitialize with Null handle",
-	[LCK_INIT_NULL_VERSION_T] =
-	    "saLckInitialize with Null version and callbacks",
-	[LCK_INIT_NULL_PARAMS_T] = "saLckInitialize with all null parameters",
-	[LCK_INIT_NULL_CBK_PARAM_T] =
-	    "saLckInitialize with Null callback parameter",
-	[LCK_INIT_NULL_VERSION_CBKS_T] =
-	    "saLckInitialize with Null version and callbacks",
-	[LCK_INIT_BAD_VERSION_T] = "saLckInitialize with invalid version",
-	[LCK_INIT_BAD_REL_CODE_T] =
-	    "saLckInitialize with version with invalid release code",
-	[LCK_INIT_BAD_MAJOR_VER_T] =
-	    "saLckInitialize with version with invalid major version",
-	[LCK_INIT_SUCCESS_T] = "saLckInitialize with valid parameters",
-	[LCK_INIT_SUCCESS_HDL2_T] = "saLckInitialize with valid parameters",
-	[LCK_INIT_NULL_CBKS_T] = "saLckInitialize with Null callbacks",
-	[LCK_INIT_NULL_CBKS2_T] = "saLckInitialize with Null callbacks",
-	[LCK_INIT_NULL_WT_CLBK_T] = "saLckInitialize with Null waiter callback",
-	[LCK_INIT_ERR_TRY_AGAIN_T] =
-	    "saLckInitialize when service is not available",
+    [LCK_INIT_NULL_HANDLE_T] = "saLckInitialize with Null handle",
+    [LCK_INIT_NULL_VERSION_T] =
+	"saLckInitialize with Null version and callbacks",
+    [LCK_INIT_NULL_PARAMS_T] = "saLckInitialize with all null parameters",
+    [LCK_INIT_NULL_CBK_PARAM_T] =
+	"saLckInitialize with Null callback parameter",
+    [LCK_INIT_NULL_VERSION_CBKS_T] =
+	"saLckInitialize with Null version and callbacks",
+    [LCK_INIT_BAD_VERSION_T] = "saLckInitialize with invalid version",
+    [LCK_INIT_BAD_REL_CODE_T] =
+	"saLckInitialize with version with invalid release code",
+    [LCK_INIT_BAD_MAJOR_VER_T] =
+	"saLckInitialize with version with invalid major version",
+    [LCK_INIT_SUCCESS_T] = "saLckInitialize with valid parameters",
+    [LCK_INIT_SUCCESS_HDL2_T] = "saLckInitialize with valid parameters",
+    [LCK_INIT_NULL_CBKS_T] = "saLckInitialize with Null callbacks",
+    [LCK_INIT_NULL_CBKS2_T] = "saLckInitialize with Null callbacks",
+    [LCK_INIT_NULL_WT_CLBK_T] = "saLckInitialize with Null waiter callback",
+    [LCK_INIT_ERR_TRY_AGAIN_T] =
+	"saLckInitialize when service is not available",
 };
 
 struct SafLckInitialize API_Glsv_Initialize[] = {
-	[LCK_INIT_NULL_HANDLE_T] = {NULL, &gl_gla_env.version,
-				    &gl_gla_env.gen_clbks,
-				    SA_AIS_ERR_INVALID_PARAM},
-	[LCK_INIT_NULL_VERSION_T] = {&gl_gla_env.lck_hdl1, NULL,
-				     &gl_gla_env.gen_clbks,
-				     SA_AIS_ERR_INVALID_PARAM},
-	[LCK_INIT_NULL_PARAMS_T] = {NULL, NULL, NULL, SA_AIS_ERR_INVALID_PARAM},
-	[LCK_INIT_NULL_CBK_PARAM_T] = {&gl_gla_env.lck_hdl1,
-				       &gl_gla_env.version, NULL, SA_AIS_OK},
-	[LCK_INIT_NULL_VERSION_CBKS_T] = {&gl_gla_env.lck_hdl1, NULL, NULL,
-					  SA_AIS_ERR_INVALID_PARAM},
-	[LCK_INIT_BAD_VERSION_T] = {&gl_gla_env.lck_hdl1,
-				    &gl_gla_env.inv_params.inv_version,
-				    &gl_gla_env.gen_clbks, SA_AIS_ERR_VERSION},
-	[LCK_INIT_BAD_REL_CODE_T] =
-	    {&gl_gla_env.lck_hdl1, &gl_gla_env.inv_params.inv_ver_bad_rel_code,
-	     &gl_gla_env.gen_clbks, SA_AIS_ERR_VERSION},
-	[LCK_INIT_BAD_MAJOR_VER_T] = {&gl_gla_env.lck_hdl1,
-				      &gl_gla_env.inv_params.inv_ver_not_supp,
-				      &gl_gla_env.gen_clbks,
-				      SA_AIS_ERR_VERSION},
-	[LCK_INIT_SUCCESS_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.version,
-				&gl_gla_env.gen_clbks, SA_AIS_OK},
-	[LCK_INIT_SUCCESS_HDL2_T] = {&gl_gla_env.lck_hdl2, &gl_gla_env.version,
-				     &gl_gla_env.gen_clbks, SA_AIS_OK},
-	[LCK_INIT_NULL_CBKS_T] = {&gl_gla_env.null_clbks_lck_hdl,
-				  &gl_gla_env.version, &gl_gla_env.null_clbks,
-				  SA_AIS_OK},
-	[LCK_INIT_NULL_CBKS2_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.version,
-				   &gl_gla_env.null_clbks, SA_AIS_OK},
-	[LCK_INIT_NULL_WT_CLBK_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.version,
-				     &gl_gla_env.null_wt_clbks, SA_AIS_OK},
-	[LCK_INIT_ERR_TRY_AGAIN_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.version,
-				      &gl_gla_env.gen_clbks,
-				      SA_AIS_ERR_TRY_AGAIN},
+    [LCK_INIT_NULL_HANDLE_T] = {NULL, &gl_gla_env.version,
+				&gl_gla_env.gen_clbks,
+				SA_AIS_ERR_INVALID_PARAM},
+    [LCK_INIT_NULL_VERSION_T] = {&gl_gla_env.lck_hdl1, NULL,
+				 &gl_gla_env.gen_clbks,
+				 SA_AIS_ERR_INVALID_PARAM},
+    [LCK_INIT_NULL_PARAMS_T] = {NULL, NULL, NULL, SA_AIS_ERR_INVALID_PARAM},
+    [LCK_INIT_NULL_CBK_PARAM_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.version,
+				   NULL, SA_AIS_OK},
+    [LCK_INIT_NULL_VERSION_CBKS_T] = {&gl_gla_env.lck_hdl1, NULL, NULL,
+				      SA_AIS_ERR_INVALID_PARAM},
+    [LCK_INIT_BAD_VERSION_T] = {&gl_gla_env.lck_hdl1,
+				&gl_gla_env.inv_params.inv_version,
+				&gl_gla_env.gen_clbks, SA_AIS_ERR_VERSION},
+    [LCK_INIT_BAD_REL_CODE_T] = {&gl_gla_env.lck_hdl1,
+				 &gl_gla_env.inv_params.inv_ver_bad_rel_code,
+				 &gl_gla_env.gen_clbks, SA_AIS_ERR_VERSION},
+    [LCK_INIT_BAD_MAJOR_VER_T] = {&gl_gla_env.lck_hdl1,
+				  &gl_gla_env.inv_params.inv_ver_not_supp,
+				  &gl_gla_env.gen_clbks, SA_AIS_ERR_VERSION},
+    [LCK_INIT_SUCCESS_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.version,
+			    &gl_gla_env.gen_clbks, SA_AIS_OK},
+    [LCK_INIT_SUCCESS_HDL2_T] = {&gl_gla_env.lck_hdl2, &gl_gla_env.version,
+				 &gl_gla_env.gen_clbks, SA_AIS_OK},
+    [LCK_INIT_NULL_CBKS_T] = {&gl_gla_env.null_clbks_lck_hdl,
+			      &gl_gla_env.version, &gl_gla_env.null_clbks,
+			      SA_AIS_OK},
+    [LCK_INIT_NULL_CBKS2_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.version,
+			       &gl_gla_env.null_clbks, SA_AIS_OK},
+    [LCK_INIT_NULL_WT_CLBK_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.version,
+				 &gl_gla_env.null_wt_clbks, SA_AIS_OK},
+    [LCK_INIT_ERR_TRY_AGAIN_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.version,
+				  &gl_gla_env.gen_clbks, SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_lckInitialize(int i, GLSV_CONFIG_FLAG flg)
@@ -220,35 +218,31 @@ int tet_test_red_lckInitialize(int i, GLSV_CONFIG_FLAG flg)
 /* ***************  Lock Selection Object Test cases  ***************** */
 
 char *API_Glsv_Selection_resultstring[] = {
-	[LCK_SEL_OBJ_BAD_HANDLE_T] =
-	    "saLckSelectionObjGet with invalid lock handle",
-	[LCK_SEL_OBJ_FINALIZED_HDL_T] =
-	    "saLckSelectionObjGet with finalized lock handle",
-	[LCK_SEL_OBJ_NULL_SEL_OBJ_T] =
-	    "saLckSelectionObjGet with NULL selection object parameter",
-	[LCK_SEL_OBJ_SUCCESS_T] = "saLckSelectionObjGet with valid parameters",
-	[LCK_SEL_OBJ_SUCCESS_HDL2_T] =
-	    "saLckSelectionObjGet with valid parameters",
-	[LCK_SEL_OBJ_ERR_TRY_AGAIN_T] =
-	    "saLckSelectionObjGet when service is not available",
+    [LCK_SEL_OBJ_BAD_HANDLE_T] =
+	"saLckSelectionObjGet with invalid lock handle",
+    [LCK_SEL_OBJ_FINALIZED_HDL_T] =
+	"saLckSelectionObjGet with finalized lock handle",
+    [LCK_SEL_OBJ_NULL_SEL_OBJ_T] =
+	"saLckSelectionObjGet with NULL selection object parameter",
+    [LCK_SEL_OBJ_SUCCESS_T] = "saLckSelectionObjGet with valid parameters",
+    [LCK_SEL_OBJ_SUCCESS_HDL2_T] = "saLckSelectionObjGet with valid parameters",
+    [LCK_SEL_OBJ_ERR_TRY_AGAIN_T] =
+	"saLckSelectionObjGet when service is not available",
 };
 
 struct SafSelectionObject API_Glsv_Selection[] = {
-	[LCK_SEL_OBJ_BAD_HANDLE_T] = {&gl_gla_env.inv_params.inv_lck_hdl,
-				      &gl_gla_env.sel_obj,
-				      SA_AIS_ERR_BAD_HANDLE},
-	[LCK_SEL_OBJ_FINALIZED_HDL_T] = {&gl_gla_env.lck_hdl1,
-					 &gl_gla_env.sel_obj,
-					 SA_AIS_ERR_BAD_HANDLE},
-	[LCK_SEL_OBJ_NULL_SEL_OBJ_T] = {&gl_gla_env.lck_hdl1, NULL,
-					SA_AIS_ERR_INVALID_PARAM},
-	[LCK_SEL_OBJ_SUCCESS_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.sel_obj,
-				   SA_AIS_OK},
-	[LCK_SEL_OBJ_SUCCESS_HDL2_T] = {&gl_gla_env.lck_hdl2,
-					&gl_gla_env.sel_obj, SA_AIS_OK},
-	[LCK_SEL_OBJ_ERR_TRY_AGAIN_T] = {&gl_gla_env.lck_hdl1,
-					 &gl_gla_env.sel_obj,
-					 SA_AIS_ERR_TRY_AGAIN},
+    [LCK_SEL_OBJ_BAD_HANDLE_T] = {&gl_gla_env.inv_params.inv_lck_hdl,
+				  &gl_gla_env.sel_obj, SA_AIS_ERR_BAD_HANDLE},
+    [LCK_SEL_OBJ_FINALIZED_HDL_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.sel_obj,
+				     SA_AIS_ERR_BAD_HANDLE},
+    [LCK_SEL_OBJ_NULL_SEL_OBJ_T] = {&gl_gla_env.lck_hdl1, NULL,
+				    SA_AIS_ERR_INVALID_PARAM},
+    [LCK_SEL_OBJ_SUCCESS_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.sel_obj,
+			       SA_AIS_OK},
+    [LCK_SEL_OBJ_SUCCESS_HDL2_T] = {&gl_gla_env.lck_hdl2, &gl_gla_env.sel_obj,
+				    SA_AIS_OK},
+    [LCK_SEL_OBJ_ERR_TRY_AGAIN_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.sel_obj,
+				     SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_lckSelectionObject(int i, GLSV_CONFIG_FLAG flg)
@@ -297,24 +291,23 @@ int tet_test_red_lckSelectionObject(int i, GLSV_CONFIG_FLAG flg)
 /* ***************  Lock Option Check Test cases  ***************** */
 
 char *API_Glsv_Options_resultstring[] = {
-	[LCK_OPT_CHCK_BAD_HDL_T] = "saLckOptionCheck with invalid lock handle",
-	[LCK_OPT_CHCK_FINALIZED_HDL_T] =
-	    "saLckOptionCheck with finalized lock handle",
-	[LCK_OPT_CHCK_INVALID_PARAM] =
-	    "saLckOptionCheck with NULL options parameter",
-	[LCK_OPT_CHCK_SUCCESS_T] = "saLckOptionCheck with all valid parameters",
+    [LCK_OPT_CHCK_BAD_HDL_T] = "saLckOptionCheck with invalid lock handle",
+    [LCK_OPT_CHCK_FINALIZED_HDL_T] =
+	"saLckOptionCheck with finalized lock handle",
+    [LCK_OPT_CHCK_INVALID_PARAM] =
+	"saLckOptionCheck with NULL options parameter",
+    [LCK_OPT_CHCK_SUCCESS_T] = "saLckOptionCheck with all valid parameters",
 };
 
 struct SafOptionCheck API_Glsv_Options[] = {
-	[LCK_OPT_CHCK_BAD_HDL_T] = {&gl_gla_env.inv_params.inv_lck_hdl,
-				    &gl_gla_env.options, SA_AIS_ERR_BAD_HANDLE},
-	[LCK_OPT_CHCK_FINALIZED_HDL_T] = {&gl_gla_env.lck_hdl1,
-					  &gl_gla_env.options,
-					  SA_AIS_ERR_BAD_HANDLE},
-	[LCK_OPT_CHCK_INVALID_PARAM] = {&gl_gla_env.lck_hdl1, NULL,
-					SA_AIS_ERR_INVALID_PARAM},
-	[LCK_OPT_CHCK_SUCCESS_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.options,
-				    SA_AIS_OK},
+    [LCK_OPT_CHCK_BAD_HDL_T] = {&gl_gla_env.inv_params.inv_lck_hdl,
+				&gl_gla_env.options, SA_AIS_ERR_BAD_HANDLE},
+    [LCK_OPT_CHCK_FINALIZED_HDL_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.options,
+				      SA_AIS_ERR_BAD_HANDLE},
+    [LCK_OPT_CHCK_INVALID_PARAM] = {&gl_gla_env.lck_hdl1, NULL,
+				    SA_AIS_ERR_INVALID_PARAM},
+    [LCK_OPT_CHCK_SUCCESS_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.options,
+				SA_AIS_OK},
 };
 
 int tet_test_lckOptionCheck(int i, GLSV_CONFIG_FLAG flg)
@@ -363,68 +356,63 @@ int tet_test_red_lckOptionCheck(int i, GLSV_CONFIG_FLAG flg)
 /* ***************  Lock Dispatch Test cases  ***************** */
 
 char *API_Glsv_Dispatch_resultstring[] = {
-	[LCK_DISPATCH_ONE_BAD_HANDLE_T] =
-	    "saLckDispatch with invalid lock handle - DISPATCH_ONE",
-	[LCK_DISPATCH_ONE_FINALIZED_HDL_T] =
-	    "saLckDispatch with finalized lock handle - DISPATCH_ONE",
-	[LCK_DISPATCH_ALL_BAD_HANDLE_T] =
-	    "saLckDispatch with invalid lock handle - DISPATCH_ALL",
-	[LCK_DISPATCH_ALL_FINALIZED_HDL_T] =
-	    "saLckDispatch with finalized lock handle - DISPATCH_ALL",
-	[LCK_DISPATCH_BLOCKING_BAD_HANDLE_T] =
-	    "saLckDispatch with invalid lock handle - DISPATCH_BLOCKING",
-	[LCK_DISPATCH_BLOCKING_FINALIZED_HDL_T] =
-	    "saLckDispatch with finalized lock handle - DISPATCH_BLOCKING",
-	[LCK_DISPATCH_BAD_FLAGS_T] =
-	    "saLckDispatch with invalid diapatch flags",
-	[LCK_DISPATCH_DISPATCH_ONE_SUCCESS_T] =
-	    "saLckDispatch with valid parameters - DISPATCH_ONE",
-	[LCK_DISPATCH_DISPATCH_ONE_SUCCESS2_T] =
-	    "saLckDispatch with valid parameters - DISPATCH_ONE",
-	[LCK_DISPATCH_DISPATCH_ALL_SUCCESS_T] =
-	    "saLckDispatch with valid parameters - DISPATCH_ALL",
-	[LCK_DISPATCH_DISPATCH_ALL_SUCCESS2_T] =
-	    "saLckDispatch with valid parameters - DISPATCH_ALL",
-	[LCK_DISPATCH_DISPATCH_BLOCKING_SUCCESS_T] =
-	    "saLckDispatch with valid parameters - DISPATCH_BLOCKING",
-	[LCK_DISPATCH_ERR_TRY_AGAIN_T] =
-	    "saLckDispatch when service is not available",
+    [LCK_DISPATCH_ONE_BAD_HANDLE_T] =
+	"saLckDispatch with invalid lock handle - DISPATCH_ONE",
+    [LCK_DISPATCH_ONE_FINALIZED_HDL_T] =
+	"saLckDispatch with finalized lock handle - DISPATCH_ONE",
+    [LCK_DISPATCH_ALL_BAD_HANDLE_T] =
+	"saLckDispatch with invalid lock handle - DISPATCH_ALL",
+    [LCK_DISPATCH_ALL_FINALIZED_HDL_T] =
+	"saLckDispatch with finalized lock handle - DISPATCH_ALL",
+    [LCK_DISPATCH_BLOCKING_BAD_HANDLE_T] =
+	"saLckDispatch with invalid lock handle - DISPATCH_BLOCKING",
+    [LCK_DISPATCH_BLOCKING_FINALIZED_HDL_T] =
+	"saLckDispatch with finalized lock handle - DISPATCH_BLOCKING",
+    [LCK_DISPATCH_BAD_FLAGS_T] = "saLckDispatch with invalid diapatch flags",
+    [LCK_DISPATCH_DISPATCH_ONE_SUCCESS_T] =
+	"saLckDispatch with valid parameters - DISPATCH_ONE",
+    [LCK_DISPATCH_DISPATCH_ONE_SUCCESS2_T] =
+	"saLckDispatch with valid parameters - DISPATCH_ONE",
+    [LCK_DISPATCH_DISPATCH_ALL_SUCCESS_T] =
+	"saLckDispatch with valid parameters - DISPATCH_ALL",
+    [LCK_DISPATCH_DISPATCH_ALL_SUCCESS2_T] =
+	"saLckDispatch with valid parameters - DISPATCH_ALL",
+    [LCK_DISPATCH_DISPATCH_BLOCKING_SUCCESS_T] =
+	"saLckDispatch with valid parameters - DISPATCH_BLOCKING",
+    [LCK_DISPATCH_ERR_TRY_AGAIN_T] =
+	"saLckDispatch when service is not available",
 };
 
 struct SafDispatch API_Glsv_Dispatch[] = {
-	[LCK_DISPATCH_ONE_BAD_HANDLE_T] = {&gl_gla_env.inv_params.inv_lck_hdl,
-					   SA_DISPATCH_ONE,
-					   SA_AIS_ERR_BAD_HANDLE},
-	[LCK_DISPATCH_ONE_FINALIZED_HDL_T] = {&gl_gla_env.lck_hdl1,
-					      SA_DISPATCH_ONE,
-					      SA_AIS_ERR_BAD_HANDLE},
-	[LCK_DISPATCH_ALL_BAD_HANDLE_T] = {&gl_gla_env.inv_params.inv_lck_hdl,
-					   SA_DISPATCH_ALL,
-					   SA_AIS_ERR_BAD_HANDLE},
-	[LCK_DISPATCH_ALL_FINALIZED_HDL_T] = {&gl_gla_env.lck_hdl1,
-					      SA_DISPATCH_ALL,
-					      SA_AIS_ERR_BAD_HANDLE},
-	[LCK_DISPATCH_BLOCKING_BAD_HANDLE_T] =
-	    {&gl_gla_env.inv_params.inv_lck_hdl, SA_DISPATCH_BLOCKING,
-	     SA_AIS_ERR_BAD_HANDLE},
-	[LCK_DISPATCH_BLOCKING_FINALIZED_HDL_T] = {&gl_gla_env.lck_hdl1,
-						   SA_DISPATCH_BLOCKING,
-						   SA_AIS_ERR_BAD_HANDLE},
-	[LCK_DISPATCH_BAD_FLAGS_T] = {&gl_gla_env.lck_hdl1, -1,
-				      SA_AIS_ERR_INVALID_PARAM},
-	[LCK_DISPATCH_DISPATCH_ONE_SUCCESS_T] = {&gl_gla_env.lck_hdl1,
-						 SA_DISPATCH_ONE, SA_AIS_OK},
-	[LCK_DISPATCH_DISPATCH_ONE_SUCCESS2_T] = {&gl_gla_env.lck_hdl2,
-						  SA_DISPATCH_ONE, SA_AIS_OK},
-	[LCK_DISPATCH_DISPATCH_ALL_SUCCESS_T] = {&gl_gla_env.lck_hdl1,
-						 SA_DISPATCH_ALL, SA_AIS_OK},
-	[LCK_DISPATCH_DISPATCH_ALL_SUCCESS2_T] = {&gl_gla_env.lck_hdl2,
-						  SA_DISPATCH_ALL, SA_AIS_OK},
-	[LCK_DISPATCH_DISPATCH_BLOCKING_SUCCESS_T] = {&gl_gla_env.lck_hdl1,
-						      SA_DISPATCH_BLOCKING,
-						      SA_AIS_OK},
-	[LCK_DISPATCH_ERR_TRY_AGAIN_T] = {&gl_gla_env.lck_hdl1, SA_DISPATCH_ONE,
-					  SA_AIS_ERR_TRY_AGAIN},
+    [LCK_DISPATCH_ONE_BAD_HANDLE_T] = {&gl_gla_env.inv_params.inv_lck_hdl,
+				       SA_DISPATCH_ONE, SA_AIS_ERR_BAD_HANDLE},
+    [LCK_DISPATCH_ONE_FINALIZED_HDL_T] = {&gl_gla_env.lck_hdl1, SA_DISPATCH_ONE,
+					  SA_AIS_ERR_BAD_HANDLE},
+    [LCK_DISPATCH_ALL_BAD_HANDLE_T] = {&gl_gla_env.inv_params.inv_lck_hdl,
+				       SA_DISPATCH_ALL, SA_AIS_ERR_BAD_HANDLE},
+    [LCK_DISPATCH_ALL_FINALIZED_HDL_T] = {&gl_gla_env.lck_hdl1, SA_DISPATCH_ALL,
+					  SA_AIS_ERR_BAD_HANDLE},
+    [LCK_DISPATCH_BLOCKING_BAD_HANDLE_T] = {&gl_gla_env.inv_params.inv_lck_hdl,
+					    SA_DISPATCH_BLOCKING,
+					    SA_AIS_ERR_BAD_HANDLE},
+    [LCK_DISPATCH_BLOCKING_FINALIZED_HDL_T] = {&gl_gla_env.lck_hdl1,
+					       SA_DISPATCH_BLOCKING,
+					       SA_AIS_ERR_BAD_HANDLE},
+    [LCK_DISPATCH_BAD_FLAGS_T] = {&gl_gla_env.lck_hdl1, -1,
+				  SA_AIS_ERR_INVALID_PARAM},
+    [LCK_DISPATCH_DISPATCH_ONE_SUCCESS_T] = {&gl_gla_env.lck_hdl1,
+					     SA_DISPATCH_ONE, SA_AIS_OK},
+    [LCK_DISPATCH_DISPATCH_ONE_SUCCESS2_T] = {&gl_gla_env.lck_hdl2,
+					      SA_DISPATCH_ONE, SA_AIS_OK},
+    [LCK_DISPATCH_DISPATCH_ALL_SUCCESS_T] = {&gl_gla_env.lck_hdl1,
+					     SA_DISPATCH_ALL, SA_AIS_OK},
+    [LCK_DISPATCH_DISPATCH_ALL_SUCCESS2_T] = {&gl_gla_env.lck_hdl2,
+					      SA_DISPATCH_ALL, SA_AIS_OK},
+    [LCK_DISPATCH_DISPATCH_BLOCKING_SUCCESS_T] = {&gl_gla_env.lck_hdl1,
+						  SA_DISPATCH_BLOCKING,
+						  SA_AIS_OK},
+    [LCK_DISPATCH_ERR_TRY_AGAIN_T] = {&gl_gla_env.lck_hdl1, SA_DISPATCH_ONE,
+				      SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_lckDispatch(int i, GLSV_CONFIG_FLAG flg)
@@ -473,29 +461,25 @@ int tet_test_red_lckDispatch(int i, GLSV_CONFIG_FLAG flg)
 /* ***************  Lock Finalize Test cases  ***************** */
 
 char *API_Glsv_Finalize_resultstring[] = {
-	[LCK_FINALIZE_BAD_HDL_T] = "saLckFinalize with invalid lock handle",
-	[LCK_FINALIZE_SUCCESS_T] = "saLckFinalize with all valid parameters",
-	[LCK_FINALIZE_SUCCESS_HDL2_T] =
-	    "saLckFinalize with all valid parameters",
-	[LCK_FINALIZE_SUCCESS_HDL3_T] =
-	    "saLckFinalize with all valid parameters",
-	[LCK_FINALIZE_FINALIZED_HDL_T] =
-	    "saLckFinalize with finalized lock handle",
-	[LCK_FINALIZE_ERR_TRY_AGAIN_T] =
-	    "saLckFinalize when service is not available",
+    [LCK_FINALIZE_BAD_HDL_T] = "saLckFinalize with invalid lock handle",
+    [LCK_FINALIZE_SUCCESS_T] = "saLckFinalize with all valid parameters",
+    [LCK_FINALIZE_SUCCESS_HDL2_T] = "saLckFinalize with all valid parameters",
+    [LCK_FINALIZE_SUCCESS_HDL3_T] = "saLckFinalize with all valid parameters",
+    [LCK_FINALIZE_FINALIZED_HDL_T] = "saLckFinalize with finalized lock handle",
+    [LCK_FINALIZE_ERR_TRY_AGAIN_T] =
+	"saLckFinalize when service is not available",
 };
 
 struct SafFinalize API_Glsv_Finalize[] = {
-	[LCK_FINALIZE_BAD_HDL_T] = {&gl_gla_env.inv_params.inv_lck_hdl,
-				    SA_AIS_ERR_BAD_HANDLE},
-	[LCK_FINALIZE_SUCCESS_T] = {&gl_gla_env.lck_hdl1, SA_AIS_OK},
-	[LCK_FINALIZE_SUCCESS_HDL2_T] = {&gl_gla_env.lck_hdl2, SA_AIS_OK},
-	[LCK_FINALIZE_SUCCESS_HDL3_T] = {&gl_gla_env.null_clbks_lck_hdl,
-					 SA_AIS_OK},
-	[LCK_FINALIZE_FINALIZED_HDL_T] = {&gl_gla_env.lck_hdl1,
-					  SA_AIS_ERR_BAD_HANDLE},
-	[LCK_FINALIZE_ERR_TRY_AGAIN_T] = {&gl_gla_env.lck_hdl1,
-					  SA_AIS_ERR_TRY_AGAIN},
+    [LCK_FINALIZE_BAD_HDL_T] = {&gl_gla_env.inv_params.inv_lck_hdl,
+				SA_AIS_ERR_BAD_HANDLE},
+    [LCK_FINALIZE_SUCCESS_T] = {&gl_gla_env.lck_hdl1, SA_AIS_OK},
+    [LCK_FINALIZE_SUCCESS_HDL2_T] = {&gl_gla_env.lck_hdl2, SA_AIS_OK},
+    [LCK_FINALIZE_SUCCESS_HDL3_T] = {&gl_gla_env.null_clbks_lck_hdl, SA_AIS_OK},
+    [LCK_FINALIZE_FINALIZED_HDL_T] = {&gl_gla_env.lck_hdl1,
+				      SA_AIS_ERR_BAD_HANDLE},
+    [LCK_FINALIZE_ERR_TRY_AGAIN_T] = {&gl_gla_env.lck_hdl1,
+				      SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_lckFinalize(int i, GLSV_CONFIG_FLAG flg)
@@ -552,127 +536,127 @@ int tet_test_red_lckFinalize(int i, GLSV_CONFIG_FLAG flg)
 /* ***************  Lock Resource Open Test cases  ***************** */
 
 char *API_Glsv_ResourceOpen_resultstring[] = {
-	[LCK_RESOURCE_OPEN_BAD_HANDLE_T] =
-	    "saLckResourceOpen with invalid lock handle",
-	[LCK_RESOURCE_OPEN_FINALIZED_HANDLE_T] =
-	    "saLckResourceOpen with finalized lock handle",
-	[LCK_RESOURCE_OPEN_NULL_RSC_NAME_T] =
-	    "saLckResourceOpen with Null resource name",
-	[LCK_RESOURCE_OPEN_NULL_RSC_HDL_T] =
-	    "saLckResourceOpen with Null resource handle",
-	[LCK_RESOURCE_OPEN_BAD_FLAGS_T] =
-	    "saLckResourceOpen with invalid resource flags",
-	[LCK_RESOURCE_OPEN_TIMEOUT_T] = "saLckResourceOpen - ERR_TIMEOUT case",
-	[LCK_RESOURCE_OPEN_RSC_NOT_EXIST_T] =
-	    "Open a resource that does not exist w/o create flag",
-	[LCK_RESOURCE_OPEN_RSC_NOT_EXIST2_T] =
-	    "Open a resource that does not exist w/o create flag",
-	[LCK_RESOURCE_OPEN_HDL1_NAME1_SUCCESS_T] =
-	    "saLckResourceOpen with valid parameters",
-	[LCK_RESOURCE_OPEN_HDL1_NAME2_SUCCESS_T] =
-	    "saLckResourceOpen with valid parameters",
-	[LCK_RESOURCE_OPEN_HDL1_NAME3_SUCCESS_T] =
-	    "saLckResourceOpen with valid parameters",
-	[LCK_RESOURCE_OPEN_HDL2_NAME1_SUCCESS_T] =
-	    "saLckResourceOpen with valid parameters",
-	[LCK_RESOURCE_OPEN_HDL2_NAME2_SUCCESS_T] =
-	    "saLckResourceOpen with valid parameters",
-	[LCK_RESOURCE_OPEN_RSC_EXIST_HDL1_NAME1_SUCCESS_T] =
-	    "Open a resource that already exists with zero resource flag",
-	[LCK_RESOURCE_OPEN_RSC_EXIST_HDL1_NAME2_SUCCESS_T] =
-	    "Open a resource that already exists with zero resource flag",
-	[LCK_RESOURCE_OPEN_RSC_EXIST_HDL2_NAME1_SUCCESS_T] =
-	    "Open a resource that already exists with zero resource flag",
-	[LCK_RESOURCE_OPEN_RSC_EXIST_HDL2_NAME2_SUCCESS_T] =
-	    "Open a resource that already exists with zero resource flag",
-	[LCK_RESOURCE_OPEN_NAME1_EXIST_SUCCESS_T] =
-	    "Open a resource that exists with create flag",
-	[LCK_RESOURCE_OPEN_NAME2_EXIST_SUCCESS_T] =
-	    "Open a resource that exists with create flag",
-	[LCK_RESOURCE_OPEN_ERR_TRY_AGAIN_T] =
-	    "saLckResourceOpen when service is not available",
+    [LCK_RESOURCE_OPEN_BAD_HANDLE_T] =
+	"saLckResourceOpen with invalid lock handle",
+    [LCK_RESOURCE_OPEN_FINALIZED_HANDLE_T] =
+	"saLckResourceOpen with finalized lock handle",
+    [LCK_RESOURCE_OPEN_NULL_RSC_NAME_T] =
+	"saLckResourceOpen with Null resource name",
+    [LCK_RESOURCE_OPEN_NULL_RSC_HDL_T] =
+	"saLckResourceOpen with Null resource handle",
+    [LCK_RESOURCE_OPEN_BAD_FLAGS_T] =
+	"saLckResourceOpen with invalid resource flags",
+    [LCK_RESOURCE_OPEN_TIMEOUT_T] = "saLckResourceOpen - ERR_TIMEOUT case",
+    [LCK_RESOURCE_OPEN_RSC_NOT_EXIST_T] =
+	"Open a resource that does not exist w/o create flag",
+    [LCK_RESOURCE_OPEN_RSC_NOT_EXIST2_T] =
+	"Open a resource that does not exist w/o create flag",
+    [LCK_RESOURCE_OPEN_HDL1_NAME1_SUCCESS_T] =
+	"saLckResourceOpen with valid parameters",
+    [LCK_RESOURCE_OPEN_HDL1_NAME2_SUCCESS_T] =
+	"saLckResourceOpen with valid parameters",
+    [LCK_RESOURCE_OPEN_HDL1_NAME3_SUCCESS_T] =
+	"saLckResourceOpen with valid parameters",
+    [LCK_RESOURCE_OPEN_HDL2_NAME1_SUCCESS_T] =
+	"saLckResourceOpen with valid parameters",
+    [LCK_RESOURCE_OPEN_HDL2_NAME2_SUCCESS_T] =
+	"saLckResourceOpen with valid parameters",
+    [LCK_RESOURCE_OPEN_RSC_EXIST_HDL1_NAME1_SUCCESS_T] =
+	"Open a resource that already exists with zero resource flag",
+    [LCK_RESOURCE_OPEN_RSC_EXIST_HDL1_NAME2_SUCCESS_T] =
+	"Open a resource that already exists with zero resource flag",
+    [LCK_RESOURCE_OPEN_RSC_EXIST_HDL2_NAME1_SUCCESS_T] =
+	"Open a resource that already exists with zero resource flag",
+    [LCK_RESOURCE_OPEN_RSC_EXIST_HDL2_NAME2_SUCCESS_T] =
+	"Open a resource that already exists with zero resource flag",
+    [LCK_RESOURCE_OPEN_NAME1_EXIST_SUCCESS_T] =
+	"Open a resource that exists with create flag",
+    [LCK_RESOURCE_OPEN_NAME2_EXIST_SUCCESS_T] =
+	"Open a resource that exists with create flag",
+    [LCK_RESOURCE_OPEN_ERR_TRY_AGAIN_T] =
+	"saLckResourceOpen when service is not available",
 };
 
 struct SafResourceOpen API_Glsv_ResourceOpen[] = {
 
-	[LCK_RESOURCE_OPEN_BAD_HANDLE_T] = {&gl_gla_env.inv_params.inv_lck_hdl,
-					    &gl_gla_env.res1, RES_OPEN_TIMEOUT,
-					    &gl_gla_env.res_hdl1,
-					    SA_LCK_RESOURCE_CREATE,
-					    SA_AIS_ERR_BAD_HANDLE},
-	[LCK_RESOURCE_OPEN_FINALIZED_HANDLE_T] = {&gl_gla_env.lck_hdl1,
-						  &gl_gla_env.res1,
-						  RES_OPEN_TIMEOUT,
-						  &gl_gla_env.res_hdl1,
-						  SA_LCK_RESOURCE_CREATE,
-						  SA_AIS_ERR_BAD_HANDLE},
-	[LCK_RESOURCE_OPEN_NULL_RSC_NAME_T] = {&gl_gla_env.lck_hdl1, NULL,
-					       RES_OPEN_TIMEOUT,
-					       &gl_gla_env.res_hdl1,
-					       SA_LCK_RESOURCE_CREATE,
-					       SA_AIS_ERR_INVALID_PARAM},
-	[LCK_RESOURCE_OPEN_NULL_RSC_HDL_T] = {&gl_gla_env.lck_hdl1,
-					      &gl_gla_env.res1,
-					      RES_OPEN_TIMEOUT, NULL,
-					      SA_LCK_RESOURCE_CREATE,
-					      SA_AIS_ERR_INVALID_PARAM},
-	[LCK_RESOURCE_OPEN_BAD_FLAGS_T] = {&gl_gla_env.lck_hdl1,
+    [LCK_RESOURCE_OPEN_BAD_HANDLE_T] = {&gl_gla_env.inv_params.inv_lck_hdl,
+					&gl_gla_env.res1, RES_OPEN_TIMEOUT,
+					&gl_gla_env.res_hdl1,
+					SA_LCK_RESOURCE_CREATE,
+					SA_AIS_ERR_BAD_HANDLE},
+    [LCK_RESOURCE_OPEN_FINALIZED_HANDLE_T] =
+	{&gl_gla_env.lck_hdl1, &gl_gla_env.res1, RES_OPEN_TIMEOUT,
+	 &gl_gla_env.res_hdl1, SA_LCK_RESOURCE_CREATE, SA_AIS_ERR_BAD_HANDLE},
+    [LCK_RESOURCE_OPEN_NULL_RSC_NAME_T] = {&gl_gla_env.lck_hdl1, NULL,
+					   RES_OPEN_TIMEOUT,
+					   &gl_gla_env.res_hdl1,
+					   SA_LCK_RESOURCE_CREATE,
+					   SA_AIS_ERR_INVALID_PARAM},
+    [LCK_RESOURCE_OPEN_NULL_RSC_HDL_T] = {&gl_gla_env.lck_hdl1,
+					  &gl_gla_env.res1, RES_OPEN_TIMEOUT,
+					  NULL, SA_LCK_RESOURCE_CREATE,
+					  SA_AIS_ERR_INVALID_PARAM},
+    [LCK_RESOURCE_OPEN_BAD_FLAGS_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.res1,
+				       RES_OPEN_TIMEOUT, &gl_gla_env.res_hdl1,
+				       100, SA_AIS_ERR_BAD_FLAGS},
+    [LCK_RESOURCE_OPEN_TIMEOUT_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.res1, 0,
+				     &gl_gla_env.res_hdl1,
+				     SA_LCK_RESOURCE_CREATE,
+				     SA_AIS_ERR_TIMEOUT},
+    [LCK_RESOURCE_OPEN_RSC_NOT_EXIST_T] = {&gl_gla_env.lck_hdl1,
 					   &gl_gla_env.res1, RES_OPEN_TIMEOUT,
-					   &gl_gla_env.res_hdl1, 100,
-					   SA_AIS_ERR_BAD_FLAGS},
-	[LCK_RESOURCE_OPEN_TIMEOUT_T] = {&gl_gla_env.lck_hdl1, &gl_gla_env.res1,
-					 0, &gl_gla_env.res_hdl1,
-					 SA_LCK_RESOURCE_CREATE,
-					 SA_AIS_ERR_TIMEOUT},
-	[LCK_RESOURCE_OPEN_RSC_NOT_EXIST_T] = {&gl_gla_env.lck_hdl1,
-					       &gl_gla_env.res1,
-					       RES_OPEN_TIMEOUT,
-					       &gl_gla_env.res_hdl1, 0,
-					       SA_AIS_ERR_NOT_EXIST},
-	[LCK_RESOURCE_OPEN_RSC_NOT_EXIST2_T] = {&gl_gla_env.lck_hdl1,
-						&gl_gla_env.res2,
-						RES_OPEN_TIMEOUT,
-						&gl_gla_env.res_hdl1, 0,
-						SA_AIS_ERR_NOT_EXIST},
-	[LCK_RESOURCE_OPEN_HDL1_NAME1_SUCCESS_T] =
-	    {&gl_gla_env.lck_hdl1, &gl_gla_env.res1, RES_OPEN_TIMEOUT,
-	     &gl_gla_env.res_hdl1, SA_LCK_RESOURCE_CREATE, SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_HDL1_NAME2_SUCCESS_T] =
-	    {&gl_gla_env.lck_hdl1, &gl_gla_env.res2, RES_OPEN_TIMEOUT,
-	     &gl_gla_env.res_hdl2, SA_LCK_RESOURCE_CREATE, SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_HDL1_NAME3_SUCCESS_T] =
-	    {&gl_gla_env.lck_hdl1, &gl_gla_env.res3, RES_OPEN_TIMEOUT,
-	     &gl_gla_env.res_hdl3, SA_LCK_RESOURCE_CREATE, SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_HDL2_NAME1_SUCCESS_T] =
-	    {&gl_gla_env.lck_hdl2, &gl_gla_env.res1, RES_OPEN_TIMEOUT,
-	     &gl_gla_env.res_hdl1, SA_LCK_RESOURCE_CREATE, SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_HDL2_NAME2_SUCCESS_T] =
-	    {&gl_gla_env.lck_hdl2, &gl_gla_env.res2, RES_OPEN_TIMEOUT,
-	     &gl_gla_env.res_hdl2, SA_LCK_RESOURCE_CREATE, SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_RSC_EXIST_HDL1_NAME1_SUCCESS_T] =
-	    {&gl_gla_env.lck_hdl1, &gl_gla_env.res1, RES_OPEN_TIMEOUT,
-	     &gl_gla_env.res_hdl1, 0, SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_RSC_EXIST_HDL1_NAME2_SUCCESS_T] =
-	    {&gl_gla_env.lck_hdl1, &gl_gla_env.res2, RES_OPEN_TIMEOUT,
-	     &gl_gla_env.res_hdl2, 0, SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_RSC_EXIST_HDL2_NAME1_SUCCESS_T] =
-	    {&gl_gla_env.lck_hdl2, &gl_gla_env.res1, RES_OPEN_TIMEOUT,
-	     &gl_gla_env.res_hdl1, 0, SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_RSC_EXIST_HDL2_NAME2_SUCCESS_T] =
-	    {&gl_gla_env.lck_hdl2, &gl_gla_env.res2, RES_OPEN_TIMEOUT,
-	     &gl_gla_env.res_hdl2, 0, SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_NAME1_EXIST_SUCCESS_T] =
-	    {&gl_gla_env.lck_hdl1, &gl_gla_env.res1, RES_OPEN_TIMEOUT,
-	     &gl_gla_env.res_hdl1, SA_LCK_RESOURCE_CREATE, SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_NAME2_EXIST_SUCCESS_T] =
-	    {&gl_gla_env.lck_hdl1, &gl_gla_env.res2, RES_OPEN_TIMEOUT,
-	     &gl_gla_env.res_hdl2, SA_LCK_RESOURCE_CREATE, SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_ERR_TRY_AGAIN_T] = {&gl_gla_env.lck_hdl1,
-					       &gl_gla_env.res1,
-					       RES_OPEN_TIMEOUT,
-					       &gl_gla_env.res_hdl1,
-					       SA_LCK_RESOURCE_CREATE,
-					       SA_AIS_ERR_TRY_AGAIN},
+					   &gl_gla_env.res_hdl1, 0,
+					   SA_AIS_ERR_NOT_EXIST},
+    [LCK_RESOURCE_OPEN_RSC_NOT_EXIST2_T] = {&gl_gla_env.lck_hdl1,
+					    &gl_gla_env.res2, RES_OPEN_TIMEOUT,
+					    &gl_gla_env.res_hdl1, 0,
+					    SA_AIS_ERR_NOT_EXIST},
+    [LCK_RESOURCE_OPEN_HDL1_NAME1_SUCCESS_T] =
+	{&gl_gla_env.lck_hdl1, &gl_gla_env.res1, RES_OPEN_TIMEOUT,
+	 &gl_gla_env.res_hdl1, SA_LCK_RESOURCE_CREATE, SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_HDL1_NAME2_SUCCESS_T] =
+	{&gl_gla_env.lck_hdl1, &gl_gla_env.res2, RES_OPEN_TIMEOUT,
+	 &gl_gla_env.res_hdl2, SA_LCK_RESOURCE_CREATE, SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_HDL1_NAME3_SUCCESS_T] =
+	{&gl_gla_env.lck_hdl1, &gl_gla_env.res3, RES_OPEN_TIMEOUT,
+	 &gl_gla_env.res_hdl3, SA_LCK_RESOURCE_CREATE, SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_HDL2_NAME1_SUCCESS_T] =
+	{&gl_gla_env.lck_hdl2, &gl_gla_env.res1, RES_OPEN_TIMEOUT,
+	 &gl_gla_env.res_hdl1, SA_LCK_RESOURCE_CREATE, SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_HDL2_NAME2_SUCCESS_T] =
+	{&gl_gla_env.lck_hdl2, &gl_gla_env.res2, RES_OPEN_TIMEOUT,
+	 &gl_gla_env.res_hdl2, SA_LCK_RESOURCE_CREATE, SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_RSC_EXIST_HDL1_NAME1_SUCCESS_T] = {&gl_gla_env.lck_hdl1,
+							  &gl_gla_env.res1,
+							  RES_OPEN_TIMEOUT,
+							  &gl_gla_env.res_hdl1,
+							  0, SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_RSC_EXIST_HDL1_NAME2_SUCCESS_T] = {&gl_gla_env.lck_hdl1,
+							  &gl_gla_env.res2,
+							  RES_OPEN_TIMEOUT,
+							  &gl_gla_env.res_hdl2,
+							  0, SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_RSC_EXIST_HDL2_NAME1_SUCCESS_T] = {&gl_gla_env.lck_hdl2,
+							  &gl_gla_env.res1,
+							  RES_OPEN_TIMEOUT,
+							  &gl_gla_env.res_hdl1,
+							  0, SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_RSC_EXIST_HDL2_NAME2_SUCCESS_T] = {&gl_gla_env.lck_hdl2,
+							  &gl_gla_env.res2,
+							  RES_OPEN_TIMEOUT,
+							  &gl_gla_env.res_hdl2,
+							  0, SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_NAME1_EXIST_SUCCESS_T] =
+	{&gl_gla_env.lck_hdl1, &gl_gla_env.res1, RES_OPEN_TIMEOUT,
+	 &gl_gla_env.res_hdl1, SA_LCK_RESOURCE_CREATE, SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_NAME2_EXIST_SUCCESS_T] =
+	{&gl_gla_env.lck_hdl1, &gl_gla_env.res2, RES_OPEN_TIMEOUT,
+	 &gl_gla_env.res_hdl2, SA_LCK_RESOURCE_CREATE, SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_ERR_TRY_AGAIN_T] = {&gl_gla_env.lck_hdl1,
+					   &gl_gla_env.res1, RES_OPEN_TIMEOUT,
+					   &gl_gla_env.res_hdl1,
+					   SA_LCK_RESOURCE_CREATE,
+					   SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_lckResourceOpen(int i, GLSV_CONFIG_FLAG flg)
@@ -748,92 +732,96 @@ int tet_test_red_lckResourceOpen(int i, GLSV_CONFIG_FLAG flg)
 /* ***************  Lock Resource Open Async Test cases  ***************** */
 
 char *API_Glsv_ResourceOpenAsync_resultstring[] = {
-	[LCK_RESOURCE_OPEN_ASYNC_BAD_HANDLE_T] =
-	    "saLckResourceOpenAsync with invalid lock handle",
-	[LCK_RESOURCE_OPEN_ASYNC_FINALIZED_HDL_T] =
-	    "saLckResourceOpenAsync with finalized lock handle",
-	[LCK_RESOURCE_OPEN_ASYNC_NULL_RSC_NAME_T] =
-	    "saLckResourceOpenAsync with Null resource name",
-	[LCK_RESOURCE_OPEN_ASYNC_BAD_FLAGS_T] =
-	    "saLckResourceOpenAsync with invalid resource flags",
-	[LCK_RESOURCE_OPEN_ASYNC_NULL_OPEN_CBK_T] =
-	    "saLckResourceOpenAsync - ERR_INIT case",
-	[LCK_RESOURCE_OPEN_ASYNC_RSC_NOT_EXIST_T] =
-	    "Open a resource that does not exist w/o create flag",
-	[LCK_RESOURCE_OPEN_ASYNC_RSC_NOT_EXIST2_T] =
-	    "Open a resource that does not exist w/o create flag",
-	[LCK_RESOURCE_OPEN_ASYNC_HDL1_NAME1_SUCCESS_T] =
-	    "saLckResourceOpenAsync with valid parameters",
-	[LCK_RESOURCE_OPEN_ASYNC_HDL1_NAME2_SUCCESS_T] =
-	    "saLckResourceOpenAsync with valid parameters",
-	[LCK_RESOURCE_OPEN_ASYNC_HDL2_NAME1_SUCCESS_T] =
-	    "saLckResourceOpenAsync with valid parameters",
-	[LCK_RESOURCE_OPEN_ASYNC_HDL2_NAME2_SUCCESS_T] =
-	    "saLckResourceOpenAsync with valid parameters",
-	[LCK_RESOURCE_OPEN_ASYNC_HDL1_NAME1_EXIST_SUCCESS_T] =
-	    "Open a resource that already exists with zero resource flags",
-	[LCK_RESOURCE_OPEN_ASYNC_HDL2_NAME1_EXIST_SUCCESS_T] =
-	    "Open a resource that already exists with zero resource flags",
-	[LCK_RESOURCE_OPEN_ASYNC_NAME1_EXIST_T] =
-	    "Open a resource that already exists with create flag",
-	[LCK_RESOURCE_OPEN_ASYNC_NAME2_EXIST_T] =
-	    "Open a resource that already exists with create flag",
-	[LCK_RESOURCE_OPEN_ASYNC_ERR_TRY_AGAIN_T] =
-	    "saLckResourceOpenAsync when service is not available",
+    [LCK_RESOURCE_OPEN_ASYNC_BAD_HANDLE_T] =
+	"saLckResourceOpenAsync with invalid lock handle",
+    [LCK_RESOURCE_OPEN_ASYNC_FINALIZED_HDL_T] =
+	"saLckResourceOpenAsync with finalized lock handle",
+    [LCK_RESOURCE_OPEN_ASYNC_NULL_RSC_NAME_T] =
+	"saLckResourceOpenAsync with Null resource name",
+    [LCK_RESOURCE_OPEN_ASYNC_BAD_FLAGS_T] =
+	"saLckResourceOpenAsync with invalid resource flags",
+    [LCK_RESOURCE_OPEN_ASYNC_NULL_OPEN_CBK_T] =
+	"saLckResourceOpenAsync - ERR_INIT case",
+    [LCK_RESOURCE_OPEN_ASYNC_RSC_NOT_EXIST_T] =
+	"Open a resource that does not exist w/o create flag",
+    [LCK_RESOURCE_OPEN_ASYNC_RSC_NOT_EXIST2_T] =
+	"Open a resource that does not exist w/o create flag",
+    [LCK_RESOURCE_OPEN_ASYNC_HDL1_NAME1_SUCCESS_T] =
+	"saLckResourceOpenAsync with valid parameters",
+    [LCK_RESOURCE_OPEN_ASYNC_HDL1_NAME2_SUCCESS_T] =
+	"saLckResourceOpenAsync with valid parameters",
+    [LCK_RESOURCE_OPEN_ASYNC_HDL2_NAME1_SUCCESS_T] =
+	"saLckResourceOpenAsync with valid parameters",
+    [LCK_RESOURCE_OPEN_ASYNC_HDL2_NAME2_SUCCESS_T] =
+	"saLckResourceOpenAsync with valid parameters",
+    [LCK_RESOURCE_OPEN_ASYNC_HDL1_NAME1_EXIST_SUCCESS_T] =
+	"Open a resource that already exists with zero resource flags",
+    [LCK_RESOURCE_OPEN_ASYNC_HDL2_NAME1_EXIST_SUCCESS_T] =
+	"Open a resource that already exists with zero resource flags",
+    [LCK_RESOURCE_OPEN_ASYNC_NAME1_EXIST_T] =
+	"Open a resource that already exists with create flag",
+    [LCK_RESOURCE_OPEN_ASYNC_NAME2_EXIST_T] =
+	"Open a resource that already exists with create flag",
+    [LCK_RESOURCE_OPEN_ASYNC_ERR_TRY_AGAIN_T] =
+	"saLckResourceOpenAsync when service is not available",
 };
 
 struct SafAsyncResourceOpen API_Glsv_ResourceOpenAsync[] = {
-	[LCK_RESOURCE_OPEN_ASYNC_BAD_HANDLE_T] =
-	    {&gl_gla_env.inv_params.inv_lck_hdl, 200, &gl_gla_env.res1,
-	     SA_LCK_RESOURCE_CREATE, SA_AIS_ERR_BAD_HANDLE},
-	[LCK_RESOURCE_OPEN_ASYNC_FINALIZED_HDL_T] = {&gl_gla_env.lck_hdl1, 201,
-						     &gl_gla_env.res1,
-						     SA_LCK_RESOURCE_CREATE,
-						     SA_AIS_ERR_BAD_HANDLE},
-	[LCK_RESOURCE_OPEN_ASYNC_NULL_RSC_NAME_T] = {&gl_gla_env.lck_hdl1, 203,
-						     NULL,
-						     SA_LCK_RESOURCE_CREATE,
-						     SA_AIS_ERR_INVALID_PARAM},
-	[LCK_RESOURCE_OPEN_ASYNC_NULL_OPEN_CBK_T] =
-	    {&gl_gla_env.null_clbks_lck_hdl, 204, &gl_gla_env.res1,
-	     SA_LCK_RESOURCE_CREATE, SA_AIS_ERR_INIT},
-	[LCK_RESOURCE_OPEN_ASYNC_BAD_FLAGS_T] = {&gl_gla_env.lck_hdl1, 205,
-						 &gl_gla_env.res1, 100,
-						 SA_AIS_ERR_BAD_FLAGS},
-	[LCK_RESOURCE_OPEN_ASYNC_RSC_NOT_EXIST_T] = {&gl_gla_env.lck_hdl1, 206,
-						     &gl_gla_env.res1, 0,
-						     SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_ASYNC_RSC_NOT_EXIST2_T] = {&gl_gla_env.lck_hdl1, 207,
-						      &gl_gla_env.res2, 0,
+    [LCK_RESOURCE_OPEN_ASYNC_BAD_HANDLE_T] =
+	{&gl_gla_env.inv_params.inv_lck_hdl, 200, &gl_gla_env.res1,
+	 SA_LCK_RESOURCE_CREATE, SA_AIS_ERR_BAD_HANDLE},
+    [LCK_RESOURCE_OPEN_ASYNC_FINALIZED_HDL_T] = {&gl_gla_env.lck_hdl1, 201,
+						 &gl_gla_env.res1,
+						 SA_LCK_RESOURCE_CREATE,
+						 SA_AIS_ERR_BAD_HANDLE},
+    [LCK_RESOURCE_OPEN_ASYNC_NULL_RSC_NAME_T] = {&gl_gla_env.lck_hdl1, 203,
+						 NULL, SA_LCK_RESOURCE_CREATE,
+						 SA_AIS_ERR_INVALID_PARAM},
+    [LCK_RESOURCE_OPEN_ASYNC_NULL_OPEN_CBK_T] = {&gl_gla_env.null_clbks_lck_hdl,
+						 204, &gl_gla_env.res1,
+						 SA_LCK_RESOURCE_CREATE,
+						 SA_AIS_ERR_INIT},
+    [LCK_RESOURCE_OPEN_ASYNC_BAD_FLAGS_T] = {&gl_gla_env.lck_hdl1, 205,
+					     &gl_gla_env.res1, 100,
+					     SA_AIS_ERR_BAD_FLAGS},
+    [LCK_RESOURCE_OPEN_ASYNC_RSC_NOT_EXIST_T] = {&gl_gla_env.lck_hdl1, 206,
+						 &gl_gla_env.res1, 0,
+						 SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_ASYNC_RSC_NOT_EXIST2_T] = {&gl_gla_env.lck_hdl1, 207,
+						  &gl_gla_env.res2, 0,
+						  SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_ASYNC_HDL1_NAME1_SUCCESS_T] = {&gl_gla_env.lck_hdl1, 208,
+						      &gl_gla_env.res1,
+						      SA_LCK_RESOURCE_CREATE,
 						      SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_ASYNC_HDL1_NAME1_SUCCESS_T] =
-	    {&gl_gla_env.lck_hdl1, 208, &gl_gla_env.res1,
-	     SA_LCK_RESOURCE_CREATE, SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_ASYNC_HDL1_NAME2_SUCCESS_T] =
-	    {&gl_gla_env.lck_hdl1, 209, &gl_gla_env.res2,
-	     SA_LCK_RESOURCE_CREATE, SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_ASYNC_HDL2_NAME1_SUCCESS_T] =
-	    {&gl_gla_env.lck_hdl2, 210, &gl_gla_env.res1,
-	     SA_LCK_RESOURCE_CREATE, SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_ASYNC_HDL2_NAME2_SUCCESS_T] =
-	    {&gl_gla_env.lck_hdl2, 211, &gl_gla_env.res2,
-	     SA_LCK_RESOURCE_CREATE, SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_ASYNC_HDL1_NAME1_EXIST_SUCCESS_T] =
-	    {&gl_gla_env.lck_hdl1, 212, &gl_gla_env.res1, 0, SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_ASYNC_HDL2_NAME1_EXIST_SUCCESS_T] =
-	    {&gl_gla_env.lck_hdl2, 213, &gl_gla_env.res1, 0, SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_ASYNC_NAME1_EXIST_T] = {&gl_gla_env.lck_hdl1, 214,
-						   &gl_gla_env.res1,
-						   SA_LCK_RESOURCE_CREATE,
-						   SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_ASYNC_NAME2_EXIST_T] = {&gl_gla_env.lck_hdl1, 215,
-						   &gl_gla_env.res2,
-						   SA_LCK_RESOURCE_CREATE,
-						   SA_AIS_OK},
-	[LCK_RESOURCE_OPEN_ASYNC_ERR_TRY_AGAIN_T] = {&gl_gla_env.lck_hdl1, 216,
-						     &gl_gla_env.res1,
-						     SA_LCK_RESOURCE_CREATE,
-						     SA_AIS_ERR_TRY_AGAIN},
+    [LCK_RESOURCE_OPEN_ASYNC_HDL1_NAME2_SUCCESS_T] = {&gl_gla_env.lck_hdl1, 209,
+						      &gl_gla_env.res2,
+						      SA_LCK_RESOURCE_CREATE,
+						      SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_ASYNC_HDL2_NAME1_SUCCESS_T] = {&gl_gla_env.lck_hdl2, 210,
+						      &gl_gla_env.res1,
+						      SA_LCK_RESOURCE_CREATE,
+						      SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_ASYNC_HDL2_NAME2_SUCCESS_T] = {&gl_gla_env.lck_hdl2, 211,
+						      &gl_gla_env.res2,
+						      SA_LCK_RESOURCE_CREATE,
+						      SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_ASYNC_HDL1_NAME1_EXIST_SUCCESS_T] =
+	{&gl_gla_env.lck_hdl1, 212, &gl_gla_env.res1, 0, SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_ASYNC_HDL2_NAME1_EXIST_SUCCESS_T] =
+	{&gl_gla_env.lck_hdl2, 213, &gl_gla_env.res1, 0, SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_ASYNC_NAME1_EXIST_T] = {&gl_gla_env.lck_hdl1, 214,
+					       &gl_gla_env.res1,
+					       SA_LCK_RESOURCE_CREATE,
+					       SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_ASYNC_NAME2_EXIST_T] = {&gl_gla_env.lck_hdl1, 215,
+					       &gl_gla_env.res2,
+					       SA_LCK_RESOURCE_CREATE,
+					       SA_AIS_OK},
+    [LCK_RESOURCE_OPEN_ASYNC_ERR_TRY_AGAIN_T] = {&gl_gla_env.lck_hdl1, 216,
+						 &gl_gla_env.res1,
+						 SA_LCK_RESOURCE_CREATE,
+						 SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_lckResourceOpenAsync(int i, GLSV_CONFIG_FLAG flg)
@@ -907,33 +895,31 @@ int tet_test_red_lckResourceOpenAsync(int i, GLSV_CONFIG_FLAG flg)
 /* ***************  Lock Resource Close Test cases  ***************** */
 
 char *API_Glsv_ResourceClose_resultstring[] = {
-	[LCK_RESOURCE_CLOSE_BAD_RSC_HDL_T] =
-	    "saLckResourceClose with invalid resource handle",
-	[LCK_RESOURCE_CLOSE_BAD_HANDLE_T] =
-	    "saLckResourceClose with closed resource handle",
-	[LCK_RESOURCE_CLOSE_BAD_HANDLE2_T] =
-	    "saLckResourceClose after finalizing the lock handle",
-	[LCK_RESOURCE_CLOSE_RSC_HDL1_SUCCESS_T] =
-	    "saLckResourceClose with valid parameters",
-	[LCK_RESOURCE_CLOSE_RSC_HDL2_SUCCESS_T] =
-	    "saLckResourceClose with valid parameters",
-	[LCK_RESOURCE_CLOSE_ERR_TRY_AGAIN_T] =
-	    "saLckResourceClose when service is not available",
+    [LCK_RESOURCE_CLOSE_BAD_RSC_HDL_T] =
+	"saLckResourceClose with invalid resource handle",
+    [LCK_RESOURCE_CLOSE_BAD_HANDLE_T] =
+	"saLckResourceClose with closed resource handle",
+    [LCK_RESOURCE_CLOSE_BAD_HANDLE2_T] =
+	"saLckResourceClose after finalizing the lock handle",
+    [LCK_RESOURCE_CLOSE_RSC_HDL1_SUCCESS_T] =
+	"saLckResourceClose with valid parameters",
+    [LCK_RESOURCE_CLOSE_RSC_HDL2_SUCCESS_T] =
+	"saLckResourceClose with valid parameters",
+    [LCK_RESOURCE_CLOSE_ERR_TRY_AGAIN_T] =
+	"saLckResourceClose when service is not available",
 };
 
 struct SafResourceClose API_Glsv_ResourceClose[] = {
-	[LCK_RESOURCE_CLOSE_BAD_RSC_HDL_T] =
-	    {&gl_gla_env.inv_params.inv_res_hdl, SA_AIS_ERR_BAD_HANDLE},
-	[LCK_RESOURCE_CLOSE_BAD_HANDLE_T] = {&gl_gla_env.res_hdl1,
-					     SA_AIS_ERR_BAD_HANDLE},
-	[LCK_RESOURCE_CLOSE_BAD_HANDLE2_T] = {&gl_gla_env.res_hdl1,
-					      SA_AIS_ERR_BAD_HANDLE},
-	[LCK_RESOURCE_CLOSE_RSC_HDL1_SUCCESS_T] = {&gl_gla_env.res_hdl1,
-						   SA_AIS_OK},
-	[LCK_RESOURCE_CLOSE_RSC_HDL2_SUCCESS_T] = {&gl_gla_env.res_hdl2,
-						   SA_AIS_OK},
-	[LCK_RESOURCE_CLOSE_ERR_TRY_AGAIN_T] = {&gl_gla_env.res_hdl1,
-						SA_AIS_ERR_TRY_AGAIN},
+    [LCK_RESOURCE_CLOSE_BAD_RSC_HDL_T] = {&gl_gla_env.inv_params.inv_res_hdl,
+					  SA_AIS_ERR_BAD_HANDLE},
+    [LCK_RESOURCE_CLOSE_BAD_HANDLE_T] = {&gl_gla_env.res_hdl1,
+					 SA_AIS_ERR_BAD_HANDLE},
+    [LCK_RESOURCE_CLOSE_BAD_HANDLE2_T] = {&gl_gla_env.res_hdl1,
+					  SA_AIS_ERR_BAD_HANDLE},
+    [LCK_RESOURCE_CLOSE_RSC_HDL1_SUCCESS_T] = {&gl_gla_env.res_hdl1, SA_AIS_OK},
+    [LCK_RESOURCE_CLOSE_RSC_HDL2_SUCCESS_T] = {&gl_gla_env.res_hdl2, SA_AIS_OK},
+    [LCK_RESOURCE_CLOSE_ERR_TRY_AGAIN_T] = {&gl_gla_env.res_hdl1,
+					    SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_lckResourceClose(int i, GLSV_CONFIG_FLAG flg)
@@ -992,230 +978,236 @@ int tet_test_red_lckResourceClose(int i, GLSV_CONFIG_FLAG flg)
 /* ***************  Lock Resource Lock Test cases  ***************** */
 
 char *API_Glsv_ResourceLock_resultstring[] = {
-	[LCK_RSC_LOCK_BAD_RSC_HDL_T] =
-	    "saLckResourceLock with invalid resource handle",
-	[LCK_RSC_LOCK_BAD_HDL_T] =
-	    "saLckResourceLock with invalid resource handle",
-	[LCK_RSC_LOCK_CLOSED_RSC_HDL_T] =
-	    "saLckResourceLock with closed resource handle",
-	[LCK_RSC_LOCK_FINALIZED_HDL_T] =
-	    "saLckResourceLock after finalizing the lock handle",
-	[LCK_RSC_LOCK_NULL_LCKID_T] =
-	    "saLckResourceLock with Null lock id parameter",
-	[LCK_RSC_LOCK_NULL_LCK_STATUS_T] =
-	    "saLckResourceLock with Null lock status parameter",
-	[LCK_RSC_LOCK_INVALID_LOCK_MODE_T] =
-	    "saLckResourceLock with invalid lock mode",
-	[LCK_RSC_LOCK_BAD_FLGS_T] = "saLckResourceLock with invalid lock flags",
-	[LCK_RSC_LOCK_ZERO_TIMEOUT_T] = "saLckResourceLock - ERR_TIMEOUT case",
-	[LCK_RSC_LOCK_PR_ERR_TIMEOUT_T] =
-	    "saLckResourceLock - ERR_TIMEOUT case",
-	[LCK_RSC_LOCK_EX_ERR_TIMEOUT_T] =
-	    "saLckResourceLock - ERR_TIMEOUT case",
-	[LCK_RSC_LOCK_PR_LOCK_SUCCESS_T] = "Request lock in PR mode",
-	[LCK_RSC_LOCK_EX_LOCK_SUCCESS_T] = "Request lock in EX mode",
-	[LCK_RSC_LOCK_PR_LOCK_RSC2_SUCCESS_T] = "Request lock in PR mode",
-	[LCK_RSC_LOCK_EX_LOCK_RSC2_SUCCESS_T] = "Request lock in EX mode",
-	[LCK_RSC_LOCK_EX_LOCK_RSC3_SUCCESS_T] = "Request lock in EX mode",
-	[LCK_RSC_LOCK_DUPLICATE_EXLCK_T] =
-	    "saLckResourceLock - SA_LCK_LOCK_DUPLICATE_EX lock status case",
-	[LCK_RSC_LOCK_NO_QUEUE_PRLCK_T] =
-	    "saLckResourceLock with SA_LCK_LOCK_NO_QUEUE flag in PR mode",
-	[LCK_RSC_LOCK_NO_QUEUE_EXLCK_T] =
-	    "saLckResourceLock with SA_LCK_LOCK_NO_QUEUE flag in EX mode",
-	[LCK_RSC_LOCK_ORPHAN_PRLCK_T] =
-	    "saLckResourceLock with SA_LCK_LOCK_ORPHAN flag in PR mode",
-	[LCK_RSC_LOCK_ORPHAN_EXLCK_T] =
-	    "saLckResourceLock with SA_LCK_LOCK_ORPHAN flag in EX mode",
-	[LCK_RSC_LOCK_ORPHAN_EXLCK_RSC2_T] =
-	    "Successful saLckResourceLock in EX mode with Orphan Flag2",
-	[LCK_RSC_LOCK_PR_LOCK_NOT_QUEUED_T] =
-	    "saLckResourceLock - SA_LCK_LOCK_NOT_QUEUED lock status case in PR mode",
-	[LCK_RSC_LOCK_EX_LOCK_NOT_QUEUED_T] =
-	    "saLckResourceLock - SA_LCK_LOCK_NOT_QUEUED lock status case in EX mode",
-	[LCK_RSC_LOCK_PR_LOCK_DEADLOCK_T] =
-	    "saLckResourceLock - SA_LCK_LOCK_DEADLOCK lock status case in PR mode",
-	[LCK_RSC_LOCK_EX_LOCK_DEADLOCK_T] =
-	    "saLckResourceLock - SA_LCK_LOCK_DEADLOCK lock status case in EX mode",
-	[LCK_RSC_LOCK_PR_LOCK_RSC2_DEADLOCK_T] =
-	    "saLckResourceLock - SA_LCK_LOCK_DEADLOCK lock status case in PR mode",
-	[LCK_RSC_LOCK_EX_LOCK_RSC2_DEADLOCK_T] =
-	    "saLckResourceLock - SA_LCK_LOCK_DEADLOCK lock status case in EX mode",
-	[LCK_RSC_LOCK_EX_LOCK_ORPHANED_T] =
-	    "saLckResourceLock - SA_LCK_LOCK_ORPHANED lock status case in EX mode",
-	[LCK_RSC_LOCK_PR_LOCK_ORPHANED_T] =
-	    "saLckResourceLock - SA_LCK_LOCK_ORPHANED lock status case in PR mode",
-	[LCK_RSC_LOCK_EX_LOCK_RSC2_ORPHANED_T] =
-	    "saLckResourceLock - SA_LCK_LOCK_ORPHANED lock status case in EX mode",
-	[LCK_RSC_LOCK_PR_LOCK_RSC2_ORPHANED_T] =
-	    "saLckResourceLock - SA_LCK_LOCK_ORPHANED lock status case in PR mode",
-	[LCK_RSC_LOCK_EX_LOCK_ORPHAN_DDLCK_T] =
-	    "saLckResourceLock - Deadlock case with orphan flag",
-	[LCK_RSC_LOCK_ERR_TRY_AGAIN_T] =
-	    "saLckResourceLock when service is not available",
+    [LCK_RSC_LOCK_BAD_RSC_HDL_T] =
+	"saLckResourceLock with invalid resource handle",
+    [LCK_RSC_LOCK_BAD_HDL_T] = "saLckResourceLock with invalid resource handle",
+    [LCK_RSC_LOCK_CLOSED_RSC_HDL_T] =
+	"saLckResourceLock with closed resource handle",
+    [LCK_RSC_LOCK_FINALIZED_HDL_T] =
+	"saLckResourceLock after finalizing the lock handle",
+    [LCK_RSC_LOCK_NULL_LCKID_T] =
+	"saLckResourceLock with Null lock id parameter",
+    [LCK_RSC_LOCK_NULL_LCK_STATUS_T] =
+	"saLckResourceLock with Null lock status parameter",
+    [LCK_RSC_LOCK_INVALID_LOCK_MODE_T] =
+	"saLckResourceLock with invalid lock mode",
+    [LCK_RSC_LOCK_BAD_FLGS_T] = "saLckResourceLock with invalid lock flags",
+    [LCK_RSC_LOCK_ZERO_TIMEOUT_T] = "saLckResourceLock - ERR_TIMEOUT case",
+    [LCK_RSC_LOCK_PR_ERR_TIMEOUT_T] = "saLckResourceLock - ERR_TIMEOUT case",
+    [LCK_RSC_LOCK_EX_ERR_TIMEOUT_T] = "saLckResourceLock - ERR_TIMEOUT case",
+    [LCK_RSC_LOCK_PR_LOCK_SUCCESS_T] = "Request lock in PR mode",
+    [LCK_RSC_LOCK_EX_LOCK_SUCCESS_T] = "Request lock in EX mode",
+    [LCK_RSC_LOCK_PR_LOCK_RSC2_SUCCESS_T] = "Request lock in PR mode",
+    [LCK_RSC_LOCK_EX_LOCK_RSC2_SUCCESS_T] = "Request lock in EX mode",
+    [LCK_RSC_LOCK_EX_LOCK_RSC3_SUCCESS_T] = "Request lock in EX mode",
+    [LCK_RSC_LOCK_DUPLICATE_EXLCK_T] =
+	"saLckResourceLock - SA_LCK_LOCK_DUPLICATE_EX lock status case",
+    [LCK_RSC_LOCK_NO_QUEUE_PRLCK_T] =
+	"saLckResourceLock with SA_LCK_LOCK_NO_QUEUE flag in PR mode",
+    [LCK_RSC_LOCK_NO_QUEUE_EXLCK_T] =
+	"saLckResourceLock with SA_LCK_LOCK_NO_QUEUE flag in EX mode",
+    [LCK_RSC_LOCK_ORPHAN_PRLCK_T] =
+	"saLckResourceLock with SA_LCK_LOCK_ORPHAN flag in PR mode",
+    [LCK_RSC_LOCK_ORPHAN_EXLCK_T] =
+	"saLckResourceLock with SA_LCK_LOCK_ORPHAN flag in EX mode",
+    [LCK_RSC_LOCK_ORPHAN_EXLCK_RSC2_T] =
+	"Successful saLckResourceLock in EX mode with Orphan Flag2",
+    [LCK_RSC_LOCK_PR_LOCK_NOT_QUEUED_T] =
+	"saLckResourceLock - SA_LCK_LOCK_NOT_QUEUED lock status case in PR mode",
+    [LCK_RSC_LOCK_EX_LOCK_NOT_QUEUED_T] =
+	"saLckResourceLock - SA_LCK_LOCK_NOT_QUEUED lock status case in EX mode",
+    [LCK_RSC_LOCK_PR_LOCK_DEADLOCK_T] =
+	"saLckResourceLock - SA_LCK_LOCK_DEADLOCK lock status case in PR mode",
+    [LCK_RSC_LOCK_EX_LOCK_DEADLOCK_T] =
+	"saLckResourceLock - SA_LCK_LOCK_DEADLOCK lock status case in EX mode",
+    [LCK_RSC_LOCK_PR_LOCK_RSC2_DEADLOCK_T] =
+	"saLckResourceLock - SA_LCK_LOCK_DEADLOCK lock status case in PR mode",
+    [LCK_RSC_LOCK_EX_LOCK_RSC2_DEADLOCK_T] =
+	"saLckResourceLock - SA_LCK_LOCK_DEADLOCK lock status case in EX mode",
+    [LCK_RSC_LOCK_EX_LOCK_ORPHANED_T] =
+	"saLckResourceLock - SA_LCK_LOCK_ORPHANED lock status case in EX mode",
+    [LCK_RSC_LOCK_PR_LOCK_ORPHANED_T] =
+	"saLckResourceLock - SA_LCK_LOCK_ORPHANED lock status case in PR mode",
+    [LCK_RSC_LOCK_EX_LOCK_RSC2_ORPHANED_T] =
+	"saLckResourceLock - SA_LCK_LOCK_ORPHANED lock status case in EX mode",
+    [LCK_RSC_LOCK_PR_LOCK_RSC2_ORPHANED_T] =
+	"saLckResourceLock - SA_LCK_LOCK_ORPHANED lock status case in PR mode",
+    [LCK_RSC_LOCK_EX_LOCK_ORPHAN_DDLCK_T] =
+	"saLckResourceLock - Deadlock case with orphan flag",
+    [LCK_RSC_LOCK_ERR_TRY_AGAIN_T] =
+	"saLckResourceLock when service is not available",
 };
 
 struct SafResourceLock API_Glsv_ResourceLock[] = {
-	[LCK_RSC_LOCK_BAD_RSC_HDL_T] = {&gl_gla_env.inv_params.inv_res_hdl,
-					&gl_gla_env.pr_lck_id,
-					SA_LCK_PR_LOCK_MODE, 0, 1000,
-					RES_LOCK_TIMEOUT,
-					&gl_gla_env.lck_status,
-					SA_AIS_ERR_BAD_HANDLE, 0},
-	[LCK_RSC_LOCK_BAD_HDL_T] = {&gl_gla_env.res_hdl1, &gl_gla_env.pr_lck_id,
-				    SA_LCK_PR_LOCK_MODE, 0, 1000,
-				    RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
+    [LCK_RSC_LOCK_BAD_RSC_HDL_T] = {&gl_gla_env.inv_params.inv_res_hdl,
+				    &gl_gla_env.pr_lck_id, SA_LCK_PR_LOCK_MODE,
+				    0, 1000, RES_LOCK_TIMEOUT,
+				    &gl_gla_env.lck_status,
 				    SA_AIS_ERR_BAD_HANDLE, 0},
-	[LCK_RSC_LOCK_CLOSED_RSC_HDL_T] = {&gl_gla_env.res_hdl1,
-					   &gl_gla_env.pr_lck_id,
-					   SA_LCK_PR_LOCK_MODE, 0, 1100,
-					   RES_LOCK_TIMEOUT,
-					   &gl_gla_env.lck_status,
-					   SA_AIS_ERR_BAD_HANDLE, 0},
-	[LCK_RSC_LOCK_FINALIZED_HDL_T] = {&gl_gla_env.res_hdl1,
-					  &gl_gla_env.pr_lck_id,
-					  SA_LCK_PR_LOCK_MODE, 0, 1200,
+    [LCK_RSC_LOCK_BAD_HDL_T] = {&gl_gla_env.res_hdl1, &gl_gla_env.pr_lck_id,
+				SA_LCK_PR_LOCK_MODE, 0, 1000, RES_LOCK_TIMEOUT,
+				&gl_gla_env.lck_status, SA_AIS_ERR_BAD_HANDLE,
+				0},
+    [LCK_RSC_LOCK_CLOSED_RSC_HDL_T] = {&gl_gla_env.res_hdl1,
+				       &gl_gla_env.pr_lck_id,
+				       SA_LCK_PR_LOCK_MODE, 0, 1100,
+				       RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
+				       SA_AIS_ERR_BAD_HANDLE, 0},
+    [LCK_RSC_LOCK_FINALIZED_HDL_T] = {&gl_gla_env.res_hdl1,
+				      &gl_gla_env.pr_lck_id,
+				      SA_LCK_PR_LOCK_MODE, 0, 1200,
+				      RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
+				      SA_AIS_ERR_BAD_HANDLE, 0},
+    [LCK_RSC_LOCK_NULL_LCKID_T] = {&gl_gla_env.res_hdl1, NULL,
+				   SA_LCK_PR_LOCK_MODE, 0, 1300,
+				   RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
+				   SA_AIS_ERR_INVALID_PARAM, 0},
+    [LCK_RSC_LOCK_NULL_LCK_STATUS_T] = {&gl_gla_env.res_hdl1,
+					&gl_gla_env.pr_lck_id,
+					SA_LCK_PR_LOCK_MODE, 0, 1400,
+					RES_LOCK_TIMEOUT, NULL,
+					SA_AIS_ERR_INVALID_PARAM, 0},
+    [LCK_RSC_LOCK_INVALID_LOCK_MODE_T] = {&gl_gla_env.res_hdl1,
+					  &gl_gla_env.pr_lck_id, 100, 0, 1500,
 					  RES_LOCK_TIMEOUT,
 					  &gl_gla_env.lck_status,
-					  SA_AIS_ERR_BAD_HANDLE, 0},
-	[LCK_RSC_LOCK_NULL_LCKID_T] = {&gl_gla_env.res_hdl1, NULL,
-				       SA_LCK_PR_LOCK_MODE, 0, 1300,
-				       RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
-				       SA_AIS_ERR_INVALID_PARAM, 0},
-	[LCK_RSC_LOCK_NULL_LCK_STATUS_T] = {&gl_gla_env.res_hdl1,
-					    &gl_gla_env.pr_lck_id,
-					    SA_LCK_PR_LOCK_MODE, 0, 1400,
-					    RES_LOCK_TIMEOUT, NULL,
-					    SA_AIS_ERR_INVALID_PARAM, 0},
-	[LCK_RSC_LOCK_INVALID_LOCK_MODE_T] = {&gl_gla_env.res_hdl1,
-					      &gl_gla_env.pr_lck_id, 100, 0,
-					      1500, RES_LOCK_TIMEOUT,
-					      &gl_gla_env.lck_status,
-					      SA_AIS_ERR_INVALID_PARAM, 0},
-	[LCK_RSC_LOCK_BAD_FLGS_T] = {&gl_gla_env.res_hdl1,
+					  SA_AIS_ERR_INVALID_PARAM, 0},
+    [LCK_RSC_LOCK_BAD_FLGS_T] = {&gl_gla_env.res_hdl1, &gl_gla_env.pr_lck_id,
+				 SA_LCK_PR_LOCK_MODE, 100, 1600,
+				 RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
+				 SA_AIS_ERR_BAD_FLAGS, 0},
+    [LCK_RSC_LOCK_ZERO_TIMEOUT_T] = {&gl_gla_env.res_hdl1,
 				     &gl_gla_env.pr_lck_id, SA_LCK_PR_LOCK_MODE,
-				     100, 1600, RES_LOCK_TIMEOUT,
-				     &gl_gla_env.lck_status,
-				     SA_AIS_ERR_BAD_FLAGS, 0},
-	[LCK_RSC_LOCK_ZERO_TIMEOUT_T] = {&gl_gla_env.res_hdl1,
-					 &gl_gla_env.pr_lck_id,
-					 SA_LCK_PR_LOCK_MODE, 0, 1700, 0,
-					 &gl_gla_env.lck_status,
-					 SA_AIS_ERR_TIMEOUT, 0},
-	[LCK_RSC_LOCK_PR_ERR_TIMEOUT_T] = {&gl_gla_env.res_hdl1,
-					   &gl_gla_env.pr_lck_id,
-					   SA_LCK_PR_LOCK_MODE, 0, 1700,
-					   RES_LOCK_TIMEOUT,
-					   &gl_gla_env.lck_status,
-					   SA_AIS_ERR_TIMEOUT, 0},
-	[LCK_RSC_LOCK_EX_ERR_TIMEOUT_T] = {&gl_gla_env.res_hdl1,
-					   &gl_gla_env.ex_lck_id,
-					   SA_LCK_EX_LOCK_MODE, 0, 1700,
-					   RES_LOCK_TIMEOUT,
-					   &gl_gla_env.lck_status,
-					   SA_AIS_ERR_TIMEOUT, 0},
-	[LCK_RSC_LOCK_PR_LOCK_SUCCESS_T] = {&gl_gla_env.res_hdl1,
-					    &gl_gla_env.pr_lck_id,
-					    SA_LCK_PR_LOCK_MODE, 0, 1800,
-					    RES_LOCK_TIMEOUT,
-					    &gl_gla_env.lck_status, SA_AIS_OK,
-					    SA_LCK_LOCK_GRANTED},
-	[LCK_RSC_LOCK_EX_LOCK_SUCCESS_T] = {&gl_gla_env.res_hdl1,
-					    &gl_gla_env.ex_lck_id,
-					    SA_LCK_EX_LOCK_MODE, 0, 1900,
-					    RES_LOCK_TIMEOUT,
-					    &gl_gla_env.lck_status, SA_AIS_OK,
-					    SA_LCK_LOCK_GRANTED},
-	[LCK_RSC_LOCK_PR_LOCK_RSC2_SUCCESS_T] =
-	    {&gl_gla_env.res_hdl2, &gl_gla_env.pr_lck_id, SA_LCK_PR_LOCK_MODE,
-	     0, 2000, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status, SA_AIS_OK,
-	     SA_LCK_LOCK_GRANTED},
-	[LCK_RSC_LOCK_EX_LOCK_RSC2_SUCCESS_T] =
-	    {&gl_gla_env.res_hdl2, &gl_gla_env.ex_lck_id, SA_LCK_EX_LOCK_MODE,
-	     0, 2100, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status, SA_AIS_OK,
-	     SA_LCK_LOCK_GRANTED},
-	[LCK_RSC_LOCK_DUPLICATE_EXLCK_T] = {&gl_gla_env.res_hdl1,
-					    &gl_gla_env.ex_lck_id,
-					    SA_LCK_EX_LOCK_MODE, 0, 2200,
-					    RES_LOCK_TIMEOUT,
-					    &gl_gla_env.lck_status, SA_AIS_OK,
-					    SA_LCK_LOCK_DUPLICATE_EX},
-	[LCK_RSC_LOCK_NO_QUEUE_PRLCK_T] =
-	    {&gl_gla_env.res_hdl1, &gl_gla_env.pr_lck_id, SA_LCK_PR_LOCK_MODE,
-	     SA_LCK_LOCK_NO_QUEUE, 2300, RES_LOCK_TIMEOUT,
-	     &gl_gla_env.lck_status, SA_AIS_OK, SA_LCK_LOCK_GRANTED},
-	[LCK_RSC_LOCK_NO_QUEUE_EXLCK_T] =
-	    {&gl_gla_env.res_hdl1, &gl_gla_env.ex_lck_id, SA_LCK_EX_LOCK_MODE,
-	     SA_LCK_LOCK_NO_QUEUE, 2400, RES_LOCK_TIMEOUT,
-	     &gl_gla_env.lck_status, SA_AIS_OK, SA_LCK_LOCK_GRANTED},
-	[LCK_RSC_LOCK_ORPHAN_PRLCK_T] =
-	    {&gl_gla_env.res_hdl1, &gl_gla_env.pr_lck_id, SA_LCK_PR_LOCK_MODE,
-	     SA_LCK_LOCK_ORPHAN, 2500, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
-	     SA_AIS_OK, SA_LCK_LOCK_GRANTED},
-	[LCK_RSC_LOCK_ORPHAN_EXLCK_T] =
-	    {&gl_gla_env.res_hdl1, &gl_gla_env.ex_lck_id, SA_LCK_EX_LOCK_MODE,
-	     SA_LCK_LOCK_ORPHAN, 2600, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
-	     SA_AIS_OK, SA_LCK_LOCK_GRANTED},
-	[LCK_RSC_LOCK_ORPHAN_EXLCK_RSC2_T] =
-	    {&gl_gla_env.res_hdl2, &gl_gla_env.ex_lck_id, SA_LCK_EX_LOCK_MODE,
-	     SA_LCK_LOCK_ORPHAN, 2700, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
-	     SA_AIS_OK, SA_LCK_LOCK_GRANTED},
-	[LCK_RSC_LOCK_PR_LOCK_NOT_QUEUED_T] =
-	    {&gl_gla_env.res_hdl1, &gl_gla_env.pr_lck_id, SA_LCK_PR_LOCK_MODE,
-	     SA_LCK_LOCK_NO_QUEUE, 2800, RES_LOCK_TIMEOUT,
-	     &gl_gla_env.lck_status, SA_AIS_OK, SA_LCK_LOCK_NOT_QUEUED},
-	[LCK_RSC_LOCK_EX_LOCK_NOT_QUEUED_T] =
-	    {&gl_gla_env.res_hdl1, &gl_gla_env.ex_lck_id, SA_LCK_EX_LOCK_MODE,
-	     SA_LCK_LOCK_NO_QUEUE, 2900, RES_LOCK_TIMEOUT,
-	     &gl_gla_env.lck_status, SA_AIS_OK, SA_LCK_LOCK_NOT_QUEUED},
-	[LCK_RSC_LOCK_PR_LOCK_DEADLOCK_T] = {&gl_gla_env.res_hdl1,
+				     0, 1700, 0, &gl_gla_env.lck_status,
+				     SA_AIS_ERR_TIMEOUT, 0},
+    [LCK_RSC_LOCK_PR_ERR_TIMEOUT_T] = {&gl_gla_env.res_hdl1,
+				       &gl_gla_env.pr_lck_id,
+				       SA_LCK_PR_LOCK_MODE, 0, 1700,
+				       RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
+				       SA_AIS_ERR_TIMEOUT, 0},
+    [LCK_RSC_LOCK_EX_ERR_TIMEOUT_T] = {&gl_gla_env.res_hdl1,
+				       &gl_gla_env.ex_lck_id,
+				       SA_LCK_EX_LOCK_MODE, 0, 1700,
+				       RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
+				       SA_AIS_ERR_TIMEOUT, 0},
+    [LCK_RSC_LOCK_PR_LOCK_SUCCESS_T] = {&gl_gla_env.res_hdl1,
+					&gl_gla_env.pr_lck_id,
+					SA_LCK_PR_LOCK_MODE, 0, 1800,
+					RES_LOCK_TIMEOUT,
+					&gl_gla_env.lck_status, SA_AIS_OK,
+					SA_LCK_LOCK_GRANTED},
+    [LCK_RSC_LOCK_EX_LOCK_SUCCESS_T] = {&gl_gla_env.res_hdl1,
+					&gl_gla_env.ex_lck_id,
+					SA_LCK_EX_LOCK_MODE, 0, 1900,
+					RES_LOCK_TIMEOUT,
+					&gl_gla_env.lck_status, SA_AIS_OK,
+					SA_LCK_LOCK_GRANTED},
+    [LCK_RSC_LOCK_PR_LOCK_RSC2_SUCCESS_T] = {&gl_gla_env.res_hdl2,
 					     &gl_gla_env.pr_lck_id,
-					     SA_LCK_PR_LOCK_MODE, 0, 3000,
+					     SA_LCK_PR_LOCK_MODE, 0, 2000,
 					     RES_LOCK_TIMEOUT,
 					     &gl_gla_env.lck_status, SA_AIS_OK,
-					     SA_LCK_LOCK_DEADLOCK},
-	[LCK_RSC_LOCK_EX_LOCK_DEADLOCK_T] = {&gl_gla_env.res_hdl1,
+					     SA_LCK_LOCK_GRANTED},
+    [LCK_RSC_LOCK_EX_LOCK_RSC2_SUCCESS_T] = {&gl_gla_env.res_hdl2,
 					     &gl_gla_env.ex_lck_id,
-					     SA_LCK_EX_LOCK_MODE, 0, 3100,
+					     SA_LCK_EX_LOCK_MODE, 0, 2100,
 					     RES_LOCK_TIMEOUT,
 					     &gl_gla_env.lck_status, SA_AIS_OK,
-					     SA_LCK_LOCK_DEADLOCK},
-	[LCK_RSC_LOCK_PR_LOCK_RSC2_DEADLOCK_T] =
-	    {&gl_gla_env.res_hdl2, &gl_gla_env.pr_lck_id, SA_LCK_PR_LOCK_MODE,
-	     0, 3200, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status, SA_AIS_OK,
-	     SA_LCK_LOCK_DEADLOCK},
-	[LCK_RSC_LOCK_EX_LOCK_RSC2_DEADLOCK_T] =
-	    {&gl_gla_env.res_hdl2, &gl_gla_env.ex_lck_id, SA_LCK_EX_LOCK_MODE,
-	     0, 3300, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status, SA_AIS_OK,
-	     SA_LCK_LOCK_DEADLOCK},
-	[LCK_RSC_LOCK_EX_LOCK_ORPHANED_T] =
-	    {&gl_gla_env.res_hdl1, &gl_gla_env.ex_lck_id, SA_LCK_EX_LOCK_MODE,
-	     SA_LCK_LOCK_ORPHAN, 3400, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
-	     SA_AIS_OK, SA_LCK_LOCK_ORPHANED},
-	[LCK_RSC_LOCK_PR_LOCK_ORPHANED_T] =
-	    {&gl_gla_env.res_hdl1, &gl_gla_env.pr_lck_id, SA_LCK_PR_LOCK_MODE,
-	     SA_LCK_LOCK_ORPHAN, 3500, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
-	     SA_AIS_OK, SA_LCK_LOCK_ORPHANED},
-	[LCK_RSC_LOCK_PR_LOCK_RSC2_ORPHANED_T] =
-	    {&gl_gla_env.res_hdl2, &gl_gla_env.pr_lck_id, SA_LCK_PR_LOCK_MODE,
-	     SA_LCK_LOCK_ORPHAN, 3600, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
-	     SA_AIS_OK, SA_LCK_LOCK_ORPHANED},
-	[LCK_RSC_LOCK_EX_LOCK_RSC2_ORPHANED_T] =
-	    {&gl_gla_env.res_hdl2, &gl_gla_env.ex_lck_id, SA_LCK_EX_LOCK_MODE,
-	     SA_LCK_LOCK_ORPHAN, 3700, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
-	     SA_AIS_OK, SA_LCK_LOCK_ORPHANED},
-	[LCK_RSC_LOCK_EX_LOCK_RSC3_SUCCESS_T] =
-	    {&gl_gla_env.res_hdl3, &gl_gla_env.ex_lck_id, SA_LCK_EX_LOCK_MODE,
-	     0, 3800, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status, SA_AIS_OK,
-	     SA_LCK_LOCK_GRANTED},
-	[LCK_RSC_LOCK_EX_LOCK_ORPHAN_DDLCK_T] =
-	    {&gl_gla_env.res_hdl1, &gl_gla_env.ex_lck_id, SA_LCK_EX_LOCK_MODE,
-	     SA_LCK_LOCK_ORPHAN, 3900, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
-	     SA_AIS_OK, SA_LCK_LOCK_DEADLOCK},
-	[LCK_RSC_LOCK_ERR_TRY_AGAIN_T] =
-	    {&gl_gla_env.res_hdl1, &gl_gla_env.ex_lck_id, SA_LCK_EX_LOCK_MODE,
-	     0, 1900, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
-	     SA_AIS_ERR_TRY_AGAIN, SA_LCK_LOCK_GRANTED},
+					     SA_LCK_LOCK_GRANTED},
+    [LCK_RSC_LOCK_DUPLICATE_EXLCK_T] = {&gl_gla_env.res_hdl1,
+					&gl_gla_env.ex_lck_id,
+					SA_LCK_EX_LOCK_MODE, 0, 2200,
+					RES_LOCK_TIMEOUT,
+					&gl_gla_env.lck_status, SA_AIS_OK,
+					SA_LCK_LOCK_DUPLICATE_EX},
+    [LCK_RSC_LOCK_NO_QUEUE_PRLCK_T] = {&gl_gla_env.res_hdl1,
+				       &gl_gla_env.pr_lck_id,
+				       SA_LCK_PR_LOCK_MODE,
+				       SA_LCK_LOCK_NO_QUEUE, 2300,
+				       RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
+				       SA_AIS_OK, SA_LCK_LOCK_GRANTED},
+    [LCK_RSC_LOCK_NO_QUEUE_EXLCK_T] = {&gl_gla_env.res_hdl1,
+				       &gl_gla_env.ex_lck_id,
+				       SA_LCK_EX_LOCK_MODE,
+				       SA_LCK_LOCK_NO_QUEUE, 2400,
+				       RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
+				       SA_AIS_OK, SA_LCK_LOCK_GRANTED},
+    [LCK_RSC_LOCK_ORPHAN_PRLCK_T] = {&gl_gla_env.res_hdl1,
+				     &gl_gla_env.pr_lck_id, SA_LCK_PR_LOCK_MODE,
+				     SA_LCK_LOCK_ORPHAN, 2500, RES_LOCK_TIMEOUT,
+				     &gl_gla_env.lck_status, SA_AIS_OK,
+				     SA_LCK_LOCK_GRANTED},
+    [LCK_RSC_LOCK_ORPHAN_EXLCK_T] = {&gl_gla_env.res_hdl1,
+				     &gl_gla_env.ex_lck_id, SA_LCK_EX_LOCK_MODE,
+				     SA_LCK_LOCK_ORPHAN, 2600, RES_LOCK_TIMEOUT,
+				     &gl_gla_env.lck_status, SA_AIS_OK,
+				     SA_LCK_LOCK_GRANTED},
+    [LCK_RSC_LOCK_ORPHAN_EXLCK_RSC2_T] =
+	{&gl_gla_env.res_hdl2, &gl_gla_env.ex_lck_id, SA_LCK_EX_LOCK_MODE,
+	 SA_LCK_LOCK_ORPHAN, 2700, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
+	 SA_AIS_OK, SA_LCK_LOCK_GRANTED},
+    [LCK_RSC_LOCK_PR_LOCK_NOT_QUEUED_T] =
+	{&gl_gla_env.res_hdl1, &gl_gla_env.pr_lck_id, SA_LCK_PR_LOCK_MODE,
+	 SA_LCK_LOCK_NO_QUEUE, 2800, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
+	 SA_AIS_OK, SA_LCK_LOCK_NOT_QUEUED},
+    [LCK_RSC_LOCK_EX_LOCK_NOT_QUEUED_T] =
+	{&gl_gla_env.res_hdl1, &gl_gla_env.ex_lck_id, SA_LCK_EX_LOCK_MODE,
+	 SA_LCK_LOCK_NO_QUEUE, 2900, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
+	 SA_AIS_OK, SA_LCK_LOCK_NOT_QUEUED},
+    [LCK_RSC_LOCK_PR_LOCK_DEADLOCK_T] = {&gl_gla_env.res_hdl1,
+					 &gl_gla_env.pr_lck_id,
+					 SA_LCK_PR_LOCK_MODE, 0, 3000,
+					 RES_LOCK_TIMEOUT,
+					 &gl_gla_env.lck_status, SA_AIS_OK,
+					 SA_LCK_LOCK_DEADLOCK},
+    [LCK_RSC_LOCK_EX_LOCK_DEADLOCK_T] = {&gl_gla_env.res_hdl1,
+					 &gl_gla_env.ex_lck_id,
+					 SA_LCK_EX_LOCK_MODE, 0, 3100,
+					 RES_LOCK_TIMEOUT,
+					 &gl_gla_env.lck_status, SA_AIS_OK,
+					 SA_LCK_LOCK_DEADLOCK},
+    [LCK_RSC_LOCK_PR_LOCK_RSC2_DEADLOCK_T] = {&gl_gla_env.res_hdl2,
+					      &gl_gla_env.pr_lck_id,
+					      SA_LCK_PR_LOCK_MODE, 0, 3200,
+					      RES_LOCK_TIMEOUT,
+					      &gl_gla_env.lck_status, SA_AIS_OK,
+					      SA_LCK_LOCK_DEADLOCK},
+    [LCK_RSC_LOCK_EX_LOCK_RSC2_DEADLOCK_T] = {&gl_gla_env.res_hdl2,
+					      &gl_gla_env.ex_lck_id,
+					      SA_LCK_EX_LOCK_MODE, 0, 3300,
+					      RES_LOCK_TIMEOUT,
+					      &gl_gla_env.lck_status, SA_AIS_OK,
+					      SA_LCK_LOCK_DEADLOCK},
+    [LCK_RSC_LOCK_EX_LOCK_ORPHANED_T] =
+	{&gl_gla_env.res_hdl1, &gl_gla_env.ex_lck_id, SA_LCK_EX_LOCK_MODE,
+	 SA_LCK_LOCK_ORPHAN, 3400, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
+	 SA_AIS_OK, SA_LCK_LOCK_ORPHANED},
+    [LCK_RSC_LOCK_PR_LOCK_ORPHANED_T] =
+	{&gl_gla_env.res_hdl1, &gl_gla_env.pr_lck_id, SA_LCK_PR_LOCK_MODE,
+	 SA_LCK_LOCK_ORPHAN, 3500, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
+	 SA_AIS_OK, SA_LCK_LOCK_ORPHANED},
+    [LCK_RSC_LOCK_PR_LOCK_RSC2_ORPHANED_T] =
+	{&gl_gla_env.res_hdl2, &gl_gla_env.pr_lck_id, SA_LCK_PR_LOCK_MODE,
+	 SA_LCK_LOCK_ORPHAN, 3600, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
+	 SA_AIS_OK, SA_LCK_LOCK_ORPHANED},
+    [LCK_RSC_LOCK_EX_LOCK_RSC2_ORPHANED_T] =
+	{&gl_gla_env.res_hdl2, &gl_gla_env.ex_lck_id, SA_LCK_EX_LOCK_MODE,
+	 SA_LCK_LOCK_ORPHAN, 3700, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
+	 SA_AIS_OK, SA_LCK_LOCK_ORPHANED},
+    [LCK_RSC_LOCK_EX_LOCK_RSC3_SUCCESS_T] = {&gl_gla_env.res_hdl3,
+					     &gl_gla_env.ex_lck_id,
+					     SA_LCK_EX_LOCK_MODE, 0, 3800,
+					     RES_LOCK_TIMEOUT,
+					     &gl_gla_env.lck_status, SA_AIS_OK,
+					     SA_LCK_LOCK_GRANTED},
+    [LCK_RSC_LOCK_EX_LOCK_ORPHAN_DDLCK_T] =
+	{&gl_gla_env.res_hdl1, &gl_gla_env.ex_lck_id, SA_LCK_EX_LOCK_MODE,
+	 SA_LCK_LOCK_ORPHAN, 3900, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status,
+	 SA_AIS_OK, SA_LCK_LOCK_DEADLOCK},
+    [LCK_RSC_LOCK_ERR_TRY_AGAIN_T] =
+	{&gl_gla_env.res_hdl1, &gl_gla_env.ex_lck_id, SA_LCK_EX_LOCK_MODE, 0,
+	 1900, RES_LOCK_TIMEOUT, &gl_gla_env.lck_status, SA_AIS_ERR_TRY_AGAIN,
+	 SA_LCK_LOCK_GRANTED},
 };
 
 int tet_test_lckResourceLock(int i, GLSV_CONFIG_FLAG flg)
@@ -1305,103 +1297,100 @@ int tet_test_red_lckResourceLock(int i, GLSV_CONFIG_FLAG flg)
 /* ***************  Lock Resource Lock Async Test cases  ***************** */
 
 char *API_Glsv_ResourceLockAsync_resultstring[] = {
-	[LCK_RSC_LOCK_ASYNC_BAD_RSC_HDL_T] =
-	    "saLckResourceLockAsync with invalid resource handle",
-	[LCK_RSC_LOCK_ASYNC_CLOSED_RSC_HDL_T] =
-	    "saLckResourceLockAsync with closed resource handle",
-	[LCK_RSC_LOCK_ASYNC_FINALIZED_HDL_T] =
-	    "saLckResourceLockAsync after finalizing the lock handle",
-	[LCK_RSC_LOCK_ASYNC_NULL_LCKID_T] =
-	    "saLckResourceLockAsync with Null lock id parameter",
-	[LCK_RSC_LOCK_ASYNC_INVALID_LOCK_MODE_T] =
-	    "saLckResourceLockAsync with invalid Lock mode",
-	[LCK_RSC_LOCK_ASYNC_BAD_FLGS_T] =
-	    "saLckResourceLockAsync with invalid lock flags",
-	[LCK_RSC_LOCK_ASYNC_ERR_INIT_T] =
-	    "saLckResourceLockAsync - ERR_INIT case",
-	[LCK_RSC_LOCK_ASYNC_PRLCK_SUCCESS_T] = "Request lock in PR mode",
-	[LCK_RSC_LOCK_ASYNC_EXLCK_SUCCESS_T] = "Request lock in EX mode",
-	[LCK_RSC_LOCK_ASYNC_PRLCK_RSC2_SUCCESS_T] = "Request lock in PR mode",
-	[LCK_RSC_LOCK_ASYNC_EXLCK_RSC2_SUCCESS_T] = "Request lock in EX mode",
-	[LCK_RSC_LOCK_ASYNC_NO_QUEUE_PRLCK_T] =
-	    "saLckResourceLockAsync with SA_LCK_LOCK_NO_QUEUE lock flag in PR mode",
-	[LCK_RSC_LOCK_ASYNC_NO_QUEUE_EXLCK_T] =
-	    "saLckResourceLockAsync with SA_LCK_LOCK_NO_QUEUE lock flag in PR mode",
-	[LCK_RSC_LOCK_ASYNC_ORPHAN_PRLCK_T] =
-	    "saLckResourceLockAsync with SA_LCK_LOCK_ORPHAN lock flag in PR mode",
-	[LCK_RSC_LOCK_ASYNC_ORPHAN_EXLCK_T] =
-	    "saLckResourceLockAsync with SA_LCK_LOCK_ORPHAN lock flag in EX mode",
-	[LCK_RSC_LOCK_ASYNC_ERR_TRY_AGAIN_T] =
-	    "saLckResourceLockAsync when service is not available",
+    [LCK_RSC_LOCK_ASYNC_BAD_RSC_HDL_T] =
+	"saLckResourceLockAsync with invalid resource handle",
+    [LCK_RSC_LOCK_ASYNC_CLOSED_RSC_HDL_T] =
+	"saLckResourceLockAsync with closed resource handle",
+    [LCK_RSC_LOCK_ASYNC_FINALIZED_HDL_T] =
+	"saLckResourceLockAsync after finalizing the lock handle",
+    [LCK_RSC_LOCK_ASYNC_NULL_LCKID_T] =
+	"saLckResourceLockAsync with Null lock id parameter",
+    [LCK_RSC_LOCK_ASYNC_INVALID_LOCK_MODE_T] =
+	"saLckResourceLockAsync with invalid Lock mode",
+    [LCK_RSC_LOCK_ASYNC_BAD_FLGS_T] =
+	"saLckResourceLockAsync with invalid lock flags",
+    [LCK_RSC_LOCK_ASYNC_ERR_INIT_T] = "saLckResourceLockAsync - ERR_INIT case",
+    [LCK_RSC_LOCK_ASYNC_PRLCK_SUCCESS_T] = "Request lock in PR mode",
+    [LCK_RSC_LOCK_ASYNC_EXLCK_SUCCESS_T] = "Request lock in EX mode",
+    [LCK_RSC_LOCK_ASYNC_PRLCK_RSC2_SUCCESS_T] = "Request lock in PR mode",
+    [LCK_RSC_LOCK_ASYNC_EXLCK_RSC2_SUCCESS_T] = "Request lock in EX mode",
+    [LCK_RSC_LOCK_ASYNC_NO_QUEUE_PRLCK_T] =
+	"saLckResourceLockAsync with SA_LCK_LOCK_NO_QUEUE lock flag in PR mode",
+    [LCK_RSC_LOCK_ASYNC_NO_QUEUE_EXLCK_T] =
+	"saLckResourceLockAsync with SA_LCK_LOCK_NO_QUEUE lock flag in PR mode",
+    [LCK_RSC_LOCK_ASYNC_ORPHAN_PRLCK_T] =
+	"saLckResourceLockAsync with SA_LCK_LOCK_ORPHAN lock flag in PR mode",
+    [LCK_RSC_LOCK_ASYNC_ORPHAN_EXLCK_T] =
+	"saLckResourceLockAsync with SA_LCK_LOCK_ORPHAN lock flag in EX mode",
+    [LCK_RSC_LOCK_ASYNC_ERR_TRY_AGAIN_T] =
+	"saLckResourceLockAsync when service is not available",
 };
 
 struct SafAsyncResourceLock API_Glsv_ResourceLockAsync[] = {
-	[LCK_RSC_LOCK_ASYNC_BAD_RSC_HDL_T] =
-	    {&gl_gla_env.inv_params.inv_res_hdl, 700, &gl_gla_env.ex_lck_id,
-	     SA_LCK_EX_LOCK_MODE, 0, 5000, SA_AIS_ERR_BAD_HANDLE},
-	[LCK_RSC_LOCK_ASYNC_CLOSED_RSC_HDL_T] = {&gl_gla_env.res_hdl1, 701,
-						 &gl_gla_env.ex_lck_id,
-						 SA_LCK_EX_LOCK_MODE, 0, 5100,
-						 SA_AIS_ERR_BAD_HANDLE},
-	[LCK_RSC_LOCK_ASYNC_NULL_LCKID_T] = {&gl_gla_env.res_hdl1, 702, NULL,
-					     SA_LCK_EX_LOCK_MODE, 0, 5200,
-					     SA_AIS_ERR_INVALID_PARAM},
-	[LCK_RSC_LOCK_ASYNC_INVALID_LOCK_MODE_T] = {&gl_gla_env.res_hdl1, 703,
-						    &gl_gla_env.pr_lck_id, 90,
-						    0, 5300,
-						    SA_AIS_ERR_INVALID_PARAM},
-	[LCK_RSC_LOCK_ASYNC_BAD_FLGS_T] = {&gl_gla_env.res_hdl1, 704,
-					   &gl_gla_env.pr_lck_id,
-					   SA_LCK_EX_LOCK_MODE, 23, 5400,
-					   SA_AIS_ERR_BAD_FLAGS},
-	[LCK_RSC_LOCK_ASYNC_ERR_INIT_T] = {&gl_gla_env.res_hdl1, 705,
-					   &gl_gla_env.ex_lck_id,
-					   SA_LCK_EX_LOCK_MODE, 0, 5500,
-					   SA_AIS_ERR_INIT},
-	[LCK_RSC_LOCK_ASYNC_PRLCK_SUCCESS_T] = {&gl_gla_env.res_hdl1, 706,
-						&gl_gla_env.pr_lck_id,
-						SA_LCK_PR_LOCK_MODE, 0, 5600,
-						SA_AIS_OK},
-	[LCK_RSC_LOCK_ASYNC_EXLCK_SUCCESS_T] = {&gl_gla_env.res_hdl1, 707,
-						&gl_gla_env.ex_lck_id,
-						SA_LCK_EX_LOCK_MODE, 0, 5700,
-						SA_AIS_OK},
-	[LCK_RSC_LOCK_ASYNC_PRLCK_RSC2_SUCCESS_T] = {&gl_gla_env.res_hdl2, 708,
-						     &gl_gla_env.pr_lck_id,
-						     SA_LCK_PR_LOCK_MODE, 0,
-						     5800, SA_AIS_OK},
-	[LCK_RSC_LOCK_ASYNC_EXLCK_RSC2_SUCCESS_T] = {&gl_gla_env.res_hdl2, 709,
-						     &gl_gla_env.ex_lck_id,
-						     SA_LCK_EX_LOCK_MODE, 0,
-						     5900, SA_AIS_OK},
-	[LCK_RSC_LOCK_ASYNC_NO_QUEUE_PRLCK_T] = {&gl_gla_env.res_hdl1, 710,
+    [LCK_RSC_LOCK_ASYNC_BAD_RSC_HDL_T] = {&gl_gla_env.inv_params.inv_res_hdl,
+					  700, &gl_gla_env.ex_lck_id,
+					  SA_LCK_EX_LOCK_MODE, 0, 5000,
+					  SA_AIS_ERR_BAD_HANDLE},
+    [LCK_RSC_LOCK_ASYNC_CLOSED_RSC_HDL_T] = {&gl_gla_env.res_hdl1, 701,
+					     &gl_gla_env.ex_lck_id,
+					     SA_LCK_EX_LOCK_MODE, 0, 5100,
+					     SA_AIS_ERR_BAD_HANDLE},
+    [LCK_RSC_LOCK_ASYNC_NULL_LCKID_T] = {&gl_gla_env.res_hdl1, 702, NULL,
+					 SA_LCK_EX_LOCK_MODE, 0, 5200,
+					 SA_AIS_ERR_INVALID_PARAM},
+    [LCK_RSC_LOCK_ASYNC_INVALID_LOCK_MODE_T] = {&gl_gla_env.res_hdl1, 703,
+						&gl_gla_env.pr_lck_id, 90, 0,
+						5300, SA_AIS_ERR_INVALID_PARAM},
+    [LCK_RSC_LOCK_ASYNC_BAD_FLGS_T] = {&gl_gla_env.res_hdl1, 704,
+				       &gl_gla_env.pr_lck_id,
+				       SA_LCK_EX_LOCK_MODE, 23, 5400,
+				       SA_AIS_ERR_BAD_FLAGS},
+    [LCK_RSC_LOCK_ASYNC_ERR_INIT_T] = {&gl_gla_env.res_hdl1, 705,
+				       &gl_gla_env.ex_lck_id,
+				       SA_LCK_EX_LOCK_MODE, 0, 5500,
+				       SA_AIS_ERR_INIT},
+    [LCK_RSC_LOCK_ASYNC_PRLCK_SUCCESS_T] = {&gl_gla_env.res_hdl1, 706,
+					    &gl_gla_env.pr_lck_id,
+					    SA_LCK_PR_LOCK_MODE, 0, 5600,
+					    SA_AIS_OK},
+    [LCK_RSC_LOCK_ASYNC_EXLCK_SUCCESS_T] = {&gl_gla_env.res_hdl1, 707,
+					    &gl_gla_env.ex_lck_id,
+					    SA_LCK_EX_LOCK_MODE, 0, 5700,
+					    SA_AIS_OK},
+    [LCK_RSC_LOCK_ASYNC_PRLCK_RSC2_SUCCESS_T] = {&gl_gla_env.res_hdl2, 708,
 						 &gl_gla_env.pr_lck_id,
-						 SA_LCK_PR_LOCK_MODE,
-						 SA_LCK_LOCK_NO_QUEUE, 6000,
+						 SA_LCK_PR_LOCK_MODE, 0, 5800,
 						 SA_AIS_OK},
-	[LCK_RSC_LOCK_ASYNC_NO_QUEUE_EXLCK_T] = {&gl_gla_env.res_hdl1, 711,
+    [LCK_RSC_LOCK_ASYNC_EXLCK_RSC2_SUCCESS_T] = {&gl_gla_env.res_hdl2, 709,
 						 &gl_gla_env.ex_lck_id,
-						 SA_LCK_EX_LOCK_MODE,
-						 SA_LCK_LOCK_NO_QUEUE, 6100,
+						 SA_LCK_EX_LOCK_MODE, 0, 5900,
 						 SA_AIS_OK},
-	[LCK_RSC_LOCK_ASYNC_ORPHAN_PRLCK_T] = {&gl_gla_env.res_hdl1, 712,
-					       &gl_gla_env.pr_lck_id,
-					       SA_LCK_PR_LOCK_MODE,
-					       SA_LCK_LOCK_ORPHAN, 6200,
-					       SA_AIS_OK},
-	[LCK_RSC_LOCK_ASYNC_ORPHAN_EXLCK_T] = {&gl_gla_env.res_hdl1, 713,
-					       &gl_gla_env.ex_lck_id,
-					       SA_LCK_EX_LOCK_MODE,
-					       SA_LCK_LOCK_ORPHAN, 6300,
-					       SA_AIS_OK},
-	[LCK_RSC_LOCK_ASYNC_FINALIZED_HDL_T] = {&gl_gla_env.res_hdl1, 714,
-						&gl_gla_env.ex_lck_id,
-						SA_LCK_EX_LOCK_MODE, 0, 6500,
-						SA_AIS_ERR_BAD_HANDLE},
-	[LCK_RSC_LOCK_ASYNC_ERR_TRY_AGAIN_T] = {&gl_gla_env.res_hdl1, 707,
-						&gl_gla_env.ex_lck_id,
-						SA_LCK_EX_LOCK_MODE, 0, 5700,
-						SA_AIS_ERR_TRY_AGAIN},
+    [LCK_RSC_LOCK_ASYNC_NO_QUEUE_PRLCK_T] = {&gl_gla_env.res_hdl1, 710,
+					     &gl_gla_env.pr_lck_id,
+					     SA_LCK_PR_LOCK_MODE,
+					     SA_LCK_LOCK_NO_QUEUE, 6000,
+					     SA_AIS_OK},
+    [LCK_RSC_LOCK_ASYNC_NO_QUEUE_EXLCK_T] = {&gl_gla_env.res_hdl1, 711,
+					     &gl_gla_env.ex_lck_id,
+					     SA_LCK_EX_LOCK_MODE,
+					     SA_LCK_LOCK_NO_QUEUE, 6100,
+					     SA_AIS_OK},
+    [LCK_RSC_LOCK_ASYNC_ORPHAN_PRLCK_T] = {&gl_gla_env.res_hdl1, 712,
+					   &gl_gla_env.pr_lck_id,
+					   SA_LCK_PR_LOCK_MODE,
+					   SA_LCK_LOCK_ORPHAN, 6200, SA_AIS_OK},
+    [LCK_RSC_LOCK_ASYNC_ORPHAN_EXLCK_T] = {&gl_gla_env.res_hdl1, 713,
+					   &gl_gla_env.ex_lck_id,
+					   SA_LCK_EX_LOCK_MODE,
+					   SA_LCK_LOCK_ORPHAN, 6300, SA_AIS_OK},
+    [LCK_RSC_LOCK_ASYNC_FINALIZED_HDL_T] = {&gl_gla_env.res_hdl1, 714,
+					    &gl_gla_env.ex_lck_id,
+					    SA_LCK_EX_LOCK_MODE, 0, 6500,
+					    SA_AIS_ERR_BAD_HANDLE},
+    [LCK_RSC_LOCK_ASYNC_ERR_TRY_AGAIN_T] = {&gl_gla_env.res_hdl1, 707,
+					    &gl_gla_env.ex_lck_id,
+					    SA_LCK_EX_LOCK_MODE, 0, 5700,
+					    SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_lckResourceLockAsync(int i, GLSV_CONFIG_FLAG flg)
@@ -1489,46 +1478,45 @@ int tet_test_red_lckResourceLockAsync(int i, GLSV_CONFIG_FLAG flg)
 
 /* ***************  Lock Resource Unlock Async Test cases  ***************** */
 
-char *API_Glsv_ResourceUnlockAsync_resultstring[] =
-    {[LCK_RSC_UNLOCK_ASYNC_BAD_LOCKID_T] =
-	 "saLckResourceUnlockAsync with invalid lock id",
-     [LCK_RSC_UNLOCK_ASYNC_UNLOCKED_LOCKID_T] =
-	 "saLckResourceUnlockAsync with unlocked lock id",
-     [LCK_RSC_UNLOCK_ASYNC_BAD_HDL_T] =
-	 "saLckResourceUnlockAsync after closing the resource",
-     [LCK_RSC_UNLOCK_ASYNC_BAD_HDL2_T] =
-	 "saLckResourceUnlockAsync after finalizing the lock handle",
-     [LCK_RSC_UNLOCK_ASYNC_SUCCESS_T] =
-	 "saLckResourceUnlockAsync with valid parameters",
-     [LCK_RSC_UNLOCK_ASYNC_SUCCESS_ID2_T] =
-	 "saLckResourceUnlockAsync with valid parameters",
-     [LCK_RSC_UNLOCK_ASYNC_ERR_INIT_T] =
-	 "saLckResourceUnlockAsync - ERR_INIT case",
-     [LCK_RSC_UNLOCK_ASYNC_ERR_TRY_AGAIN_T] =
-	 "saLckResourceUnlockAsync when service is not available",
-     [LCK_RSC_FINALIZED_ASYNC_UNLOCKED_LOCKID_T] =
-	 "saLckResourceUnlockAsync after finalizing the lock handle"};
+char *API_Glsv_ResourceUnlockAsync_resultstring[] = {
+    [LCK_RSC_UNLOCK_ASYNC_BAD_LOCKID_T] =
+	"saLckResourceUnlockAsync with invalid lock id",
+    [LCK_RSC_UNLOCK_ASYNC_UNLOCKED_LOCKID_T] =
+	"saLckResourceUnlockAsync with unlocked lock id",
+    [LCK_RSC_UNLOCK_ASYNC_BAD_HDL_T] =
+	"saLckResourceUnlockAsync after closing the resource",
+    [LCK_RSC_UNLOCK_ASYNC_BAD_HDL2_T] =
+	"saLckResourceUnlockAsync after finalizing the lock handle",
+    [LCK_RSC_UNLOCK_ASYNC_SUCCESS_T] =
+	"saLckResourceUnlockAsync with valid parameters",
+    [LCK_RSC_UNLOCK_ASYNC_SUCCESS_ID2_T] =
+	"saLckResourceUnlockAsync with valid parameters",
+    [LCK_RSC_UNLOCK_ASYNC_ERR_INIT_T] =
+	"saLckResourceUnlockAsync - ERR_INIT case",
+    [LCK_RSC_UNLOCK_ASYNC_ERR_TRY_AGAIN_T] =
+	"saLckResourceUnlockAsync when service is not available",
+    [LCK_RSC_FINALIZED_ASYNC_UNLOCKED_LOCKID_T] =
+	"saLckResourceUnlockAsync after finalizing the lock handle"};
 
 struct SafAsyncResourceUnlock API_Glsv_ResourceUnlockAsync[] = {
-	[LCK_RSC_UNLOCK_ASYNC_BAD_LOCKID_T] =
-	    {900, &gl_gla_env.inv_params.inv_lck_id, SA_AIS_ERR_BAD_HANDLE},
-	[LCK_RSC_UNLOCK_ASYNC_UNLOCKED_LOCKID_T] = {901, &gl_gla_env.ex_lck_id,
-						    SA_AIS_ERR_NOT_EXIST},
-	[LCK_RSC_UNLOCK_ASYNC_BAD_HDL_T] = {902, &gl_gla_env.ex_lck_id,
-					    SA_AIS_ERR_BAD_HANDLE},
-	[LCK_RSC_UNLOCK_ASYNC_BAD_HDL2_T] = {903, &gl_gla_env.ex_lck_id,
-					     SA_AIS_ERR_BAD_HANDLE},
-	[LCK_RSC_UNLOCK_ASYNC_SUCCESS_T] = {904, &gl_gla_env.ex_lck_id,
+    [LCK_RSC_UNLOCK_ASYNC_BAD_LOCKID_T] = {900,
+					   &gl_gla_env.inv_params.inv_lck_id,
+					   SA_AIS_ERR_BAD_HANDLE},
+    [LCK_RSC_UNLOCK_ASYNC_UNLOCKED_LOCKID_T] = {901, &gl_gla_env.ex_lck_id,
+						SA_AIS_ERR_NOT_EXIST},
+    [LCK_RSC_UNLOCK_ASYNC_BAD_HDL_T] = {902, &gl_gla_env.ex_lck_id,
+					SA_AIS_ERR_BAD_HANDLE},
+    [LCK_RSC_UNLOCK_ASYNC_BAD_HDL2_T] = {903, &gl_gla_env.ex_lck_id,
+					 SA_AIS_ERR_BAD_HANDLE},
+    [LCK_RSC_UNLOCK_ASYNC_SUCCESS_T] = {904, &gl_gla_env.ex_lck_id, SA_AIS_OK},
+    [LCK_RSC_UNLOCK_ASYNC_SUCCESS_ID2_T] = {905, &gl_gla_env.pr_lck_id,
 					    SA_AIS_OK},
-	[LCK_RSC_UNLOCK_ASYNC_SUCCESS_ID2_T] = {905, &gl_gla_env.pr_lck_id,
-						SA_AIS_OK},
-	[LCK_RSC_UNLOCK_ASYNC_ERR_INIT_T] = {906, &gl_gla_env.ex_lck_id,
-					     SA_AIS_ERR_INIT},
-	[LCK_RSC_UNLOCK_ASYNC_ERR_TRY_AGAIN_T] = {904, &gl_gla_env.ex_lck_id,
-						  SA_AIS_ERR_TRY_AGAIN},
-	[LCK_RSC_FINALIZED_ASYNC_UNLOCKED_LOCKID_T] = {901,
-						       &gl_gla_env.ex_lck_id,
-						       SA_AIS_ERR_BAD_HANDLE},
+    [LCK_RSC_UNLOCK_ASYNC_ERR_INIT_T] = {906, &gl_gla_env.ex_lck_id,
+					 SA_AIS_ERR_INIT},
+    [LCK_RSC_UNLOCK_ASYNC_ERR_TRY_AGAIN_T] = {904, &gl_gla_env.ex_lck_id,
+					      SA_AIS_ERR_TRY_AGAIN},
+    [LCK_RSC_FINALIZED_ASYNC_UNLOCKED_LOCKID_T] = {901, &gl_gla_env.ex_lck_id,
+						   SA_AIS_ERR_BAD_HANDLE},
 };
 
 int tet_test_lckResourceUnlockAsync(int i, GLSV_CONFIG_FLAG flg)
@@ -1594,48 +1582,46 @@ int tet_test_red_lckResourceUnlockAsync(int i, GLSV_CONFIG_FLAG flg)
 
 /* ***************  Lock Resource Unlock Test cases  ***************** */
 
-char *API_Glsv_ResourceUnlock_resultstring[] =
-    {[LCK_RSC_UNLOCK_BAD_LOCKID_T] = "saLckResourceUnlock with invalid lock id",
-     [LCK_RSC_UNLOCK_UNLOCKED_LOCKID_T] =
-	 "saLckResourceUnlock with unlocked lock id",
-     [LCK_RSC_UNLOCK_BAD_HDL_T] =
-	 "saLckResourceUnlock after closing the resource",
-     [LCK_RSC_UNLOCK_BAD_HDL2_T] =
-	 "saLckResourceUnlock after finalizing the lock handle",
-     [LCK_RSC_UNLOCK_ERR_TIMEOUT_T] = "saLckResourceUnlock - ERR_TIMEOUT case",
-     [LCK_RSC_UNLOCK_LCKID1_SUCCESS_T] =
-	 "saLckResourceUnlock with valid parameters",
-     [LCK_RSC_UNLOCK_LCKID2_SUCCESS_T] =
-	 "saLckResourceUnlock with valid parameters",
-     [LCK_RSC_UNLOCK_ERR_TRY_AGAIN_T] =
-	 "saLckResourceUnlock when service is not available",
-     [LCK_RSC_FINALIZED_UNLOCKED_LOCKID_T] =
-	 "saLckResourceUnlock after finalizing the lock handle"};
+char *API_Glsv_ResourceUnlock_resultstring[] = {
+    [LCK_RSC_UNLOCK_BAD_LOCKID_T] = "saLckResourceUnlock with invalid lock id",
+    [LCK_RSC_UNLOCK_UNLOCKED_LOCKID_T] =
+	"saLckResourceUnlock with unlocked lock id",
+    [LCK_RSC_UNLOCK_BAD_HDL_T] =
+	"saLckResourceUnlock after closing the resource",
+    [LCK_RSC_UNLOCK_BAD_HDL2_T] =
+	"saLckResourceUnlock after finalizing the lock handle",
+    [LCK_RSC_UNLOCK_ERR_TIMEOUT_T] = "saLckResourceUnlock - ERR_TIMEOUT case",
+    [LCK_RSC_UNLOCK_LCKID1_SUCCESS_T] =
+	"saLckResourceUnlock with valid parameters",
+    [LCK_RSC_UNLOCK_LCKID2_SUCCESS_T] =
+	"saLckResourceUnlock with valid parameters",
+    [LCK_RSC_UNLOCK_ERR_TRY_AGAIN_T] =
+	"saLckResourceUnlock when service is not available",
+    [LCK_RSC_FINALIZED_UNLOCKED_LOCKID_T] =
+	"saLckResourceUnlock after finalizing the lock handle"};
 
 struct SafResourceUnlock API_Glsv_ResourceUnlock[] = {
-	[LCK_RSC_UNLOCK_BAD_LOCKID_T] = {&gl_gla_env.inv_params.inv_lck_id,
-					 RES_UNLOCK_TIMEOUT,
-					 SA_AIS_ERR_BAD_HANDLE},
-	[LCK_RSC_UNLOCK_UNLOCKED_LOCKID_T] = {&gl_gla_env.ex_lck_id,
-					      RES_UNLOCK_TIMEOUT,
-					      SA_AIS_ERR_NOT_EXIST},
-	[LCK_RSC_UNLOCK_BAD_HDL_T] = {&gl_gla_env.ex_lck_id, RES_UNLOCK_TIMEOUT,
-				      SA_AIS_ERR_BAD_HANDLE},
-	[LCK_RSC_UNLOCK_BAD_HDL2_T] = {&gl_gla_env.pr_lck_id,
-				       RES_UNLOCK_TIMEOUT,
-				       SA_AIS_ERR_BAD_HANDLE},
-	[LCK_RSC_UNLOCK_ERR_TIMEOUT_T] = {&gl_gla_env.ex_lck_id, 100,
-					  SA_AIS_ERR_TIMEOUT},
-	[LCK_RSC_UNLOCK_LCKID1_SUCCESS_T] = {&gl_gla_env.ex_lck_id,
-					     RES_UNLOCK_TIMEOUT, SA_AIS_OK},
-	[LCK_RSC_UNLOCK_LCKID2_SUCCESS_T] = {&gl_gla_env.pr_lck_id,
-					     RES_UNLOCK_TIMEOUT, SA_AIS_OK},
-	[LCK_RSC_UNLOCK_ERR_TRY_AGAIN_T] = {&gl_gla_env.ex_lck_id,
-					    RES_UNLOCK_TIMEOUT,
-					    SA_AIS_ERR_TRY_AGAIN},
-	[LCK_RSC_FINALIZED_UNLOCKED_LOCKID_T] = {&gl_gla_env.ex_lck_id,
-						 RES_UNLOCK_TIMEOUT,
-						 SA_AIS_ERR_BAD_HANDLE},
+    [LCK_RSC_UNLOCK_BAD_LOCKID_T] = {&gl_gla_env.inv_params.inv_lck_id,
+				     RES_UNLOCK_TIMEOUT, SA_AIS_ERR_BAD_HANDLE},
+    [LCK_RSC_UNLOCK_UNLOCKED_LOCKID_T] = {&gl_gla_env.ex_lck_id,
+					  RES_UNLOCK_TIMEOUT,
+					  SA_AIS_ERR_NOT_EXIST},
+    [LCK_RSC_UNLOCK_BAD_HDL_T] = {&gl_gla_env.ex_lck_id, RES_UNLOCK_TIMEOUT,
+				  SA_AIS_ERR_BAD_HANDLE},
+    [LCK_RSC_UNLOCK_BAD_HDL2_T] = {&gl_gla_env.pr_lck_id, RES_UNLOCK_TIMEOUT,
+				   SA_AIS_ERR_BAD_HANDLE},
+    [LCK_RSC_UNLOCK_ERR_TIMEOUT_T] = {&gl_gla_env.ex_lck_id, 100,
+				      SA_AIS_ERR_TIMEOUT},
+    [LCK_RSC_UNLOCK_LCKID1_SUCCESS_T] = {&gl_gla_env.ex_lck_id,
+					 RES_UNLOCK_TIMEOUT, SA_AIS_OK},
+    [LCK_RSC_UNLOCK_LCKID2_SUCCESS_T] = {&gl_gla_env.pr_lck_id,
+					 RES_UNLOCK_TIMEOUT, SA_AIS_OK},
+    [LCK_RSC_UNLOCK_ERR_TRY_AGAIN_T] = {&gl_gla_env.ex_lck_id,
+					RES_UNLOCK_TIMEOUT,
+					SA_AIS_ERR_TRY_AGAIN},
+    [LCK_RSC_FINALIZED_UNLOCKED_LOCKID_T] = {&gl_gla_env.ex_lck_id,
+					     RES_UNLOCK_TIMEOUT,
+					     SA_AIS_ERR_BAD_HANDLE},
 };
 
 int tet_test_lckResourceUnlock(int i, GLSV_CONFIG_FLAG flg)
@@ -1694,33 +1680,30 @@ int tet_test_red_lckResourceUnlock(int i, GLSV_CONFIG_FLAG flg)
 /* ***************  Lock Purge Test cases  ***************** */
 
 char *API_Glsv_Purge_resultstring[] = {
-	[LCK_LOCK_PURGE_BAD_HDL_T] =
-	    "saLckLockPurge with invalid resource handle",
-	[LCK_LOCK_PURGE_CLOSED_HDL_T] =
-	    "saLckLockPurge with closed resource handle",
-	[LCK_LOCK_PURGE_FINALIZED_HDL_T] =
-	    "saLckLockPurge after finalzing the lock handle",
-	[LCK_LOCK_PURGE_SUCCESS_T] = "saLckLockPurge with valid parameters",
-	[LCK_LOCK_PURGE_SUCCESS_RSC2_T] =
-	    "saLckLockPurge with valid parameters",
-	[LCK_LOCK_PURGE_NO_ORPHAN_T] =
-	    "saLckLockPurge when there are no orphan locks the resource",
-	[LCK_LOCK_PURGE_ERR_TRY_AGAIN_T] =
-	    "saLckLockPurge when service is not available",
+    [LCK_LOCK_PURGE_BAD_HDL_T] = "saLckLockPurge with invalid resource handle",
+    [LCK_LOCK_PURGE_CLOSED_HDL_T] =
+	"saLckLockPurge with closed resource handle",
+    [LCK_LOCK_PURGE_FINALIZED_HDL_T] =
+	"saLckLockPurge after finalzing the lock handle",
+    [LCK_LOCK_PURGE_SUCCESS_T] = "saLckLockPurge with valid parameters",
+    [LCK_LOCK_PURGE_SUCCESS_RSC2_T] = "saLckLockPurge with valid parameters",
+    [LCK_LOCK_PURGE_NO_ORPHAN_T] =
+	"saLckLockPurge when there are no orphan locks the resource",
+    [LCK_LOCK_PURGE_ERR_TRY_AGAIN_T] =
+	"saLckLockPurge when service is not available",
 };
 
 struct SafPurge API_Glsv_Purge[] = {
-	[LCK_LOCK_PURGE_BAD_HDL_T] = {&gl_gla_env.res_hdl1,
-				      SA_AIS_ERR_BAD_HANDLE},
-	[LCK_LOCK_PURGE_CLOSED_HDL_T] = {&gl_gla_env.res_hdl1,
-					 SA_AIS_ERR_BAD_HANDLE},
-	[LCK_LOCK_PURGE_FINALIZED_HDL_T] = {&gl_gla_env.res_hdl1,
-					    SA_AIS_ERR_BAD_HANDLE},
-	[LCK_LOCK_PURGE_SUCCESS_T] = {&gl_gla_env.res_hdl1, SA_AIS_OK},
-	[LCK_LOCK_PURGE_SUCCESS_RSC2_T] = {&gl_gla_env.res_hdl2, SA_AIS_OK},
-	[LCK_LOCK_PURGE_NO_ORPHAN_T] = {&gl_gla_env.res_hdl1, SA_AIS_OK},
-	[LCK_LOCK_PURGE_ERR_TRY_AGAIN_T] = {&gl_gla_env.res_hdl1,
-					    SA_AIS_ERR_TRY_AGAIN},
+    [LCK_LOCK_PURGE_BAD_HDL_T] = {&gl_gla_env.res_hdl1, SA_AIS_ERR_BAD_HANDLE},
+    [LCK_LOCK_PURGE_CLOSED_HDL_T] = {&gl_gla_env.res_hdl1,
+				     SA_AIS_ERR_BAD_HANDLE},
+    [LCK_LOCK_PURGE_FINALIZED_HDL_T] = {&gl_gla_env.res_hdl1,
+					SA_AIS_ERR_BAD_HANDLE},
+    [LCK_LOCK_PURGE_SUCCESS_T] = {&gl_gla_env.res_hdl1, SA_AIS_OK},
+    [LCK_LOCK_PURGE_SUCCESS_RSC2_T] = {&gl_gla_env.res_hdl2, SA_AIS_OK},
+    [LCK_LOCK_PURGE_NO_ORPHAN_T] = {&gl_gla_env.res_hdl1, SA_AIS_OK},
+    [LCK_LOCK_PURGE_ERR_TRY_AGAIN_T] = {&gl_gla_env.res_hdl1,
+					SA_AIS_ERR_TRY_AGAIN},
 };
 
 int tet_test_lckLockPurge(int i, GLSV_CONFIG_FLAG flg)

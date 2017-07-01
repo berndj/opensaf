@@ -25,7 +25,7 @@ const timespec kZeroDotNineSeconds = {0, 900000000};
 const timespec number1 = {1576315623, 358743382};
 const timespec number2 = {279394477, 639614599};
 const timespec difference = {1296921145, 719128783};
-}
+}  // namespace
 
 TEST(BaseTimeSubtract, ZeroMinusZero) {
   timespec result = base::kZeroSeconds - base::kZeroSeconds;

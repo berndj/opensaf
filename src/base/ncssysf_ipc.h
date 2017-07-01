@@ -68,7 +68,9 @@ typedef enum ncs_ipc_priority {
  ** Note: this queue element exists to force the requirement that the first
  ** field of the object to be queued must be "next" (void *).
  **/
-typedef struct ncs_ipc_msg { struct ncs_ipc_msg *next; } NCS_IPC_MSG;
+typedef struct ncs_ipc_msg {
+  struct ncs_ipc_msg *next;
+} NCS_IPC_MSG;
 
 /****************************************************************************
  * m_NCS_IPC_CREATE

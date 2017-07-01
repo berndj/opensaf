@@ -148,8 +148,7 @@ void App_saMsgQueueGroupTrackCallback(
 	if (rc == SA_AIS_OK) {
 		groupTrackInfo((SaMsgQueueGroupNotificationBufferT *)buffer);
 		memcpy(gl_mqa_env.track_clbk_grp_name.value,
-		       queueGroupName->value,
-           queueGroupName->length);
+		       queueGroupName->value, queueGroupName->length);
 		gl_mqa_env.track_clbk_grp_name.length = queueGroupName->length;
 		gl_mqa_env.track_clbk_num_mem = num_mem;
 		copy_notif_buffer((SaMsgQueueGroupNotificationBufferT *)buffer);
@@ -275,8 +274,10 @@ void mqsv_fill_q_grp_names(SaNameT *name, char *string, char *inst_num_char)
 {
 	memcpy(name->value, string, strlen(string));
 	if (inst_num_char)
-		memcpy(name->value + strlen(string), inst_num_char, strlen(inst_num_char));
-	name->length = strlen(string) + (inst_num_char ? strlen(inst_num_char) : 0);
+		memcpy(name->value + strlen(string), inst_num_char,
+		       strlen(inst_num_char));
+	name->length =
+	    strlen(string) + (inst_num_char ? strlen(inst_num_char) : 0);
 }
 
 void mqsv_fill_grp_notif_buffer(SaMsgQueueGroupNotificationBufferT *buffer,
@@ -312,7 +313,7 @@ void init_mqsv_test_env()
 	char *data = "Message Queue Service Send Message";
 	char *rcv_msg_data = NULL;
 	SaMsgQueueGroupNotificationT *inv_notif =
-    (SaMsgQueueGroupNotificationT *)0x06; /* some  value */
+	    (SaMsgQueueGroupNotificationT *)0x06; /* some  value */
 	SaMsgQueueGroupNotificationT *notification;
 	char inst_num_char[10] = {0};
 
@@ -4211,11 +4212,12 @@ void mqsv_it_qgrp_track_11()
 	    gl_mqa_env.buffer_null_notif.numberOfItems == 1 &&
 	    gl_mqa_env.buffer_null_notif.queueGroupPolicy ==
 		SA_MSG_QUEUE_GROUP_ROUND_ROBIN &&
-      gl_mqa_env.buffer_null_notif.notification->member.queueName.length ==
-      gl_mqa_env.non_pers_q.length &&
-	    !memcmp(gl_mqa_env.buffer_null_notif.notification->member.queueName.value,
+	    gl_mqa_env.buffer_null_notif.notification->member.queueName
+		    .length == gl_mqa_env.non_pers_q.length &&
+	    !memcmp(gl_mqa_env.buffer_null_notif.notification->member.queueName
+			.value,
 		    gl_mqa_env.non_pers_q.value,
-        gl_mqa_env.non_pers_q.length) &&
+		    gl_mqa_env.non_pers_q.length) &&
 	    gl_mqa_env.buffer_null_notif.notification->change ==
 		SA_MSG_QUEUE_GROUP_NO_CHANGE)
 		result = TET_PASS;
@@ -4294,20 +4296,19 @@ void mqsv_it_qgrp_track_12()
 	    gl_mqa_env.buffer_non_null_notif.queueGroupPolicy ==
 		SA_MSG_QUEUE_GROUP_ROUND_ROBIN &&
 	    gl_mqa_env.buffer_non_null_notif.notification &&
-      gl_mqa_env.buffer_non_null_notif.notification[0].member.queueName.length ==
-      gl_mqa_env.non_pers_q.length &&
+	    gl_mqa_env.buffer_non_null_notif.notification[0]
+		    .member.queueName.length == gl_mqa_env.non_pers_q.length &&
 	    !memcmp(gl_mqa_env.buffer_non_null_notif.notification[0]
 			.member.queueName.value,
 		    gl_mqa_env.non_pers_q.value,
-        gl_mqa_env.non_pers_q.length) &&
+		    gl_mqa_env.non_pers_q.length) &&
 	    gl_mqa_env.buffer_non_null_notif.notification[0].change ==
 		SA_MSG_QUEUE_GROUP_NO_CHANGE &&
-      gl_mqa_env.buffer_non_null_notif.notification[1].member.queueName.length ==
-      gl_mqa_env.pers_q.length &&
+	    gl_mqa_env.buffer_non_null_notif.notification[1]
+		    .member.queueName.length == gl_mqa_env.pers_q.length &&
 	    !memcmp(gl_mqa_env.buffer_non_null_notif.notification[1]
 			.member.queueName.value,
-		    gl_mqa_env.pers_q.value,
-        gl_mqa_env.pers_q.length) &&
+		    gl_mqa_env.pers_q.value, gl_mqa_env.pers_q.length) &&
 	    gl_mqa_env.buffer_non_null_notif.notification[1].change ==
 		SA_MSG_QUEUE_GROUP_NO_CHANGE)
 		result = TET_PASS;
@@ -4484,19 +4485,19 @@ void mqsv_it_qgrp_track_15()
 	}
 
 	if (gl_mqa_env.track_clbk_num_mem == 1 &&
-      gl_mqa_env.track_clbk_grp_name.length == gl_mqa_env.qgroup1.length &&
+	    gl_mqa_env.track_clbk_grp_name.length ==
+		gl_mqa_env.qgroup1.length &&
 	    !memcmp(gl_mqa_env.track_clbk_grp_name.value,
-		    gl_mqa_env.qgroup1.value,
-        gl_mqa_env.qgroup1.length) &&
+		    gl_mqa_env.qgroup1.value, gl_mqa_env.qgroup1.length) &&
 	    gl_mqa_env.track_clbk_notif.numberOfItems == 1 &&
 	    gl_mqa_env.track_clbk_notif.queueGroupPolicy ==
 		SA_MSG_QUEUE_GROUP_ROUND_ROBIN &&
-      gl_mqa_env.track_clbk_notif.notification[0]
-      .member.queueName.length == gl_mqa_env.non_pers_q.length &&
+	    gl_mqa_env.track_clbk_notif.notification[0]
+		    .member.queueName.length == gl_mqa_env.non_pers_q.length &&
 	    !memcmp(gl_mqa_env.track_clbk_notif.notification[0]
 			.member.queueName.value,
 		    gl_mqa_env.non_pers_q.value,
-        gl_mqa_env.non_pers_q.length) &&
+		    gl_mqa_env.non_pers_q.length) &&
 	    gl_mqa_env.track_clbk_notif.notification[0].change ==
 		SA_MSG_QUEUE_GROUP_NO_CHANGE)
 		result = TET_PASS;
@@ -4666,19 +4667,18 @@ void mqsv_it_qgrp_track_20()
 
 	if (gl_mqa_env.track_clbk_err != SA_AIS_OK ||
 	    gl_mqa_env.track_clbk_num_mem != 1 ||
-      gl_mqa_env.track_clbk_grp_name.length != gl_mqa_env.qgroup1.length ||
+	    gl_mqa_env.track_clbk_grp_name.length !=
+		gl_mqa_env.qgroup1.length ||
 	    memcmp(gl_mqa_env.track_clbk_grp_name.value,
-		   gl_mqa_env.qgroup1.value,
-       gl_mqa_env.qgroup1.length) ||
+		   gl_mqa_env.qgroup1.value, gl_mqa_env.qgroup1.length) ||
 	    gl_mqa_env.track_clbk_notif.numberOfItems != 1 ||
 	    gl_mqa_env.track_clbk_notif.queueGroupPolicy !=
 		SA_MSG_QUEUE_GROUP_ROUND_ROBIN ||
-      gl_mqa_env.track_clbk_notif.notification[0]
-           .member.queueName.length != gl_mqa_env.non_pers_q.length ||
+	    gl_mqa_env.track_clbk_notif.notification[0]
+		    .member.queueName.length != gl_mqa_env.non_pers_q.length ||
 	    memcmp(gl_mqa_env.track_clbk_notif.notification[0]
 		       .member.queueName.value,
-		   gl_mqa_env.non_pers_q.value,
-       gl_mqa_env.non_pers_q.length) ||
+		   gl_mqa_env.non_pers_q.value, gl_mqa_env.non_pers_q.length) ||
 	    gl_mqa_env.track_clbk_notif.notification[0].change !=
 		SA_MSG_QUEUE_GROUP_ADDED) {
 		result = TET_FAIL;
@@ -4696,27 +4696,25 @@ void mqsv_it_qgrp_track_20()
 
 	if (gl_mqa_env.track_clbk_err != SA_AIS_OK ||
 	    gl_mqa_env.track_clbk_num_mem != 2 ||
-      gl_mqa_env.track_clbk_grp_name.length != gl_mqa_env.qgroup1.length ||
+	    gl_mqa_env.track_clbk_grp_name.length !=
+		gl_mqa_env.qgroup1.length ||
 	    memcmp(gl_mqa_env.track_clbk_grp_name.value,
-		   gl_mqa_env.qgroup1.value,
-       gl_mqa_env.qgroup1.length) ||
+		   gl_mqa_env.qgroup1.value, gl_mqa_env.qgroup1.length) ||
 	    gl_mqa_env.track_clbk_notif.numberOfItems != 2 ||
 	    gl_mqa_env.track_clbk_notif.queueGroupPolicy !=
 		SA_MSG_QUEUE_GROUP_ROUND_ROBIN ||
-      gl_mqa_env.track_clbk_notif.notification[0]
-           .member.queueName.length != gl_mqa_env.non_pers_q.length ||
+	    gl_mqa_env.track_clbk_notif.notification[0]
+		    .member.queueName.length != gl_mqa_env.non_pers_q.length ||
 	    memcmp(gl_mqa_env.track_clbk_notif.notification[0]
 		       .member.queueName.value,
-		   gl_mqa_env.non_pers_q.value,
-       gl_mqa_env.non_pers_q.length) ||
+		   gl_mqa_env.non_pers_q.value, gl_mqa_env.non_pers_q.length) ||
 	    gl_mqa_env.track_clbk_notif.notification[0].change !=
 		SA_MSG_QUEUE_GROUP_NO_CHANGE ||
-      gl_mqa_env.track_clbk_notif.notification[1]
-           .member.queueName.length != gl_mqa_env.pers_q.length ||
+	    gl_mqa_env.track_clbk_notif.notification[1]
+		    .member.queueName.length != gl_mqa_env.pers_q.length ||
 	    memcmp(gl_mqa_env.track_clbk_notif.notification[1]
 		       .member.queueName.value,
-		   gl_mqa_env.pers_q.value,
-       gl_mqa_env.pers_q.length) ||
+		   gl_mqa_env.pers_q.value, gl_mqa_env.pers_q.length) ||
 	    gl_mqa_env.track_clbk_notif.notification[1].change !=
 		SA_MSG_QUEUE_GROUP_ADDED)
 		result = TET_FAIL;
@@ -5291,8 +5289,8 @@ void mqsv_it_qgrp_track_26()
 	    gl_mqa_env.buffer_null_notif.numberOfItems != 1 ||
 	    gl_mqa_env.buffer_null_notif.queueGroupPolicy !=
 		SA_MSG_QUEUE_GROUP_ROUND_ROBIN ||
-	    strcmp((char *)gl_mqa_env.buffer_null_notif.notification->member.queueName
-		       .value,
+	    strcmp((char *)gl_mqa_env.buffer_null_notif.notification->member
+		       .queueName.value,
 		   (char *)gl_mqa_env.pers_q.value) ||
 	    gl_mqa_env.buffer_null_notif.notification->change !=
 		SA_MSG_QUEUE_GROUP_NO_CHANGE) {
@@ -5374,8 +5372,8 @@ void mqsv_it_qgrp_track_27()
 	    gl_mqa_env.buffer_null_notif.numberOfItems != 1 ||
 	    gl_mqa_env.buffer_null_notif.queueGroupPolicy !=
 		SA_MSG_QUEUE_GROUP_ROUND_ROBIN ||
-	    strcmp((char *)gl_mqa_env.buffer_null_notif.notification->member.queueName
-		       .value,
+	    strcmp((char *)gl_mqa_env.buffer_null_notif.notification->member
+		       .queueName.value,
 		   (char *)gl_mqa_env.pers_q.value) ||
 	    gl_mqa_env.buffer_null_notif.notification->change !=
 		SA_MSG_QUEUE_GROUP_NO_CHANGE) {
@@ -11492,7 +11490,6 @@ void mqsv_it_msgqs_20()
 {
 	int result;
 
-
 	result = tet_test_msgInitialize(MSG_INIT_SUCCESS_T, TEST_CONFIG_MODE);
 	if (result != TET_PASS)
 		goto final;
@@ -11699,8 +11696,8 @@ void mqsv_it_msgq_grps_01()
 		goto final3;
 
 	if (gl_mqa_env.buffer_null_notif.numberOfItems == 1 &&
-	    !strcmp((char *)gl_mqa_env.buffer_null_notif.notification->member.queueName
-			.value,
+	    !strcmp((char *)gl_mqa_env.buffer_null_notif.notification->member
+			.queueName.value,
 		    (char *)gl_mqa_env.pers_q.value) &&
 	    gl_mqa_env.buffer_null_notif.notification->change ==
 		SA_MSG_QUEUE_GROUP_NO_CHANGE)
@@ -12011,7 +12008,6 @@ final:
 void mqsv_it_msgq_grps_06()
 {
 	int result;
-
 
 	result = tet_test_msgInitialize(MSG_INIT_SUCCESS_T, TEST_CONFIG_MODE);
 	if (result != TET_PASS)
@@ -13252,7 +13248,6 @@ void mqsv_it_msg_delprop_12()
 {
 	int result;
 
-
 	result = tet_test_msgInitialize(MSG_INIT_SUCCESS_T, TEST_CONFIG_MODE);
 	if (result != TET_PASS)
 		goto final;
@@ -13454,7 +13449,6 @@ final:
 	mqsv_result(result);
 }
 
-
 /********* MQSV Inputs ************/
 
 void tet_mqsv_get_inputs(TET_MQSV_INST *inst)
@@ -13507,7 +13501,8 @@ void tet_mqsv_get_inputs(TET_MQSV_INST *inst)
 	tmp_ptr = (char *)getenv("TET_MQSV_PERS_Q_NAME1");
 	if (tmp_ptr) {
 		strcpy((char *)inst->pers_q_name1.value, tmp_ptr);
-		inst->pers_q_name1.length = strlen((char *)inst->pers_q_name1.value);
+		inst->pers_q_name1.length =
+		    strlen((char *)inst->pers_q_name1.value);
 		tmp_ptr = NULL;
 	}
 
@@ -13522,14 +13517,16 @@ void tet_mqsv_get_inputs(TET_MQSV_INST *inst)
 	tmp_ptr = (char *)getenv("TET_MQSV_ZERO_Q_NAME");
 	if (tmp_ptr) {
 		strcpy((char *)inst->zero_q_name.value, tmp_ptr);
-		inst->zero_q_name.length = strlen((char *)inst->zero_q_name.value);
+		inst->zero_q_name.length =
+		    strlen((char *)inst->zero_q_name.value);
 		tmp_ptr = NULL;
 	}
 
 	tmp_ptr = (char *)getenv("TET_MQSV_PERS_Q_NAME2");
 	if (tmp_ptr) {
 		strcpy((char *)inst->pers_q_name2.value, tmp_ptr);
-		inst->pers_q_name2.length = strlen((char *)inst->pers_q_name2.value);
+		inst->pers_q_name2.length =
+		    strlen((char *)inst->pers_q_name2.value);
 		tmp_ptr = NULL;
 	}
 
@@ -13544,21 +13541,24 @@ void tet_mqsv_get_inputs(TET_MQSV_INST *inst)
 	tmp_ptr = (char *)getenv("TET_MQSV_Q_GRP_NAME1");
 	if (tmp_ptr) {
 		strcpy((char *)inst->q_grp_name1.value, tmp_ptr);
-		inst->q_grp_name1.length = strlen((char *)inst->q_grp_name1.value);
+		inst->q_grp_name1.length =
+		    strlen((char *)inst->q_grp_name1.value);
 		tmp_ptr = NULL;
 	}
 
 	tmp_ptr = (char *)getenv("TET_MQSV_Q_GRP_NAME2");
 	if (tmp_ptr) {
 		strcpy((char *)inst->q_grp_name2.value, tmp_ptr);
-		inst->q_grp_name2.length = strlen((char *)inst->q_grp_name2.value);
+		inst->q_grp_name2.length =
+		    strlen((char *)inst->q_grp_name2.value);
 		tmp_ptr = NULL;
 	}
 
 	tmp_ptr = (char *)getenv("TET_MQSV_Q_GRP_NAME3");
 	if (tmp_ptr) {
 		strcpy((char *)inst->q_grp_name3.value, tmp_ptr);
-		inst->q_grp_name3.length = strlen((char *)inst->q_grp_name3.value);
+		inst->q_grp_name3.length =
+		    strlen((char *)inst->q_grp_name3.value);
 		tmp_ptr = NULL;
 	}
 
@@ -13579,7 +13579,8 @@ void tet_mqsv_fill_inputs(TET_MQSV_INST *inst)
 {
 	if (inst->pers_q_name1.length) {
 		memset(&gl_mqa_env.pers_q, '\0', sizeof(SaNameT));
-		strcpy((char *)gl_mqa_env.pers_q.value, (char *)inst->pers_q_name1.value);
+		strcpy((char *)gl_mqa_env.pers_q.value,
+		       (char *)inst->pers_q_name1.value);
 		gl_mqa_env.pers_q.length = inst->pers_q_name1.length;
 	}
 	if (inst->non_pers_q_name1.length) {
@@ -13590,12 +13591,14 @@ void tet_mqsv_fill_inputs(TET_MQSV_INST *inst)
 	}
 	if (inst->zero_q_name.length) {
 		memset(&gl_mqa_env.zero_q, '\0', sizeof(SaNameT));
-		strcpy((char *)gl_mqa_env.zero_q.value, (char *)inst->zero_q_name.value);
+		strcpy((char *)gl_mqa_env.zero_q.value,
+		       (char *)inst->zero_q_name.value);
 		gl_mqa_env.zero_q.length = inst->zero_q_name.length;
 	}
 	if (inst->pers_q_name2.length) {
 		memset(&gl_mqa_env.pers_q2, '\0', sizeof(SaNameT));
-		strcpy((char *)gl_mqa_env.pers_q2.value, (char *)inst->pers_q_name2.value);
+		strcpy((char *)gl_mqa_env.pers_q2.value,
+		       (char *)inst->pers_q_name2.value);
 		gl_mqa_env.pers_q2.length = inst->pers_q_name2.length;
 	}
 	if (inst->non_pers_q_name2.length) {
@@ -13606,17 +13609,20 @@ void tet_mqsv_fill_inputs(TET_MQSV_INST *inst)
 	}
 	if (inst->q_grp_name1.length) {
 		memset(&gl_mqa_env.qgroup1, '\0', sizeof(SaNameT));
-		strcpy((char *)gl_mqa_env.qgroup1.value, (char *)inst->q_grp_name1.value);
+		strcpy((char *)gl_mqa_env.qgroup1.value,
+		       (char *)inst->q_grp_name1.value);
 		gl_mqa_env.qgroup1.length = inst->q_grp_name1.length;
 	}
 	if (inst->q_grp_name2.length) {
 		memset(&gl_mqa_env.qgroup2, '\0', sizeof(SaNameT));
-		strcpy((char *)gl_mqa_env.qgroup2.value, (char *)inst->q_grp_name2.value);
+		strcpy((char *)gl_mqa_env.qgroup2.value,
+		       (char *)inst->q_grp_name2.value);
 		gl_mqa_env.qgroup2.length = inst->q_grp_name2.length;
 	}
 	if (inst->q_grp_name3.length) {
 		memset(&gl_mqa_env.qgroup3, '\0', sizeof(SaNameT));
-		strcpy((char *)gl_mqa_env.qgroup3.value, (char *)inst->q_grp_name3.value);
+		strcpy((char *)gl_mqa_env.qgroup3.value,
+		       (char *)inst->q_grp_name3.value);
 		gl_mqa_env.qgroup3.length = inst->q_grp_name3.length;
 	}
 }

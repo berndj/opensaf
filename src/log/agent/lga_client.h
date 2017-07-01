@@ -110,10 +110,8 @@ class LogClient {
   // Add a log stream with its additional data to @stream_list_.
   // This action is invoked right after successful saLogStreamOpen()
   // on @this log client.
-  void AddLogStreamInfo(
-      LogStreamInfo*,
-      SaLogStreamOpenFlagsT,
-      SaLogHeaderTypeT);
+  void AddLogStreamInfo(LogStreamInfo*, SaLogStreamOpenFlagsT,
+                        SaLogHeaderTypeT);
 
   // Remove log stream @stream from the @stream_list_.
   // The method is called after getting @saLogStreamClose() or @saLogFinalize().
@@ -228,9 +226,8 @@ class LogClient {
     // true - means this client has been recovered successfully.
     std::atomic<bool> recovered_flag;
 
-    AtomicData() : stale_flag{false}
-                 , initialized_flag{true}
-                 , recovered_flag{true} {}
+    AtomicData()
+        : stale_flag{false}, initialized_flag{true}, recovered_flag{true} {}
   };
 
   // Hold all atomic data
@@ -294,10 +291,9 @@ inline bool LogClient::is_client_initialized() const {
 }
 
 inline bool LogClient::is_interested_in_clm() const {
-  return (!(
-      (version_.releaseCode  == LOG_RELEASE_CODE_0) &&
-      (version_.majorVersion == LOG_MAJOR_VERSION_0) &&
-      (version_.minorVersion == LOG_MINOR_VERSION_0)));
+  return (!((version_.releaseCode == LOG_RELEASE_CODE_0) &&
+            (version_.majorVersion == LOG_MAJOR_VERSION_0) &&
+            (version_.minorVersion == LOG_MINOR_VERSION_0)));
 }
 
 // There is no recovery process going at the moment, and the recovery flag

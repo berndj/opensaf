@@ -109,7 +109,7 @@ typedef struct glsv_gla_evt {
   union {
     GLSV_GLA_CALLBACK_INFO gla_clbk_info; /* callbk info */
     GLSV_GLA_API_RESP_INFO gla_resp_info; /* api response info */
-    GLSV_GLA_CLM_INFO      gla_clm_info;	/* clm info */
+    GLSV_GLA_CLM_INFO gla_clm_info;       /* clm info */
   } info;
 } GLSV_GLA_EVT;
 
