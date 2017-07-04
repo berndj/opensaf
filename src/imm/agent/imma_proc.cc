@@ -1745,6 +1745,7 @@ SaAisErrorT imma_hdl_callbk_dispatch_one(IMMA_CB *cb, SaImmHandleT immHandle) {
       imma_proc_ccbaug_setup(cl_node, callback);
       m_NCS_UNLOCK(&cb->cb_lock, NCS_LOCK_WRITE);
       if (!imma_process_callback_info(cb, cl_node, callback, immHandle)) {
+        IMMSV_EVT finalize_evt, *out_evt;
         /* Callback protocol could not be honored due to some lack
            of client capabilities. E.g. applier can not handle long DNs
            while regular OI can, or there is no regular OI. The capabilties
@@ -1757,6 +1758,22 @@ SaAisErrorT imma_hdl_callbk_dispatch_one(IMMA_CB *cb, SaImmHandleT immHandle) {
         */
         cl_node->stale = true;
         cl_node->exposed = true;
+
+        out_evt = NULL;
+        memset(&finalize_evt, 0, sizeof(IMMSV_EVT));
+        finalize_evt.type = IMMSV_EVT_TYPE_IMMND;
+        finalize_evt.info.immnd.type = IMMND_EVT_A2ND_IMM_FINALIZE;
+        finalize_evt.info.immnd.info.finReq.client_hdl = cl_node->handle;
+
+        /* send the request to the IMMND */
+        imma_mds_msg_sync_send(cb->imma_mds_hdl, &(cb->immnd_mds_dest),
+                               &finalize_evt, &out_evt,
+                               cl_node->syncr_timeout);
+
+        if (out_evt) {
+          free(out_evt);
+        }
+
         return SA_AIS_ERR_BAD_HANDLE;
       }
       return SA_AIS_OK;
@@ -1810,6 +1827,7 @@ SaAisErrorT imma_hdl_callbk_dispatch_all(IMMA_CB *cb, SaImmHandleT immHandle) {
       imma_proc_ccbaug_setup(cl_node, callback);
       m_NCS_UNLOCK(&cb->cb_lock, NCS_LOCK_WRITE);
       if (!imma_process_callback_info(cb, cl_node, callback, immHandle)) {
+        IMMSV_EVT finalize_evt, *out_evt;
         /* Callback protocol could not be honored due to some lack
            of client capabilities. E.g. applier can not handle long DNs
            while regular OI can, or there is no regular OI. The capabilties
@@ -1822,6 +1840,22 @@ SaAisErrorT imma_hdl_callbk_dispatch_all(IMMA_CB *cb, SaImmHandleT immHandle) {
         */
         cl_node->stale = true;
         cl_node->exposed = true;
+
+        out_evt = NULL;
+        memset(&finalize_evt, 0, sizeof(IMMSV_EVT));
+        finalize_evt.type = IMMSV_EVT_TYPE_IMMND;
+        finalize_evt.info.immnd.type = IMMND_EVT_A2ND_IMM_FINALIZE;
+        finalize_evt.info.immnd.info.finReq.client_hdl = cl_node->handle;
+
+        /* send the request to the IMMND */
+        imma_mds_msg_sync_send(cb->imma_mds_hdl, &(cb->immnd_mds_dest),
+                               &finalize_evt, &out_evt,
+                               cl_node->syncr_timeout);
+
+        if (out_evt) {
+          free(out_evt);
+        }
+
         return SA_AIS_ERR_BAD_HANDLE;
       }
     } else {
@@ -1903,6 +1937,7 @@ SaAisErrorT imma_hdl_callbk_dispatch_block(IMMA_CB *cb,
         imma_proc_ccbaug_setup(client_info, callback);
         m_NCS_UNLOCK(&cb->cb_lock, NCS_LOCK_WRITE);
         if (!imma_process_callback_info(cb, client_info, callback, immHandle)) {
+          IMMSV_EVT finalize_evt, *out_evt;
           /* Callback protocol could not be honored due to some lack
              of client capabilities. E.g. applier can not handle long DNs
              while regular OI can, or there is no regular OI. The capabilties
@@ -1915,6 +1950,22 @@ SaAisErrorT imma_hdl_callbk_dispatch_block(IMMA_CB *cb,
            */
           client_info->stale = true;
           client_info->exposed = true;
+
+          out_evt = NULL;
+          memset(&finalize_evt, 0, sizeof(IMMSV_EVT));
+          finalize_evt.type = IMMSV_EVT_TYPE_IMMND;
+          finalize_evt.info.immnd.type = IMMND_EVT_A2ND_IMM_FINALIZE;
+          finalize_evt.info.immnd.info.finReq.client_hdl = client_info->handle;
+
+          /* send the request to the IMMND */
+          imma_mds_msg_sync_send(cb->imma_mds_hdl, &(cb->immnd_mds_dest),
+                                 &finalize_evt, &out_evt,
+                                 client_info->syncr_timeout);
+
+          if (out_evt) {
+            free(out_evt);
+          }
+
           return SA_AIS_ERR_BAD_HANDLE;
         }
       } else {
