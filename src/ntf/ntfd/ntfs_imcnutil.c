@@ -44,8 +44,6 @@ typedef struct {
 	SaAmfHAStateT ha_state;
 	pid_t pid;
 	pthread_t thread;
-	/* ntfimcn functionality: true(enabled), false(disabled)  */
-	bool ntfimcn_on;
 } init_params_t;
 
 static init_params_t ipar;
@@ -242,17 +240,8 @@ static void *cnsurvail_thread(void *_init_params)
 
 	while (1) {
 		osaf_mutex_lock_ordie(&ntfimcn_mutex);
-		/* Only start ntfimcn process if this functionality is
-		 * enabled, this is to avoid restarting ntfimcn when ntfd
-		 * receives SIGTERM (shutting down)
-		 * NOTE: Do not add any code outside below *if @ntfimcn_on*
-		 * block that may lead to a thread cancellation point while
-		 * ntfimcn_mutex is being locked
-		 */
-		if (ipar->ntfimcn_on == true) {
-			pid = create_imcnprocess(ipar->ha_state);
-			ipar->pid = pid;
-		}
+		pid = create_imcnprocess(ipar->ha_state);
+		ipar->pid = pid;
 		osaf_mutex_unlock_ordie(&ntfimcn_mutex);
 
 		/* Wait for child process to exit */
@@ -282,8 +271,7 @@ static void *cnsurvail_thread(void *_init_params)
 
 /**
  * Start the imcn process surveillance thread
- * When surveillance thread is running, this thread
- * will start and monitor ntfimcn process in cnsurvail_thread()
+ *
  * @param ha_state[in]
  */
 static void start_cnprocess(SaAmfHAStateT ha_state)
@@ -297,8 +285,7 @@ static void start_cnprocess(SaAmfHAStateT ha_state)
 		osaf_abort(rc);
 
 	ipar.ha_state = ha_state;
-	ipar.ntfimcn_on = true;
-	ipar.pid = 0;
+
 	rc =
 	    pthread_create(&ipar.thread, NULL, cnsurvail_thread, (void *)&ipar);
 	if (rc != 0)
@@ -343,40 +330,33 @@ void handle_state_ntfimcn(SaAmfHAStateT ha_state)
 }
 
 /**
- * This function stops functionality of ntfimcn by:
- * First: Kill imcn process
- * Second: Cancel the surveillance thread
- * (in reversed order of start ntfimcn)
+ * Cancel the surveillance trhead and kill the imcn process.
  * Use the pid and thread id saved when the process was started
  * This will terminate the process permanently.
  *
- * @return 0 if success, abort() on any error
+ * @return -1 if error
  */
 int stop_ntfimcn(void)
 {
+	void *join_ret;
 	int rc = 0;
 	TRACE_ENTER();
 
-	/* Kill ntfimcn */
-	osaf_mutex_lock_ordie(&ntfimcn_mutex);
-	if (ipar.ntfimcn_on == true) {
-		ipar.ntfimcn_on = false;
+	if (ipar.ha_state != 0) {
+		TRACE("%s: Cancel the imcn surveillance thread", __FUNCTION__);
+		rc = pthread_cancel(ipar.thread);
+		if (rc != 0)
+			osaf_abort(rc);
+		rc = pthread_join(ipar.thread, &join_ret);
+		if (rc != 0)
+			osaf_abort(rc);
+		rc = pthread_mutex_destroy(&ntfimcn_mutex);
+		if (rc != 0)
+			osaf_abort(rc);
+
 		TRACE("%s: Terminating osafntfimcnd process", __FUNCTION__);
 		timedwait_imcn_exit();
 	}
-	osaf_mutex_unlock_ordie(&ntfimcn_mutex);
-
-	/* Cancel the surveillance thread */
-	TRACE("%s: Cancel the imcn surveillance thread", __FUNCTION__);
-	rc = pthread_cancel(ipar.thread);
-	if (rc != 0)
-		osaf_abort(rc);
-	rc = pthread_join(ipar.thread, NULL);
-	if (rc != 0)
-		osaf_abort(rc);
-	rc = pthread_mutex_destroy(&ntfimcn_mutex);
-	if (rc != 0)
-		osaf_abort(rc);
 
 	TRACE_LEAVE();
 	return rc;
