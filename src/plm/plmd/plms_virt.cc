@@ -24,6 +24,7 @@
 
 #include <libvirt/virterror.h>
 #include <cstring>
+#include <fstream>
 #include <set>
 #include "osaf/immutil/immutil.h"
 #include "plm/common/plms_virt.h"
@@ -561,15 +562,45 @@ extern "C" SaUint32T plms_ee_instantiate_vm(const PLMS_ENTITY *entity) {
 
   TRACE_ENTER();
 
-  // find the hypervisor and tell it to boot the vm
-  PlmsVmmMap::iterator vmmIt(plmsVmmMap.find(entity->parent->dn_name));
+  do {
+    bool instantiate(true);
 
-  if (vmmIt != plmsVmmMap.end()) {
-    rc = vmmIt->second->instantiate(entity->dn_name);
-  } else {
-    LOG_ER("unable to find hypervisor to instantiate vm: %s",
-           entity->dn_name.value);
-  }
+    std::string plmcdFile(SYSCONFDIR);
+    plmcdFile += "/plmcd.conf";
+
+    std::ifstream ifs(plmcdFile.c_str(), std::ifstream::in);
+
+    while (ifs.good()) {
+      char myEE[SA_MAX_NAME_LENGTH];
+
+      ifs.getline(myEE, SA_MAX_NAME_LENGTH);
+
+      if (!strncmp(myEE, "safEE", sizeof("safEE") - 1)) {
+        if (!strcmp(reinterpret_cast<const char *>(entity->dn_name.value),
+                    myEE)) {
+          TRACE("not restting myself: virtual machine %s is already running",
+                entity->dn_name.value);
+          instantiate = false;
+          rc = NCSCC_RC_SUCCESS;
+        }
+
+        break;
+      }
+    }
+
+    if (!instantiate)
+      break;
+
+    // find the hypervisor and tell it to boot the vm
+    PlmsVmmMap::iterator vmmIt(plmsVmmMap.find(entity->parent->dn_name));
+
+    if (vmmIt != plmsVmmMap.end()) {
+      rc = vmmIt->second->instantiate(entity->dn_name);
+    } else {
+      LOG_ER("unable to find hypervisor to instantiate vm: %s",
+             entity->dn_name.value);
+    }
+  } while (false);
 
   TRACE_LEAVE();
 
