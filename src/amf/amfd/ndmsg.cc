@@ -371,7 +371,12 @@ uint32_t avd_n2d_msg_rcv(AVD_DND_MSG *rcv_msg, NODE_ID node_id,
 
   evt->info.avnd_msg = rcv_msg;
 
-  if (m_NCS_IPC_SEND(&cb->avd_mbx, evt, NCS_IPC_PRIORITY_HIGH) !=
+  NCS_IPC_PRIORITY priority = NCS_IPC_PRIORITY_HIGH;
+  if (evt->rcv_evt == AVD_EVT_NODE_UP_MSG) {
+    priority = NCS_IPC_PRIORITY_VERY_HIGH;
+  }
+
+  if (m_NCS_IPC_SEND(&cb->avd_mbx, evt, priority) !=
       NCSCC_RC_SUCCESS) {
     LOG_ER("%s: ncs_ipc_send failed", __FUNCTION__);
     avsv_dnd_msg_free(rcv_msg);
