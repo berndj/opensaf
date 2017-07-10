@@ -27,7 +27,7 @@
 			<flag>SA_INITIALIZED</flag> 
 		</rdn>
 		<attr>
-		      	<name>safEE</name> 
+		      	<name>saPlmEE</name>
 		      	<type>SA_NAME_T</type> 
 			<category>SA_CONFIG</category> 
 			<flag>SA_INITIALIZED</flag>
@@ -50,7 +50,7 @@
 			<flag>SA_INITIALIZED</flag> 
 		</rdn>
 		<attr>
-		      	<name>safEE</name> 
+		      	<name>saPlmEE</name>
 		      	<type>SA_NAME_T</type> 
 			<category>SA_CONFIG</category> 
 			<flag>SA_INITIALIZED</flag>

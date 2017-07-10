@@ -878,6 +878,8 @@ static SaAisErrorT plms_imm_ccb_obj_create_cbk(SaImmOiHandleT imm_oi_hdl,
 				if ((strncmp((char *)parent_name->value,
 					     "safDomain", 9) != 0) &&
 				    (strncmp((char *)parent_name->value,
+					     "safEE", sizeof("safEE") - 1) != 0) &&
+				    (strncmp((char *)parent_name->value,
 					     "safHE", 5) != 0)) {
 					TRACE_LEAVE2(
 					    "Invalid DN, object cannot be created");
@@ -901,6 +903,19 @@ static SaAisErrorT plms_imm_ccb_obj_create_cbk(SaImmOiHandleT imm_oi_hdl,
 					    "Invalid DN, object cannot be created");
 					return SA_AIS_ERR_BAD_OPERATION;
 				}
+			}
+		} else if (!strncmp(attr[j]->attrName, "plmVm", sizeof("plmVm") - 1)) {
+			/* RDN attribute, store the name and value */
+			obj_rdn = *(SaStringT *)*((attr[j])->attrValues);
+			TRACE_2("Object RDN: %s", obj_rdn);
+			if (!parent_name || (parent_name->length !=
+			     sizeof("safApp=safPlmService") - 1) ||
+			    (strncmp((char *)parent_name->value,
+				     "safApp=safPlmService",
+				     parent_name->length) != 0)) {
+				TRACE_LEAVE2(
+				    "Invalid DN, object cannot be created");
+				return SA_AIS_ERR_BAD_OPERATION;
 			}
 		}
 	}
