@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <syslog.h>
 
+#include "osaf/config.h"
 #include "plm/plmcd/plmc.h"
 
 static int checkfile(char *buf)

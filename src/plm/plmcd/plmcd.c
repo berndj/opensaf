@@ -54,6 +54,8 @@
 
 #include <arpa/inet.h>
 
+#include "osaf/config.h"
+
 #if (ENABLE_SYSTEMD == 1)
 #include <systemd/sd-daemon.h>
 #endif
