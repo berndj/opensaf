@@ -25,39 +25,58 @@ SaUint8T trackFlags;
 SaClmNodeIdT nodeId;
 SaInvocationT invocation;
 SaInvocationT lock_inv;
+static const char *s_node_name = "safNode=PL-3,safCluster=myClmCluster";
+
+static int clm_node_lock(const char *nodeName, int ignoreOutput) {
+	char command[256];
+
+	if (ignoreOutput) {
+		sprintf(command, "immadm -o 2 %s 2> /dev/null", nodeName);
+	} else {
+		sprintf(command, "immadm -o 2 %s", nodeName);
+	}
+	return system(command);
+}
+
+static int clm_node_unlock(const char *nodeName, int ignoreOutput) {
+	char command[256];
+
+	if (ignoreOutput) {
+		sprintf(command, "immadm -o 1 %s 2> /dev/null", nodeName);
+	} else {
+		sprintf(command, "immadm -o 1 %s", nodeName);
+	}
+	return system(command);
+}
+
+static int clm_node_shutdown(const char *nodeName, int ignoreOutput) {
+	char command[256];
+
+	if (ignoreOutput) {
+		sprintf(command, "immadm -o 3 %s 2> /dev/null", nodeName);
+	} else {
+		sprintf(command, "immadm -o 3 %s", nodeName);
+	}
+	return system(command);
+}
 
 static void *admin_lock(void *dummy)
 {
-	int rc;
-	char command[256];
-	char name[] = "safNode=PL-3,safCluster=myClmCluster";
-
-	sprintf(command, "immadm -o 2 %s", name);
-	assert((rc = system(command)) != -1);
+	assert(clm_node_lock(s_node_name, 0) != -1);
 	/*test_validate(WEXITSTATUS(rc), 0);*/
 	return NULL;
 }
 
 static void *admin_unlock(void *dummy)
 {
-	int rc;
-	char command[256];
-	char name[] = "safNode=PL-3,safCluster=myClmCluster";
-
-	sprintf(command, "immadm -o 1 %s", name);
-	assert((rc = system(command)) != -1);
+	assert(clm_node_unlock(s_node_name, 0) != -1);
 	/*test_validate(WEXITSTATUS(rc), 0);*/
 	return NULL;
 }
 
 static void *admin_shutdown(void *dummy)
 {
-	int rc;
-	char command[256];
-	char name[] = "safNode=PL-3,safCluster=myClmCluster";
-
-	sprintf(command, "immadm -o 3 %s", name);
-	assert((rc = system(command)) != -1);
+	assert(clm_node_shutdown(s_node_name, 0) != -1);
 	/*test_validate(WEXITSTATUS(rc), 0);*/
 	return NULL;
 }
@@ -68,9 +87,15 @@ static void saClmadmin_lock1(void)
 	char command[256];
 	char name[] = "safNode=PL-3,safCluster=myClmCluster";
 
+	// Lock node
+	clm_node_lock(name, 1);
+
 	sprintf(command, "immadm -o 2 %s", name);
 	assert((rc = system(command)) != -1);
 	test_validate(WEXITSTATUS(rc), 1);
+
+	// Reset CLM state
+	clm_node_unlock(name, 1);
 }
 
 static void saClmadmin_unlock1(void)
@@ -90,9 +115,15 @@ static void saClmadmin_shutdown1(void)
 	char command[256];
 	char name[] = "safNode=PL-3,safCluster=myClmCluster";
 
+	// Shutdown node
+	clm_node_shutdown(name, 1);
+
 	sprintf(command, "immadm -o 3 %s", name);
 	assert((rc = system(command)) != -1);
 	test_validate(WEXITSTATUS(rc), 1);
+
+	// Reset CLM state
+	clm_node_unlock(name, 1);
 }
 
 static void *plm_admin_trylock(void *dummy)
@@ -610,6 +641,9 @@ void saClmClusterTrack_21(void)
 	safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
 	safassert(saClmFinalize(clmHandle), SA_AIS_OK);
 	test_validate(rc, SA_AIS_OK);
+
+	// Reset CLM state
+	clm_node_unlock(s_node_name, 1);
 }
 
 void saClmClusterTrack_22(void)
@@ -617,6 +651,9 @@ void saClmClusterTrack_22(void)
 	struct pollfd fds[1];
 	int ret;
 	pthread_t thread1;
+
+	// Lock CLM
+	clm_node_lock(s_node_name, 1);
 
 	trackFlags = SA_TRACK_CHANGES_ONLY;
 
@@ -678,11 +715,12 @@ void saClmClusterTrack_23(void)
 	safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
 	safassert(saClmFinalize(clmHandle), SA_AIS_OK);
 	test_validate(rc, SA_AIS_OK);
+
+	// Reset CLM state
+	clm_node_unlock(s_node_name, 1);
 }
 
-void saClmClusterTrack_24(void) { saClmClusterTrack_22(); }
-
-void saClmClusterTrack_25(void)
+void saClmClusterTrack_24(void)
 {
 	struct pollfd fds[1];
 	int ret;
@@ -729,11 +767,12 @@ void saClmClusterTrack_25(void)
 	safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
 	safassert(saClmFinalize(clmHandle), SA_AIS_OK);
 	test_validate(rc, SA_AIS_OK);
+
+	// Reset CLM state
+	clm_node_unlock(s_node_name, 1);
 }
 
-void saClmClusterTrack_26(void) { saClmClusterTrack_22(); }
-
-void saClmClusterTrack_27(void)
+void saClmClusterTrack_25(void)
 {
 	struct pollfd fds[1];
 	int ret;
@@ -781,11 +820,12 @@ void saClmClusterTrack_27(void)
 	safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
 	safassert(saClmFinalize(clmHandle), SA_AIS_OK);
 	test_validate(rc, SA_AIS_OK);
+
+	// Reset CLM state
+	clm_node_unlock(s_node_name, 1);
 }
 
-void saClmClusterTrack_29(void) { saClmClusterTrack_22(); }
-
-void saClmClusterTrack_30(void)
+void saClmClusterTrack_27(void)
 {
 	struct pollfd fds[1];
 	int ret;
@@ -833,9 +873,11 @@ void saClmClusterTrack_30(void)
 	safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
 	safassert(saClmFinalize(clmHandle), SA_AIS_OK);
 	test_validate(rc, SA_AIS_OK);
+
+	// Reset CLM state
+	clm_node_unlock(s_node_name, 1);
 }
-void saClmClusterTrack_31(void) { saClmClusterTrack_22(); }
-void saClmClusterTrack_32(void)
+void saClmClusterTrack_28(void)
 {
 	struct pollfd fds[1];
 	int ret;
@@ -883,12 +925,13 @@ void saClmClusterTrack_32(void)
 	safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
 	safassert(saClmFinalize(clmHandle), SA_AIS_OK);
 	test_validate(rc, SA_AIS_OK);
+
+	// Reset CLM state
+	clm_node_unlock(s_node_name, 1);
 }
 
-void saClmClusterTrack_34(void) { saClmClusterTrack_22(); }
-
 /*plm admin trylock*/
-void saClmClusterTrack_36(void)
+void saClmClusterTrack_31(void)
 {
 	struct pollfd fds[1];
 	int ret;
@@ -1031,39 +1074,24 @@ __attribute__((constructor)) static void saClmClusterTrack_constructor(void)
 	    "saClmClusterTrack_4 with SA_TRACK_CHANGES track flags - admin lock");
 	test_case_add(
 	    7, saClmClusterTrack_24,
-	    "saClmClusterTrack_4 with SA_TRACK_CHANGES_ONLY track flags - admin unlock");
-	test_case_add(
-	    7, saClmClusterTrack_25,
 	    "saClmClusterTrack_4 with SA_TRACK_CHANGES and START STEP track flags - admin lock");
 	test_case_add(
-	    7, saClmClusterTrack_26,
-	    "saClmClusterTrack_4 with SA_TRACK_CHANGES_ONLY track flags - admin unlock");
-	test_case_add(
-	    7, saClmClusterTrack_27,
+	    7, saClmClusterTrack_25,
 	    "saClmClusterTrack_4 with SA_TRACK_CHANGES_ONLY and START STEP track flags -admin lock");
 	test_case_add(7, saClmadmin_lock1,
 		      "admin lock of the already lock node");
 	test_case_add(
-	    7, saClmClusterTrack_29,
-	    "saClmClusterTrack_4 with SA_TRACK_CHANGES_ONLY track flags - admin unlock");
-	test_case_add(
-	    7, saClmClusterTrack_30,
+	    7, saClmClusterTrack_27,
 	    "saClmClusterTrack_4 with SA_TRACK_CHANGES_ONLY and START STEP track flags - adminshutdown ");
 	test_case_add(
-	    7, saClmClusterTrack_31,
-	    "saClmClusterTrack_4 with SA_TRACK_CHANGES_ONLY track flags - admin unlock  ");
-	test_case_add(
-	    7, saClmClusterTrack_32,
+	    7, saClmClusterTrack_28,
 	    "saClmClusterTrack_4 with SA_TRACK_CHANGES track flags - admin shutdown");
 	test_case_add(7, saClmadmin_shutdown1,
 		      "admin shutdown of already shut node");
-	test_case_add(
-	    7, saClmClusterTrack_34,
-	    "saClmClusterTrack_4 with SA_TRACK_CHANGES_ONLY track flags - admin unlock");
 	test_case_add(7, saClmadmin_unlock1, "unlock already unlocked node");
 	/* Uncomment these two test cases if PLM is enabled */
 	test_case_add(
-	    7, saClmClusterTrack_36,
+	    7, saClmClusterTrack_31,
 	    "saClmClusterTrack_4 with START STEP,VALIDATE STEP and changes - PLM admin trylock");
 	test_case_add(7, saClmPlm_unlock, "PLM admin Unlock");
 }

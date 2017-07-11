@@ -38,6 +38,13 @@ SaNameT node_name;
 void clm_init(void)
 {
 	FILE *fp;
+	// Command list to execute before tests start
+	char *command[] = {
+		// Unlock PL-3
+		"immadm -o 1 safNode=PL-3,safCluster=myClmCluster 2> /dev/null"
+	};
+	int command_list_size = 1;
+	int i;
 
 	fp = fopen("/etc/opensaf/node_name", "r");
 	if (fp == NULL) {
@@ -49,6 +56,14 @@ void clm_init(void)
 	if (cnt == 1)
 		node_name.length = strlen((char *)node_name.value);
 	fclose(fp);
+
+	// Execute commands
+	for(i=0; i<command_list_size; ++i) {
+		/* Return code is not important, and will be ignored.
+		 * To avoid warn_unused_result warning on some compilers,
+		 * system is executed within empty 'if' statement */
+		if(system(command[i])) {}
+	}
 }
 
 const SaVersionT refVersion = CLM_HIGHEST_SUPPORTED_VERSION;
