@@ -5429,7 +5429,7 @@ void verLogFileRotate(void)
 	FILE *fp = NULL;
 	char fileSize_c[10];
 	uint32_t fileSize = 0;
-	char logRecord[1000];
+	char logRecord[1000] = {0};
 	SaUint32T v_saLogStreamFixedLogRecordSize = 0;
 	const int max_log_file_size = 1500, fixed_log_rec_size = 1000;
 

@@ -109,6 +109,35 @@ static uint32_t dec_finalize_msg(NCS_UBAID *uba, lgsv_msg_t *msg) {
   return rc;
 }
 
+static uint32_t decode_sanamet(NCS_UBAID *uba, uint8_t *p8, SaNameT *name)
+{
+  uint8_t local_data[2];
+  p8 = ncs_dec_flatten_space(uba, local_data, 2);
+  // Decode the length of name
+  size_t length = ncs_decode_16bit(&p8);
+  if (length > kOsafMaxDnLength) {
+    LOG_WA("SaNameT length too long: %zu", length);
+    return NCSCC_RC_FAILURE;
+  }
+  ncs_dec_skip_space(uba, 2);
+
+  // This allocated memory have to be freed in main thread
+  char *value = static_cast<char *>(calloc(1, length + 1));
+  if (value == NULL) {
+    LOG_ER("Fail to allocated memory");
+    return NCSCC_RC_FAILURE;
+  }
+
+  // Decode name
+  ncs_decode_n_octets_from_uba(uba, reinterpret_cast<uint8_t *>(value),
+                               static_cast<uint32_t>(length));
+
+  value[length] = '\0';
+  osaf_extended_name_clear(name);
+  osaf_extended_name_steal(value, name);
+  return NCSCC_RC_SUCCESS;
+}
+
 /****************************************************************************
   Name          : dec_lstr_open_sync_msg
 
@@ -127,7 +156,6 @@ static uint32_t dec_lstr_open_sync_msg(NCS_UBAID *uba, lgsv_msg_t *msg) {
   uint32_t rc = NCSCC_RC_SUCCESS;
   lgsv_stream_open_req_t *param = &msg->info.api_info.param.lstr_open_sync;
   uint8_t local_data[256];
-  char *str_name = NULL;
 
   TRACE_ENTER();
   // To make it safe when using free()
@@ -140,29 +168,13 @@ static uint32_t dec_lstr_open_sync_msg(NCS_UBAID *uba, lgsv_msg_t *msg) {
   param->client_id = ncs_decode_32bit(&p8);
   ncs_dec_skip_space(uba, 4);
 
-  /* log stream name length */
-  p8 = ncs_dec_flatten_space(uba, local_data, 2);
-  size_t length = ncs_decode_16bit(&p8);
-  ncs_dec_skip_space(uba, 2);
 
-  if (length >= kOsafMaxDnLength) {
-    TRACE("%s - lstr_name too long", __FUNCTION__);
-    rc = NCSCC_RC_FAILURE;
+  // Decode logStreamName
+  rc = decode_sanamet(uba, p8, &param->lstr_name);
+  if (rc == NCSCC_RC_FAILURE) {
+    LOG_WA("Decode logStreamName FAILED");
     goto done;
   }
-
-  /* log stream name */
-  str_name = static_cast<char *>(calloc(1, length + 1));
-  if (str_name == NULL) {
-    LOG_ER("Fail to allocated memory - str_name");
-    rc = NCSCC_RC_FAILURE;
-    goto done;
-  }
-  ncs_decode_n_octets_from_uba(uba, reinterpret_cast<uint8_t *>(str_name),
-                               static_cast<uint32_t>(length));
-  osaf_extended_name_clear(&param->lstr_name);
-  /* This allocated memory must be freed in proc_stream_open_msg @lgs_evt */
-  osaf_extended_name_alloc(str_name, &param->lstr_name);
 
   /* log file name */
   p8 = ncs_dec_flatten_space(uba, local_data, 2);
@@ -249,8 +261,6 @@ done_err:
   free(param->logFileFmt);
 
 done:
-  free(str_name);
-  str_name = NULL;
   TRACE_8("LGSV_STREAM_OPEN_REQ");
   return rc;
 }
@@ -287,18 +297,17 @@ static uint32_t dec_write_ntf_log_header(NCS_UBAID *uba,
                                          SaLogNtfLogHeaderT *const ntfLogH) {
   uint8_t *p8;
   uint8_t local_data[1024];
-  size_t notificationL, notifyingL;
   uint32_t rc = NCSCC_RC_SUCCESS;
-  char *notificationObj = NULL;
-  char *notifyingObj = NULL;
 
   ntfLogH->notificationObject = NULL;
   ntfLogH->notifyingObject = NULL;
   ntfLogH->notificationClassId = NULL;
 
-  p8 = ncs_dec_flatten_space(uba, local_data, 14);
+  p8 = ncs_dec_flatten_space(uba, local_data, 12);
   ntfLogH->notificationId = ncs_decode_64bit(&p8);
   ntfLogH->eventType = static_cast<SaNtfEventTypeT>(ncs_decode_32bit(&p8));
+  ncs_dec_skip_space(uba, 12);
+
 
   ntfLogH->notificationObject =
       static_cast<SaNameT *>(malloc(sizeof(SaNameT) + 1));
@@ -308,25 +317,12 @@ static uint32_t dec_write_ntf_log_header(NCS_UBAID *uba,
     goto done;
   }
 
-  notificationL = ncs_decode_16bit(&p8);
-  if (kOsafMaxDnLength <= notificationL) {
-    LOG_WA("notificationObject length is so long (max: %d)", kOsafMaxDnLength);
-    rc = NCSCC_RC_FAILURE;
+  // Decode notificationObject
+  rc = decode_sanamet(uba, p8, ntfLogH->notificationObject);
+  if (rc == NCSCC_RC_FAILURE) {
+    LOG_WA("Decode notificationObject FAILED");
     goto done;
   }
-  ncs_dec_skip_space(uba, 14);
-
-  notificationObj = static_cast<char *>(calloc(1, notificationL + 1));
-  if (notificationObj == NULL) {
-    LOG_WA("Fail to allocated memory - notificationObj");
-    rc = NCSCC_RC_FAILURE;
-    goto done;
-  }
-  ncs_decode_n_octets_from_uba(uba,
-                               reinterpret_cast<uint8_t *>(notificationObj),
-                               static_cast<uint32_t>(notificationL));
-  osaf_extended_name_clear(ntfLogH->notificationObject);
-  osaf_extended_name_alloc(notificationObj, ntfLogH->notificationObject);
 
   ntfLogH->notifyingObject =
       static_cast<SaNameT *>(malloc(sizeof(SaNameT) + 1));
@@ -336,25 +332,12 @@ static uint32_t dec_write_ntf_log_header(NCS_UBAID *uba,
     goto done;
   }
 
-  p8 = ncs_dec_flatten_space(uba, local_data, 2);
-  notifyingL = ncs_decode_16bit(&p8);
-  ncs_dec_skip_space(uba, 2);
-
-  if (kOsafMaxDnLength <= notifyingL) {
-    LOG_WA("notifyingObject is so long (max: %d)", kOsafMaxDnLength);
-    rc = NCSCC_RC_FAILURE;
+  // Decode notifyingObject
+  rc = decode_sanamet(uba, p8, ntfLogH->notifyingObject);
+  if (rc == NCSCC_RC_FAILURE) {
+    LOG_WA("Decode notifyingObject FAILED");
     goto done;
   }
-  notifyingObj = static_cast<char *>(calloc(1, notifyingL + 1));
-  if (notifyingObj == NULL) {
-    LOG_WA("Fail to allocated memory - notifyingObj");
-    rc = NCSCC_RC_FAILURE;
-    goto done;
-  }
-  ncs_decode_n_octets_from_uba(uba, reinterpret_cast<uint8_t *>(notifyingObj),
-                               static_cast<uint32_t>(notifyingL));
-  osaf_extended_name_clear(ntfLogH->notifyingObject);
-  osaf_extended_name_alloc(notifyingObj, ntfLogH->notifyingObject);
 
   ntfLogH->notificationClassId =
       static_cast<SaNtfClassIdT *>(malloc(sizeof(SaNtfClassIdT)));
@@ -371,8 +354,6 @@ static uint32_t dec_write_ntf_log_header(NCS_UBAID *uba,
   ncs_dec_skip_space(uba, 16);
 
 done:
-  free(notificationObj);
-  free(notifyingObj);
   TRACE("%s - rc = %d", __func__, rc);
   return rc;
 }
@@ -381,9 +362,7 @@ static uint32_t dec_write_gen_log_header(
     NCS_UBAID *uba, SaLogGenericLogHeaderT *const genLogH) {
   uint8_t *p8;
   uint8_t local_data[1024];
-  size_t svcLength;
   uint32_t rc = NCSCC_RC_SUCCESS;
-  char *logSvcUsrName = NULL;
 
   genLogH->notificationClassId = NULL;
   genLogH->logSvcUsrName = NULL;
@@ -396,42 +375,30 @@ static uint32_t dec_write_gen_log_header(
     goto done;
   }
 
-  p8 = ncs_dec_flatten_space(uba, local_data, 10);
+  p8 = ncs_dec_flatten_space(uba, local_data, 8);
   genLogH->notificationClassId->vendorId = ncs_decode_32bit(&p8);
   genLogH->notificationClassId->majorId = ncs_decode_16bit(&p8);
   genLogH->notificationClassId->minorId = ncs_decode_16bit(&p8);
+  ncs_dec_skip_space(uba, 8);
 
-  svcLength = ncs_decode_16bit(&p8);
-  if (kOsafMaxDnLength <= svcLength) {
-    LOG_WA("logSvcUsrName too big (max: %d)", kOsafMaxDnLength);
-    rc = NCSCC_RC_FAILURE;
-    goto done;
-  }
-  logSvcUsrName = static_cast<char *>(malloc(svcLength + 1));
-  if (logSvcUsrName == NULL) {
-    LOG_WA("malloc FAILED");
-    rc = NCSCC_RC_FAILURE;
-    goto done;
-  }
   genLogH->logSvcUsrName = static_cast<SaNameT *>(malloc(sizeof(SaNameT) + 1));
   if (genLogH->logSvcUsrName == NULL) {
     LOG_WA("malloc FAILED");
     rc = NCSCC_RC_FAILURE;
     goto done;
   }
-  ncs_dec_skip_space(uba, 10);
-  ncs_decode_n_octets_from_uba(uba, reinterpret_cast<uint8_t *>(logSvcUsrName),
-                               static_cast<uint32_t>(svcLength));
-  osaf_extended_name_clear(const_cast<SaNameT *>(genLogH->logSvcUsrName));
-  osaf_extended_name_alloc(logSvcUsrName,
-                           const_cast<SaNameT *>(genLogH->logSvcUsrName));
+  // Decode logSvcUsrName
+  rc = decode_sanamet(uba, p8, const_cast<SaNameT *>(genLogH->logSvcUsrName));
+  if (rc == NCSCC_RC_FAILURE) {
+    LOG_WA("Decode logSvcUsrName FAILED");
+    goto done;
+  }
 
   p8 = ncs_dec_flatten_space(uba, local_data, 2);
   genLogH->logSeverity = ncs_decode_16bit(&p8);
   ncs_dec_skip_space(uba, 2);
 
 done:
-  free(logSvcUsrName);
   TRACE("%s - rc = %d", __func__, rc);
   return rc;
 }

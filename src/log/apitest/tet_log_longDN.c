@@ -754,21 +754,21 @@ void longDNAt_No_token(void)
 	ais = initLog();
 	if (ais != SA_AIS_OK) {
 		fprintf(stderr, "initLog FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done;
 	}
 
 	ais = openLog(E_ALARM);
 	if (ais != SA_AIS_OK) {
 		fprintf(stderr, "openLog FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done_init;
 	}
 
 	ais = saLogSelectionObjectGet(logHandleLd, &selectionObjectLd);
 	if (ais != SA_AIS_OK) {
 		printf("saLogSelectionObjectGet FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done_init;
 	}
 
@@ -780,7 +780,7 @@ void longDNAt_No_token(void)
 	ais = writeLog();
 	if (ais != SA_AIS_OK) {
 		fprintf(stderr, "saLogOpen FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done_init;
 	}
 
@@ -821,21 +821,21 @@ void longDNAt_Ng_token(void)
 	ais = initLog();
 	if (ais != SA_AIS_OK) {
 		fprintf(stderr, "saLogInitialize FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done;
 	}
 
 	ais = openLog(E_NOTIF);
 	if (ais != SA_AIS_OK) {
 		fprintf(stderr, "saLogOpen FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done_init;
 	}
 
 	ais = saLogSelectionObjectGet(logHandleLd, &selectionObjectLd);
 	if (ais != SA_AIS_OK) {
 		printf("saLogSelectionObjectGet FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done_init;
 	}
 
@@ -847,7 +847,7 @@ void longDNAt_Ng_token(void)
 	ais = writeLog();
 	if (ais != SA_AIS_OK) {
 		fprintf(stderr, "saLogOpen FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done_init;
 	}
 
@@ -888,21 +888,21 @@ void longDNAt_Sl_token(void)
 	ais = initLog();
 	if (ais != SA_AIS_OK) {
 		fprintf(stderr, "saLogInitialize FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done;
 	}
 
 	ais = openLog(E_SYSTE);
 	if (ais != SA_AIS_OK) {
 		fprintf(stderr, "saLogOpen FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done_init;
 	}
 
 	ais = saLogSelectionObjectGet(logHandleLd, &selectionObjectLd);
 	if (ais != SA_AIS_OK) {
 		printf("saLogSelectionObjectGet FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done_init;
 	}
 
@@ -914,7 +914,7 @@ void longDNAt_Sl_token(void)
 	ais = writeLog();
 	if (ais != SA_AIS_OK) {
 		fprintf(stderr, "saLogOpen FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done_init;
 	}
 
@@ -962,28 +962,28 @@ void longDN_AppStream(void)
 	ais = initLog();
 	if (ais != SA_AIS_OK) {
 		fprintf(stderr, "saLogInitialize FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done;
 	}
 
 	ais = openLog(E_APPLI);
 	if (ais != SA_AIS_OK) {
 		fprintf(stderr, "saLogOpen FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done_init;
 	}
 
 	ais = saLogSelectionObjectGet(logHandleLd, &selectionObjectLd);
 	if (ais != SA_AIS_OK) {
 		printf("saLogSelectionObjectGet FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done_init;
 	}
 
 	ais = writeLog();
 	if (ais != SA_AIS_OK) {
 		fprintf(stderr, "saLogOpen FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done_init;
 	}
 
@@ -1064,31 +1064,31 @@ void longDN_No_Over_MaxDn(void)
 	ais = initLog();
 	if (ais != SA_AIS_OK) {
 		fprintf(stderr, "initLog FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done;
 	}
 
 	ais = openLog(E_ALARM);
 	if (ais != SA_AIS_OK) {
 		fprintf(stderr, "openLog FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done_init;
 	}
 
 	ais = saLogSelectionObjectGet(logHandleLd, &selectionObjectLd);
 	if (ais != SA_AIS_OK) {
 		printf("saLogSelectionObjectGet FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done_init;
 	}
 
 	// Long DN in @No token
-	char notificationObj[kOsafMaxDnLength + 1] = {0};
-	memset(notificationObj, 'X', sizeof(notificationObj) - 1);
+	char notificationObj[kOsafMaxDnLength + 2] = {0};
+	memset(notificationObj, 'X', kOsafMaxDnLength + 1);
 	saAisNameLend(notificationObj, &notificationObjLd);
 
 	ais = writeLog();
-	rc_validate(ais, SA_AIS_ERR_INVALID_PARAM);
+	test_validate(ais, SA_AIS_ERR_INVALID_PARAM);
 
 // End testing. Close handles and restore data
 done_init:
@@ -1124,31 +1124,31 @@ void longDN_Ng_Over_MaxDn(void)
 	ais = initLog();
 	if (ais != SA_AIS_OK) {
 		fprintf(stderr, "saLogInitialize FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done;
 	}
 
 	ais = openLog(E_NOTIF);
 	if (ais != SA_AIS_OK) {
 		fprintf(stderr, "saLogOpen FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done_init;
 	}
 
 	ais = saLogSelectionObjectGet(logHandleLd, &selectionObjectLd);
 	if (ais != SA_AIS_OK) {
 		printf("saLogSelectionObjectGet FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done_init;
 	}
 
 	// Long DN in @No token
-	char notifyingObj[kOsafMaxDnLength + 1] = {0};
-	memset(notifyingObj, 'Y', sizeof(notifyingObj) - 1);
+	char notifyingObj[kOsafMaxDnLength + 2] = {0};
+	memset(notifyingObj, 'Y', kOsafMaxDnLength + 1);
 	saAisNameLend(notifyingObj, &notifyingObjLd);
 
 	ais = writeLog();
-	rc_validate(ais, SA_AIS_ERR_INVALID_PARAM);
+	test_validate(ais, SA_AIS_ERR_INVALID_PARAM);
 
 // End testing. Close handles and restore data
 done_init:
@@ -1184,31 +1184,31 @@ void longDN_Sl_Over_MaxDn(void)
 	ais = initLog();
 	if (ais != SA_AIS_OK) {
 		fprintf(stderr, "saLogInitialize FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done;
 	}
 
 	ais = openLog(E_SYSTE);
 	if (ais != SA_AIS_OK) {
 		fprintf(stderr, "saLogOpen FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done_init;
 	}
 
 	ais = saLogSelectionObjectGet(logHandleLd, &selectionObjectLd);
 	if (ais != SA_AIS_OK) {
 		printf("saLogSelectionObjectGet FAILED: %s\n", saf_error(ais));
-		rc_validate(ais, SA_AIS_OK);
+		test_validate(ais, SA_AIS_OK);
 		goto done_init;
 	}
 
 	// Long DN in @Sl token
-	char serviceName[kOsafMaxDnLength + 1] = {0};
-	memset(serviceName, 'Z', sizeof(serviceName) - 1);
+	char serviceName[kOsafMaxDnLength + 2] = {0};
+	memset(serviceName, 'Z', kOsafMaxDnLength + 1);
 	saAisNameLend(serviceName, &logSvcUsrNameLd);
 
 	ais = writeLog();
-	rc_validate(ais, SA_AIS_ERR_INVALID_PARAM);
+	test_validate(ais, SA_AIS_ERR_INVALID_PARAM);
 
 // End testing. Close handles and restore data
 done_init:
@@ -1280,7 +1280,67 @@ void longDNIn_AppStreamDN_ButNoF(void)
 		return;
 	}
 
-	rc_validate(WEXITSTATUS(rc), 0);
+	rc_validate(WEXITSTATUS(rc), 1);
+}
+
+//>>
+// UC1: Write an log records with length of `notificationObject`
+// is kOsafMaxDnLength (2048) using Log API.
+//<<
+void longDN_No_MaxDn(void)
+{
+	int rc;
+	SaAisErrorT ais;
+
+	rc = backupData(E_ALARM);
+	if (rc != 0) {
+		fprintf(stderr, "Backup data failed\n");
+		// Not report test failed as can use default data to restore.
+		// rc_validate(WEXITSTATUS(rc), 0);
+		// return;
+	}
+
+	rc = setUpTestEnv(E_ALARM);
+	if (rc != 0) {
+		fprintf(stderr, "set up env failed\n");
+		rc_validate(WEXITSTATUS(rc), 0);
+		goto done;
+	}
+
+	ais = initLog();
+	if (ais != SA_AIS_OK) {
+		fprintf(stderr, "initLog FAILED: %s\n", saf_error(ais));
+		test_validate(ais, SA_AIS_OK);
+		goto done;
+	}
+
+	ais = openLog(E_ALARM);
+	if (ais != SA_AIS_OK) {
+		fprintf(stderr, "openLog FAILED: %s\n", saf_error(ais));
+		test_validate(ais, SA_AIS_OK);
+		goto done_init;
+	}
+
+	ais = saLogSelectionObjectGet(logHandleLd, &selectionObjectLd);
+	if (ais != SA_AIS_OK) {
+		printf("saLogSelectionObjectGet FAILED: %s\n", saf_error(ais));
+		test_validate(ais, SA_AIS_OK);
+		goto done_init;
+	}
+
+	// Long DN in @No token
+	char notificationObj[kOsafMaxDnLength + 1] = {0};
+	memset(notificationObj, 'X', kOsafMaxDnLength);
+	saAisNameLend(notificationObj, &notificationObjLd);
+
+	ais = writeLog();
+	test_validate(ais, SA_AIS_OK);
+
+// End testing. Close handles and restore data
+done_init:
+	endLog();
+done:
+	restoreData(E_ALARM);
 }
 
 /*
@@ -1317,4 +1377,7 @@ __attribute__((constructor)) static void longDN_constructor(void)
 	test_case_add(
 	    13, longDNIn_AppStreamDN_ButNoF,
 	    "Write a log record to long DN runtime app using saflogger, but no f option");
+	test_case_add(
+	    13, longDN_No_MaxDn,
+	    "Write a log record with notificationObj (@No) max length");
 }

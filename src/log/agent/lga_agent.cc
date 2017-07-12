@@ -1055,7 +1055,7 @@ SaAisErrorT LogAgent::HandleLogRecord(const SaLogRecordT* logRecord,
         ais_rc = SA_AIS_ERR_INVALID_PARAM;
         return ais_rc;
       }
-      if (strlen(logSvcUsrName) >= kOsafMaxDnLength) {
+      if (strlen(logSvcUsrChars) > kOsafMaxDnLength) {
         TRACE("SA_AMF_COMPONENT_NAME is too long");
         ais_rc = SA_AIS_ERR_INVALID_PARAM;
         return ais_rc;
@@ -1111,7 +1111,7 @@ SaAisErrorT LogAgent::saLogWriteLogAsync(SaLogStreamHandleT logStreamHandle,
   lgsv_msg_t msg;
   SaAisErrorT ais_rc = SA_AIS_OK;
   lgsv_write_log_async_req_t* write_param;
-  char logSvcUsrName[kOsafMaxDnLength] = {0};
+  char logSvcUsrName[kOsafMaxDnLength + 1] = {0};
   bool is_locked = false;
   SaNameT tmpSvcUsrName;
   bool cUpdated = false, sUpdated = false;

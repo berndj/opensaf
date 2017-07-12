@@ -109,7 +109,7 @@ int log_rtobj_list_add(const std::string &dn_str) {
   }
 
   /* Save dn string */
-  len = dn_str.size() + 1; /* Including '\0' */
+  len = dn_str.size();
   if (len > kOsafMaxDnLength) {
     /* Should never happen */
     LOG_WA("%s\tToo long dn string!", __FUNCTION__);
@@ -117,7 +117,7 @@ int log_rtobj_list_add(const std::string &dn_str) {
     goto done;
   }
 
-  str_ptr = static_cast<char *>(calloc(1, len));
+  str_ptr = static_cast<char *>(calloc(1, len + 1));
   if (str_ptr == NULL) {
     LOG_WA("%s\tcalloc Fail", __FUNCTION__);
     rc = -1;
@@ -336,7 +336,7 @@ int lgs_restore_one_app_stream(const std::string &stream_name,
     rc_out = -1;
     goto done;
   }
-  if (stream_name.size() >= kOsafMaxDnLength) {
+  if (stream_name.size() > kOsafMaxDnLength) {
     TRACE("Log stream name \"%s\" is truncated", stream_name.c_str());
     rc_out = -1;
     goto done;

@@ -143,8 +143,9 @@ bool lga_is_extended_name_valid(const SaNameT* name) {
   if (name == nullptr) return false;
   if (osaf_is_extended_name_valid(name) == false) return false;
 
-  SaConstStringT str = osaf_extended_name_borrow(name);
-  if (strlen(str) >= kOsafMaxDnLength) return false;
+  if (osaf_extended_name_length(name) > kOsafMaxDnLength) {
+    return false;
+  }
 
   return true;
 }
