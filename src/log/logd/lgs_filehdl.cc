@@ -25,10 +25,10 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <string>
 
 #include "base/logtrace.h"
 #include "base/osaf_time.h"
-
 #include "log/logd/lgs.h"
 
 extern pthread_mutex_t lgs_ftcom_mutex; /* For locking communication */
@@ -51,7 +51,7 @@ int path_is_writeable_dir_hdl(void *indata, void *outdata, size_t max_outsize) {
   int is_writeable_dir = 0;
   struct stat pathstat;
 
-  char *pathname = (char *)indata;
+  char *pathname = static_cast<char *>(indata);
 
   TRACE_ENTER();
 
@@ -97,7 +97,7 @@ done:
  */
 int check_path_exists_hdl(void *indata, void *outdata, size_t max_outsize) {
   struct stat pathstat;
-  char *path_str = (char *)indata;
+  char *path_str = static_cast<char *>(indata);
   int rc = 0;
 
   osaf_mutex_unlock_ordie(&lgs_ftcom_mutex); /* UNLOCK  Critical section */
@@ -162,9 +162,9 @@ int create_config_file_hdl(void *indata, void *outdata, size_t max_outsize) {
 
   /* Create the config file */
   do {
-    if ((filp = fopen(file_path, "w")) != NULL) break;
+    if ((filp = fopen(file_path, "w")) != nullptr) break;
   } while (errno == EINTR);
-  if (filp == NULL) {
+  if (filp == nullptr) {
     LOG_NO("Could not open '%s' - %s", file_path, strerror(errno));
     rc = -1;
     goto done;
@@ -305,9 +305,9 @@ done:
     But consider it as a trade-off to have a better performance of LOGsv
     as time-out occurs very rarely.
   */
-  if ((*timeout_f == true) && (logrecord != NULL)) {
+  if ((*timeout_f == true) && (logrecord != nullptr)) {
     free(logrecord);
-    logrecord = NULL;
+    logrecord = nullptr;
   }
 
   TRACE_LEAVE2("rc = %d", rc);
@@ -337,8 +337,8 @@ int make_log_dir_hdl(void *indata, void *outdata, size_t max_outsize) {
   std::string rootpath = params_in->root_dir;
   std::string dir_to_make;
   std::string mpath;
-  const char *spath_p = NULL;
-  const char *epath_p = NULL;
+  const char *spath_p = nullptr;
+  const char *epath_p = nullptr;
   int path_len = 0;
 
   TRACE_ENTER();
@@ -372,7 +372,7 @@ int make_log_dir_hdl(void *indata, void *outdata, size_t max_outsize) {
 
   /* Create the path */
   spath_p = epath_p = dir_to_make.c_str();
-  while ((epath_p = strchr(epath_p, '/')) != NULL) {
+  while ((epath_p = strchr(epath_p, '/')) != nullptr) {
     if (epath_p == spath_p) {
       epath_p++;
       continue; /* Don't try to create path "/" */
@@ -796,9 +796,9 @@ int get_number_of_cfg_files_hdl(void *indata, void *outdata,
 
     if ((old_ind != -1) && (cfg_old_date == log_old_date) &&
         (cfg_old_time <= log_old_time)) {
-      TRACE_1(
-          " (cfg_old_date:%d == log_old_date:%d) && (cfg_old_time:%d <= log_old_time:%d )",
-          cfg_old_date, log_old_date, cfg_old_time, log_old_time);
+      TRACE_1(" (cfg_old_date:%d == log_old_date:%d) &&"
+              " (cfg_old_time:%d <= log_old_time:%d )",
+              cfg_old_date, log_old_date, cfg_old_time, log_old_time);
       TRACE_1("oldest: %s", cfg_namelist[old_ind]->d_name);
       n = snprintf(oldest_file, max_outsize, "%s/%s", path.c_str(),
                    cfg_namelist[old_ind]->d_name);
@@ -924,7 +924,7 @@ done_exit:
 static int chr_cnt_b(char *str, char c, int lim) {
   int cnt = 0;
 
-  if ((str == NULL) || (*str == '\0')) {
+  if ((str == nullptr) || (*str == '\0')) {
     TRACE("%s: Parameter error", __FUNCTION__);
     return 0;
   }
@@ -954,13 +954,13 @@ static int chr_cnt_b(char *str, char c, int lim) {
 /* Filename prefix (no timestamps or extension */
 static std::string file_name_find_g;
 static int filter_logfile_name(const struct dirent *finfo) {
-  bool name_found = false, ext_found = false;
+  int found = 0;
 
-  if (strstr(finfo->d_name, file_name_find_g.c_str()) != NULL)
-    name_found = true;
-  if (strstr(finfo->d_name, ".log") != NULL) ext_found = true;
+  if ((strstr(finfo->d_name, file_name_find_g.c_str()) != nullptr) &&
+      (strstr(finfo->d_name, ".log") != nullptr))
+    found = 1;
 
-  return (int)(name_found && ext_found);
+  return found;
 }
 
 /**
@@ -976,7 +976,7 @@ static int filter_logfile_name(const struct dirent *finfo) {
  * @return -1 on error filename_o is not valid
  */
 static int filename_get(char *filepath_i, char *filename_i,
-                        std::string &filename_o, std::string &curname_o,
+                        std::string *filename_o, std::string *curname_o,
                         uint32_t *fsize) {
   int rc = 0;
   int num_files = 0;
@@ -985,7 +985,7 @@ static int filename_get(char *filepath_i, char *filename_i,
   struct stat statbuf;
   std::string file_path;
   double time_tmp;
-  char *str_p = NULL;
+  char *str_p = nullptr;
   int len = 0;
   /* Time newest file */
   double time_new = 0;
@@ -997,8 +997,8 @@ static int filename_get(char *filepath_i, char *filename_i,
   TRACE_ENTER();
 
   // /* Initiate out data */
-  filename_o.clear();
-  curname_o.clear();
+  filename_o->clear();
+  curname_o->clear();
   *fsize = 0;
 
   /* Create a list of all .log files that has
@@ -1029,7 +1029,7 @@ static int filename_get(char *filepath_i, char *filename_i,
     }
 
     /* Save found file name */
-    filename_o = namelist[0]->d_name;
+    *filename_o = namelist[0]->d_name;
 
     /* Handle current log file output */
     goto done_hdl_cur;
@@ -1068,15 +1068,15 @@ static int filename_get(char *filepath_i, char *filename_i,
   *fsize = 0;
   if (empty_flg_new == false) {
     /* Give the newest filename and its size. File is not empty */
-    filename_o = namelist[name_ix_new]->d_name;
+    *filename_o = namelist[name_ix_new]->d_name;
     *fsize = statbuf.st_size;
   } else if (empty_flg_prv == false) {
     /* Give the second newest filename. File is not empty */
-    filename_o = namelist[name_ix_prv]->d_name;
+    *filename_o = namelist[name_ix_prv]->d_name;
   } else {
     /* Both files are empty. This is an error */
     TRACE("%s: Both newest and second newest are empy", __FUNCTION__);
-    filename_o.clear();
+    filename_o->clear();
     rc = -1;
   }
 
@@ -1086,7 +1086,7 @@ done_hdl_cur:
   str_p = namelist[name_ix_new]->d_name + len;
   if (chr_cnt_b(str_p, '_', 4) == 2) {
     /* Newest is current log file */
-    curname_o = namelist[name_ix_new]->d_name;
+    *curname_o = namelist[name_ix_new]->d_name;
   }
 
 done_free:
@@ -1111,13 +1111,13 @@ done:
  * @return record Id or -1 on error. Set to 0 if no error but no Id is found
  */
 static int record_id_get(const char *file_path) {
-  FILE *fd = NULL;
+  FILE *fd = nullptr;
   int id_rc = 0;
   int i;
   int c;
-  long endpos;
+  int64_t endpos;
 
-  char *read_line = NULL;
+  char *read_line = nullptr;
   size_t dummy_n = 0;
   ssize_t line_len;
 
@@ -1126,7 +1126,7 @@ static int record_id_get(const char *file_path) {
   /* Open the file */
   while (1) {
     fd = fopen(file_path, "r");
-    if (fd != NULL) {
+    if (fd != nullptr) {
       break;
     } else if (errno != EINTR) {
       TRACE("%s fopen Fail %s", __FUNCTION__, strerror(errno));
@@ -1192,7 +1192,7 @@ done_free:
   free(read_line);
 
 done:
-  if (fd != NULL) fclose(fd);
+  if (fd != nullptr) fclose(fd);
 
   TRACE_LEAVE();
   return id_rc;
@@ -1210,8 +1210,8 @@ done:
  *                                         Id = 1, rc = OK
  * - If current log file empty is rotated: Name = cur log file, Size = 0,
  *                                         Id = fr last rotated, rc = OK
- * - If no log file at all:  Name = NULL, Size = 0, Id = 1, rc = OK
- * - If only rotated log file: Name = NULL, Size = 0, Id = fr rotated file,
+ * - If no log file at all:  Name = nullptr, Size = 0, Id = 1, rc = OK
+ * - If only rotated log file: Name = nullptr, Size = 0, Id = fr rotated file,
  *                             rc = OK
  *
  * NOTE: This function allocates memory pointed to by par_out->curFileName.
@@ -1247,14 +1247,14 @@ int lgs_get_file_params_hdl(void *indata, void *outdata, size_t max_outsize) {
   osaf_mutex_unlock_ordie(&lgs_ftcom_mutex); /* UNLOCK  Critical section */
 
   /* Initialize out parameters */
-  par_out->curFileName = NULL;
+  par_out->curFileName = nullptr;
   par_out->curFileSize = 0;
   par_out->logRecordId = 0;
 
   TRACE("file_path = %s, file_name = %s", par_in->file_path, par_in->file_name);
   /* Get log file to get info from and its size */
-  int_rc = filename_get(par_in->file_path, par_in->file_name, file_name,
-                        file_name_cur, &file_size);
+  int_rc = filename_get(par_in->file_path, par_in->file_name, &file_name,
+                        &file_name_cur, &file_size);
   if (int_rc == -1) {
     TRACE("%s: filename_get Fail", __FUNCTION__);
     rc = -1;
@@ -1285,19 +1285,19 @@ int lgs_get_file_params_hdl(void *indata, void *outdata, size_t max_outsize) {
     // This allocated memory will be freed by the caller
     par_out->curFileName =
         static_cast<char *>(calloc(1, file_name_cur.size() + 1));
-    if (par_out->curFileName == NULL) {
+    if (par_out->curFileName == nullptr) {
       LOG_ER("%s Failed to allocate memory", __FUNCTION__);
       rc = -1;
       goto done;
     }
 
-    strcpy(par_out->curFileName, file_name_cur.c_str());
+    strncpy(par_out->curFileName, file_name_cur.c_str(), file_name_cur.size());
     /* Remove extension */
     ptr_str = strstr(par_out->curFileName, ".log");
-    if (ptr_str == NULL) {
+    if (ptr_str == nullptr) {
       TRACE("%s: Could not find .log extension Fail", __FUNCTION__);
       free(par_out->curFileName);
-      par_out->curFileName = NULL;
+      par_out->curFileName = nullptr;
       rc = -1;
       goto done;
     }

@@ -384,7 +384,7 @@ bool WriteToDestination(const RecordData& data, const VectorString& destnames) {
 
   // Origin is FQDN = <hostname>[.<networkname>]
   // hostname = where the log record comes from (not active node)
-  const std::string origin = std::string{data.hostname} + networkname;
+  const std::string origin = std::string {data.hostname} + networkname;
 
   info.msgid = data.msgid;
   info.log_record = data.logrec;

@@ -27,7 +27,7 @@
  * dn:s
  */
 
-static char **rtobj_list = NULL;
+static char **rtobj_list = nullptr;
 static bool rtobj_list_init_f = false;
 static uint32_t rtobj_cnt = 0;       /* Number of object names in list */
 static SaUint32T rtobj_list_len = 0; /* Also the length of the list */
@@ -48,7 +48,7 @@ static bool log_rtobj_list_init() {
       lgs_cfg_get(LGS_IMM_LOG_MAX_APPLICATION_STREAMS));
 
   rtobj_list = static_cast<char **>(calloc(rtobj_list_len, sizeof(char *)));
-  if (rtobj_list != NULL) {
+  if (rtobj_list != nullptr) {
     rtobj_list_init_f = true;
   } else {
     TRACE("%s\tFail to alloc memory for rtobj_list", __FUNCTION__);
@@ -66,18 +66,18 @@ done:
 void log_rtobj_list_free() {
   TRACE_ENTER();
 
-  if (rtobj_list == NULL) return; /* No list to free */
+  if (rtobj_list == nullptr) return; /* No list to free */
 
   /* Free positions in the list if needed */
   uint32_t pos;
   for (pos = 0; pos < rtobj_list_len; pos++) {
-    if (rtobj_list[pos] != NULL) free(rtobj_list[pos]);
+    if (rtobj_list[pos] != nullptr) free(rtobj_list[pos]);
   }
 
   free(rtobj_list);
   rtobj_cnt = 0;
   rtobj_list_len = 0;
-  rtobj_list = NULL;
+  rtobj_list = nullptr;
 
   TRACE_LEAVE();
 }
@@ -89,7 +89,7 @@ void log_rtobj_list_free() {
  * @return -1 on error
  */
 int log_rtobj_list_add(const std::string &dn_str) {
-  char *str_ptr = NULL;
+  char *str_ptr = nullptr;
   size_t len = 0;
   int rc = 0;
 
@@ -118,7 +118,7 @@ int log_rtobj_list_add(const std::string &dn_str) {
   }
 
   str_ptr = static_cast<char *>(calloc(1, len + 1));
-  if (str_ptr == NULL) {
+  if (str_ptr == nullptr) {
     LOG_WA("%s\tcalloc Fail", __FUNCTION__);
     rc = -1;
     goto done;
@@ -154,13 +154,13 @@ int log_rtobj_list_find(const std::string &dn_str) {
 
   TRACE_ENTER2("dn_str \"%s\"", dn_str.c_str());
 
-  if (rtobj_list == NULL) {
+  if (rtobj_list == nullptr) {
     TRACE("\t No rtobj_list exist");
     goto done;
   }
 
   for (i = 0; i < rtobj_list_len; i++) {
-    if (rtobj_list[i] == NULL) continue;
+    if (rtobj_list[i] == nullptr) continue;
     if (strcmp(rtobj_list[i], dn_str.c_str()) == 0) {
       /* Found! */
       pos = (int)i;
@@ -183,7 +183,7 @@ int log_rtobj_list_getnamepos() {
   int pos = -1;
 
   for (i = 0; i < rtobj_list_len; i++) {
-    if (rtobj_list[i] == NULL) {
+    if (rtobj_list[i] == nullptr) {
       continue;
     } else {
       pos = static_cast<int>(i);
@@ -203,7 +203,7 @@ int log_rtobj_list_getnamepos() {
  *         NULL is returned.
  */
 char *log_rtobj_list_getname(int pos) {
-  if (pos >= static_cast<int>(rtobj_list_len)) return NULL;
+  if (pos >= static_cast<int>(rtobj_list_len)) return nullptr;
 
   return rtobj_list[pos];
 }
@@ -220,13 +220,13 @@ void log_rtobj_list_erase_one_pos(int pos) {
     return;
   }
 
-  if (rtobj_list[pos] == NULL) {
+  if (rtobj_list[pos] == nullptr) {
     TRACE_LEAVE2("%s\tNo string in pos %d", __FUNCTION__, pos);
     return;
   }
 
   free(rtobj_list[pos]);
-  rtobj_list[pos] = NULL;
+  rtobj_list[pos] = nullptr;
 
   if (rtobj_cnt > 0) rtobj_cnt--;
 
@@ -315,7 +315,7 @@ int lgs_restore_one_app_stream(const std::string &stream_name,
   int i = 0;
   SaBoolT twelveHourModeFlag = SA_FALSE;
   lgsv_stream_open_req_t open_stream_param;
-  log_stream_t *log_stream = NULL;
+  log_stream_t *log_stream = nullptr;
   SaTimeT restored_creationTimeStamp = 0;
   SaUint32T restored_severityFilter = 0;
 
@@ -323,7 +323,7 @@ int lgs_restore_one_app_stream(const std::string &stream_name,
   std::string pathName, fullPathName;
 
   // Make it safe for free
-  par_out.curFileName = NULL;
+  par_out.curFileName = nullptr;
 
   TRACE_ENTER2("object_name \"%s\", client_id=%d", stream_name.c_str(),
                client_id);
@@ -370,7 +370,7 @@ int lgs_restore_one_app_stream(const std::string &stream_name,
    *       exist.
    */
   i = 0;
-  while ((attribute = attributes[i++]) != NULL) {
+  while ((attribute = attributes[i++]) != nullptr) {
     void *value;
     char *name;
     char *str_val;
@@ -381,12 +381,12 @@ int lgs_restore_one_app_stream(const std::string &stream_name,
     if (attribute->attrValuesNumber != 0)
       value = attribute->attrValues[0];
     else {
-      value = NULL;
+      value = nullptr;
     }
 
     TRACE("\t attribute name \"%s\"", name);
     if (!strcmp(name, "saLogStreamFileName")) {
-      if (value == NULL) {
+      if (value == nullptr) {
         TRACE("%s: Fail, has empty value", name);
         rc_out = -1;
         goto done_free_attr;
@@ -395,7 +395,7 @@ int lgs_restore_one_app_stream(const std::string &stream_name,
       fileName = *(static_cast<char **>(value));
       TRACE("\t saLogStreamFileName \"%s\"", fileName.c_str());
     } else if (!strcmp(name, "saLogStreamPathName")) {
-      if (value == NULL) {
+      if (value == nullptr) {
         TRACE("%s: Fail, has empty value", name);
         rc_out = -1;
         goto done_free_attr;
@@ -404,7 +404,7 @@ int lgs_restore_one_app_stream(const std::string &stream_name,
       pathName = *(static_cast<char **>(value));
       TRACE("\t saLogStreamPathName \"%s\"", pathName.c_str());
     } else if (!strcmp(name, "saLogStreamMaxLogFileSize")) {
-      if (value == NULL) {
+      if (value == nullptr) {
         TRACE("%s: Fail, has empty value", name);
         rc_out = -1;
         goto done_free_attr;
@@ -415,7 +415,7 @@ int lgs_restore_one_app_stream(const std::string &stream_name,
             open_stream_param.maxLogFileSize);
 
     } else if (!strcmp(name, "saLogStreamFixedLogRecordSize")) {
-      if (value == NULL) {
+      if (value == nullptr) {
         TRACE("%s: Fail, has empty value", name);
         rc_out = -1;
         goto done_free_attr;
@@ -425,7 +425,7 @@ int lgs_restore_one_app_stream(const std::string &stream_name,
             open_stream_param.maxLogRecordSize);
 
     } else if (!strcmp(name, "saLogStreamHaProperty")) {
-      if (value == NULL) {
+      if (value == nullptr) {
         TRACE("%s: Fail, has empty value", name);
         rc_out = -1;
         goto done_free_attr;
@@ -434,7 +434,7 @@ int lgs_restore_one_app_stream(const std::string &stream_name,
       TRACE("\t saLogStreamHaProperty=%d", open_stream_param.haProperty);
 
     } else if (!strcmp(name, "saLogStreamLogFullAction")) {
-      if (value == NULL) {
+      if (value == nullptr) {
         TRACE("%s: Fail, has empty value", name);
         rc_out = -1;
         goto done_free_attr;
@@ -445,7 +445,7 @@ int lgs_restore_one_app_stream(const std::string &stream_name,
             open_stream_param.logFileFullAction);
 
     } else if (!strcmp(name, "saLogStreamMaxFilesRotated")) {
-      if (value == NULL) {
+      if (value == nullptr) {
         TRACE("%s: Fail, has empty value", name);
         rc_out = -1;
         goto done_free_attr;
@@ -459,16 +459,16 @@ int lgs_restore_one_app_stream(const std::string &stream_name,
        * - Must be checked!
        * - Use better max length than PATH_MAX!
        */
-      if (value == NULL) {
+      if (value == nullptr) {
         TRACE("%s: Fail, has empty value", name);
         rc_out = -1;
         goto done_free_attr;
       }
       str_val = *(static_cast<char **>(value));
-      open_stream_param.logFileFmt = NULL;
+      open_stream_param.logFileFmt = nullptr;
       open_stream_param.logFileFmt =
           static_cast<char *>(calloc(1, strlen(str_val) + 1));
-      if (open_stream_param.logFileFmt == NULL) {
+      if (open_stream_param.logFileFmt == nullptr) {
         TRACE("%s [%d] calloc Fail", __FUNCTION__, __LINE__);
         rc_out = -1;
         goto done_free_attr;
@@ -483,7 +483,7 @@ int lgs_restore_one_app_stream(const std::string &stream_name,
       TRACE("\t saLogStreamLogFileFormat \"%s\"", open_stream_param.logFileFmt);
 
     } else if (!strcmp(name, "saLogStreamCreationTimestamp")) {
-      if (value == NULL) {
+      if (value == nullptr) {
         TRACE("%s: Fail, has empty value", name);
         rc_out = -1;
         goto done_free_attr;
@@ -492,7 +492,7 @@ int lgs_restore_one_app_stream(const std::string &stream_name,
       TRACE("\t saLogStreamCreationTimestamp=%lld", restored_creationTimeStamp);
 
     } else if (!strcmp(name, "saLogStreamSeverityFilter")) {
-      if (value == NULL) {
+      if (value == nullptr) {
         TRACE("%s: Fail, has empty value", name);
         rc_out = -1;
         goto done_free_attr;
@@ -511,7 +511,7 @@ int lgs_restore_one_app_stream(const std::string &stream_name,
   open_stream_param.logFilePathName = const_cast<char *>(pathName.c_str());
 
   log_stream = log_stream_new(stream_name, STREAM_NEW);
-  if (log_stream == NULL) {
+  if (log_stream == nullptr) {
     TRACE("%s: log_stream_new failed", __FUNCTION__);
     rc_out = -1;
     goto done_free_attr;
@@ -589,10 +589,10 @@ int lgs_restore_one_app_stream(const std::string &stream_name,
 
   /* If no current log file create a file name
    */
-  if (par_out.curFileName == NULL) {
+  if (par_out.curFileName == nullptr) {
     /* There is no current log file. Create a file name */
     log_stream->logFileCurrent =
-        log_stream->fileName + "_" + lgs_get_time(NULL);
+        log_stream->fileName + "_" + lgs_get_time(nullptr);
     TRACE("\t A new file name for current log file is created");
   } else {
     log_stream->logFileCurrent = par_out.curFileName;
@@ -621,7 +621,7 @@ done_free_attr:
 
 done:
   free(open_stream_param.logFileFmt);
-  if (par_out.curFileName != NULL) {
+  if (par_out.curFileName != nullptr) {
     // This memory is allocated in lgs_get_file_params_hdl()
     free(par_out.curFileName);
   }
@@ -670,7 +670,7 @@ int log_stream_open_file_restore(log_stream_t *stream) {
   // Initialize the output
   par_out.curFileSize = 0;
   par_out.logRecordId = 0;
-  par_out.curFileName = NULL;
+  par_out.curFileName = nullptr;
 
   int_rc = lgs_get_file_params_h(&par_in, &par_out);
 
@@ -696,7 +696,7 @@ int log_stream_open_file_restore(log_stream_t *stream) {
 
   /* If no current log file create a file name
    */
-  if (par_out.curFileName == NULL) {
+  if (par_out.curFileName == nullptr) {
     /* There is no current log file. Consider as logsv starts from scratch */
     TRACE("\t Create new cfg/logfile for stream (%s)", stream->name.c_str());
     log_stream_open_fileinit(stream);
@@ -734,7 +734,7 @@ int log_stream_open_file_restore(log_stream_t *stream) {
 
 done:
   // This memory is allocated in lgs_get_file_params_hdl()
-  if (par_out.curFileName != NULL) free(par_out.curFileName);
+  if (par_out.curFileName != nullptr) free(par_out.curFileName);
 
   TRACE_LEAVE2("rc_out = %d", rc_out);
   return rc_out;
@@ -754,14 +754,14 @@ int log_close_rtstream_files(const std::string &stream_name) {
   gfp_in_t par_in;
   gfp_out_t par_out;
   int i = 0;
-  char *current_time = lgs_get_time(NULL);
+  char *current_time = lgs_get_time(nullptr);
 
   std::string fileName, rootPath;
   std::string pathName, pathName_bk;
   std::string emptyStr = "";
 
   // Make it safe for free
-  par_out.curFileName = NULL;
+  par_out.curFileName = nullptr;
 
   TRACE_ENTER2("object_name \"%s\"", stream_name.c_str());
 
@@ -787,7 +787,7 @@ int log_close_rtstream_files(const std::string &stream_name) {
    *       exist.
    */
   i = 0;
-  while ((attribute = attributes[i++]) != NULL) {
+  while ((attribute = attributes[i++]) != nullptr) {
     void *value;
     char *name;
 
@@ -797,12 +797,12 @@ int log_close_rtstream_files(const std::string &stream_name) {
     if (attribute->attrValuesNumber != 0)
       value = attribute->attrValues[0];
     else {
-      value = NULL;
+      value = nullptr;
     }
 
     TRACE("\t attribute name \"%s\"", name);
     if (!strcmp(name, "saLogStreamFileName")) {
-      if (value == NULL) {
+      if (value == nullptr) {
         TRACE("%s: Fail, has empty value", name);
         rc_out = -1;
         goto done_free_attr;
@@ -811,7 +811,7 @@ int log_close_rtstream_files(const std::string &stream_name) {
       fileName = *(static_cast<char **>(value));
       TRACE("\t saLogStreamFileName \"%s\"", fileName.c_str());
     } else if (!strcmp(name, "saLogStreamPathName")) {
-      if (value == NULL) {
+      if (value == nullptr) {
         TRACE("%s: Fail, has empty value", name);
         rc_out = -1;
         goto done_free_attr;
@@ -837,20 +837,20 @@ int log_close_rtstream_files(const std::string &stream_name) {
 
   /* If no current log file create a file name
    */
-  if (par_out.curFileName == NULL) {
+  if (par_out.curFileName == nullptr) {
     LOG_WA("\t No log file exist. Should never happen");
     goto done_free_attr;
   }
 
   int_rc = lgs_file_rename_h(rootPath, pathName_bk, par_out.curFileName,
-                             current_time, LGS_LOG_FILE_EXT, emptyStr);
+                             current_time, LGS_LOG_FILE_EXT, &emptyStr);
   if (int_rc == -1) {
     LOG_WA("Failed to rename log file (%s) for stream (%s)",
            par_out.curFileName, stream_name.c_str());
   }
 
   int_rc = lgs_file_rename_h(rootPath, pathName_bk, fileName, current_time,
-                             LGS_LOG_FILE_CONFIG_EXT, emptyStr);
+                             LGS_LOG_FILE_CONFIG_EXT, &emptyStr);
 
   if (int_rc == -1) {
     LOG_WA("Failed to rename configuration file (%s) for stream (%s)",
@@ -865,7 +865,7 @@ done_free_attr:
     rc_out = -1;
   }
 
-  if (par_out.curFileName != NULL) {
+  if (par_out.curFileName != nullptr) {
     // This memory is allocated in lgs_get_file_params_hdl()
     free(par_out.curFileName);
   }

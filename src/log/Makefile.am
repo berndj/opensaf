@@ -89,7 +89,8 @@ noinst_HEADERS += \
 	src/log/logd/lgs_dest.h \
 	src/log/logd/lgs_nildest.h \
 	src/log/logd/lgs_unixsock_dest.h \
-	src/log/logd/lgs_common.h
+	src/log/logd/lgs_common.h \
+	src/log/logd/lgs_amf.h
 
 
 bin_PROGRAMS += bin/saflogger

@@ -15,8 +15,8 @@
  *
  */
 
-#ifndef SRC_LOG_LOGD_LGS_NILDEST_H_
-#define SRC_LOG_LOGD_LGS_NILDEST_H_
+#ifndef LOG_LOGD_LGS_NILDEST_H_
+#define LOG_LOGD_LGS_NILDEST_H_
 
 #include <string>
 
@@ -69,4 +69,4 @@ class NilDestType {
   DELETE_COPY_AND_MOVE_OPERATORS(NilDestType);
 };
 
-#endif  // SRC_LOG_LOGD_LGS_NILDEST_H_
+#endif  // LOG_LOGD_LGS_NILDEST_H_

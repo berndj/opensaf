@@ -20,9 +20,9 @@
  */
 
 #include "nid/agent/nid_start_util.h"
-#include "log/logd/lgs.h"
-#include "lgs_config.h"
 #include "osaf/immutil/immutil.h"
+#include "log/logd/lgs.h"
+#include "log/logd/lgs_config.h"
 
 static void close_all_files() {
   log_stream_t *stream;
@@ -124,13 +124,11 @@ static SaAisErrorT amf_standby_state_handler(lgs_cb_t *cb,
  *****************************************************************************/
 static SaAisErrorT amf_quiescing_state_handler(lgs_cb_t *cb,
                                                SaInvocationT invocation) {
-  SaAisErrorT ais_rc = SA_AIS_OK;
-
   TRACE_ENTER2("HA QUIESCING request");
   close_all_files();
 
   /* Give up our IMM OI implementer role */
-  ais_rc = immutil_saImmOiImplementerClear(cb->immOiHandle);
+  SaAisErrorT ais_rc = immutil_saImmOiImplementerClear(cb->immOiHandle);
   if (ais_rc != SA_AIS_OK) {
     LOG_WA("immutil_saImmOiImplementerClear failed: %s", saf_error(ais_rc));
   }
@@ -156,13 +154,11 @@ static SaAisErrorT amf_quiescing_state_handler(lgs_cb_t *cb,
 static SaAisErrorT amf_quiesced_state_handler(lgs_cb_t *cb,
                                               SaInvocationT invocation) {
   V_DEST_RL mds_role;
-  SaAisErrorT rc = SA_AIS_OK;
-
   TRACE_ENTER2("HA AMF QUIESCED STATE request");
   close_all_files();
 
   /* Give up our IMM OI implementer role */
-  rc = immutil_saImmOiImplementerClear(cb->immOiHandle);
+  SaAisErrorT rc = immutil_saImmOiImplementerClear(cb->immOiHandle);
   if (rc != SA_AIS_OK) {
     LOG_WA("immutil_saImmOiImplementerClear failed: %s", saf_error(rc));
   }
@@ -410,12 +406,14 @@ static SaAisErrorT amf_healthcheck_start(lgs_cb_t *lgs_cb) {
   memset(&healthy, 0, sizeof(healthy));
   health_key = getenv("LGSV_ENV_HEALTHCHECK_KEY");
 
-  if (health_key == NULL)
-    strcpy((char *)healthy.key, "F1B2");
+  if (health_key == nullptr)
+    snprintf(reinterpret_cast<char *>(healthy.key),
+             SA_AMF_HEALTHCHECK_KEY_MAX, "F1B2");
   else
-    strcpy((char *)healthy.key, health_key);
+    snprintf(reinterpret_cast<char *>(healthy.key),
+             SA_AMF_HEALTHCHECK_KEY_MAX, "%s", health_key);
 
-  healthy.keyLen = strlen((char *)healthy.key);
+  healthy.keyLen = strlen(reinterpret_cast<char *>(healthy.key));
 
   error = saAmfHealthcheckStart(lgs_cb->amf_hdl, &lgs_cb->comp_name, &healthy,
                                 SA_AMF_HEALTHCHECK_AMF_INVOKED,
@@ -485,7 +483,7 @@ SaAisErrorT lgs_amf_init(lgs_cb_t *cb) {
   }
 
   /* Register component with AMF */
-  error = saAmfComponentRegister(cb->amf_hdl, &cb->comp_name, (SaNameT *)NULL);
+  error = saAmfComponentRegister(cb->amf_hdl, &cb->comp_name, nullptr);
   if (error != SA_AIS_OK) {
     LOG_ER("saAmfComponentRegister() FAILED");
     goto done;

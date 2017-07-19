@@ -247,7 +247,7 @@ TEST(WriteToDestination, HaveDestNameAndDestCfg) {
                : "";
 
   // Origin is FQDN = <hostname>[.<networkname>]
-  origin = std::string{data.hostname} + nkname;
+  origin = std::string {data.hostname} + nkname;
 
   info.msgid = data.msgid;
   info.log_record = data.logrec;

@@ -16,20 +16,21 @@
  *
  */
 
+#include "log/logd/lgs_evt.h"
+
 #include <stdlib.h>
 #include <cinttypes>
-
+#include <string>
 #include "base/osaf_time.h"
-#include "base/saf_error.h"
-
-#include "lgs_mbcsv_v1.h"
-#include "lgs_mbcsv_v2.h"
-#include "lgs_mbcsv_v6.h"
-#include "lgs_recov.h"
-#include "lgs_imm_gcfg.h"
 #include "base/osaf_extended_name.h"
-#include "lgs_clm.h"
-#include "lgs_dest.h"
+#include "base/saf_error.h"
+#include "log/logd/lgs_mbcsv_v1.h"
+#include "log/logd/lgs_mbcsv_v2.h"
+#include "log/logd/lgs_mbcsv_v6.h"
+#include "log/logd/lgs_recov.h"
+#include "log/logd/lgs_imm_gcfg.h"
+#include "log/logd/lgs_clm.h"
+#include "log/logd/lgs_dest.h"
 
 void *client_db = nullptr; /* used for C++ STL map */
 
@@ -105,7 +106,7 @@ log_client_t *lgs_client_get_by_id(uint32_t client_id) {
   } else {
     TRACE("clm_node_id delete to map not exist failed : %x", client_id);
   }
-  if (NULL == rec) TRACE("client_id: %u lookup failed", client_id);
+  if (nullptr == rec) TRACE("client_id: %u lookup failed", client_id);
 
   return rec;
 }
@@ -132,7 +133,7 @@ log_client_t *lgs_client_new(MDS_DEST mds_dest, uint32_t client_id,
 
   client = new log_client_t();
 
-  if (NULL == client) {
+  if (nullptr == client) {
     LOG_WA("lgs_client_new calloc FAILED");
     goto done;
   }
@@ -153,7 +154,7 @@ log_client_t *lgs_client_new(MDS_DEST mds_dest, uint32_t client_id,
       TRACE("unable to add clm node info map - the id %x already existed",
             client->client_id);
       delete client;
-      client = NULL;
+      client = nullptr;
     }
   } else {
     TRACE("can't find local sec map in lgs_clm_node_add");
@@ -186,7 +187,7 @@ int lgs_client_delete(uint32_t client_id, time_t *closetime_ptr) {
   /* Client DB */
   ClientMap *clientMap(reinterpret_cast<ClientMap *>(client_db));
   /* Initiate close time value if not provided via closetime_ptr */
-  if (closetime_ptr == NULL) {
+  if (closetime_ptr == nullptr) {
     osaf_clock_gettime(CLOCK_REALTIME, &closetime_tspec);
     closetime = closetime_tspec.tv_sec;
   } else {
@@ -194,18 +195,18 @@ int lgs_client_delete(uint32_t client_id, time_t *closetime_ptr) {
   }
 
   /* Get client data */
-  if ((client = lgs_client_get_by_id(client_id)) == NULL) {
+  if ((client = lgs_client_get_by_id(client_id)) == nullptr) {
     status = -1;
     goto done;
   }
 
   cur_rec = client->stream_list_root;
-  while (NULL != cur_rec) {
+  while (nullptr != cur_rec) {
     lgs_stream_list_t *tmp_rec;
     log_stream_t *stream = log_stream_get_by_id(cur_rec->stream_id);
     TRACE_4("client_id: %u, REMOVE stream id: %u", client->client_id,
             cur_rec->stream_id);
-    if (stream != NULL) {
+    if (stream != nullptr) {
       log_stream_close(&stream, &closetime);
     }
     tmp_rec = cur_rec->next;
@@ -248,13 +249,13 @@ int lgs_client_stream_add(uint32_t client_id, uint32_t stream_id) {
 
   TRACE_ENTER2("client_id %u, stream ID %u", client_id, stream_id);
 
-  if ((client = lgs_client_get_by_id(client_id)) == NULL) {
+  if ((client = lgs_client_get_by_id(client_id)) == nullptr) {
     rs = -1;
     goto err_exit;
   }
 
   stream = static_cast<lgs_stream_list_t *>(malloc(sizeof(lgs_stream_list_t)));
-  if (stream == NULL) {
+  if (stream == nullptr) {
     LOG_WA("malloc FAILED");
     rs = -1;
     goto err_exit;
@@ -284,12 +285,12 @@ int lgs_client_stream_rmv(uint32_t client_id, uint32_t stream_id) {
 
   TRACE_ENTER2("client_id %u, stream ID %u", client_id, stream_id);
 
-  if ((client = lgs_client_get_by_id(client_id)) == NULL) {
+  if ((client = lgs_client_get_by_id(client_id)) == nullptr) {
     rc = -1;
     goto done;
   }
 
-  if (NULL == client->stream_list_root) {
+  if (nullptr == client->stream_list_root) {
     rc = -2;
     goto done;
   }
@@ -309,7 +310,7 @@ int lgs_client_stream_rmv(uint32_t client_id, uint32_t stream_id) {
     }
     last_rec = cur_rec;
     cur_rec = last_rec->next;
-  } while (NULL != cur_rec);
+  } while (nullptr != cur_rec);
 
 done:
   TRACE_LEAVE();
@@ -327,7 +328,7 @@ done:
  */
 int lgs_client_delete_by_mds_dest(MDS_DEST mds_dest, time_t *closetime_ptr) {
   uint32_t rc = 0;
-  log_client_t *rp = NULL;
+  log_client_t *rp = nullptr;
 
   TRACE_ENTER2("mds_dest %" PRIx64, mds_dest);
   /* Loop through Client DB */
@@ -356,28 +357,28 @@ int lgs_client_delete_by_mds_dest(MDS_DEST mds_dest, time_t *closetime_ptr) {
  ****************************************************************************/
 uint32_t lgs_remove_lga_down_rec(lgs_cb_t *cb, MDS_DEST mds_dest) {
   LGA_DOWN_LIST *lga_down_rec = cb->lga_down_list_head;
-  LGA_DOWN_LIST *prev = NULL;
+  LGA_DOWN_LIST *prev = nullptr;
   while (lga_down_rec) {
     if (m_NCS_MDS_DEST_EQUAL(&lga_down_rec->mds_dest, &mds_dest)) {
       /* Remove the LGA entry */
       /* Reset pointers */
       if (lga_down_rec == cb->lga_down_list_head) { /* 1st in the list? */
-        if (lga_down_rec->next == NULL) {           /* Only one in the list? */
-          cb->lga_down_list_head = NULL; /* Clear head sublist pointer */
-          cb->lga_down_list_tail = NULL; /* Clear tail sublist pointer */
+        if (lga_down_rec->next == nullptr) {        /* Only one in the list? */
+          cb->lga_down_list_head = nullptr; /* Clear head sublist pointer */
+          cb->lga_down_list_tail = nullptr; /* Clear tail sublist pointer */
         } else {                         /* 1st but not only one */
           cb->lga_down_list_head = lga_down_rec->next; /* Move next one up */
         }
       } else { /* Not 1st in the list */
         if (prev) {
-          if (lga_down_rec->next == NULL) cb->lga_down_list_tail = prev;
+          if (lga_down_rec->next == nullptr) cb->lga_down_list_tail = prev;
           prev->next = lga_down_rec->next; /* Link previous to next */
         }
       }
 
       /* Free the EDA_DOWN_REC */
       free(lga_down_rec);
-      lga_down_rec = NULL;
+      lga_down_rec = nullptr;
       break;
     }
     prev = lga_down_rec;               /* Remember address of this entry */
@@ -445,18 +446,18 @@ static uint32_t proc_lga_updn_mds_msg(lgsv_lgs_evt_t *evt) {
           }
         }
       } else if (lgs_cb->ha_state == SA_AMF_HA_STANDBY) {
-        LGA_DOWN_LIST *lga_down_rec = NULL;
+        LGA_DOWN_LIST *lga_down_rec = nullptr;
         if (lgs_lga_entry_valid(lgs_cb, evt->fr_dest)) {
           lga_down_rec =
               static_cast<LGA_DOWN_LIST *>(malloc(sizeof(LGA_DOWN_LIST)));
-          if (NULL == lga_down_rec) {
+          if (nullptr == lga_down_rec) {
             /* Log it */
             LOG_WA("memory allocation for the LGA_DOWN_LIST failed");
             break;
           }
           memset(lga_down_rec, 0, sizeof(LGA_DOWN_LIST));
           lga_down_rec->mds_dest = evt->fr_dest;
-          if (lgs_cb->lga_down_list_head == NULL) {
+          if (lgs_cb->lga_down_list_head == nullptr) {
             lgs_cb->lga_down_list_head = lga_down_rec;
           } else {
             if (lgs_cb->lga_down_list_tail)
@@ -502,8 +503,9 @@ static uint32_t proc_mds_quiesced_ack_msg(lgsv_lgs_evt_t *evt) {
 
     /* Finally respond to AMF */
     saAmfResponse(lgs_cb->amf_hdl, lgs_cb->amf_invocation_id, SA_AIS_OK);
-  } else
+  } else {
     LOG_ER("Received LGSV_EVT_QUIESCED_ACK message but is_quiesced_set==false");
+  }
 
   TRACE_LEAVE();
   return NCSCC_RC_SUCCESS;
@@ -516,7 +518,7 @@ static uint32_t proc_mds_quiesced_ack_msg(lgsv_lgs_evt_t *evt) {
 static void lgs_process_lga_down_list() {
   struct timespec closetime_tspec;
   if (lgs_cb->ha_state == SA_AMF_HA_ACTIVE) {
-    LGA_DOWN_LIST *temp_lga_down_rec = NULL;
+    LGA_DOWN_LIST *temp_lga_down_rec = nullptr;
     osaf_clock_gettime(CLOCK_REALTIME, &closetime_tspec);
     time_t closetime = closetime_tspec.tv_sec;
 
@@ -530,8 +532,8 @@ static void lgs_process_lga_down_list() {
       lga_down_rec = lga_down_rec->next;
       free(temp_lga_down_rec);
     }
-    lgs_cb->lga_down_list_head = NULL;
-    lgs_cb->lga_down_list_tail = NULL;
+    lgs_cb->lga_down_list_head = nullptr;
+    lgs_cb->lga_down_list_tail = nullptr;
   }
 }
 
@@ -653,8 +655,8 @@ static uint32_t lgs_ckpt_initialized_client(lgs_cb_t *cb, MDS_DEST mds_dest,
   uint32_t async_rc = NCSCC_RC_SUCCESS;
   lgsv_ckpt_msg_v1_t ckpt_v1;
   lgsv_ckpt_msg_v6_t ckpt_v6;
-  void *ckpt_ptr = NULL;
-  lgsv_ckpt_header_t *header_ptr = NULL;
+  void *ckpt_ptr = nullptr;
+  lgsv_ckpt_header_t *header_ptr = nullptr;
 
   TRACE_ENTER();
 
@@ -705,7 +707,7 @@ static uint32_t proc_initialize_msg(lgs_cb_t *cb, lgsv_lgs_evt_t *evt) {
   SaAisErrorT ais_rc = SA_AIS_OK;
   SaVersionT *version;
   lgsv_msg_t msg;
-  log_client_t *client = NULL;
+  log_client_t *client = nullptr;
 
   TRACE_ENTER2("dest %" PRIx64, evt->fr_dest);
 
@@ -730,7 +732,7 @@ static uint32_t proc_initialize_msg(lgs_cb_t *cb, lgsv_lgs_evt_t *evt) {
     goto snd_rsp;
   }
 
-  if ((client = lgs_client_new(evt->fr_dest, 0, NULL)) == NULL) {
+  if ((client = lgs_client_new(evt->fr_dest, 0, nullptr)) == nullptr) {
     ais_rc = SA_AIS_ERR_NO_MEMORY;
     goto snd_rsp;
   }
@@ -863,7 +865,7 @@ SaAisErrorT create_new_app_stream(lgsv_stream_open_req_t *open_sync_param,
     goto done;
   }
 
-  if (open_sync_param->logFileFmt == NULL) {
+  if (open_sync_param->logFileFmt == nullptr) {
     TRACE("logFileFmt is NULL, use default one");
     const char *logFileFormat =
         static_cast<const char *>(lgs_cfg_get(LGS_IMM_LOG_STREAM_FILE_FORMAT));
@@ -933,7 +935,7 @@ SaAisErrorT create_new_app_stream(lgsv_stream_open_req_t *open_sync_param,
   }
 
   *o_stream = log_stream_new(str_name, STREAM_NEW);
-  if (*o_stream == NULL) {
+  if (*o_stream == nullptr) {
     rc = SA_AIS_ERR_NO_MEMORY;
     goto done;
   }
@@ -997,7 +999,7 @@ static SaAisErrorT file_attribute_cmp(lgsv_stream_open_req_t *open_sync_param,
           open_sync_param->logFilePathName,
           applicationStream->pathName.c_str());
     rs = SA_AIS_ERR_EXIST;
-  } else if ((open_sync_param->logFileFmt != NULL) &&
+  } else if ((open_sync_param->logFileFmt != nullptr) &&
              strcmp(applicationStream->logFileFormat,
                     open_sync_param->logFileFmt) != 0) {
     TRACE("logFile format differs, new: %s existing: %s",
@@ -1048,7 +1050,7 @@ static uint32_t proc_stream_open_msg(lgs_cb_t *cb, lgsv_lgs_evt_t *evt) {
   }
 
   logStream = log_stream_get_by_name(name);
-  if (logStream != NULL) {
+  if (logStream != nullptr) {
     TRACE("existing stream - id %u", logStream->streamId);
     if (logStream->streamType == STREAM_TYPE_APPLICATION) {
       /* Verify the creation attributes for an existing appl. stream */
@@ -1205,7 +1207,7 @@ static uint32_t proc_stream_close_msg(lgs_cb_t *cb, lgsv_lgs_evt_t *evt) {
     goto snd_rsp;
   }
 
-  if ((stream = log_stream_get_by_id(close_param->lstr_id)) == NULL) {
+  if ((stream = log_stream_get_by_id(close_param->lstr_id)) == nullptr) {
     TRACE("Bad stream ID");
     ais_rc = SA_AIS_ERR_BAD_HANDLE;
     goto snd_rsp;
@@ -1279,9 +1281,9 @@ snd_rsp:
 static uint32_t proc_write_log_async_msg(lgs_cb_t *cb, lgsv_lgs_evt_t *evt) {
   lgsv_write_log_async_req_t *param =
       &(evt->info.msg.info.api_info.param).write_log_async;
-  log_stream_t *stream = NULL;
+  log_stream_t *stream = nullptr;
   SaAisErrorT error = SA_AIS_OK;
-  SaStringT logOutputString = NULL;
+  SaStringT logOutputString = nullptr;
   SaUint32T buf_size;
   int n, rc = 0;
   lgsv_ckpt_msg_v1_t ckpt_v1;
@@ -1305,13 +1307,13 @@ static uint32_t proc_write_log_async_msg(lgs_cb_t *cb, lgsv_lgs_evt_t *evt) {
     goto done;
   }
 
-  if (lgs_client_get_by_id(param->client_id) == NULL) {
+  if (lgs_client_get_by_id(param->client_id) == nullptr) {
     TRACE("Bad client ID: %u", param->client_id);
     error = SA_AIS_ERR_BAD_HANDLE;
     goto done;
   }
 
-  if ((stream = log_stream_get_by_id(param->lstr_id)) == NULL) {
+  if ((stream = log_stream_get_by_id(param->lstr_id)) == nullptr) {
     TRACE("Bad stream ID: %u", param->lstr_id);
     error = SA_AIS_ERR_BAD_HANDLE;
     goto done;
@@ -1336,7 +1338,7 @@ static uint32_t proc_write_log_async_msg(lgs_cb_t *cb, lgsv_lgs_evt_t *evt) {
                                              : stream->fixedLogRecordSize;
   logOutputString = static_cast<char *>(
       calloc(1, buf_size + 1)); /* Make room for a '\0' termination */
-  if (logOutputString == NULL) {
+  if (logOutputString == nullptr) {
     LOG_ER("Could not allocate %d bytes", stream->fixedLogRecordSize + 1);
     error = SA_AIS_ERR_NO_MEMORY;
     goto done;
@@ -1447,9 +1449,9 @@ done:
 
     Other cases, the allocator frees it.
   */
-  if ((rc != -2) && (logOutputString != NULL)) {
+  if ((rc != -2) && (logOutputString != nullptr)) {
     free(logOutputString);
-    logOutputString = NULL;
+    logOutputString = nullptr;
   }
 
   if (param->ack_flags == SA_LOG_RECORD_WRITE_ACK)
@@ -1543,7 +1545,7 @@ void lgs_process_mbx(SYSF_MBX *mbx) {
   lgsv_lgs_evt_t *msg;
 
   msg = reinterpret_cast<lgsv_lgs_evt_t *>(m_NCS_IPC_NON_BLK_RECEIVE(mbx, msg));
-  if (msg != NULL) {
+  if (msg != nullptr) {
     if (lgs_cb->ha_state == SA_AMF_HA_ACTIVE) {
       if (msg->evt_type <= LGSV_LGS_EVT_LGA_DOWN) {
         lgs_lgsv_top_level_evt_dispatch_tbl[msg->evt_type](msg);
@@ -1553,8 +1555,9 @@ void lgs_process_mbx(SYSF_MBX *mbx) {
         TRACE("Jolted the main thread so it picks up the new IMM FD");
       } else if (msg->evt_type == LGSV_EVT_RDA) {
         TRACE("ignoring RDA message for role %u", msg->info.rda_info.io_role);
-      } else
+      } else {
         LOG_ER("message type invalid");
+      }
     } else {
       if (msg->evt_type == LGSV_LGS_EVT_LGA_DOWN) {
         lgs_lgsv_top_level_evt_dispatch_tbl[msg->evt_type](msg);

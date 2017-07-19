@@ -26,18 +26,17 @@
  * lgs_file.h, lgs_file.c, lgs_filendl.c and lgs_filehdl.h
  * Examples can be found in file lgs_stream.c, e.g. function fileopen(...)
  */
-
-#include <cinttypes>
 #include "log/logd/lgs_util.h"
 
 #include <stdlib.h>
 #include <grp.h>
-#include "base/osaf_time.h"
+#include <cinttypes>
 
+#include "base/osaf_time.h"
+#include "base/osaf_timerfd.h"
 #include "log/logd/lgs.h"
 #include "log/logd/lgs_file.h"
 #include "log/logd/lgs_filehdl.h"
-#include "base/osaf_timerfd.h"
 
 #define ALARM_STREAM_ENV_PREFIX "ALARM"
 #define NOTIFICATION_STREAM_ENV_PREFIX "NOTIFICATION"
@@ -61,7 +60,7 @@ int lgs_create_config_file_h(const std::string &root_path,
                              log_stream_t *stream) {
   lgsf_apipar_t apipar;
   lgsf_retcode_t api_rc;
-  void *params_in = NULL;
+  void *params_in = nullptr;
   ccfh_t *header_in_p;
   size_t params_in_size;
   char *logFileFormat_p;
@@ -154,7 +153,7 @@ int lgs_create_config_file_h(const std::string &root_path,
   apipar.data_in_size = params_in_size;
   apipar.data_in = params_in;
   apipar.data_out_size = 0;
-  apipar.data_out = NULL;
+  apipar.data_out = nullptr;
 
   api_rc = log_file_api(&apipar);
   if (api_rc != LGSF_SUCESS) {
@@ -178,7 +177,7 @@ done:
  *
  * @param time_in
  *        Time to format.
- *        If NULL time is fetched using osaf_clock_gettime()
+ *        If nullptr time is fetched using osaf_clock_gettime()
  * @return char*
  */
 char *lgs_get_time(time_t *time_in) {
@@ -189,7 +188,7 @@ char *lgs_get_time(time_t *time_in) {
   time_t testTime;
   struct timespec testime_tspec;
 
-  if (time_in == NULL) {
+  if (time_in == nullptr) {
     osaf_clock_gettime(CLOCK_REALTIME, &testime_tspec);
     testTime = testime_tspec.tv_sec;
   } else {
@@ -257,13 +256,13 @@ SaTimeT lgs_get_SaTime() {
 int lgs_file_rename_h(const std::string &root_path, const std::string &rel_path,
                       const std::string &old_name,
                       const std::string &time_stamp, const std::string &suffix,
-                      std::string &new_name) {
+                      std::string *new_name) {
   int rc;
   std::string oldpath;
   std::string newpath;
   std::string new_name_loc;
   lgsf_apipar_t apipar;
-  void *params_in_p = NULL;
+  void *params_in_p = nullptr;
   size_t params_in_size;
   lgsf_retcode_t api_rc;
   char *oldpath_in_p;
@@ -284,7 +283,7 @@ int lgs_file_rename_h(const std::string &root_path, const std::string &rel_path,
   if (time_stamp.empty() == false) {
     new_name_loc = old_name + "_" + time_stamp + suffix;
   } else {
-    new_name_loc = new_name + suffix;
+    new_name_loc = *new_name + suffix;
   }
 
   newpath = root_path + "/" + rel_path + "/" + new_name_loc;
@@ -294,8 +293,8 @@ int lgs_file_rename_h(const std::string &root_path, const std::string &rel_path,
     goto done;
   }
 
-  if (new_name.empty() == false) {
-    new_name = new_name_loc;
+  if (new_name->empty() == false) {
+    *new_name = new_name_loc;
   }
 
   TRACE_4("Rename file from %s", oldpath.c_str());
@@ -323,7 +322,7 @@ int lgs_file_rename_h(const std::string &root_path, const std::string &rel_path,
   apipar.data_in_size = params_in_size;
   apipar.data_in = params_in_p;
   apipar.data_out_size = 0;
-  apipar.data_out = NULL;
+  apipar.data_out = nullptr;
 
   api_rc = log_file_api(&apipar);
   if (api_rc != LGSF_SUCESS) {
@@ -359,7 +358,7 @@ void lgs_exit(const char *msg, SaAmfRecommendedRecoveryT rec_rcvr) {
  *
  ****************************************************************************/
 bool lgs_lga_entry_valid(lgs_cb_t *cb, MDS_DEST mds_dest) {
-  log_client_t *rp = NULL;
+  log_client_t *rp = nullptr;
   /* Loop through Client DB */
   ClientMap *clientMap(reinterpret_cast<ClientMap *>(client_db));
   for (const auto &value : *clientMap) {
@@ -423,7 +422,7 @@ void lgs_free_write_log(const lgsv_write_log_async_req_t *param) {
     free(param->logRecord->logBuffer);
     free(genLogH->notificationClassId);
     osaf_extended_name_free(const_cast<SaNameT *>(genLogH->logSvcUsrName));
-    free((void *)genLogH->logSvcUsrName);
+    free(const_cast<SaNameT *>(genLogH->logSvcUsrName));
     free(param->logRecord);
   } else {
     SaLogNtfLogHeaderT *ntfLogH = &param->logRecord->logHeader.ntfHdr;
@@ -501,7 +500,7 @@ int lgs_make_reldir_h(const std::string &path) {
   apipar.data_in_size = sizeof(mld_in_t);
   apipar.data_in = &params_in;
   apipar.data_out_size = 0;
-  apipar.data_out = NULL;
+  apipar.data_out = nullptr;
   api_rc = log_file_api(&apipar);
   if (api_rc != LGSF_SUCESS) {
     TRACE("%s - API error %s", __FUNCTION__, lgsf_retcode_str(api_rc));
@@ -540,7 +539,7 @@ int lgs_check_path_exists_h(const char *path_to_check) {
   apipar.data_in_size = params_in_size;
   apipar.data_in = params_in_p;
   apipar.data_out_size = 0;
-  apipar.data_out = NULL;
+  apipar.data_out = nullptr;
 
   api_rc = log_file_api(&apipar);
   if (api_rc != LGSF_SUCESS) {
@@ -561,14 +560,18 @@ int lgs_check_path_exists_h(const char *path_to_check) {
  *          gid of data group if set.
  */
 gid_t lgs_get_data_gid(char *groupname) {
-  osafassert(groupname != NULL);
+  osafassert(groupname != nullptr);
 
   if (strcmp(groupname, "") == 0) {
     return -1;
   } else {
-    struct group *gr = getgrnam(groupname);
-    if (gr) {
-      return gr->gr_gid;
+    char grp_buf[4096];
+    struct group grp;
+    struct group * tmp_grp_ptr;
+    int rc = getgrnam_r(groupname, &grp, grp_buf,
+                        sizeof (grp_buf), &tmp_grp_ptr);
+    if (rc == 0) {
+      return grp.gr_gid;
     } else {
       LOG_ER("Could not get group struct for %s, %s", groupname,
              strerror(errno));
@@ -620,7 +623,7 @@ int lgs_own_log_files_h(log_stream_t *stream, const char *groupname) {
   apipar.data_in_size = sizeof(olfbgh_t);
   apipar.data_in = data_in;
   apipar.data_out_size = 0;
-  apipar.data_out = NULL;
+  apipar.data_out = nullptr;
 
   api_rc = log_file_api(&apipar);
   if (api_rc != LGSF_SUCESS) {
@@ -750,7 +753,7 @@ static size_t lgs_pathconf() {
   }
 
   errno = 0;
-  long max = pathconf(dir_path.c_str(), _PC_NAME_MAX);
+  int64_t max = pathconf(dir_path.c_str(), _PC_NAME_MAX);
 
   /* Get default value if the limit is not defined, or error */
   if (max == -1) {
@@ -826,7 +829,7 @@ bool lgs_is_valid_pathlength(const std::string &path,
  * Check if the name is valid or not.
  */
 bool lgs_is_extended_name_valid(const SaNameT *name) {
-  if (name == NULL) return false;
+  if (name == nullptr) return false;
   if (osaf_is_extended_name_valid(name) == false) return false;
 
   if (osaf_extended_name_length(name) > kOsafMaxDnLength) {
@@ -936,7 +939,7 @@ static void lgs_send_filter_msg(uint32_t client_id, uint32_t stream_id,
  */
 void lgs_send_severity_filter_to_clients(uint32_t stream_id,
                                          SaLogSeverityFlagsT severity_filter) {
-  log_client_t *rp = NULL;
+  log_client_t *rp = nullptr;
   lgs_stream_list_t *stream;
 
   TRACE_ENTER();
@@ -950,7 +953,7 @@ void lgs_send_severity_filter_to_clients(uint32_t stream_id,
         callback and associate with this stream */
     stream = rp->stream_list_root;
     if (is_filter_supported(rp->client_ver)) {
-      while (stream != NULL) {
+      while (stream != nullptr) {
         if (stream->stream_id == stream_id) {
           lgs_send_filter_msg(rp->client_id, stream_id, severity_filter,
                               rp->mds_dest);

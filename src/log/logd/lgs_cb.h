@@ -115,8 +115,6 @@ typedef struct lgs_cb {
   lgs_cb() : lgs_recovery_state(LGS_NORMAL){};
 } lgs_cb_t;
 
-extern uint32_t lgs_cb_init(lgs_cb_t *);
-extern void lgs_process_mbx(SYSF_MBX *mbx);
 extern uint32_t lgs_stream_add(lgs_cb_t *cb, log_stream_t *stream);
 
 #endif  // LOG_LOGD_LGS_CB_H_

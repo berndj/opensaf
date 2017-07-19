@@ -833,12 +833,12 @@ void log_stream_close(log_stream_t **s, time_t *close_time_ptr) {
 
       /* Rename stream log file */
       rc = lgs_file_rename_h(root_path, stream->pathName, file_to_rename,
-                             timeString, LGS_LOG_FILE_EXT, emptyStr);
+                             timeString, LGS_LOG_FILE_EXT, &emptyStr);
       while ((rc == -1) && (msecs_waited < max_waiting_time)) {
         usleep(sleep_delay_ms * 1000);
         msecs_waited += sleep_delay_ms;
         rc = lgs_file_rename_h(root_path, stream->pathName, file_to_rename,
-                               timeString, LGS_LOG_FILE_EXT, emptyStr);
+                               timeString, LGS_LOG_FILE_EXT, &emptyStr);
       }
 
       if (rc == -1) {
@@ -848,12 +848,12 @@ void log_stream_close(log_stream_t **s, time_t *close_time_ptr) {
 
       /* Rename stream config file */
       rc = lgs_file_rename_h(root_path, stream->pathName, stream->fileName,
-                             timeString, LGS_LOG_FILE_CONFIG_EXT, emptyStr);
+                             timeString, LGS_LOG_FILE_CONFIG_EXT, &emptyStr);
       while ((rc == -1) && (msecs_waited < max_waiting_time)) {
         usleep(sleep_delay_ms * 1000);
         msecs_waited += sleep_delay_ms;
         rc = lgs_file_rename_h(root_path, stream->pathName, stream->fileName,
-                               timeString, LGS_LOG_FILE_CONFIG_EXT, emptyStr);
+                               timeString, LGS_LOG_FILE_CONFIG_EXT, &emptyStr);
       }
       if (rc == -1) {
         LOG_WA("Could not rename config file: %s", strerror(errno));
@@ -1074,7 +1074,7 @@ static int log_rotation_stb(log_stream_t *stream, size_t count) {
     /* Rename file to give it the "close timestamp" */
     rc = lgs_file_rename_h(root_path, stream->pathName,
                            stream->stb_logFileCurrent, current_time_str,
-                           LGS_LOG_FILE_EXT, emptyStr);
+                           LGS_LOG_FILE_EXT, &emptyStr);
     if (rc == -1) goto done;
 
     /* Remove oldest file if needed */
@@ -1139,7 +1139,7 @@ static int log_rotation_act(log_stream_t *stream, size_t count) {
 
     /* Rename file to give it the "close timestamp" */
     rc = lgs_file_rename_h(root_path, stream->pathName, stream->logFileCurrent,
-                           current_time, LGS_LOG_FILE_EXT, emptyStr);
+                           current_time, LGS_LOG_FILE_EXT, &emptyStr);
     if (rc == -1) goto done;
 
     /* Save time when logFileCurrent was closed */
@@ -1491,7 +1491,7 @@ int log_stream_config_change(bool create_files_f, const std::string &root_path,
     *stream->p_fd = -1;
 
     rc = lgs_file_rename_h(root_path, stream->pathName, current_logfile_name,
-                           current_time, LGS_LOG_FILE_EXT, emptyStr);
+                           current_time, LGS_LOG_FILE_EXT, &emptyStr);
     if (rc == -1) {
       LOG_WA("log file (%s) is renamed  FAILED: %d",
              current_logfile_name.c_str(), rc);
@@ -1499,7 +1499,7 @@ int log_stream_config_change(bool create_files_f, const std::string &root_path,
     }
 
     rc = lgs_file_rename_h(root_path, stream->pathName, stream->fileName,
-                           current_time, LGS_LOG_FILE_CONFIG_EXT, emptyStr);
+                           current_time, LGS_LOG_FILE_CONFIG_EXT, &emptyStr);
     if (rc == -1) {
       LOG_WA("cfg file (%s) is renamed  FAILED: %d", stream->fileName.c_str(),
              rc);

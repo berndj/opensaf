@@ -23,8 +23,7 @@
 #include "rde/agent/rda_papi.h"
 #include "mds/mds_papi.h"
 #include "log/common/lgsv_msg.h"
-
-#include "lgs_cb.h"
+#include "log/logd/lgs_cb.h"
 
 typedef enum lgsv_lgs_evt_type {
   LGSV_LGS_LGSV_MSG = 0,
@@ -47,13 +46,13 @@ typedef struct lgsv_lgs_evt {
   struct lgsv_lgs_evt *next;
   struct timespec entered_at;
   uint32_t cb_hdl;
-  MDS_SYNC_SND_CTXT mds_ctxt; /* Relevant when this event has to be responded to
-                               * in a synchronous fashion.
-                               */
+  // Relevant when this event has to be responded to
+  // in a synchronous fashion.
+  MDS_SYNC_SND_CTXT mds_ctxt;
   MDS_DEST fr_dest;
   NODE_ID fr_node_id;
   char node_name[_POSIX_HOST_NAME_MAX];
-  MDS_SEND_PRIORITY_TYPE rcvd_prio; /* Priority of the recvd evt */
+  MDS_SEND_PRIORITY_TYPE rcvd_prio;  // Priority of the recvd evt
   LGSV_LGS_EVT_TYPE evt_type;
   union {
     lgsv_msg_t msg;
@@ -62,15 +61,17 @@ typedef struct lgsv_lgs_evt {
   } info;
 } lgsv_lgs_evt_t;
 
-/* Client DB */
-extern void *client_db; /* used for C++ STL map */
+// Client DB
+extern void *client_db;  // used for C++ STL map
 typedef std::map<NODE_ID, log_client_t *> ClientMap;
 
-/* These are the function prototypes for event handling */
+// These are the function prototypes for event handling
 typedef uint32_t (*LGSV_LGS_LGA_API_MSG_HANDLER)(lgs_cb_t *,
                                                  lgsv_lgs_evt_t *evt);
 typedef uint32_t (*LGSV_LGS_EVT_HANDLER)(lgsv_lgs_evt_t *evt);
 
+extern uint32_t lgs_cb_init(lgs_cb_t *);
+extern void lgs_process_mbx(SYSF_MBX *mbx);
 extern int lgs_client_stream_add(uint32_t client_id, uint32_t stream_id);
 extern int lgs_client_stream_rmv(uint32_t client_id, uint32_t stream_id);
 extern log_client_t *lgs_client_new(MDS_DEST mds_dest, uint32_t client_id,

@@ -16,26 +16,24 @@
  */
 
 #include "log/logd/lgs_file.h"
-#include "log/logd/lgs_filehdl.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-
 #include <unistd.h>
-
-#include "base/logtrace.h"
 #include <errno.h>
 #include <pthread.h>
 #include <time.h>
-#include "base/ncsgl_defs.h"
 
-#include "log/logd/lgs.h"
+#include "base/ncsgl_defs.h"
+#include "base/logtrace.h"
 #include "base/osaf_utility.h"
 #include "base/osaf_time.h"
-#include "lgs_config.h"
+#include "log/logd/lgs.h"
+#include "log/logd/lgs_config.h"
+#include "log/logd/lgs_filehdl.h"
 
 pthread_mutex_t lgs_ftcom_mutex;  /* For locking communication */
 static pthread_cond_t request_cv; /* File thread waiting for request */
@@ -57,9 +55,9 @@ struct file_communicate {
         timeout_f(false),
         request_code(LGSF_NOREQ),
         return_code(LGSF_NORETC),
-        indata_ptr(NULL),
+        indata_ptr(nullptr),
         outdata_size(0),
-        outdata_ptr(NULL) {}
+        outdata_ptr(nullptr) {}
 };
 
 /* Used for synchronizing and transfer of data ownership between main thread
@@ -255,7 +253,7 @@ static int start_file_thread() {
   /* Create thread.
    */
   rc = pthread_create(&file_thread_id, NULL, file_hndl_thread,
-                      (void *)&tbd_inpar);
+                      &tbd_inpar);
   if (rc != 0) {
     LOG_ER("pthread_create fail %s", strerror(errno));
     goto done;
@@ -294,8 +292,8 @@ typedef struct fd_list {
   int32_t fd;
 } fd_list_t;
 
-static fd_list_t *fd_first_p = NULL;
-static fd_list_t *fd_last_p = NULL;
+static fd_list_t *fd_first_p = nullptr;
+static fd_list_t *fd_last_p = nullptr;
 
 /**
  * Add stream file descriptor to list
@@ -309,7 +307,7 @@ void lgs_fd_list_add(int32_t fd) {
   fd_new_p = static_cast<fd_list_t *>(malloc(sizeof(fd_list_t)));
   osafassert(fd_new_p);
 
-  if (fd_first_p == NULL) {
+  if (fd_first_p == nullptr) {
     /* First in list */
     fd_first_p = fd_new_p;
     fd_last_p = fd_new_p;
@@ -319,7 +317,7 @@ void lgs_fd_list_add(int32_t fd) {
   }
 
   fd_new_p->fd = fd;
-  fd_new_p->fd_next_p = NULL;
+  fd_new_p->fd_next_p = nullptr;
 
   TRACE_LEAVE();
 }
@@ -332,7 +330,7 @@ int32_t lgs_fd_list_get() {
   int32_t r_fp;
   fd_list_t *fd_rem_p;
 
-  if (fd_first_p == NULL) {
+  if (fd_first_p == nullptr) {
     /* List empty */
     return -1;
   }
@@ -340,9 +338,9 @@ int32_t lgs_fd_list_get() {
   r_fp = fd_first_p->fd; /* fd to return */
   fd_rem_p = fd_first_p;
   fd_first_p = fd_rem_p->fd_next_p;
-  if (fd_first_p == NULL) {
+  if (fd_first_p == nullptr) {
     /* List is empty */
-    fd_last_p = NULL;
+    fd_last_p = nullptr;
   }
 
   free(fd_rem_p);
@@ -385,27 +383,27 @@ lgsf_retcode_t log_file_api(lgsf_apipar_t *apipar_in) {
           apipar_in->req_code_in);
     apipar_in->req_code_in = LGSF_FILECLOSE;
     apipar_in->data_in_size = sizeof(int);
-    apipar_in->data_in = (void *)&fd;
+    apipar_in->data_in = &fd;
     apipar_in->data_out_size = 0;
-    apipar_in->data_out = NULL;
+    apipar_in->data_out = nullptr;
     busy_close_flag = true;
   }
 
   /* Free request data before allocating new memeory */
-  if (lgs_com_data.indata_ptr != NULL) {
+  if (lgs_com_data.indata_ptr != nullptr) {
     free(lgs_com_data.indata_ptr);
-    lgs_com_data.indata_ptr = NULL;
+    lgs_com_data.indata_ptr = nullptr;
   }
-  if (lgs_com_data.outdata_ptr != NULL) {
+  if (lgs_com_data.outdata_ptr != nullptr) {
     free(lgs_com_data.outdata_ptr);
-    lgs_com_data.outdata_ptr = NULL;
+    lgs_com_data.outdata_ptr = nullptr;
   }
 
   /* Allocate memory and enter data for a request */
   lgs_com_data.request_code = apipar_in->req_code_in;
   if (apipar_in->data_in_size != 0) {
     lgs_com_data.indata_ptr = malloc(apipar_in->data_in_size);
-    if (lgs_com_data.indata_ptr == NULL) {
+    if (lgs_com_data.indata_ptr == nullptr) {
       LOG_ER("%s Could not allocate memory for in data", __FUNCTION__);
       api_rc = LGSF_FAIL;
       goto api_exit;
@@ -413,19 +411,19 @@ lgsf_retcode_t log_file_api(lgsf_apipar_t *apipar_in) {
     memcpy(lgs_com_data.indata_ptr, apipar_in->data_in,
            apipar_in->data_in_size);
   } else {
-    lgs_com_data.indata_ptr = NULL;
+    lgs_com_data.indata_ptr = nullptr;
   }
 
   if (apipar_in->data_out_size != 0) {
     lgs_com_data.outdata_ptr = malloc(apipar_in->data_out_size);
-    if (lgs_com_data.outdata_ptr == NULL) {
+    if (lgs_com_data.outdata_ptr == nullptr) {
       LOG_ER("%s Could not allocate memory for out data", __FUNCTION__);
       api_rc = LGSF_FAIL;
       goto api_exit;
     }
-    *(char *)lgs_com_data.outdata_ptr = '\0';
+    *static_cast<char *>(lgs_com_data.outdata_ptr) = '\0';
   } else {
-    lgs_com_data.outdata_ptr = NULL;
+    lgs_com_data.outdata_ptr = nullptr;
   }
   lgs_com_data.outdata_size = apipar_in->data_out_size;
 
@@ -498,7 +496,7 @@ char *lgsf_retcode_str(lgsf_retcode_t rc) {
     case LGSF_FAIL:
       return const_cast<char *>("LGSF_FAIL");
     default:
-      sprintf(errstr, "Unknown lgsf_retcode %d", rc);
+      snprintf(errstr, sizeof(errstr),  "Unknown lgsf_retcode %d", rc);
       return errstr;
   }
 }

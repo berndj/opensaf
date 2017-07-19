@@ -42,6 +42,8 @@
 #include "osaf/immutil/immutil.h"
 #include "lgs_clm.h"
 #include "log/logd/lgs_dest.h"
+#include "log/logd/lgs_amf.h"
+
 
 /* ========================================================================
  *   DEFINITIONS

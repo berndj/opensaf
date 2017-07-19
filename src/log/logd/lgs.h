@@ -97,7 +97,6 @@ extern uint32_t initialize_for_assignment(lgs_cb_t *cb, SaAmfHAStateT ha_state);
 
 extern uint32_t lgs_configure_mailbox();
 
-extern SaAisErrorT lgs_amf_init(lgs_cb_t *cb);
 extern uint32_t lgs_mds_init(lgs_cb_t *cb, SaAmfHAStateT ha_state);
 extern uint32_t lgs_mds_finalize(lgs_cb_t *cb);
 extern uint32_t lgs_mds_change_role(lgs_cb_t *cb);

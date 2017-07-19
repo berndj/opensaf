@@ -15,8 +15,8 @@
  *
  */
 
-#ifndef SRC_LOG_LOGD_LGS_UNIXSOCK_DEST_H_
-#define SRC_LOG_LOGD_LGS_UNIXSOCK_DEST_H_
+#ifndef LOG_LOGD_LGS_UNIXSOCK_DEST_H_
+#define LOG_LOGD_LGS_UNIXSOCK_DEST_H_
 
 #include <string>
 #include <map>
@@ -241,4 +241,4 @@ class UnixSocketType {
   DELETE_COPY_AND_MOVE_OPERATORS(UnixSocketType);
 };
 
-#endif  // SRC_LOG_LOGD_LGS_UNIXSOCK_DEST_H_
+#endif  // LOG_LOGD_LGS_UNIXSOCK_DEST_H_

@@ -28,8 +28,9 @@
 #include <saAis.h>
 #include <saAmf.h>
 #include <vector>
-#include "lgs_stream.h"
-#include "lgs_evt.h"
+#include <string>
+#include "log/logd/lgs_stream.h"
+#include "log/logd/lgs_evt.h"
 
 /* ========================================================================
  *   DEFINITIONS
@@ -60,7 +61,7 @@ extern int lgs_file_rename_h(const std::string &root_path,
                              const std::string &rel_path,
                              const std::string &old_name,
                              const std::string &time_stamp,
-                             const std::string &suffix, std::string &new_name);
+                             const std::string &suffix, std::string *new_name);
 // extern uint32_t lgs_create_known_streams(lgs_cb_t *lgs_cb); /* Not used, no
 // code */
 extern void lgs_exit(const char *msg, SaAmfRecommendedRecoveryT rec_rcvr);
