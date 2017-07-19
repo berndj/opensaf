@@ -572,6 +572,22 @@ bool SmfUpgradeProcedure::calculateRollingSteps(
   const std::list<SmfParentType *> &actUnitTemplates =
       nodeTemplate->getActivationUnitTemplateList();
 
+  // If we have all empty elements in a procedure do not create steps for it.
+  // The reason is that we do not want to lock/unlock nodes when there is no
+  // software to install or remove.
+  if (m_beforeLock.empty() &&
+      m_beforeTerm.empty() &&
+      m_afterImmModify.empty() &&
+      m_afterInstantiate.empty() &&
+      m_afterUnlock.empty() &&
+      nodeTemplate->getSwInstallList().empty() &&
+      nodeTemplate->getSwRemoveList().empty() &&
+      byTemplate->getTargetEntityTemplate().empty() &&
+      actUnitTemplates.size() == 0) {
+    LOG_WA("%s: not creating step when elements are empty", __FUNCTION__);
+    return true;
+  }
+
   if (actUnitTemplates.size() == 0) {
     /* No activation unit templates, use node list as activation/deactivation
      * units */
