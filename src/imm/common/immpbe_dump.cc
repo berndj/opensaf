@@ -352,6 +352,7 @@ static void typeToPBE(SaImmAttrDefinitionT_2 *p, void *dbHandle,
 static void valuesToPBE(const SaImmAttrValuesT_2 *p, SaImmAttrFlagsT attrFlags,
                         int objId, void *db_handle) {
   int rc = 0;
+  bool badfile = false;
   sqlite3 *dbHandle = (sqlite3 *)db_handle;
   sqlite3_stmt *stmt;
   int sqlIndex;
@@ -414,6 +415,9 @@ static void valuesToPBE(const SaImmAttrValuesT_2 *p, SaImmAttrFlagsT attrFlags,
     if (rc != SQLITE_DONE) {
       LOG_ER("SQL statement ('%s') failed with error code: %d\n",
              preparedSql[sqlIndex], rc);
+      if (rc == SQLITE_CONSTRAINT) {
+        badfile = true;
+      }
       goto bailout;
     }
     sqlite3_reset(stmt);
@@ -424,6 +428,9 @@ static void valuesToPBE(const SaImmAttrValuesT_2 *p, SaImmAttrFlagsT attrFlags,
 
 bailout:
   sqlite3_close((sqlite3 *)dbHandle);
+  if (badfile) {
+    discardPbeFile(*sPbeFileName);
+  }
   LOG_ER("Exiting (line:%u)", __LINE__);
   exit(1);
 }
@@ -2334,6 +2341,7 @@ bool objectToPBE(std::string objectNameString, const SaImmAttrValuesT_2 **attrs,
   sqlite3 *dbHandle = (sqlite3 *)db_handle;
   sqlite3_stmt *stmt;
   bool rdnFound = false;
+  bool badfile = false;
 
   std::string sqlAttr;
 
@@ -2380,6 +2388,9 @@ bool objectToPBE(std::string objectNameString, const SaImmAttrValuesT_2 **attrs,
   if (rc != SQLITE_DONE) {
     LOG_ER("SQL statement('%s') failed with error code: %d",
            preparedSql[SQL_INS_OBJECTS], rc);
+    if (rc == SQLITE_CONSTRAINT) {
+      badfile = true;
+    }
     goto bailout;
   }
   sqlite3_reset(stmt);
@@ -2447,6 +2458,9 @@ bool objectToPBE(std::string objectNameString, const SaImmAttrValuesT_2 **attrs,
   if (rc != SQLITE_DONE) {
     LOG_ER("SQL object statement for table '%s' failed with error code: %d\n",
            classNameString.c_str(), rc);
+    if(rc == SQLITE_CONSTRAINT) {
+      badfile = true;
+    }
     goto bailout;
   }
   sqlite3_reset(stmt);
@@ -2456,6 +2470,9 @@ bool objectToPBE(std::string objectNameString, const SaImmAttrValuesT_2 **attrs,
   return true;
 bailout:
   sqlite3_close(dbHandle);
+  if(badfile) {
+    discardPbeFile(*sPbeFileName);
+  }
   return false;
 }
 
