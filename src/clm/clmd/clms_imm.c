@@ -432,10 +432,12 @@ SaAisErrorT clms_cluster_config_get(void)
 	SaNameT dn;
 	SaImmAttrValuesT_2 **attributes;
 	const char *className = "SaClmCluster";
+	SaVersionT version;
 
 	TRACE_ENTER();
 
-	(void)immutil_saImmOmInitialize(&imm_om_hdl, NULL, &immVersion);
+	version = immVersion;
+	(void)immutil_saImmOmInitialize(&imm_om_hdl, NULL, &version);
 
 	searchParam.searchOneAttr.attrName = "SaImmAttrClassName";
 	searchParam.searchOneAttr.attrValueType = SA_IMM_ATTR_SASTRINGT;
@@ -445,6 +447,20 @@ SaAisErrorT clms_cluster_config_get(void)
 	    imm_om_hdl, &osaf_cluster->name, SA_IMM_SUBTREE,
 	    SA_IMM_SEARCH_ONE_ATTR | SA_IMM_SEARCH_GET_ALL_ATTR, &searchParam,
 	    NULL, &search_hdl);
+
+	if (rc == SA_AIS_ERR_BAD_HANDLE) {
+		// Repeat one more search on ERR_BAD_HANDLE
+
+		// Close the open OM handle, and initialize a new one
+		(void)immutil_saImmOmFinalize(imm_om_hdl);
+		version = immVersion;
+		(void)immutil_saImmOmInitialize(&imm_om_hdl, NULL, &version);
+
+		rc = immutil_saImmOmSearchInitialize_2(
+			    imm_om_hdl, &osaf_cluster->name, SA_IMM_SUBTREE,
+			    SA_IMM_SEARCH_ONE_ATTR | SA_IMM_SEARCH_GET_ALL_ATTR,
+			    &searchParam, NULL, &search_hdl);
+	}
 
 	if (rc != SA_AIS_OK) {
 		LOG_ER("No Object of  SaClmCluster Class was found");
