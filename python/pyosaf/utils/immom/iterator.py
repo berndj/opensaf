@@ -19,6 +19,7 @@
 IMM Search iterators
 '''
 
+from __future__ import print_function
 import sys
 import collections
 from ctypes import pointer, c_char_p, cast, c_void_p
@@ -33,7 +34,6 @@ from pyosaf import saImmOm
 from pyosaf.utils import immom
 from pyosaf.utils import SafException
 from pyosaf.utils.immom.object import ImmObject
-from __future__ import print_function
 
 
 class SearchIterator(collections.Iterator):
