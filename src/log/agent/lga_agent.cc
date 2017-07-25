@@ -292,7 +292,7 @@ SaAisErrorT LogAgent::saLogInitialize(SaLogHandleT* logHandle,
                                       const SaLogCallbacksT* callbacks,
                                       SaVersionT* version) {
   LogClient* client;
-  lgsv_msg_t i_msg, *o_msg;
+  lgsv_msg_t i_msg, *o_msg = nullptr;
   SaAisErrorT ais_rc = SA_AIS_OK;
   int rc;
   uint32_t client_id = 0;
