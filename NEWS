@@ -1,8 +1,8 @@
-OpenSAF 5.2.0 (released 2017-04-10)
------------------------------------
+OpenSAF 5.17.07 (released 2017-07-27)
+-------------------------------------
 
 This is a major release containing new enhancements. Before installing or
-upgrading to OpenSAF 5.2, make sure your system meets the minimum version
+upgrading to OpenSAF 5.17.07, make sure your system meets the minimum version
 requirements of the following system components:
 
 - Linux kernel, version 2.6.37 or later. Recommended version is Linux 3.18 or
@@ -13,6 +13,8 @@ requirements of the following system components:
 - GNU C Library (Glibc), version 2.11 or later
 - GNU Compiler Collection (GCC), version 4.8.1 or later
 - Libxml2, version 2.7 or later
+- Python, version 2.7 or later (only needed when configuring with
+  --enable-python)
 - Libopenssl, version 0.9.8 or later (optional)
 - Libsqlite3, version 3.6 or later (only needed when configuring with
   --enable-imm-pbe)
@@ -21,124 +23,64 @@ requirements of the following system components:
 - Libvirt, version 0.9.7 or later (only needed when configuring with
   --enable-ais-plm)
 
-When upgrading to OpenSAF 5.2.0 or later, be aware that SMF upgrade campaigns
-can behave differently compared to earlier OpenSAF releases in case of component
-failures. This is because Section 4.2.1.3 of SMF spec A.01.02 was implemented in
-OpenSAF 5.2.0. You can disable this new feature in OpenSAF 5.17.08 by setting
-the attribute osafAmfRestrictAutoRepairEnable to 0 in the AMF configuration
-object amfConfig=1,safApp=safAmfService.
-
-After upgrading to OpenSAF 5.2.0, please review the setting of
-OSAF_CKPT_SHM_ALLOC_GUARANTEE in /etc/opensaf/ckptnd.conf. To avoid a
-performance regression compared to OpenSAF 5.1.0, the default setting disables
-the protection against situations when the POSIX shared memory is full. You must
-change the setting of OSAF_CKPT_SHM_ALLOC_GUARANTEE if you wish to enable this
-protection.
+When upgrading from OpenSAF version 5.1 or older, be aware that SMF upgrade
+campaigns can behave differently compared to earlier OpenSAF releases in case of
+component failures. This is because Section 4.2.1.3 of SMF spec A.01.02 was
+implemented in OpenSAF 5.2.0. You can now disable this new feature in OpenSAF
+5.17.07 by setting the attribute osafAmfRestrictAutoRepairEnable to 0 in the AMF
+configuration object amfConfig=1,safApp=safAmfService.
 
 Important enhancements in this release
 --------------------------------------
 
 **AMF enhancements**
 
-- Implement partial support for si-swap admin op for N+M model [#2259]
-
-- Make saAmfCompCmdEnv attribute writable [#2255]
-
-- Implement restrictions to auto-repair according to Section 3.11.1.4.2 in the
-  spec. [#2144], [#2435]
-
-- Fix default value for saAmfSIPrefActiveAssignments [#1190]
-
-- Add support for SA_AMF_CLUSTER_RESET recommended recovery [#2065]
-
-- Roll back SI shutdown/​lock admin operation in case of node failover [#2133]
-
-- Improvements to the SC absence feature [#1902]
-
-- Support the saAmfSUAssignedSIs attribute [#905]
-
-- Correcte the return code from saAmResponse_4(), saAmfComponentErrorClear_4()
-  and saAmfComponentUnregister() in error cases [#251], [#245], [#171]
-
-**Build system enhancements**
-
-- Both the controller and the payload RPMs can now be installed on the same node
-  at the same time [#2102]
-
-- Use non-recursive make, and improve the default hardening options [#2084]
-
-- Remove dependencies to internal OpenSAF libraries from the AIS libraries
-  [#2375]
+- New command amfclusterstatus, that can be used to detect if the SC's are
+  absent when SC absence is allowed [#2354]
 
 **CLM enhancements**
 
-- Add a new CLM cluster reboot admin operation [#2053]
+- New commands clm-adm, clm-state and clm-find for administrating and inspecting
+  the CLM cluster [#2394]
 
 **IMM ennhancements**
 
-- Support SC absence time-outs longer than 65535 seconds [#2130]
+- Improved handling of CCB error strings [#2367], [#2433]
 
-- Use CCB error string to report if an object is created in another CCB when
-  calling CcbObjectCreate() [#2111]
+- SC absence improvements [#2447]
 
-- Print textual name of SAF error codes in the IMM command-line tools [#2123]
+**LCK enhancements**
 
-- Integrate the IMM service with CLM [#1640]
+- Integrate the LCK service with CLM, so that service is only provided on member
+  nodes [#2390]
 
-**LOG enhancements**
-
-- Support logging to unix sockets using the RFC 5424 syslog protocol [#2258]
-
-- Implement SaLogFilterSetCallbackT (Section 3.6.5 in spec.) [#2146]
-
-- Implement rotation of .cfg files [#2239]
-
-**MDS enhancements**
-
-- Use a separate process for writing MDS log messages [#2015], [#2035], [#2241]
-
-- Improvements to avoid dropped MDS messages [#2132]
+- Implement the saLckLimitGet() API function [#2425]
 
 **OpenSAF start/stop enhancements**
 
-- Use a lock file to protect OpenSAF start and stop script from concurrent
-  execution [#2244]
-
-- Improve the detection of service failures during the OpenSAF start phase
-  [#2204]
-
-- Prevent remote fencing of nodes that are being stopped using the OpenSAF stop
-  script [#2160]
-
-**PLM enhancements**
-
-- Add ability to scale out EEs dynamically [#2118]
-
-- Log resource ids or entity paths when applicable for failed HPI calls [#2109]
+- Calling opensafd start/stop will now block until any previous start/stop
+  request has completed [#2459]
 
 **Python enhancements**
 
-- Add a dispatch function to the clm utils [#2120]
+- The OpenSAF Python bindings now support Python version 3 [#2492]
 
-**SMF ennhancements**
+**Samples enhancements**
 
-- Support detection of asynchronous failures of AMF entities (Section 4.2.1.3 of
-  SMF spec A.01.02) [#2145]
+- DESTDIR environment variable is now supported when installing the OpenSAF
+  sample programs [#2460]
 
-**Tracing enhancements**
-
-- Add thread id to trace log messages [#2370]
 
 Links
 -----
 
-* The complete list of enhancements in the 5.2.0 release can be found in this
+* The complete list of enhancements in the 5.17.07 release can be found in this
   report:
 
-https://sourceforge.net/p/opensaf/tickets/search/?q=status%3Afixed+AND+_milestone%3A%285.2.FC+5.2.RC1+5.2.RC2+5.2.0%29+AND+_type%3Aenhancement&limit=100
+https://sourceforge.net/p/opensaf/tickets/search/?q=status%3Afixed+AND+_milestone%3A5.17.07+AND+_type%3Aenhancement
 
-* The documentation for the OpenSAF 5.2.0 release can be downloaded here:
+* The documentation for the OpenSAF 5.17.07 release can be downloaded here:
 
-http://sourceforge.net/projects/opensaf/files/docs/opensaf-documentation-5.2.0.tar.gz/download
+http://sourceforge.net/projects/opensaf/files/docs/opensaf-documentation-5.17.07.tar.gz/download
 
 You can also check the README of the respective OpenSAF service.
