@@ -117,7 +117,8 @@ void *ntfs_clm_init_thread(void *cb)
 	TRACE_ENTER();
 
 	rc = saClmInitialize_4(&_ntfs_cb->clm_hdl, &clm_callbacks, &clmVersion);
-	while ((rc == SA_AIS_ERR_TRY_AGAIN) || (rc == SA_AIS_ERR_TIMEOUT)) {
+	while ((rc == SA_AIS_ERR_TRY_AGAIN) || (rc == SA_AIS_ERR_TIMEOUT) ||
+	       (rc == SA_AIS_ERR_UNAVAILABLE)) {
 		osaf_nanosleep(&kHundredMilliseconds);
 		rc = saClmInitialize_4(&_ntfs_cb->clm_hdl, &clm_callbacks,
 				       &clmVersion);
