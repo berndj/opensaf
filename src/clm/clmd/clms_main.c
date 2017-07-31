@@ -163,8 +163,16 @@ static uint32_t clms_self_node_info(void)
 	node = clms_node_get_by_name(&node_name_dn);
 
 	if (node == NULL) {
-		LOG_ER("%s not found in the database. Please verify %s",
-		       node_name_dn.value, node_name_file);
+		if (clms_cb->scale_out_script != NULL) {
+			LOG_NO("Own node %s not found in the database. It will "
+			       "be scaled out since autoscaling is enabled.",
+			       node_name_dn.value);
+			rc = NCSCC_RC_SUCCESS;
+		} else {
+			LOG_ER("Own node %s not found in the database. Please "
+			       "update %s or enable autoscaling",
+			       node_name_dn.value, node_name_file);
+		}
 		goto done;
 	}
 
