@@ -276,13 +276,15 @@ SaAisErrorT avnd_clm_init(AVND_CB *cb) {
 
   cb->first_time_up = true;
   cb->clmHandle = 0;
+  bool has_logged_clm_error = false;
   for (;;) {
     SaVersionT Version = {'B', 4, 1};
     error = saClmInitialize_4(&cb->clmHandle, &callbacks, &Version);
     if (error == SA_AIS_ERR_TRY_AGAIN || error == SA_AIS_ERR_TIMEOUT ||
         error == SA_AIS_ERR_UNAVAILABLE) {
-      if (error != SA_AIS_ERR_TRY_AGAIN) {
-        LOG_WA("saClmInitialize_4 returned %u", (unsigned)error);
+      if (error != SA_AIS_ERR_TRY_AGAIN && !has_logged_clm_error) {
+        LOG_WA("saClmInitialize_4 returned %u", static_cast<unsigned>(error));
+        has_logged_clm_error = true;
       }
       osaf_nanosleep(&kHundredMilliseconds);
       continue;
