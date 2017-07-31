@@ -337,7 +337,8 @@ void *lgs_clm_init_thread(void *cb) {
   TRACE_ENTER();
 
   rc = saClmInitialize_4(&_lgs_cb->clm_hdl, &clm_callbacks, &clmVersion);
-  while ((rc == SA_AIS_ERR_TRY_AGAIN) || (rc == SA_AIS_ERR_TIMEOUT)) {
+  while ((rc == SA_AIS_ERR_TRY_AGAIN) || (rc == SA_AIS_ERR_TIMEOUT) ||
+         (rc == SA_AIS_ERR_UNAVAILABLE)) {
     if (_lgs_cb->clm_hdl != 0) {
       saClmFinalize(_lgs_cb->clm_hdl);
       _lgs_cb->clm_hdl = 0;
