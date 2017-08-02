@@ -85,6 +85,7 @@ noinst_HEADERS += \
 	src/clm/common/clmsv_enc_dec.h \
 	src/clm/common/clmsv_msg.h
 
+bin_PROGRAMS += bin/clmprint
 osaf_execbin_PROGRAMS += bin/osafclmd bin/osafclmna
 
 nodist_pkgclccli_SCRIPTS += \
@@ -164,6 +165,18 @@ dist_bin_SCRIPTS += \
        src/clm/tools/clm-adm \
        src/clm/tools/clm-find \
        src/clm/tools/clm-state
+
+bin_clmprint_CPPFLAGS = \
+        -DSA_EXTENDED_NAME_SOURCE \
+        $(AM_CPPFLAGS)
+
+bin_clmprint_SOURCES = \
+        src/clm/tools/clm_print.c
+
+bin_clmprint_LDADD = \
+        lib/libSaClm.la \
+	lib/libopensaf_core.la
+
 
 if ENABLE_TESTS
 
