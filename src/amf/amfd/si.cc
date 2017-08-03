@@ -1594,6 +1594,20 @@ const AVD_SIRANKEDSU *AVD_SI::get_si_ranked_su(
 
   return sirankedsu;
 }
+/*
+ * @brief Count number of SUSI assignment that are assigned to this SI
+ *        with specified HA state
+ * @param [in] @ha: HA state
+ * @return: number of SUSI assignment
+ */
+uint32_t AVD_SI::count_sisu_with(SaAmfHAStateT ha) {
+  uint32_t count = 0;
+  for (AVD_SU_SI_REL *sisu = list_of_sisu; sisu != nullptr;
+      sisu = sisu->si_next) {
+    if (sisu->state == ha) count++;
+  }
+  return count;
+}
 
 /*
  * @brief Update alarm_sent by new value of @alarm_state,

@@ -351,11 +351,9 @@ bool avd_susi_validate_absent_assignment(AVD_SU *su, AVD_SI *si,
       goto done;
   }
   // No need to create absent SUSI assignment for the 2N SI that already has
-  // ACTIVE SUSI
+  // the same @imm_ha_state SUSI
   if (su->sg_of_su->sg_redundancy_model == SA_AMF_2N_REDUNDANCY_MODEL) {
-    if (si->list_of_sisu != nullptr &&
-        si->list_of_sisu->state == SA_AMF_HA_ACTIVE &&
-        imm_ha_state == SA_AMF_HA_ACTIVE)
+    if (si->count_sisu_with(imm_ha_state) > 0)
       goto done;
   }
 

@@ -152,6 +152,7 @@ class AVD_SI {
   const AVD_SIRANKEDSU *get_si_ranked_su(const std::string &su_name) const;
   bool is_active() const;
   SaAisErrorT si_swap_validate();
+  uint32_t count_sisu_with(SaAmfHAStateT ha);
 
  private:
   bool is_assigned() const { return list_of_sisu ? true : false; }
