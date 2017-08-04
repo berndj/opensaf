@@ -32,5 +32,7 @@ uint32_t clmsv_decodeSaNameT(NCS_UBAID *uba, SaNameT *name);
 uint32_t clmsv_decodeNodeAddressT(NCS_UBAID *uba,
                                   SaClmNodeAddressT *nodeAddress);
 uint32_t clmsv_encodeSaNameT(NCS_UBAID *uba, SaNameT *name);
+uint32_t clmsv_encodeNodeAddressT(NCS_UBAID *uba,
+                                  SaClmNodeAddressT *nodeAddress);
 
 #endif  // CLM_COMMON_CLMSV_ENC_DEC_H_

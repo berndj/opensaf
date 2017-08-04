@@ -17,6 +17,8 @@
 #ifndef CLM_COMMON_CLMSV_MSG_H_
 #define CLM_COMMON_CLMSV_MSG_H_
 
+#include <saClm.h>
+
 /* CLMS->CLMA && CLMA->CLMS message types */
 typedef enum clms_msg_type {
   CLMSV_CLMA_TO_CLMS_API_MSG = 0,
@@ -137,6 +139,9 @@ typedef struct clmsv_track_info_t {
 typedef struct {
   SaUint32T node_id;
   SaNameT node_name;
+  SaTimeT boot_time;
+  SaUint16T no_of_addresses;
+  SaClmNodeAddressT address;
 } clmsv_clms_node_up_info_t;
 
 typedef struct clmsv_api_info_t {

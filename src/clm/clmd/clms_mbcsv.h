@@ -172,8 +172,6 @@ extern void prepare_ckpt_to_ckpt_node(CLMSV_CKPT_NODE *node,
                                       CLMSV_CKPT_NODE *cluster_node);
 extern void prepare_ckpt_to_ckpt_config_node(
     CLMSV_CKPT_NODE_CONFIG_REC *node, CLMSV_CKPT_NODE_CONFIG_REC *cluster_node);
-extern uint32_t encodeNodeAddressT(NCS_UBAID *uba,
-                                   SaClmNodeAddressT *nodeAddress);
 
 extern void send_async_update_for_node_rec(CLMS_CLUSTER_NODE *cluster_node);
 #endif  // CLM_CLMD_CLMS_MBCSV_H_

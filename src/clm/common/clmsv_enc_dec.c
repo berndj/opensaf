@@ -62,7 +62,7 @@ uint32_t clmsv_decodeNodeAddressT(NCS_UBAID *uba,
 
 	p8 = ncs_dec_flatten_space(uba, local_data, 2);
 	nodeAddress->length = ncs_decode_16bit(&p8);
-	if (nodeAddress->length > SA_MAX_NAME_LENGTH) {
+	if (nodeAddress->length > SA_CLM_MAX_ADDRESS_LENGTH) {
 		LOG_ER("nodeAddress->length length too long: %hd",
 		       nodeAddress->length);
 		/* this should not happen */
@@ -101,5 +101,37 @@ uint32_t clmsv_encodeSaNameT(NCS_UBAID *uba, SaNameT *name)
 	    uba, (uint8_t *)osaf_extended_name_borrow(name), length);
 	total_bytes += (uint32_t)length;
 	TRACE_LEAVE();
+	return total_bytes;
+}
+
+uint32_t clmsv_encodeNodeAddressT(NCS_UBAID *uba,
+				  SaClmNodeAddressT *nodeAddress)
+{
+	uint8_t *p8 = NULL;
+	uint32_t total_bytes = 0;
+
+	p8 = ncs_enc_reserve_space(uba, 4);
+	if (!p8) {
+		TRACE("p8 NULL!!!");
+		return 0;
+	}
+	ncs_encode_32bit(&p8, nodeAddress->family);
+	ncs_enc_claim_space(uba, 4);
+	total_bytes += 4;
+	p8 = ncs_enc_reserve_space(uba, 2);
+	if (!p8) {
+		TRACE("p8 NULL!!!");
+		return 0;
+	}
+	if (nodeAddress->length > SA_CLM_MAX_ADDRESS_LENGTH) {
+		LOG_ER("SaNameT length too long %hd", nodeAddress->length);
+		osafassert(0);
+	}
+	ncs_encode_16bit(&p8, nodeAddress->length);
+	ncs_enc_claim_space(uba, 2);
+	total_bytes += 2;
+	ncs_encode_n_octets_in_uba(uba, nodeAddress->value,
+				   (uint32_t)nodeAddress->length);
+	total_bytes += (uint32_t)nodeAddress->length;
 	return total_bytes;
 }

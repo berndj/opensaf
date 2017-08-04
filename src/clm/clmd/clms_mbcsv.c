@@ -17,9 +17,10 @@
  */
 
 #include "base/ncsencdec_pub.h"
-#include "clms.h"
-#include "clms_mbcsv.h"
-#include "clms_evt.h"
+#include "clm/clmd/clms.h"
+#include "clm/clmd/clms_evt.h"
+#include "clm/clmd/clms_mbcsv.h"
+#include "clm/common/clmsv_enc_dec.h"
 
 static uint32_t ckpt_proc_cluster_rec(CLMS_CB *cb, CLMS_CKPT_REC *data);
 static uint32_t ckpt_proc_reg_rec(CLMS_CB *cb, CLMS_CKPT_REC *data);
@@ -1829,7 +1830,7 @@ uint32_t enc_mbcsv_node_config_msg(NCS_UBAID *uba,
 	/** encode the contents **/
 	total_bytes += clmsv_encodeSaNameT(uba, &param->node_name);
 	total_bytes += clmsv_encodeSaNameT(uba, &param->ee_name);
-	total_bytes += encodeNodeAddressT(uba, &param->node_addr);
+	total_bytes += clmsv_encodeNodeAddressT(uba, &param->node_addr);
 
 	p8 = ncs_enc_reserve_space(uba, 4);
 	if (!p8) {
@@ -1886,7 +1887,7 @@ uint32_t enc_mbcsv_node_msg(NCS_UBAID *uba, CLMSV_CKPT_NODE *param)
 	ncs_enc_claim_space(uba, 4);
 	total_bytes += 4;
 
-	total_bytes += encodeNodeAddressT(uba, &param->node_addr);
+	total_bytes += clmsv_encodeNodeAddressT(uba, &param->node_addr);
 	total_bytes += clmsv_encodeSaNameT(uba, &param->node_name);
 	total_bytes += clmsv_encodeSaNameT(uba, &param->ee_name);
 

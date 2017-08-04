@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2008 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -15,8 +16,12 @@
  *
  */
 
+#include <inttypes.h>
+#include <string.h>
+#include "base/logtrace.h"
 #include "base/ncsencdec_pub.h"
-#include "clms.h"
+#include "clm/clmd/clms.h"
+#include "clm/common/clmsv_enc_dec.h"
 
 #define CLMS_SVC_PVT_SUBPART_VERSION 1
 #define CLMS_WRT_CLMA_SUBPART_VER_AT_MIN_MSG_FMT 1
@@ -286,37 +291,6 @@ done:
 	return total_bytes;
 }
 
-uint32_t encodeNodeAddressT(NCS_UBAID *uba, SaClmNodeAddressT *nodeAddress)
-{
-	uint8_t *p8 = NULL;
-	uint32_t total_bytes = 0;
-
-	p8 = ncs_enc_reserve_space(uba, 4);
-	if (!p8) {
-		TRACE("p8 NULL!!!");
-		return 0;
-	}
-	ncs_encode_32bit(&p8, nodeAddress->family);
-	ncs_enc_claim_space(uba, 4);
-	total_bytes += 4;
-	p8 = ncs_enc_reserve_space(uba, 2);
-	if (!p8) {
-		TRACE("p8 NULL!!!");
-		return 0;
-	}
-	if (nodeAddress->length > SA_CLM_MAX_ADDRESS_LENGTH) {
-		LOG_ER("SaNameT length too long %hd", nodeAddress->length);
-		osafassert(0);
-	}
-	ncs_encode_16bit(&p8, nodeAddress->length);
-	ncs_enc_claim_space(uba, 2);
-	total_bytes += 2;
-	ncs_encode_n_octets_in_uba(uba, nodeAddress->value,
-				   (uint32_t)nodeAddress->length);
-	total_bytes += (uint32_t)nodeAddress->length;
-	return total_bytes;
-}
-
 static uint32_t clms_enc_node_get_msg(NCS_UBAID *uba, SaClmClusterNodeT_4 *msg)
 {
 	uint8_t *p8;
@@ -332,7 +306,7 @@ static uint32_t clms_enc_node_get_msg(NCS_UBAID *uba, SaClmClusterNodeT_4 *msg)
 	ncs_enc_claim_space(uba, 4);
 	total_bytes += 4;
 
-	total_bytes += encodeNodeAddressT(uba, &param->nodeAddress);
+	total_bytes += clmsv_encodeNodeAddressT(uba, &param->nodeAddress);
 	total_bytes += clmsv_encodeSaNameT(uba, &param->nodeName);
 	total_bytes += clmsv_encodeSaNameT(uba, &param->executionEnvironment);
 
@@ -783,6 +757,17 @@ err:
 	return NCSCC_RC_FAILURE;
 }
 
+static void trace_node_address(const SaClmNodeAddressT *node_addr)
+{
+	char addr[SA_CLM_MAX_ADDRESS_LENGTH + 1];
+	size_t len = node_addr->length;
+	if (len > SA_CLM_MAX_ADDRESS_LENGTH)
+		len = SA_CLM_MAX_ADDRESS_LENGTH;
+	memcpy(addr, node_addr->value, len);
+	addr[len] = '\0';
+	TRACE("Address family %d, value '%s'", (int)node_addr->family, addr);
+}
+
 /**
  * Decode the nodeup msg
  **/
@@ -790,7 +775,7 @@ static uint32_t clms_dec_nodeup_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 {
 	uint8_t *p8;
 	uint32_t total_bytes = 0;
-	uint8_t local_data[4];
+	uint8_t local_data[8];
 	TRACE_ENTER();
 
 	p8 = ncs_dec_flatten_space(uba, local_data, 4);
@@ -802,7 +787,42 @@ static uint32_t clms_dec_nodeup_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 	TRACE("nodename %s length %d",
 	      msg->info.api_info.param.nodeup_info.node_name.value,
 	      msg->info.api_info.param.nodeup_info.node_name.length);
-
+	p8 = ncs_dec_flatten_space(uba, local_data, 8);
+	// Old protocol versions don't have the boot_time field. Use the current
+	// wall clock time if boot_time isn't present in the message.
+	uint64_t boot_time;
+	if (p8 != NULL) {
+		boot_time = ncs_decode_64bit(&p8);
+		ncs_dec_skip_space(uba, 8);
+		total_bytes += 8;
+		TRACE("Boot time: %" PRIu64, boot_time);
+	} else {
+		boot_time = clms_get_SaTime();
+	}
+	msg->info.api_info.param.nodeup_info.boot_time = boot_time;
+	p8 = ncs_dec_flatten_space(uba, local_data, 2);
+	// Old protocol versions don't have the no_of_addresses field, and hence
+	// no addresses in the message. Just stop decoding if no_of_addresses
+	// isn't found.
+	uint16_t no_of_addresses = 0;
+	if (p8 != NULL) {
+		no_of_addresses = ncs_decode_16bit(&p8);
+		ncs_dec_skip_space(uba, 2);
+		total_bytes += 2;
+		TRACE("Number of node addresses: %" PRIu16, no_of_addresses);
+	}
+	msg->info.api_info.param.nodeup_info.no_of_addresses = no_of_addresses;
+	SaClmNodeAddressT *node_addr =
+	    &(msg->info.api_info.param.nodeup_info.address);
+	if (no_of_addresses != 0) {
+		total_bytes += clmsv_decodeNodeAddressT(uba, node_addr);
+		trace_node_address(node_addr);
+	}
+	// For now we only use the first address, skip the rest.
+	for (uint16_t i = 1; i < no_of_addresses; ++i) {
+		SaClmNodeAddressT nodeAddress;
+		total_bytes += clmsv_decodeNodeAddressT(uba, &nodeAddress);
+	}
 	TRACE("CLMSV_NODE_UP_MSG");
 	TRACE_LEAVE();
 	return total_bytes;

@@ -116,7 +116,6 @@ extern SaAisErrorT clms_plm_init(CLMS_CB *cb);
 #endif
 extern void clms_node_add_to_model(CLMS_CLUSTER_NODE *node);
 extern SaTimeT clms_get_SaTime(void);
-extern SaTimeT clms_get_BootTime(void);
 extern void clms_imm_impl_set(CLMS_CB *cb);
 extern uint32_t clms_rda_init(CLMS_CB *cb);
 extern void clms_adminop_pending(void);

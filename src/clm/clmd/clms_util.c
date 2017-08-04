@@ -308,21 +308,6 @@ SaTimeT clms_get_SaTime(void)
 	return osaf_timespec_to_nanos(&realtime);
 }
 
-SaTimeT clms_get_BootTime(void)
-{
-	struct timespec monotonic;
-	struct timespec realtime;
-	struct timespec boottime;
-	osaf_clock_gettime(CLOCK_MONOTONIC, &monotonic);
-	osaf_clock_gettime(CLOCK_REALTIME, &realtime);
-	if (osaf_timespec_compare(&realtime, &monotonic) >= 0) {
-		osaf_timespec_subtract(&realtime, &monotonic, &boottime);
-	} else {
-		boottime = realtime;
-	}
-	return osaf_timespec_to_nanos(&boottime);
-}
-
 /**
  * Validate the saClmNode DN
  * @param[in] DN

@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2010,2015 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -664,17 +665,27 @@ uint32_t proc_node_up_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 			    "/node_name configuration");
 		}
 	}
-	node->boot_time = clms_get_SaTime();
+	node->boot_time =
+	    evt->info.msg.info.api_info.param.nodeup_info.boot_time;
 
 	/* Update the node with ipaddress information */
 	if (ip->addr.length) {
-		memset(&node->node_addr, 0 , sizeof(SaClmNodeAddressT));
+		memset(&node->node_addr, 0, sizeof(SaClmNodeAddressT));
 		node->node_addr.family = ip->addr.family;
 		node->node_addr.length = ip->addr.length;
 		memcpy(node->node_addr.value, ip->addr.value, ip->addr.length);
 	} else {			    /* AF_TIPC */
 		node->node_addr.family = 1; /* For backward compatibility */
 		node->node_addr.length = 0;
+	}
+
+	// If the node has sent us its address, this takes precedence over the
+	// address given by MDS.
+	if (evt->info.msg.info.api_info.param.nodeup_info.no_of_addresses !=
+	    0) {
+		SaClmNodeAddressT *node_addr =
+		    &(evt->info.msg.info.api_info.param.nodeup_info.address);
+		memcpy(&(node->node_addr), node_addr, sizeof(*node_addr));
 	}
 
 	/*When plm not in model,membership status depends only on the nodeup */

@@ -18,28 +18,28 @@
 
 #include <errno.h>
 #include <inttypes.h>
+#include <saClm.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-#include "clm/clmnd/cb.h"
-#include "base/ncs_main_papi.h"
+#include "base/logtrace.h"
 #include "base/ncs_hdl_pub.h"
-#include "base/ncsencdec_pub.h"
+#include "base/ncs_main_papi.h"
 #include "base/ncs_mda_pvt.h"
 #include "base/ncs_util.h"
-#include "base/logtrace.h"
-#include <saClm.h>
-#include "osaf/configmake.h"
-#include "clm/common/clmsv_msg.h"
-#include "clm/common/clmsv_enc_dec.h"
-#include "clm/clmnd/evt.h"
-#include "clmna.h"
+#include "base/ncsencdec_pub.h"
+#include "base/ncsgl_defs.h"
 #include "base/osaf_poll.h"
 #include "base/osaf_time.h"
-#include "base/ncsgl_defs.h"
+#include "clm/clmnd/cb.h"
+#include "clm/clmnd/clmna.h"
+#include "clm/clmnd/election_starter_wrapper.h"
+#include "clm/clmnd/evt.h"
+#include "clm/common/clmsv_enc_dec.h"
+#include "clm/common/clmsv_msg.h"
 #include "mds/mds_papi.h"
-#include "election_starter_wrapper.h"
+#include "osaf/configmake.h"
 
 enum { FD_TERM = 0, FD_AMF, FD_MBX, NUM_FD };
 
@@ -389,6 +389,28 @@ static uint32_t clmna_mds_enc(struct ncsmds_callback_info *info)
 			total_bytes += clmsv_encodeSaNameT(
 			    uba,
 			    &(msg->info.api_info.param.nodeup_info.node_name));
+			p8 = ncs_enc_reserve_space(uba, 8);
+			ncs_encode_64bit(
+			    &p8,
+			    msg->info.api_info.param.nodeup_info.boot_time);
+			ncs_enc_claim_space(uba, 8);
+			total_bytes += 8;
+			TRACE("Encoded boot time: %" PRIu64,
+			      (uint64_t)msg->info.api_info.param.nodeup_info
+				  .boot_time);
+			uint16_t no_of_addresses =
+			    msg->info.api_info.param.nodeup_info
+				.no_of_addresses;
+			p8 = ncs_enc_reserve_space(uba, 2);
+			ncs_encode_16bit(&p8, no_of_addresses);
+			ncs_enc_claim_space(uba, 2);
+			total_bytes += 2;
+			if (no_of_addresses != 0) {
+				osafassert(no_of_addresses == 1);
+				total_bytes += clmsv_encodeNodeAddressT(
+				    uba, &(msg->info.api_info.param.nodeup_info
+					       .address));
+			}
 		}
 	}
 
@@ -504,7 +526,7 @@ static int get_node_info(NODE_INFO *node)
 	}
 	fclose(fp);
 	node->node_name.length = strlen((char *)node->node_name.value);
-	TRACE("%s", node->node_name.value);
+	TRACE("node name: '%s'", node->node_name.value);
 
 	fp = fopen(PKGLOCALSTATEDIR "/node_id", "r");
 	if (fp == NULL) {
@@ -519,8 +541,38 @@ static int get_node_info(NODE_INFO *node)
 		return -1;
 	}
 	fclose(fp);
-	TRACE("%d", node->node_id);
+	TRACE("node id: 0x%" PRIx32, node->node_id);
+	struct timespec boot_time;
+	osaf_get_boot_time(&boot_time);
+	// Round boot time to 10 microseconds, so that multiple readings are
+	// likely to result in the same value.
+	uint64_t boot_time_10us =
+	    (osaf_timespec_to_nanos(&boot_time) + 5000) / 10000;
+	node->boot_time = boot_time_10us * 10000;
+	TRACE("Boot time: %" PRIu64, (uint64_t)node->boot_time);
 
+	long family_val = 0;
+	char *family = getenv("CLMNA_ADDR_FAMILY");
+	char *value = getenv("CLMNA_ADDR_VALUE");
+	if (family != NULL) {
+		char *endptr = family;
+		errno = 0;
+		family_val = strtol(family, &endptr, 0);
+		if (errno != 0 || *endptr != '\0' || *family == '\0')
+			family = NULL;
+	}
+	if (family != NULL && value != NULL) {
+		size_t len = strlen(value);
+		if (len > SA_CLM_MAX_ADDRESS_LENGTH)
+			len = SA_CLM_MAX_ADDRESS_LENGTH;
+		node->address.family = family_val;
+		node->address.length = len;
+		memcpy(node->address.value, value, len);
+		node->no_of_addresses = 1;
+	} else {
+		node->no_of_addresses = 0;
+		memset(&node->address, 0, sizeof(node->address));
+	}
 	return 0;
 }
 
@@ -621,6 +673,11 @@ static void clmna_process_dummyup_msg(void)
 		msg.info.api_info.param.nodeup_info.node_id = self_node.node_id;
 		msg.info.api_info.param.nodeup_info.node_name =
 		    self_node.node_name;
+		msg.info.api_info.param.nodeup_info.boot_time =
+		    self_node.boot_time;
+		msg.info.api_info.param.nodeup_info.no_of_addresses =
+		    self_node.no_of_addresses;
+		msg.info.api_info.param.nodeup_info.address = self_node.address;
 		stop_scale_out_retry_tmr();
 		start_scale_out_retry_tmr(CLMNA_JOIN_RETRY_TIME);
 		uint32_t rc = clmna_mds_msg_send(&msg);

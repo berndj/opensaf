@@ -20,22 +20,26 @@
 #define CLM_CLMND_CB_H_
 
 #include <assert.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
 #include <poll.h>
+#include <saClm.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-#include "osaf/configmake.h"
 #include "base/daemon.h"
-#include "nid/agent/nid_api.h"
-#include "mds/mds_papi.h"
 #include "base/ncssysf_ipc.h"
 #include "base/ncssysf_tmr.h"
+#include "mds/mds_papi.h"
+#include "nid/agent/nid_api.h"
+#include "osaf/configmake.h"
 
 /* Self node information */
 typedef struct node_detail_t {
   SaUint32T node_id;
   SaNameT node_name;
+  SaTimeT boot_time;
+  SaUint16T no_of_addresses;
+  SaClmNodeAddressT address;
 } NODE_INFO;
 
 /* CLM Server control block */

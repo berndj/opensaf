@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2008,2015 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -21,18 +22,17 @@
  * ========================================================================
  */
 
-#include <string.h>
+#include <poll.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
-#include <signal.h>
-#include <poll.h>
-
-#include "osaf/configmake.h"
 #include "base/daemon.h"
-
+#include "base/osaf_time.h"
+#include "clm/clmd/clms.h"
 #include "nid/agent/nid_api.h"
-#include "clms.h"
+#include "osaf/configmake.h"
 #include "osaf/saflog/saflog.h"
 
 /* ========================================================================
@@ -184,7 +184,13 @@ static uint32_t clms_self_node_info(void)
 	if (node->admin_state == SA_CLM_ADMIN_UNLOCKED) {
 		node->member = SA_TRUE;
 		++(osaf_cluster->num_nodes);
-		node->boot_time = clms_get_BootTime();
+		struct timespec boot_time;
+		osaf_get_boot_time(&boot_time);
+		// Round boot time to 10 microseconds, so that multiple readings
+		// are likely to result in the same value.
+		uint64_t boot_time_10us =
+		    (osaf_timespec_to_nanos(&boot_time) + 5000) / 10000;
+		node->boot_time = boot_time_10us * 10000;
 #ifdef ENABLE_AIS_PLM
 		node->ee_red_state =
 		    SA_PLM_READINESS_IN_SERVICE; /*TBD : changed when plm
