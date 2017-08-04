@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2015 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -24,10 +25,12 @@ struct MockClockGettime {
   struct timespec execution_time;
   int return_value;
   int errno_value;
+  bool disable_mock;
 };
 
 extern timespec realtime_clock;
 extern timespec monotonic_clock;
+extern timespec boottime_clock;
 extern MockClockGettime mock_clock_gettime;
 
 #endif  // BASE_TESTS_MOCK_CLOCK_GETTIME_H_

@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2013 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -81,6 +82,17 @@ extern const struct timespec kOneHour;
 extern void osaf_nanosleep(const struct timespec* sleep_duration);
 
 /**
+ * @brief Get the time when the node booted
+ *
+ * This function gets the time stamp of the CLOCK_REALTIME clock when the node
+ * booted, and stores the result in @a boot_time. Zero is returned in case of an
+ * error. Note that since the boot time is calculated by reading the current
+ * time and the node's uptime, you may not get the exact same result when
+ * calling this function multiple times.
+ */
+extern void osaf_get_boot_time(struct timespec* boot_time);
+
+/**
  * @brief Get the time
  *
  * This is a convenience function that behaves exactly like the POSIX function
@@ -129,6 +141,19 @@ static inline void osaf_timespec_add(const struct timespec* i_time1,
 static inline void osaf_timespec_subtract(const struct timespec* i_end,
                                           const struct timespec* i_start,
                                           struct timespec* o_difference);
+
+/**
+ * @brief Calculate the average of two timespec structures.
+ *
+ * This function calculates the average of the two timespec structures @a
+ * i_time1 and @a i_time2, and stores the result in the output parameter @a
+ * o_average. The input parameters must be normalized, and the output parameter
+ * @a o_average is guaranteed to also be normalized. The parameters are allowed
+ * to point to the same memory address. Negative times are not supported.
+ */
+static inline void osaf_timespec_average(const struct timespec* i_time1,
+                                         const struct timespec* i_time2,
+                                         struct timespec* o_average);
 
 /**
  * @brief Compare two timespec structures.
@@ -311,6 +336,21 @@ static inline void osaf_timespec_subtract(const struct timespec* i_end,
   }
   o_difference->tv_sec = sec;
   o_difference->tv_nsec = nsec;
+}
+
+static inline void osaf_timespec_average(const struct timespec* i_time1,
+                                         const struct timespec* i_time2,
+                                         struct timespec* o_average) {
+  // Use uint64_t instead of time_t, to avoid overflow (inputs are guaranteed to
+  // be non-negative so tv_sec is in the range [0, INT64_MAX].
+  uint64_t sec = (uint64_t)i_time1->tv_sec + (uint64_t)i_time2->tv_sec;
+  long nsec = i_time1->tv_nsec + i_time2->tv_nsec;
+  if (nsec >= kNanosPerSec) {
+    sec += 1;
+    nsec -= kNanosPerSec;
+  }
+  o_average->tv_sec = sec / 2;
+  o_average->tv_nsec = (kNanosPerSec * (sec & 1) + nsec) / 2;
 }
 
 static inline int osaf_timespec_compare(const struct timespec* i_end,

@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2013 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -17,6 +18,10 @@
 
 #include "base/osaf_time.h"
 #include <errno.h>
+
+#ifndef CLOCK_BOOTTIME
+#define CLOCK_BOOTTIME 7
+#endif
 
 const struct timespec kZeroSeconds = {0, 0};
 const struct timespec kTenMilliseconds = {0, 10000000};
@@ -41,4 +46,23 @@ void osaf_nanosleep(const struct timespec *sleep_duration)
 	} while (retval == EINTR);
 	if (retval != 0)
 		osaf_abort(retval);
+}
+
+void osaf_get_boot_time(struct timespec *boot_time)
+{
+	struct timespec uptime;
+	struct timespec realtime;
+	struct timespec uptime_after;
+	int result = clock_gettime(CLOCK_BOOTTIME, &uptime);
+	result |= clock_gettime(CLOCK_REALTIME, &realtime);
+	result |= clock_gettime(CLOCK_BOOTTIME, &uptime_after);
+	if (result == 0) {
+		osaf_timespec_average(&uptime, &uptime_after, &uptime);
+		if (osaf_timespec_compare(&realtime, &uptime) >= 0) {
+			osaf_timespec_subtract(&realtime, &uptime, boot_time);
+			return;
+		}
+	}
+	boot_time->tv_sec = 0;
+	boot_time->tv_nsec = 0;
 }

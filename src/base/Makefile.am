@@ -221,17 +221,19 @@ bin_core_common_test_LDFLAGS = \
 	src/base/lib_libopensaf_core_la-osaf_utility.lo
 
 bin_core_common_test_SOURCES = \
+	src/base/tests/mock_clock_gettime.cc \
+	src/base/tests/mock_clock_nanosleep.cc \
+	src/base/tests/mock_syslog.cc \
 	src/base/tests/osaf_clock_gettime_test.cc \
+	src/base/tests/osaf_get_boot_time_test.cc \
+	src/base/tests/osaf_millis_timeout_test.cc \
 	src/base/tests/osaf_nanosleep_test.cc \
 	src/base/tests/osaf_normalize_timespec_test.cc \
 	src/base/tests/osaf_timespec_add_test.cc \
+	src/base/tests/osaf_timespec_average_test.cc \
 	src/base/tests/osaf_timespec_compare_test.cc \
 	src/base/tests/osaf_timespec_convert_test.cc \
-	src/base/tests/osaf_timespec_subtract_test.cc \
-	src/base/tests/osaf_millis_timeout_test.cc \
-	src/base/tests/mock_clock_gettime.cc \
-	src/base/tests/mock_clock_nanosleep.cc \
-	src/base/tests/mock_syslog.cc
+	src/base/tests/osaf_timespec_subtract_test.cc
 
 bin_core_common_test_LDADD = \
 	$(GTEST_DIR)/lib/libgtest.la \

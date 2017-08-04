@@ -934,7 +934,7 @@ Upgrading OpenSAF
 Before installing or upgrading to OpenSAF 5.17.10, make sure your system meets
 the minimum version requirements of the following system components:
 
-- Linux kernel, version 2.6.37 or later. Recommended version is Linux 3.18 or
+- Linux kernel, version 2.6.39 or later. Recommended version is Linux 3.18 or
   later when using the TCP transport, and Linux 4.4.22 or later when using the
   TIPC transport. Linux versions older than the recommended ones contain bugs
   that are known to affect the proper function of OpenSAF. Use of Linux versions
@@ -968,7 +968,9 @@ protection.
 
 Pay special attention to the fact that we have increased the minimum required
 version of GCC to 4.8.1 in OpenSAF 4.7.0, due to the use of the C++11 standard.
-In OpenSAF 4.7.2, the minimum Linux version was increased to 2.6.37.
+In OpenSAF 4.7.2, the minimum Linux version was increased to 2.6.37 due to the
+use of TCP_USER_TIMEOUT, and in OpenSAF 5.17.10 the minimum Linux version was
+increased to 2.6.39 due to the use of CLOCK_BOOTTIME.
 
 New configuration attributes have been added to the class OpensafImm in OpenSAF
 4.5, which means that the class schema has to be updated when upgrading from an
