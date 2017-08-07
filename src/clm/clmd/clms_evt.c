@@ -488,9 +488,17 @@ static void scale_out_node(CLMS_CB *cb,
 		queue_the_node = false;
 	}
 	if (queue_the_node) {
+		char node_address[SA_CLM_MAX_ADDRESS_LENGTH + 1];
+		size_t addr_len = nodeup_info->address.length;
+		if (addr_len > SA_CLM_MAX_ADDRESS_LENGTH)
+			addr_len = SA_CLM_MAX_ADDRESS_LENGTH;
+		if (nodeup_info->no_of_addresses == 0)
+			addr_len = 0;
+		memcpy(node_address, nodeup_info->address.value, addr_len);
+		node_address[addr_len] = '\0';
 		char *strp;
-		if (asprintf(&strp, "%" PRIu32 ",%s,", nodeup_info->node_id,
-			     node_name) != -1) {
+		if (asprintf(&strp, "%" PRIu32 ",%s,%s,", nodeup_info->node_id,
+			     node_name, node_address) != -1) {
 			LOG_NO("Queuing request to scale out node 0x%" PRIx32
 			       " (%s)",
 			       nodeup_info->node_id, node_name);
@@ -525,13 +533,10 @@ uint32_t proc_node_up_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 {
 	clmsv_clms_node_up_info_t *nodeup_info =
 	    &(evt->info.msg.info.api_info.param).nodeup_info;
-	CLMS_CLUSTER_NODE *node = NULL;
-	SaUint32T nodeid;
 	uint32_t rc = NCSCC_RC_SUCCESS;
 	SaNameT node_name = {0};
 	CLMSV_MSG clm_msg;
 	SaBoolT check_member;
-	IPLIST *ip = NULL;
 
 	TRACE_ENTER2("Node up mesg for nodename length %d %s",
 		     nodeup_info->node_name.length,
@@ -542,10 +547,21 @@ uint32_t proc_node_up_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 	    (char *)node_name.value, sizeof(node_name.value), "safNode=%s,%s",
 	    nodeup_info->node_name.value, osaf_cluster->name.value);
 
-	nodeid = evt->info.msg.info.api_info.param.nodeup_info.node_id;
+	SaUint32T nodeid = nodeup_info->node_id;
 
-	node = clms_node_get_by_name(&node_name);
+	/* Retrieve IP information */
+	IPLIST *ip = (IPLIST *)ncs_patricia_tree_get(&clms_cb->iplist,
+						     (uint8_t *)&nodeid);
+
+	if (ip != NULL && ip->addr.length != 0 &&
+	    nodeup_info->no_of_addresses == 0) {
+		nodeup_info->no_of_addresses = 1;
+		memcpy(&(nodeup_info->address), &(ip->addr), sizeof(ip->addr));
+	}
+
+	CLMS_CLUSTER_NODE *node = clms_node_get_by_name(&node_name);
 	clm_msg.info.api_resp_info.rc = SA_AIS_OK;
+
 	if (node == NULL) {
 		/* The /etc/opensaf/node_name is an user exposed configuration
 		 * file. The node_name file contains the RDN value of the CLM
@@ -573,8 +589,7 @@ uint32_t proc_node_up_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 
 	if (node != NULL) {
 		/* Retrieve IP information */
-		if ((ip = (IPLIST *)ncs_patricia_tree_get(
-			 &clms_cb->iplist, (uint8_t *)&nodeid)) == NULL) {
+		if (ip == NULL) {
 			clm_msg.info.api_resp_info.rc = SA_AIS_ERR_NOT_EXIST;
 			LOG_ER(
 			    "IP information not found for: %s with node_id: %u",
@@ -653,8 +668,7 @@ uint32_t proc_node_up_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 	/* Self Node needs to be added tp patricia tree before hand during init
 	 */
 	if (NULL == clms_node_get_by_id(nodeid)) {
-		node->node_id =
-		    evt->info.msg.info.api_info.param.nodeup_info.node_id;
+		node->node_id = nodeup_info->node_id;
 
 		TRACE("node->node_id %u node->nodeup %d", node->node_id,
 		      node->nodeup);
@@ -665,27 +679,16 @@ uint32_t proc_node_up_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 			    "/node_name configuration");
 		}
 	}
-	node->boot_time =
-	    evt->info.msg.info.api_info.param.nodeup_info.boot_time;
+
+	node->boot_time = nodeup_info->boot_time;
 
 	/* Update the node with ipaddress information */
-	if (ip->addr.length) {
-		memset(&node->node_addr, 0, sizeof(SaClmNodeAddressT));
-		node->node_addr.family = ip->addr.family;
-		node->node_addr.length = ip->addr.length;
-		memcpy(node->node_addr.value, ip->addr.value, ip->addr.length);
+	if (nodeup_info->no_of_addresses != 0) {
+		memcpy(&(node->node_addr), &(nodeup_info->address),
+		       sizeof(nodeup_info->address));
 	} else {			    /* AF_TIPC */
 		node->node_addr.family = 1; /* For backward compatibility */
 		node->node_addr.length = 0;
-	}
-
-	// If the node has sent us its address, this takes precedence over the
-	// address given by MDS.
-	if (evt->info.msg.info.api_info.param.nodeup_info.no_of_addresses !=
-	    0) {
-		SaClmNodeAddressT *node_addr =
-		    &(evt->info.msg.info.api_info.param.nodeup_info.address);
-		memcpy(&(node->node_addr), node_addr, sizeof(*node_addr));
 	}
 
 	/*When plm not in model,membership status depends only on the nodeup */
