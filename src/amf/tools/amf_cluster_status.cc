@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
+#include <getopt.h>
 
 #include "mds/mds_papi.h"
 #include "base/osaf_time.h"
@@ -29,7 +30,6 @@
 #include "osaf/immutil/immutil.h"
 
 enum { AMF_CLUSTER_MDS_VERSION = 1, AMF_CLUSTER_MDS_SVC_ID = 501 };
-
 class CLM_NODE {
  public:
   std::string clm_rdn;
@@ -51,6 +51,9 @@ static std::vector<NODE_ID> avnd_up_db;
 static std::map<std::string, CLM_NODE> clm_db;
 static std::map<std::string, AMF_NODE> amf_db;
 static uint32_t width = strlen("NODE(AMF)");
+static NODE_ID scs_node_id[2];
+static uint32_t scs_count;
+static bool print_also = true;
 
 uint32_t mds_callback(struct ncsmds_callback_info *info) {
   uint32_t rc = NCSCC_RC_SUCCESS;
@@ -67,7 +70,11 @@ uint32_t mds_callback(struct ncsmds_callback_info *info) {
 
   if (info->info.svc_evt.i_change == NCSMDS_UP) {
     if (info->info.svc_evt.i_svc_id == NCSMDS_SVC_ID_AVD) {
-      if (m_MDS_DEST_IS_AN_ADEST(info->info.svc_evt.i_dest)) is_avd_up = true;
+      if (m_MDS_DEST_IS_AN_ADEST(info->info.svc_evt.i_dest)) {
+        is_avd_up = true;
+        if (scs_count < 2)
+          scs_node_id[scs_count++] = info->info.svc_evt.i_node_id;
+      }
     } else if (info->info.svc_evt.i_svc_id == NCSMDS_SVC_ID_AVND) {
       avnd_up_db.push_back(info->info.svc_evt.i_node_id);
     }
@@ -290,56 +297,199 @@ static void print_cluster_info() {
 
 static void usage(const char *prog_name) {
   std::cout << std::endl << "NAME" << std::endl;
-  std::cout << "\t" << prog_name
-            << " - lists RDNs of AMF nodes with their status (UP, DOWN, SAM)"
-            << std::endl;
+  std::cout << "\t" << prog_name << std::endl;
   std::cout << std::endl << "SYNOPSIS" << std::endl;
   std::cout << "\t" << prog_name << " [option]" << std::endl;
 
   std::cout << std::endl << "DESCRIPTION" << std::endl;
   std::cout << "\t"
-            << "lists RDNs of AMF nodes with their status: " << std::endl;
+            << "Use this command:"<<std::endl;
+  std::cout << "\t"
+            << "- to check if any System Controller(SC) is up."<<std::endl;
+  std::cout << "\t"
+            << "- to check if a node is System Controller(SC)."<<std::endl;
+  std::cout << "\t"
+            << "- to lists RDNs of AMF nodes with their status: " << std::endl;
   std::cout << "\t  "
-            << "UP:   Node is up (OpenSAF running)." << std::endl;
+            << "   UP:   Node is up (OpenSAF running)." << std::endl;
   std::cout << "\t  "
-            << "DOWN: Node is down (OpenSAF not running)." << std::endl;
-  std::cout
-      << "\t  "
-      << "SAM:  Stands for SCs Absence Mode. Node is up without any SCs up in cluster."
-      << std::endl;
-  std::cout
-      << std::endl
-      << "\t"
-      << "Note: a CLM locked node is shown up if OpenSAF is running on that node."
-      << std::endl;
+            << "   DOWN: Node is down (OpenSAF not running)." << std::endl;
+  std::cout << "\t  "
+            << "   SAM:  Stands for SCs Absence Mode. Node is up without any SCs up in cluster."
+            << std::endl;
+  std::cout << "\t"
+            << "Note: a CLM locked node is shown up if OpenSAF is running on that node."
+            << std::endl;
 
   std::cout << std::endl << "OPTIONS" << std::endl;
   std::cout << "\t"
-            << "-h, --help - display this help and exit" << std::endl;
+            << "-s or --controller-status      returns 0 if at least one SC is up"<<std::endl
+            << "\t"
+            << "                               returns 1 if SCs are absent"<<std::endl<<std::endl;
+  std::cout << "\t"
+            << "-c or --is-controller          returns 0 if this is a SC node"<<std::endl
+            << "\t"
+            << "                               returns 1 if this is not a SC node"<<std::endl
+            << "\t"
+            << "                               If nodeid is passed as optional argument"<<std::endl
+            << "\t"
+            << "                               then nodeid is checked for SC."<<std::endl;
+  std::cout << "\t"
+            << "                               Here SC node means active or standby SC"<<std::endl
+            <<std::endl;
+  std::cout << "\t"
+            << "-u or --node-up                returns 0 if this node is up"<<std::endl
+            << "\t"
+            << "                               returns 1 if this node is not up"<<std::endl
+            << "\t"
+            << "                               If nodeid is passed as optional argument"<<std::endl
+            << "\t"
+            << "                               then nodeid is checked for up status."<<std::endl<<std::endl;
+
+  std::cout << "\t"
+            << "-q or --quiet                  suppresses prints." <<std::endl <<std::endl;
+  std::cout << "\t"
+            << "-h or --help                   display this help and exit" <<std::endl<<std::endl;
+  std::cout << "\t"
+            << "Note: Without any option, prints AMF nodes and their status" <<std::endl;
 
   std::cout << std::endl << "EXAMPLE" << std::endl;
   std::cout << "\t"
             << "amfclusterstatus " << std::endl;
   std::cout << "\t"
             << "amfclusterstatus -h " << std::endl;
+  std::cout << "\t"
+            << "amfclusterstatus -c -q" << std::endl;
+  std::cout << "\t"
+            << "amfclusterstatus -c 0x2030f -q" << std::endl;
+  std::cout << "\t"
+            << "amfclusterstatus -u -q" << std::endl;
+  std::cout << "\t"
+            << "amfclusterstatus -u 0x2030f -q" << std::endl;
+  std::cout << "\t"
+            << "amfclusterstatus -s -q" << std::endl;
 }
 
 int main(int argc, char *argv[]) {
-  if (argc != 1) {
-    usage(basename(argv[0]));
-    return 0;
+  char opt_char = 'z';
+  char *ptr = NULL;
+  NODE_ID node_id = 0;
+  bool user_node = false;
+
+  struct option long_options[] = {
+    {"help",                no_argument,       0, 'h'},
+    {"controller-status",   no_argument,       0, 's'},
+    {"is-controller",       optional_argument, 0, 'c'},
+    {"node-up",             optional_argument, 0, 'u'},
+    {"quiet",               no_argument,       0, 'q'},
+    {0, 0, 0, 0}
+  };
+  while (1) {
+     int option = getopt_long(argc, argv, "sc::u::qh", long_options,NULL);
+     if (option == -1)
+       break;
+
+     switch (option) {
+     case 's':
+             opt_char = option;
+             break;
+     case 'c':
+     case 'u':
+             opt_char = option;
+	     if (optarg == NULL) {
+	       if ((argv[optind] != NULL) &&
+	           (argv[optind][0] != '-')) {
+		 node_id = strtoul(argv[optind], &ptr, 0);
+		 ++optind;
+                 user_node = true;
+               }
+	     } else {
+	       node_id = strtoul(optarg, &ptr, 0);
+               user_node = true;
+             }
+             break;
+     case 'q':
+             print_also = false;
+             break;
+     case 'h':
+             usage(basename(argv[0]));
+             exit(EXIT_SUCCESS);
+     case '?':
+	     std::cout << "Try "<< basename(argv[0]) << "-h or --help for more information" << std::endl;
+             exit(EXIT_FAILURE);
+             break;
+     }
   }
+
   setenv("SA_ENABLE_EXTENDED_NAMES", "1", 1);
   if (ncs_agents_startup() != NCSCC_RC_SUCCESS) {
     std::cerr << "ncs_core_agents_startup FAILED" << std::endl;
     exit(EXIT_FAILURE);
   }
+
+  if (user_node == false)
+    node_id = m_NCS_GET_NODE_ID; //Get local node_id
+
   if (mds_get_handle() != NCSCC_RC_SUCCESS) exit(EXIT_FAILURE);
   if (mds_init() != NCSCC_RC_SUCCESS) exit(EXIT_FAILURE);
   if (get_clm_nodes() != SA_AIS_OK) exit(EXIT_FAILURE);
   if (get_amf_nodes() != SA_AIS_OK) exit(EXIT_FAILURE);
   if (mds_finalize() != NCSCC_RC_SUCCESS) exit(EXIT_FAILURE);
-  print_cluster_info();
+
+  switch (opt_char) {
+  case 's':
+          if (is_avd_up == true) {
+            if (print_also == true)
+               std::cout << "At least one controller is up"<<std::endl;
+            exit(EXIT_SUCCESS);
+          } else {
+            if (print_also == true)
+              std::cout << "No controller is up"<<std::endl;
+            exit(EXIT_FAILURE);
+          }
+          break;
+  case 'c':
+          if ((node_id == scs_node_id[0]) || (node_id == scs_node_id[1])) {
+            if (print_also == true) {
+              if (user_node == false)
+                std::cout << "This is a Controller node"<<std::endl;
+              else
+                std::cout << std::hex << node_id <<" is a Controller node"<<std::endl;
+            }
+	    exit(EXIT_SUCCESS);
+          } else {
+            if (print_also == true) {
+              if (user_node == false)
+                std::cout << "This is not a Controller node"<<std::endl;
+              else
+                std::cout << std::hex << node_id <<" is not a Controller node"<<std::endl;
+            }
+	    exit(EXIT_FAILURE);
+          }
+          break;
+  case 'u':
+          if (std::find(avnd_up_db.begin(), avnd_up_db.end(), node_id) !=
+              avnd_up_db.end()) {
+            if (print_also == true) {
+             if (user_node == false)
+               std::cout << "This node is up"<<std::endl;
+             else
+               std::cout << std::hex << node_id <<" is up"<<std::endl;
+	    }
+	    exit(EXIT_SUCCESS);
+          } else {
+            if (print_also == true) {
+                std::cout << std::hex << node_id <<" is not up"<<std::endl;
+            }
+            exit(EXIT_FAILURE);
+          }
+          break;
+  default:
+          if (print_also == true)
+          print_cluster_info();
+          break;
+  }
   std::cout << std::endl;
+  ncs_agents_shutdown();
   return EXIT_SUCCESS;
 }
