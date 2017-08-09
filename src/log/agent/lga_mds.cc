@@ -521,7 +521,7 @@ static uint32_t lga_lgs_msg_proc(lgsv_msg_t *lgsv_msg,
   }
 
   // @client is being deleted in other thread. DO NOT touch this.
-  bool updated;
+  bool updated = false;
   if (client->FetchAndIncreaseRefCounter(&updated) == -1) {
     LogAgent::instance().LeaveCriticalSection();
     lga_msg_destroy(lgsv_msg);

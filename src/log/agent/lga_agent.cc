@@ -411,7 +411,7 @@ SaAisErrorT LogAgent::saLogSelectionObjectGet(
     SaLogHandleT logHandle, SaSelectionObjectT* selectionObject) {
   SaAisErrorT ais_rc = SA_AIS_OK;
   LogClient* client = nullptr;
-  bool updated;
+  bool updated = false;
 
   TRACE_ENTER();
 
@@ -461,7 +461,7 @@ SaAisErrorT LogAgent::saLogSelectionObjectGet(
 SaAisErrorT LogAgent::saLogDispatch(SaLogHandleT logHandle,
                                     SaDispatchFlagsT dispatchFlags) {
   LogClient* client = nullptr;
-  bool updated;
+  bool updated = false;
   SaAisErrorT ais_rc;
 
   TRACE_ENTER();
@@ -554,7 +554,7 @@ SaAisErrorT LogAgent::SendFinalizeMsg(uint32_t client_id) {
 
 SaAisErrorT LogAgent::saLogFinalize(SaLogHandleT logHandle) {
   LogClient* client = nullptr;
-  bool updated;
+  bool updated = false;
   bool is_locked = false;
   SaAisErrorT ais_rc = SA_AIS_OK;
 
@@ -804,7 +804,7 @@ SaAisErrorT LogAgent::saLogStreamOpen_2(
   SaLogHeaderTypeT log_header_type = SA_LOG_NTF_HEADER;
   bool is_locked = false;
   SaConstStringT streamName;
-  bool updated;
+  bool updated = false;
 
   TRACE_ENTER();
 
@@ -1114,7 +1114,7 @@ SaAisErrorT LogAgent::saLogWriteLogAsync(SaLogStreamHandleT logStreamHandle,
   char logSvcUsrName[kOsafMaxDnLength] = {0};
   bool is_locked = false;
   SaNameT tmpSvcUsrName;
-  bool cUpdated, sUpdated;
+  bool cUpdated = false, sUpdated = false;
 
   TRACE_ENTER();
 
@@ -1284,7 +1284,7 @@ SaAisErrorT LogAgent::saLogStreamClose(SaLogStreamHandleT logStreamHandle) {
   SaAisErrorT ais_rc = SA_AIS_OK;
   uint32_t mds_rc;
   bool is_locked = false;
-  bool sUpdated, cUpdated;
+  bool sUpdated = false, cUpdated = false;
 
   TRACE_ENTER();
 
