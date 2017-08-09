@@ -282,7 +282,7 @@ uint32_t dtm_node_add(DTM_NODE_DB *node, int i)
 			TRACE(
 			    "DTM:ncs_patricia_tree_add for node_ip  FAILED for :%s :%u",
 			    node->node_ip, rc);
-			node->pat_comm_socket.key_info = NULL;
+			node->pat_ip_address.key_info = NULL;
 			goto done;
 		}
 		break;
@@ -318,7 +318,7 @@ uint32_t dtm_node_delete(DTM_NODE_DB *node, int i)
 	switch (i) {
 
 	case 0:
-		if (node->node_id != 0) {
+		if (node->node_id != 0 && node->pat_nodeid.key_info) {
 			TRACE(
 			    "DTM:Deleting node_id from the database with node_id :%u as key",
 			    node->node_id);
@@ -333,7 +333,7 @@ uint32_t dtm_node_delete(DTM_NODE_DB *node, int i)
 		}
 		break;
 	case 1:
-		if (node->comm_socket != 0) {
+		if (node->comm_socket != 0 && node->pat_comm_socket.key_info) {
 			TRACE(
 			    "DTM:Deleting comm_socket  from  the database with comm_socket :%u as key",
 			    node->comm_socket);
@@ -349,7 +349,7 @@ uint32_t dtm_node_delete(DTM_NODE_DB *node, int i)
 		break;
 
 	case 2:
-		if (node->node_ip != NULL) {
+		if (node->node_ip != NULL && node->pat_ip_address.key_info) {
 			TRACE(
 			    "DTM:Deleting node_ip from the  database with node_ip :%s as key",
 			    node->node_ip);

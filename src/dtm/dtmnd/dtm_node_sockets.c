@@ -1470,7 +1470,7 @@ int dtm_process_accept(DTM_INTERNODE_CB *dtms_cb, int stream_sock)
 	/* Set length of client address structure (in-out parameter) */
 	socklen_t clnt_addrLen = sizeof(clnt_addr);
 	void *numericAddress = NULL; /* Pointer to binary address */
-	char addrBuffer[INET6_ADDRSTRLEN];
+	char addrBuffer[INET6_ADDRSTRLEN] = { 0 };
 	int err = 0;
 	DTM_NODE_DB node;
 	DTM_NODE_DB *new_node;
