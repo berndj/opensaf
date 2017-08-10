@@ -20,6 +20,7 @@
 
 #include <time.h>
 #include <cstdint>
+#include <set>
 #include "base/macros.h"
 #include "mds/mds_papi.h"
 #include "rde/agent/rda_papi.h"
@@ -31,6 +32,7 @@ class Process;
 class Role {
  public:
   explicit Role(NODE_ID own_node_id);
+  void AddPeer(NODE_ID node_id);
   void SetPeerState(PCS_RDA_ROLE node_role, NODE_ID node_id);
   timespec* Poll(timespec* ts);
   uint32_t SetRole(PCS_RDA_ROLE new_role);
@@ -44,6 +46,7 @@ class Role {
   void ResetElectionTimer();
   uint32_t UpdateMdsRegistration(PCS_RDA_ROLE new_role, PCS_RDA_ROLE old_role);
 
+  std::set<NODE_ID> known_nodes_;
   PCS_RDA_ROLE role_;
   NODE_ID own_node_id_;
   base::Process* proc_;

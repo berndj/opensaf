@@ -264,27 +264,29 @@ uint32_t rde_mds_send(struct rde_msg *msg, MDS_DEST to_dest) {
   NCSMDS_INFO info;
   uint32_t rc;
 
-  for (int i = 0; i != 3; ++i) {
-    TRACE("Sending %s to %" PRIx64, rde_msg_name[msg->type], to_dest);
-    memset(&info, 0, sizeof(info));
+  TRACE("Sending %s to %" PRIx64, rde_msg_name[msg->type], to_dest);
+  memset(&info, 0, sizeof(info));
 
-    info.i_mds_hdl = mds_hdl;
-    info.i_op = MDS_SEND;
-    info.i_svc_id = NCSMDS_SVC_ID_RDE;
+  info.i_mds_hdl = mds_hdl;
+  info.i_op = MDS_SEND;
+  info.i_svc_id = NCSMDS_SVC_ID_RDE;
 
-    info.info.svc_send.i_msg = msg;
-    info.info.svc_send.i_priority = MDS_SEND_PRIORITY_MEDIUM;
-    info.info.svc_send.i_sendtype = MDS_SENDTYPE_SND;
-    info.info.svc_send.i_to_svc = NCSMDS_SVC_ID_RDE;
-    info.info.svc_send.info.snd.i_to_dest = to_dest;
+  info.info.svc_send.i_msg = msg;
+  info.info.svc_send.i_priority = MDS_SEND_PRIORITY_MEDIUM;
+  info.info.svc_send.i_sendtype = MDS_SENDTYPE_SND;
+  info.info.svc_send.i_to_svc = NCSMDS_SVC_ID_RDE;
+  info.info.svc_send.info.snd.i_to_dest = to_dest;
 
-    rc = ncsmds_api(&info);
-    if (NCSCC_RC_FAILURE == rc) {
-      LOG_WA("Failed to send %s to %" PRIx64, rde_msg_name[msg->type], to_dest);
-      base::Sleep(base::kOneHundredMilliseconds);
-    } else {
-      break;
-    }
+  struct timespec start_time = base::ReadMonotonicClock();
+  rc = ncsmds_api(&info);
+  struct timespec end_time = base::ReadMonotonicClock();
+  uint64_t duration = base::TimespecToMicros(end_time - start_time);
+  if (NCSCC_RC_FAILURE == rc) {
+    LOG_WA("Failed to send %s to %" PRIx64 ", and blocked for %" PRIu64 " us",
+           rde_msg_name[msg->type], to_dest, duration);
+  } else if (duration > 5000) {
+    LOG_WA("Sending %s to %" PRIx64 " blocked for %" PRIu64 " us",
+           rde_msg_name[msg->type], to_dest, duration);
   }
 
   return rc;

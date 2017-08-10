@@ -43,7 +43,8 @@ const char* Role::to_string(PCS_RDA_ROLE role) {
 }
 
 Role::Role(NODE_ID own_node_id)
-    : role_{PCS_RDA_QUIESCED},
+    : known_nodes_{},
+      role_{PCS_RDA_QUIESCED},
       own_node_id_{own_node_id},
       proc_{new base::Process()},
       election_end_time_{},
@@ -76,6 +77,11 @@ void Role::ExecutePreActiveScript() {
                  std::chrono::milliseconds(pre_active_script_timeout_));
 }
 
+void Role::AddPeer(NODE_ID node_id) {
+  auto result = known_nodes_.insert(node_id);
+  if (result.second) ResetElectionTimer();
+}
+
 uint32_t Role::SetRole(PCS_RDA_ROLE new_role) {
   PCS_RDA_ROLE old_role = role_;
   if (new_role == PCS_RDA_ACTIVE &&
@@ -88,6 +94,7 @@ uint32_t Role::SetRole(PCS_RDA_ROLE new_role) {
     if (new_role == PCS_RDA_ACTIVE) ExecutePreActiveScript();
     role_ = new_role;
     if (new_role == PCS_RDA_UNDEFINED) {
+      known_nodes_.clear();
       ResetElectionTimer();
     } else {
       rde_rda_send_role(new_role);

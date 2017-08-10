@@ -42,7 +42,6 @@
 
 enum { FD_TERM = 0, FD_AMF = 1, FD_MBX, FD_RDA_SERVER, FD_CLIENT_START };
 
-static void SendPeerInfoReq(MDS_DEST mds_dest);
 static void SendPeerInfoResp(MDS_DEST mds_dest);
 static void CheckForSplitBrain(const rde_msg *msg);
 
@@ -99,19 +98,10 @@ static void handle_mbx_event() {
         Role::to_string(role->role()));
 
   switch (msg->type) {
-    case RDE_MSG_PEER_INFO_REQ: {
-      LOG_NO("Got peer info request from node 0x%x with role %s",
-             msg->fr_node_id, Role::to_string(msg->info.peer_info.ha_role));
-      CheckForSplitBrain(msg);
-      if(msg->info.peer_info.ha_role == PCS_RDA_ACTIVE
-          || msg->info.peer_info.ha_role == PCS_RDA_STANDBY) {
-        role->SetPeerState(msg->info.peer_info.ha_role, msg->fr_node_id);
-      }
-      SendPeerInfoResp(msg->fr_dest);
-      break;
-    }
+    case RDE_MSG_PEER_INFO_REQ:
     case RDE_MSG_PEER_INFO_RESP: {
-      LOG_NO("Got peer info response from node 0x%x with role %s",
+      LOG_NO("Got peer info %s from node 0x%x with role %s",
+             msg->type == RDE_MSG_PEER_INFO_RESP ? "response" : "request",
              msg->fr_node_id, Role::to_string(msg->info.peer_info.ha_role));
       CheckForSplitBrain(msg);
       role->SetPeerState(msg->info.peer_info.ha_role, msg->fr_node_id);
@@ -120,7 +110,8 @@ static void handle_mbx_event() {
     case RDE_MSG_PEER_UP: {
       if (msg->fr_node_id != own_node_id) {
         LOG_NO("Peer up on node 0x%x", msg->fr_node_id);
-        SendPeerInfoReq(msg->fr_dest);
+        SendPeerInfoResp(msg->fr_dest);
+        role->AddPeer(msg->fr_node_id);
       }
       break;
     }
@@ -143,13 +134,6 @@ static void CheckForSplitBrain(const rde_msg *msg) {
   if (own_role == PCS_RDA_ACTIVE && other_role == PCS_RDA_ACTIVE) {
     opensaf_reboot(0, nullptr, "Split-brain detected");
   }
-}
-
-static void SendPeerInfoReq(MDS_DEST mds_dest) {
-  rde_msg peer_info_req;
-  peer_info_req.type = RDE_MSG_PEER_INFO_REQ;
-  peer_info_req.info.peer_info.ha_role = role->role();
-  rde_mds_send(&peer_info_req, mds_dest);
 }
 
 static void SendPeerInfoResp(MDS_DEST mds_dest) {
