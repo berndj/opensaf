@@ -2,6 +2,7 @@
  *
  * (C) Copyright 2008 The OpenSAF Foundation
  * Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (C) 2018 Ericsson AB. All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -13,6 +14,7 @@
  * licensing terms.
  *
  * Author(s): Emerson Network Power
+ *            Ericsson
  *
  */
 
@@ -272,7 +274,7 @@ SaAisErrorT AmfAgent::Dispatch(SaAmfHandleT hdl, SaDispatchFlagsT flags) {
     rc = SA_AIS_ERR_LIBRARY;
     goto done;
   }
-  /* acquire cb read lock */
+  /* acquire cb write lock */
   m_NCS_LOCK(&cb->lock, NCS_LOCK_WRITE);
   /* retrieve hdl rec */
   if (!(hdl_rec = (AVA_HDL_REC *)ncshm_take_hdl(NCS_SERVICE_ID_AVA, hdl))) {
@@ -293,7 +295,7 @@ SaAisErrorT AmfAgent::Dispatch(SaAmfHandleT hdl, SaDispatchFlagsT flags) {
   pend_fin = cb->pend_fin;
 
 done:
-  /* release cb read lock and return handles */
+  /* release cb write lock and return handles */
   if (cb) {
     m_NCS_UNLOCK(&cb->lock, NCS_LOCK_WRITE);
     ncshm_give_hdl(gl_ava_hdl);
@@ -356,7 +358,7 @@ SaAisErrorT AmfAgent::Finalize(SaAmfHandleT hdl) {
     uninstall_osafAmfSCStatusChangeCallback();
   }
 
-  /* acquire cb read lock */
+  /* acquire cb write lock */
   m_NCS_LOCK(&cb->lock, NCS_LOCK_WRITE);
 
   /* retrieve hdl rec */
@@ -394,7 +396,7 @@ SaAisErrorT AmfAgent::Finalize(SaAmfHandleT hdl) {
     cb->pend_fin++;
 
 done:
-  /* release cb read lock and return handles */
+  /* release cb read write and return handles */
   if (cb) {
     m_NCS_UNLOCK(&cb->lock, NCS_LOCK_WRITE);
     ncshm_give_hdl(gl_ava_hdl);
@@ -457,8 +459,8 @@ SaAisErrorT AmfAgent::ComponentRegister(SaAmfHandleT hdl,
     goto done;
   }
   /* retrieve AvA CB */
-  if (!(cb = (AVA_CB *)ncshm_take_hdl(NCS_SERVICE_ID_AVA, gl_ava_hdl)) ||
-      !m_AVA_FLAG_IS_COMP_NAME(cb)) {
+  if (!(cb = static_cast<AVA_CB *>(
+          ncshm_take_hdl(NCS_SERVICE_ID_AVA, gl_ava_hdl)))) {
     TRACE_4("SA_AIS_ERR_LIBRARY: Unable to retrieve cb handle");
     rc = SA_AIS_ERR_LIBRARY;
     goto done;
@@ -627,8 +629,8 @@ SaAisErrorT AmfAgent::ComponentUnregister(SaAmfHandleT hdl,
     goto done;
   }
   /* retrieve AvA CB */
-  if (!(cb = (AVA_CB *)ncshm_take_hdl(NCS_SERVICE_ID_AVA, gl_ava_hdl)) ||
-      !m_AVA_FLAG_IS_COMP_NAME(cb)) {
+  if (!(cb = static_cast<AVA_CB *>(
+          ncshm_take_hdl(NCS_SERVICE_ID_AVA, gl_ava_hdl)))) {
     TRACE_4("SA_AIS_ERR_LIBRARY: Unable to retrieve cb handle");
     rc = SA_AIS_ERR_LIBRARY;
     goto done;
@@ -636,6 +638,13 @@ SaAisErrorT AmfAgent::ComponentUnregister(SaAmfHandleT hdl,
 
   /* acquire cb read lock */
   m_NCS_LOCK(&cb->lock, NCS_LOCK_READ);
+
+  if (!m_AVA_FLAG_IS_COMP_NAME(cb)) {
+    TRACE_2("The SA_AMF_COMPONENT_NAME environment variable is NULL");
+    rc = SA_AIS_ERR_LIBRARY;
+    goto done;
+  }
+
   /* Version is previously set in in initialize function */
   if (ava_B4_ver_used(cb)) {
     TRACE_2("Invalid AMF version, B 4.1");
@@ -1373,14 +1382,20 @@ SaAisErrorT AmfAgent::CSIQuiescingComplete(SaAmfHandleT hdl, SaInvocationT inv,
     goto done;
   }
   /* retrieve AvA CB */
-  if (!(cb = (AVA_CB *)ncshm_take_hdl(NCS_SERVICE_ID_AVA, gl_ava_hdl)) ||
-      !m_AVA_FLAG_IS_COMP_NAME(cb)) {
+  if (!(cb = (AVA_CB *)ncshm_take_hdl(NCS_SERVICE_ID_AVA, gl_ava_hdl))) {
     TRACE_4("SA_AIS_ERR_LIBRARY: Unable to retrieve cb handle");
     rc = SA_AIS_ERR_LIBRARY;
     goto done;
   }
   /* acquire cb read lock */
   m_NCS_LOCK(&cb->lock, NCS_LOCK_READ);
+
+  if (!m_AVA_FLAG_IS_COMP_NAME(cb)) {
+    TRACE_2("The SA_AMF_COMPONENT_NAME environment variable is NULL");
+    rc = SA_AIS_ERR_LIBRARY;
+    goto done;
+  }
+
   /* retrieve hdl rec */
   if (!(hdl_rec = (AVA_HDL_REC *)ncshm_take_hdl(NCS_SERVICE_ID_AVA, hdl))) {
     rc = SA_AIS_ERR_BAD_HANDLE;
@@ -1590,7 +1605,7 @@ SaAisErrorT AmfAgent::ProtectionGroupTrack(
     rc = SA_AIS_ERR_LIBRARY;
     goto done;
   }
-  /* acquire cb read lock */
+  /* acquire cb write lock */
   m_NCS_LOCK(&cb->lock, NCS_LOCK_WRITE);
   /* retrieve hdl rec */
   if (!(hdl_rec = (AVA_HDL_REC *)ncshm_take_hdl(NCS_SERVICE_ID_AVA, hdl))) {
@@ -1700,7 +1715,7 @@ SaAisErrorT AmfAgent::ProtectionGroupTrack(
     rc = SA_AIS_ERR_TIMEOUT;
 
 done:
-  /* release cb read lock and return handles */
+  /* release cb write lock and return handles */
   if (cb) {
     m_NCS_UNLOCK(&cb->lock, NCS_LOCK_WRITE);
     ncshm_give_hdl(gl_ava_hdl);
@@ -2193,7 +2208,6 @@ SaAisErrorT AmfAgent::Initialize_4(SaAmfHandleT *o_hdl,
 
   /* Create AVA/CLA  CB */
   if (ncs_ava_startup() != NCSCC_RC_SUCCESS) {
-    ncs_agents_shutdown();
     rc = SA_AIS_ERR_LIBRARY;
     goto done;
   }
@@ -2257,7 +2271,7 @@ done:
   /* free the hdl rec if there's some error */
   if (hdl_rec && SA_AIS_OK != rc) ava_hdl_rec_del(cb, hdl_db, &hdl_rec);
 
-  /* release cb read lock and return handle */
+  /* release cb write lock and return handle */
   if (cb) {
     m_NCS_UNLOCK(&cb->lock, NCS_LOCK_WRITE);
     ncshm_give_hdl(gl_ava_hdl);
@@ -2431,7 +2445,7 @@ SaAisErrorT AmfAgent::ProtectionGroupTrack_4(
     rc = SA_AIS_ERR_LIBRARY;
     goto done;
   }
-  /* acquire cb read lock */
+  /* acquire cb write lock */
   m_NCS_LOCK(&cb->lock, NCS_LOCK_WRITE);
   /* retrieve hdl rec */
   if (!(hdl_rec = (AVA_HDL_REC *)ncshm_take_hdl(NCS_SERVICE_ID_AVA, hdl))) {
@@ -2577,7 +2591,7 @@ SaAisErrorT AmfAgent::ProtectionGroupTrack_4(
     rc = SA_AIS_ERR_TIMEOUT;
 
 done:
-  /* release cb read lock and return handles */
+  /* release cb write lock and return handles */
   if (cb) {
     m_NCS_UNLOCK(&cb->lock, NCS_LOCK_WRITE);
     ncshm_give_hdl(gl_ava_hdl);
@@ -2660,7 +2674,7 @@ SaAisErrorT AmfAgent::ProtectionGroupNotificationFree_4(
     rc = SA_AIS_ERR_INVALID_PARAM;
 
 done:
-  /* release cb read lock and return handler */
+  /* release cb write lock and return handler */
   if (cb) {
     m_NCS_UNLOCK(&cb->lock, NCS_LOCK_WRITE);
     ncshm_give_hdl(gl_ava_hdl);
@@ -2976,7 +2990,6 @@ SaAisErrorT saAmfInitialize_o4(SaAmfHandleT *o_hdl,
 
   /* Create AVA/CLA  CB */
   if (ncs_ava_startup() != NCSCC_RC_SUCCESS) {
-    ncs_agents_shutdown();
     rc = SA_AIS_ERR_LIBRARY;
     goto done;
   }
