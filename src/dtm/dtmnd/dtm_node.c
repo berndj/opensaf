@@ -110,8 +110,11 @@ uint32_t dtm_process_node_info(DTM_INTERNODE_CB *dtms_cb, int stream_sock,
 			node->comm_status = true;
 			if (dtm_node_add(node, 0) != NCSCC_RC_SUCCESS) {
 				LOG_ER(
-				    "DTM:  Node already exit in the cluster with smiler configuration , correct the other joining Node configuration ");
-				osafassert(0);
+				    "DTM:  A node already exists in the cluster with similar "
+					"configuration (possible duplicate IP address and/or node id), please "
+					"correct the other joining Node configuration");
+				rc = NCSCC_RC_FAILURE;
+				goto done;
 			}
 
 		} else if (node->node_id == node_id) {
@@ -131,8 +134,11 @@ uint32_t dtm_process_node_info(DTM_INTERNODE_CB *dtms_cb, int stream_sock,
 
 		} else {
 			LOG_ER(
-			    "DTM: Node already exit in the cluster with smiler configuration , correct the other joining Node configuration ");
-			osafassert(0);
+				    "DTM:  A node already exists in the cluster with similar "
+				"configuration (possible duplicate IP address and/or node id), please "
+				"correct the other joining Node configuration");
+			rc = NCSCC_RC_FAILURE;
+			goto done;
 		}
 
 		TRACE(
