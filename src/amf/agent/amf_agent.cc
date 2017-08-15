@@ -2296,6 +2296,13 @@ SaAisErrorT AmfAgent::PmStart_3(SaAmfHandleT hdl, const SaNameT *comp_name,
   SaAisErrorT rc = SA_AIS_OK;
   TRACE_ENTER2("SaAmfHandleT passed is %llx", hdl);
 
+  /* Verifying the input Handle & global handle */
+  if (!gl_ava_hdl || hdl > AVSV_UNS32_HDL_MAX) {
+    TRACE_2("Invalid SaAmfHandle passed by component: %llx", hdl);
+    rc = SA_AIS_ERR_BAD_HANDLE;
+    goto done;
+  }
+
   /* Version is previously set in in initialize function */
   if (!ava_B4_ver_used(0)) {
     TRACE_2(
@@ -2843,6 +2850,13 @@ SaAisErrorT AmfAgent::Response_4(SaAmfHandleT hdl, SaInvocationT inv,
                                  SaAisErrorT error) {
   SaAisErrorT rc = SA_AIS_OK;
   TRACE_ENTER2("SaAmfHandleT passed is %llx", hdl);
+
+  /* Verifying the input Handle & global handle */
+  if (!gl_ava_hdl || hdl > AVSV_UNS32_HDL_MAX) {
+    TRACE_2("Invalid SaAmfHandle passed by component: %llx", hdl);
+    rc = SA_AIS_ERR_BAD_HANDLE;
+    goto done;
+  }
 
   /* Version is previously set in in initialize function */
   if (!ava_B4_ver_used(0)) {
