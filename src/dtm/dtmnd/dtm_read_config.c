@@ -39,6 +39,7 @@ extern uint32_t intranode_max_processes;
 #define KEEPALIVE_PROBES 9
 #define DIS_TIME_OUT 5
 #define BCAST_FRE 250
+#define CONT_BCAST_INT 0
 #define USER_TIMEOUT 1500 // 1.5 sec to match other transport
 
 const char *IN6ADDR_LINK_LOCAL =
@@ -108,6 +109,8 @@ void dtm_print_config(DTM_INTERNODE_CB *config)
 	TRACE("  %d", config->initial_dis_timeout);
 	TRACE("  DTM_BCAST_FRE_MSECS: ");
 	TRACE("  %" PRId64 "", config->bcast_msg_freq);
+ 	TRACE("  DTM_CONT_BCAST_INT: ");
+	TRACE("  %d", config->cont_bcast_int);
 	TRACE("  DTM_SOCK_SND_BUF_SIZE: ");
 	TRACE("  %d", config->sock_sndbuf_size);
 	TRACE("  DTM_SOCK_RCV_BUF_SIZE: ");
@@ -277,6 +280,7 @@ int dtm_read_config(DTM_INTERNODE_CB *config, char *dtm_config_file)
 	config->comm_keepidle_time = USER_TIMEOUT;
 	config->i_addr_family = DTM_IP_ADDR_TYPE_IPV4;
 	config->bcast_msg_freq = BCAST_FRE;
+	config->cont_bcast_int = CONT_BCAST_INT;
 	config->initial_dis_timeout = DIS_TIME_OUT;
 	config->sock_sndbuf_size = 0;
 	config->sock_rcvbuf_size = 0;
@@ -425,6 +429,19 @@ int dtm_read_config(DTM_INTERNODE_CB *config, char *dtm_config_file)
 				if (config->dgram_port_rcvr < 1) {
 					LOG_ER(
 					    "DTM:dgram_port_rcvr t must be a positive integer");
+					fclose(dtm_conf_file);
+					return -1;
+				}
+
+				tag = 0;
+				tag_len = 0;
+
+			}
+			if (strncmp(line, "DTM_CONTINUOUS_BCAST_INT=", strlen("DTM_CONTINUOUS_BCAST_INT=")) == 0) {
+				tag_len = strlen("DTM_CONTINUOUS_BCAST_INT=");
+				config->cont_bcast_int = atoi(&line[tag_len]);
+				if (config->cont_bcast_int < 0) {
+					LOG_ER("DTM:cont_bcast_int must be 0 or greater");
 					fclose(dtm_conf_file);
 					return -1;
 				}

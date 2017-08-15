@@ -233,6 +233,30 @@ err:
 	return rc;
 }
 
+static uint32_t dtm_send_bcast_mcast(DTM_INTERNODE_CB *dtms_cb,
+					void *send_bcast_buffer,
+					size_t bcast_buf_len)
+{
+	uint32_t rc;
+
+	TRACE_ENTER();
+
+	if (dtms_cb->mcast_flag == true) {
+		rc = dtm_dgram_sendto_mcast(dtms_cb, send_bcast_buffer, bcast_buf_len);
+		if (NCSCC_RC_SUCCESS != rc) {
+			LOG_ER("DTM: dtm_dgram_sendto_mcast Failed rc : %d \n", rc);
+		}
+	} else {
+		rc = dtm_dgram_sendto_bcast(dtms_cb, send_bcast_buffer, bcast_buf_len);
+		if (NCSCC_RC_SUCCESS != rc) {
+			LOG_ER("DTM: dtm_dgram_sendto_bcast Failed rc : %d \n", rc);
+		}
+	}
+
+	TRACE_LEAVE();
+	return rc;
+}
+
 /**
  *  DTM process main function
  *
@@ -357,26 +381,7 @@ int main(int argc, char *argv[])
 
 		/* Broadcast msg string in datagram to clients every 250  m
 		 * seconds */
-		if (dtms_cb->mcast_flag == true) {
-
-			rc = dtm_dgram_sendto_mcast(dtms_cb, send_bcast_buffer,
-						    bcast_buf_len);
-			if (NCSCC_RC_SUCCESS != rc) {
-				LOG_ER(
-				    "DTM: dtm_dgram_sendto_mcast Failed rc : %d \n",
-				    rc);
-			}
-
-		} else {
-
-			rc = dtm_dgram_sendto_bcast(dtms_cb, send_bcast_buffer,
-						    bcast_buf_len);
-			if (NCSCC_RC_SUCCESS != rc) {
-				LOG_ER(
-				    "DTM: dtm_dgram_sendto_bcast Failed rc : %d \n",
-				    rc);
-			}
-		}
+		dtm_send_bcast_mcast(dtms_cb, send_bcast_buffer, bcast_buf_len);
 
 		dis_elapsed_time_usec =
 		    dis_elapsed_time_usec + (dtms_cb->bcast_msg_freq * 1000);
@@ -387,8 +392,15 @@ int main(int argc, char *argv[])
 	/*************************************************************/
 	initial_discovery_phase = false;
 	while (1) {
-		m_NCS_TASK_SLEEP(0xfffffff0);
-		/* m_NCS_TASK_SLEEP(30000); */
+		if (dtms_cb->cont_bcast_int) {
+			m_NCS_TASK_SLEEP(dtms_cb->cont_bcast_int);
+			/* periodically send a broadcast */
+			dtm_send_bcast_mcast(dtms_cb,
+						send_bcast_buffer,
+						bcast_buf_len);
+		} else {
+			m_NCS_TASK_SLEEP(0xfffffff0);
+		}
 	}
 done1:
 	LOG_ER("DTM : dtm_destroy_service_discovery_task exiting...");
