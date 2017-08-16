@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2010 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -559,11 +560,12 @@ int dtm_read_config(DTM_INTERNODE_CB *config, char *dtm_config_file)
 				tag_len = strlen("DTM_SOCK_SND_RCV_BUF_SIZE=");
 				uint32_t sndbuf_size = 0; /* Send buffer size */
 				uint32_t rcvbuf_size =
-				    0;		  /* Receive buffer size */
-				socklen_t optlen; /* Option length */
-				int sockfd;
-				sockfd = socket(AF_INET, SOCK_STREAM, 0);
-				optlen = sizeof(rcvbuf_size);
+				    0; /* Receive buffer size */
+				socklen_t optlen = sizeof(rcvbuf_size);
+				int sockfd = socket(
+				    AF_INET,
+				    SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC,
+				    0);
 				getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF,
 					   &rcvbuf_size, &optlen);
 				if ((rcvbuf_size < DTM_SOCK_SND_RCV_BUF_SIZE) &&
@@ -579,6 +581,8 @@ int dtm_read_config(DTM_INTERNODE_CB *config, char *dtm_config_file)
 				optlen = sizeof(sndbuf_size);
 				getsockopt(sockfd, SOL_SOCKET, SO_SNDBUF,
 					   &sndbuf_size, &optlen);
+				if (sockfd >= 0)
+					close(sockfd);
 				if ((sndbuf_size < DTM_SOCK_SND_RCV_BUF_SIZE) &&
 				    (atoi(&line[tag_len]) <
 				     DTM_SOCK_SND_RCV_BUF_SIZE)) {

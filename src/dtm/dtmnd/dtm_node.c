@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2010 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -16,14 +17,15 @@
  */
 
 #include "dtm.h"
+#include <stdbool.h>
+#include <stdlib.h>
+#include <sys/epoll.h>
 #include "dtm_socket.h"
 #include "dtm_node.h"
 #include "dtm_inter.h"
 #include "dtm_inter_disc.h"
 #include "dtm_inter_trans.h"
 
-#define MAX_FD 103
-#define DTM_TCP_POLL_TIMEOUT 20000
 #define DTM_INTERNODE_RECV_BUFFER_SIZE 1024
 
 /* packet_size +  mds_indentifier + mds_version +  msg_type  +node_id +
@@ -32,8 +34,16 @@
 
 #define NODE_INFO_PKT_SIZE (NODE_INFO_HDR_SIZE + _POSIX_HOST_NAME_MAX)
 
-static struct pollfd fds[MAX_FD]; /* Poll fds global list */
-static int nfds = 0;
+static void ReceiveBcastOrMcast(void);
+static void AcceptTcpConnections(uint8_t *node_info_hrd,
+				 int node_info_buffer_len);
+static void ReceiveFromMailbox(void);
+static void AddNodeToEpoll(DTM_INTERNODE_CB *dtms_cb, DTM_NODE_DB *node);
+static void RemoveNodeFromEpoll(DTM_INTERNODE_CB *dtms_cb, DTM_NODE_DB *node);
+
+static DTM_NODE_DB dgram_sock_rcvr;
+static DTM_NODE_DB stream_sock;
+static DTM_NODE_DB mbx_fd;
 
 /**
  * Function to construct the node info hdr
@@ -74,28 +84,27 @@ static uint32_t dtm_construct_node_info_hdr(DTM_INTERNODE_CB *dtms_cb,
  * @return NCSCC_RC_FAILURE
  *
  */
-uint32_t dtm_process_node_info(DTM_INTERNODE_CB *dtms_cb, int stream_sock,
+uint32_t dtm_process_node_info(DTM_INTERNODE_CB *dtms_cb, DTM_NODE_DB *node,
 			       uint8_t *buffer, uint8_t *node_info_hrd,
 			       int buffer_len)
 {
 	uint32_t node_id;
-	DTM_NODE_DB *node;
 	uint32_t nodename_len;
 	char nodename[_POSIX_HOST_NAME_MAX];
 	int rc = 0;
 	uint8_t *data = buffer;
 	TRACE_ENTER();
 
-	node_id = ncs_decode_32bit(&data);
-	nodename_len = ncs_decode_32bit(&data);
-	strncpy((char *)nodename, (char *)data, nodename_len);
-
-	node = dtm_node_get_by_comm_socket(stream_sock);
-
 	if (node == NULL) {
 		rc = NCSCC_RC_FAILURE;
 		goto done;
 	}
+
+	int fd = node->comm_socket;
+
+	node_id = ncs_decode_32bit(&data);
+	nodename_len = ncs_decode_32bit(&data);
+	strncpy((char *)nodename, (char *)data, nodename_len);
 
 	if (!node->comm_status) {
 
@@ -120,8 +129,8 @@ uint32_t dtm_process_node_info(DTM_INTERNODE_CB *dtms_cb, int stream_sock,
 		} else if (node->node_id == node_id) {
 			strncpy((char *)&node->node_name, nodename,
 				nodename_len);
-			rc = dtm_comm_socket_send(stream_sock, node_info_hrd,
-						  buffer_len);
+			rc =
+			    dtm_comm_socket_send(fd, node_info_hrd, buffer_len);
 			if (rc != NCSCC_RC_SUCCESS) {
 
 				LOG_ER(
@@ -175,9 +184,9 @@ done:
  */
 uint32_t dtm_process_node_up_down(NODE_ID node_id, char *node_name,
 				  char *node_ip, DTM_IP_ADDR_TYPE i_addr_family,
-				  uint8_t comm_status)
+				  bool comm_status)
 {
-	if (true == comm_status) {
+	if (comm_status == true) {
 		TRACE(
 		    "DTM: dtm_process_node_up_down node_ip:%s, node_id:%u i_addr_family:%d ",
 		    node_ip, node_id, i_addr_family);
@@ -201,7 +210,7 @@ void dtm_internode_process_poll_rcv_msg_common(DTM_NODE_DB *node,
 					       uint16_t local_len_buf,
 					       uint8_t *node_info_hrd,
 					       uint16_t node_info_buffer_len,
-					       int fd, int *close_conn)
+					       bool *close_conn)
 {
 	DTM_MSG_TYPES pkt_type = 0;
 	uint32_t identifier = 0;
@@ -238,7 +247,7 @@ void dtm_internode_process_poll_rcv_msg_common(DTM_NODE_DB *node,
 		    alloc_buffer, (local_len_buf - 6), node->node_id);
 	} else if (pkt_type == DTM_CONN_DETAILS_MSG_TYPE) {
 		if (dtm_process_node_info(
-			dtms_cb, fd, &node->buffer[8], node_info_hrd,
+			dtms_cb, node, &node->buffer[8], node_info_hrd,
 			node_info_buffer_len) != NCSCC_RC_SUCCESS) {
 			LOG_ER(
 			    " DTM : communication socket Connection closed\n");
@@ -289,19 +298,19 @@ done:
  * @return NCSCC_RC_FAILURE
  *
  */
-void dtm_internode_process_poll_rcv_msg(int fd, int *close_conn,
+void dtm_internode_process_poll_rcv_msg(DTM_NODE_DB *node, bool *close_conn,
 					uint8_t *node_info_hrd,
 					uint16_t node_info_buffer_len)
 {
-	DTM_NODE_DB *node = NULL;
 	TRACE_ENTER();
-
-	node = dtm_node_get_by_comm_socket(fd);
 
 	if (NULL == node) {
 		LOG_ER("DTM: database mismatch");
 		osafassert(0);
 	}
+
+	int fd = node->comm_socket;
+
 	if (0 == node->bytes_tb_read) {
 		if (0 == node->num_by_read_for_len_buff) {
 			uint8_t *data;
@@ -311,7 +320,7 @@ void dtm_internode_process_poll_rcv_msg(int fd, int *close_conn,
 			/* Receive all incoming data on this socket */
 			/*******************************************************/
 
-			recd_bytes = recv(fd, node->len_buff, 2, 0);
+			recd_bytes = recv(fd, node->len_buff, 2, MSG_DONTWAIT);
 			if (0 == recd_bytes) {
 				*close_conn = true;
 				return;
@@ -333,7 +342,7 @@ void dtm_internode_process_poll_rcv_msg(int fd, int *close_conn,
 					return;
 				}
 				recd_bytes = recv(fd, &node->buffer[2],
-						  local_len_buf, 0);
+						  local_len_buf, MSG_DONTWAIT);
 
 				if (recd_bytes < 0) {
 					return;
@@ -353,8 +362,7 @@ void dtm_internode_process_poll_rcv_msg(int fd, int *close_conn,
 					/* Call the common rcv function */
 					dtm_internode_process_poll_rcv_msg_common(
 					    node, local_len_buf, node_info_hrd,
-					    node_info_buffer_len, fd,
-					    close_conn);
+					    node_info_buffer_len, close_conn);
 				} else {
 					LOG_ER(
 					    "DTM :unknown corrupted data received on this file descriptor \n");
@@ -380,7 +388,8 @@ void dtm_internode_process_poll_rcv_msg(int fd, int *close_conn,
 		} else if (1 == node->num_by_read_for_len_buff) {
 			int recd_bytes = 0;
 
-			recd_bytes = recv(fd, &node->len_buff[1], 1, 0);
+			recd_bytes =
+			    recv(fd, &node->len_buff[1], 1, MSG_DONTWAIT);
 			if (recd_bytes < 0) {
 				/* This can happen due to system call interrupt
 				 */
@@ -411,8 +420,8 @@ void dtm_internode_process_poll_rcv_msg(int fd, int *close_conn,
 				    "DTM :Memory allocation failed in dtm_internode_processing \n");
 				return;
 			}
-			recd_bytes =
-			    recv(fd, &node->buffer[2], node->buff_total_len, 0);
+			recd_bytes = recv(fd, &node->buffer[2],
+					  node->buff_total_len, MSG_DONTWAIT);
 
 			if (recd_bytes < 0) {
 				return;
@@ -432,7 +441,7 @@ void dtm_internode_process_poll_rcv_msg(int fd, int *close_conn,
 				/* Call the common rcv function */
 				dtm_internode_process_poll_rcv_msg_common(
 				    node, node->buff_total_len, node_info_hrd,
-				    node_info_buffer_len, fd, close_conn);
+				    node_info_buffer_len, close_conn);
 			} else {
 				LOG_ER(
 				    "DTM :unknown corrupted data received on this file descriptor \n");
@@ -451,7 +460,7 @@ void dtm_internode_process_poll_rcv_msg(int fd, int *close_conn,
 		recd_bytes = recv(fd,
 				  &node->buffer[2 + (node->buff_total_len -
 						     node->bytes_tb_read)],
-				  node->bytes_tb_read, 0);
+				  node->bytes_tb_read, MSG_DONTWAIT);
 
 		if (recd_bytes < 0) {
 			return;
@@ -470,7 +479,7 @@ void dtm_internode_process_poll_rcv_msg(int fd, int *close_conn,
 			/* Call the common rcv function */
 			dtm_internode_process_poll_rcv_msg_common(
 			    node, node->buff_total_len, node_info_hrd,
-			    node_info_buffer_len, fd, close_conn);
+			    node_info_buffer_len, close_conn);
 		} else {
 			LOG_ER(
 			    "DTM :unknown corrupted data received on this file descriptor \n");
@@ -494,23 +503,13 @@ void node_discovery_process(void *arg)
 {
 	TRACE_ENTER();
 
-	int poll_ret = 0;
-	int end_server = false, compress_array = false;
-	int close_conn = false;
+	bool close_conn = false;
 	DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
 
-	int current_size = 0, i, j;
-
 	/* Data Received */
-	uint8_t inbuf[DTM_INTERNODE_RECV_BUFFER_SIZE];
-	uint8_t *data1; /* Used for DATAGRAM decoding */
-	uint16_t recd_bytes = 0;
-	uint16_t recd_buf_len = 0;
 	int node_info_buffer_len = 0;
 	uint8_t node_info_hrd[NODE_INFO_PKT_SIZE];
-	char node_ip[INET6_ADDRSTRLEN];
 
-	memset(&node_ip, 0, INET6_ADDRSTRLEN);
 	/*************************************************************/
 	/* Set up the initial bcast or mcast receiver socket */
 	/*************************************************************/
@@ -520,7 +519,7 @@ void node_discovery_process(void *arg)
 		if (NCSCC_RC_SUCCESS != dtm_dgram_bcast_listener(dtms_cb)) {
 			LOG_ER(
 			    "DTM:Set up the initial bcast  receiver socket   failed");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 
 	} else {
@@ -528,7 +527,7 @@ void node_discovery_process(void *arg)
 		if (NCSCC_RC_SUCCESS != dtm_dgram_mcast_listener(dtms_cb)) {
 			LOG_ER(
 			    "DTM:Set up the initial mcast  receiver socket   failed");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 
@@ -538,31 +537,15 @@ void node_discovery_process(void *arg)
 	if (NCSCC_RC_SUCCESS != dtm_stream_nonblocking_listener(dtms_cb)) {
 		LOG_ER(
 		    "DTM: Set up the initial stream nonblocking serv  failed");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
-	/*************************************************************/
-	/* Initialize the pollfd structure */
-	/*************************************************************/
-	memset(fds, 0, sizeof(fds));
-
-	/*************************************************************/
-	/* Set up the initial listening socket */
-	/*************************************************************/
-
-	fds[0].fd = dtms_cb->dgram_sock_rcvr;
-	fds[0].events = POLLIN;
-
-	/*************************************************************/
-	/* Set up the initial listening socket */
-	/*************************************************************/
-
-	fds[1].fd = dtms_cb->stream_sock;
-	fds[1].events = POLLIN;
-
-	fds[2].fd = dtms_cb->mbx_fd;
-	fds[2].events = POLLIN;
-	nfds = 3;
+	dgram_sock_rcvr.comm_socket = dtms_cb->dgram_sock_rcvr;
+	stream_sock.comm_socket = dtms_cb->stream_sock;
+	mbx_fd.comm_socket = dtms_cb->mbx_fd;
+	AddNodeToEpoll(dtms_cb, &dgram_sock_rcvr);
+	AddNodeToEpoll(dtms_cb, &stream_sock);
+	AddNodeToEpoll(dtms_cb, &mbx_fd);
 
 	/*************************************************************/
 	/* Set up the initial listening socket */
@@ -581,230 +564,56 @@ void node_discovery_process(void *arg)
 	/* on any of the connected sockets. */
 	/*************************************************************/
 
-	do {
+	for (;;) {
 		/***********************************************************/
 		/* Call poll() and wait . */
 		/***********************************************************/
-		int fd_check = 0;
-		poll_ret = poll(fds, nfds, DTM_TCP_POLL_TIMEOUT);
+		struct epoll_event events[128];
+		int poll_ret;
+		do {
+			poll_ret =
+			    epoll_wait(dtms_cb->epoll_fd, &events[0],
+				       sizeof(events) / sizeof(events[0]), -1);
+		} while (poll_ret < 0 && errno == EINTR);
 		/***********************************************************/
 
 		/* Check to see if the poll call failed. */
 		/***********************************************************/
 		if (poll_ret < 0) {
-			LOG_ER(" poll() failed");
-			continue;
-		}
-		/***********************************************************/
-		/* Check to see if the 3 minute time out expired. */
-		/***********************************************************/
-		if (poll_ret == 0) {
-			continue;
+			LOG_ER("epoll_wait() failed: %d", errno);
+			break;
 		}
 
 		/***********************************************************/
 		/* One or more descriptors are readable. Need to */
 		/* determine which ones they are. */
 		/***********************************************************/
-		current_size = nfds;
-		for (i = 0; i < current_size; i++) {
+		for (int i = 0; i < poll_ret; ++i) {
+			DTM_NODE_DB *node = (DTM_NODE_DB *)events[i].data.ptr;
 
 			/*********************************************************/
 			/* Loop through to find the descriptors that returned */
-			/* POLLIN and determine whether it's the listening */
+			/* EPOLLIN and determine whether it's the listening */
 			/* or the active connection. */
 			/*********************************************************/
-			if (POLLIN & fds[i].revents) {
-
-				if (fds[i].fd == dtms_cb->dgram_sock_rcvr) {
-
-					fd_check++;
+			if ((events[i].events & EPOLLIN) != 0) {
+				if (node == &dgram_sock_rcvr) {
 					/* Data Received */
-					memset(inbuf, 0,
-					       DTM_INTERNODE_RECV_BUFFER_SIZE);
-					recd_bytes = 0;
-					recd_buf_len = 0;
-
-					recd_bytes = dtm_dgram_recvfrom_bmcast(
-					    dtms_cb, node_ip, inbuf,
-					    sizeof(inbuf));
-
-					if (recd_bytes == 0) {
-						LOG_ER(
-						    "DTM: recd bytes=0 on DGRAM sock");
-						continue;
-					}
-
-					data1 =
-					    inbuf; /* take care of previous
-						      address */
-
-					recd_buf_len = ncs_decode_16bit(&data1);
-
-					if (recd_buf_len == recd_bytes) {
-
-						int new_sd = -1;
-
-						new_sd = dtm_process_connect(
-						    dtms_cb, node_ip, inbuf,
-						    (recd_bytes - 2));
-
-						if (new_sd == -1)
-							continue;
-
-						/*****************************************************/
-						/* Add the new incoming
-						 * connection to the */
-						/* pollfd structure */
-						/*****************************************************/
-						LOG_IN(
-						    "DTM: add New incoming connection to fd : %d\n",
-						    new_sd);
-						fds[nfds].fd = new_sd;
-						fds[nfds].events =
-						    POLLIN | POLLERR | POLLHUP |
-						    POLLNVAL;
-						nfds++;
-
-					} else {
-						/* Log message that we are
-						 * dropping the data */
-						LOG_ER(
-						    "DTM: BRoadcastLEN-MISMATCH: dropping the data");
-					}
-
-				} else if (fds[i].fd == dtms_cb->stream_sock) {
-
-					int new_sd = -1;
-					uint32_t local_rc = NCSCC_RC_SUCCESS;
-					fd_check++;
+					ReceiveBcastOrMcast();
+				} else if (node == &stream_sock) {
 					/*******************************************************/
 					/* Listening descriptor is readable. */
 					/*******************************************************/
 					TRACE(
 					    " DTM :Listening socket is readable");
-					/*******************************************************/
-					/* Accept all incoming connections that
-					 * are */
-					/* queued up on the listening socket
-					 * before we */
-					/* loop back and call poll again. */
-					/*******************************************************/
-					/* do { */
-					/*****************************************************/
-					/* Accept each incoming connection. If
-					 */
-					/* accept fails with EWOULDBLOCK, then
-					 * we */
-					/* have accepted all of them. Any other
-					 */
-					/* failure on accept will cause us to
-					 * end the */
-					/* serv. */
-					/*****************************************************/
-					new_sd = dtm_process_accept(
-					    dtms_cb, dtms_cb->stream_sock);
-					if (new_sd < 0) {
-						LOG_ER("DTM: accept() failed");
-						end_server = true;
-						break;
-					}
-
-					/*****************************************************/
-					/* Node info data back to the accept
-					 * with node info  */
-					/*****************************************************/
-
-					local_rc = dtm_comm_socket_send(
-					    new_sd, node_info_hrd,
+					AcceptTcpConnections(
+					    node_info_hrd,
 					    node_info_buffer_len);
-					if (local_rc != NCSCC_RC_SUCCESS) {
-						dtm_comm_socket_close(&new_sd);
-						LOG_ER("DTM: send() failed ");
-						break;
-					}
-
-					/*****************************************************/
-					/* Add the new incoming connection to
-					 * the */
-					/* pollfd structure */
-					/*****************************************************/
-					TRACE(
-					    "DTM :add New incoming connection to fd : %d\n",
-					    new_sd);
-					fds[nfds].fd = new_sd;
-					fds[nfds].events = POLLIN | POLLERR |
-							   POLLHUP | POLLNVAL;
-					nfds++;
-
-					/*****************************************************/
-					/* Loop back up and accept another
-					 * incoming */
-					/* connection */
-					/*****************************************************/
-					/* } while (new_sd != -1); */ /* accept
-									 one at
-									 a time
-								       */
-
-				} else if (fds[i].fd == dtms_cb->mbx_fd) {
+				} else if (node == &mbx_fd) {
 					/* MBX fd messages that need to be sent
 					 * out from this node */
 					/* Process the mailbox events */
-					DTM_SND_MSG_ELEM *msg_elem = NULL;
-
-					fd_check++;
-					msg_elem =
-					    (DTM_SND_MSG_ELEM
-						 *)(m_NCS_IPC_NON_BLK_RECEIVE(
-						&dtms_cb->mbx, NULL));
-
-					if (NULL == msg_elem) {
-						LOG_ER(
-						    "DTM: Inter Node Mailbox IPC_NON_BLK_RECEIVE Failed");
-						continue;
-					} else if (DTM_MBX_ADD_DISTR_TYPE ==
-						   msg_elem->type) {
-						dtm_internode_add_to_svc_dist_list(
-						    msg_elem->info.svc_event
-							.server_type,
-						    msg_elem->info.svc_event
-							.server_inst,
-						    msg_elem->info.svc_event
-							.pid);
-						free(msg_elem);
-						msg_elem = NULL;
-					} else if (DTM_MBX_DEL_DISTR_TYPE ==
-						   msg_elem->type) {
-						dtm_internode_del_from_svc_dist_list(
-						    msg_elem->info.svc_event
-							.server_type,
-						    msg_elem->info.svc_event
-							.server_inst,
-						    msg_elem->info.svc_event
-							.pid);
-						free(msg_elem);
-						msg_elem = NULL;
-					} else if (DTM_MBX_DATA_MSG_TYPE ==
-						   msg_elem->type) {
-						dtm_prepare_data_msg(
-						    msg_elem->info.data.buffer,
-						    msg_elem->info.data
-							.buff_len);
-						dtm_internode_snd_msg_to_node(
-						    msg_elem->info.data.buffer,
-						    msg_elem->info.data
-							.buff_len,
-						    msg_elem->info.data
-							.dst_nodeid);
-						free(msg_elem);
-						msg_elem = NULL;
-					} else {
-						LOG_ER(
-						    "DTM Intranode :Invalid evt type from mbx");
-						free(msg_elem);
-						msg_elem = NULL;
-					}
+					ReceiveFromMailbox();
 				} else {
 
 					/*********************************************************/
@@ -813,17 +622,13 @@ void node_discovery_process(void *arg)
 					/* existing connection must be readable
 					 */
 					/*********************************************************/
-					fd_check++;
 					dtm_internode_process_poll_rcv_msg(
-					    fds[i].fd, &close_conn,
-					    node_info_hrd,
+					    node, &close_conn, node_info_hrd,
 					    node_info_buffer_len);
 				}
-			} else if (fds[i].revents & POLLOUT) {
-				fd_check++;
-				dtm_internode_process_pollout(fds[i].fd);
-			} else if (fds[i].revents & POLLHUP) {
-				fd_check++;
+			} else if ((events[i].events & EPOLLOUT) != 0) {
+				dtm_internode_process_pollout(node);
+			} else if ((events[i].events & EPOLLHUP) != 0) {
 				close_conn = true;
 			}
 
@@ -834,49 +639,128 @@ void node_discovery_process(void *arg)
 			/* descriptor. */
 			/*******************************************************/
 			if (close_conn) {
-				dtm_comm_socket_close(&fds[i].fd);
 				close_conn = false;
-				compress_array = true;
-			}
-			/* End of existing connection is readable */
-			if (poll_ret == fd_check) {
-				break;
+				RemoveNodeFromEpoll(dtms_cb, node);
+				dtm_comm_socket_close(node);
 			}
 		}
-
-		/***********************************************************/
-		/* If the compress_array flag was turned on, we need */
-		/* to squeeze together the array and decrement the number */
-		/* of file descriptors. We do not need to move back the */
-		/* events and revents fields because the events will always */
-		/* be POLLIN in this case, and revents is output. */
-		/***********************************************************/
-
-		if (compress_array) {
-			compress_array = false;
-			for (i = 0; i < nfds; i++) {
-				if (fds[i].fd == -1) {
-					for (j = i; j < nfds; j++) {
-						fds[j].fd = fds[j + 1].fd;
-					}
-					nfds--;
-				}
-			}
-		}
-
-	} while (end_server == false);
+	}
 
 /* End of serving running. */
 /*************************************************************/
 /* Clean up all of the sockets that are open */
 /*************************************************************/
 done:
-	for (i = 0; i < nfds; i++) {
-		if (fds[i].fd >= 0)
-			dtm_comm_socket_close(&fds[i].fd);
-	}
 	TRACE_LEAVE();
 	return;
+}
+
+static void ReceiveBcastOrMcast(void)
+{
+	DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
+	uint8_t inbuf[DTM_INTERNODE_RECV_BUFFER_SIZE];
+	ssize_t recd_bytes;
+	do {
+		recd_bytes =
+		    dtm_dgram_recv_bmcast(dtms_cb, inbuf, sizeof(inbuf));
+		if (recd_bytes >= 2) {
+			uint8_t *data1 = inbuf;
+			uint16_t recd_buf_len = ncs_decode_16bit(&data1);
+			if (recd_buf_len == (size_t)recd_bytes) {
+				DTM_NODE_DB *new_node = dtm_process_connect(
+				    dtms_cb, data1,
+				    (recd_bytes - sizeof(uint16_t)));
+				if (new_node != NULL) {
+					// Add the new incoming connection to
+					// the pollfd structure
+					LOG_IN(
+					    "DTM: add New incoming connection to fd : %d\n",
+					    new_node->comm_socket);
+					AddNodeToEpoll(dtms_cb, new_node);
+				}
+			} else {
+				// Log message that we are dropping the data
+				LOG_ER("DTM: BRoadcastLEN-MISMATCH %" PRIu16
+				       "/%zd: dropping the data",
+				       recd_buf_len, recd_bytes);
+			}
+		} else {
+			if (recd_bytes >= 0)
+				LOG_ER("DTM: recd bytes=%zd on DGRAM sock",
+				       recd_bytes);
+		}
+	} while (recd_bytes >= 0);
+}
+
+static void AcceptTcpConnections(uint8_t *node_info_hrd,
+				 int node_info_buffer_len)
+{
+	DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
+	DTM_NODE_DB *new_node;
+	while ((new_node = dtm_process_accept(dtms_cb, dtms_cb->stream_sock)) !=
+	       NULL) {
+		if (dtm_comm_socket_send(new_node->comm_socket, node_info_hrd,
+					 node_info_buffer_len) ==
+		    NCSCC_RC_SUCCESS) {
+			TRACE("DTM: add New incoming connection to fd: %d",
+			      new_node->comm_socket);
+			AddNodeToEpoll(dtms_cb, new_node);
+		} else {
+			dtm_comm_socket_close(new_node);
+			LOG_ER("DTM: send() failed");
+		}
+	}
+}
+
+static void ReceiveFromMailbox(void)
+{
+	DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
+	DTM_SND_MSG_ELEM *msg_elem;
+	while ((msg_elem = (DTM_SND_MSG_ELEM *)(m_NCS_IPC_NON_BLK_RECEIVE(
+		    &dtms_cb->mbx, NULL))) != NULL) {
+		if (msg_elem->type == DTM_MBX_ADD_DISTR_TYPE) {
+			dtm_internode_add_to_svc_dist_list(
+			    msg_elem->info.svc_event.server_type,
+			    msg_elem->info.svc_event.server_inst,
+			    msg_elem->info.svc_event.pid);
+		} else if (msg_elem->type == DTM_MBX_DEL_DISTR_TYPE) {
+			dtm_internode_del_from_svc_dist_list(
+			    msg_elem->info.svc_event.server_type,
+			    msg_elem->info.svc_event.server_inst,
+			    msg_elem->info.svc_event.pid);
+		} else if (msg_elem->type == DTM_MBX_DATA_MSG_TYPE) {
+			dtm_prepare_data_msg(msg_elem->info.data.buffer,
+					     msg_elem->info.data.buff_len);
+			dtm_internode_snd_msg_to_node(
+			    msg_elem->info.data.buffer,
+			    msg_elem->info.data.buff_len,
+			    msg_elem->info.data.dst_nodeid);
+		} else {
+			LOG_ER("DTM Intranode :Invalid evt type from mbx");
+		}
+		free(msg_elem);
+	}
+}
+
+static void AddNodeToEpoll(DTM_INTERNODE_CB *dtms_cb, DTM_NODE_DB *node)
+{
+	struct epoll_event event = {EPOLLIN, {.ptr = node}};
+	if (epoll_ctl(dtms_cb->epoll_fd, EPOLL_CTL_ADD, node->comm_socket,
+		      &event) != 0) {
+		LOG_ER("DTM: epoll_ctl(%d, EPOLL_CTL_ADD, %d) failed: %d",
+		       dtms_cb->epoll_fd, node->comm_socket, errno);
+		exit(EXIT_FAILURE);
+	}
+}
+
+static void RemoveNodeFromEpoll(DTM_INTERNODE_CB *dtms_cb, DTM_NODE_DB *node)
+{
+	if (epoll_ctl(dtms_cb->epoll_fd, EPOLL_CTL_DEL, node->comm_socket,
+		      NULL) != 0) {
+		LOG_ER("DTM: epoll_ctl(%d, EPOLL_CTL_DEL, %d) failed: %d",
+		       dtms_cb->epoll_fd, node->comm_socket, errno);
+		exit(EXIT_FAILURE);
+	}
 }
 
 /**
@@ -888,19 +772,17 @@ done:
  * @return NCSCC_RC_FAILURE
  *
  */
-uint32_t dtm_internode_set_poll_fdlist(int fd, uint16_t events)
+void dtm_internode_set_pollout(DTM_NODE_DB *node)
 {
-	int i = 0;
-
-	for (i = 0; i < nfds; i++) {
-		if (fd == fds[i].fd) {
-			fds[i].events = fds[i].events | events;
-			LOG_IN("event set success, in the poll fd list");
-			return NCSCC_RC_SUCCESS;
-		}
+	DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
+	struct epoll_event event = {EPOLLIN | EPOLLOUT, {.ptr = node}};
+	if (epoll_ctl(dtms_cb->epoll_fd, EPOLL_CTL_MOD, node->comm_socket,
+		      &event) == 0) {
+		TRACE("event set success, in the poll fd list");
+	} else {
+		LOG_ER("DTM: epoll_ctl(%d, EPOLL_CTL_MOD, %d) failed: %d",
+		       dtms_cb->epoll_fd, node->comm_socket, errno);
 	}
-	LOG_ER("Unable to set the event in the poll list");
-	return NCSCC_RC_FAILURE;
 }
 
 /**
@@ -912,16 +794,15 @@ uint32_t dtm_internode_set_poll_fdlist(int fd, uint16_t events)
  * @return NCSCC_RC_FAILURE
  *
  */
-uint32_t dtm_internode_reset_poll_fdlist(int fd)
+void dtm_internode_clear_pollout(DTM_NODE_DB *node)
 {
-	int i = 0;
-	for (i = 0; i < nfds; i++) {
-		if (fd == fds[i].fd) {
-			fds[i].events = POLLIN | POLLERR | POLLHUP | POLLNVAL;
-			LOG_IN("event set success, in the poll fd list");
-			return NCSCC_RC_SUCCESS;
-		}
+	DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
+	struct epoll_event event = {EPOLLIN, {.ptr = node}};
+	if (epoll_ctl(dtms_cb->epoll_fd, EPOLL_CTL_MOD, node->comm_socket,
+		      &event) == 0) {
+		TRACE("event set success, in the poll fd list");
+	} else {
+		LOG_ER("DTM: epoll_ctl(%d, EPOLL_CTL_MOD, %d) failed: %d",
+		       dtms_cb->epoll_fd, node->comm_socket, errno);
 	}
-	LOG_ER("\nUnable to set the event in the poll list");
-	return NCSCC_RC_FAILURE;
 }

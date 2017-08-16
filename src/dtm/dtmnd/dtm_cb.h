@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2010 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -17,6 +18,8 @@
 
 #ifndef DTM_DTMND_DTM_CB_H_
 #define DTM_DTMND_DTM_CB_H_
+
+#include <stdbool.h>
 
 #define MAX_PORT_LENGTH 256
 
@@ -42,9 +45,8 @@ typedef struct node_list {
   DTM_IP_ADDR_TYPE i_addr_family; /* Indicates V4 or V6 */
   int comm_socket;
   NCS_PATRICIA_NODE pat_nodeid;
-  NCS_PATRICIA_NODE pat_comm_socket;
   NCS_PATRICIA_NODE pat_ip_address;
-  uint8_t comm_status;
+  bool comm_status;
   NCS_LOCK node_lock;
   SYSF_MBX mbx;
   int mbx_fd;
@@ -78,13 +80,12 @@ typedef struct dtm_internode_cb {
   int dgram_sock_sndr;            /*  */
   int dgram_sock_rcvr;            /*  */
   DTM_IP_ADDR_TYPE i_addr_family; /* Indicates V4 or V6 */
-  uint8_t mcast_flag;             /* Indicates mcast */
+  bool mcast_flag;                /* Indicates mcast */
   int32_t initial_dis_timeout;
   int32_t cont_bcast_int;
   int64_t bcast_msg_freq;
-  NCS_PATRICIA_TREE nodeid_tree;    /* NODE_DB information of Nodes */
-  NCS_PATRICIA_TREE comm_sock_tree; /* NODE_DB information of Nodes */
-  NCS_PATRICIA_TREE ip_addr_tree;   /* NODE_DB information of Nodes */
+  NCS_PATRICIA_TREE nodeid_tree;  /* NODE_DB information of Nodes */
+  NCS_PATRICIA_TREE ip_addr_tree; /* NODE_DB information of Nodes */
   int so_keepalive;
   NCS_LOCK cb_lock;
   int comm_keepidle_time;
@@ -96,6 +97,7 @@ typedef struct dtm_internode_cb {
   int32_t sock_rcvbuf_size; /* The value of SO_RCVBUF */
   SYSF_MBX mbx;
   int mbx_fd;
+  int epoll_fd;
 } DTM_INTERNODE_CB;
 
 /*extern DTM_INTERNODE_CB *dtms_gl_cb; */

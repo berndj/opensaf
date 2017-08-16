@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2010 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -15,8 +16,10 @@
  *
  */
 
+#include <sys/epoll.h>
+#include <unistd.h>
 #include "base/usrbuf.h"
-#include "dtm.h"
+#include "dtm/dtmnd/dtm.h"
 
 /**
  * Function to add new node
@@ -27,17 +30,14 @@
  * @return NCSCC_RC_FAILURE
  *
  */
-DTM_NODE_DB *dtm_node_new(DTM_NODE_DB *new_node)
+DTM_NODE_DB *dtm_node_new(const DTM_NODE_DB *new_node)
 {
-
-	DTM_NODE_DB *node = NULL;
-
 	TRACE_ENTER();
 
-	node = calloc(1, sizeof(DTM_NODE_DB));
+	DTM_NODE_DB *node = malloc(sizeof(DTM_NODE_DB));
 
 	if (node == NULL) {
-		LOG_ER("Calloc failed");
+		LOG_ER("malloc failed");
 		goto done;
 	}
 
@@ -63,30 +63,27 @@ done:
 uint32_t dtm_cb_init(DTM_INTERNODE_CB *dtms_cb)
 {
 	NCS_PATRICIA_PARAMS nodeid_param;
-	NCS_PATRICIA_PARAMS comm_socket_param;
 	NCS_PATRICIA_PARAMS ipaddr_param;
 
 	TRACE_ENTER();
 
 	memset(&nodeid_param, 0, sizeof(NCS_PATRICIA_PARAMS));
-	memset(&comm_socket_param, 0, sizeof(NCS_PATRICIA_PARAMS));
 	memset(&ipaddr_param, 0, sizeof(NCS_PATRICIA_PARAMS));
 
 	nodeid_param.key_size = sizeof(uint32_t);
-	comm_socket_param.key_size = sizeof(uint32_t);
 	ipaddr_param.key_size = INET6_ADDRSTRLEN;
+
+	dtms_cb->epoll_fd = epoll_create1(EPOLL_CLOEXEC);
+	if (dtms_cb->epoll_fd < 0) {
+		LOG_ER("DTM: epoll_create() failed: %d", errno);
+		return NCSCC_RC_FAILURE;
+	}
 
 	/* Initialize patricia tree for nodeid list */
 	if (NCSCC_RC_SUCCESS !=
 	    ncs_patricia_tree_init(&dtms_cb->nodeid_tree, &nodeid_param)) {
 		LOG_ER("DTM: ncs_patricia_tree_init FAILED");
-		return NCSCC_RC_FAILURE;
-	}
-
-	/* Initialize comm_socket patricia tree */
-	if (NCSCC_RC_SUCCESS != ncs_patricia_tree_init(&dtms_cb->comm_sock_tree,
-						       &comm_socket_param)) {
-		LOG_ER("DTM:ncs_patricia_tree_init FAILED");
+		close(dtms_cb->epoll_fd);
 		return NCSCC_RC_FAILURE;
 	}
 
@@ -94,12 +91,14 @@ uint32_t dtm_cb_init(DTM_INTERNODE_CB *dtms_cb)
 	if (NCSCC_RC_SUCCESS !=
 	    ncs_patricia_tree_init(&dtms_cb->ip_addr_tree, &ipaddr_param)) {
 		LOG_ER("DTM:ncs_patricia_tree_init FAILED");
+		close(dtms_cb->epoll_fd);
 		return NCSCC_RC_FAILURE;
 	}
 
 	if (m_NCS_IPC_CREATE(&dtms_cb->mbx) != NCSCC_RC_SUCCESS) {
 		/* Mail box creation failed */
 		LOG_ER("DTM:IPC create FAILED");
+		close(dtms_cb->epoll_fd);
 		return NCSCC_RC_FAILURE;
 	} else {
 
@@ -108,6 +107,7 @@ uint32_t dtm_cb_init(DTM_INTERNODE_CB *dtms_cb)
 		if (NCSCC_RC_SUCCESS != m_NCS_IPC_ATTACH(&dtms_cb->mbx)) {
 			m_NCS_IPC_RELEASE(&dtms_cb->mbx, NULL);
 			LOG_ER("DTM: Internode Mailbox  Attach failed");
+			close(dtms_cb->epoll_fd);
 			return NCSCC_RC_FAILURE;
 		}
 
@@ -189,37 +189,6 @@ DTM_NODE_DB *dtm_node_getnext_by_id(uint32_t node_id)
 }
 
 /**
- * Retrieve node from node db by comm_socket
- *
- * @param comm_socket
- *
- * @return NCSCC_RC_SUCCESS
- * @return NCSCC_RC_FAILURE
- *
- */
-DTM_NODE_DB *dtm_node_get_by_comm_socket(uint32_t comm_socket)
-{
-	DTM_NODE_DB *node = NULL;
-	DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
-	TRACE_ENTER();
-
-	node = (DTM_NODE_DB *)ncs_patricia_tree_get(&dtms_cb->comm_sock_tree,
-						    (uint8_t *)&comm_socket);
-	if (node != (DTM_NODE_DB *)NULL) {
-		/* Adjust the pointer */
-		node =
-		    (DTM_NODE_DB *)(((char *)node) -
-				    (((char *)&(
-					 ((DTM_NODE_DB *)0)->pat_comm_socket)) -
-				     ((char *)((DTM_NODE_DB *)0))));
-		TRACE("DTM:Node found %d", node->comm_socket);
-	}
-
-	TRACE_LEAVE();
-	return node;
-}
-
-/**
  * Adds the node to patricia tree
  *
  * @param node
@@ -255,20 +224,7 @@ uint32_t dtm_node_add(DTM_NODE_DB *node, int i)
 		}
 		break;
 	case 1:
-		TRACE(
-		    "DTM:Adding comm_socket to the database with comm_socket :%u as key",
-		    node->comm_socket);
-		node->pat_comm_socket.key_info =
-		    (uint8_t *)&(node->comm_socket);
-		rc = ncs_patricia_tree_add(&dtms_cb->comm_sock_tree,
-					   &node->pat_comm_socket);
-		if (rc != NCSCC_RC_SUCCESS) {
-			TRACE(
-			    "DTM:ncs_patricia_tree_add for comm_socket  FAILED for :%d :%u",
-			    node->comm_socket, rc);
-			node->pat_comm_socket.key_info = NULL;
-			goto done;
-		}
+		osafassert(false);
 		break;
 
 	case 2:
@@ -333,19 +289,7 @@ uint32_t dtm_node_delete(DTM_NODE_DB *node, int i)
 		}
 		break;
 	case 1:
-		if (node->comm_socket != 0 && node->pat_comm_socket.key_info) {
-			TRACE(
-			    "DTM:Deleting comm_socket  from  the database with comm_socket :%u as key",
-			    node->comm_socket);
-			if ((rc = ncs_patricia_tree_del(
-				 &dtms_cb->comm_sock_tree,
-				 &node->pat_comm_socket)) != NCSCC_RC_SUCCESS) {
-				TRACE(
-				    "DTM:ncs_patricia_tree_del  FAILED for comm_socket :%d rc :%u",
-				    node->comm_socket, rc);
-				goto done;
-			}
-		}
+		osafassert(false);
 		break;
 
 	case 2:

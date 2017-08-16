@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2010 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -21,6 +22,7 @@
 /* From /base/common/inc */
 
 #include "base/logtrace.h"
+#include <stdbool.h>
 #include <poll.h>
 #include "base/usrbuf.h"
 #include "base/ncsencdec_pub.h"
@@ -30,7 +32,7 @@
 #include "dtm_cb.h"
 
 extern DTM_INTERNODE_CB *dtms_gl_cb;
-extern uint8_t initial_discovery_phase;
+extern bool initial_discovery_phase;
 
 #define BMCAST_MSG_LEN ( sizeof(uint16_t) + sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint16_t)
 
@@ -106,10 +108,9 @@ extern void node_discovery_process(void *arg);
 extern uint32_t dtm_cb_init(DTM_INTERNODE_CB *dtms_cb);
 extern DTM_NODE_DB *dtm_node_get_by_id(uint32_t nodeid);
 extern DTM_NODE_DB *dtm_node_getnext_by_id(uint32_t node_id);
-extern DTM_NODE_DB *dtm_node_get_by_comm_socket(uint32_t comm_socket);
 extern uint32_t dtm_node_add(DTM_NODE_DB *node, int i);
 extern uint32_t dtm_node_delete(DTM_NODE_DB *nnode, int i);
-extern DTM_NODE_DB *dtm_node_new(DTM_NODE_DB *new_node);
+extern DTM_NODE_DB *dtm_node_new(const DTM_NODE_DB *new_node);
 extern int dtm_read_config(DTM_INTERNODE_CB *config, char *dtm_config_file);
 uint32_t dtm_service_discovery_init(DTM_INTERNODE_CB *dtms_cb);
 

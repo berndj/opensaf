@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2010 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -15,6 +16,7 @@
  *
  */
 
+#include "dtm/dtmnd/dtm_inter_trans.h"
 #include "dtm.h"
 #include "dtm_cb.h"
 #include "dtm_inter.h"
@@ -25,7 +27,6 @@ uint32_t dtm_internode_snd_msg_to_all_nodes(uint8_t *buffer, uint16_t len);
 uint32_t dtm_internode_snd_msg_to_node(uint8_t *buffer, uint16_t len,
 				       NODE_ID node_id);
 
-uint32_t dtm_internode_process_pollout(int fd);
 uint32_t dtm_prepare_data_msg(uint8_t *buffer, uint16_t len);
 static uint32_t dtm_internode_snd_unsent_msg(DTM_NODE_DB *node);
 static uint32_t dtm_internode_snd_msg_common(DTM_NODE_DB *node, uint8_t *buffer,
@@ -203,8 +204,7 @@ static uint32_t dtm_internode_snd_msg_common(DTM_NODE_DB *node, uint8_t *buffer,
 			add_ptr->len = len;
 			node->msgs_hdr = add_ptr;
 			node->msgs_tail = add_ptr;
-			dtm_internode_set_poll_fdlist(node->comm_socket,
-						      POLLOUT);
+			dtm_internode_set_pollout(node);
 			return NCSCC_RC_SUCCESS;
 		}
 	} else {
@@ -219,8 +219,7 @@ static uint32_t dtm_internode_snd_msg_common(DTM_NODE_DB *node, uint8_t *buffer,
 			add_ptr->len = len;
 			tail->next = add_ptr;
 			node->msgs_tail = add_ptr;
-			dtm_internode_set_poll_fdlist(node->comm_socket,
-						      POLLOUT);
+			dtm_internode_set_pollout(node);
 			return NCSCC_RC_SUCCESS;
 		}
 	}
@@ -271,12 +270,9 @@ uint32_t dtm_internode_snd_msg_to_node(uint8_t *buffer, uint16_t len,
  * @return NCSCC_RC_FAILURE
  *
  */
-uint32_t dtm_internode_process_pollout(int fd)
+uint32_t dtm_internode_process_pollout(DTM_NODE_DB *node)
 {
-	DTM_NODE_DB *node = NULL;
-
 	TRACE_ENTER();
-	node = dtm_node_get_by_comm_socket((uint32_t)fd);
 	if (NULL == node) {
 		LOG_ER(
 		    "DTM :No node matching the fd for pollout, delete this fd from fd list ");
@@ -288,7 +284,7 @@ uint32_t dtm_internode_process_pollout(int fd)
 		if (NULL == hdr) {
 			/* No messages to be sent, reset the POLLOUT event on
 			 * this fd */
-			dtm_internode_reset_poll_fdlist(node->comm_socket);
+			dtm_internode_clear_pollout(node);
 		} else {
 			dtm_internode_snd_unsent_msg(node);
 		}
@@ -315,7 +311,7 @@ static uint32_t dtm_internode_snd_unsent_msg(DTM_NODE_DB *node)
 	int snd_count = 0;
 	TRACE_ENTER();
 	if (NULL == unsent_msg) {
-		dtm_internode_reset_poll_fdlist(node->comm_socket);
+		dtm_internode_clear_pollout(node);
 		return NCSCC_RC_SUCCESS;
 	}
 	while (NULL != unsent_msg) {
@@ -365,7 +361,7 @@ static uint32_t dtm_internode_snd_unsent_msg(DTM_NODE_DB *node)
 		}
 	}
 	if (NULL == node->msgs_hdr) {
-		dtm_internode_reset_poll_fdlist(node->comm_socket);
+		dtm_internode_clear_pollout(node);
 	}
 	TRACE_LEAVE();
 	return NCSCC_RC_SUCCESS;

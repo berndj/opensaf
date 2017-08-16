@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2010 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -130,7 +131,7 @@ uint32_t dtm_intra_processing_init(char *node_name, char *node_ip,
 
 	/* Open a socket, If socket opens to fail return Error */
 	dtm_intranode_cb->server_sockfd =
-	    socket(dtm_socket_domain, SOCK_STREAM, 0);
+	    socket(dtm_socket_domain, SOCK_STREAM | SOCK_CLOEXEC, 0);
 
 	if (dtm_intranode_cb->server_sockfd < 0) {
 		LOG_ER("DTM: Socket creation failed err :%s ", strerror(errno));

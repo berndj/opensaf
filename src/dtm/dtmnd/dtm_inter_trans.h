@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2010 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -14,8 +15,15 @@
  * Author(s): GoAhead Software
  *
  */
+
 #ifndef DTM_DTMND_DTM_INTER_TRANS_H_
 #define DTM_DTMND_DTM_INTER_TRANS_H_
+
+#include <stdint.h>
+#include "mds/mds_papi.h"
+
+struct node_list;
+typedef struct node_list DTM_NODE_DB;
 
 extern uint32_t dtm_add_to_msg_dist_list(uint8_t *buffer, uint16_t len,
                                          NODE_ID node_id);
@@ -25,7 +33,7 @@ extern uint32_t dtm_internode_snd_msg_to_all_nodes(uint8_t *buffer,
 
 extern uint32_t dtm_internode_snd_msg_to_node(uint8_t *buffer, uint16_t len,
                                               NODE_ID node_id);
-extern uint32_t dtm_internode_process_pollout(int fd);
+extern uint32_t dtm_internode_process_pollout(DTM_NODE_DB *node);
 extern uint32_t dtm_prepare_data_msg(uint8_t *buffer, uint16_t len);
 
 #endif  // DTM_DTMND_DTM_INTER_TRANS_H_

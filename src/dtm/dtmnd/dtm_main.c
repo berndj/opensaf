@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2010 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -28,8 +29,10 @@
 #include "dtm_node.h"
 #include "base/osaf_poll.h"
 
-#include <stdlib.h>
 #include <sched.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 /* ========================================================================
  *   DEFINITIONS
@@ -57,7 +60,7 @@ NCSCONTEXT gl_serv_dis_task_hdl = 0;
 static DTM_INTERNODE_CB _dtms_cb;
 DTM_INTERNODE_CB *dtms_gl_cb = &_dtms_cb;
 
-uint8_t initial_discovery_phase = true;
+bool initial_discovery_phase = true;
 
 /* ========================================================================
  *   FUNCTION PROTOTYPES
@@ -111,7 +114,7 @@ static uint32_t dtm_construct_bcast_hdr(DTM_INTERNODE_CB *dtms_cb,
 	ncs_encode_16bit(&data, *pack_size);
 	ncs_encode_16bit(&data, dtms_cb->cluster_id);
 	ncs_encode_32bit(&data, dtms_cb->node_id);
-	ncs_encode_8bit(&data, dtms_cb->mcast_flag);
+	ncs_encode_8bit(&data, (uint8_t)dtms_cb->mcast_flag);
 	ncs_encode_16bit(&data, dtms_cb->stream_port);
 	ncs_encode_8bit(&data, (uint8_t)dtms_cb->i_addr_family);
 	memcpy(data, dtms_cb->ip_addr, INET6_ADDRSTRLEN);
@@ -399,7 +402,8 @@ int main(int argc, char *argv[])
 						send_bcast_buffer,
 						bcast_buf_len);
 		} else {
-			m_NCS_TASK_SLEEP(0xfffffff0);
+			for (;;)
+				pause();
 		}
 	}
 done1:

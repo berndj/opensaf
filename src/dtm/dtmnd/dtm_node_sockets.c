@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2010 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -15,12 +16,14 @@
  *
  */
 
-#include <netdb.h>
-#include <netinet/tcp.h>
 #include <arpa/inet.h>
-#include <sys/socket.h>
+#include <netdb.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <stdbool.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
 #include "base/ncsencdec_pub.h"
 #include "base/usrbuf.h"
 #include "dtm.h"
@@ -89,7 +92,7 @@ static uint32_t set_keepalive(DTM_INTERNODE_CB *dtms_cb, int sock_desc)
 	comm_keepalive_probes = dtms_cb->comm_keepalive_probes;
 	comm_user_timeout = dtms_cb->comm_user_timeout;
 
-	if (so_keepalive == true) {
+	if (so_keepalive == 1) {
 		socklen_t optlen;
 
 		/* Set SO_KEEPALIVE */
@@ -386,19 +389,14 @@ static uint32_t dgram_set_mcast_ttl(DTM_INTERNODE_CB *dtms_cb, int mcast_ttl)
  * @return NCSCC_RC_FAILURE
  *
  */
-uint32_t dtm_comm_socket_close(int *comm_socket)
+void dtm_comm_socket_close(DTM_NODE_DB *node)
 {
-
-	DTM_NODE_DB *node;
 	TRACE_ENTER();
-	int rc = NCSCC_RC_SUCCESS;
 	int err = 0;
-
-	node = dtm_node_get_by_comm_socket(*comm_socket);
 
 	if (node != NULL) {
 		TRACE("DTM: node deleting  enty ");
-		if (true == node->comm_status) {
+		if (node->comm_status == true) {
 			TRACE(
 			    "DTM: dtm_comm_socket_close node_ip:%s, node_id:%u i_addr_family:%d ",
 			    node->node_ip, node->node_id, node->i_addr_family);
@@ -406,10 +404,7 @@ uint32_t dtm_comm_socket_close(int *comm_socket)
 				node->node_id, node->node_name, node->node_ip,
 				node->i_addr_family,
 				false) != NCSCC_RC_SUCCESS) {
-				LOG_ER(
-				    " dtm_process_node_up_down() failed rc : %d ",
-				    rc);
-				rc = NCSCC_RC_FAILURE;
+				LOG_ER("dtm_process_node_up_down() failed");
 				goto done;
 			}
 		}
@@ -418,12 +413,15 @@ uint32_t dtm_comm_socket_close(int *comm_socket)
 			LOG_ER("DTM :dtm_node_delete failed ");
 		}
 
-		if (dtm_node_delete(node, 1) != NCSCC_RC_SUCCESS) {
-			LOG_ER("DTM :dtm_node_delete failed");
-		}
-
 		if (dtm_node_delete(node, 2) != NCSCC_RC_SUCCESS) {
 			LOG_ER("DTM :dtm_node_delete failed ");
+		}
+
+		if (close(node->comm_socket) != 0) {
+			err = errno;
+			LOG_ER("DTM : dtm_sockdesc_close err :%s ",
+			       strerror(err));
+			goto done;
 		}
 
 		free(node);
@@ -431,17 +429,8 @@ uint32_t dtm_comm_socket_close(int *comm_socket)
 	} else
 		TRACE("DTM :comm_socket_not exist ");
 
-	if (close(*comm_socket) != 0) {
-		err = errno;
-		LOG_ER("DTM : dtm_sockdesc_close err :%s ", strerror(err));
-		rc = NCSCC_RC_FAILURE;
-		goto done;
-	}
-	*comm_socket = -1;
-
 done:
-	TRACE_LEAVE2("rc :%d", rc);
-	return rc;
+	TRACE_LEAVE();
 }
 
 /**
@@ -540,7 +529,7 @@ int comm_socket_setup_new(DTM_INTERNODE_CB *dtms_cb,
 	TRACE("DTM : family : %d, socktype : %d, protocol :%d", p->ai_family,
 	      p->ai_socktype, p->ai_protocol);
 	/* Create socket for sending multicast datagrams */
-	if ((sock_desc = socket(p->ai_family, p->ai_socktype,
+	if ((sock_desc = socket(p->ai_family, p->ai_socktype | SOCK_CLOEXEC,
 				p->ai_protocol)) == SOCKET_ERROR()) {
 		LOG_ER("DTM:Socket creation failed (socket()) err :%s",
 		       strerror(errno));
@@ -552,7 +541,8 @@ int comm_socket_setup_new(DTM_INTERNODE_CB *dtms_cb,
 			sizeof(rcvbuf_size)) != 0)) {
 		LOG_ER("DTM:Socket rcv buf size set failed err :%s",
 		       strerror(errno));
-		dtm_comm_socket_close(&sock_desc);
+		close(sock_desc);
+		sock_desc = -1;
 		goto done;
 	}
 
@@ -561,7 +551,8 @@ int comm_socket_setup_new(DTM_INTERNODE_CB *dtms_cb,
 			sizeof(sndbuf_size)) != 0)) {
 		LOG_ER("DTM:Socket snd buf size set failed err :%s",
 		       strerror(errno));
-		dtm_comm_socket_close(&sock_desc);
+		close(sock_desc);
+		sock_desc = -1;
 		goto done;
 	}
 
@@ -570,13 +561,15 @@ int comm_socket_setup_new(DTM_INTERNODE_CB *dtms_cb,
 		       sizeof(flag)) != 0) {
 		LOG_ER("DTM:Socket TCP_NODELAY set failed err :%s",
 		       strerror(errno));
-		dtm_comm_socket_close(&sock_desc);
+		close(sock_desc);
+		sock_desc = -1;
 		goto done;
 	}
 
 	if (NCSCC_RC_SUCCESS != set_keepalive(dtms_cb, sock_desc)) {
 		LOG_ER("DTM :set_keepalive failed ");
-		dtm_comm_socket_close(&sock_desc);
+		close(sock_desc);
+		sock_desc = -1;
 		goto done;
 	}
 
@@ -585,13 +578,15 @@ int comm_socket_setup_new(DTM_INTERNODE_CB *dtms_cb,
 		err = errno;
 		LOG_ER("DTM :Connect failed (connect()) err :%s",
 		       strerror(err));
-		dtm_comm_socket_close(&sock_desc);
+		close(sock_desc);
+		sock_desc = -1;
+		goto done;
 	}
 
+done:
 	/* Free address structure(s) allocated by getaddrinfo() */
 	freeaddrinfo(addr_list);
 
-done:
 	TRACE_LEAVE2("sock_desc : %d", sock_desc);
 	return sock_desc;
 }
@@ -707,8 +702,9 @@ uint32_t dtm_stream_nonblocking_listener(DTM_INTERNODE_CB *dtms_cb)
 	TRACE("DTM :family : %d, socktype : %d, protocol :%d", p->ai_family,
 	      p->ai_socktype, p->ai_protocol);
 	/* Create socket for sending multicast datagrams */
-	if ((dtms_cb->stream_sock = socket(p->ai_family, p->ai_socktype,
-					   p->ai_protocol)) == SOCKET_ERROR()) {
+	if ((dtms_cb->stream_sock = socket(
+		 p->ai_family, p->ai_socktype | SOCK_NONBLOCK | SOCK_CLOEXEC,
+		 p->ai_protocol)) == SOCKET_ERROR()) {
 		LOG_ER("DTM:Socket creation failed (socket()) err :%s",
 		       strerror(errno));
 		TRACE_LEAVE2("rc :%d", NCSCC_RC_FAILURE);
@@ -829,9 +825,9 @@ uint32_t dtm_dgram_mcast_listener(DTM_INTERNODE_CB *dtms_cb)
 	TRACE("DTM :family : %d, socktype : %d, protocol :%d", p->ai_family,
 	      p->ai_socktype, p->ai_protocol);
 	/* Create socket for sending multicast datagrams */
-	if ((dtms_cb->dgram_sock_rcvr =
-		 socket(p->ai_family, p->ai_socktype, p->ai_protocol)) ==
-	    SOCKET_ERROR()) {
+	if ((dtms_cb->dgram_sock_rcvr = socket(
+		 p->ai_family, p->ai_socktype | SOCK_NONBLOCK | SOCK_CLOEXEC,
+		 p->ai_protocol)) == SOCKET_ERROR()) {
 		LOG_ER("DTM:Socket creation failed (socket()) err :%s",
 		       strerror(errno));
 		TRACE_LEAVE2("rc :%d", NCSCC_RC_FAILURE);
@@ -933,9 +929,9 @@ uint32_t dtm_dgram_mcast_sender(DTM_INTERNODE_CB *dtms_cb, int mcast_ttl)
 	TRACE("DTM :family : %d, socktype : %d, protocol :%d", p->ai_family,
 	      p->ai_socktype, p->ai_protocol);
 	/* Create socket for sending multicast datagrams */
-	if ((dtms_cb->dgram_sock_sndr =
-		 socket(p->ai_family, p->ai_socktype, p->ai_protocol)) ==
-	    SOCKET_ERROR()) {
+	if ((dtms_cb->dgram_sock_sndr = socket(
+		 p->ai_family, p->ai_socktype | SOCK_NONBLOCK | SOCK_CLOEXEC,
+		 p->ai_protocol)) == SOCKET_ERROR()) {
 		LOG_ER("DTM:Socket creation failed (socket()) err :%s",
 		       strerror(errno));
 		TRACE_LEAVE2("rc :%d", NCSCC_RC_FAILURE);
@@ -1072,7 +1068,8 @@ uint32_t dtm_dgram_bcast_listener(DTM_INTERNODE_CB *dtms_cb)
 				      ipstr);
 		}
 		if ((dtms_cb->dgram_sock_rcvr =
-			 socket(p->ai_family, p->ai_socktype,
+			 socket(p->ai_family,
+				p->ai_socktype | SOCK_NONBLOCK | SOCK_CLOEXEC,
 				p->ai_protocol)) == SOCKET_ERROR()) {
 			LOG_ER("DTM:Socket creation failed (socket()) err :%s",
 			       strerror(errno));
@@ -1217,7 +1214,8 @@ uint32_t dtm_dgram_bcast_sender(DTM_INTERNODE_CB *dtms_cb)
 
 	/* Create socket for sending/receiving datagrams */
 	dtms_cb->dgram_sock_sndr =
-	    socket(bcast_dest_address->sa_family, SOCK_DGRAM, IPPROTO_UDP);
+	    socket(bcast_dest_address->sa_family,
+		   SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_UDP);
 	if (dtms_cb->dgram_sock_sndr == SOCKET_ERROR()) {
 		LOG_ER("DTM :socket create  failederr :%s", strerror(errno));
 		TRACE_LEAVE2("rc :%d", NCSCC_RC_FAILURE);
@@ -1290,21 +1288,21 @@ uint32_t dtm_dgram_bcast_sender(DTM_INTERNODE_CB *dtms_cb)
  * @return NCSCC_RC_FAILURE
  *
  */
-int dtm_process_connect(DTM_INTERNODE_CB *dtms_cb, char *node_ip, uint8_t *data,
-			uint16_t len)
+DTM_NODE_DB *dtm_process_connect(DTM_INTERNODE_CB *dtms_cb, uint8_t *data,
+				 uint16_t len)
 {
 
 	in_port_t foreign_port;
-	int sock_desc = -1;
 	DTM_NODE_DB node = {0};
 	DTM_NODE_DB *new_node = NULL;
-	uint8_t *buffer = data, mcast_flag;
+	uint8_t *buffer = data;
+	bool mcast_flag;
 	TRACE_ENTER();
 
 	memset(&node, 0, sizeof(DTM_NODE_DB));
 
 	/* Decode start */
-	node.cluster_id = ncs_decode_32bit(&buffer);
+	node.cluster_id = ncs_decode_16bit(&buffer);
 	node.node_id = ncs_decode_32bit(&buffer);
 	if (dtms_cb->node_id == node.node_id) {
 		if (dtms_cb->mcast_flag != true) {
@@ -1316,8 +1314,8 @@ int dtm_process_connect(DTM_INTERNODE_CB *dtms_cb, char *node_ip, uint8_t *data,
 			    "DTM: received the self node_id mcast message, dropping message cluster_id: %d node_id: %u",
 			    node.cluster_id, node.node_id);
 		}
-		TRACE_LEAVE2("sock_desc :%d", sock_desc);
-		return sock_desc;
+		TRACE_LEAVE();
+		return NULL;
 	}
 
 	/* Decode end */
@@ -1325,12 +1323,12 @@ int dtm_process_connect(DTM_INTERNODE_CB *dtms_cb, char *node_ip, uint8_t *data,
 		LOG_WA(
 		    "DTM:cluster_id  mis match  dropping message cluster_id: %d, node_id: %u",
 		    node.cluster_id, node.node_id);
-		TRACE_LEAVE2("sock_desc :%d", sock_desc);
-		return sock_desc;
+		TRACE_LEAVE();
+		return NULL;
 	}
 
-	mcast_flag = ncs_decode_8bit(&buffer);
-	TRACE("mcast flag: %" PRIu8, mcast_flag);
+	mcast_flag = ncs_decode_8bit(&buffer) != 0;
+	TRACE("mcast flag: %d", mcast_flag ? 1 : 0);
 
 	/* foreign_port = htons((in_port_t)(ncs_decode_16bit(&buffer))); */
 	foreign_port = ((in_port_t)(ncs_decode_16bit(&buffer)));
@@ -1342,7 +1340,7 @@ int dtm_process_connect(DTM_INTERNODE_CB *dtms_cb, char *node_ip, uint8_t *data,
 			TRACE(
 			    "DTM: received node_id is less than local node_id dropping message cluster_id: %d node_id: %u",
 			    node.cluster_id, node.node_id);
-			return sock_desc;
+			return NULL;
 		}
 	}
 
@@ -1365,16 +1363,15 @@ int dtm_process_connect(DTM_INTERNODE_CB *dtms_cb, char *node_ip, uint8_t *data,
 					    "DTM:node duplicate discovered dropping message  cluster_id: %d, node_id :%u, node_ip:%s",
 					    node.cluster_id, node.node_id,
 					    node.node_ip);
-				TRACE_LEAVE2("sock_desc :%d", sock_desc);
 			} else {
 
 				TRACE(
 				    "DTM: discovery in progress dropping message cluster_id: %d, node_id :%u, node_ip:%s",
 				    node.cluster_id, node.node_id,
 				    node.node_ip);
-				TRACE_LEAVE2("sock_desc :%d", sock_desc);
 			}
-			return sock_desc;
+			TRACE_LEAVE();
+			return NULL;
 		} else if ((new_node->comm_status == false) &&
 			   ((new_node->node_id != node.node_id) ||
 			    (strncmp(node.node_ip, new_node->node_ip,
@@ -1383,9 +1380,6 @@ int dtm_process_connect(DTM_INTERNODE_CB *dtms_cb, char *node_ip, uint8_t *data,
 			    "DTM: deleting stale enty cluster_id: %d, node_id :%u, node_ip:%s",
 			    node.cluster_id, node.node_id, node.node_ip);
 			if (dtm_node_delete(new_node, 0) != NCSCC_RC_SUCCESS) {
-				LOG_ER("DTM :dtm_node_delete failed (recv())");
-			}
-			if (dtm_node_delete(new_node, 1) != NCSCC_RC_SUCCESS) {
 				LOG_ER("DTM :dtm_node_delete failed (recv())");
 			}
 			if (dtm_node_delete(new_node, 2) != NCSCC_RC_SUCCESS) {
@@ -1399,12 +1393,11 @@ int dtm_process_connect(DTM_INTERNODE_CB *dtms_cb, char *node_ip, uint8_t *data,
 
 	if (new_node == NULL) {
 		LOG_ER(" dtm_node_new failed .node_ip : %s ", node.node_ip);
-		sock_desc = -1;
-		goto node_fail;
+		return NULL;
 	}
 
-	sock_desc = comm_socket_setup_new(dtms_cb, (char *)&node.node_ip,
-					  foreign_port, node.i_addr_family);
+	int sock_desc = comm_socket_setup_new(dtms_cb, (char *)&node.node_ip,
+					      foreign_port, node.i_addr_family);
 
 	new_node->comm_socket = sock_desc;
 	new_node->node_id = node.node_id;
@@ -1421,19 +1414,8 @@ int dtm_process_connect(DTM_INTERNODE_CB *dtms_cb, char *node_ip, uint8_t *data,
 			LOG_ER(
 			    "DTM: dtm_node_add failed .node_ip: %s, node_id: %u",
 			    new_node->node_ip, new_node->node_id);
-			dtm_comm_socket_close(&sock_desc);
+			dtm_comm_socket_close(new_node);
 			sock_desc = -1;
-			free(new_node);
-			goto node_fail;
-		}
-
-		if (dtm_node_add(new_node, 1) != NCSCC_RC_SUCCESS) {
-			LOG_ER(
-			    "DTM: dtm_node_add failed .node_ip: %s, node_id: %u",
-			    new_node->node_ip, new_node->node_id);
-			dtm_comm_socket_close(&sock_desc);
-			sock_desc = -1;
-			free(new_node);
 			goto node_fail;
 		}
 
@@ -1441,9 +1423,8 @@ int dtm_process_connect(DTM_INTERNODE_CB *dtms_cb, char *node_ip, uint8_t *data,
 			LOG_ER(
 			    "DTM: dtm_node_add failed .node_ip: %s, node_id: %u",
 			    new_node->node_ip, new_node->node_id);
-			dtm_comm_socket_close(&sock_desc);
+			dtm_comm_socket_close(new_node);
 			sock_desc = -1;
-			free(new_node);
 			goto node_fail;
 		} else
 			TRACE("DTM: dtm_node_add add .node_ip: %s, node_id: %u",
@@ -1452,7 +1433,7 @@ int dtm_process_connect(DTM_INTERNODE_CB *dtms_cb, char *node_ip, uint8_t *data,
 
 node_fail:
 	TRACE_LEAVE2("sock_desc :%d", sock_desc);
-	return sock_desc;
+	return new_node;
 }
 
 /**
@@ -1460,20 +1441,19 @@ node_fail:
  *
  * @param dtms_cb stream_sock
  *
- * @return NCSCC_RC_SUCCESS
- * @return NCSCC_RC_FAILURE
+ * @return new node, or NULL if no more connections to available to be accepted
  *
  */
-int dtm_process_accept(DTM_INTERNODE_CB *dtms_cb, int stream_sock)
+DTM_NODE_DB *dtm_process_accept(DTM_INTERNODE_CB *dtms_cb, int stream_sock)
 {
 	struct sockaddr_storage clnt_addr; /* Client address */
 	/* Set length of client address structure (in-out parameter) */
 	socklen_t clnt_addrLen = sizeof(clnt_addr);
 	void *numericAddress = NULL; /* Pointer to binary address */
-	char addrBuffer[INET6_ADDRSTRLEN] = { 0 };
-	int err = 0;
+	char addrBuffer[INET6_ADDRSTRLEN] = {0};
 	DTM_NODE_DB node;
-	DTM_NODE_DB *new_node;
+	DTM_NODE_DB *new_node = NULL;
+	int err;
 	int new_conn_sd, sndbuf_size = dtms_cb->sock_sndbuf_size,
 			 rcvbuf_size = dtms_cb->sock_rcvbuf_size;
 	const struct sockaddr *clnt_addr1 = (struct sockaddr *)&clnt_addr;
@@ -1481,68 +1461,76 @@ int dtm_process_accept(DTM_INTERNODE_CB *dtms_cb, int stream_sock)
 
 	memset(&node, 0, sizeof(DTM_NODE_DB));
 
-	if ((new_conn_sd = accept(stream_sock, (struct sockaddr *)&clnt_addr,
-				  &clnt_addrLen)) < 0) {
+	for (;;) {
+		do {
+			new_conn_sd =
+			    accept(stream_sock, (struct sockaddr *)&clnt_addr,
+				   &clnt_addrLen);
+			err = errno;
+		} while (new_conn_sd < 0 &&
+			 (err == EINTR || err == ECONNABORTED));
+		if (new_conn_sd < 0) {
+			if (err == EAGAIN || err == EWOULDBLOCK)
+				return NULL;
+			LOG_ER("DTM:Accept failed (accept()) err :%s",
+			       strerror(err));
+			exit(EXIT_FAILURE);
+		}
 
-		err = errno;
-		LOG_ER("DTM:Accept failed (accept()) err :%s", strerror(err));
-		new_conn_sd = -1;
-		goto done;
-	}
+		if ((rcvbuf_size > 0) &&
+		    (setsockopt(new_conn_sd, SOL_SOCKET, SO_RCVBUF,
+				&rcvbuf_size, sizeof(rcvbuf_size)) != 0)) {
+			LOG_ER("DTM: Unable to set the SO_RCVBUF ");
+			close(new_conn_sd);
+			continue;
+		}
+		if ((sndbuf_size > 0) &&
+		    (setsockopt(new_conn_sd, SOL_SOCKET, SO_SNDBUF,
+				&sndbuf_size, sizeof(sndbuf_size)) != 0)) {
+			LOG_ER("DTM: Unable to set the SO_SNDBUF ");
+			close(new_conn_sd);
+			continue;
+		}
 
-	if ((rcvbuf_size > 0) &&
-	    (setsockopt(new_conn_sd, SOL_SOCKET, SO_RCVBUF, &rcvbuf_size,
-			sizeof(rcvbuf_size)) != 0)) {
-		LOG_ER("DTM: Unable to set the SO_RCVBUF ");
-		dtm_comm_socket_close(&new_conn_sd);
-		goto done;
-	}
-	if ((sndbuf_size > 0) &&
-	    (setsockopt(new_conn_sd, SOL_SOCKET, SO_SNDBUF, &sndbuf_size,
-			sizeof(sndbuf_size)) != 0)) {
-		LOG_ER("DTM: Unable to set the SO_SNDBUF ");
-		dtm_comm_socket_close(&new_conn_sd);
-		goto done;
-	}
+		int flag = 1;
+		if (setsockopt(new_conn_sd, IPPROTO_TCP, TCP_NODELAY,
+			       (void *)&flag, sizeof(flag)) != 0) {
+			LOG_ER("DTM:Socket TCP_NODELAY set failed err :%s",
+			       strerror(errno));
+			close(new_conn_sd);
+			continue;
+		}
 
-	int flag = 1;
-	if (setsockopt(new_conn_sd, IPPROTO_TCP, TCP_NODELAY, (void *)&flag,
-		       sizeof(flag)) != 0) {
-		LOG_ER("DTM:Socket TCP_NODELAY set failed err :%s",
-		       strerror(errno));
-		dtm_comm_socket_close(&new_conn_sd);
-		goto done;
-	}
+		if (NCSCC_RC_SUCCESS != set_keepalive(dtms_cb, new_conn_sd)) {
+			LOG_ER("DTM:set_keepalive failed ");
+			close(new_conn_sd);
+			continue;
+		}
 
-	if (NCSCC_RC_SUCCESS != set_keepalive(dtms_cb, new_conn_sd)) {
-		LOG_ER("DTM:set_keepalive failed ");
-		dtm_comm_socket_close(&new_conn_sd);
-		goto done;
-	}
+		if (clnt_addr1->sa_family == AF_INET) {
+			numericAddress =
+			    &((struct sockaddr_in *)clnt_addr1)->sin_addr;
+		} else if (clnt_addr1->sa_family == AF_INET6) {
+			numericAddress =
+			    &((struct sockaddr_in6 *)clnt_addr1)->sin6_addr;
+		} else {
+			LOG_ER("DTM: AF not supported=%d",
+			       clnt_addr1->sa_family);
+			close(new_conn_sd);
+			continue;
+		}
 
-	if (clnt_addr1->sa_family == AF_INET) {
-		numericAddress = &((struct sockaddr_in *)clnt_addr1)->sin_addr;
-	} else if (clnt_addr1->sa_family == AF_INET6) {
-		numericAddress =
-		    &((struct sockaddr_in6 *)clnt_addr1)->sin6_addr;
-	} else {
-		LOG_ER("DTM: AF not supported=%d", clnt_addr1->sa_family);
-		dtm_comm_socket_close(&new_conn_sd);
-		osafassert(0);
-	}
-
-	/* Convert binary to printable address */
-	if (inet_ntop(clnt_addr1->sa_family, numericAddress, addrBuffer,
-		      sizeof(addrBuffer)) == NULL) {
-		LOG_ER("DTM: [invalid address]");
-		dtm_comm_socket_close(&new_conn_sd);
-		goto done;
-	} else {
-		memcpy(node.node_ip, (uint8_t *)addrBuffer, INET6_ADDRSTRLEN);
-		node.i_addr_family = clnt_addr1->sa_family;
-	}
-
-	if (new_conn_sd != -1) {
+		/* Convert binary to printable address */
+		if (inet_ntop(clnt_addr1->sa_family, numericAddress, addrBuffer,
+			      sizeof(addrBuffer)) == NULL) {
+			LOG_ER("DTM: [invalid address]");
+			close(new_conn_sd);
+			continue;
+		} else {
+			memcpy(node.node_ip, (uint8_t *)addrBuffer,
+			       INET6_ADDRSTRLEN);
+			node.i_addr_family = clnt_addr1->sa_family;
+		}
 
 		node.cluster_id = dtms_cb->cluster_id;
 		node.comm_socket = new_conn_sd;
@@ -1553,32 +1541,22 @@ int dtm_process_accept(DTM_INTERNODE_CB *dtms_cb, int stream_sock)
 			LOG_ER(
 			    "DTM: dtm_node_new failed. node_ip: %s, node_id: %u",
 			    node.node_ip, node.node_id);
-			dtm_comm_socket_close(&new_conn_sd);
-			goto node_fail;
-		}
-
-		if (dtm_node_add(new_node, 1) != NCSCC_RC_SUCCESS) {
-			LOG_ER(
-			    "DTM: dtm_node_add failed .node_ip: %s, node_id: %u",
-			    new_node->node_ip, new_node->node_id);
-			dtm_comm_socket_close(&new_conn_sd);
-			goto node_fail;
+			close(new_conn_sd);
+			continue;
 		}
 
 		if (dtm_node_add(new_node, 2) != NCSCC_RC_SUCCESS) {
-
 			LOG_ER(
 			    "DTM: dtm_node_add failed .node_ip: %s, node_id: %u",
 			    new_node->node_ip, new_node->node_id);
-			dtm_comm_socket_close(&new_conn_sd);
-			goto node_fail;
+			dtm_comm_socket_close(new_node);
+			continue;
 		}
+		break;
 	}
 
-done:
-node_fail:
 	TRACE_LEAVE2("DTM: new_conn_sd :%d", new_conn_sd);
-	return new_conn_sd;
+	return new_node;
 }
 
 /**
@@ -1590,54 +1568,20 @@ node_fail:
  * @return NCSCC_RC_FAILURE
  *
  */
-int dtm_dgram_recvfrom_bmcast(DTM_INTERNODE_CB *dtms_cb, char *node_ip,
-			      void *buffer, int buffer_len)
+ssize_t dtm_dgram_recv_bmcast(DTM_INTERNODE_CB *dtms_cb, void *buffer,
+			      int buffer_len)
 {
-	struct sockaddr_storage clnt_addr;
-	socklen_t addrLen = sizeof(clnt_addr);
-	int rtn;
 	TRACE_ENTER();
 
-	memset(node_ip, 0, INET6_ADDRSTRLEN);
-
-	if ((rtn = recvfrom(dtms_cb->dgram_sock_rcvr, (raw_type *)buffer,
-			    buffer_len, 0, (struct sockaddr *)&clnt_addr,
-			    (socklen_t *)&addrLen)) < 0) {
-
-		LOG_ER("DTM:Receive failed (recvfrom()) err :%s",
-		       strerror(errno));
-
-	} else {
-		const struct sockaddr *clnt_addr1 =
-		    (struct sockaddr *)&clnt_addr;
-		void *numericAddress = NULL; /* Pointer to binary address */
-
-		if (clnt_addr1->sa_family == AF_INET) {
-			numericAddress =
-			    &((struct sockaddr_in *)clnt_addr1)->sin_addr;
-		}
-
-		else if (clnt_addr1->sa_family == AF_INET6) {
-
-			numericAddress =
-			    &((struct sockaddr_in6 *)clnt_addr1)->sin6_addr;
-		} else {
-			LOG_ER("DTM:AF not supported=%d",
-			       clnt_addr1->sa_family);
-			osafassert(0);
-		}
-
-		/* Convert binary to printable address */
-		char addrBuffer[INET6_ADDRSTRLEN];
-		if (inet_ntop(clnt_addr1->sa_family, numericAddress, addrBuffer,
-			      sizeof(addrBuffer)) == NULL) {
-			TRACE("DTM: invalid address :%s", addrBuffer);
-		} else {
-			memcpy(node_ip, (uint8_t *)addrBuffer,
-			       INET6_ADDRSTRLEN);
-		}
+	ssize_t rtn;
+	do {
+		rtn = recv(dtms_cb->dgram_sock_rcvr, buffer, buffer_len,
+			   MSG_DONTWAIT);
+	} while (rtn < 0 && errno == EINTR);
+	if (rtn < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+		LOG_ER("DTM:Receive failed (recv()) err :%s", strerror(errno));
 	}
 
-	TRACE_LEAVE2("rc :%d", rtn);
+	TRACE_LEAVE2("rc :%zd", rtn);
 	return rtn;
 }
