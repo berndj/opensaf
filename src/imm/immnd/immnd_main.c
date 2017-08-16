@@ -303,8 +303,7 @@ int main(int argc, char *argv[])
 	int maxEvt = 100;
 	struct timespec start_time;
 	struct pollfd fds[5];
-	int term_fd, nfds = 4;
-	;
+	int term_fd, nfds = 5;
 
 	daemonize(argc, argv);
 
@@ -428,7 +427,6 @@ int main(int argc, char *argv[])
 				ncs_sel_obj_rmv_ind(&immnd_cb->clm_init_sel_obj,
 						    true, true);
 				immnd_init_with_clm();
-				nfds = 5;
 			}
 
 			if (fds[FD_CLM].revents & POLLIN) {
