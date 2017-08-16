@@ -1209,7 +1209,8 @@ bailout:
 }
 
 static ClassInfo *verifyClassPBE(std::string classNameString,
-                                 SaImmHandleT immHandle, void *db_handle) {
+                                 SaImmHandleT immHandle,
+                                 void *db_handle, bool *badfile) {
   sqlite3 *dbHandle = (sqlite3 *)db_handle;
   int rc = 0;
   unsigned int class_id = 0;
@@ -1229,6 +1230,8 @@ static ClassInfo *verifyClassPBE(std::string classNameString,
   */
 
   TRACE_ENTER();
+
+  *badfile = false;
 
   stmt = preparedStmt[SQL_SEL_CLASSES_NAME];
   if ((rc = sqlite3_bind_text(stmt, 1, classNameString.c_str(), -1, NULL)) !=
@@ -1271,10 +1274,17 @@ static ClassInfo *verifyClassPBE(std::string classNameString,
                                    &classCategory, &attrDefinitions);
 
   if (errorCode != SA_AIS_OK) {
+    if (errorCode != SA_AIS_ERR_NOT_EXIST
+            && errorCode != SA_AIS_ERR_INVALID_PARAM) {
+        LOG_ER("Failed to get class description for class '%s' from imm "
+               "with error=%d, exiting",
+               classNameString.c_str(), errorCode);
+        exit(1);
+    }
     TRACE_4(
         "Failed to get class description for class %s from imm with error=%d",
         classNameString.c_str(), errorCode);
-    if (errorCode == SA_AIS_ERR_TRY_AGAIN) exit(1);
+    *badfile = true;
     goto bailout;
   }
 
@@ -1290,6 +1300,7 @@ static ClassInfo *verifyClassPBE(std::string classNameString,
            (sqlite3_stmt **)&(classInfo->sqlStmt))) != SQLITE_OK) {
     LOG_ER("Failed to prepare class insert statement. Error code: %d", rc);
     saImmOmClassDescriptionMemoryFree_2(immHandle, attrDefinitions);
+    *badfile = true;
     goto bailout;
   }
 
@@ -2563,12 +2574,11 @@ int verifyPbeState(SaImmHandleT immHandle, ClassMap *classIdMap,
   }
 
   while (it != classNameList.end()) {
-    ClassInfo *cl_info = verifyClassPBE((*it), immHandle, dbHandle);
+    ClassInfo *cl_info = verifyClassPBE((*it), immHandle, dbHandle, &badfile);
     if (cl_info) {
       (*classIdMap)[(*it)] = cl_info;
       it++;
     } else {
-      badfile = true;
       goto bailout;
     }
   }
