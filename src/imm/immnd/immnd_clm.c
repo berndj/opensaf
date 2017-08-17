@@ -199,6 +199,11 @@ void *immnd_clm_init_thread(void *cb)
 {
 	TRACE_ENTER();
 
+	if(immnd_cb->clm_hdl) {
+		TRACE("CLM handle has already been initialized.");
+		goto done;
+	}
+
 	SaAisErrorT rc =
 	    saClmInitialize_4(&immnd_cb->clm_hdl, &clm_callbacks, &clmVersion);
 	while ((rc == SA_AIS_ERR_TRY_AGAIN) || (rc == SA_AIS_ERR_TIMEOUT) ||
@@ -228,6 +233,8 @@ void *immnd_clm_init_thread(void *cb)
 		exit(EXIT_FAILURE);
 	}
 	TRACE("CLM Initialization SUCCESS......");
+
+done:
 	TRACE_LEAVE();
 	return NULL;
 }

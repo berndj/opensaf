@@ -422,11 +422,12 @@ int main(int argc, char *argv[])
 			}
 
 			if (fds[FD_CLM_INIT].revents & POLLIN) {
-				osafassert(!immnd_cb->clm_hdl);
-				TRACE("Initalize CLM ");
 				ncs_sel_obj_rmv_ind(&immnd_cb->clm_init_sel_obj,
 						    true, true);
-				immnd_init_with_clm();
+				if(!immnd_cb->clm_hdl) {
+					TRACE("Initalize CLM ");
+					immnd_init_with_clm();
+				}
 			}
 
 			if (fds[FD_CLM].revents & POLLIN) {
@@ -443,6 +444,7 @@ int main(int argc, char *argv[])
 						    immnd_cb->clm_hdl);
 						immnd_clm_node_cleanup(
 						    immnd_cb);
+						immnd_cb->clm_hdl = 0;
 						immnd_cb->clmSelectionObject =
 						    -1;
 						immnd_init_with_clm();
