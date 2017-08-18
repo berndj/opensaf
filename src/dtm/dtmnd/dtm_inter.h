@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2010 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -17,6 +18,8 @@
 
 #ifndef DTM_DTMND_DTM_INTER_H_
 #define DTM_DTMND_DTM_INTER_H_
+
+#include <stdint.h>
 
 #define DTM_INTERNODE_RCV_MSG_IDENTIFIER 0x56123456
 

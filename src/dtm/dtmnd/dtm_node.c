@@ -17,9 +17,15 @@
  */
 
 #include "dtm.h"
+#include <errno.h>
+#include <inttypes.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/epoll.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include "dtm_socket.h"
 #include "dtm_node.h"
 #include "dtm_inter.h"
@@ -85,26 +91,30 @@ static uint32_t dtm_construct_node_info_hdr(DTM_INTERNODE_CB *dtms_cb,
  *
  */
 uint32_t dtm_process_node_info(DTM_INTERNODE_CB *dtms_cb, DTM_NODE_DB *node,
-			       uint8_t *buffer, uint8_t *node_info_hrd,
-			       int buffer_len)
+			       uint8_t *buffer, uint16_t buffer_size,
+			       uint8_t *node_info_hrd, int buffer_len)
 {
 	uint32_t node_id;
 	uint32_t nodename_len;
-	char nodename[_POSIX_HOST_NAME_MAX];
-	int rc = 0;
+	uint32_t rc = NCSCC_RC_SUCCESS;
 	uint8_t *data = buffer;
 	TRACE_ENTER();
 
-	if (node == NULL) {
+	if (buffer_size < 2 * sizeof(uint32_t)) {
+		LOG_ER("Received node_info of size %" PRIu16, buffer_size);
 		rc = NCSCC_RC_FAILURE;
 		goto done;
 	}
-
-	int fd = node->comm_socket;
-
 	node_id = ncs_decode_32bit(&data);
 	nodename_len = ncs_decode_32bit(&data);
-	strncpy((char *)nodename, (char *)data, nodename_len);
+	if (nodename_len >= sizeof(node->node_name) ||
+	    nodename_len > buffer_size - 2 * sizeof(uint32_t)) {
+		LOG_ER("Received node_info of size %" PRIu16
+		       " with nodename_len %" PRIu32,
+		       buffer_size, nodename_len);
+		rc = NCSCC_RC_FAILURE;
+		goto done;
+	}
 
 	if (!node->comm_status) {
 
@@ -114,8 +124,8 @@ uint32_t dtm_process_node_info(DTM_INTERNODE_CB *dtms_cb, DTM_NODE_DB *node,
 
 		if (node->node_id == 0) {
 			node->node_id = node_id;
-			strncpy((char *)&node->node_name, nodename,
-				nodename_len);
+			memcpy(node->node_name, data, nodename_len);
+			node->node_name[nodename_len] = '\0';
 			node->comm_status = true;
 			if (dtm_node_add(node, 0) != NCSCC_RC_SUCCESS) {
 				LOG_ER(
@@ -125,14 +135,12 @@ uint32_t dtm_process_node_info(DTM_INTERNODE_CB *dtms_cb, DTM_NODE_DB *node,
 				rc = NCSCC_RC_FAILURE;
 				goto done;
 			}
-
 		} else if (node->node_id == node_id) {
-			strncpy((char *)&node->node_name, nodename,
-				nodename_len);
-			rc =
-			    dtm_comm_socket_send(fd, node_info_hrd, buffer_len);
+			memcpy(node->node_name, data, nodename_len);
+			node->node_name[nodename_len] = '\0';
+			rc = dtm_comm_socket_send(node->comm_socket,
+						  node_info_hrd, buffer_len);
 			if (rc != NCSCC_RC_SUCCESS) {
-
 				LOG_ER(
 				    "DTM: dtm_comm_socket_send() failed rc : %d",
 				    rc);
@@ -140,7 +148,6 @@ uint32_t dtm_process_node_info(DTM_INTERNODE_CB *dtms_cb, DTM_NODE_DB *node,
 				goto done;
 			}
 			node->comm_status = true;
-
 		} else {
 			LOG_ER(
 				    "DTM:  A node already exists in the cluster with similar "
@@ -150,9 +157,10 @@ uint32_t dtm_process_node_info(DTM_INTERNODE_CB *dtms_cb, DTM_NODE_DB *node,
 			goto done;
 		}
 
-		TRACE(
-		    "DTM: dtm_process_node_info node_ip:%s, node_id:%u i_addr_family:%d ",
-		    node->node_ip, node->node_id, node->i_addr_family);
+		TRACE("DTM: dtm_process_node_info node_name: '%s' node_ip:%s, "
+		      "node_id:%u i_addr_family:%d ",
+		      node->node_name, node->node_ip, node->node_id,
+		      node->i_addr_family);
 		rc = dtm_process_node_up_down(
 		    node->node_id, node->node_name, node->node_ip,
 		    node->i_addr_family, node->comm_status);
@@ -206,20 +214,22 @@ uint32_t dtm_process_node_up_down(NODE_ID node_id, char *node_name,
  * @return NCSCC_RC_FAILURE
  *
  */
-void dtm_internode_process_poll_rcv_msg_common(DTM_NODE_DB *node,
-					       uint16_t local_len_buf,
-					       uint8_t *node_info_hrd,
-					       uint16_t node_info_buffer_len,
-					       bool *close_conn)
+void dtm_internode_process_poll_rcv_msg_common(
+    DTM_NODE_DB *node, uint8_t *buffer, uint16_t local_len_buf,
+    uint8_t *node_info_hrd, uint16_t node_info_buffer_len, bool *close_conn)
 {
 	DTM_MSG_TYPES pkt_type = 0;
 	uint32_t identifier = 0;
 	uint8_t version = 0;
-	uint8_t *data = NULL;
+	uint8_t *data = buffer;
 	DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
 
-	node->buffer[local_len_buf + 2] = '\0';
-	data = &node->buffer[2];
+	if (local_len_buf < 6) {
+		LOG_ER("DTM: Malformed message received, size = %" PRId16,
+		       local_len_buf);
+		return;
+	}
+
 	/* Decode the message */
 	identifier = ncs_decode_32bit(&data);
 	version = ncs_decode_8bit(&data);
@@ -228,65 +238,65 @@ void dtm_internode_process_poll_rcv_msg_common(DTM_NODE_DB *node,
 	    (DTM_INTERNODE_RCV_MSG_VER != version)) {
 		LOG_ER("DTM: Malformed packet recd, Ident : %d, ver : %d",
 		       identifier, version);
-		goto done;
+		return;
 	}
 
 	pkt_type = ncs_decode_8bit(&data);
 
 	if (pkt_type == DTM_UP_MSG_TYPE) {
-		uint8_t *alloc_buffer = NULL;
-
-		if (NULL == (alloc_buffer = calloc(1, (local_len_buf - 6)))) {
+		uint8_t *alloc_buffer = malloc(local_len_buf - 6);
+		if (alloc_buffer == NULL) {
 			LOG_ER(
-			    "\nMemory allocation failed in dtm_internode_processing");
-			goto done;
+			    "Memory allocation failed in dtm_internode_processing");
+			return;
 		}
-		memcpy(alloc_buffer, &node->buffer[8], (local_len_buf - 6));
-
+		memcpy(alloc_buffer, buffer + 6, local_len_buf - 6);
 		dtm_internode_process_rcv_up_msg(
-		    alloc_buffer, (local_len_buf - 6), node->node_id);
+		    alloc_buffer, local_len_buf - 6, node->node_id);
 	} else if (pkt_type == DTM_CONN_DETAILS_MSG_TYPE) {
-		if (dtm_process_node_info(
-			dtms_cb, node, &node->buffer[8], node_info_hrd,
-			node_info_buffer_len) != NCSCC_RC_SUCCESS) {
-			LOG_ER(
-			    " DTM : communication socket Connection closed\n");
+		if (dtm_process_node_info(dtms_cb, node, buffer + 6,
+					  local_len_buf - 6, node_info_hrd,
+					  node_info_buffer_len) !=
+		    NCSCC_RC_SUCCESS) {
+			LOG_ER(" DTM : communication socket Connection closed");
 			*close_conn = true;
 		}
 	} else if (pkt_type == DTM_DOWN_MSG_TYPE) {
-		uint8_t *alloc_buffer = NULL;
-
-		if (NULL == (alloc_buffer = calloc(1, (local_len_buf - 6)))) {
+		uint8_t *alloc_buffer = malloc(local_len_buf - 6);
+		if (alloc_buffer == NULL) {
 			LOG_ER(
-			    "\nMemory allocation failed in dtm_internode_processing");
-			goto done;
+			    "Memory allocation failed in dtm_internode_processing");
+			return;
 		}
-		memcpy(alloc_buffer, &node->buffer[8], (local_len_buf - 6));
+		memcpy(alloc_buffer, buffer + 6, local_len_buf - 6);
 		dtm_internode_process_rcv_down_msg(
-		    alloc_buffer, (local_len_buf - 6), node->node_id);
+		    alloc_buffer, local_len_buf - 6, node->node_id);
 	} else if (pkt_type == DTM_MESSAGE_MSG_TYPE) {
-		NODE_ID dst_nodeid = 0;
-		uint32_t dst_processid = 0;
-		dst_nodeid = ncs_decode_32bit(&data);
+		if (local_len_buf < 14) {
+			LOG_ER(
+			    "DTM: Malformed DTM_MESSAGE received, size = %" PRId16,
+			    local_len_buf);
+			return;
+		}
+		uint8_t *alloc_buffer = malloc(local_len_buf + 2);
+		if (alloc_buffer == NULL) {
+			LOG_ER(
+			    "Memory allocation failed in dtm_internode_processing");
+			return;
+		}
+		memcpy(alloc_buffer + 8, buffer + 6, local_len_buf - 6);
+		NODE_ID dst_nodeid = ncs_decode_32bit(&data);
 		if (dtms_cb->node_id != dst_nodeid)
 			LOG_ER(
 			    "Invalid dest_nodeid: %u received in dtm_internode_processing",
 			    dst_nodeid);
-		dst_processid = ncs_decode_32bit(&data);
-		dtm_internode_process_rcv_data_msg(node->buffer, dst_processid,
-						   (local_len_buf + 2));
-		node->bytes_tb_read = 0;
-		node->buff_total_len = 0;
-		node->num_by_read_for_len_buff = 0;
-		return;
+		uint32_t dst_processid = ncs_decode_32bit(&data);
+		dtm_internode_process_rcv_data_msg(alloc_buffer, dst_processid,
+						   local_len_buf + 2);
+	} else {
+		LOG_ER("Unknown packet type %d received from node 0x%" PRIx32,
+		       pkt_type, node->node_id);
 	}
-done:
-	node->bytes_tb_read = 0;
-	node->buff_total_len = 0;
-	node->num_by_read_for_len_buff = 0;
-	free(node->buffer);
-	node->buffer = NULL;
-	return;
 }
 
 /**
@@ -303,191 +313,55 @@ void dtm_internode_process_poll_rcv_msg(DTM_NODE_DB *node, bool *close_conn,
 					uint16_t node_info_buffer_len)
 {
 	TRACE_ENTER();
-
-	if (NULL == node) {
-		LOG_ER("DTM: database mismatch");
-		osafassert(0);
-	}
-
-	int fd = node->comm_socket;
-
-	if (0 == node->bytes_tb_read) {
-		if (0 == node->num_by_read_for_len_buff) {
-			uint8_t *data;
-			int recd_bytes = 0;
-
-			/*******************************************************/
-			/* Receive all incoming data on this socket */
-			/*******************************************************/
-
-			recd_bytes = recv(fd, node->len_buff, 2, MSG_DONTWAIT);
-			if (0 == recd_bytes) {
-				*close_conn = true;
-				return;
-			} else if (2 == recd_bytes) {
-				uint16_t local_len_buf = 0;
-
-				data = node->len_buff;
-				local_len_buf = ncs_decode_16bit(&data);
-				node->buff_total_len = local_len_buf;
-				node->num_by_read_for_len_buff = 2;
-
-				if (NULL == (node->buffer = calloc(
-						 1, (local_len_buf + 3)))) {
-					/* Length + 2 is done to reuse the same
-					   buffer while sending to other nodes
-					 */
-					LOG_ER(
-					    "\nMemory allocation failed in dtm_internode_processing");
-					return;
-				}
-				recd_bytes = recv(fd, &node->buffer[2],
-						  local_len_buf, MSG_DONTWAIT);
-
-				if (recd_bytes < 0) {
-					return;
-				} else if (0 == recd_bytes) {
-					*close_conn = true;
-					return;
-				} else if (local_len_buf > recd_bytes) {
-					/* can happen only in two cases, system
-					 * call interrupt or half data, */
-					TRACE(
-					    "DTM: less data recd, recd bytes : %d, actual len : %d",
-					    recd_bytes, local_len_buf);
-					node->bytes_tb_read =
-					    node->buff_total_len - recd_bytes;
-					return;
-				} else if (local_len_buf == recd_bytes) {
-					/* Call the common rcv function */
-					dtm_internode_process_poll_rcv_msg_common(
-					    node, local_len_buf, node_info_hrd,
-					    node_info_buffer_len, close_conn);
-				} else {
-					LOG_ER(
-					    "DTM :unknown corrupted data received on this file descriptor \n");
-					osafassert(0);
-				}
-			} else {
-				/* we had recd some bytes */
-				if (recd_bytes < 0) {
-					/* This can happen due to system call
-					 * interrupt */
-					return;
-				} else if (1 == recd_bytes) {
-					/* We recd one byte of the length part
-					 */
-					node->num_by_read_for_len_buff =
-					    recd_bytes;
-				} else {
-					LOG_ER(
-					    "DTM :unknown corrupted data received on this file descriptor \n");
-					osafassert(0);
-				}
-			}
-		} else if (1 == node->num_by_read_for_len_buff) {
-			int recd_bytes = 0;
-
+	for (;;) {
+		ssize_t recd_bytes;
+		do {
 			recd_bytes =
-			    recv(fd, &node->len_buff[1], 1, MSG_DONTWAIT);
-			if (recd_bytes < 0) {
-				/* This can happen due to system call interrupt
-				 */
-				return;
-			} else if (1 == recd_bytes) {
-				/* We recd one byte(remaining) of the length
-				 * part */
-				uint8_t *data = node->len_buff;
-				node->num_by_read_for_len_buff = 2;
-				node->buff_total_len = ncs_decode_16bit(&data);
-				return;
-			} else if (0 == recd_bytes) {
-				*close_conn = true;
-				return;
-			} else {
-				LOG_ER(
-				    "DTM :unknown corrupted data received on this file descriptor \n");
-				osafassert(0); /* This should never occur */
-			}
-		} else if (2 == node->num_by_read_for_len_buff) {
-			int recd_bytes = 0;
-
-			if (NULL == (node->buffer = calloc(
-					 1, (node->buff_total_len + 3)))) {
-				/* Length + 2 is done to reuse the same buffer
-				   while sending to other nodes */
-				LOG_ER(
-				    "DTM :Memory allocation failed in dtm_internode_processing \n");
-				return;
-			}
-			recd_bytes = recv(fd, &node->buffer[2],
-					  node->buff_total_len, MSG_DONTWAIT);
-
-			if (recd_bytes < 0) {
-				return;
-			} else if (0 == recd_bytes) {
-				*close_conn = true;
-				return;
-			} else if (node->buff_total_len > recd_bytes) {
-				/* can happen only in two cases, system call
-				 * interrupt or half data, */
-				TRACE(
-				    "DTM: less data recd, recd bytes : %d, actual len : %d",
-				    recd_bytes, node->buff_total_len);
-				node->bytes_tb_read =
-				    node->buff_total_len - recd_bytes;
-				return;
-			} else if (node->buff_total_len == recd_bytes) {
-				/* Call the common rcv function */
-				dtm_internode_process_poll_rcv_msg_common(
-				    node, node->buff_total_len, node_info_hrd,
-				    node_info_buffer_len, close_conn);
-			} else {
-				LOG_ER(
-				    "DTM :unknown corrupted data received on this file descriptor \n");
-				osafassert(0);
-			}
-		} else {
-			LOG_ER(
-			    "DTM :unknown corrupted data received on this file descriptor \n");
-			osafassert(0);
-		}
-
-	} else {
-		/* Partial data already read */
-		int recd_bytes = 0;
-
-		recd_bytes = recv(fd,
-				  &node->buffer[2 + (node->buff_total_len -
-						     node->bytes_tb_read)],
-				  node->bytes_tb_read, MSG_DONTWAIT);
-
-		if (recd_bytes < 0) {
-			return;
-		} else if (0 == recd_bytes) {
+			    recv(node->comm_socket,
+				 node->recvbuf + node->recvbuf_size,
+				 sizeof(node->recvbuf) - node->recvbuf_size,
+				 MSG_DONTWAIT);
+		} while (recd_bytes < 0 && errno == EINTR);
+		if (recd_bytes == 0) {
+			TRACE("Node 0x%" PRIx32 " closed the connection",
+			      (uint32_t)node->node_id);
 			*close_conn = true;
-			return;
-		} else if (node->bytes_tb_read > recd_bytes) {
-			/* can happen only in two cases, system call interrupt
-			 * or half data, */
-			TRACE(
-			    "DTM: less data recd, recd bytes : %d, actual len : %d",
-			    recd_bytes, node->bytes_tb_read);
-			node->bytes_tb_read = node->bytes_tb_read - recd_bytes;
-			return;
-		} else if (node->bytes_tb_read == recd_bytes) {
-			/* Call the common rcv function */
+			break;
+		}
+		if (recd_bytes < 0) {
+			if (errno != EAGAIN && errno != EWOULDBLOCK) {
+				if (errno == ECONNRESET) {
+					TRACE(
+					    "Connection reset by node 0x%" PRIx32,
+					    (uint32_t)node->node_id);
+				} else {
+					LOG_ER("recv() from node 0x%" PRIx32
+					       " failed, errno=%d",
+					       (uint32_t)node->node_id, errno);
+				}
+				*close_conn = true;
+			}
+			break;
+		}
+		node->recvbuf_size += recd_bytes;
+		while (node->recvbuf_size >= sizeof(uint16_t)) {
+			uint16_t message_size =
+			    (((uint16_t)node->recvbuf[0]) << 8) |
+			    ((uint16_t)node->recvbuf[1]);
+			uint32_t total_size =
+			    sizeof(uint16_t) + ((uint32_t)message_size);
+			if (node->recvbuf_size < total_size)
+				break;
 			dtm_internode_process_poll_rcv_msg_common(
-			    node, node->buff_total_len, node_info_hrd,
-			    node_info_buffer_len, close_conn);
-		} else {
-			LOG_ER(
-			    "DTM :unknown corrupted data received on this file descriptor \n");
-			osafassert(0);
+			    node, node->recvbuf + sizeof(uint16_t),
+			    message_size, node_info_hrd, node_info_buffer_len,
+			    close_conn);
+			node->recvbuf_size -= total_size;
+			memmove(node->recvbuf, node->recvbuf + total_size,
+				node->recvbuf_size);
 		}
 	}
 	TRACE_LEAVE();
-	return;
 }
 
 /**
@@ -663,7 +537,7 @@ static void ReceiveBcastOrMcast(void)
 	do {
 		recd_bytes =
 		    dtm_dgram_recv_bmcast(dtms_cb, inbuf, sizeof(inbuf));
-		if (recd_bytes >= 2) {
+		if (recd_bytes >= (ssize_t)sizeof(uint16_t)) {
 			uint8_t *data1 = inbuf;
 			uint16_t recd_buf_len = ncs_decode_16bit(&data1);
 			if (recd_buf_len == (size_t)recd_bytes) {

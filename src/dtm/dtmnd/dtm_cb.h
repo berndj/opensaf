@@ -20,6 +20,7 @@
 #define DTM_DTMND_DTM_CB_H_
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #define MAX_PORT_LENGTH 256
 
@@ -54,11 +55,8 @@ typedef struct node_list {
   DTM_INTERNODE_UNSENT_MSGS *msgs_hdr;
   DTM_INTERNODE_UNSENT_MSGS *msgs_tail;
   /* Message related */
-  uint16_t bytes_tb_read;
-  uint16_t buff_total_len;
-  uint8_t len_buff[2];
-  uint8_t num_by_read_for_len_buff;
-  uint8_t *buffer;
+  uint32_t recvbuf_size;
+  uint8_t recvbuf[sizeof(uint16_t) + UINT16_MAX];
 } DTM_NODE_DB;
 
 char remoteIP[INET6_ADDRSTRLEN];

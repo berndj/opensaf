@@ -16,6 +16,8 @@
  *
  */
 
+#include <stdlib.h>
+#include <string.h>
 #include <sys/epoll.h>
 #include <unistd.h>
 #include "base/usrbuf.h"
@@ -33,20 +35,12 @@
 DTM_NODE_DB *dtm_node_new(const DTM_NODE_DB *new_node)
 {
 	TRACE_ENTER();
-
 	DTM_NODE_DB *node = malloc(sizeof(DTM_NODE_DB));
-
-	if (node == NULL) {
+	if (node != NULL) {
+		memcpy(node, new_node, sizeof(DTM_NODE_DB));
+	} else {
 		LOG_ER("malloc failed");
-		goto done;
 	}
-
-	/* memset(node, 0, sizeof(DTM_NODE_DB)); */
-
-	/*Initialize some attributes of the node like */
-	memcpy(node, new_node, sizeof(DTM_NODE_DB));
-
-done:
 	TRACE_LEAVE();
 	return node;
 }
