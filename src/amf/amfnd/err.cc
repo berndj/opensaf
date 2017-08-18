@@ -2,6 +2,7 @@
  *
  * (C) Copyright 2008 The OpenSAF Foundation
  * Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (C) 2017, Ericsson AB. All rights reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -13,6 +14,7 @@
  * licensing terms.
  *
  * Author(s): Emerson Network Power
+ *            Ericsson
  *
  */
 
@@ -164,10 +166,11 @@ uint32_t avnd_evt_ava_err_rep_evh(AVND_CB *cb, AVND_EVT *evt) {
     }
   }
 
-  /* get the comp */
+  /* check if component exists on local AvND node */
   comp = avnd_compdb_rec_get(cb->compdb, Amf::to_string(&err_rep->err_comp));
-  /* determine the error code, if any */
   if (!comp) amf_rc = SA_AIS_ERR_NOT_EXIST;
+
+  /* determine other error codes, if any */
 
   /* We need not entertain errors when comp is not in shape */
   if (comp && (m_AVND_COMP_PRES_STATE_IS_UNINSTANTIATED(comp) ||
@@ -265,13 +268,15 @@ uint32_t avnd_evt_ava_err_clear_evh(AVND_CB *cb, AVND_EVT *evt) {
     }
   }
 
-  /* get the comp */
+  /* check if component exists on local AvND node */
   comp = avnd_compdb_rec_get(cb->compdb, Amf::to_string(&err_clear->comp_name));
+  if (!comp) amf_rc = SA_AIS_ERR_NOT_EXIST;
 
-  /* determine the error code, if any */
-  if (!comp || !m_AVND_COMP_IS_REG(comp) ||
+  /* determine other error codes, if any */
+
+  if ((comp) && (!m_AVND_COMP_IS_REG(comp) ||
       (!m_AVND_COMP_TYPE_IS_PREINSTANTIABLE(comp) &&
-       !m_AVND_COMP_TYPE_IS_PROXIED(comp)))
+       !m_AVND_COMP_TYPE_IS_PROXIED(comp))))
     amf_rc = SA_AIS_ERR_BAD_OPERATION;
 
   if ((comp) && m_AVND_COMP_OPER_STATE_IS_ENABLED(comp))
