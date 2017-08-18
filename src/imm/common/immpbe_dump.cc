@@ -1276,9 +1276,15 @@ static ClassInfo *verifyClassPBE(std::string classNameString,
   if (errorCode != SA_AIS_OK) {
     if (errorCode != SA_AIS_ERR_NOT_EXIST
             && errorCode != SA_AIS_ERR_INVALID_PARAM) {
-        LOG_ER("Failed to get class description for class '%s' from imm "
-               "with error=%d, exiting",
-               classNameString.c_str(), errorCode);
+        if(errorCode == SA_AIS_ERR_TRY_AGAIN) {
+            LOG_WA("Failed to get class description for class '%s' from imm "
+                   "with error=%d, exiting",
+                   classNameString.c_str(), errorCode);
+        } else {
+            LOG_ER("Failed to get class description for class '%s' from imm "
+                   "with error=%d, exiting",
+                   classNameString.c_str(), errorCode);
+        }
         exit(1);
     }
     TRACE_4(
