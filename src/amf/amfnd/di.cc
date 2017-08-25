@@ -39,30 +39,7 @@
 
 #include "base/logtrace.h"
 #include "amf/amfnd/avnd.h"
-
-/* macro to push the AvD msg parameters (to the end of the list) */
-#define m_AVND_DIQ_REC_PUSH(cb, rec)         \
-  {                                          \
-    AVND_DND_LIST *list = &((cb)->dnd_list); \
-    if (!(list->head))                       \
-      list->head = (rec);                    \
-    else                                     \
-      list->tail->next = (rec);              \
-    list->tail = (rec);                      \
-  }
-
-/* macro to pop the record (from the beginning of the list) */
-#define m_AVND_DIQ_REC_POP(cb, o_rec)            \
-  {                                              \
-    AVND_DND_LIST *list = &((cb)->dnd_list);     \
-    if (list->head) {                            \
-      (o_rec) = list->head;                      \
-      list->head = (o_rec)->next;                \
-      (o_rec)->next = 0;                         \
-      if (list->tail == (o_rec)) list->tail = 0; \
-    } else                                       \
-      (o_rec) = 0;                               \
-  }
+#include <algorithm>
 
 static uint32_t avnd_node_oper_req(AVND_CB *cb, AVSV_PARAM_INFO *param) {
   uint32_t rc = NCSCC_RC_FAILURE;
@@ -460,7 +437,9 @@ uint32_t avnd_evt_tmr_rcv_msg_rsp_evh(AVND_CB *cb, AVND_EVT *evt) {
 
   ncshm_give_hdl(tmr->opq_hdl);
   if (rec_tobe_deleted) {
-    m_AVND_DIQ_REC_FIND_POP(cb, rec);
+    auto position = std::find(cb->dnd_list.begin(), cb->dnd_list.end(), rec);
+    osafassert(position != cb->dnd_list.end());
+    cb->dnd_list.erase(position);
     avnd_diq_rec_del(cb, rec);
   }
 done:
@@ -471,7 +450,6 @@ done:
 void avnd_send_node_up_msg(void) {
   AVND_CB *cb = avnd_cb;
   AVND_MSG msg = {};
-  AVND_DND_MSG_LIST *pending_rec = 0;
   uint32_t rc;
 
   TRACE_ENTER();
@@ -487,8 +465,7 @@ void avnd_send_node_up_msg(void) {
   }
 
   // We don't send node_up if it has already been sent and waiting for ACK
-  for (pending_rec = cb->dnd_list.head; pending_rec != nullptr;
-       pending_rec = pending_rec->next) {
+  for (auto pending_rec : cb->dnd_list) {
     if (pending_rec->msg.info.avd->msg_type == AVSV_N2D_NODE_UP_MSG) {
       TRACE(
           "Don't send another node_up since it has been sent and waiting for ack");
@@ -677,12 +654,11 @@ uint32_t avnd_evt_mds_avd_dn_evh(AVND_CB *cb, AVND_EVT *evt) {
 
   if (cb->scs_absence_max_duration == 0) {
     // check for pending messages TO director
-    if ((cb->dnd_list.head != nullptr)) {
+    if ((cb->dnd_list.empty() == false)) {
       uint32_t no_pending_msg = 0;
-      AVND_DND_MSG_LIST *rec = 0;
-      for (rec = cb->dnd_list.head; rec != nullptr;
-           rec = rec->next, no_pending_msg++) {
+      for (auto rec : cb->dnd_list) {
         osafassert(rec->msg.type == AVND_MSG_AVD);
+        no_pending_msg++;
       }
 
       /* Don't issue reboot if it has been already issued.*/
@@ -1115,7 +1091,9 @@ uint32_t avnd_di_msg_send(AVND_CB *cb, AVND_MSG *msg) {
 done:
   if (NCSCC_RC_SUCCESS != rc && rec) {
     /* pop & delete */
-    m_AVND_DIQ_REC_FIND_POP(cb, rec);
+    auto position = std::find(cb->dnd_list.begin(), cb->dnd_list.end(), rec);
+    osafassert(position != cb->dnd_list.end());
+    cb->dnd_list.erase(position);
     avnd_diq_rec_del(cb, rec);
   }
   TRACE_LEAVE2("%u", rc);
@@ -1252,21 +1230,29 @@ uint32_t avnd_di_node_down_msg_send(AVND_CB *cb)
   Notes         : None.
 ******************************************************************************/
 void avnd_di_msg_ack_process(AVND_CB *cb, uint32_t mid) {
-  AVND_DND_MSG_LIST *rec = 0;
+  TRACE_ENTER2("%u", mid);
 
-  /* find & pop the matching record */
-  m_AVND_DIQ_REC_FIND(cb, mid, rec);
-  if (rec) {
-    if (rec->msg.info.avd->msg_type == AVSV_N2D_NODE_DOWN_MSG) {
-      // first to stop timer to avoid processing timeout event
-      // then perform last step clean up
-      avnd_stop_tmr(cb, &rec->resp_tmr);
-      avnd_last_step_clean(cb);
+  for (auto iter =  cb->dnd_list.begin(); iter != cb->dnd_list.end(); ++iter) {
+    auto rec = *iter;
+    osafassert(rec->msg.type == AVND_MSG_AVD);
+    const uint32_t msg_id = *(reinterpret_cast<uint32_t*>(&(rec->msg.info.avd->msg_info)));
+
+    // matching record
+    if (msg_id == mid) {
+      if (rec->msg.info.avd->msg_type == AVSV_N2D_NODE_DOWN_MSG) {
+        // first to stop timer to avoid processing timeout event
+        // then perform last step clean up
+        avnd_stop_tmr(cb, &rec->resp_tmr);
+        avnd_last_step_clean(cb);
+      }
+      cb->dnd_list.erase(iter);
+      TRACE("remove msg %u from queue", msg_id);
+      avnd_diq_rec_del(cb, rec);
+      break;
     }
-    m_AVND_DIQ_REC_FIND_POP(cb, rec);
-    avnd_diq_rec_del(cb, rec);
   }
 
+  TRACE_LEAVE2();
   return;
 }
 
@@ -1288,64 +1274,54 @@ void avnd_di_msg_ack_process(AVND_CB *cb, uint32_t mid) {
   Notes         : None.
 ******************************************************************************/
 void avnd_diq_rec_check_buffered_msg(AVND_CB *cb) {
-  if ((cb->dnd_list.head != nullptr)) {
-    AVND_DND_MSG_LIST *rec = 0;
-    AVND_DND_MSG_LIST *tail = cb->dnd_list.tail;
-    bool found = true;
-    while (found) {
-      found = false;
-      for (rec = cb->dnd_list.head; rec != nullptr;) {
-        osafassert(rec->msg.type == AVND_MSG_AVD);
-        m_AVND_DIQ_REC_POP(cb, rec);
-        // Assignment response had been sent, but not ack because
-        // last controller go down, reset msg_id and will be resent later
-        if (rec->msg.info.avd->msg_type == AVSV_N2D_INFO_SU_SI_ASSIGN_MSG) {
-          if (rec->msg.info.avd->msg_info.n2d_su_si_assign.msg_id != 0) {
-            rec->msg.info.avd->msg_info.n2d_su_si_assign.msg_id = 0;
-            found = true;
-            LOG_NO(
-                "Found not-ack su_si_assign msg for SU:'%s', "
-                "SI:'%s', ha_state:'%u', msg_act:'%u', single_csi:'%u', "
-                "error:'%u', msg_id:'%u'",
-                osaf_extended_name_borrow(&rec->msg.info.avd->msg_info
-                                               .n2d_su_si_assign.su_name),
-                osaf_extended_name_borrow(&rec->msg.info.avd->msg_info
-                                               .n2d_su_si_assign.si_name),
-                rec->msg.info.avd->msg_info.n2d_su_si_assign.ha_state,
-                rec->msg.info.avd->msg_info.n2d_su_si_assign.msg_act,
-                rec->msg.info.avd->msg_info.n2d_su_si_assign
-                    .single_csi,
-                rec->msg.info.avd->msg_info.n2d_su_si_assign.error,
-                rec->msg.info.avd->msg_info.n2d_su_si_assign.msg_id);
-          }
-          m_AVND_DIQ_REC_PUSH(cb, rec);
-          if (tail == cb->dnd_list.tail) break;
-        } else if (rec->msg.info.avd->msg_type ==
-              AVSV_N2D_OPERATION_STATE_MSG) {
-          if (rec->msg.info.avd->msg_info.n2d_opr_state.msg_id != 0) {
-            rec->msg.info.avd->msg_info.n2d_opr_state.msg_id = 0;
-            found = true;
-            LOG_NO(
-                "Found not-ack oper_state msg for SU:'%s', "
-                "su_oper_state:'%u', node_oper_state:'%u', recovery:'%u'",
-                osaf_extended_name_borrow(&rec->msg.info.avd->msg_info
-                                               .n2d_opr_state.su_name),
-                rec->msg.info.avd->msg_info.n2d_opr_state
-                    .su_oper_state,
-                rec->msg.info.avd->msg_info.n2d_opr_state
-                    .node_oper_state,
-                rec->msg.info.avd->msg_info.n2d_opr_state.rec_rcvr
-                    .raw);
-          }
-          m_AVND_DIQ_REC_PUSH(cb, rec);
-          if (tail == cb->dnd_list.tail) break;
-        } else {
-          // delete other messages for now
-          avnd_diq_rec_del(cb, rec);
-          rec = cb->dnd_list.head;
-          tail = cb->dnd_list.tail;
-        }
+  for (auto iter = cb->dnd_list.begin(); iter != cb->dnd_list.end();) {
+    auto rec = *iter;
+    osafassert(rec->msg.type == AVND_MSG_AVD);
+    // Assignment response had been sent, but not ack because
+    // last controller go down, reset msg_id and will be resent later
+    if (rec->msg.info.avd->msg_type == AVSV_N2D_INFO_SU_SI_ASSIGN_MSG) {
+      if (rec->msg.info.avd->msg_info.n2d_su_si_assign.msg_id != 0) {
+        rec->msg.info.avd->msg_info.n2d_su_si_assign.msg_id = 0;
+        LOG_NO(
+          "Found not-ack su_si_assign msg for SU:'%s', "
+          "SI:'%s', ha_state:'%u', msg_act:'%u', single_csi:'%u', "
+          "error:'%u', msg_id:'%u'",
+          osaf_extended_name_borrow(&rec->msg.info.avd->msg_info
+                                        .n2d_su_si_assign.su_name),
+          osaf_extended_name_borrow(&rec->msg.info.avd->msg_info
+                                        .n2d_su_si_assign.si_name),
+          rec->msg.info.avd->msg_info.n2d_su_si_assign.ha_state,
+          rec->msg.info.avd->msg_info.n2d_su_si_assign.msg_act,
+          rec->msg.info.avd->msg_info.n2d_su_si_assign
+             .single_csi,
+          rec->msg.info.avd->msg_info.n2d_su_si_assign.error,
+          rec->msg.info.avd->msg_info.n2d_su_si_assign.msg_id);
       }
+      // leave in dnd_list
+      ++iter;
+      continue;
+    } else if (rec->msg.info.avd->msg_type == AVSV_N2D_OPERATION_STATE_MSG) {
+      if (rec->msg.info.avd->msg_info.n2d_opr_state.msg_id != 0) {
+        rec->msg.info.avd->msg_info.n2d_opr_state.msg_id = 0;
+        LOG_NO(
+          "Found not-ack oper_state msg for SU:'%s', "
+          "su_oper_state:'%u', node_oper_state:'%u', recovery:'%u'",
+          osaf_extended_name_borrow(&rec->msg.info.avd->msg_info
+                                        .n2d_opr_state.su_name),
+            rec->msg.info.avd->msg_info.n2d_opr_state
+               .su_oper_state,
+            rec->msg.info.avd->msg_info.n2d_opr_state
+               .node_oper_state,
+            rec->msg.info.avd->msg_info.n2d_opr_state.rec_rcvr
+               .raw);
+      }
+      // leave in dnd_list
+      ++iter;
+      continue;
+    } else {
+    // delete other messages for now
+    iter = cb->dnd_list.erase(iter);
+    avnd_diq_rec_del(cb, rec);
     }
   }
   return;
@@ -1381,7 +1357,7 @@ AVND_DND_MSG_LIST *avnd_diq_rec_add(AVND_CB *cb, AVND_MSG *msg) {
   msg->info.avd = 0;
 
   /* push the record to the AvD msg list */
-  m_AVND_DIQ_REC_PUSH(cb, rec);
+  cb->dnd_list.push_back(rec);
   TRACE_LEAVE();
   return rec;
 
@@ -1439,87 +1415,69 @@ void avnd_diq_rec_send_buffered_msg(AVND_CB *cb) {
   TRACE_ENTER();
   // Resend msgs from queue because amfnd dropped during headless
   // or headless-synchronization
-  if ((cb->dnd_list.head != nullptr)) {
-    AVND_DND_MSG_LIST *pending_rec = 0;
-    TRACE("Attach msg_id of buffered msg");
-    bool found = true;
-    while (found) {
-      found = false;
-      for (pending_rec = cb->dnd_list.head; pending_rec != nullptr;
-           pending_rec = pending_rec->next) {
-        if (pending_rec->msg.type == AVND_MSG_AVD) {
-          // Check su_si_assign message
-          if (pending_rec->msg.info.avd->msg_type ==
-                  AVSV_N2D_INFO_SU_SI_ASSIGN_MSG &&
-              pending_rec->msg.info.avd->msg_info.n2d_su_si_assign.msg_id ==
-                  0) {
-            found = true;
-            m_AVND_DIQ_REC_POP(cb, pending_rec);
-#if 1
-            // only resend if this SUSI does exist
-            AVND_SU *su = cb->sudb.find(Amf::to_string(
-                &pending_rec->msg.info.avd->msg_info.n2d_su_si_assign.su_name));
-            if (su != nullptr && su->si_list.n_nodes > 0) {
-#endif
-              pending_rec->msg.info.avd->msg_info.n2d_su_si_assign.msg_id =
-                  ++(cb->snd_msg_id);
-              m_AVND_DIQ_REC_PUSH(cb, pending_rec);
-              LOG_NO(
-                  "Found and resend buffered su_si_assign msg for SU:'%s', "
-                  "SI:'%s', ha_state:'%u', msg_act:'%u', single_csi:'%u', "
-                  "error:'%u', msg_id:'%u'",
-                  osaf_extended_name_borrow(&pending_rec->msg.info.avd->msg_info
-                                                 .n2d_su_si_assign.su_name),
-                  osaf_extended_name_borrow(&pending_rec->msg.info.avd->msg_info
-                                                 .n2d_su_si_assign.si_name),
-                  pending_rec->msg.info.avd->msg_info.n2d_su_si_assign.ha_state,
-                  pending_rec->msg.info.avd->msg_info.n2d_su_si_assign.msg_act,
-                  pending_rec->msg.info.avd->msg_info.n2d_su_si_assign
-                      .single_csi,
-                  pending_rec->msg.info.avd->msg_info.n2d_su_si_assign.error,
-                  pending_rec->msg.info.avd->msg_info.n2d_su_si_assign.msg_id);
 
-#if 1
-            } else {
-              avnd_msg_content_free(cb, &pending_rec->msg);
-              delete pending_rec;
-              break;
-            }
-#endif
-          }
-          // Check oper_state message
-          else if (pending_rec->msg.info.avd->msg_type ==
-                       AVSV_N2D_OPERATION_STATE_MSG &&
-                   pending_rec->msg.info.avd->msg_info.n2d_opr_state.msg_id ==
-                       0) {
-            found = true;
-            m_AVND_DIQ_REC_POP(cb, pending_rec);
-            if (pending_rec != nullptr) {
-              pending_rec->msg.info.avd->msg_info.n2d_opr_state.msg_id =
-                  ++(cb->snd_msg_id);
+  for (auto iter = cb->dnd_list.begin(); iter != cb->dnd_list.end();) {
+    auto pending_rec = *iter;
+    osafassert(pending_rec->msg.type == AVND_MSG_AVD);
 
-              m_AVND_DIQ_REC_PUSH(cb, pending_rec);
-              LOG_NO(
-                  "Found and resend buffered oper_state msg for SU:'%s', "
-                  "su_oper_state:'%u', node_oper_state:'%u', recovery:'%u'",
-                  osaf_extended_name_borrow(&pending_rec->msg.info.avd->msg_info
-                                                 .n2d_opr_state.su_name),
-                  pending_rec->msg.info.avd->msg_info.n2d_opr_state
-                      .su_oper_state,
-                  pending_rec->msg.info.avd->msg_info.n2d_opr_state
-                      .node_oper_state,
-                  pending_rec->msg.info.avd->msg_info.n2d_opr_state.rec_rcvr
-                      .raw);
-            }
-          }
-        }
+    // Check su_si_assign message
+    if (pending_rec->msg.info.avd->msg_type ==
+            AVSV_N2D_INFO_SU_SI_ASSIGN_MSG &&
+        pending_rec->msg.info.avd->msg_info.n2d_su_si_assign.msg_id ==
+            0) {
+
+      // only resend if this SUSI does exist
+      AVND_SU *su = cb->sudb.find(Amf::to_string(
+          &pending_rec->msg.info.avd->msg_info.n2d_su_si_assign.su_name));
+      if (su != nullptr && su->si_list.n_nodes > 0) {
+        pending_rec->msg.info.avd->msg_info.n2d_su_si_assign.msg_id =
+            ++(cb->snd_msg_id);
+        LOG_NO(
+            "Found and resend buffered su_si_assign msg for SU:'%s', "
+            "SI:'%s', ha_state:'%u', msg_act:'%u', single_csi:'%u', "
+            "error:'%u', msg_id:'%u'",
+            osaf_extended_name_borrow(&pending_rec->msg.info.avd->msg_info
+                                           .n2d_su_si_assign.su_name),
+            osaf_extended_name_borrow(&pending_rec->msg.info.avd->msg_info
+                                           .n2d_su_si_assign.si_name),
+            pending_rec->msg.info.avd->msg_info.n2d_su_si_assign.ha_state,
+            pending_rec->msg.info.avd->msg_info.n2d_su_si_assign.msg_act,
+            pending_rec->msg.info.avd->msg_info.n2d_su_si_assign
+                .single_csi,
+            pending_rec->msg.info.avd->msg_info.n2d_su_si_assign.error,
+            pending_rec->msg.info.avd->msg_info.n2d_su_si_assign.msg_id);
+        ++iter;
+      } else {
+        iter = cb->dnd_list.erase(iter);
+        avnd_msg_content_free(cb, &pending_rec->msg);
+        delete pending_rec;
       }
+    } else if (pending_rec->msg.info.avd->msg_type == AVSV_N2D_OPERATION_STATE_MSG &&
+               pending_rec->msg.info.avd->msg_info.n2d_opr_state.msg_id == 0) {
+        pending_rec->msg.info.avd->msg_info.n2d_opr_state.msg_id =
+            ++(cb->snd_msg_id);
+
+        LOG_NO(
+            "Found and resend buffered oper_state msg for SU:'%s', "
+            "su_oper_state:'%u', node_oper_state:'%u', recovery:'%u'",
+            osaf_extended_name_borrow(&pending_rec->msg.info.avd->msg_info
+                                           .n2d_opr_state.su_name),
+            pending_rec->msg.info.avd->msg_info.n2d_opr_state
+                .su_oper_state,
+            pending_rec->msg.info.avd->msg_info.n2d_opr_state
+                .node_oper_state,
+            pending_rec->msg.info.avd->msg_info.n2d_opr_state.rec_rcvr
+                .raw);
+        ++iter;
+    } else {
+      // no other messages should be buffered
+      osafassert(false);
     }
-    TRACE("retransmit message to amfd");
-    for (pending_rec = cb->dnd_list.head; pending_rec != nullptr;
-         pending_rec = pending_rec->next) {
-      avnd_diq_rec_send(cb, pending_rec);
-    }
+  }
+
+  TRACE("retransmit message to amfd");
+  for (auto pending_rec : cb->dnd_list) {
+    avnd_diq_rec_send(cb, pending_rec);
   }
   TRACE_LEAVE();
   return;

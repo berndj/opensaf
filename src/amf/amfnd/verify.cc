@@ -33,6 +33,7 @@
 */
 
 #include "amf/amfnd/avnd.h"
+#include <algorithm>
 
 /****************************************************************************
   Name          : avnd_evt_avd_verify_message
@@ -48,8 +49,6 @@
   Notes         : None.
 ******************************************************************************/
 uint32_t avnd_evt_avd_verify_evh(AVND_CB *cb, AVND_EVT *evt) {
-  AVND_DND_LIST *list = &((cb)->dnd_list);
-  AVND_DND_MSG_LIST *rec = 0, t_rec;
   AVSV_D2N_DATA_VERIFY_MSG_INFO *info;
   uint32_t rcv_id;
   bool msg_found = false;
@@ -100,9 +99,8 @@ uint32_t avnd_evt_avd_verify_evh(AVND_CB *cb, AVND_EVT *evt) {
    * Otherwise this exercise also helps us in cleaning all the messages
    * currently pending in the Queue and are not acked.
    */
-  for (rec = list->head; nullptr != rec;) {
-    t_rec = *rec;
-
+  for (auto iter = cb->dnd_list.begin(); iter != cb->dnd_list.end();) {
+    auto rec = *iter;
     /*
      * Since AVD is telling us that he has received till recv_id, we should
      * always find msg with ID (rcv_id + 1). Delete and remove all the
@@ -112,10 +110,11 @@ uint32_t avnd_evt_avd_verify_evh(AVND_CB *cb, AVND_EVT *evt) {
      */
     if ((rcv_id + 1) > (*((uint32_t *)(&rec->msg.info.avd->msg_info)))) {
       /* pop & delete */
-      m_AVND_DIQ_REC_FIND_POP(cb, rec);
+      iter = cb->dnd_list.erase(iter);
       TRACE_1("AVND record %u deleted, upon fail-over",
               *((uint32_t *)(&rec->msg.info.avd->msg_info)));
       avnd_diq_rec_del(cb, rec);
+      continue;
     } else {
       avnd_diq_rec_send(cb, rec);
 
@@ -124,8 +123,7 @@ uint32_t avnd_evt_avd_verify_evh(AVND_CB *cb, AVND_EVT *evt) {
 
       msg_found = true;
     }
-
-    rec = t_rec.next;
+    ++iter;
   }
 
   if ((cb->snd_msg_id != info->rcv_id_cnt) && (msg_found == false)) {

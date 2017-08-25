@@ -63,18 +63,12 @@ typedef struct avnd_msg {
   } info;
 } AVND_MSG;
 
-typedef struct avnd_dnd_msg_list_tag {
+struct AVND_DND_MSG_LIST {
   AVND_MSG msg;
   AVND_TMR resp_tmr;
   uint32_t opq_hdl;
   uint16_t no_retries;
-  struct avnd_dnd_msg_list_tag *next;
-} AVND_DND_MSG_LIST;
-
-typedef struct avnd_dnd_list_tag {
-  AVND_DND_MSG_LIST *head;
-  AVND_DND_MSG_LIST *tail;
-} AVND_DND_LIST;
+};
 
 /*****************************************************************************
                  Macros to fill the MDS message structure

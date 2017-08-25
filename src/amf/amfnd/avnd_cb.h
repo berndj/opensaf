@@ -33,6 +33,7 @@
 #ifndef AMF_AMFND_AVND_CB_H_
 #define AMF_AMFND_AVND_CB_H_
 #include <map>
+#include <vector>
 
 typedef struct avnd_cb_tag {
   SYSF_MBX mbx; /* mailbox on which AvND waits */
@@ -99,7 +100,7 @@ typedef struct avnd_cb_tag {
    * Messages are removed when acked with the ACK message.
    * At director failover the list is scanned handling the
    * VERIFY message from the director and possibly resent again */
-  AVND_DND_LIST dnd_list;
+  std::vector<AVND_DND_MSG_LIST*> dnd_list;
 
   AVND_TERM_STATE term_state;
   AVND_LED_STATE led_state;

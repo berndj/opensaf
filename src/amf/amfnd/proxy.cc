@@ -25,6 +25,7 @@
 
 ****************************************************************************/
 #include <cinttypes>
+#include <algorithm>
 
 #include "amf/amfnd/avnd.h"
 #include "base/osaf_extended_name.h"
@@ -138,7 +139,9 @@ uint32_t avnd_evt_ava_comp_val_req(AVND_CB *cb, AVND_EVT *evt) {
       LOG_ER("avnd_diq_rec_send:failed:%s,Type:%u and Hdl%llx",
              comp_name.c_str(), api_info->type, reg->hdl);
       /* pop & delete */
-      m_AVND_DIQ_REC_FIND_POP(cb, rec);
+      auto position = std::find(cb->dnd_list.begin(), cb->dnd_list.end(), rec);
+      osafassert(position != cb->dnd_list.end());
+      cb->dnd_list.erase(position);
       avnd_diq_rec_del(cb, rec);
     }
   } else {
@@ -173,7 +176,7 @@ uint32_t avnd_evt_ava_comp_val_req(AVND_CB *cb, AVND_EVT *evt) {
 ******************************************************************************/
 uint32_t avnd_evt_avd_comp_validation_resp_evh(AVND_CB *cb, AVND_EVT *evt) {
   uint32_t rc = NCSCC_RC_SUCCESS;
-  AVND_DND_MSG_LIST *rec = 0;
+  AVND_DND_MSG_LIST *rec = nullptr;
   AVSV_D2N_COMP_VALIDATION_RESP_INFO *info = nullptr;
   SaAisErrorT amf_rc = SA_AIS_OK;
   AVND_COMP *comp = nullptr, *pxy_comp = nullptr;
@@ -192,7 +195,13 @@ uint32_t avnd_evt_avd_comp_validation_resp_evh(AVND_CB *cb, AVND_EVT *evt) {
   TRACE("%s:MsgId=%u,NodeId=%u,result:%u", info_comp_name.c_str(), info->msg_id,
         info->node_id, info->result);
 
-  m_AVND_DIQ_REC_FIND(cb, info->msg_id, rec);
+  for (auto temp_rec : cb->dnd_list) {
+    osafassert(temp_rec->msg.type == AVND_MSG_AVD);
+    if (*(reinterpret_cast<uint32_t*>(&(temp_rec->msg.info.avd->msg_info))) == info->msg_id) {
+      rec = temp_rec;
+      break;
+    }
+  }
 
   if ((nullptr == rec) ||
       (memcmp(osaf_extended_name_borrow(&info->comp_name),
@@ -301,7 +310,9 @@ send_resp:
 
 done:
   if (rec) {
-    m_AVND_DIQ_REC_FIND_POP(cb, rec);
+    auto position = std::find(cb->dnd_list.begin(), cb->dnd_list.end(), rec);
+    osafassert(position != cb->dnd_list.end());
+    cb->dnd_list.erase(position);
     avnd_diq_rec_del(cb, rec);
   }
 
