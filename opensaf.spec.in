@@ -1522,6 +1522,7 @@ fi
 %{_bindir}/ntf_search_criteria_test.sh
 %{_bindir}/clmtest
 %{_bindir}/mdstest
+%{_bindir}/amftest
 %if %is_ais_ckpt
 %{_bindir}/ckpttest
 %endif

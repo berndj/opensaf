@@ -415,3 +415,23 @@ bin_osafamfwd_SOURCES = \
 bin_osafamfwd_LDADD = \
 	lib/libSaAmf.la \
 	lib/libopensaf_core.la
+
+if ENABLE_TESTS
+
+bin_PROGRAMS += bin/amftest
+
+noinst_HEADERS += \
+        src/amf/apitest/amftest.h
+
+bin_amftest_CPPFLAGS = $(AM_CPPFLAGS)
+
+bin_amftest_SOURCES = \
+        src/amf/apitest/amftest.c \
+        src/amf/apitest/test_osafAmfInstallSCStatusChangeCallback.c
+
+bin_amftest_LDADD = \
+        lib/libSaAmf.la \
+        lib/libopensaf_core.la \
+        lib/libapitest.la
+
+endif
