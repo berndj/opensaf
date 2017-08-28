@@ -1,6 +1,7 @@
 #      -*- OpenSAF  -*-
 #
 # (C) Copyright 2010 The OpenSAF Foundation
+# Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -65,6 +66,7 @@ AC_CONFIG_FILES([ \
         amf/sa_aware/Makefile \
         amf/wrapper/Makefile \
         amf/proxy/Makefile \
+        amf/api_demo/Makefile \
         cpsv/Makefile \
         cpsv/ckpt_demo/Makefile \
         cpsv/ckpt_track_demo/Makefile \

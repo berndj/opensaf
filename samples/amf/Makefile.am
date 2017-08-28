@@ -1,6 +1,7 @@
 #      -*- OpenSAF  -*-
 #
 # (C) Copyright 2010 The OpenSAF Foundation
+# Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -18,5 +19,5 @@ include $(top_srcdir)/Makefile.common
 
 MAINTAINERCLEANFILES = Makefile.in
 
-SUBDIRS = sa_aware non_sa_aware wrapper proxy
+SUBDIRS = sa_aware non_sa_aware wrapper proxy api_demo
 

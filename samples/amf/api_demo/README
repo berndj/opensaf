@@ -1,0 +1,38 @@
+This directory contains two demos related to SC status change callback and
+its installation API osafAmfInstallSCStatusChangeCallback().
+
+Both of these demos gets installed in /opt/amf_api_demo directory.
+They demostrates how an application can make itself aware
+of SCs leaving and joining the cluster(when SC Absence Feature is enabled)
+by calling minimum set of AMF APIs.
+
+amf_sc_status_demo.c:
+In this demo callback is invoked in the context of MDS thread.
+Demo uses following AMF APIs:
+-saAmfInitialize()
+-osafAmfInstallSCStatusChangeCallback()
+
+Steps to run amfscstatusdemo:
+1)Run amfscstatusdemo from a terminal on a payload node.
+2)Bring down controllers, amfscstatusdemo exits with message:
+  "Received SC Status Change Callback: SC status Absent"
+3)Bring one controler up, amfscstatusdemo exits with message:
+ "Received SC Status Change Callback: SC status Present"
+
+
+amf_sc_status_dispatch_demo.c:
+In this demo, SC status change callback is invoked in the context
+of process or thread calling saAmfDisptach() with the handle used for
+registratinig the callback in osafAmfInstallSCStatusChangeCallback().
+Demo uses following AMF APIs:
+-saAmfInitialize()
+-saAmfSelectionObjectGet()
+-saAmfDispatch()
+-osafAmfInstallSCStatusChangeCallback().
+
+Steps to run amfscstatusdispatchdemo:
+1)Run amfscstatusdispatchdemo from a terminal on a payload node.
+2)Bring down controllers, amfscstatusdispatchdemo prints message:
+  "Received SC Status Change Callback: SC status Absent"
+3)Bring one controler up, amfscstatusdispatchdemo prints message:
+ "Received SC Status Change Callback: SC status Present"
