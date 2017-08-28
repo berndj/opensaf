@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2008 The OpenSAF Foundation
+ * Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -55,6 +56,8 @@ typedef struct ava_cb_tag {
 
   /* AvA handle database */
   AVA_HDL_DB hdl_db;
+  //Remember SAF handle which registers SC STATUS Change Cbk.
+  SaAmfHandleT ava_sc_status_handle;
 } AVA_CB;
 
 /* constants for PM_START param */

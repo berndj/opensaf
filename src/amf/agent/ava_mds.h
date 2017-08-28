@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2008 The OpenSAF Foundation
+ * Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -35,10 +36,10 @@ extern "C" {
 #endif
 
 /* In Service upgrade support */
-#define AVA_MDS_SUB_PART_VERSION 2
+#define AVA_MDS_SUB_PART_VERSION 3
 
 #define AVA_AVND_SUBPART_VER_MIN 1
-#define AVA_AVND_SUBPART_VER_MAX 2
+#define AVA_AVND_SUBPART_VER_MAX 3
 
 /*****************************************************************************
                  Function to fill the MDS message structure
@@ -100,6 +101,10 @@ uint32_t ava_mds_cbk(NCSMDS_CALLBACK_INFO*);
 
 uint32_t ava_mds_send(struct ava_cb_tag*, AVSV_NDA_AVA_MSG*,
                       AVSV_NDA_AVA_MSG**);
+
+void osafAmfSCStatusChangeCallback_invoke(OsafAmfSCStatusT state);
+bool is_osafAmfSCStatusChangeCallback_registered();
+void uninstall_osafAmfSCStatusChangeCallback();
 
 #ifdef __cplusplus
 }

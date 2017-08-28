@@ -58,7 +58,8 @@ const MDS_CLIENT_MSG_FORMAT_VER avnd_avnd_msg_fmt_map_table[] = {
     AVSV_AVND_AVND_MSG_FMT_VER_1};
 
 const MDS_CLIENT_MSG_FORMAT_VER avnd_ava_msg_fmt_map_table[] = {
-    AVSV_AVND_AVA_MSG_FMT_VER_1, AVSV_AVND_AVA_MSG_FMT_VER_2};
+    AVSV_AVND_AVA_MSG_FMT_VER_1, AVSV_AVND_AVA_MSG_FMT_VER_2,
+    AVSV_AVND_AVA_MSG_FMT_VER_3};
 
 /* static function declarations */
 
@@ -1033,6 +1034,8 @@ uint32_t avnd_mds_flat_ava_enc(AVND_CB *cb, MDS_CALLBACK_ENC_INFO *enc_info) {
             osaf_encode_sanamet(enc_info->io_uba,
                                 &cbk_info->param.pxied_comp_clean.comp_name);
           }
+          break;
+        case AVSV_AMF_SC_STATUS_CHANGE:
           break;
 
         default:

@@ -60,7 +60,8 @@ static uint32_t dec_csi_attr_change_msg(NCS_UBAID *uba, AVSV_NDA_AVA_MSG *msg);
 
 static const MDS_CLIENT_MSG_FORMAT_VER
     ava_avnd_msg_fmt_map_table[AVA_AVND_SUBPART_VER_MAX] = {
-        AVSV_AVND_AVA_MSG_FMT_VER_1, AVSV_AVND_AVA_MSG_FMT_VER_2};
+        AVSV_AVND_AVA_MSG_FMT_VER_1, AVSV_AVND_AVA_MSG_FMT_VER_2,
+        AVSV_AVND_AVA_MSG_FMT_VER_3};
 
 /**
  * function called when MDS down for avnd (AMF) is received
@@ -68,6 +69,37 @@ static const MDS_CLIENT_MSG_FORMAT_VER
  */
 static void (*amf_down_cb)(void);
 
+/**
+ * @brief  SC status change callback. It is called when cluster becomes
+ *         without SCs and with SCs. It can be used by a client to know
+ *         when cluster runs without SCs and with SCs.
+ * @param  state.
+ */
+static void (*OsafAmfSCStatusChangeCallbackT)(OsafAmfSCStatusT state);
+
+//Wrapper function that AMFA uses to invoke SC status change callback.
+void osafAmfSCStatusChangeCallback_invoke(OsafAmfSCStatusT state) {
+  TRACE_ENTER();
+  if (OsafAmfSCStatusChangeCallbackT == nullptr) {
+     TRACE("Callback not registered");
+  } else {
+     TRACE("Invoking SC status change callback");
+    /* A client has installed a callback pointer, call it */
+    OsafAmfSCStatusChangeCallbackT(state);
+  }
+  TRACE_LEAVE();
+}
+bool is_osafAmfSCStatusChangeCallback_registered() {
+  if (OsafAmfSCStatusChangeCallbackT == nullptr)
+    return false;
+  else
+    return true;
+}
+
+void uninstall_osafAmfSCStatusChangeCallback() {
+  TRACE("uninstalling OsafAmfSCStatusChangeCallbackT.");
+  OsafAmfSCStatusChangeCallbackT = nullptr;
+}
 /****************************************************************************
   Name          : ava_mds_reg
 
@@ -893,6 +925,8 @@ uint32_t ava_mds_flat_dec(AVA_CB *cb, MDS_CALLBACK_DEC_FLAT_INFO *dec_info) {
             osaf_decode_sanamet(dec_info->io_uba, &pxied_comp_clean->comp_name);
           }
         } break;
+        case AVSV_AMF_SC_STATUS_CHANGE: {
+        } break;
 
         default:
           osafassert(0);
@@ -1166,6 +1200,54 @@ extern "C" void ava_install_amf_down_cb(void (*cb)(void)) {
   amf_down_cb = cb;
 
   TRACE_LEAVE();
+}
+
+/**
+ * @brief   API for client to install SC status change callback.
+ */
+SaAisErrorT osafAmfInstallSCStatusChangeCallback(SaAmfHandleT hdl,
+                                     void (*cb)(OsafAmfSCStatusT status)) {
+  TRACE_ENTER2("handle:%llx", hdl);
+
+  AVA_CB *ava_cb = 0;
+  AVA_HDL_REC *hdl_rec = 0;
+  SaAisErrorT rc = SA_AIS_OK;
+
+  if (!cb) {
+    TRACE_1("null cbk.");
+    rc = SA_AIS_ERR_INVALID_PARAM;
+    goto done;
+  }
+
+  if (!gl_ava_hdl || hdl > AVSV_UNS32_HDL_MAX) {
+    TRACE_2("Invalid SaAmfHandle passed.");
+    rc = SA_AIS_ERR_BAD_HANDLE;
+    goto done;
+  }
+  if (!(ava_cb = (AVA_CB *)ncshm_take_hdl(NCS_SERVICE_ID_AVA, gl_ava_hdl))) {
+    TRACE_4("SA_AIS_ERR_LIBRARY: Unable to retrieve cb handle");
+    rc = SA_AIS_ERR_LIBRARY;
+    goto done;
+  }
+
+  m_NCS_LOCK(&ava_cb->lock, NCS_LOCK_READ);
+  if ((hdl != 0) &&
+      (!(hdl_rec = (AVA_HDL_REC *)ncshm_take_hdl(NCS_SERVICE_ID_AVA, hdl)))) {
+    rc = SA_AIS_ERR_BAD_HANDLE;
+    goto done;
+  }
+  ava_cb->ava_sc_status_handle = hdl;
+  OsafAmfSCStatusChangeCallbackT = cb;
+
+done:
+  if (ava_cb) {
+    m_NCS_UNLOCK(&ava_cb->lock, NCS_LOCK_READ);
+    ncshm_give_hdl(gl_ava_hdl);
+  }
+  if (hdl_rec)
+    ncshm_give_hdl(hdl);
+  TRACE_LEAVE2("rc:%u", rc);
+  return rc;
 }
 
 void ava_fill_finalize_msg(AVSV_NDA_AVA_MSG *msg, MDS_DEST dst,

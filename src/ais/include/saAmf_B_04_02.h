@@ -1,6 +1,7 @@
 /*      -*- OpenSAF -*-
  *
  * (C) Copyright 2016 The OpenSAF Foundation
+ * Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -58,6 +59,15 @@ saAmfInitialize_o4(
     SaAmfHandleT *amfHandle, 
     const SaAmfCallbacksT_o4 *amfCallbacks,
     SaVersionT *version);
+
+typedef enum {
+    OSAF_AMF_SC_PRESENT = 1,
+    OSAF_AMF_SC_ABSENT = 2,
+} OsafAmfSCStatusT;
+
+extern SaAisErrorT osafAmfInstallSCStatusChangeCallback(
+    SaAmfHandleT amfHandle,
+    void (*OsafAmfSCStatusChangeCallbackT)(OsafAmfSCStatusT status));
 
 #ifdef  __cplusplus
 }

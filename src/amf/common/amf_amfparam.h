@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2008 The OpenSAF Foundation
+ * Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -65,6 +66,7 @@ typedef enum avsv_amf_cbk_type {
   AVSV_AMF_PXIED_COMP_INST,
   AVSV_AMF_PXIED_COMP_CLEAN,
   AVSV_AMF_CSI_ATTR_CHANGE,
+  AVSV_AMF_SC_STATUS_CHANGE,
   AVSV_AMF_CBK_MAX
 } AVSV_AMF_CBK_TYPE;
 
@@ -252,6 +254,11 @@ typedef struct avsv_amf_csi_attr_change_param_tag {
   SaAmfCSIAttributeListT csiAttr; /* contains the csi-attr list SAF compliant*/
 } AVSV_AMF_CSI_ATTR_CHANGE_PARAM;
 
+//SC status change callback msg structure from AMFND to AMF agent.
+typedef struct avsv_amf_sc_status_param_tag {
+  OsafAmfSCStatusT sc_status;
+} AVSV_AMF_SC_STATUS_CHANGE_PARAM;
+
 /* csi remove */
 typedef struct avsv_amf_csi_rem_param_tag {
   SaNameT comp_name;        /* comp name */
@@ -291,6 +298,7 @@ typedef struct avsv_amf_cbk_info_tag {
     AVSV_AMF_PXIED_COMP_INST_PARAM pxied_comp_inst;
     AVSV_AMF_PXIED_COMP_CLEAN_PARAM pxied_comp_clean;
     AVSV_AMF_CSI_ATTR_CHANGE_PARAM csi_attr_change;
+    AVSV_AMF_SC_STATUS_CHANGE_PARAM sc_status_change;
   } param;
 } AVSV_AMF_CBK_INFO;
 

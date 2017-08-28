@@ -493,6 +493,37 @@ done:
   TRACE_LEAVE();
 }
 
+/*
+ * @brief      Sends message to AMFA about SCs Absence and Presence.
+ * @param [in]  status
+ */
+void avnd_send_sc_status_message(OsafAmfSCStatusT status) {
+  TRACE_ENTER();
+  uint32_t rc = NCSCC_RC_SUCCESS;
+  AVND_MSG msg;
+  MDS_DEST mds_dest = 0;
+  memset(&msg, 0, sizeof(AVND_MSG));
+
+  for (auto& it: agent_mds_ver_db) {
+    if (it.second < AVSV_AVND_AVA_MSG_FMT_VER_3) {
+      TRACE("AMFA does not support the callback");
+      continue;
+    }
+    msg.info.ava =
+      static_cast<AVSV_NDA_AVA_MSG *>(calloc(1, sizeof(AVSV_NDA_AVA_MSG)));
+    msg.type = AVND_MSG_AVA;
+    msg.info.ava->type = AVSV_AVND_AMF_CBK_MSG;
+    msg.info.ava->info.cbk_info = static_cast<AVSV_AMF_CBK_INFO*>(calloc(1, sizeof(AVSV_AMF_CBK_INFO)));
+    msg.info.ava->info.cbk_info->param.sc_status_change.sc_status = status;
+    msg.info.ava->info.cbk_info->type = AVSV_AMF_SC_STATUS_CHANGE;
+    mds_dest = it.first;
+    rc = avnd_mds_send(avnd_cb, &msg, &mds_dest, 0);
+    if (rc != NCSCC_RC_SUCCESS)
+      LOG_WA("Message failed to dest");
+    avnd_msg_content_free(avnd_cb, &msg);
+  }
+  TRACE_LEAVE();
+}
 /****************************************************************************
   Name          : avnd_evt_mds_avd_up
 
@@ -577,11 +608,13 @@ uint32_t avnd_evt_mds_avd_up_evh(AVND_CB *cb, AVND_EVT *evt) {
       avnd_send_node_up_msg();
     }
     cb->is_avd_down = false;
+
+    //Inform AMFA about SCs presence now.
+    avnd_send_sc_status_message(OSAF_AMF_SC_PRESENT);
   }
 
   if (m_AVND_TMR_IS_ACTIVE(cb->sc_absence_tmr))
     avnd_stop_tmr(cb, &cb->sc_absence_tmr);
-
 done:
   TRACE_LEAVE();
   return NCSCC_RC_SUCCESS;
@@ -715,6 +748,10 @@ uint32_t avnd_evt_mds_avd_dn_evh(AVND_CB *cb, AVND_EVT *evt) {
   // reset msg_id counter
   cb->rcv_msg_id = 0;
   cb->snd_msg_id = 0;
+
+  //Inform AMFA about SCs absence now.
+  avnd_send_sc_status_message(OSAF_AMF_SC_ABSENT);
+
   TRACE_LEAVE();
   return rc;
 }

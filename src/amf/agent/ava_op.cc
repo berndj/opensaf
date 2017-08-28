@@ -85,6 +85,23 @@ uint32_t ava_avnd_msg_prc(AVA_CB *cb, AVSV_NDA_AVA_MSG *msg) {
 
   /* retrieve the handle record */
   hdl = cbk_info->hdl;
+
+  if (cbk_info->type == AVSV_AMF_SC_STATUS_CHANGE) {
+    TRACE("SCs Status:%u", cbk_info->param.sc_status_change.sc_status);
+    if (is_osafAmfSCStatusChangeCallback_registered() == false) {
+      TRACE("osafAmfSCStatusChangeCallback not registered");
+      goto done;
+    }
+    //If callback was not registered with SAF handle invoke here itself.
+    if (cb->ava_sc_status_handle == 0) {
+      osafAmfSCStatusChangeCallback_invoke(cbk_info->param.sc_status_change.sc_status);
+      goto done;
+    }
+    //So this cbk was registered with a SAF handle. Update hdl now.
+    hdl = cb->ava_sc_status_handle;
+    TRACE("ava_sc_status_handle:%llx", cb->ava_sc_status_handle);
+  }
+
   hdl_rec = (AVA_HDL_REC *)ncshm_take_hdl(NCS_SERVICE_ID_AVA, hdl);
   if (hdl_rec) {
     /* push the callbk parameters in the pending callbk list */

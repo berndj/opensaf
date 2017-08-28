@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2008 The OpenSAF Foundation
+ * Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -41,6 +42,7 @@ extern "C" {
 /* Message format versions */
 #define AVSV_AVND_AVA_MSG_FMT_VER_1 1
 #define AVSV_AVND_AVA_MSG_FMT_VER_2 2
+#define AVSV_AVND_AVA_MSG_FMT_VER_3 3
 
 /* AMF API enums */
 typedef enum avsv_nda_ava_msg_type {

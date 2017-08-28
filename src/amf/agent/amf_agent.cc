@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2008 The OpenSAF Foundation
+ * Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -347,6 +348,14 @@ SaAisErrorT AmfAgent::Finalize(SaAmfHandleT hdl) {
     rc = SA_AIS_ERR_LIBRARY;
     goto done;
   }
+
+  //Forget the handle which was used to register SC Status Change Cbk.
+  if (cb->ava_sc_status_handle == hdl) {
+    TRACE("SC Status Change Cbk was registered with this handle.");
+    cb->ava_sc_status_handle = 0;
+    uninstall_osafAmfSCStatusChangeCallback();
+  }
+
   /* acquire cb read lock */
   m_NCS_LOCK(&cb->lock, NCS_LOCK_WRITE);
 

@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2008 The OpenSAF Foundation
+ * Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -146,6 +147,7 @@ uint32_t ava_create(NCS_LIB_CREATE *create_info) {
   /* assign the AvA pool-id (used by hdl-mngr) */
   cb->pool_id = NCS_HM_POOL_ID_COMMON;
 
+  cb->ava_sc_status_handle = 0;
   /* create the association with hdl-mngr */
   if (!(cb->cb_hdl = ncshm_create_hdl(cb->pool_id, NCS_SERVICE_ID_AVA,
                                       (NCSCONTEXT)cb))) {

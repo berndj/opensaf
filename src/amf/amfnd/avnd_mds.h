@@ -2,6 +2,7 @@
  *
  * (C) Copyright 2008 The OpenSAF Foundation
  * Copyright Ericsson AB 2017 - All Rights Reserved.
+ * Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -41,7 +42,7 @@
 #define AVND_AVND_SUBPART_VER_MAX 1
 
 #define AVND_AVA_SUBPART_VER_MIN 1
-#define AVND_AVA_SUBPART_VER_MAX 2
+#define AVND_AVA_SUBPART_VER_MAX 3
 
 #define AVND_CLA_SUBPART_VER_MIN 1
 #define AVND_CLA_SUBPART_VER_MAX 1

@@ -359,7 +359,8 @@ uint32_t ava_hdl_cbk_dispatch_one(AVA_CB **cb, AVA_HDL_REC **hdl_rec) {
                                                       NULL);
 
   if (rec) {
-    if (rec->cbk_info->type != AVSV_AMF_PG_TRACK) {
+    if ((rec->cbk_info->type != AVSV_AMF_PG_TRACK) &&
+        (rec->cbk_info->type != AVSV_AMF_SC_STATUS_CHANGE)) {
       /* push this record into pending response list */
       m_AVA_HDL_PEND_RESP_PUSH(list_resp, (AVA_PEND_RESP_REC *)rec);
       m_AVA_HDL_CBK_REC_IN_DISPATCH_SET(rec);
@@ -384,11 +385,13 @@ uint32_t ava_hdl_cbk_dispatch_one(AVA_CB **cb, AVA_HDL_REC **hdl_rec) {
 
     /* if we are done with this rec, free it */
     if ((rec->cbk_info->type != AVSV_AMF_PG_TRACK) &&
+        (rec->cbk_info->type != AVSV_AMF_SC_STATUS_CHANGE) &&
         m_AVA_HDL_IS_CBK_RESP_DONE(rec)) {
       m_AVA_HDL_PEND_RESP_POP(list_resp, rec, rec->cbk_info->inv);
       ava_hdl_cbk_rec_del(rec);
-    } else if (rec->cbk_info->type == AVSV_AMF_PG_TRACK) {
-      /* PG Track cbk do not have any response */
+    } else if ((rec->cbk_info->type == AVSV_AMF_PG_TRACK) ||
+               (rec->cbk_info->type == AVSV_AMF_SC_STATUS_CHANGE)) {
+      /* PG Track cbk and SC status change CBk do not have any response. */
       ava_hdl_cbk_rec_del(rec);
     } else {
       m_AVA_HDL_CBK_REC_IN_DISPATCH_RESET(rec);
@@ -429,7 +432,8 @@ uint32_t ava_hdl_cbk_dispatch_all(AVA_CB **cb, AVA_HDL_REC **hdl_rec) {
         &(*hdl_rec)->callbk_mbx, NULL);
     if (!rec) break;
 
-    if (rec->cbk_info->type != AVSV_AMF_PG_TRACK) {
+    if ((rec->cbk_info->type != AVSV_AMF_PG_TRACK) &&
+        (rec->cbk_info->type != AVSV_AMF_SC_STATUS_CHANGE)) {
       /* push this record into pending response list */
       m_AVA_HDL_PEND_RESP_PUSH(list_resp, (AVA_PEND_RESP_REC *)rec);
       m_AVA_HDL_CBK_REC_IN_DISPATCH_SET(rec);
@@ -454,11 +458,13 @@ uint32_t ava_hdl_cbk_dispatch_all(AVA_CB **cb, AVA_HDL_REC **hdl_rec) {
 
     /* if we are done with this rec, free it */
     if ((rec->cbk_info->type != AVSV_AMF_PG_TRACK) &&
+        (rec->cbk_info->type != AVSV_AMF_SC_STATUS_CHANGE) &&
         m_AVA_HDL_IS_CBK_RESP_DONE(rec)) {
       m_AVA_HDL_PEND_RESP_POP(list_resp, rec, rec->cbk_info->inv);
       ava_hdl_cbk_rec_del(rec);
-    } else if (rec->cbk_info->type == AVSV_AMF_PG_TRACK) {
-      /* PG Track cbk do not have any response */
+    } else if ((rec->cbk_info->type == AVSV_AMF_PG_TRACK) ||
+               (rec->cbk_info->type == AVSV_AMF_SC_STATUS_CHANGE)) {
+      /* PG Track cbk and SC status change Cbk do not have any response */
       ava_hdl_cbk_rec_del(rec);
     } else {
       m_AVA_HDL_CBK_REC_IN_DISPATCH_RESET(rec);
@@ -514,7 +520,8 @@ uint32_t ava_hdl_cbk_dispatch_block(AVA_CB **cb, AVA_HDL_REC **hdl_rec) {
       break;
     }
 
-    if (rec->cbk_info->type != AVSV_AMF_PG_TRACK) {
+    if ((rec->cbk_info->type != AVSV_AMF_PG_TRACK) &&
+        (rec->cbk_info->type != AVSV_AMF_SC_STATUS_CHANGE)) {
       /* push this record into pending response list */
       m_AVA_HDL_PEND_RESP_PUSH(list_resp, (AVA_PEND_RESP_REC *)rec);
       m_AVA_HDL_CBK_REC_IN_DISPATCH_SET(rec);
@@ -540,11 +547,13 @@ uint32_t ava_hdl_cbk_dispatch_block(AVA_CB **cb, AVA_HDL_REC **hdl_rec) {
 
     /* if we are done with this rec, free it */
     if ((rec->cbk_info->type != AVSV_AMF_PG_TRACK) &&
+        (rec->cbk_info->type != AVSV_AMF_SC_STATUS_CHANGE) &&
         m_AVA_HDL_IS_CBK_RESP_DONE(rec)) {
       m_AVA_HDL_PEND_RESP_POP(list_resp, rec, rec->cbk_info->inv);
       ava_hdl_cbk_rec_del(rec);
-    } else if (rec->cbk_info->type == AVSV_AMF_PG_TRACK) {
-      /* PG Track cbk do not have any response */
+    } else if ((rec->cbk_info->type == AVSV_AMF_PG_TRACK) ||
+               (rec->cbk_info->type == AVSV_AMF_SC_STATUS_CHANGE)) {
+      /* PG Track cbk and SC status change cbk do not have any response */
       ava_hdl_cbk_rec_del(rec);
     } else {
       m_AVA_HDL_CBK_REC_IN_DISPATCH_RESET(rec);
@@ -592,6 +601,10 @@ uint32_t ava_hdl_cbk_rec_prc(AVSV_AMF_CBK_INFO *info,
 
   /* invoke the corresponding callback */
   switch (info->type) {
+    case AVSV_AMF_SC_STATUS_CHANGE: {
+      osafAmfSCStatusChangeCallback_invoke(info->param.sc_status_change.sc_status);
+      break;
+    }
     case AVSV_AMF_HC: {
       AVSV_AMF_HC_PARAM *hc = &info->param.hc;
       if (!ava_sanamet_is_valid(&hc->comp_name)) {
