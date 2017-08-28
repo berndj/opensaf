@@ -1470,8 +1470,7 @@ void avnd_diq_rec_send_buffered_msg(AVND_CB *cb) {
                 .raw);
         ++iter;
     } else {
-      // no other messages should be buffered
-      osafassert(false);
+      ++iter;
     }
   }
 
