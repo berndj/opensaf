@@ -2,6 +2,7 @@
 #      -*- OpenSAF  -*-
 #
 # (C) Copyright 2016 The OpenSAF Foundation
+# Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -156,3 +157,44 @@ amfd to lose all objects which were created before SC absence and data
 inconsistency will occur between amfnd and amfd/IMM on the SC. To avoid this 
 inconsistency, the payload will be rebooted.
 
+SC Status Change Callback
+=========================
+Enhancement supports two resources for application to know about
+SC joining and leaving the cluster.
+
+Information about the resources:
+* A callback that will be invoked by AMFA whenever a SC joins cluster and
+  both SCs leaves cluster if SC Absence feature is enabled.
+
+  -Callback and its argument:
+
+      void (*OsafAmfSCStatusChangeCallbackT)(OsafAmfSCStatusT state)
+      where OsafAmfSCStatusT is defined as:
+        typedef enum {
+          OSAF_AMF_SC_PRESENT = 1,
+          OSAF_AMF_SC_ABSENT = 2,
+        } OsafAmfSCStatusT;
+
+  This callback can be integrated
+  with standard AMF component(even with legacy one also).
+
+  -Return codes:
+   SA_AIS_OK - The function returned successfully.
+   SA_AIS_ERR_LIBRARY - An unexpected problem occurred in the library (such as
+                        corruption). The library cannot be used anymore.
+   SA_AIS_ERR_BAD_HANDLE - The handle amfHandle is invalid, since it is corrupted,
+                           uninitialized, or has already been finalized.
+   SA_AIS_ERR_INVALID_PARAM - A parameter is not set correctly (callback).
+
+* An API to register/install above callback function:
+   void osafAmfInstallSCStatusChangeCallback(SaAmfHandleT amfHandle,
+     void (*OsafAmfSCStatusChangeCallbackT)(OsafAmfSCStatusT status));
+   If 0 is passed as amfHandle, then callback will be invoked in the
+   context of MDS thread. If a valid amfHandle is passed then callback
+   will be invoked in the context of thread which is calling saAmfDispatch()
+   with this handle.
+
+   Note: OsafAmfSCStatusT and API is declared in saAmf.h
+
+Also two applications amf_sc_status_demo.c and amf_sc_status_dispatch_demo.c
+are added in samples/amf/api_demo/ to demonstrate usage.
