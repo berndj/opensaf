@@ -171,6 +171,24 @@ AC_ARG_WITH([initscriptdir],
 AC_SUBST([initscriptdir], ["$with_initscriptdir"])
 
 #
+# Enable/disable experimental code
+#
+AC_MSG_CHECKING([whether to build experimental code])
+AC_ARG_ENABLE([experimental],
+	[AS_HELP_STRING([--enable-experimental],
+		[enable experimental code [default=no]])],
+	[],
+	[enable_experimental=no])
+AC_MSG_RESULT([$enable_experimental])
+
+if test "$enable_experimental" = yes; then
+	AC_DEFINE([HAVE_EXPERIMENTAL], 1, [Define if experimental code is enabled])
+fi
+
+AM_CONDITIONAL([ENABLE_EXPERIMENTAL], [test "$enable_experimental" = yes])
+AC_SUBST([EXPERIMENTAL_ENABLED], ["$enable_experimental"])
+
+#
 # Enable/disable the Python AIS bindings
 #
 AC_MSG_CHECKING([whether to enable the Python AIS bindings])

@@ -1,0 +1,29 @@
+#
+#      -*- OpenSAF  -*-
+#
+# Copyright Ericsson AB 2017 - All Rights Reserved.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. This file and program are licensed
+# under the GNU Lesser General Public License Version 2.1, February 1999.
+# The complete license can be accessed from the following location:
+# http://opensource.org/licenses/lgpl-license.php
+# See the Copying file included with the OpenSAF distribution for full
+# licensing terms.
+#
+
+This directory contains experimental OpenSAF code and new features that are not
+yet considered to be fully mature, and thus not recommended for use in a
+production environment. They are provided as "technology preview" or for beta
+testing to anyone who might be interested. If and when a feature is considered
+mature, it will be moved out of the experimental directory into the regular
+OpenSAF source code tree.
+
+By default, the experimental code is not built. To build the experimental code
+in this directory and its subdirectories, you must provide the
+--enable-experimental option to the OpenSAF configure script.
+
+When adding new code into the experimental directory, please use an appropriate
+subdirectory under the experimental directory, so that unrelated features are
+not mixed in the same directory.

@@ -154,6 +154,7 @@ dist_osaf_execbin_SCRIPTS += \
 include $(top_srcdir)/src/ais/Makefile.am
 include $(top_srcdir)/src/base/Makefile.am
 include $(top_srcdir)/src/osaf/Makefile.am
+include $(top_srcdir)/src/experimental/Makefile.am
 include $(top_srcdir)/src/amf/Makefile.am
 include $(top_srcdir)/src/ckpt/Makefile.am
 include $(top_srcdir)/src/clm/Makefile.am

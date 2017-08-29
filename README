@@ -534,6 +534,7 @@ available w.r.t enabling/disabling the build for a particular OpenSAF service:
                           produced.
   --disable-rpm-target    disable support for the "make rpm" target
                           [default=no]
+  --enable-experimental   enable experimental code [default=no]
   --enable-python         enable the Python AIS bindings [default=yes]
   --enable-java           enable the Java AIS interface mapping [default=no]
   --enable-am4j           enable the AM4J agent [default=no]
