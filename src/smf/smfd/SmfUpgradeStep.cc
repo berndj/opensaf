@@ -891,9 +891,26 @@ bool SmfUpgradeStep::setMaintenanceState(SmfActivationUnit &i_units) {
   }
 
   if ((result = immUtil.doImmOperations(operations)) != SA_AIS_OK) {
-    LOG_NO("Fails to set saAmfSUMaintenanceCampaign, rc=%s", saf_error(result));
-    rc = false;
-    goto exit;
+     LOG_NO("Fails to set saAmfSUMaintenanceCampaign, rc=%s", saf_error(result));
+
+     int ret = SA_AIS_OK;
+     base::Timer doImmOpTimer(60000);
+     while (doImmOpTimer.is_timeout() == false) {
+       TRACE("%s: doImmOperations time left = %" PRIu64,
+            __FUNCTION__, doImmOpTimer.time_left());
+       ret = immUtil.doImmOperations(operations);
+       if (ret  == SA_AIS_ERR_TRY_AGAIN) {
+         base::Sleep(base::kFiveHundredMilliseconds);
+	 continue;
+       }else{
+         break;
+       }
+     }
+     if (ret != SA_AIS_OK) {
+        LOG_NO("SmfUpgradeStep::setMaintenanceState(), fails to set all saAmfSUMaintenanceCampaign attr");
+        rc = false;
+        goto exit;
+     }
   }
 
 exit:
