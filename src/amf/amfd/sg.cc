@@ -98,7 +98,7 @@ AVD_SG::AVD_SG()
       saAmfSGAutoAdjust(SA_FALSE),
       saAmfSGNumPrefActiveSUs(0),
       saAmfSGNumPrefStandbySUs(0),
-      saAmfSGNumPrefInserviceSUs(~0),
+      saAmfSGNumPrefInserviceSUs(0),
       saAmfSGNumPrefAssignedSUs(0),
       saAmfSGMaxActiveSIsperSU(0),
       saAmfSGMaxStandbySIsperSU(0),
@@ -978,18 +978,18 @@ static void ccb_apply_modify_hdlr(CcbUtilOperationData_t *opdata) {
               sg->saAmfSGNumPrefStandbySUs);
       } else if (!strcmp(attribute->attrName, "saAmfSGNumPrefInserviceSUs")) {
         if (value_is_deleted)
-          sg->saAmfSGNumPrefInserviceSUs = ~0;
+          sg->saAmfSGNumPrefInserviceSUs = 0; //default value for internal use.
         else
           sg->saAmfSGNumPrefInserviceSUs = *((SaUint32T *)value);
         TRACE("Modified saAmfSGNumPrefInserviceSUs is '%u'",
-              sg->saAmfSGNumPrefInserviceSUs);
+              sg->pref_inservice_sus());
       } else if (!strcmp(attribute->attrName, "saAmfSGNumPrefAssignedSUs")) {
         if (value_is_deleted)
-          sg->saAmfSGNumPrefAssignedSUs = sg->saAmfSGNumPrefInserviceSUs;
+          sg->saAmfSGNumPrefAssignedSUs = 0; //default value for internal use.
         else
           sg->saAmfSGNumPrefAssignedSUs = *((SaUint32T *)value);
         TRACE("Modified saAmfSGNumPrefAssignedSUs is '%u'",
-              sg->saAmfSGNumPrefAssignedSUs);
+              sg->pref_assigned_sus());
       } else if (!strcmp(attribute->attrName, "saAmfSGMaxActiveSIsperSU")) {
         if (value_is_deleted)
           sg->saAmfSGMaxActiveSIsperSU = -1;
@@ -1091,11 +1091,11 @@ static void ccb_apply_modify_hdlr(CcbUtilOperationData_t *opdata) {
 
       if (!strcmp(attribute->attrName, "saAmfSGNumPrefInserviceSUs")) {
         if (value_is_deleted)
-          sg->saAmfSGNumPrefInserviceSUs = ~0;
+          sg->saAmfSGNumPrefInserviceSUs = 0;
         else
           sg->saAmfSGNumPrefInserviceSUs = *((SaUint32T *)value);
         TRACE("Modified saAmfSGNumPrefInserviceSUs is '%u'",
-              sg->saAmfSGNumPrefInserviceSUs);
+              sg->pref_inservice_sus());
 
         if (avd_cb->avail_state_avd == SA_AMF_HA_ACTIVE) {
           if (avd_sg_app_su_inst_func(avd_cb, sg) != NCSCC_RC_SUCCESS) {
@@ -1256,7 +1256,7 @@ static void sg_app_sg_admin_unlock_inst(AVD_CL_CB *cb, AVD_SG *sg) {
         (su->saAmfSUPresenceState == SA_AMF_PRESENCE_UNINSTANTIATED)) {
       if (su->saAmfSUPreInstantiable == true) {
         if (su->su_on_node->node_state == AVD_AVND_STATE_PRESENT) {
-          if (su->sg_of_su->saAmfSGNumPrefInserviceSUs > su_try_inst) {
+          if (su->sg_of_su->pref_inservice_sus() > su_try_inst) {
             if (avd_snd_presence_msg(cb, su, false) != NCSCC_RC_SUCCESS) {
               LOG_NO("%s: Failed to send Instantiation order of '%s' to %x",
                      __FUNCTION__, su->name.c_str(),
@@ -1944,19 +1944,6 @@ void avd_sg_adjust_config(AVD_SG *sg) {
       }
     }
   }
-
-  /* adjust saAmfSGNumPrefAssignedSUs if not configured, only applicable for
-   * the N-way and N-way active redundancy models
-   */
-  if ((sg->saAmfSGNumPrefAssignedSUs == 0) &&
-      ((sg->sg_type->saAmfSgtRedundancyModel ==
-        SA_AMF_N_WAY_REDUNDANCY_MODEL) ||
-       (sg->sg_type->saAmfSgtRedundancyModel ==
-        SA_AMF_N_WAY_ACTIVE_REDUNDANCY_MODEL))) {
-    sg->saAmfSGNumPrefAssignedSUs = sg->saAmfSGNumPrefInserviceSUs;
-    LOG_NO("'%s' saAmfSGNumPrefAssignedSUs adjusted to %u", sg->name.c_str(),
-           sg->saAmfSGNumPrefAssignedSUs);
-  }
 }
 
 /**
@@ -1972,7 +1959,7 @@ uint32_t sg_instantiated_su_count(const AVD_SG *sg) {
   for (const auto &su : sg->list_of_su) {
     TRACE_1("su'%s', pres state'%u', in_serv'%u', PrefIn'%u'", su->name.c_str(),
             su->saAmfSUPresenceState, su->saAmfSuReadinessState,
-            sg->saAmfSGNumPrefInserviceSUs);
+            sg->pref_inservice_sus());
     if (((su->saAmfSUPresenceState == SA_AMF_PRESENCE_INSTANTIATED) ||
          (su->saAmfSUPresenceState == SA_AMF_PRESENCE_INSTANTIATING) ||
          (su->saAmfSUPresenceState == SA_AMF_PRESENCE_RESTARTING))) {
@@ -2051,7 +2038,7 @@ bool sg_stable_after_lock_in_or_unlock_in(AVD_SG *sg) {
         }
       }
 
-      if (instantiated_sus >= sg->saAmfSGNumPrefInserviceSUs)
+      if (instantiated_sus >= sg->pref_inservice_sus())
         return true;
       else {
         if (to_be_instantiated_sus == 0)
@@ -2358,9 +2345,19 @@ bool AVD_SG::any_assignment_assigned() {
 }
 
 uint32_t AVD_SG::pref_assigned_sus() const {
-  // If not configured, AMFD has already adjusted to default value in
-  // avd_sg_adjust_config().
-  return saAmfSGNumPrefAssignedSUs;
+  if (saAmfSGNumPrefAssignedSUs == 0)
+    //default value is saAmfSGNumPrefInserviceSUs.
+    return pref_inservice_sus();
+  else
+    return saAmfSGNumPrefAssignedSUs;
+}
+
+uint32_t AVD_SG::pref_inservice_sus() const {
+  if (saAmfSGNumPrefInserviceSUs == 0)
+    //default value is saAmfSGNumPrefInserviceSUs.
+    return list_of_su.size();
+  else
+    return saAmfSGNumPrefInserviceSUs;
 }
 
 /*

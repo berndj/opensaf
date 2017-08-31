@@ -130,6 +130,15 @@ AVD_SU *avd_sg_nacvred_su_chose_asgn(AVD_CL_CB *cb, AVD_SG *sg) {
         continue;
       }
 
+      if ((sg->pref_assigned_sus() == sg->curr_assigned_sus()) &&
+           (i_su->list_of_susi == nullptr)) {
+        //PrefAssignedSU count reached so no assignment in fresh SU.
+        //Check in next siranked su.
+        TRACE_1("PrefAssignedSU count reached in '%s', so no fresh assignments.",
+                 sg->name.c_str());
+        continue;
+      }
+
       /* found the SU assign the SI to the SU as active */
       if (avd_new_assgn_susi(cb, i_su, i_si, SA_AMF_HA_ACTIVE, false,
                              &tmp_rel) == NCSCC_RC_SUCCESS) {
@@ -164,6 +173,15 @@ AVD_SU *avd_sg_nacvred_su_chose_asgn(AVD_CL_CB *cb, AVD_SG *sg) {
           ((i_su->sg_of_su->saAmfSGMaxActiveSIsperSU != 0) &&
            (i_su->sg_of_su->saAmfSGMaxActiveSIsperSU <=
             i_su->saAmfSUNumCurrActiveSIs))) {
+        continue;
+      }
+
+      if ((sg->pref_assigned_sus() == sg->curr_assigned_sus()) &&
+          (i_su->list_of_susi == nullptr)) {
+        //PrefAssignedSU count reached so no assignment in fresh SU.
+        //search in already assigned SU.
+        TRACE_1("PrefAssignedSU count reached in '%s', so no fresh assignments.",
+                 sg->name.c_str());
         continue;
       }
 
@@ -259,7 +277,6 @@ uint32_t SG_NACV::si_assign(AVD_CL_CB *cb, AVD_SI *si) {
 
   if ((cb->init_state != AVD_APP_STATE) &&
       (si->sg_of_si->sg_ncs_spec == false)) {
-    LOG_ER("%s:%u: %u", __FILE__, __LINE__, si->sg_of_si->sg_ncs_spec);
     return NCSCC_RC_SUCCESS;
   }
 
@@ -1903,6 +1920,16 @@ static AVD_SU *avd_get_qualified_su(AVD_SG *sg, AVD_SI *i_si,
           i_su->saAmfSUNumCurrActiveSIs))) {
       continue;
     }
+
+    if ((sg->pref_assigned_sus() == sg->curr_assigned_sus()) &&
+        (i_su->list_of_susi == nullptr)) {
+      //PrefAssignedSU count reached so no assigned in fresh SU.
+      //continue search in already assigned SU.
+      TRACE_1("PrefAssignedSU count reached in '%s', so no fresh assignments.",
+               sg->name.c_str());
+      continue;
+    }
+
     l_flag = true;
     if (avd_su_susi_find(avd_cb, i_su, i_si->name) != AVD_SU_SI_REL_NULL) {
       /* This SU has already a assignment for this SI go to the

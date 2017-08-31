@@ -1149,6 +1149,15 @@ AVD_SU *avd_sg_nway_get_su_std_equal(AVD_SG *sg, AVD_SI *curr_si) {
           curr_su->sg_of_su->saAmfSGMaxStandbySIsperSU)))
       continue;
 
+     if ((sg->pref_assigned_sus() == sg->curr_assigned_sus()) &&
+         (curr_su->list_of_susi == nullptr)) {
+	//PrefAssignedSU count reached so no assignment in fresh SU.
+        //Continue searching next already assigned SU.
+        TRACE_1("PrefAssignedSU count reached in '%s', so no fresh assignments.",
+                 sg->name.c_str());
+        continue;
+     }
+
     l_flag = true;
 
     /* Get the current no of Standby assignments on the su */
@@ -1373,10 +1382,8 @@ uint32_t avd_sg_nway_si_assign(AVD_CL_CB *cb, AVD_SG *sg) {
           if (sg->equal_ranked_su == true) {
             /* first try to select an SU which has no assignments */
             if ((iter->saAmfSUNumCurrActiveSIs == 0) &&
-                (iter->saAmfSUNumCurrStandbySIs == 0)) {
-              /* got an SU without any assignments select
-               * it for this SI's active assignment
-               */
+                (iter->saAmfSUNumCurrStandbySIs == 0) &&
+                (sg->pref_assigned_sus() > sg->curr_assigned_sus())) {
               pref_su = iter;
               TRACE("set %s as pref_su", pref_su->name.c_str());
               break;
@@ -1415,6 +1422,14 @@ uint32_t avd_sg_nway_si_assign(AVD_CL_CB *cb, AVD_SG *sg) {
 
     /* if found, send active assignment */
     if (curr_su) {
+      if ((sg->pref_assigned_sus() == sg->curr_assigned_sus()) &&
+          (curr_su->list_of_susi == nullptr)) {
+        //PrefAssignedSU count reached so no assignment in fresh SU.
+        //Next SI may get assgined in already assigned SU.
+        TRACE_1("PrefAssignedSU count reached in '%s', so no fresh assignments.",
+                sg->name.c_str());
+        continue;
+      }
       TRACE("send active assignment to %s", curr_su->name.c_str());
 
       rc = avd_new_assgn_susi(cb, curr_su, curr_si, SA_AMF_HA_ACTIVE, false,
@@ -1480,6 +1495,15 @@ uint32_t avd_sg_nway_si_assign(AVD_CL_CB *cb, AVD_SG *sg) {
       /* verify if this su does not have this assignment */
       if (avd_su_susi_find(cb, curr_su, curr_si->name) != AVD_SU_SI_REL_NULL)
         continue;
+
+        if ((sg->pref_assigned_sus() == sg->curr_assigned_sus()) &&
+            (curr_su->list_of_susi == nullptr)) {
+          //PrefAssignedSU count reached so no assignment in fresh SU.
+          //Still continue for next pref ranked SU.
+          TRACE_1("PrefAssignedSU count reached in '%s', so no fresh assignments.",
+                   sg->name.c_str());
+          continue;
+        }
 
       /* send the standby assignment */
       rc = avd_new_assgn_susi(cb, curr_su, curr_si, SA_AMF_HA_STANDBY, false,
@@ -1549,6 +1573,13 @@ uint32_t avd_sg_nway_si_assign(AVD_CL_CB *cb, AVD_SG *sg) {
             curr_su->sg_of_su->saAmfSGMaxStandbySIsperSU)))
         continue;
 
+      if ((sg->pref_assigned_sus() == sg->curr_assigned_sus())
+           && (curr_su->list_of_susi == nullptr)) {
+        //PrefAssignedSU count reached so no assignment in fresh SU.
+        TRACE_1("PrefAssignedSU count reached in '%s', so no fresh assignments.",
+                 sg->name.c_str());
+        continue;
+      }
       su_found = true;
 
       /* verify if this su does not have this assignment */

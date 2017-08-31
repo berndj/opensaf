@@ -447,6 +447,7 @@ class AVD_SG {
   uint32_t curr_non_instantiated_spare_sus() const;
   bool is_middleware() const { return sg_ncs_spec ? true : false; }
   uint32_t pref_assigned_sus() const;
+  uint32_t pref_inservice_sus() const;
   // Checks if si_equal_distribution is configured for the SG.
   bool is_equal() const;
 
