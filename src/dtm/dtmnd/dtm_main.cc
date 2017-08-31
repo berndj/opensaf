@@ -21,18 +21,17 @@
  * ========================================================================
  */
 
+#include <sched.h>
+#include <unistd.h>
+#include <cstdlib>
 #include "base/daemon.h"
+#include "base/ncs_main_papi.h"
+#include "base/ncsencdec_pub.h"
+#include "base/osaf_poll.h"
+#include "dtm/dtmnd/dtm.h"
+#include "dtm/dtmnd/dtm_node.h"
 #include "nid/agent/nid_api.h"
 #include "osaf/configmake.h"
-#include "base/ncs_main_papi.h"
-#include "dtm.h"
-#include "dtm_node.h"
-#include "base/osaf_poll.h"
-
-#include <sched.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <unistd.h>
 
 /* ========================================================================
  *   DEFINITIONS
@@ -54,8 +53,8 @@
  * ========================================================================
  */
 
-NCSCONTEXT gl_node_dis_task_hdl = 0;
-NCSCONTEXT gl_serv_dis_task_hdl = 0;
+NCSCONTEXT gl_node_dis_task_hdl = nullptr;
+NCSCONTEXT gl_serv_dis_task_hdl = nullptr;
 
 static DTM_INTERNODE_CB _dtms_cb;
 DTM_INTERNODE_CB *dtms_gl_cb = &_dtms_cb;
@@ -114,9 +113,9 @@ static uint32_t dtm_construct_bcast_hdr(DTM_INTERNODE_CB *dtms_cb,
 	ncs_encode_16bit(&data, *pack_size);
 	ncs_encode_16bit(&data, dtms_cb->cluster_id);
 	ncs_encode_32bit(&data, dtms_cb->node_id);
-	ncs_encode_8bit(&data, (uint8_t)dtms_cb->mcast_flag);
+	ncs_encode_8bit(&data, dtms_cb->mcast_flag ? 1 : 0);
 	ncs_encode_16bit(&data, dtms_cb->stream_port);
-	ncs_encode_8bit(&data, (uint8_t)dtms_cb->i_addr_family);
+	ncs_encode_8bit(&data, static_cast<uint8_t>(dtms_cb->i_addr_family));
 	memcpy(data, dtms_cb->ip_addr, INET6_ADDRSTRLEN);
 
 	TRACE_LEAVE();
@@ -132,7 +131,7 @@ static uint32_t dtm_construct_bcast_hdr(DTM_INTERNODE_CB *dtms_cb,
  * @return NCSCC_RC_FAILURE
  *
  */
-static uint32_t dtm_destroy_node_discovery_task(void)
+static uint32_t dtm_destroy_node_discovery_task()
 {
 	TRACE_ENTER();
 
@@ -158,7 +157,7 @@ static uint32_t dtm_destroy_node_discovery_task(void)
  * @return NCSCC_RC_FAILURE
  *
  */
-static uint32_t dtm_destroy_service_discovery_task(void)
+static uint32_t dtm_destroy_service_discovery_task()
 {
 	TRACE_ENTER();
 
@@ -184,9 +183,8 @@ static uint32_t dtm_destroy_service_discovery_task(void)
  * @return NCSCC_RC_FAILURE
  *
  */
-uint32_t dtm_node_discovery_task_create(void)
+uint32_t dtm_node_discovery_task_create()
 {
-	uint32_t rc;
 	TRACE_ENTER();
 
 	int policy = SCHED_RR; /*root defaults */
@@ -194,8 +192,8 @@ uint32_t dtm_node_discovery_task_create(void)
 	int min_prio = sched_get_priority_min(policy);
 	int prio_val = ((max_prio - min_prio) * 0.87);
 
-	rc = m_NCS_TASK_CREATE((NCS_OS_CB)node_discovery_process, NULL,
-			       (char *)"OSAF_NODE_DISCOVERY", prio_val, policy,
+	uint32_t rc = ncs_task_create(node_discovery_process, nullptr,
+			       "OSAF_NODE_DISCOVERY", prio_val, policy,
 			       m_NODE_DISCOVERY_STACKSIZE,
 			       &gl_node_dis_task_hdl);
 	if (NCSCC_RC_SUCCESS != rc) {
@@ -223,7 +221,7 @@ err:
 		/* release the task */
 		m_NCS_TASK_RELEASE(gl_node_dis_task_hdl);
 
-		gl_node_dis_task_hdl = 0;
+		gl_node_dis_task_hdl = nullptr;
 	} else {
 
 		/* Detach this thread and allow it to have its own life. This
@@ -366,7 +364,7 @@ int main(int argc, char *argv[])
 		goto done1;
 	}
 
-	rc = nid_notify("TRANSPORT", NCSCC_RC_SUCCESS, NULL);
+	rc = nid_notify("TRANSPORT", NCSCC_RC_SUCCESS, nullptr);
 	if (NCSCC_RC_SUCCESS != rc) {
 		LOG_ER("TRANSPORT: nid_notify failed rc : %d ", rc);
 		goto done1;
@@ -425,6 +423,6 @@ done2:
 
 done3:
 	TRACE_LEAVE();
-	(void)nid_notify("TRANSPORT", NCSCC_RC_FAILURE, NULL);
+	(void)nid_notify("TRANSPORT", NCSCC_RC_FAILURE, nullptr);
 	exit(1);
 }

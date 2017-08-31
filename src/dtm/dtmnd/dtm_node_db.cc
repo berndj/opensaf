@@ -16,10 +16,11 @@
  *
  */
 
-#include <stdlib.h>
-#include <string.h>
 #include <sys/epoll.h>
 #include <unistd.h>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
 #include "base/usrbuf.h"
 #include "dtm/dtmnd/dtm.h"
 
@@ -35,8 +36,8 @@
 DTM_NODE_DB *dtm_node_new(const DTM_NODE_DB *new_node)
 {
 	TRACE_ENTER();
-	DTM_NODE_DB *node = malloc(sizeof(DTM_NODE_DB));
-	if (node != NULL) {
+	DTM_NODE_DB *node = static_cast<DTM_NODE_DB *>(malloc(sizeof(DTM_NODE_DB)));
+	if (node != nullptr) {
 		memcpy(node, new_node, sizeof(DTM_NODE_DB));
 	} else {
 		LOG_ER("malloc failed");
@@ -95,11 +96,10 @@ uint32_t dtm_cb_init(DTM_INTERNODE_CB *dtms_cb)
 		close(dtms_cb->epoll_fd);
 		return NCSCC_RC_FAILURE;
 	} else {
-
 		NCS_SEL_OBJ obj;
 
 		if (NCSCC_RC_SUCCESS != m_NCS_IPC_ATTACH(&dtms_cb->mbx)) {
-			m_NCS_IPC_RELEASE(&dtms_cb->mbx, NULL);
+			m_NCS_IPC_RELEASE(&dtms_cb->mbx, nullptr);
 			LOG_ER("DTM: Internode Mailbox  Attach failed");
 			close(dtms_cb->epoll_fd);
 			return NCSCC_RC_FAILURE;
@@ -128,18 +128,15 @@ uint32_t dtm_cb_init(DTM_INTERNODE_CB *dtms_cb)
  */
 DTM_NODE_DB *dtm_node_get_by_id(uint32_t nodeid)
 {
-	DTM_NODE_DB *node = NULL;
 	TRACE_ENTER();
 	DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
 
-	node = (DTM_NODE_DB *)ncs_patricia_tree_get(&dtms_cb->nodeid_tree,
-						    (uint8_t *)&nodeid);
-	if (node != (DTM_NODE_DB *)NULL) {
+	DTM_NODE_DB *node = reinterpret_cast<DTM_NODE_DB *>(ncs_patricia_tree_get(&dtms_cb->nodeid_tree,
+                                                                                  reinterpret_cast<uint8_t *>(&nodeid)));
+	if (node != nullptr) {
 		/* Adjust the pointer */
-		node = (DTM_NODE_DB *)(((char *)node) -
-				       (((char *)&(
-					    ((DTM_NODE_DB *)0)->pat_nodeid)) -
-					((char *)((DTM_NODE_DB *)0))));
+          node = reinterpret_cast<DTM_NODE_DB *>(reinterpret_cast<char *>(node) -
+                                                 offsetof(DTM_NODE_DB, pat_nodeid));
 	}
 
 	TRACE_LEAVE();
@@ -157,24 +154,22 @@ DTM_NODE_DB *dtm_node_get_by_id(uint32_t nodeid)
  */
 DTM_NODE_DB *dtm_node_getnext_by_id(uint32_t node_id)
 {
-	DTM_NODE_DB *node = NULL;
+	DTM_NODE_DB *node = nullptr;
 	DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
 	TRACE_ENTER();
 
 	if (node_id == 0) {
+          node = reinterpret_cast<DTM_NODE_DB *>(ncs_patricia_tree_getnext(
+              &dtms_cb->nodeid_tree, nullptr));
+	} else {
+          node = reinterpret_cast<DTM_NODE_DB *>(ncs_patricia_tree_getnext(
+              &dtms_cb->nodeid_tree, reinterpret_cast<uint8_t *>(&node_id)));
+        }
 
-		node = (DTM_NODE_DB *)ncs_patricia_tree_getnext(
-		    &dtms_cb->nodeid_tree, (uint8_t *)0);
-	} else
-		node = (DTM_NODE_DB *)ncs_patricia_tree_getnext(
-		    &dtms_cb->nodeid_tree, (uint8_t *)&node_id);
-
-	if (node != (DTM_NODE_DB *)NULL) {
+	if (node != nullptr) {
 		/* Adjust the pointer */
-		node = (DTM_NODE_DB *)(((char *)node) -
-				       (((char *)&(
-					    ((DTM_NODE_DB *)0)->pat_nodeid)) -
-					((char *)((DTM_NODE_DB *)0))));
+          node = reinterpret_cast<DTM_NODE_DB *>(reinterpret_cast<char *>(node) -
+                                                 offsetof(DTM_NODE_DB, pat_nodeid));
 		TRACE("DTM:Node found %d", node->node_id);
 	}
 
@@ -198,22 +193,21 @@ uint32_t dtm_node_add(DTM_NODE_DB *node, int i)
 	TRACE_ENTER();
 	TRACE("DTM:value of i %d", i);
 
-	osafassert(node != NULL);
+	osafassert(node != nullptr);
 
 	switch (i) {
-
 	case 0:
 		TRACE(
 		    "DTM:Adding node_id to the database with node_id :%u as key",
 		    node->node_id);
-		node->pat_nodeid.key_info = (uint8_t *)&(node->node_id);
+		node->pat_nodeid.key_info = reinterpret_cast<uint8_t *>(&(node->node_id));
 		rc = ncs_patricia_tree_add(&dtms_cb->nodeid_tree,
 					   &node->pat_nodeid);
 		if (rc != NCSCC_RC_SUCCESS) {
 			TRACE(
 			    "DTM:ncs_patricia_tree_add for node_id  FAILED for :%d :%u",
 			    node->node_id, rc);
-			node->pat_nodeid.key_info = NULL;
+			node->pat_nodeid.key_info = nullptr;
 			goto done;
 		}
 		break;
@@ -225,14 +219,14 @@ uint32_t dtm_node_add(DTM_NODE_DB *node, int i)
 		TRACE(
 		    "DTM:Adding node_ip to the database with node_ip :%s as key",
 		    node->node_ip);
-		node->pat_ip_address.key_info = (uint8_t *)&(node->node_ip);
+		node->pat_ip_address.key_info = reinterpret_cast<uint8_t *>(&(node->node_ip));
 		rc = ncs_patricia_tree_add(&dtms_cb->ip_addr_tree,
 					   &node->pat_ip_address);
 		if (rc != NCSCC_RC_SUCCESS) {
 			TRACE(
 			    "DTM:ncs_patricia_tree_add for node_ip  FAILED for :%s :%u",
 			    node->node_ip, rc);
-			node->pat_ip_address.key_info = NULL;
+			node->pat_ip_address.key_info = nullptr;
 			goto done;
 		}
 		break;
@@ -263,10 +257,9 @@ uint32_t dtm_node_delete(DTM_NODE_DB *node, int i)
 	DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
 	TRACE_ENTER2("DTM:value of i %d", i);
 
-	osafassert(node != NULL);
+	osafassert(node != nullptr);
 
 	switch (i) {
-
 	case 0:
 		if (node->node_id != 0 && node->pat_nodeid.key_info) {
 			TRACE(
@@ -287,7 +280,7 @@ uint32_t dtm_node_delete(DTM_NODE_DB *node, int i)
 		break;
 
 	case 2:
-		if (node->node_ip != NULL && node->pat_ip_address.key_info) {
+		if (node->node_ip != nullptr && node->pat_ip_address.key_info) {
 			TRACE(
 			    "DTM:Deleting node_ip from the  database with node_ip :%s as key",
 			    node->node_ip);

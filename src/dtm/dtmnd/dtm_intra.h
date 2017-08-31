@@ -14,18 +14,19 @@
  * Author(s): GoAhead Software
  *
  */
+
 #ifndef DTM_DTMND_DTM_INTRA_H_
 #define DTM_DTMND_DTM_INTRA_H_
 
 #include <netinet/tcp.h>
+#include <cstdint>
+#include "dtm/dtmnd/dtm_cb.h"
+#include "mds/mds_papi.h"
 
-#define DTM_INTRANODE_RCV_MSG_IDENTIFIER 0x56123456
-
-#define DTM_INTRANODE_RCV_MSG_VER 1
-
-#define DTM_INTRANODE_SND_MSG_IDENTIFIER 0x56123456
-
-#define DTM_INTRANODE_SND_MSG_VER 1
+constexpr uint32_t DTM_INTRANODE_RCV_MSG_IDENTIFIER = 0x56123456;
+constexpr uint8_t DTM_INTRANODE_RCV_MSG_VER = 1;
+constexpr uint32_t DTM_INTRANODE_SND_MSG_IDENTIFIER = 0x56123456;
+constexpr uint8_t DTM_INTRANODE_SND_MSG_VER = 1;
 
 typedef enum dtm_intranode_rcv_msg_types {
   DTM_INTRANODE_RCV_PID_TYPE = 1,

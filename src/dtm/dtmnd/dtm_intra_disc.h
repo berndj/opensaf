@@ -17,29 +17,36 @@
 #ifndef DTM_DTMND_DTM_INTRA_DISC_H_
 #define DTM_DTMND_DTM_INTRA_DISC_H_
 
+#include <limits.h>
+#include <cstdint>
+#include "base/ncspatricia.h"
+#include "base/ncssysf_ipc.h"
+#include "dtm/dtmnd/dtm_cb.h"
+#include "dtm/dtmnd/dtm_intra_disc.h"
+#include "mds/mds_papi.h"
+
 /* 2 -len(0), 4 - iden(2), 1- ver(6), 1-msg type(7), 4- server_type (8),
    4 -server lower(12), 4 -server lower(16), 8 -ref(20), 4 - nodeid(28),
    4 - pid(32) */
-#define DTM_LIB_UP_MSG_SIZE 34
+constexpr uint16_t DTM_LIB_UP_MSG_SIZE = 34;
 
-#define DTM_LIB_DOWN_MSG_SIZE DTM_LIB_UP_MSG_SIZE
+constexpr uint16_t DTM_LIB_DOWN_MSG_SIZE = DTM_LIB_UP_MSG_SIZE;
 
-#define DTM_LIB_UP_MSG_SIZE_FULL (DTM_LIB_UP_MSG_SIZE + 2)
+constexpr uint16_t DTM_LIB_UP_MSG_SIZE_FULL = DTM_LIB_UP_MSG_SIZE + 2;
 
-#define DTM_LIB_DOWN_MSG_SIZE_FULL DTM_LIB_UP_MSG_SIZE_FULL
+constexpr uint16_t DTM_LIB_DOWN_MSG_SIZE_FULL = DTM_LIB_UP_MSG_SIZE_FULL;
 
 /* 2 -len(0), 4 - iden(2), 1- ver(6), 1-msg type(7), 4- node_id (8),
    8 -ref_val(12) */
 
-#define DTM_LIB_NODE_UP_MSG_SIZE               \
-  (18 + 1 /*i_addr_family*/ + 46 /*ip_addr*/ + \
-   _POSIX_HOST_NAME_MAX /* node_name */)
+constexpr uint16_t DTM_LIB_NODE_UP_MSG_SIZE = 18 + 1 /*i_addr_family*/ + 46 /*ip_addr*/ +
+                                               _POSIX_HOST_NAME_MAX /* node_name */;
 
-#define DTM_LIB_NODE_DOWN_MSG_SIZE 18
+constexpr uint16_t DTM_LIB_NODE_DOWN_MSG_SIZE = 18;
 
-#define DTM_LIB_NODE_UP_MSG_SIZE_FULL (DTM_LIB_NODE_UP_MSG_SIZE + 2)
+constexpr uint16_t DTM_LIB_NODE_UP_MSG_SIZE_FULL = DTM_LIB_NODE_UP_MSG_SIZE + 2;
 
-#define DTM_LIB_NODE_DOWN_MSG_SIZE_FULL (DTM_LIB_NODE_DOWN_MSG_SIZE + 2)
+constexpr uint16_t DTM_LIB_NODE_DOWN_MSG_SIZE_FULL = DTM_LIB_NODE_DOWN_MSG_SIZE + 2;
 
 typedef enum dtm_svc_install_scope {
   DTM_SVC_INSTALL_SCOPE_PCON = 1,

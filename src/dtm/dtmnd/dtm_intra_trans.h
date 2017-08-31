@@ -14,8 +14,12 @@
  * Author(s): GoAhead Software
  *
  */
+
 #ifndef DTM_DTMND_DTM_INTRA_TRANS_H_
 #define DTM_DTMND_DTM_INTRA_TRANS_H_
+
+#include <cstdint>
+#include "dtm/dtmnd/dtm_intra_disc.h"
 
 uint32_t dtm_intranode_process_data_msg(uint8_t *buffer, uint32_t dst_pid,
                                         uint16_t len);

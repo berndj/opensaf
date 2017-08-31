@@ -18,13 +18,15 @@
 #ifndef DTM_DTMND_DTM_INTER_DISC_H_
 #define DTM_DTMND_DTM_INTER_DISC_H_
 
+#include <cstdint>
+
 /*iden-4 , ver-1, type-1, num_elements-2, type-4, inst-4, pid-4 */
 
-#define DTM_UP_MSG_SIZE 20
-#define DTM_DOWN_MSG_SIZE DTM_UP_MSG_SIZE
+constexpr uint16_t DTM_UP_MSG_SIZE = 20;
+constexpr uint16_t DTM_DOWN_MSG_SIZE = DTM_UP_MSG_SIZE;
 
-#define DTM_UP_MSG_SIZE_FULL (DTM_UP_MSG_SIZE + 2)
-#define DTM_DOWN_MSG_SIZE_FULL DTM_UP_MSG_SIZE_FULL
+constexpr uint16_t DTM_UP_MSG_SIZE_FULL = DTM_UP_MSG_SIZE + 2;
+constexpr uint16_t DTM_DOWN_MSG_SIZE_FULL = DTM_UP_MSG_SIZE_FULL;
 
 typedef struct dtm_svc_data {
   struct dtm_svc_data *next;

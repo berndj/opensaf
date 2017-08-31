@@ -16,31 +16,30 @@
  *
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sched.h>
-#include <sys/time.h>
+#include "dtm/dtmnd/dtm_intra.h"
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include "osaf/configmake.h"
-
+#include <sched.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/un.h>
+#include <cstdlib>
+#include <cstring>
 #include "base/ncs_main_papi.h"
 #include "base/ncssysf_def.h"
-#include "base/ncssysf_tsk.h"
 #include "base/ncssysf_mem.h"
-#include "dtm.h"
-#include "dtm_cb.h"
-#include "dtm_intra.h"
-#include "dtm_intra_disc.h"
-#include "dtm_intra_trans.h"
-#include "dtm_inter_trans.h"
+#include "base/ncssysf_tsk.h"
+#include "dtm/dtmnd/dtm.h"
+#include "dtm/dtmnd/dtm_cb.h"
+#include "dtm/dtmnd/dtm_inter_trans.h"
+#include "dtm/dtmnd/dtm_intra_disc.h"
+#include "dtm/dtmnd/dtm_intra_trans.h"
+#include "osaf/configmake.h"
 
-DTM_INTRANODE_CB *dtm_intranode_cb = NULL;
+DTM_INTRANODE_CB *dtm_intranode_cb = nullptr;
 
 #define DTM_INTRANODE_POLL_TIMEOUT 20000
 #define DTM_INTRANODE_TASKNAME "DTM_INTRANODE"
@@ -63,13 +62,13 @@ static uint32_t dtm_intra_processing_init(char *node_name, char *node_ip,
 					  DTM_IP_ADDR_TYPE i_addr_family,
 					  int32_t sndbuf_size,
 					  int32_t rcvbuf_size);
-static void dtm_intranode_processing(void);
+static void dtm_intranode_processing(void*);
 static uint32_t dtm_intranode_add_poll_fdlist(int fd, uint16_t event);
 static uint32_t dtm_intranode_create_rcv_task(int task_hdl);
-static uint32_t dtm_intranode_process_incoming_conn(void);
+static uint32_t dtm_intranode_process_incoming_conn();
 static uint32_t dtm_intranode_del_poll_fdlist(int fd);
 
-static uint32_t dtm_intranode_fill_fd_set(void);
+static uint32_t dtm_intranode_fill_fd_set();
 uint32_t dtm_socket_domain = AF_UNIX;
 
 /**
@@ -109,7 +108,7 @@ uint32_t dtm_intra_processing_init(char *node_name, char *node_ip,
 	/* UNIX is default transport for intranode */
 	dtm_socket_domain = AF_UNIX;
 
-	if (NULL == (dtm_intranode_cb = calloc(1, sizeof(DTM_INTRANODE_CB)))) {
+	if (nullptr == (dtm_intranode_cb = static_cast<DTM_INTRANODE_CB *>(calloc(1, sizeof(DTM_INTRANODE_CB))))) {
 		LOG_ER("DTM: Memory allocation failed for dtm_intranode_cb");
 		return NCSCC_RC_FAILURE;
 	}
@@ -118,13 +117,13 @@ uint32_t dtm_intra_processing_init(char *node_name, char *node_ip,
 	dtm_intranode_cb->sock_rcvbuf_size = rcvbuf_size;
 	dtm_intranode_cb->max_processes = intranode_max_processes;
 
-	if (NULL == (dtm_intranode_pfd = calloc(dtm_intranode_cb->max_processes,
-						sizeof(struct pollfd)))) {
+	if (nullptr == (dtm_intranode_pfd = static_cast<struct pollfd *>(calloc(dtm_intranode_cb->max_processes,
+                                                                          sizeof(struct pollfd))))) {
 		LOG_ER("DTM: Memory allocation failed for dtm_intranode_pfd");
 		return NCSCC_RC_FAILURE;
 	}
-	if (NULL == (pfd_list = calloc(dtm_intranode_cb->max_processes,
-				       sizeof(struct pollfd)))) {
+	if (nullptr == (pfd_list = static_cast<struct pollfd *>(calloc(dtm_intranode_cb->max_processes,
+                                                                         sizeof(struct pollfd))))) {
 		LOG_ER("DTM: Memory allocation failed for pfd_list");
 		return NCSCC_RC_FAILURE;
 	}
@@ -167,7 +166,7 @@ uint32_t dtm_intra_processing_init(char *node_name, char *node_ip,
 
 	dtm_intranode_cb->nodeid = m_NCS_GET_NODE_ID;
 
-	memset((char *)&serv_addr, 0, sizeof(serv_addr));
+	memset(&serv_addr, 0, sizeof(serv_addr));
 
 	if (dtm_socket_domain == AF_UNIX) {
 #define UX_SOCK_NAME_PREFIX PKGLOCALSTATEDIR "/osaf_dtm_intra_server"
@@ -187,7 +186,7 @@ uint32_t dtm_intra_processing_init(char *node_name, char *node_ip,
 		 * created socket*/
 
 		if (bind(dtm_intranode_cb->server_sockfd,
-			 (struct sockaddr *)&serv_addr, servlen) < 0) {
+			 reinterpret_cast<struct sockaddr *>(&serv_addr), servlen) < 0) {
 			LOG_ER("DTM: Bind failed err :%s ", strerror(errno));
 			close(dtm_intranode_cb->server_sockfd);
 			free(dtm_intranode_cb);
@@ -215,7 +214,7 @@ uint32_t dtm_intra_processing_init(char *node_name, char *node_ip,
 			serveraddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
 			if (bind(dtm_intranode_cb->server_sockfd,
-				 (struct sockaddr *)&serveraddr,
+				 reinterpret_cast<struct sockaddr *>(&serveraddr),
 				 sizeof(serveraddr)) < 0) {
 				LOG_ER("DTM: Bind failed err :%s ",
 				       strerror(errno));
@@ -233,7 +232,7 @@ uint32_t dtm_intra_processing_init(char *node_name, char *node_ip,
 				  &serveraddr6.sin6_addr);
 
 			if (bind(dtm_intranode_cb->server_sockfd,
-				 (struct sockaddr *)&serveraddr6,
+				 reinterpret_cast<struct sockaddr *>(&serveraddr6),
 				 sizeof(serveraddr6)) < 0) {
 				LOG_ER("DTM_INTRA: Bind failed");
 				close(dtm_intranode_cb->server_sockfd);
@@ -318,7 +317,7 @@ uint32_t dtm_intra_processing_init(char *node_name, char *node_ip,
 		 * Print at sysf_ipc.c: 640 */
 		if (NCSCC_RC_SUCCESS !=
 		    m_NCS_IPC_ATTACH(&dtm_intranode_cb->mbx)) {
-			m_NCS_IPC_RELEASE(&dtm_intranode_cb->mbx, NULL);
+			m_NCS_IPC_RELEASE(&dtm_intranode_cb->mbx, nullptr);
 			close(dtm_intranode_cb->server_sockfd);
 			free(dtm_intranode_cb);
 			free(dtm_intranode_pfd);
@@ -374,9 +373,9 @@ static uint32_t dtm_intranode_create_rcv_task(int task_hdl)
 	int min_prio = sched_get_priority_min(policy);
 	int prio_val = ((max_prio - min_prio) * 0.87);
 
-	if (m_NCS_TASK_CREATE((NCS_OS_CB)dtm_intranode_processing,
-			      (NCSCONTEXT)(long)task_hdl,
-			      (char *)"OSAF_DTM_INTRANODE", prio_val, policy,
+	if (ncs_task_create(dtm_intranode_processing,
+                            reinterpret_cast<NCSCONTEXT>(task_hdl),
+			      "OSAF_DTM_INTRANODE", prio_val, policy,
 			      DTM_INTRANODE_STACKSIZE,
 			      &dtm_intranode_cb->dtm_intranode_hdl_task) !=
 	    NCSCC_RC_SUCCESS) {
@@ -387,7 +386,7 @@ static uint32_t dtm_intranode_create_rcv_task(int task_hdl)
 	/* Start the created task,
 	 *   if start fails,
 	 *        release the task by calling the NCS task release function*/
-	if (m_NCS_TASK_START(dtm_intranode_cb->dtm_intranode_hdl_task) !=
+	if (ncs_task_start(dtm_intranode_cb->dtm_intranode_hdl_task) !=
 	    NCSCC_RC_SUCCESS) {
 		LOG_ER("DTM:Start of the Created Task-failed");
 		m_NCS_TASK_RELEASE(dtm_intranode_cb->dtm_intranode_hdl_task);
@@ -408,8 +407,7 @@ uint32_t
 dtm_intranode_process_poll_rcv_msg_common(DTM_INTRANODE_PID_INFO *pid_node)
 {
 	uint32_t identifier = 0;
-	uint8_t version = 0, *data = NULL;
-	DTM_INTRANODE_RCV_MSG_TYPES msg_type = 0;
+	uint8_t version = 0, *data = nullptr;
 
 	pid_node->buffer[pid_node->buff_total_len + 2] = '\0';
 	data = &pid_node->buffer[2];
@@ -426,7 +424,7 @@ dtm_intranode_process_poll_rcv_msg_common(DTM_INTRANODE_PID_INFO *pid_node)
 		return NCSCC_RC_FAILURE;
 	}
 
-	msg_type = ncs_decode_8bit(&data);
+	DTM_INTRANODE_RCV_MSG_TYPES msg_type = static_cast<DTM_INTRANODE_RCV_MSG_TYPES>(ncs_decode_8bit(&data));
 
 	if (DTM_INTRANODE_RCV_PID_TYPE == msg_type) {
 		dtm_intranode_process_pid_msg(&pid_node->buffer[8],
@@ -485,7 +483,7 @@ dtm_intranode_process_poll_rcv_msg_common(DTM_INTRANODE_PID_INFO *pid_node)
 	pid_node->bytes_tb_read = 0;
 	pid_node->buff_total_len = 0;
 	pid_node->num_by_read_for_len_buff = 0;
-	pid_node->buffer = NULL;
+	pid_node->buffer = nullptr;
 	return NCSCC_RC_SUCCESS;
 }
 
@@ -497,11 +495,9 @@ dtm_intranode_process_poll_rcv_msg_common(DTM_INTRANODE_PID_INFO *pid_node)
  */
 void dtm_intranode_process_poll_rcv_msg(int fd)
 {
-	DTM_INTRANODE_PID_INFO *node = NULL;
+	DTM_INTRANODE_PID_INFO *node = dtm_intranode_get_pid_info_using_fd(fd);
 
-	node = dtm_intranode_get_pid_info_using_fd(fd);
-
-	if (NULL == node) {
+	if (nullptr == node) {
 		LOG_ER(
 		    "DTM INTRA : PID info coressponding to fd doesnt exist, database mismatch. fd :%d",
 		    fd);
@@ -531,8 +527,8 @@ void dtm_intranode_process_poll_rcv_msg(int fd)
 				node->buff_total_len = local_len_buf;
 				node->num_by_read_for_len_buff = 2;
 
-				if (NULL == (node->buffer = calloc(
-						 1, (local_len_buf + 3)))) {
+				if (nullptr == (node->buffer = static_cast<uint8_t *>(calloc(
+                                        1, (local_len_buf + 3))))) {
 					/* Length + 2 is done to reuse the same
 					   buffer while sending to other nodes
 					 */
@@ -616,8 +612,8 @@ void dtm_intranode_process_poll_rcv_msg(int fd)
 		} else if (2 == node->num_by_read_for_len_buff) {
 			int recd_bytes = 0;
 
-			if (NULL == (node->buffer = calloc(
-					 1, (node->buff_total_len + 3)))) {
+			if (nullptr == (node->buffer = static_cast<uint8_t *>(calloc(
+                                1, (node->buff_total_len + 3))))) {
 				/* Length + 2 is done to reuse the same buffer
 				   while sending to other nodes */
 				LOG_ER(
@@ -703,7 +699,7 @@ void dtm_intranode_process_poll_rcv_msg(int fd)
  * @return NCSCC_RC_FAILURE
  *
  */
-static void dtm_intranode_processing(void)
+static void dtm_intranode_processing(void*)
 {
 	TRACE_ENTER();
 	while (1) {
@@ -731,15 +727,11 @@ static void dtm_intranode_processing(void)
 						/* Message process from
 						 * internode */
 						DTM_RCV_MSG_ELEM *msg_elem =
-						    NULL;
+						    reinterpret_cast<DTM_RCV_MSG_ELEM*>
+							 (ncs_ipc_non_blk_recv(
+                                                             &dtm_intranode_cb->mbx));
 
-						msg_elem =
-						    (DTM_RCV_MSG_ELEM
-							 *)(m_NCS_IPC_NON_BLK_RECEIVE(
-							&dtm_intranode_cb->mbx,
-							NULL));
-
-						if (NULL == msg_elem) {
+						if (nullptr == msg_elem) {
 							LOG_ER(
 							    "DTM : Intra Node Mailbox IPC_NON_BLK_RECEIVE Failed");
 							continue;
@@ -865,12 +857,12 @@ static void dtm_intranode_processing(void)
  */
 static uint32_t dtm_intranode_add_poll_fdlist(int fd, uint16_t event)
 {
-	DTM_INTRANODE_POLLFD_LIST *alloc_ptr = NULL, *head_ptr = NULL,
-				  *tail_ptr = NULL;
+	DTM_INTRANODE_POLLFD_LIST *alloc_ptr = nullptr, *head_ptr = nullptr,
+				  *tail_ptr = nullptr;
 
 	TRACE_ENTER();
-	if (NULL ==
-	    (alloc_ptr = calloc(1, sizeof(DTM_INTRANODE_POLLFD_LIST)))) {
+	if (nullptr ==
+	    (alloc_ptr = static_cast<DTM_INTRANODE_POLLFD_LIST *>(calloc(1, sizeof(DTM_INTRANODE_POLLFD_LIST))))) {
 		return NCSCC_RC_FAILURE;
 	}
 	alloc_ptr->dtm_intranode_fd.fd = fd;
@@ -879,9 +871,9 @@ static uint32_t dtm_intranode_add_poll_fdlist(int fd, uint16_t event)
 	head_ptr = dtm_intranode_cb->fd_list_ptr_head;
 	tail_ptr = dtm_intranode_cb->fd_list_ptr_tail;
 
-	alloc_ptr->next = NULL;
+	alloc_ptr->next = nullptr;
 
-	if (head_ptr == NULL) {
+	if (head_ptr == nullptr) {
 		dtm_intranode_cb->fd_list_ptr_head = alloc_ptr;
 		dtm_intranode_cb->fd_list_ptr_tail = alloc_ptr;
 	} else {
@@ -905,14 +897,14 @@ static uint32_t dtm_intranode_add_poll_fdlist(int fd, uint16_t event)
  */
 static uint32_t dtm_intranode_del_poll_fdlist(int fd)
 {
-	DTM_INTRANODE_POLLFD_LIST *back = NULL, *mov_ptr = NULL;
+	DTM_INTRANODE_POLLFD_LIST *back = nullptr, *mov_ptr = nullptr;
 
 	TRACE_ENTER();
-	for (back = NULL, mov_ptr = dtm_intranode_cb->fd_list_ptr_head;
-	     mov_ptr != NULL; back = mov_ptr, mov_ptr = mov_ptr->next) {
+	for (back = nullptr, mov_ptr = dtm_intranode_cb->fd_list_ptr_head;
+	     mov_ptr != nullptr; back = mov_ptr, mov_ptr = mov_ptr->next) {
 		if (fd == mov_ptr->dtm_intranode_fd.fd) {
 			/* STEP: Detach "mov_ptr" from linked-list */
-			if (back == NULL) {
+			if (back == nullptr) {
 				/* The head node is being deleted */
 				dtm_intranode_cb->fd_list_ptr_head =
 				    mov_ptr->next;
@@ -921,7 +913,7 @@ static uint32_t dtm_intranode_del_poll_fdlist(int fd)
 
 			} else {
 				back->next = mov_ptr->next;
-				if (NULL == mov_ptr->next) {
+				if (nullptr == mov_ptr->next) {
 					dtm_intranode_cb->fd_list_ptr_tail =
 					    back;
 				}
@@ -929,7 +921,7 @@ static uint32_t dtm_intranode_del_poll_fdlist(int fd)
 
 			/* STEP: Detach "mov_ptr" from linked-list */
 			free(mov_ptr);
-			mov_ptr = NULL;
+			mov_ptr = nullptr;
 			dtm_intranode_max_fd--;
 			dtm_intranode_fill_fd_set();
 			TRACE("DTM :Successfully deleted fd list");
@@ -955,11 +947,11 @@ uint32_t dtm_intranode_set_poll_fdlist(int fd, uint16_t events)
 	DTM_INTRANODE_POLLFD_LIST *mov_ptr = dtm_intranode_cb->fd_list_ptr_head;
 
 	TRACE_ENTER();
-	if (mov_ptr == NULL) {
+	if (mov_ptr == nullptr) {
 		LOG_ER("DTM:Unable to set the event in the poll list");
 		return NCSCC_RC_FAILURE;
 	}
-	while (mov_ptr != NULL) {
+	while (mov_ptr != nullptr) {
 		if (fd == mov_ptr->dtm_intranode_fd.fd) {
 			mov_ptr->dtm_intranode_fd.events =
 			    mov_ptr->dtm_intranode_fd.events | events;
@@ -987,11 +979,11 @@ uint32_t dtm_intranode_reset_poll_fdlist(int fd)
 	DTM_INTRANODE_POLLFD_LIST *mov_ptr = dtm_intranode_cb->fd_list_ptr_head;
 
 	TRACE_ENTER();
-	if (mov_ptr == NULL) {
+	if (mov_ptr == nullptr) {
 		LOG_ER("DTM:Unable to set the event in the poll list");
 		return NCSCC_RC_FAILURE;
 	}
-	while (mov_ptr != NULL) {
+	while (mov_ptr != nullptr) {
 		if (fd == mov_ptr->dtm_intranode_fd.fd) {
 			mov_ptr->dtm_intranode_fd.events = POLLIN;
 			dtm_intranode_fill_fd_set();
@@ -1012,14 +1004,14 @@ uint32_t dtm_intranode_reset_poll_fdlist(int fd)
  * @return NCSCC_RC_FAILURE
  *
  */
-static uint32_t dtm_intranode_fill_fd_set(void)
+static uint32_t dtm_intranode_fill_fd_set()
 {
 	int i = 0;
 	DTM_INTRANODE_POLLFD_LIST *mov_ptr = dtm_intranode_cb->fd_list_ptr_head;
 
 	TRACE_ENTER();
 	for (i = 0; i < dtm_intranode_max_fd; i++) {
-		if (NULL != mov_ptr) {
+		if (nullptr != mov_ptr) {
 			dtm_intranode_pfd[i].fd = mov_ptr->dtm_intranode_fd.fd;
 			dtm_intranode_pfd[i].events =
 			    mov_ptr->dtm_intranode_fd.events;
@@ -1035,9 +1027,9 @@ static uint32_t dtm_intranode_fill_fd_set(void)
 }
 static uint32_t dtm_intranode_create_pid_info(int fd)
 {
-	DTM_INTRANODE_PID_INFO *pid_node = NULL;
+	DTM_INTRANODE_PID_INFO *pid_node = nullptr;
 	TRACE_ENTER();
-	if (NULL == (pid_node = calloc(1, sizeof(DTM_INTRANODE_PID_INFO)))) {
+	if (nullptr == (pid_node = static_cast<DTM_INTRANODE_PID_INFO *>(calloc(1, sizeof(DTM_INTRANODE_PID_INFO))))) {
 		TRACE("\nMemory allocation failed for DTM_INTRANODE_PID_INFO");
 		return NCSCC_RC_FAILURE;
 	}
@@ -1046,7 +1038,7 @@ static uint32_t dtm_intranode_create_pid_info(int fd)
 	pid_node->pid =
 	    0; /* Yet to be filled from the PID Message which is yet to come */
 	pid_node->node_id = m_NCS_GET_NODE_ID;
-	pid_node->fd_node.key_info = (uint8_t *)&pid_node->accepted_fd;
+	pid_node->fd_node.key_info = reinterpret_cast<uint8_t *>(&pid_node->accepted_fd);
 
 	if (m_NCS_IPC_CREATE(&pid_node->mbx) != NCSCC_RC_SUCCESS) {
 		/* Mail box creation failed */
@@ -1060,7 +1052,7 @@ static uint32_t dtm_intranode_create_pid_info(int fd)
 		if (NCSCC_RC_SUCCESS != m_NCS_IPC_ATTACH(&pid_node->mbx)) {
 			TRACE(
 			    "\nMailbox attach failed,dtm_intranode_process_pid_msg");
-			m_NCS_IPC_RELEASE(&pid_node->mbx, NULL);
+			m_NCS_IPC_RELEASE(&pid_node->mbx, nullptr);
 			free(pid_node);
 			return NCSCC_RC_FAILURE;
 		}
@@ -1072,7 +1064,7 @@ static uint32_t dtm_intranode_create_pid_info(int fd)
 		    obj); /* extract and fill value needs to be extracted */
 	}
 	ncs_patricia_tree_add(&dtm_intranode_cb->dtm_intranode_fd_list,
-			      (NCS_PATRICIA_NODE *)&pid_node->fd_node);
+			      &pid_node->fd_node);
 	TRACE_LEAVE();
 	return NCSCC_RC_SUCCESS;
 }
@@ -1085,18 +1077,17 @@ static uint32_t dtm_intranode_create_pid_info(int fd)
  * @return NCSCC_RC_FAILURE
  *
  */
-static uint32_t dtm_intranode_process_incoming_conn(void)
+static uint32_t dtm_intranode_process_incoming_conn()
 {
+	TRACE_ENTER();
 	/* Accept processing */
-	int accept_fd = 0;
-	int sndbuf_size = dtm_intranode_cb->sock_sndbuf_size,
-	    rcvbuf_size = dtm_intranode_cb->sock_rcvbuf_size;
+	int sndbuf_size = dtm_intranode_cb->sock_sndbuf_size;
+	int rcvbuf_size = dtm_intranode_cb->sock_rcvbuf_size;
 	socklen_t len = sizeof(struct sockaddr_un);
 	struct sockaddr_un cli_addr;
 	/* Accept should be non_block */
-	TRACE_ENTER();
-	accept_fd = accept(dtm_intranode_cb->server_sockfd,
-			   (struct sockaddr *)&cli_addr, &len);
+	int accept_fd = accept(dtm_intranode_cb->server_sockfd,
+			   reinterpret_cast<struct sockaddr *>(&cli_addr), &len);
 
 	/* Error Checking */
 	if (accept_fd < 0) {

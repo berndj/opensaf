@@ -16,21 +16,22 @@
  *
  */
 
-#include "dtm.h"
-#include <errno.h>
-#include <inttypes.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include "dtm/dtmnd/dtm_node.h"
+#include <limits.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include "dtm_socket.h"
-#include "dtm_node.h"
-#include "dtm_inter.h"
-#include "dtm_inter_disc.h"
-#include "dtm_inter_trans.h"
+#include <cerrno>
+#include <cinttypes>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include "base/ncsencdec_pub.h"
+#include "dtm/dtmnd/dtm.h"
+#include "dtm/dtmnd/dtm_inter.h"
+#include "dtm/dtmnd/dtm_inter_disc.h"
+#include "dtm/dtmnd/dtm_inter_trans.h"
+#include "dtm/dtmnd/dtm_socket.h"
 
 #define DTM_INTERNODE_RECV_BUFFER_SIZE 1024
 
@@ -69,14 +70,14 @@ static uint32_t dtm_construct_node_info_hdr(DTM_INTERNODE_CB *dtms_cb,
 
 	*pack_size = NODE_INFO_HDR_SIZE + strlen(dtms_cb->node_name);
 
-	ncs_encode_16bit(&data, (uint16_t)(*pack_size - 2)); /*pkt_type  */
-	ncs_encode_32bit(&data, (uint32_t)(DTM_INTERNODE_SND_MSG_IDENTIFIER));
-	ncs_encode_8bit(&data, (uint8_t)DTM_INTERNODE_SND_MSG_VER);
-	ncs_encode_8bit(&data, (uint8_t)DTM_CONN_DETAILS_MSG_TYPE);
+	ncs_encode_16bit(&data, static_cast<uint16_t>(*pack_size - 2)); /*pkt_type  */
+	ncs_encode_32bit(&data, DTM_INTERNODE_SND_MSG_IDENTIFIER);
+	ncs_encode_8bit(&data, DTM_INTERNODE_SND_MSG_VER);
+	ncs_encode_8bit(&data, uint8_t{DTM_CONN_DETAILS_MSG_TYPE});
 	ncs_encode_32bit(&data, dtms_cb->node_id);
 	ncs_encode_32bit(&data, strlen(dtms_cb->node_name));
-	ncs_encode_octets(&data, (uint8_t *)dtms_cb->node_name,
-			  (uint8_t)strlen(dtms_cb->node_name));
+	ncs_encode_octets(&data, reinterpret_cast<uint8_t *>(dtms_cb->node_name),
+			  static_cast<uint8_t>(strlen(dtms_cb->node_name)));
 
 	return NCSCC_RC_SUCCESS;
 }
@@ -218,9 +219,6 @@ void dtm_internode_process_poll_rcv_msg_common(
     DTM_NODE_DB *node, uint8_t *buffer, uint16_t local_len_buf,
     uint8_t *node_info_hrd, uint16_t node_info_buffer_len, bool *close_conn)
 {
-	DTM_MSG_TYPES pkt_type = 0;
-	uint32_t identifier = 0;
-	uint8_t version = 0;
 	uint8_t *data = buffer;
 	DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
 
@@ -231,8 +229,8 @@ void dtm_internode_process_poll_rcv_msg_common(
 	}
 
 	/* Decode the message */
-	identifier = ncs_decode_32bit(&data);
-	version = ncs_decode_8bit(&data);
+	uint32_t identifier = ncs_decode_32bit(&data);
+	uint8_t version = ncs_decode_8bit(&data);
 
 	if ((DTM_INTERNODE_RCV_MSG_IDENTIFIER != identifier) ||
 	    (DTM_INTERNODE_RCV_MSG_VER != version)) {
@@ -241,11 +239,11 @@ void dtm_internode_process_poll_rcv_msg_common(
 		return;
 	}
 
-	pkt_type = ncs_decode_8bit(&data);
+	DTM_MSG_TYPES pkt_type = static_cast<DTM_MSG_TYPES>(ncs_decode_8bit(&data));
 
 	if (pkt_type == DTM_UP_MSG_TYPE) {
-		uint8_t *alloc_buffer = malloc(local_len_buf - 6);
-		if (alloc_buffer == NULL) {
+          uint8_t *alloc_buffer = static_cast<uint8_t *>(malloc(local_len_buf - 6));
+		if (alloc_buffer == nullptr) {
 			LOG_ER(
 			    "Memory allocation failed in dtm_internode_processing");
 			return;
@@ -262,8 +260,8 @@ void dtm_internode_process_poll_rcv_msg_common(
 			*close_conn = true;
 		}
 	} else if (pkt_type == DTM_DOWN_MSG_TYPE) {
-		uint8_t *alloc_buffer = malloc(local_len_buf - 6);
-		if (alloc_buffer == NULL) {
+          uint8_t *alloc_buffer = static_cast<uint8_t *>(malloc(local_len_buf - 6));
+		if (alloc_buffer == nullptr) {
 			LOG_ER(
 			    "Memory allocation failed in dtm_internode_processing");
 			return;
@@ -278,8 +276,8 @@ void dtm_internode_process_poll_rcv_msg_common(
 			    local_len_buf);
 			return;
 		}
-		uint8_t *alloc_buffer = malloc(local_len_buf + 2);
-		if (alloc_buffer == NULL) {
+		uint8_t *alloc_buffer = static_cast<uint8_t *>(malloc(local_len_buf + 2));
+		if (alloc_buffer == nullptr) {
 			LOG_ER(
 			    "Memory allocation failed in dtm_internode_processing");
 			return;
@@ -324,7 +322,7 @@ void dtm_internode_process_poll_rcv_msg(DTM_NODE_DB *node, bool *close_conn,
 		} while (recd_bytes < 0 && errno == EINTR);
 		if (recd_bytes == 0) {
 			TRACE("Node 0x%" PRIx32 " closed the connection",
-			      (uint32_t)node->node_id);
+			      static_cast<uint32_t>(node->node_id));
 			*close_conn = true;
 			break;
 		}
@@ -333,11 +331,11 @@ void dtm_internode_process_poll_rcv_msg(DTM_NODE_DB *node, bool *close_conn,
 				if (errno == ECONNRESET) {
 					TRACE(
 					    "Connection reset by node 0x%" PRIx32,
-					    (uint32_t)node->node_id);
+					    static_cast<uint32_t>(node->node_id));
 				} else {
 					LOG_ER("recv() from node 0x%" PRIx32
 					       " failed, errno=%d",
-					       (uint32_t)node->node_id, errno);
+					       static_cast<uint32_t>(node->node_id), errno);
 				}
 				*close_conn = true;
 			}
@@ -346,10 +344,10 @@ void dtm_internode_process_poll_rcv_msg(DTM_NODE_DB *node, bool *close_conn,
 		node->recvbuf_size += recd_bytes;
 		while (node->recvbuf_size >= sizeof(uint16_t)) {
 			uint16_t message_size =
-			    (((uint16_t)node->recvbuf[0]) << 8) |
-			    ((uint16_t)node->recvbuf[1]);
+			    (static_cast<uint16_t>(node->recvbuf[0]) << 8) |
+			    static_cast<uint16_t>(node->recvbuf[1]);
 			uint32_t total_size =
-			    sizeof(uint16_t) + ((uint32_t)message_size);
+			    sizeof(uint16_t) + (static_cast<uint32_t>(message_size));
 			if (node->recvbuf_size < total_size)
 				break;
 			dtm_internode_process_poll_rcv_msg_common(
@@ -463,7 +461,7 @@ void node_discovery_process(void *arg)
 		/* determine which ones they are. */
 		/***********************************************************/
 		for (int i = 0; i < poll_ret; ++i) {
-			DTM_NODE_DB *node = (DTM_NODE_DB *)events[i].data.ptr;
+                  DTM_NODE_DB *node = static_cast<DTM_NODE_DB *>(events[i].data.ptr);
 
 			/*********************************************************/
 			/* Loop through to find the descriptors that returned */
@@ -537,14 +535,14 @@ static void ReceiveBcastOrMcast(void)
 	do {
 		recd_bytes =
 		    dtm_dgram_recv_bmcast(dtms_cb, inbuf, sizeof(inbuf));
-		if (recd_bytes >= (ssize_t)sizeof(uint16_t)) {
+		if (recd_bytes >= static_cast<ssize_t>(sizeof(uint16_t))) {
 			uint8_t *data1 = inbuf;
 			uint16_t recd_buf_len = ncs_decode_16bit(&data1);
-			if (recd_buf_len == (size_t)recd_bytes) {
+			if (recd_buf_len == static_cast<size_t>(recd_bytes)) {
 				DTM_NODE_DB *new_node = dtm_process_connect(
 				    dtms_cb, data1,
 				    (recd_bytes - sizeof(uint16_t)));
-				if (new_node != NULL) {
+				if (new_node != nullptr) {
 					// Add the new incoming connection to
 					// the pollfd structure
 					LOG_IN(
@@ -572,7 +570,7 @@ static void AcceptTcpConnections(uint8_t *node_info_hrd,
 	DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
 	DTM_NODE_DB *new_node;
 	while ((new_node = dtm_process_accept(dtms_cb, dtms_cb->stream_sock)) !=
-	       NULL) {
+	       nullptr) {
 		if (dtm_comm_socket_send(new_node->comm_socket, node_info_hrd,
 					 node_info_buffer_len) ==
 		    NCSCC_RC_SUCCESS) {
@@ -590,8 +588,8 @@ static void ReceiveFromMailbox(void)
 {
 	DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
 	DTM_SND_MSG_ELEM *msg_elem;
-	while ((msg_elem = (DTM_SND_MSG_ELEM *)(m_NCS_IPC_NON_BLK_RECEIVE(
-		    &dtms_cb->mbx, NULL))) != NULL) {
+	while ((msg_elem = reinterpret_cast<DTM_SND_MSG_ELEM *>(ncs_ipc_non_blk_recv(
+		    &dtms_cb->mbx))) != nullptr) {
 		if (msg_elem->type == DTM_MBX_ADD_DISTR_TYPE) {
 			dtm_internode_add_to_svc_dist_list(
 			    msg_elem->info.svc_event.server_type,
@@ -630,7 +628,7 @@ static void AddNodeToEpoll(DTM_INTERNODE_CB *dtms_cb, DTM_NODE_DB *node)
 static void RemoveNodeFromEpoll(DTM_INTERNODE_CB *dtms_cb, DTM_NODE_DB *node)
 {
 	if (epoll_ctl(dtms_cb->epoll_fd, EPOLL_CTL_DEL, node->comm_socket,
-		      NULL) != 0) {
+		      nullptr) != 0) {
 		LOG_ER("DTM: epoll_ctl(%d, EPOLL_CTL_DEL, %d) failed: %d",
 		       dtms_cb->epoll_fd, node->comm_socket, errno);
 		exit(EXIT_FAILURE);

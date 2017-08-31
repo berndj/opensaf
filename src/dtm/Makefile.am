@@ -43,7 +43,7 @@ nodist_pkgclccli_SCRIPTS += \
 dist_pkgsysconf_DATA += \
 	src/dtm/dtmnd/dtmd.conf
 
-bin_osaftransportd_CXXFLAGS =$(AM_CXXFLAGS)
+bin_osaftransportd_CXXFLAGS = $(AM_CXXFLAGS)
 
 bin_osaftransportd_CPPFLAGS = \
 	$(AM_CPPFLAGS)
@@ -57,20 +57,22 @@ bin_osaftransportd_SOURCES = \
 bin_osaftransportd_LDADD = \
 	lib/libopensaf_core.la
 
+bin_osafdtmd_CXXFLAGS = -Wold-style-cast -Wzero-as-null-pointer-constant $(AM_CXXFLAGS)
+
 bin_osafdtmd_CPPFLAGS = \
 	$(AM_CPPFLAGS)
 
 bin_osafdtmd_SOURCES = \
-	src/dtm/dtmnd/dtm_intra.c \
-	src/dtm/dtmnd/dtm_main.c \
-	src/dtm/dtmnd/dtm_read_config.c \
-	src/dtm/dtmnd/dtm_node.c \
-	src/dtm/dtmnd/dtm_node_db.c \
-	src/dtm/dtmnd/dtm_node_sockets.c \
-	src/dtm/dtmnd/dtm_inter_svc.c \
-	src/dtm/dtmnd/dtm_intra_svc.c \
-	src/dtm/dtmnd/dtm_intra_trans.c \
-	src/dtm/dtmnd/dtm_inter_trans.c
+	src/dtm/dtmnd/dtm_inter_svc.cc \
+	src/dtm/dtmnd/dtm_inter_trans.cc \
+	src/dtm/dtmnd/dtm_intra.cc \
+	src/dtm/dtmnd/dtm_intra_svc.cc \
+	src/dtm/dtmnd/dtm_intra_trans.cc \
+	src/dtm/dtmnd/dtm_main.cc \
+	src/dtm/dtmnd/dtm_node.cc \
+	src/dtm/dtmnd/dtm_node_db.cc \
+	src/dtm/dtmnd/dtm_node_sockets.cc \
+	src/dtm/dtmnd/dtm_read_config.cc
 
 bin_osafdtmd_LDADD = \
 	lib/libopensaf_core.la

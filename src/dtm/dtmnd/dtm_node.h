@@ -15,12 +15,14 @@
  * Author(s): GoAhead Software
  *
  */
+
 #ifndef DTM_DTMND_DTM_NODE_H_
 #define DTM_DTMND_DTM_NODE_H_
 
-#include <stdbool.h>
-
-typedef void raw_type;
+#include <cstddef>
+#include <cstdint>
+#include "dtm/dtmnd/dtm_cb.h"
+#include "mds/mds_papi.h"
 
 extern char *dtm_validate_listening_ip_addr(DTM_INTERNODE_CB *config);
 extern uint32_t dtm_stream_nonblocking_listener(DTM_INTERNODE_CB *dtms_cb);

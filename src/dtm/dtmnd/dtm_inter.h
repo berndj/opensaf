@@ -19,15 +19,15 @@
 #ifndef DTM_DTMND_DTM_INTER_H_
 #define DTM_DTMND_DTM_INTER_H_
 
-#include <stdint.h>
+#include <cstdint>
+#include "base/ncssysf_ipc.h"
+#include "dtm/dtmnd/dtm_cb.h"
+#include "mds/mds_papi.h"
 
-#define DTM_INTERNODE_RCV_MSG_IDENTIFIER 0x56123456
-
-#define DTM_INTERNODE_RCV_MSG_VER 1
-
-#define DTM_INTERNODE_SND_MSG_IDENTIFIER 0x56123456
-
-#define DTM_INTERNODE_SND_MSG_VER 1
+constexpr uint32_t DTM_INTERNODE_RCV_MSG_IDENTIFIER = 0x56123456;
+constexpr uint8_t DTM_INTERNODE_RCV_MSG_VER = 1;
+constexpr uint32_t DTM_INTERNODE_SND_MSG_IDENTIFIER = 0x56123456;
+constexpr uint8_t DTM_INTERNODE_SND_MSG_VER = 1;
 
 typedef enum dtm_msg_types {
   DTM_CONN_DETAILS_MSG_TYPE = 1,

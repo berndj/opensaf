@@ -19,17 +19,10 @@
 #ifndef DTM_DTMND_DTM_H_
 #define DTM_DTMND_DTM_H_
 
-/* From /base/common/inc */
-
-#include "base/logtrace.h"
-#include <stdbool.h>
-#include <poll.h>
-#include "base/usrbuf.h"
-#include "base/ncsencdec_pub.h"
-#include "base/ncs_mda_papi.h"
-#include "base/ncs_edu_pub.h"
-#include <net/if.h>
-#include "dtm_cb.h"
+#include <netinet/in.h>
+#include <cstdint>
+#include "dtm/dtmnd/dtm_cb.h"
+#include "mds/mds_papi.h"
 
 extern DTM_INTERNODE_CB *dtms_gl_cb;
 extern bool initial_discovery_phase;
@@ -54,7 +47,6 @@ typedef enum {
 typedef struct dtm_rcv_msg_elem {
   void *next;
   MBX_POST_TYPES type;
-  uint8_t pri;
   union {
     struct {
       uint16_t len;
@@ -111,7 +103,7 @@ extern DTM_NODE_DB *dtm_node_getnext_by_id(uint32_t node_id);
 extern uint32_t dtm_node_add(DTM_NODE_DB *node, int i);
 extern uint32_t dtm_node_delete(DTM_NODE_DB *nnode, int i);
 extern DTM_NODE_DB *dtm_node_new(const DTM_NODE_DB *new_node);
-extern int dtm_read_config(DTM_INTERNODE_CB *config, char *dtm_config_file);
-uint32_t dtm_service_discovery_init(DTM_INTERNODE_CB *dtms_cb);
+extern int dtm_read_config(DTM_INTERNODE_CB *config, const char *dtm_config_file);
+extern uint32_t dtm_service_discovery_init(DTM_INTERNODE_CB *dtms_cb);
 
 #endif  // DTM_DTMND_DTM_H_

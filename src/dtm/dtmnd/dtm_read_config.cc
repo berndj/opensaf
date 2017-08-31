@@ -18,18 +18,18 @@
 
 #include <arpa/inet.h>
 #include <ifaddrs.h>
-#include <inttypes.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <sys/socket.h>
-#include <stdio.h>
-#include "osaf/configmake.h"
+#include <cinttypes>
+#include <cstdio>
 #include "base/logtrace.h"
 #include "base/ncs_main_papi.h"
-#include "dtm.h"
-#include "dtm_socket.h"
-#include "dtm_node.h"
+#include "dtm/dtmnd/dtm.h"
+#include "dtm/dtmnd/dtm_node.h"
+#include "dtm/dtmnd/dtm_socket.h"
+#include "osaf/configmake.h"
 
 char match_ip[INET6_ADDRSTRLEN];
 extern uint32_t intranode_max_processes;
@@ -141,27 +141,27 @@ bool in6_islinklocal(struct sockaddr_in6 *sin6)
  */
 char *dtm_validate_listening_ip_addr(DTM_INTERNODE_CB *config)
 {
-	struct ifaddrs *if_addrs = NULL;
-	struct ifaddrs *if_addr = NULL;
+	struct ifaddrs *if_addrs = nullptr;
+	struct ifaddrs *if_addr = nullptr;
 	memset(match_ip, 0, INET6_ADDRSTRLEN);
 
 	if (0 == getifaddrs(&if_addrs)) {
-		for (if_addr = if_addrs; if_addr != NULL;
+		for (if_addr = if_addrs; if_addr != nullptr;
 		     if_addr = if_addr->ifa_next) {
 
 			TRACE("Interface name : %s", if_addr->ifa_name);
 
-			if (if_addr->ifa_addr == NULL)
+			if (if_addr->ifa_addr == nullptr)
 				continue;
 
 			// Address
-			void *tmp = NULL;
+			void *tmp = nullptr;
 			if (if_addr->ifa_addr->sa_family == AF_INET) {
-				tmp = &((struct sockaddr_in *)if_addr->ifa_addr)
+                          tmp = &(reinterpret_cast<struct sockaddr_in *>(if_addr->ifa_addr))
 					   ->sin_addr;
 			} else if (if_addr->ifa_addr->sa_family == AF_INET6) {
 				tmp =
-				    &((struct sockaddr_in6 *)if_addr->ifa_addr)
+				    &(reinterpret_cast<struct sockaddr_in6 *>(if_addr->ifa_addr))
 					 ->sin6_addr;
 			}
 			TRACE("IP addr : %s",
@@ -171,24 +171,18 @@ char *dtm_validate_listening_ip_addr(DTM_INTERNODE_CB *config)
 			if (strcmp(match_ip, config->ip_addr) == 0) {
 
 				config->i_addr_family =
-				    if_addr->ifa_addr->sa_family;
+				    static_cast<DTM_IP_ADDR_TYPE>(if_addr->ifa_addr->sa_family);
 				strncpy(config->ifname, if_addr->ifa_name,
 					IFNAMSIZ);
 
 				// Bcast  Address
 				if (if_addr->ifa_addr->sa_family == AF_INET) {
 					struct in_addr addr =
-					    ((struct sockaddr_in *)
-						 if_addr->ifa_addr)
-						->sin_addr;
+					    reinterpret_cast<struct sockaddr_in *>(if_addr->ifa_addr)->sin_addr;
 					struct in_addr netmask =
-					    ((struct sockaddr_in *)
-						 if_addr->ifa_netmask)
-						->sin_addr;
+					    reinterpret_cast<struct sockaddr_in *>(if_addr->ifa_netmask)->sin_addr;
 					struct in_addr broadaddr =
-					    ((struct sockaddr_in *)
-						 if_addr->ifa_broadaddr)
-						->sin_addr;
+					    reinterpret_cast<struct sockaddr_in *>(if_addr->ifa_broadaddr)->sin_addr;
 					TRACE("DTM: addr=0x%" PRIx32,
 					      ntohl(addr.s_addr));
 					TRACE("DTM: netmask=0x%" PRIx32,
@@ -209,8 +203,7 @@ char *dtm_validate_listening_ip_addr(DTM_INTERNODE_CB *config)
 				} else if (if_addr->ifa_addr->sa_family ==
 					   AF_INET6) {
 					struct sockaddr_in6 *addr =
-					    (struct sockaddr_in6 *)
-						if_addr->ifa_addr;
+					    reinterpret_cast<struct sockaddr_in6 *>(if_addr->ifa_addr);
 					memset(config->bcast_addr, 0,
 					       INET6_ADDRSTRLEN);
 					if (in6_islinklocal(addr) == true) {
@@ -233,18 +226,18 @@ char *dtm_validate_listening_ip_addr(DTM_INTERNODE_CB *config)
 				    config->bcast_addr, config->i_addr_family);
 
 				freeifaddrs(if_addrs);
-				if_addrs = NULL;
+				if_addrs = nullptr;
 				return (match_ip);
 			}
 		}
 		freeifaddrs(if_addrs);
-		if_addrs = NULL;
+		if_addrs = nullptr;
 	} else {
 		TRACE("getifaddrs() failed with errno =  %i %s", errno,
 		      strerror(errno));
 	}
 	LOG_ER("DTM:  Validation of  IP address failed : %s ", config->ip_addr);
-	return (NULL);
+	return (nullptr);
 }
 
 /**
@@ -256,13 +249,13 @@ char *dtm_validate_listening_ip_addr(DTM_INTERNODE_CB *config)
  * @return NCSCC_RC_FAILURE
  *
  */
-int dtm_read_config(DTM_INTERNODE_CB *config, char *dtm_config_file)
+int dtm_read_config(DTM_INTERNODE_CB *config, const char *dtm_config_file)
 {
 	FILE *dtm_conf_file;
 	char line[DTM_MAX_TAG_LEN];
 	int i, n, comment_line, fieldmissing = 0, tag = 0, tag_len = 0;
 	/* Location for storing the matched IP address */
-	char *local_match_ip = NULL;
+	char *local_match_ip = nullptr;
 	FILE *fp;
 
 	TRACE_ENTER();
@@ -290,7 +283,7 @@ int dtm_read_config(DTM_INTERNODE_CB *config, char *dtm_config_file)
 	config->node_id = m_NCS_GET_NODE_ID;
 	intranode_max_processes = 100;
 	fp = fopen(PKGSYSCONFDIR "/node_name", "r");
-	if (fp == NULL) {
+	if (fp == nullptr) {
 		LOG_ER("DTM: Could not open file  node_name ");
 		return errno;
 	}
@@ -310,7 +303,7 @@ int dtm_read_config(DTM_INTERNODE_CB *config, char *dtm_config_file)
 
 	/* Open dtm.conf config file. */
 	dtm_conf_file = fopen(dtm_config_file, "r");
-	if (dtm_conf_file == NULL) {
+	if (dtm_conf_file == nullptr) {
 		/* Problem with conf file - return errno value */
 		LOG_ER(
 		    "DTM: dtm_read_cofig: there was a problem opening the dtm.conf file");
@@ -367,7 +360,7 @@ int dtm_read_config(DTM_INTERNODE_CB *config, char *dtm_config_file)
 					    1); /* ipv4 ipv6 addrBuffer */
 				if (strlen(config->ip_addr) == 0) {
 					LOG_ER(
-					    "DTM:ip_addr Shouldn't  be NULL");
+					    "DTM:ip_addr Shouldn't be empty");
 					fclose(dtm_conf_file);
 					return -1;
 				}
@@ -393,7 +386,7 @@ int dtm_read_config(DTM_INTERNODE_CB *config, char *dtm_config_file)
 				    strlen("DTM_TCP_LISTENING_PORT=")) == 0) {
 				tag_len = strlen("DTM_TCP_LISTENING_PORT=");
 				config->stream_port =
-				    (in_port_t)atoi(&line[tag_len]);
+				    atoi(&line[tag_len]);
 
 				if (config->stream_port < 1) {
 					LOG_ER(
@@ -409,7 +402,7 @@ int dtm_read_config(DTM_INTERNODE_CB *config, char *dtm_config_file)
 				    strlen("DTM_UDP_BCAST_SND_PORT=")) == 0) {
 				tag_len = strlen("DTM_UDP_BCAST_SND_PORT=");
 				config->dgram_port_sndr =
-				    ((in_port_t)atoi(&line[tag_len]));
+				    atoi(&line[tag_len]);
 				if (config->dgram_port_sndr < 1) {
 					LOG_ER(
 					    "DTM:dgram_port_sndr  must be a positive integer");
@@ -424,7 +417,7 @@ int dtm_read_config(DTM_INTERNODE_CB *config, char *dtm_config_file)
 				    strlen("DTM_UDP_BCAST_REV_PORT=")) == 0) {
 				tag_len = strlen("DTM_UDP_BCAST_REV_PORT=");
 				config->dgram_port_rcvr =
-				    ((in_port_t)atoi(&line[tag_len]));
+				    atoi(&line[tag_len]);
 				TRACE("DTM:dgram_port_rcvr  :%d",
 				      config->dgram_port_rcvr);
 				if (config->dgram_port_rcvr < 1) {
@@ -573,7 +566,7 @@ int dtm_read_config(DTM_INTERNODE_CB *config, char *dtm_config_file)
 				     DTM_SOCK_SND_RCV_BUF_SIZE)) {
 					config->sock_rcvbuf_size =
 					    DTM_SOCK_SND_RCV_BUF_SIZE;
-				} else if (atoi(&line[tag_len]) > rcvbuf_size) {
+				} else if (atoi(&line[tag_len]) >= 0 && static_cast<uint32_t>(atoi(&line[tag_len])) > rcvbuf_size) {
 					config->sock_rcvbuf_size =
 					    atoi(&line[tag_len]);
 				}
@@ -588,7 +581,7 @@ int dtm_read_config(DTM_INTERNODE_CB *config, char *dtm_config_file)
 				     DTM_SOCK_SND_RCV_BUF_SIZE)) {
 					config->sock_sndbuf_size =
 					    DTM_SOCK_SND_RCV_BUF_SIZE;
-				} else if (atoi(&line[tag_len]) > sndbuf_size) {
+				} else if (atoi(&line[tag_len]) >= 0 && static_cast<uint32_t>(atoi(&line[tag_len])) > sndbuf_size) {
 					config->sock_sndbuf_size =
 					    atoi(&line[tag_len]);
 				}
@@ -625,7 +618,7 @@ int dtm_read_config(DTM_INTERNODE_CB *config, char *dtm_config_file)
 	/* Set up validate the IP & sa_family stuff  */
 	/*************************************************************/
 	local_match_ip = dtm_validate_listening_ip_addr(config);
-	if (local_match_ip == NULL) {
+	if (local_match_ip == nullptr) {
 		LOG_ER(
 		    "DTM: ip_addr cannot match available network interfaces with IPs of node specified in the dtm.conf file");
 		return -1;

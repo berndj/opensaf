@@ -14,8 +14,11 @@
  * Author(s): GoAhead Software
  *
  */
+
 #ifndef DTM_DTMND_DTM_SOCKET_H_
 #define DTM_DTMND_DTM_SOCKET_H_
+
+#include <cerrno>
 
 #define SOCKET_ERROR() -1
 #define SDDR_IN_USE (errno == EADDRINUSE)

@@ -19,7 +19,7 @@
 #ifndef DTM_DTMND_DTM_INTER_TRANS_H_
 #define DTM_DTMND_DTM_INTER_TRANS_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include "mds/mds_papi.h"
 
 struct node_list;

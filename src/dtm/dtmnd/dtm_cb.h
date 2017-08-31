@@ -19,8 +19,14 @@
 #ifndef DTM_DTMND_DTM_CB_H_
 #define DTM_DTMND_DTM_CB_H_
 
-#include <stdbool.h>
-#include <stdint.h>
+#include <netinet/in.h>
+#include <net/if.h>
+#include <poll.h>
+#include <cstdint>
+#include "mds/mds_papi.h"
+#include "base/ncssysf_lck.h"
+#include "base/ncspatricia.h"
+#include "base/ncssysf_ipc.h"
 
 #define MAX_PORT_LENGTH 256
 
@@ -58,8 +64,6 @@ typedef struct node_list {
   uint32_t recvbuf_size;
   uint8_t recvbuf[sizeof(uint16_t) + UINT16_MAX];
 } DTM_NODE_DB;
-
-char remoteIP[INET6_ADDRSTRLEN];
 
 /*  control block */
 typedef struct dtm_internode_cb {
