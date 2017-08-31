@@ -39,14 +39,16 @@ constexpr uint16_t DTM_LIB_DOWN_MSG_SIZE_FULL = DTM_LIB_UP_MSG_SIZE_FULL;
 /* 2 -len(0), 4 - iden(2), 1- ver(6), 1-msg type(7), 4- node_id (8),
    8 -ref_val(12) */
 
-constexpr uint16_t DTM_LIB_NODE_UP_MSG_SIZE = 18 + 1 /*i_addr_family*/ + 46 /*ip_addr*/ +
-                                               _POSIX_HOST_NAME_MAX /* node_name */;
+constexpr uint16_t DTM_LIB_NODE_UP_MSG_SIZE =
+    18 + 1 /*i_addr_family*/ + 46 /*ip_addr*/ +
+    _POSIX_HOST_NAME_MAX /* node_name */;
 
 constexpr uint16_t DTM_LIB_NODE_DOWN_MSG_SIZE = 18;
 
 constexpr uint16_t DTM_LIB_NODE_UP_MSG_SIZE_FULL = DTM_LIB_NODE_UP_MSG_SIZE + 2;
 
-constexpr uint16_t DTM_LIB_NODE_DOWN_MSG_SIZE_FULL = DTM_LIB_NODE_DOWN_MSG_SIZE + 2;
+constexpr uint16_t DTM_LIB_NODE_DOWN_MSG_SIZE_FULL =
+    DTM_LIB_NODE_DOWN_MSG_SIZE + 2;
 
 typedef enum dtm_svc_install_scope {
   DTM_SVC_INSTALL_SCOPE_PCON = 1,
