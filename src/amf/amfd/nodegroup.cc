@@ -1061,7 +1061,7 @@ static void ng_admin_unlock_inst(AVD_AMF_NG *ng) {
               (su->su_on_node->node_state != AVD_AVND_STATE_PRESENT))
             continue;
 
-          if (sg->saAmfSGNumPrefInserviceSUs > su_try_inst) {
+          if (sg->pref_inservice_sus() > su_try_inst) {
             if (avd_snd_presence_msg(avd_cb, su, false) != NCSCC_RC_SUCCESS) {
               LOG_NO("Failed to send Instantiation of '%s'", su->name.c_str());
             } else {

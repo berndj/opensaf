@@ -56,7 +56,7 @@ static void clm_node_join_complete(AVD_AVND *node) {
           /* When the SU will instantiate then prescence state change message
              will come and so store the callback parameters to send response
              later on. */
-          if (su->sg_of_su->saAmfSGNumPrefInserviceSUs >
+          if (su->sg_of_su->pref_inservice_sus() >
               (sg_instantiated_su_count(su->sg_of_su) +
                su->sg_of_su->try_inst_counter)) {
             if (avd_snd_presence_msg(avd_cb, su, false) == NCSCC_RC_SUCCESS) {

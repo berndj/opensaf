@@ -1820,7 +1820,7 @@ void avd_sg_app_node_su_inst_func(AVD_CL_CB *cb, AVD_AVND *avnd) {
           (i_su->su_on_node->saAmfNodeAdminState !=
            SA_AMF_ADMIN_LOCKED_INSTANTIATION)) {
         if (i_su->saAmfSUPreInstantiable == true) {
-          if (i_su->sg_of_su->saAmfSGNumPrefInserviceSUs >
+          if (i_su->sg_of_su->pref_inservice_sus() >
               (sg_instantiated_su_count(i_su->sg_of_su) +
                i_su->sg_of_su->try_inst_counter)) {
             /* instantiate all the pre-instatiable SUs */
@@ -2008,8 +2008,8 @@ uint32_t avd_sg_app_su_inst_func(AVD_CL_CB *cb, AVD_SG *sg) {
                  (i_su->saAmfSUOperState == SA_AMF_OPERATIONAL_ENABLED) &&
                  (i_su->term_state == false) &&
                  (any_ng_in_locked_in_state(su_node_ptr) == false)) {
-        TRACE("%u, %u", sg->saAmfSGNumPrefInserviceSUs, num_try_insvc_su);
-        if (sg->saAmfSGNumPrefInserviceSUs >
+        TRACE("%u, %u", sg->pref_inservice_sus(), num_try_insvc_su);
+        if (sg->pref_inservice_sus() >
             (sg_instantiated_su_count(i_su->sg_of_su) + num_try_insvc_su)) {
           /* Try to Instantiate this SU */
           if (avd_snd_presence_msg(cb, i_su, false) == NCSCC_RC_SUCCESS) {
@@ -2017,7 +2017,7 @@ uint32_t avd_sg_app_su_inst_func(AVD_CL_CB *cb, AVD_SG *sg) {
           }
         } else {
           /* Check whether in-serv su are sufficient. */
-          if (sg->saAmfSGNumPrefInserviceSUs > in_serv_su(sg)) {
+          if (sg->pref_inservice_sus() > in_serv_su(sg)) {
             /* Find most eligible SU(Higher Rank, Unlocked) to instantiate. */
             AVD_SU *su_inst = su_to_instantiate(sg);
             /* Find lower rank unassigned, locked, intantiated su to terminate.

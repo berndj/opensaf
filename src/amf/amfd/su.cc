@@ -1159,7 +1159,7 @@ void AVD_SU::unlock_instantiation(SaImmOiHandleT immoi_handle,
        (sg_of_su->saAmfSGAdminState != SA_AMF_ADMIN_LOCKED_INSTANTIATION)) &&
       ((saAmfSUOperState == SA_AMF_OPERATIONAL_ENABLED) ||
        (sg_of_su->sg_ncs_spec == true)) &&
-      (sg_of_su->saAmfSGNumPrefInserviceSUs >
+      (sg_of_su->pref_inservice_sus() >
        sg_instantiated_su_count(sg_of_su))) {
     /* When the SU will instantiate then prescence state change message will
        come and so store the callback parameters to send response later on. */

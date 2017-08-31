@@ -1003,7 +1003,7 @@ uint32_t node_admin_unlock_instantiation(AVD_AVND *node) {
         (su->saAmfSUPresenceState == SA_AMF_PRESENCE_UNINSTANTIATED) &&
         (su->saAmfSUOperState == SA_AMF_OPERATIONAL_ENABLED)) {
       if (su->saAmfSUPreInstantiable == true) {
-        if (su->sg_of_su->saAmfSGNumPrefInserviceSUs >
+        if (su->sg_of_su->pref_inservice_sus() >
             (sg_instantiated_su_count(su->sg_of_su) +
              su->sg_of_su->try_inst_counter)) {
           if (avd_snd_presence_msg(avd_cb, su, false) == NCSCC_RC_SUCCESS) {
