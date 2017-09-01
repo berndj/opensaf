@@ -2103,6 +2103,12 @@ void su_ccb_apply_delete_hdlr(struct CcbUtilOperationData *opdata) {
   }     /*if (AVD_SG_FSM_STABLE == sg->sg_fsm_state) */
 
 done:
+
+  // update any affected SI assignment state (if saAmfSGNumPrefAssignedSUs==0)
+  for (const auto &si : sg->list_of_si) {
+    si->update_ass_state();
+  }
+
   TRACE_LEAVE();
 }
 

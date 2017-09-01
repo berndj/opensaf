@@ -1725,6 +1725,11 @@ void avd_sg_add_su(AVD_SU *su) {
             });
 
   avd_verify_equal_ranked_su(su->sg_of_su);
+
+  // update any affected SI assignment state (if saAmfSGNumPrefAssignedSUs==0)
+  for (const auto &si : su->sg_of_su->list_of_si) {
+    si->update_ass_state();
+  }
 }
 
 void avd_sg_constructor(void) {
