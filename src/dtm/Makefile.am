@@ -57,7 +57,7 @@ bin_osaftransportd_SOURCES = \
 bin_osaftransportd_LDADD = \
 	lib/libopensaf_core.la
 
-bin_osafdtmd_CXXFLAGS = -Wold-style-cast -Wzero-as-null-pointer-constant $(AM_CXXFLAGS)
+bin_osafdtmd_CXXFLAGS = -Wzero-as-null-pointer-constant $(AM_CXXFLAGS)
 
 bin_osafdtmd_CPPFLAGS = \
 	$(AM_CPPFLAGS)
