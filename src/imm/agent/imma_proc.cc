@@ -2221,6 +2221,7 @@ static bool imma_process_callback_info(IMMA_CB *cb, IMMA_CLIENT_NODE *cl_node,
           }
         }
       }
+      cl_node->callbackInvocationSet.insert(callback->invocation);
       if (cl_node->o.iCallbk.saImmOiAdminOperationCallback &&
           isExtendedNameValid && !isAttrExtendedName) {
         if (cl_node->isImmA2fCbk) {

@@ -126,7 +126,7 @@ SaAisErrorT saImmOmInitialize_o2(SaImmHandleT *immHandle,
   }
 
   /* Alloc the client info data structure */
-  cl_node = (IMMA_CLIENT_NODE *)calloc(1, sizeof(IMMA_CLIENT_NODE));
+  cl_node = new IMMA_CLIENT_NODE{};
 
   if (cl_node == NULL) {
     TRACE_4("ERR_NO_MEMORY: IMMA_CLIENT_NODE alloc failed");
@@ -186,7 +186,7 @@ SaAisErrorT saImmOmInitialize(SaImmHandleT *immHandle,
   }
 
   /* Alloc the client info data structure */
-  cl_node = (IMMA_CLIENT_NODE *)calloc(1, sizeof(IMMA_CLIENT_NODE));
+  cl_node = new IMMA_CLIENT_NODE{};
 
   if (cl_node == NULL) {
     TRACE_4("ERR_NO_MEMORY: IMMA_CLIENT_NODE alloc failed");
@@ -467,7 +467,7 @@ end:
       rc = SA_AIS_ERR_LIBRARY;
     }
 
-    free(cl_node);
+    delete cl_node;
   }
 
   TRACE_LEAVE();

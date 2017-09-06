@@ -19,6 +19,8 @@
 #ifndef IMM_AGENT_IMMA_CB_H_
 #define IMM_AGENT_IMMA_CB_H_
 
+#include <set>
+
 /* Node to store Ccb info for OI client */
 struct imma_callback_info;
 
@@ -95,6 +97,9 @@ typedef struct imma_client_node {
   SaTimeT
       oiTimeout; /* Timeout for OI callback. If the value is 0, the default
                     timeout (6s) will be used */
+
+  /* Current callback invocations */
+  std::set<SaInvocationT> callbackInvocationSet;
 } IMMA_CLIENT_NODE;
 
 /* Node to store adminOwner info */

@@ -113,7 +113,7 @@ uint32_t imma_client_node_delete(IMMA_CB *cb, IMMA_CLIENT_NODE *cl_node) {
     imma_oi_ccb_record_delete(cl_node, cl_node->activeOiCcbs->ccbId);
   }
 
-  free(cl_node);
+  delete cl_node;
 
   return rc;
 }

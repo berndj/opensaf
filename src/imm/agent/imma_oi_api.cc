@@ -152,7 +152,7 @@ SaAisErrorT initialize_common(SaImmOiHandleT *immOiHandle,
   *immOiHandle = 0;
 
   /* Alloc the client info data structure & put it in the Pat tree */
-  cl_node = (IMMA_CLIENT_NODE *)calloc(1, sizeof(IMMA_CLIENT_NODE));
+  cl_node = new IMMA_CLIENT_NODE{};
   if (cl_node == NULL) {
     TRACE_2("ERR_NO_MEMORY: IMMA_CLIENT_NODE alloc failed");
     rc = SA_AIS_ERR_NO_MEMORY;
@@ -384,7 +384,7 @@ version_fail:
   }
 
 lock_fail:
-  if (rc != SA_AIS_OK) free(cl_node);
+  if (rc != SA_AIS_OK) delete cl_node;
 
 cnode_alloc_fail:
 
@@ -1002,6 +1002,16 @@ static SaAisErrorT admin_op_result_common(
         "ERR_VERSION: saImmOmAdminOperationInvoke_o2 only supported for "
         "A.02.11 and above");
     goto stale_handle;
+  }
+
+  if (cl_node->callbackInvocationSet.find(invocation)
+      == cl_node->callbackInvocationSet.end()) {
+    LOG_WA(
+        "ERR_INVALID_PARAM: Illegal SaInvocationT value provided in saImmOiAdminOperationResult");
+    rc = SA_AIS_ERR_INVALID_PARAM;
+    goto stale_handle;
+  } else {
+    cl_node->callbackInvocationSet.erase(invocation);
   }
 
   /* populate the structure */
