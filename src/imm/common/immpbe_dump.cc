@@ -415,7 +415,8 @@ static void valuesToPBE(const SaImmAttrValuesT_2 *p, SaImmAttrFlagsT attrFlags,
     if (rc != SQLITE_DONE) {
       LOG_ER("SQL statement ('%s') failed with error code: %d\n",
              preparedSql[sqlIndex], rc);
-      if (rc == SQLITE_CONSTRAINT) {
+      if (rc == SQLITE_CONSTRAINT || rc == SQLITE_CORRUPT
+          || rc == SQLITE_MISMATCH) {
         badfile = true;
       }
       goto bailout;
@@ -2405,7 +2406,8 @@ bool objectToPBE(std::string objectNameString, const SaImmAttrValuesT_2 **attrs,
   if (rc != SQLITE_DONE) {
     LOG_ER("SQL statement('%s') failed with error code: %d",
            preparedSql[SQL_INS_OBJECTS], rc);
-    if (rc == SQLITE_CONSTRAINT) {
+    if (rc == SQLITE_CONSTRAINT || rc == SQLITE_CORRUPT
+        || rc == SQLITE_MISMATCH) {
       badfile = true;
     }
     goto bailout;
@@ -2475,7 +2477,8 @@ bool objectToPBE(std::string objectNameString, const SaImmAttrValuesT_2 **attrs,
   if (rc != SQLITE_DONE) {
     LOG_ER("SQL object statement for table '%s' failed with error code: %d\n",
            classNameString.c_str(), rc);
-    if(rc == SQLITE_CONSTRAINT) {
+    if (rc == SQLITE_CONSTRAINT || rc == SQLITE_CORRUPT
+        || rc == SQLITE_MISMATCH) {
       badfile = true;
     }
     goto bailout;
