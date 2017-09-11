@@ -85,6 +85,9 @@ static uint32_t immd_evt_proc_sync_fevs_base(IMMD_CB *cb, IMMD_EVT *evt,
 static uint32_t immd_evt_proc_2pbe_preload(IMMD_CB *cb, IMMD_EVT *evt,
 					   IMMSV_SEND_INFO *sinfo);
 
+static uint32_t immd_evt_proc_impl_delete(IMMD_CB *cb, IMMD_EVT *evt,
+						IMMSV_SEND_INFO *sinfo);
+
 /****************************************************************************
  * Name          : immd_process_evt
  *
@@ -218,6 +221,11 @@ void immd_process_evt(void)
 	case IMMD_EVT_ND2D_LOADING_COMPLETED:
 		rc = immd_evt_proc_loading_completed(cb, &evt->info.immd,
 						     &evt->sinfo);
+		break;
+
+	case IMMD_EVT_ND2D_IMPLDELETE:
+		rc = immd_evt_proc_impl_delete(cb, &evt->info.immd,
+				&evt->sinfo);
 		break;
 
 	default:
@@ -3265,4 +3273,65 @@ static uint32_t immd_evt_proc_mds_evt(IMMD_CB *cb, IMMD_EVT *evt)
 done:
 	TRACE_LEAVE();
 	return NCSCC_RC_SUCCESS;
+}
+
+static uint32_t immd_evt_proc_impl_delete(IMMD_CB *cb, IMMD_EVT *evt,
+						IMMSV_SEND_INFO *sinfo) {
+	IMMSV_EVT fevs_evt;
+	IMMSV_IMPLDELETE *impl_del = &evt->info.impl_delete;
+	NCS_UBAID uba;
+	char *tmpData = NULL;
+	uba.start = NULL;
+	TRACE_ENTER();
+	TRACE_5("Delete %u implementer(s) (applier(s))", impl_del->size);
+
+	/*Create and pack the core message for fevs. */
+
+	memset(&fevs_evt, 0, sizeof(IMMSV_EVT));
+	fevs_evt.type = IMMSV_EVT_TYPE_IMMND;
+	fevs_evt.info.immnd.type = IMMND_EVT_D2ND_IMPLDELETE;
+	fevs_evt.info.immnd.info.impl_delete = *impl_del;
+
+	uint32_t proc_rc = ncs_enc_init_space(&uba);
+	if (proc_rc != NCSCC_RC_SUCCESS) {
+		LOG_WA("Failed init ubaid");
+		goto fail;
+	}
+
+	proc_rc = immsv_evt_enc(&fevs_evt, &uba);
+	if (proc_rc != NCSCC_RC_SUCCESS) {
+		LOG_WA("Failed encode fevs");
+		goto fail;
+	}
+
+	int32_t size = uba.ttl;
+	tmpData = malloc(size);
+	osafassert(tmpData);
+	char *data = m_MMGR_DATA_AT_START(uba.start, size, tmpData);
+
+	memset(&fevs_evt, 0, sizeof(IMMSV_EVT)); /*No ponters=>no leak */
+	fevs_evt.type = IMMSV_EVT_TYPE_IMMD;
+	fevs_evt.info.immd.type = 0;
+	fevs_evt.info.immd.info.fevsReq.msg.size = size;
+	fevs_evt.info.immd.info.fevsReq.msg.buf = data;
+
+	proc_rc =
+	    immd_evt_proc_fevs_req(cb, &(fevs_evt.info.immd), sinfo, false);
+
+fail:
+	if (tmpData) {
+		free(tmpData);
+	}
+
+	if (uba.start) {
+		m_MMGR_FREE_BUFR_LIST(uba.start);
+	}
+
+	for(uint32_t i=0; i<evt->info.impl_delete.size; ++i) {
+		free(evt->info.impl_delete.implNameList[i].buf);
+	}
+	free(evt->info.impl_delete.implNameList);
+
+	TRACE_LEAVE();
+	return proc_rc;
 }

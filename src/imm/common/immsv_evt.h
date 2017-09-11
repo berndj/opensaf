@@ -246,6 +246,8 @@ typedef enum immnd_evt_type {
 
   IMMND_EVT_A2ND_OBJ_SAFE_READ = 100, /* saImmOmCcbObjectRead */
 
+  IMMND_EVT_D2ND_IMPLDELETE = 101, /* Applier delete */
+
   IMMND_EVT_MAX
 } IMMND_EVT_TYPE;
 /* Make sure the string array in immsv_evt.c matches the IMMND_EVT_TYPE enum. */
@@ -293,6 +295,8 @@ typedef enum immd_evt_type {
   IMMD_EVT_ND2D_2PBE_PRELOAD = 26, /* Redundant PBE preload stats to IMMD. */
 
   IMMD_EVT_ND2D_IMPLSET_REQ_2 = 27, /* OiImplementerSet */
+
+  IMMD_EVT_ND2D_IMPLDELETE = 28, /* Delete non-used applier */
 
   IMMD_EVT_MAX
 } IMMD_EVT_TYPE;
@@ -510,6 +514,12 @@ typedef struct imma_tmr_info {
   SaInvocationT invocation;
 } IMMA_TMR_INFO;
 
+/* Used in both ND2D and D2ND events */
+typedef struct immsv_impldelete {
+  SaUint32T size;
+  IMMSV_OCTET_STRING *implNameList;	// List of implementer names
+} IMMSV_IMPLDELETE;
+
 /******************************************************************************
  IMMA Event Data Struct
  ******************************************************************************/
@@ -589,6 +599,8 @@ typedef struct immnd_evt {
 
     SaUint64T syncFevsBase; /* FevsCount that sync iterator is
                                based on . */
+
+    IMMSV_IMPLDELETE impl_delete;
   } info;
 } IMMND_EVT;
 
@@ -626,6 +638,8 @@ typedef struct immd_evt {
     IMMSV_SYNC_FEVS_BASE syncFevsBase; /* FevsCount that sync is
                                           based on . */
     IMMSV_ND2D_2_PBE pbe2; /* Stats about a pbe file (redundant pbe)*/
+
+    IMMSV_IMPLDELETE impl_delete;
   } info;
 } IMMD_EVT;
 

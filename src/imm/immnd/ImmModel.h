@@ -73,6 +73,7 @@ class ImmSearchOp;
 typedef std::vector<SaUint32T> ConnVector;
 typedef std::vector<unsigned int> NodeIdVector;
 typedef std::vector<std::string> ObjectNameVector;
+typedef std::vector<std::string> ImplNameVector;
 typedef std::vector<SaUint32T> IdVector;
 typedef std::map<std::string, ObjectInfo*> ObjectMap;
 typedef std::vector<SaInvocationT> InvocVector;
@@ -112,6 +113,7 @@ class ImmModel {
   bool protocol47Allowed();
   bool protocol50Allowed();
   bool protocol51Allowed();
+  bool protocol51710Allowed();
   bool oneSafe2PBEAllowed();
   bool purgeSyncRequest(SaUint32T clientId);
   bool verifySchemaChange(const std::string& className, ClassInfo* oldClass,
@@ -314,6 +316,8 @@ class ImmModel {
 
   void clearImplName(ObjectInfo* obj);
 
+  void implementerDelete(const char *implementerName);
+
   SaAisErrorT implementerClear(const struct ImmsvOiImplSetReq* req,
                                SaUint32T con, unsigned int nodeId, IdVector& gv,
                                bool isAtCoord);
@@ -413,7 +417,7 @@ class ImmModel {
                 unsigned int* pbeNodeIdPtr);
   SaUint32T cleanTheBasement(InvocVector& admReqs, InvocVector& searchReqs,
                              IdVector& ccbs, IdVector& pbePrtoReqs,
-                             bool iAmCoord);
+                             ImplNameVector& appliers, bool iAmCoord);
 
   void fetchAdmImplContinuation(SaInvocationT& inv,
                                 SaUint32T* implConn,     // in-out!

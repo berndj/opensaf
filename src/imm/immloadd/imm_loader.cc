@@ -292,7 +292,8 @@ static int base64_decode(char *in, char *out) {
 void opensafClassCreate(SaImmHandleT immHandle) {
   SaAisErrorT err = SA_AIS_OK;
   int retries = 0;
-  SaImmAttrDefinitionT_2 d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13;
+  SaImmAttrDefinitionT_2 d1, d2, d3, d4, d5, d6, d7, d8, d9, d10;
+  SaImmAttrDefinitionT_2 d11, d12, d13, d14;
   SaUint32T nost_flags_default = 0;
   SaUint32T batch_size_default = IMMSV_DEFAULT_MAX_SYNC_BATCH_SIZE;
   SaUint32T extended_names_enabled_default = 0;
@@ -302,6 +303,7 @@ void opensafClassCreate(SaImmHandleT immHandle) {
   SaUint32T max_implementers_default = 3000;
   SaUint32T max_adminOwners_default = 2000;
   SaUint32T max_ccbs_default = 10000;
+  SaUint32T min_applier_timeout = 0;
 
   d1.attrName = (char *)OPENSAF_IMM_ATTR_RDN;
   d1.attrValueType = SA_IMM_ATTR_SANAMET;
@@ -371,8 +373,14 @@ void opensafClassCreate(SaImmHandleT immHandle) {
   d13.attrFlags = SA_IMM_ATTR_CONFIG | SA_IMM_ATTR_WRITABLE;
   d13.attrDefaultValue = &max_ccbs_default;
 
+  d14.attrName = (char *)OPENSAF_IMM_MIN_APPLIER_TIMEOUT;
+  d14.attrValueType = SA_IMM_ATTR_SAUINT32T;
+  d14.attrFlags = SA_IMM_ATTR_CONFIG | SA_IMM_ATTR_WRITABLE;
+  d14.attrDefaultValue = &min_applier_timeout;
+
   const SaImmAttrDefinitionT_2 *attrDefs[] = {
-      &d1, &d2, &d3, &d4, &d5, &d6, &d7, &d8, &d9, &d10, &d11, &d12, &d13, 0};
+      &d1, &d2, &d3, &d4, &d5, &d6, &d7, &d8, &d9, &d10,
+      &d11, &d12, &d13, &d14, 0};
 
   do { /* Create the class */
 

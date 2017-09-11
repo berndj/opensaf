@@ -82,7 +82,8 @@ struct ImplementerInfo {
         mAdminOpBusy(0),
         mDying(false),
         mApplier(false),
-        mTimeout(DEFAULT_TIMEOUT_SEC) {}
+        mTimeout(DEFAULT_TIMEOUT_SEC),
+        mApplierDisconnected(0) {}
   SaUint32T mId;
   SaUint32T mConn;  // Current implementer, only valid on one node.
   // NULL otherwise.
@@ -93,6 +94,7 @@ struct ImplementerInfo {
   bool mDying;
   bool mApplier;       // This is an applier OI
   SaUint32T mTimeout;  // OI callback timeout
+  SaUint64T mApplierDisconnected;  // Time when applier is disconnected
 };
 
 typedef std::vector<ImplementerInfo*> ImplementerVector;
@@ -585,6 +587,7 @@ static const std::string immMaxClasses(OPENSAF_IMM_MAX_CLASSES);
 static const std::string immMaxAdmOwn(OPENSAF_IMM_MAX_ADMINOWNERS);
 static const std::string immMaxCcbs(OPENSAF_IMM_MAX_CCBS);
 static const std::string immMaxImp(OPENSAF_IMM_MAX_IMPLEMENTERS);
+static const std::string immMinApplierTimeout(OPENSAF_IMM_MIN_APPLIER_TIMEOUT);
 
 static const std::string immMngtClass("SaImmMngt");
 static const std::string immManagementDn(
@@ -1117,6 +1120,10 @@ bool immModel_protocol51Allowed(IMMND_CB* cb) {
   return ImmModel::instance(&cb->immModel)->protocol51Allowed();
 }
 
+bool immModel_protocol51710Allowed(IMMND_CB* cb) {
+  return ImmModel::instance(&cb->immModel)->protocol51710Allowed();
+}
+
 OsafImmAccessControlModeT immModel_accessControlMode(IMMND_CB* cb) {
   return ImmModel::instance(&cb->immModel)->accessControlMode();
 }
@@ -1133,18 +1140,21 @@ SaUint32T immModel_cleanTheBasement(
     IMMND_CB* cb, SaInvocationT** admReqArr, SaUint32T* admReqArrSize,
     SaInvocationT** searchReqArr, SaUint32T* searchReqArrSize,
     SaUint32T** ccbIdArr, SaUint32T* ccbIdArrSize, SaUint32T** pbePrtoReqArr,
-    SaUint32T* pbePrtoReqArrSize, bool iAmCoordNow) {
+    SaUint32T* pbePrtoReqArrSize, IMMSV_OCTET_STRING **applierArr,
+    SaUint32T *applierArrSize, bool iAmCoordNow) {
   InvocVector admReqs;
   InvocVector searchReqs;
   InvocVector::iterator ix1;
   IdVector ccbs;
   IdVector pbePrtoReqs;
+  ImplNameVector appliers;
   IdVector::iterator ix2;
   unsigned int ix;
 
   SaUint32T stuck = ImmModel::instance(&cb->immModel)
                         ->cleanTheBasement(admReqs, searchReqs, ccbs,
-                                           pbePrtoReqs, iAmCoordNow);
+                                           pbePrtoReqs, appliers,
+                                           iAmCoordNow);
 
   *admReqArrSize = (SaUint32T)admReqs.size();
   if (*admReqArrSize) {
@@ -1242,6 +1252,16 @@ SaUint32T immModel_cleanTheBasement(
 
     cl_node = (IMMND_IMM_CLIENT_NODE*)ncs_patricia_tree_getnext(
         &cb->client_info_db, cl_node->patnode.key_info);
+  }
+
+  if(appliers.size() > 0) {
+    *applierArrSize = appliers.size();
+    *applierArr = (IMMSV_OCTET_STRING *)malloc(
+            appliers.size() * sizeof(IMMSV_OCTET_STRING));
+    for(size_t i=0; i<appliers.size(); ++i) {
+      (*applierArr)[i].buf = strdup(appliers[i].c_str());
+      (*applierArr)[i].size = strlen((*applierArr)[i].buf);
+    }
   }
 
   return stuck;
@@ -2234,6 +2254,10 @@ void immModel_setCcbErrorString(IMMND_CB* cb, SaUint32T ccbId,
   va_start(vl, errorString);
   ImmModel::instance(&cb->immModel)->setCcbErrorString(*cvi, errorString, vl);
   va_end(vl);
+}
+
+void immModel_implementerDelete(IMMND_CB *cb, const char *implementerName) {
+  ImmModel::instance(&cb->immModel)->implementerDelete(implementerName);
 }
 
 /*====================================================================*/
@@ -3897,6 +3921,30 @@ bool ImmModel::protocol51Allowed() {
   return noStdFlags & OPENSAF_IMM_FLAG_PRT51_ALLOW;
 }
 
+bool ImmModel::protocol51710Allowed() {
+  // TRACE_ENTER();
+  /* Assume that all nodes are running the same version when loading */
+  if (sImmNodeState == IMM_NODE_LOADING) {
+    return true;
+  }
+  ObjectMap::iterator oi = sObjectMap.find(immObjectDn);
+  if (oi == sObjectMap.end()) {
+    // TRACE_LEAVE();
+    return false;
+  }
+
+  ObjectInfo* immObject = oi->second;
+  ImmAttrValueMap::iterator avi =
+      immObject->mAttrValueMap.find(immAttrNostFlags);
+  osafassert(avi != immObject->mAttrValueMap.end());
+  osafassert(!(avi->second->isMultiValued()));
+  ImmAttrValue* valuep = avi->second;
+  unsigned int noStdFlags = valuep->getValue_int();
+
+  // TRACE_LEAVE();
+  return noStdFlags & OPENSAF_IMM_FLAG_PRT51710_ALLOW;
+}
+
 bool ImmModel::protocol41Allowed() {
   // TRACE_ENTER();
   ObjectMap::iterator oi = sObjectMap.find(immObjectDn);
@@ -4980,6 +5028,8 @@ SaAisErrorT ImmModel::adminOwnerDelete(SaUint32T ownerId, bool hard,
               immObject->mAttrValueMap.find(immMaxAdmOwn);
           ImmAttrValueMap::iterator avi4 =
               immObject->mAttrValueMap.find(immMaxCcbs);
+          ImmAttrValueMap::iterator avi5 =
+              immObject->mAttrValueMap.find(immMinApplierTimeout);
 
           ImmAttrValue* valuep = (ImmAttrValue*)avi->second;
           unsigned int noStdFlags = valuep->getValue_int();
@@ -4998,6 +5048,13 @@ SaAisErrorT ImmModel::adminOwnerDelete(SaUint32T ownerId, bool hard,
                 "The new OpenSAF 5.1 attributes are not added to OpensafImm class");
           } else {
             noStdFlags |= OPENSAF_IMM_FLAG_PRT51_ALLOW;
+          }
+          if(avi5 == immObject->mAttrValueMap.end()) {
+            LOG_NO("protcol51710 is not set for opensafImmNostdFlags because"
+                "The new OpenSAF 5.17.10 attributes are not added "
+                "to OpensafImm class");
+          } else {
+            noStdFlags |= OPENSAF_IMM_FLAG_PRT51710_ALLOW;
           }
           valuep->setValue_int(noStdFlags);
           LOG_NO("%s changed to: 0x%x", immAttrNostFlags.c_str(), noStdFlags);
@@ -8324,7 +8381,7 @@ SaAisErrorT ImmModel::ccbObjectCreate(
             impl->mDying = false;
             impl->mApplier = false;
           }
-          // Reconenct implementer.
+          // Reconnect implementer.
           object->mImplementer = impl;
         }
       }
@@ -13873,6 +13930,13 @@ void ImmModel::discardNode(unsigned int deadNode, IdVector& cv, IdVector& gv,
       // messages that depend on the implementer. We DO NOT want different
       // behavior at different nodes, only because an implementor is gone.
 
+      // Save the time when applier is disconnected
+      if(info->mImplementerName.at(0) == '@') {
+        struct timespec ts;
+        osaf_clock_gettime(CLOCK_MONOTONIC, &ts);
+        info->mApplierDisconnected = osaf_timespec_to_millis(&ts);
+      }
+
       // We keep the ImplementerInfo entry with the implementer name,
       // for now.
       // The ImplementerInfo is pointed to by ClassInfo or ObjectInfo.
@@ -13998,6 +14062,14 @@ void ImmModel::discardImplementer(unsigned int implHandle, bool reallyDiscard,
       // implementers. Possible solution is to here iterate through all
       // classes and objects. If none point to this object then we can
       // actually remove it. Removal must be via fevs though!
+
+      // Save the time when applier is disconnected
+      if(info->mImplementerName.at(0) == '@') {
+        struct timespec ts;
+        osaf_clock_gettime(CLOCK_MONOTONIC, &ts);
+        info->mApplierDisconnected = osaf_timespec_to_millis(&ts);
+      }
+
       if ((sImmNodeState == IMM_NODE_R_AVAILABLE) ||
           (sImmNodeState == IMM_NODE_W_AVAILABLE)) {
         /* Sync is ongoing. Remember the death of the implementer. */
@@ -14407,7 +14479,9 @@ bool ImmModel::purgeSyncRequest(SaUint32T clientId) {
 
 SaUint32T ImmModel::cleanTheBasement(InvocVector& admReqs,
                                      InvocVector& searchReqs, IdVector& ccbs,
-                                     IdVector& pbePrtoReqs, bool iAmCoord) {
+                                     IdVector& pbePrtoReqs,
+                                     ImplNameVector& appliers,
+                                     bool iAmCoord) {
   timespec now;
   osaf_clock_gettime(CLOCK_MONOTONIC, &now);
   ContinuationMap2::iterator ci2;
@@ -14663,6 +14737,44 @@ SaUint32T ImmModel::cleanTheBasement(InvocVector& admReqs,
     }
   }
 
+  if(protocol51710Allowed()) {
+    unsigned int applierTimeout;
+
+    ObjectMap::iterator oi = sObjectMap.find(immObjectDn);
+    // This has already been checked in protocol51710Allowed()
+    osafassert(oi != sObjectMap.end());
+
+    ObjectInfo* immObject = oi->second;
+    ImmAttrValueMap::iterator avi =
+        immObject->mAttrValueMap.find(immMinApplierTimeout);
+    osafassert(avi != immObject->mAttrValueMap.end());
+    osafassert(!(avi->second->isMultiValued()));
+    ImmAttrValue* valuep = avi->second;
+    applierTimeout = valuep->getValue_int();
+
+    if(applierTimeout > 0) {
+      SaUint64T now;
+      struct timespec ts;
+      ImplementerVector::iterator ivi;
+
+      // Convert applierTimeout to miliseconds
+      applierTimeout *= 1000;
+
+      osaf_clock_gettime(CLOCK_MONOTONIC, &ts);
+      now = osaf_timespec_to_millis(&ts);
+
+      for(ivi=sImplementerVector.begin();
+              ivi != sImplementerVector.end();
+              ++ivi) {
+        if((*ivi)->mImplementerName.at(0) == '@'
+                && (*ivi)->mApplierDisconnected > 0
+                && ((*ivi)->mApplierDisconnected + applierTimeout) <= now) {
+          appliers.push_back((*ivi)->mImplementerName);
+        }
+      }
+    }
+  }
+
   return ccbsStuck + pbeRtRegress;
 }
 
@@ -14821,6 +14933,7 @@ SaAisErrorT ImmModel::implementerSet(const IMMSV_OCTET_STRING* implementerName,
 
   if (isApplier) {
     info->mApplier = true;
+    info->mApplierDisconnected = 0;
     LOG_NO("Implementer (applier) connected: %u (%s) <%u, %x>", info->mId,
            info->mImplementerName.c_str(), info->mConn, info->mNodeId);
   } else {
@@ -15866,6 +15979,66 @@ void ImmModel::clearImplName(ObjectInfo* obj) {
   if (!(att->empty())) {
     att->setValueC_str(NULL);
   }
+}
+
+void ImmModel::implementerDelete(const char *implementerName) {
+  ImplementerInfo *applier = NULL;
+
+  TRACE_ENTER();
+
+  auto ivi = sImplementerVector.begin();
+  for(; ivi != sImplementerVector.end(); ++ivi) {
+    if((*ivi)->mImplementerName == implementerName) {
+      applier = *ivi;
+      break;
+    }
+  }
+
+  if(!applier) {
+    TRACE("Cannot find implementer with id: %s", implementerName);
+    goto failed;
+  }
+
+  if(applier->mImplementerName.at(0) != '@') {
+    TRACE("Implementer with id %s is not applier", implementerName);
+    goto failed;
+  }
+
+  if(!applier->mApplierDisconnected) {
+    TRACE("Applier with id %s is used again", implementerName);
+    goto failed;
+  }
+
+  // Delete implementer from sImplementerVector
+  sImplementerVector.erase(ivi);
+
+  // Delete implementer from sClassMap
+  for(auto cmi = sClassMap.begin(); cmi != sClassMap.end(); ++cmi) {
+    // TODO: It might be more efficient
+    // if we call only cmi->second->mAppliers.erase(applier);
+    auto it = cmi->second->mAppliers.find(applier);
+    if(it != cmi->second->mAppliers.end()) {
+      cmi->second->mAppliers.erase(it);
+    }
+  }
+
+  // Delete implementer from sObjAppliersMap
+  for(auto oami = sObjAppliersMap.begin();
+      oami != sObjAppliersMap.end(); ++oami) {
+    // TODO: Same as for sClassMap
+    auto it = oami->second->find(applier);
+    if(it != oami->second->end()) {
+      oami->second->erase(it);
+    }
+  }
+
+  // Delete implementer from sImplDetachTime if it exists
+  sImplDetachTime.erase(applier);
+
+  delete applier;
+
+failed:
+  TRACE_LEAVE();
 }
 
 /**
@@ -19252,6 +19425,11 @@ SaAisErrorT ImmModel::finalizeSync(ImmsvOmFinalizeSync* req, bool isCoord,
 
       // Sync currently existing implementers
       ImmsvImplList* ii = req->implementers;
+      // Calculate applier timeout before the loop
+      struct timespec ts;
+      SaUint64T applierDisconnected;
+      osaf_clock_gettime(CLOCK_MONOTONIC, &ts);
+      applierDisconnected = osaf_timespec_to_millis(&ts);
       for (; ii; ii = ii->next) {
         std::string implName;
         size_t sz = strnlen((const char*)ii->implementerName.buf,
@@ -19327,6 +19505,11 @@ SaAisErrorT ImmModel::finalizeSync(ImmsvOmFinalizeSync* req, bool isCoord,
         info->mImplementerName = implName;
         info->mAdminOpBusy = 0;
         info->mApplier = (info->mImplementerName.at(0) == '@');
+        if(!info->mNodeId && info->mApplier) {
+          /* The info when an applier is disconnected is not synced.
+           * It will be calculated from the time it's synced */
+          info->mApplierDisconnected = applierDisconnected;
+        }
         sImplementerVector.push_back(info);
         TRACE_5(
             "Immnd sync client synced implementer id:%u name:>>%s<< "

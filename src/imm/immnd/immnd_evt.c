@@ -285,6 +285,8 @@ static void immnd_evt_ccb_abort(IMMND_CB *cb, SaUint32T ccbId,
 static uint32_t immnd_evt_proc_reset(IMMND_CB *cb, IMMND_EVT *evt,
 				     IMMSV_SEND_INFO *sinfo);
 
+static uint32_t immnd_evt_impl_delete(IMMND_CB *cb, IMMND_EVT *evt);
+
 #if 0 /* Only for debug */
 static void printImmValue(SaImmValueTypeT t, IMMSV_EDU_ATTR_VAL *v)
 {
@@ -563,6 +565,11 @@ uint32_t immnd_evt_destroy(IMMSV_EVT *evt, bool onheap, uint32_t line)
 		free(evt->info.immnd.info.ccbUpcallRsp.errorString.buf);
 		evt->info.immnd.info.ccbUpcallRsp.errorString.buf = NULL;
 		evt->info.immnd.info.ccbUpcallRsp.errorString.size = 0;
+	} else if (evt->info.immnd.type == IMMND_EVT_D2ND_IMPLDELETE) {
+		for(uint32_t i=0; i<evt->info.immnd.info.impl_delete.size; ++i) {
+			free(evt->info.immnd.info.impl_delete.implNameList[i].buf);
+		}
+		free(evt->info.immnd.info.impl_delete.implNameList);
 	}
 
 	if (onheap) {
@@ -9932,6 +9939,10 @@ immnd_evt_proc_fevs_dispatch(IMMND_CB *cb, IMMSV_OCTET_STRING *msg,
 					 reply_dest);
 		break;
 
+	case IMMND_EVT_D2ND_IMPLDELETE:
+		immnd_evt_impl_delete(cb, &frwrd_evt.info.immnd);
+		break;
+
 	default:
 		LOG_ER(
 		    "UNPACK FAILURE, unrecognized message type: %u over FEVS",
@@ -12317,4 +12328,36 @@ uint32_t immnd_is_immd_up(IMMND_CB *cb)
 	m_NCS_UNLOCK(&cb->immnd_immd_up_lock, NCS_LOCK_WRITE);
 
 	return is_immd_up;
+}
+
+/*****************************************************************************
+ * Name          : immnd_evt_impl_delete
+ *
+ * Description   : This function delete non-used appliers who timed out
+ *
+ * Arguments     : cb       - IMMND Control Block pointer
+ *                 evt - Received Event structure
+ *
+ * Return Values : true/false
+ *****************************************************************************/
+static uint32_t immnd_evt_impl_delete(IMMND_CB *cb, IMMND_EVT *evt)
+{
+	uint32_t rc = NCSCC_RC_FAILURE;
+	TRACE_ENTER();
+
+	if(cb->mSync) {
+		TRACE("The node is going to be synced. Ignoring.");
+		rc =  NCSCC_RC_FAILURE;
+		goto failed;
+	}
+
+	for(uint32_t i=0; i<evt->info.impl_delete.size; ++i) {
+		immModel_implementerDelete(cb,
+				evt->info.impl_delete.implNameList[i].buf);
+	}
+
+	TRACE_LEAVE();
+
+failed:
+	return rc;
 }

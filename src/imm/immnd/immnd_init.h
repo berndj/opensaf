@@ -128,7 +128,8 @@ SaUint32T immModel_cleanTheBasement(
     IMMND_CB *cb, SaInvocationT **admReqArr, SaUint32T *admReqArrSize,
     SaInvocationT **searchReqArr, SaUint32T *searchReqArrSize,
     SaUint32T **ccbIdArr, SaUint32T *ccbIdArrSize, SaUint32T **pbePrtoReqIdArr,
-    SaUint32T *pbePrtoReqArrSize, bool iAmCoordNow);
+    SaUint32T *pbePrtoReqArrSize, IMMSV_OCTET_STRING **applierArrapplierArr,
+    SaUint32T *applierArrSize, bool iAmCoordNow);
 
 void immModel_getNonCriticalCcbs(IMMND_CB *cb, SaUint32T **ccbIdArr,
                                  SaUint32T *ccbIdArrSize);
@@ -476,6 +477,8 @@ void immModel_setScAbsenceAllowed(IMMND_CB *cb);
 void immmModel_getLocalImplementers(IMMND_CB *cb, SaUint32T *arrSize,
                                     SaUint32T **implIdArr,
                                     SaUint32T **implConnArr);
+
+void immModel_implementerDelete(IMMND_CB *cb, const char *implementerName);
 
 #ifdef __cplusplus
 }

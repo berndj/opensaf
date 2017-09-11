@@ -1199,6 +1199,8 @@ static void immnd_cleanTheHouse(IMMND_CB *cb, bool iAmCoordNow)
 	SaUint32T ccbIdArrSize = 0;
 	SaUint32T *pbePrtoReqArr = NULL;
 	SaUint32T pbePrtoReqArrSize = 0;
+	IMMSV_OCTET_STRING *applierArr = NULL;
+	SaUint32T applierArrSize = 0;
 
 	SaInvocationT inv;
 	SaUint32T reqConn = 0;
@@ -1305,7 +1307,7 @@ static void immnd_cleanTheHouse(IMMND_CB *cb, bool iAmCoordNow)
 	stuck = immModel_cleanTheBasement(
 	    cb, &admReqArr, &admReqArrSize, &searchReqArr, &searchReqArrSize,
 	    &ccbIdArr, &ccbIdArrSize, &pbePrtoReqArr, &pbePrtoReqArrSize,
-	    iAmCoordNow);
+	    &applierArr, &applierArrSize, iAmCoordNow);
 
 	if (stuck > 1) {
 		pbePrtoStuck = true;
@@ -1585,6 +1587,43 @@ static void immnd_cleanTheHouse(IMMND_CB *cb, bool iAmCoordNow)
 				kill(cb->pbePid2, SIGKILL);
 			}
 		}
+	}
+
+	if(applierArrSize) {
+		IMMSV_EVT send_evt;
+		SaUint32T pos = 0;
+
+		memset(&send_evt, 0, sizeof(IMMSV_EVT));
+		send_evt.type = IMMSV_EVT_TYPE_IMMD;
+		send_evt.info.immd.type = IMMD_EVT_ND2D_IMPLDELETE;
+
+		/* For the performance issue, IMMD_EVT_ND2D_IMPLDELETE
+		 * will send sets of applier names. Each set will be up
+		 * to 50255 (50000 + 255) characters of applier names.
+		 * This will cover that in few IMMD_EVT_ND2D_IMPLDELETE
+		 * messages, all timed out appliers are removed from
+		 * the cluster.
+		 */
+		while(pos < applierArrSize) {
+			uint32_t sendSize;
+
+			send_evt.info.immd.info.impl_delete.size = 0;
+			send_evt.info.immd.info.impl_delete.implNameList =
+					&(applierArr[pos]);
+			for(sendSize=0; pos < applierArrSize && sendSize < 50000; ++pos) {
+				++send_evt.info.immd.info.impl_delete.size;
+				sendSize += strlen(applierArr[pos].buf);
+			}
+			if (immnd_mds_msg_send(cb, NCSMDS_SVC_ID_IMMD,
+					cb->immd_mdest_id, &send_evt) != NCSCC_RC_SUCCESS) {
+				LOG_WA("Failure to broadcast implementer (applier) delete");
+			}
+		}
+
+		for(SaUint32T i=0; i<applierArrSize; ++i) {
+			free(applierArr[i].buf);
+		}
+		free(applierArr);
 	}
 
 	/*TRACE_LEAVE(); */

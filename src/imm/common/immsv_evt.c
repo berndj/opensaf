@@ -66,6 +66,7 @@ static const char *immd_evt_names[] = {"undefined",
 				       "IMMD_EVT_ND2D_LOADING_COMPLETED",
 				       "IMMD_EVT_ND2D_2PBE_PRELOAD",
 				       "IMMD_EVT_ND2D_IMPLSET_REQ_2",
+				       "IMMD_EVT_ND2D_IMPLDELETE",
 				       "undefined (high)"};
 
 static const char *immsv_get_immd_evt_name(unsigned int id)
@@ -185,6 +186,7 @@ static const char *immnd_evt_names[] = {
     "IMMND_EVT_A2ND_OBJ_CREATE_2",    /* saImmOmCcbObjectCreate_o3 */
     "IMMND_EVT_A2ND_OI_OBJ_CREATE_2", /* saImmOiRtObjectCreate_o3 */
     "IMMND_EVT_A2ND_OBJ_SAFE_READ",   /* saImmOmCcbObjectRead */
+    "IMMND_EVT_D2ND_IMPLDELETE",
     "undefined (high)"};
 
 static const char *immsv_get_immnd_evt_name(unsigned int id)
@@ -1631,6 +1633,26 @@ static uint32_t immsv_evt_enc_sublevels(IMMSV_EVT *i_evt, NCS_UBAID *o_ub)
 				    __LINE__);
 				return NCSCC_RC_OUT_OF_MEM;
 			}
+		} else if (i_evt->info.immd.type == IMMD_EVT_ND2D_IMPLDELETE) {
+			uint8_t *p8;
+			IMMSV_IMPLDELETE *impl_delete = &i_evt->info.immd.info.impl_delete;
+
+			for(SaUint32T i=0; i<impl_delete->size; ++i) {
+				uint32_t length = strnlen(impl_delete->implNameList[i].buf,
+										  impl_delete->implNameList[i].size);
+
+				IMMSV_RSRV_SPACE_ASSERT(p8, o_ub, 4);
+				ncs_encode_32bit(&p8, length);
+				ncs_enc_claim_space(o_ub, 4);
+
+				if (ncs_encode_n_octets_in_uba(o_ub,
+						(uint8_t *)impl_delete->implNameList[i].buf,
+						length) != NCSCC_RC_SUCCESS) {
+					LOG_WA(
+						"Failure inside ncs_encode_n_octets_in_uba");
+					return NCSCC_RC_FAILURE;
+				}
+			}
 		} else if ((i_evt->info.immd.info.ctrl_msg.pbeEnabled >= 3) &&
 			   (i_evt->info.immd.type ==
 			    IMMD_EVT_ND2D_INTRO)) { /* extended intro */
@@ -2155,6 +2177,28 @@ static uint32_t immsv_evt_enc_sublevels(IMMSV_EVT *i_evt, NCS_UBAID *o_ub)
 			if (!immsv_evt_enc_inline_text(__LINE__, o_ub, os)) {
 				return NCSCC_RC_OUT_OF_MEM;
 			}
+		} else if (i_evt->info.immnd.type == IMMND_EVT_D2ND_IMPLDELETE) {
+			uint32_t length;
+			uint8_t *p8;
+			IMMSV_IMPLDELETE *impl_delete =
+					&i_evt->info.immnd.info.impl_delete;
+
+			for(SaUint32T i=0; i<impl_delete->size; ++i) {
+				length = strnlen(impl_delete->implNameList[i].buf,
+								impl_delete->implNameList[i].size);
+
+				IMMSV_RSRV_SPACE_ASSERT(p8, o_ub, 4);
+				ncs_encode_32bit(&p8, length);
+				ncs_enc_claim_space(o_ub, 4);
+
+				if (ncs_encode_n_octets_in_uba(o_ub,
+						(uint8_t *)impl_delete->implNameList[i].buf,
+						length) != NCSCC_RC_SUCCESS) {
+					LOG_WA(
+					    "Failure inside ncs_encode_n_octets_in_uba");
+					return NCSCC_RC_FAILURE;
+				}
+			}
 		}
 	}
 
@@ -2389,6 +2433,31 @@ static uint32_t immsv_evt_dec_sublevels(NCS_UBAID *i_ub, IMMSV_EVT *o_evt)
 			if (p) {
 				immsv_evt_dec_attrmods(i_ub, &p);
 				o_evt->info.immd.info.objModify.attrMods = p;
+			}
+		} else if (o_evt->info.immd.type == IMMD_EVT_ND2D_IMPLDELETE) {
+			uint8_t *p8;
+			uint8_t local_data[8];
+			IMMSV_OCTET_STRING *implNameList;
+			IMMSV_IMPLDELETE *impl_delete = &o_evt->info.immd.info.impl_delete;
+
+			impl_delete->implNameList = (IMMSV_OCTET_STRING *)calloc(1,
+					impl_delete->size * sizeof(IMMSV_OCTET_STRING));
+			implNameList = impl_delete->implNameList;
+			for(SaUint32T i=0; i<impl_delete->size; ++i) {
+				IMMSV_FLTN_SPACE_ASSERT(p8, local_data, i_ub, 4);
+				implNameList[i].size = ncs_decode_32bit(&p8);
+				ncs_dec_skip_space(i_ub, 4);
+
+				implNameList[i].buf = (char *)malloc(
+						implNameList[i].size + 1);
+				if (implNameList[i].buf == NULL ||
+						ncs_decode_n_octets_from_uba(i_ub,
+								(uint8_t *)implNameList[i].buf,
+								implNameList[i].size) != NCSCC_RC_SUCCESS) {
+					LOG_WA("Failure inside ncs_decode_n_octets_from_uba");
+					return NCSCC_RC_FAILURE;
+				}
+				implNameList[i].buf[implNameList[i].size] = 0;
 			}
 		} else if ((o_evt->info.immd.info.ctrl_msg.pbeEnabled >= 3) &&
 			   (o_evt->info.immd.type ==
@@ -2814,6 +2883,31 @@ static uint32_t immsv_evt_dec_sublevels(NCS_UBAID *i_ub, IMMSV_EVT *o_evt)
 			IMMSV_OCTET_STRING *os =
 			    &(o_evt->info.immnd.info.ccbUpcallRsp.errorString);
 			immsv_evt_dec_inline_string(i_ub, os);
+		} else if (o_evt->info.immnd.type == IMMND_EVT_D2ND_IMPLDELETE) {
+			uint8_t *p8;
+			uint8_t local_data[8];
+			IMMSV_OCTET_STRING *implNameList;
+			IMMSV_IMPLDELETE *impl_delete;
+
+			impl_delete = &o_evt->info.immnd.info.impl_delete;
+			impl_delete->implNameList = (IMMSV_OCTET_STRING *)calloc(1,
+							impl_delete->size * sizeof(IMMSV_OCTET_STRING));
+			implNameList = impl_delete->implNameList;
+			for (SaUint32T i=0; i<impl_delete->size; ++i) {
+				IMMSV_FLTN_SPACE_ASSERT(p8, local_data, i_ub, 4);
+				implNameList[i].size = ncs_decode_32bit(&p8);
+				ncs_dec_skip_space(i_ub, 4);
+
+				implNameList[i].buf = (char *)malloc(implNameList[i].size);
+				if (implNameList[i].buf == NULL ||
+						ncs_decode_n_octets_from_uba(i_ub,
+								(uint8_t *)implNameList[i].buf,
+								implNameList[i].size) != NCSCC_RC_SUCCESS) {
+					LOG_WA("Failure inside ncs_decode_n_octets_from_uba");
+					return NCSCC_RC_FAILURE;
+				}
+				implNameList[i].buf[implNameList[i].size] = 0;
+			}
 		}
 	}
 	return NCSCC_RC_SUCCESS;
@@ -3521,6 +3615,12 @@ static uint32_t immsv_evt_enc_toplevel(IMMSV_EVT *i_evt, NCS_UBAID *o_ub)
 			IMMSV_RSRV_SPACE_ASSERT(p8, o_ub, 8);
 			ncs_encode_64bit(&p8, immdevt->info.pbe2.maxWeakCcbId);
 			ncs_enc_claim_space(o_ub, 8);
+			break;
+
+		case IMMD_EVT_ND2D_IMPLDELETE:
+			IMMSV_RSRV_SPACE_ASSERT(p8, o_ub, 4);
+			ncs_encode_32bit(&p8, immdevt->info.impl_delete.size);
+			ncs_enc_claim_space(o_ub, 4);
 			break;
 
 		case IMMD_EVT_MDS_INFO:
@@ -4547,6 +4647,12 @@ static uint32_t immsv_evt_enc_toplevel(IMMSV_EVT *i_evt, NCS_UBAID *o_ub)
 			/* message has no contents */
 			break;
 
+		case IMMND_EVT_D2ND_IMPLDELETE:
+			IMMSV_RSRV_SPACE_ASSERT(p8, o_ub, 4);
+			ncs_encode_32bit(&p8, immndevt->info.impl_delete.size);
+			ncs_enc_claim_space(o_ub, 4);
+			break;
+
 		case IMMND_EVT_MDS_INFO: /* IMMA/IMMND/IMMD UP/DOWN Info */
 		case IMMND_EVT_TIME_OUT: /* Time out event */
 		case IMMND_EVT_CB_DUMP:
@@ -5254,6 +5360,12 @@ static uint32_t immsv_evt_dec_toplevel(NCS_UBAID *i_ub, IMMSV_EVT *o_evt)
 			immdevt->info.pbe2.maxWeakCcbId = ncs_decode_64bit(&p8);
 			ncs_dec_skip_space(i_ub, 8);
 
+			break;
+
+		case IMMD_EVT_ND2D_IMPLDELETE:
+			IMMSV_FLTN_SPACE_ASSERT(p8, local_data, i_ub, 4);
+			immdevt->info.impl_delete.size = ncs_decode_32bit(&p8);
+			ncs_dec_skip_space(i_ub, 4);
 			break;
 
 		case IMMD_EVT_MDS_INFO:
@@ -6333,6 +6445,12 @@ static uint32_t immsv_evt_dec_toplevel(NCS_UBAID *i_ub, IMMSV_EVT *o_evt)
 			IMMSV_FLTN_SPACE_ASSERT(p8, local_data, i_ub, 4);
 			immndevt->info.admFinReq.adm_owner_id =
 			    ncs_decode_32bit(&p8);
+			ncs_dec_skip_space(i_ub, 4);
+			break;
+
+		case IMMND_EVT_D2ND_IMPLDELETE:
+			IMMSV_FLTN_SPACE_ASSERT(p8, local_data, i_ub, 4);
+			immndevt->info.impl_delete.size = ncs_decode_32bit(&p8);
 			ncs_dec_skip_space(i_ub, 4);
 			break;
 
