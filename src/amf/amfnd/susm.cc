@@ -888,7 +888,8 @@ uint32_t avnd_su_si_remove(AVND_CB *cb, AVND_SU *su, AVND_SU_SI_REC *si) {
     } else {
       /* nothing to be done, termination already done in
          quiescing/quiesced state */
-      if (su->pres == SA_AMF_PRESENCE_INSTANTIATED) {
+      if ((su->pres == SA_AMF_PRESENCE_INSTANTIATED) ||
+          (su->pres == SA_AMF_PRESENCE_RESTARTING)) {
         rc = avnd_su_pres_fsm_run(cb, su, 0, AVND_SU_PRES_FSM_EV_TERM);
         if (NCSCC_RC_SUCCESS != rc) goto done;
       } else {
@@ -3259,6 +3260,8 @@ uint32_t avnd_su_pres_restart_suterm_hdler(AVND_CB *cb, AVND_SU *su,
                                            AVND_COMP *comp) {
   AVND_COMP *curr_comp = 0;
   uint32_t rc = NCSCC_RC_SUCCESS;
+  AVND_SU_SI_REC *si = nullptr;
+  AVND_COMP_CSI_REC *csi = nullptr;
   const std::string compname = comp ? comp->name : "none";
   TRACE_ENTER2("SU Terminate event in the Restarting state:'%s' : '%s'",
                su->name.c_str(), compname.c_str());
@@ -3267,26 +3270,53 @@ uint32_t avnd_su_pres_restart_suterm_hdler(AVND_CB *cb, AVND_SU *su,
    * If pi su, pick all the instantiated/instantiating pi comps &
    * trigger their FSM with CleanupEv.
    */
-  for (curr_comp = m_AVND_COMP_FROM_SU_DLL_NODE_GET(
+  if (m_AVND_SU_IS_PREINSTANTIABLE(su)) {
+    for (curr_comp = m_AVND_COMP_FROM_SU_DLL_NODE_GET(
            m_NCS_DBLIST_FIND_FIRST(&su->comp_list));
        curr_comp; curr_comp = m_AVND_COMP_FROM_SU_DLL_NODE_GET(
                       m_NCS_DBLIST_FIND_NEXT(&curr_comp->su_dll_node))) {
-    /* terminate the non-uninstantiated pi comp */
-    if ((!m_AVND_COMP_PRES_STATE_IS_UNINSTANTIATED(curr_comp)) &&
+      /* terminate the non-uninstantiated pi comp */
+      if ((!m_AVND_COMP_PRES_STATE_IS_UNINSTANTIATED(curr_comp)) &&
         (m_AVND_COMP_TYPE_IS_PREINSTANTIABLE(curr_comp))) {
-      /* mark the comp failed */
-      m_AVND_COMP_FAILED_SET(curr_comp);
+       /* mark the comp failed */
+       m_AVND_COMP_FAILED_SET(curr_comp);
 
-      /* update comp oper state */
-      m_AVND_COMP_OPER_STATE_SET(curr_comp, SA_AMF_OPERATIONAL_DISABLED);
-      rc = avnd_comp_oper_state_avd_sync(cb, curr_comp);
-      if (NCSCC_RC_SUCCESS != rc) goto done;
+       /* update comp oper state */
+       m_AVND_COMP_OPER_STATE_SET(curr_comp, SA_AMF_OPERATIONAL_DISABLED);
+       rc = avnd_comp_oper_state_avd_sync(cb, curr_comp);
+       if (NCSCC_RC_SUCCESS != rc) goto done;
 
-      rc = avnd_comp_clc_fsm_run(cb, curr_comp,
+       rc = avnd_comp_clc_fsm_run(cb, curr_comp,
                                  AVND_COMP_CLC_PRES_FSM_EV_CLEANUP);
-      if (NCSCC_RC_SUCCESS != rc) goto done;
-    }
-  } /* for */
+       if (NCSCC_RC_SUCCESS != rc) goto done;
+      }
+    } /* for */
+  }
+
+  /*NPI su, it'll have only one si-rec in the si-list. Pick the
+    highest ranked csi belonging to this si & trigger it's comp fsm.
+  */
+  if (!m_AVND_SU_IS_PREINSTANTIABLE(su)) {
+    TRACE("NPI SU:'%s'", su->name.c_str());
+
+    si = (AVND_SU_SI_REC *)m_NCS_DBLIST_FIND_FIRST(&su->si_list);
+    osafassert(si);
+    csi = (AVND_COMP_CSI_REC *)m_NCS_DBLIST_FIND_LAST(&si->csi_list);
+    osafassert(csi);
+
+    if (m_AVND_SU_SI_CURR_ASSIGN_STATE_IS_REMOVING(si))
+      m_AVND_COMP_CSI_CURR_ASSIGN_STATE_SET(
+          csi, AVND_COMP_CSI_ASSIGN_STATE_REMOVING);
+    else
+      m_AVND_COMP_CSI_CURR_ASSIGN_STATE_SET(
+          csi, AVND_COMP_CSI_ASSIGN_STATE_ASSIGNING);
+
+    TRACE("Running the component clc FSM, terminate the component");
+    rc = avnd_comp_clc_fsm_run(cb, csi->comp,
+                               (m_AVND_COMP_IS_FAILED(csi->comp))
+                                   ? AVND_COMP_CLC_PRES_FSM_EV_CLEANUP
+                                   : AVND_COMP_CLC_PRES_FSM_EV_TERM);
+  }
 
   /* transition to terminating state */
   avnd_su_pres_state_set(cb, su, SA_AMF_PRESENCE_TERMINATING);
