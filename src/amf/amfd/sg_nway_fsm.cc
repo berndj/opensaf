@@ -1496,14 +1496,14 @@ uint32_t avd_sg_nway_si_assign(AVD_CL_CB *cb, AVD_SG *sg) {
       if (avd_su_susi_find(cb, curr_su, curr_si->name) != AVD_SU_SI_REL_NULL)
         continue;
 
-        if ((sg->pref_assigned_sus() == sg->curr_assigned_sus()) &&
-            (curr_su->list_of_susi == nullptr)) {
-          //PrefAssignedSU count reached so no assignment in fresh SU.
-          //Still continue for next pref ranked SU.
-          TRACE_1("PrefAssignedSU count reached in '%s', so no fresh assignments.",
-                   sg->name.c_str());
-          continue;
-        }
+      if ((sg->pref_assigned_sus() == sg->curr_assigned_sus()) &&
+          (curr_su->list_of_susi == nullptr)) {
+        //PrefAssignedSU count reached so no assignment in fresh SU.
+        //Still continue for next pref ranked SU.
+        TRACE_1("PrefAssignedSU count reached in '%s', so no fresh assignments.",
+                sg->name.c_str());
+        continue;
+      }
 
       /* send the standby assignment */
       rc = avd_new_assgn_susi(cb, curr_su, curr_si, SA_AMF_HA_STANDBY, false,
