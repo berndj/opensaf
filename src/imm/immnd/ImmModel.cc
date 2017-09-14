@@ -5221,9 +5221,8 @@ SaAisErrorT ImmModel::adminOwnerChange(const struct immsv_a2nd_admown_set* req,
           CcbVector::iterator i2;
           ObjectInfo* objectInfo = i1->second;
           ccbIdOfObj = objectInfo->mCcbId;
-          if (!doIt && ccbIdOfObj && release) {
+          if (!doIt && ccbIdOfObj) {
             // check for ccb interference
-            // Note: interference only possible fore release.
             // For set the adminowner is either same == noop;
             // or different => will be caught in adminOwnerSet()
             i2 = std::find_if(sCcbVector.begin(), sCcbVector.end(),
@@ -5234,7 +5233,13 @@ SaAisErrorT ImmModel::adminOwnerChange(const struct immsv_a2nd_admown_set* req,
               if (!release && (adm->mAdminOwnerName == oldOwner)) {
                 TRACE("Idempotent adminOwner set for %s on %s",
                       oldOwner.c_str(), objectName.c_str());
-              } else {
+              } else if (!release && oldOwner.empty()
+                  && (*i2)->mState == IMM_CCB_CRITICAL) {
+                TRACE_7("ERR_TRY_AGAIN: Object '%s' is in a critical CCB (%d)",
+                        objectName.c_str(), (*i2)->mId);
+                TRACE_LEAVE();
+                return SA_AIS_ERR_TRY_AGAIN;
+              } else if (release) {
                 LOG_IN("ERR_BUSY: ccb id %u active on object %s", ccbIdOfObj,
                        objectName.c_str());
                 TRACE_LEAVE();
