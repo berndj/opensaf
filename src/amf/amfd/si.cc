@@ -1079,6 +1079,12 @@ static SaAisErrorT si_ccb_completed_cb(CcbUtilOperationData_t *opdata) {
       break;
     case CCBUTIL_DELETE:
       si = avd_si_get(Amf::to_string(&opdata->objectName));
+      if (si == nullptr && avd_cb->is_active () == false) {
+        rc = SA_AIS_OK;
+        opdata->userData = nullptr;
+        goto done;
+      }
+      osafassert(si != nullptr);
       if (nullptr != si->list_of_sisu) {
         report_ccb_validation_error(opdata, "SaAmfSI is in use '%s'",
                                     si->name.c_str());
@@ -1293,6 +1299,10 @@ static void si_ccb_apply_cb(CcbUtilOperationData_t *opdata) {
       si->si_add_to_model();
       break;
     case CCBUTIL_DELETE:
+      if (opdata->userData == nullptr && avd_cb->is_active() == false) {
+        break;
+      }
+      osafassert(opdata->userData != nullptr);
       avd_si_delete(static_cast<AVD_SI *>(opdata->userData));
       break;
     case CCBUTIL_MODIFY:

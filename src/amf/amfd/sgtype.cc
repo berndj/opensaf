@@ -382,6 +382,12 @@ static SaAisErrorT sgtype_ccb_completed_cb(CcbUtilOperationData_t *opdata) {
       break;
     case CCBUTIL_DELETE:
       sgt = sgtype_db->find(Amf::to_string(&opdata->objectName));
+      if (sgt == nullptr && avd_cb->is_active() == false) {
+        rc = SA_AIS_OK;
+        opdata->userData = nullptr;
+        goto done;
+      }
+      osafassert(sgt != nullptr);
 
       for (const auto &sg : sgt->list_of_sg) {
         SaNameTWrapper sg_name(sg->name);
@@ -492,6 +498,10 @@ static void sgtype_ccb_apply_cb(CcbUtilOperationData_t *opdata) {
       sgtype_ccb_apply_modify_hdlr(opdata);
       break;
     case CCBUTIL_DELETE:
+      if (opdata->userData == nullptr && avd_cb->is_active() == false) {
+        break;
+      }
+      osafassert(opdata->userData != nullptr);
       sgtype_delete(static_cast<AVD_AMF_SG_TYPE *>(opdata->userData));
       break;
     default:

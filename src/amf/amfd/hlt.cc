@@ -71,6 +71,10 @@ static SaAisErrorT ccb_completed_delete_hdlr(CcbUtilOperationData_t *opdata) {
   avsv_sanamet_init(Amf::to_string(&opdata->objectName), comp_name, "safComp=");
 
   comp = comp_db->find(comp_name);
+  if (comp == nullptr && avd_cb->is_active() == false) {
+    opdata->userData = nullptr;
+    goto done;
+  }
   for (curr_susi = comp->su->list_of_susi; curr_susi != nullptr;
        curr_susi = curr_susi->su_next)
     for (compcsi = curr_susi->list_of_csicomp; compcsi;
@@ -160,6 +164,9 @@ static void ccb_apply_modify_hdlr(CcbUtilOperationData_t *opdata) {
 
 static void ccb_apply_delete_hdlr(CcbUtilOperationData_t *opdata) {
   AVSV_PARAM_INFO param = {0};
+  if (opdata->userData == nullptr && avd_cb->is_active() == false) {
+    return;
+  }
   AVD_AVND *node = static_cast<AVD_AVND *>(opdata->userData);
 
   param.class_id = AVSV_SA_AMF_HEALTH_CHECK;

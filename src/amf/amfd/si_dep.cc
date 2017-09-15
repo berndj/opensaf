@@ -1359,6 +1359,10 @@ static void sidep_ccb_apply_cb(CcbUtilOperationData_t *opdata) {
     case CCBUTIL_DELETE:
       avd_sidep_indx_init(Amf::to_string(&opdata->objectName), &tmp_sidep);
       sidep = sidep_db_find(tmp_sidep.spons_name, tmp_sidep.dep_name);
+      if (sidep == nullptr && avd_cb->is_active() == false) {
+        break;
+      }
+      osafassert(sidep != nullptr);
       dep_si = avd_si_get(sidep->dep_name);
       osafassert(dep_si != nullptr);
       /* If SI is in tolerance timer running state because of this

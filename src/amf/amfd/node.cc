@@ -532,6 +532,12 @@ static SaAisErrorT node_ccb_completed_delete_hdlr(
 
   TRACE_ENTER2("'%s'", osaf_extended_name_borrow(&opdata->objectName));
 
+  if (node == nullptr && avd_cb->is_active() == false) {
+    opdata->userData = nullptr;
+    goto done;
+  }
+  osafassert(node != nullptr);
+
   if (node->node_info.member) {
     report_ccb_validation_error(opdata, "Node '%s' is still cluster member",
                                 osaf_extended_name_borrow(&opdata->objectName));
@@ -783,6 +789,10 @@ static SaAisErrorT node_ccb_completed_cb(CcbUtilOperationData_t *opdata) {
 }
 
 static void node_ccb_apply_delete_hdlr(AVD_AVND *node) {
+  if (node == nullptr && avd_cb->is_active() == false) {
+    TRACE_ENTER();
+    return;
+  }
   TRACE_ENTER2("'%s'", node->name.c_str());
   avd_node_delete_nodeid(node);
   avd_node_delete(node);

@@ -157,6 +157,11 @@ static SaAisErrorT svctypecstypes_ccb_completed_cb(
     case CCBUTIL_DELETE:
       svctypecstype =
           svctypecstypes_db->find(Amf::to_string(&opdata->objectName));
+      if (svctypecstype == nullptr && avd_cb->is_active() == false) {
+        rc = SA_AIS_OK;
+        opdata->userData = nullptr;
+        break;
+      }
       if (svctypecstype->curr_num_csis == 0) {
         rc = SA_AIS_OK;
         opdata->userData = svctypecstype;

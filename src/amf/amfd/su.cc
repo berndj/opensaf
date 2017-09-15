@@ -1661,6 +1661,10 @@ static SaAisErrorT su_ccb_completed_delete_hdlr(
     is_app_su = 0;
 
   su = su_db->find(Amf::to_string(&opdata->objectName));
+  if (su == nullptr && avd_cb->is_active() == false) {
+    opdata->userData = nullptr;
+    return SA_AIS_OK;
+  }
   osafassert(su != nullptr);
 
   if (is_app_su) {
@@ -2008,10 +2012,15 @@ static void su_ccb_apply_modify_hdlr(struct CcbUtilOperationData *opdata) {
  * @param su
  */
 void su_ccb_apply_delete_hdlr(struct CcbUtilOperationData *opdata) {
-  AVD_SU *su = static_cast<AVD_SU *>(opdata->userData);
   AVD_AVND *su_node_ptr;
   AVSV_PARAM_INFO param;
-  AVD_SG *sg = su->sg_of_su;
+  AVD_SG *sg;
+
+  if (opdata->userData == nullptr && avd_cb->is_active() == false) {
+    return;
+  }
+  AVD_SU *su = static_cast<AVD_SU *>(opdata->userData);
+  sg = su->sg_of_su;
 
   TRACE_ENTER2("'%s'", su->name.c_str());
 

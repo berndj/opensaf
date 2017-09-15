@@ -281,6 +281,9 @@ static void sutype_ccb_apply_cb(CcbUtilOperationData_t *opdata) {
       break;
     case CCBUTIL_DELETE:
       sut = sutype_db->find(Amf::to_string(&opdata->objectName));
+      if (sut == nullptr && avd_cb->is_active() == false) {
+        break;
+      }
       sutype_db->erase(sut->name);
       sutype_delete(&sut);
       break;
@@ -373,6 +376,10 @@ static SaAisErrorT sutype_ccb_completed_cb(CcbUtilOperationData_t *opdata) {
       break;
     case CCBUTIL_DELETE:
       sut = sutype_db->find(Amf::to_string(&opdata->objectName));
+      if (sut == nullptr && avd_cb->is_active() == false) {
+        rc = SA_AIS_OK;
+        break;
+      }
 
       /* check whether there exists a delete operation for
        * each of the SU in the su_type list in the current CCB

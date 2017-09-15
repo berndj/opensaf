@@ -340,6 +340,10 @@ static void sirankedsu_ccb_apply_cb(CcbUtilOperationData_t *opdata) {
 
       break;
     case CCBUTIL_DELETE:
+      if (opdata->userData == nullptr && avd_cb->is_active () == false) {
+        break;
+      }
+      osafassert(opdata->userData != nullptr);
       /* delete and free the structure */
       avd_sirankedsu_del_si_list(
           avd_cb, static_cast<AVD_SUS_PER_SI_RANK *>(opdata->userData));

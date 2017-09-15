@@ -1752,6 +1752,9 @@ void comp_ccb_apply_delete_hdlr(struct CcbUtilOperationData *opdata) {
   TRACE_ENTER();
 
   AVD_COMP *comp = comp_db->find(Amf::to_string(&opdata->objectName));
+  if (comp == nullptr && avd_cb->is_active() == false) {
+    return;
+  }
   /* comp should be found in the database even if it was
    * due to parent su delete the changes are applied in
    * bottom up order so all the component deletes are applied

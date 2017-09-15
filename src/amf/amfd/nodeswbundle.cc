@@ -122,6 +122,9 @@ static int is_swbdl_delete_ok(const std::string &bundle_dn,
   /* Check if any comps are referencing this bundle */
   avsv_sanamet_init(bundle_dn, node_dn, "safAmfNode=");
   node = avd_node_get(node_dn);
+  if (node == nullptr && avd_cb->is_active() == false) {
+    return 1;
+  }
 
   if (!is_swbdl_delete_ok_for_node(bundle_dn, node_dn, node->list_of_ncs_su,
                                    opdata))

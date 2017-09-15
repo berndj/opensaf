@@ -1624,6 +1624,12 @@ static SaAisErrorT sg_ccb_completed_cb(CcbUtilOperationData_t *opdata) {
       break;
     case CCBUTIL_DELETE:
       sg = sg_db->find(Amf::to_string(&opdata->objectName));
+      if (sg == nullptr && avd_cb->is_active() == false) {
+        rc = SA_AIS_OK;
+        opdata->userData = nullptr;
+        break;
+      }
+      osafassert(sg != nullptr);
       if (sg->list_of_si.empty() == false) {
         /* check whether there is parent app delete */
         const SaNameTWrapper app_name(sg->app->name);
@@ -1680,6 +1686,10 @@ static void sg_ccb_apply_cb(CcbUtilOperationData_t *opdata) {
       sg_add_to_model(sg);
       break;
     case CCBUTIL_DELETE:
+      if (opdata->userData == nullptr && avd_cb->is_active() == false) {
+        break;
+      }
+      osafassert(opdata->userData != nullptr);
       avd_sg_delete(static_cast<AVD_SG *>(opdata->userData));
       break;
     case CCBUTIL_MODIFY:

@@ -358,6 +358,10 @@ static SaAisErrorT compcstype_ccb_completed_cb(CcbUtilOperationData_t *opdata) {
       AVD_COMP_CSI_REL *compcsi;
 
       cst = compcstype_db->find(Amf::to_string(&opdata->objectName));
+      if (cst == nullptr && avd_cb->is_active() == false) {
+        rc = SA_AIS_OK;
+        break;
+      }
       osafassert(cst);
       avsv_sanamet_init(Amf::to_string(&opdata->objectName), comp_name,
                         "safComp=");

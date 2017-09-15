@@ -200,6 +200,11 @@ static SaAisErrorT cstype_ccb_completed_hdlr(CcbUtilOperationData_t *opdata) {
       break;
     case CCBUTIL_DELETE:
       cst = cstype_db->find(object_name);
+      if (cst == nullptr && avd_cb->is_active() == false) {
+        rc = SA_AIS_OK;
+        opdata->userData = nullptr;
+        break;
+      }
       if (cst->list_of_csi != nullptr) {
         /* check whether there exists a delete operation for
          * each of the CSI in the cs_type list in the current CCB
@@ -247,6 +252,9 @@ static void cstype_ccb_apply_cb(CcbUtilOperationData_t *opdata) {
       cstype_add_to_model(cst);
       break;
     case CCBUTIL_DELETE:
+      if (opdata->userData == nullptr && avd_cb->is_active() == false) {
+        break;
+      }
       cstype_delete(static_cast<AVD_CS_TYPE *>(opdata->userData));
       break;
     default:

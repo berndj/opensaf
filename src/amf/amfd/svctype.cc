@@ -155,6 +155,11 @@ static SaAisErrorT svctype_ccb_completed_cb(CcbUtilOperationData_t *opdata) {
       break;
     case CCBUTIL_DELETE:
       svc_type = svctype_db->find(Amf::to_string(&opdata->objectName));
+      if (svc_type == nullptr && avd_cb->is_active() == false) {
+        rc = SA_AIS_OK;
+        opdata->userData = nullptr;
+        break;
+      }
 
       /* check whether there exists a delete operation for
        * each of the SI in the svc_type list in the current CCB
@@ -200,6 +205,9 @@ static void svctype_ccb_apply_cb(CcbUtilOperationData_t *opdata) {
       svctype_db_add(svc_type);
       break;
     case CCBUTIL_DELETE:
+      if (opdata->userData == nullptr && avd_cb->is_active() == false) {
+        break;
+      }
       svctype_delete(static_cast<AVD_SVC_TYPE *>(opdata->userData));
       break;
     default:

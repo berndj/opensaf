@@ -136,6 +136,7 @@ typedef struct cl_cb_tag {
   SaAmfHAStateT avail_state_avd; /* the redundancy state for
                                   * Availability director
                                   */
+  bool is_active() const {return avail_state_avd == SA_AMF_HA_ACTIVE;};
 
   MDS_HDL vaddr_pwe_hdl; /* The pwe handle returned when
                           * vdest address is created.
