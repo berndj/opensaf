@@ -40,6 +40,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
+
+#include <signal.h>
+#include <sys/timerfd.h>
+
 #include "mds_dt_tipc.h"
 #include "mds_dt_tcp_disc.h"
 #include "mds_core.h"
@@ -708,6 +712,10 @@ ssize_t recvfrom_connectionless(int sd, void *buf, size_t nbytes, int flags,
 	}
 }
 
+static void osaf_sigalrm_handler(int signo) {
+	raise(SIGABRT);
+}
+
 /*********************************************************
 
   Function NAME: mdtm_process_recv_events
@@ -722,13 +730,27 @@ ssize_t recvfrom_connectionless(int sd, void *buf, size_t nbytes, int flags,
  *********************************************************/
 static uint32_t mdtm_process_recv_events(void)
 {
-	enum { FD_DSOCK = 0, FD_BSRSOCK, FD_TMRFD, NUM_FDS };
+	enum { FD_DSOCK = 0, FD_BSRSOCK, FD_TMRFD, FD_TMRWD, NUM_FDS };
 
 	/*
 	   STEP 1: Poll on the BSRsock and Dsock to get the events
 	   if data is received process the received data
 	   if discovery events are received , process the discovery events
 	 */
+
+	int timerfd = -1;
+	if (getenv("OSAF_MDS_WATCHDOG") != NULL) {
+		signal(SIGALRM, osaf_sigalrm_handler);
+		timerfd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
+		struct itimerspec spec;
+		spec.it_interval.tv_sec = 0;
+		spec.it_interval.tv_nsec = 100000000;
+		spec.it_value.tv_sec = 0;
+		spec.it_value.tv_nsec = 100000000;
+		timerfd_settime(timerfd, 0, &spec, NULL);
+		alarm(4);
+		LOG_NO("Started MDS watchdog");
+	}
 
 	while (true) {
 		int pollres;
@@ -743,9 +765,11 @@ static uint32_t mdtm_process_recv_events(void)
 		pfd[FD_BSRSOCK].events = POLLIN;
 		pfd[FD_TMRFD].fd = tipc_cb.tmr_fd;
 		pfd[FD_TMRFD].events = POLLIN;
+		pfd[FD_TMRWD].fd = timerfd;
+		pfd[FD_TMRWD].events = POLLIN;
 
 		pfd[FD_DSOCK].revents = pfd[FD_BSRSOCK].revents =
-		    pfd[FD_TMRFD].revents = 0;
+		    pfd[FD_TMRFD].revents = pfd[FD_TMRWD].revents = 0;
 
 		pollres = poll(pfd, NUM_FDS, MDTM_TIPC_POLL_TIMEOUT);
 
@@ -1098,6 +1122,13 @@ static uint32_t mdtm_process_recv_events(void)
 					return NCSCC_RC_SUCCESS; /* Thread quit
 								  */
 				}
+			}
+
+			if (pfd[FD_TMRWD].revents == POLLIN) {
+				alarm(4);
+				uint64_t expirations = 0;
+				if (read(timerfd, &expirations, 8) != 8) LOG_ER("MDS error reading timerfd value");
+				if (expirations != 1) LOG_NO("MDS timerfd expired %" PRIu64 " times", expirations);
 			}
 			osaf_mutex_unlock_ordie(&gl_mds_library_mutex);
 		} /* if pollres */
