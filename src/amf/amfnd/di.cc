@@ -797,15 +797,20 @@ uint32_t avnd_di_oper_send(AVND_CB *cb, const AVND_SU *su, uint32_t rcvr) {
   msg.info.avd->msg_info.n2d_opr_state.rec_rcvr.raw = rcvr;
 
   if (cb->is_avd_down == true || cb->amfd_sync_required == true) {
-    // We are in headless, buffer this msg
-    msg.info.avd->msg_info.n2d_opr_state.msg_id = 0;
-    if (avnd_diq_rec_add(cb, &msg) == nullptr) {
-      rc = NCSCC_RC_FAILURE;
+    if (msg.info.avd->msg_info.n2d_opr_state.su_oper_state ==
+        SA_AMF_OPERATIONAL_DISABLED ||
+        msg.info.avd->msg_info.n2d_opr_state.node_oper_state ==
+            SA_AMF_OPERATIONAL_DISABLED) {
+      // We are in headless, buffer this msg
+      msg.info.avd->msg_info.n2d_opr_state.msg_id = 0;
+      if (avnd_diq_rec_add(cb, &msg) == nullptr) {
+        rc = NCSCC_RC_FAILURE;
+      }
+      LOG_NO(
+          "avnd_di_oper_send() deferred as AMF director is offline(%d),"
+          " or sync is required(%d)",
+          cb->is_avd_down, cb->amfd_sync_required);
     }
-    LOG_NO(
-        "avnd_di_oper_send() deferred as AMF director is offline(%d),"
-        " or sync is required(%d)",
-        cb->is_avd_down, cb->amfd_sync_required);
   } else {
     // We are in normal cluster, send msg to director
     msg.info.avd->msg_info.n2d_opr_state.msg_id = ++(cb->snd_msg_id);
@@ -1337,7 +1342,11 @@ void avnd_diq_rec_check_buffered_msg(AVND_CB *cb) {
       // leave in dnd_list
       ++iter;
       continue;
-    } else if (rec->msg.info.avd->msg_type == AVSV_N2D_OPERATION_STATE_MSG) {
+    } else if (rec->msg.info.avd->msg_type == AVSV_N2D_OPERATION_STATE_MSG &&
+        (rec->msg.info.avd->msg_info.n2d_opr_state.su_oper_state ==
+            SA_AMF_OPERATIONAL_DISABLED ||
+            rec->msg.info.avd->msg_info.n2d_opr_state.node_oper_state ==
+                SA_AMF_OPERATIONAL_DISABLED)) {
       if (rec->msg.info.avd->msg_info.n2d_opr_state.msg_id != 0) {
         rec->msg.info.avd->msg_info.n2d_opr_state.msg_id = 0;
         LOG_NO(

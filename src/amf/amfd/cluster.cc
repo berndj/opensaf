@@ -53,7 +53,6 @@ AVD_CLUSTER *avd_cluster = &_avd_cluster;
 
 void avd_cluster_tmr_init_evh(AVD_CL_CB *cb, AVD_EVT *evt) {
   TRACE_ENTER();
-  AVD_SU *su = nullptr;
   AVD_AVND *node = nullptr;
   saflog(LOG_NOTICE, amfSvcUsrName,
          "Cluster startup timeout, assigning SIs to SUs");
@@ -107,19 +106,6 @@ void avd_cluster_tmr_init_evh(AVD_CL_CB *cb, AVD_EVT *evt) {
     }
 
     if (i_sg->sg_fsm_state == AVD_SG_FSM_STABLE) i_sg->realign(cb, i_sg);
-  }
-
-  if (cb->scs_absence_max_duration > 0) {
-    TRACE("check if any SU is auto repair enabled");
-
-    for (const auto &value : *su_db) {
-      su = value.second;
-
-      if (su->list_of_susi == nullptr && su->su_on_node != nullptr &&
-          su->su_on_node->saAmfNodeOperState == SA_AMF_OPERATIONAL_ENABLED) {
-        su_try_repair(su);
-      }
-    }
   }
 
 done:
