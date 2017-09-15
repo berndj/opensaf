@@ -1,6 +1,7 @@
 [Unit]
 Description=Send a UDP datagram to OpenSAF PLM controllers indicating the OS state
-After=remote-fs.target local-fs.target syslog.target network.target
+After=remote-fs.target local-fs.target syslog.target network-online.target
+Wants=network-online.target
 
 [Service]
 ExecStart=@sbindir@/plmcd -c @sysconfdir@/plmcd.conf -s

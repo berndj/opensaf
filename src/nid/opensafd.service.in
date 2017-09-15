@@ -1,6 +1,7 @@
 [Unit]
 Description=OpenSAF daemon
-After=remote-fs.target local-fs.target syslog.target network.target
+After=remote-fs.target local-fs.target syslog.target network-online.target
+Wants=network-online.target
 
 [Service]
 ExecStart=@initscriptdir@/opensafd start
