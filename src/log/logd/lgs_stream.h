@@ -89,6 +89,8 @@ typedef struct log_stream {
   uint32_t stb_curFileSize; /* Bytes written to current log file */
 
   // Hold vector of destname string {"name1", "name2", etc.}
+  // Default value is empty. It MUST be synced with
+  // `saLogRecordDestination` default value.
   std::vector<std::string> dest_names;
   // Hold a list of strings separated by semicolon "name1;name2;etc"
   // This data is used to checkpoint to standby

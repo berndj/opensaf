@@ -2733,33 +2733,16 @@ done:
  * @return SaAisErrorT
  */
 static SaAisErrorT stream_create_and_configure(
-    const std::string &dn, log_stream_t **in_stream, int stream_id,
-    SaImmAccessorHandleT accessorHandle) {
+    const std::string &dn, int stream_id,
+    SaImmAttrValuesT_2** attributes) {
   SaAisErrorT rc = SA_AIS_OK;
-  SaNameT objectName;
   SaImmAttrValuesT_2 *attribute;
-  SaImmAttrValuesT_2 **attributes;
   int i = 0;
   log_stream_t *stream;
-  char *attribute_names[] = {
-      const_cast<char *>("saLogStreamFileName"),
-      const_cast<char *>("saLogStreamPathName"),
-      const_cast<char *>("saLogStreamMaxLogFileSize"),
-      const_cast<char *>("saLogStreamFixedLogRecordSize"),
-      const_cast<char *>("saLogStreamLogFullAction"),
-      const_cast<char *>("saLogStreamLogFullHaltThreshold"),
-      const_cast<char *>("saLogStreamMaxFilesRotated"),
-      const_cast<char *>("saLogStreamLogFileFormat"),
-      const_cast<char *>("saLogRecordDestination"),
-      const_cast<char *>("saLogStreamSeverityFilter"),
-      const_cast<char *>("saLogStreamCreationTimestamp"),
-      NULL};
 
   TRACE_ENTER2("(%s)", dn.c_str());
 
-  osaf_extended_name_lend(dn.c_str(), &objectName);
-
-  *in_stream = stream = log_stream_new(dn, stream_id);
+  stream = log_stream_new(dn, stream_id);
 
   if (stream == NULL) {
     rc = SA_AIS_ERR_NO_MEMORY;
@@ -2774,15 +2757,6 @@ static SaAisErrorT stream_create_and_configure(
     stream->streamType = STREAM_TYPE_SYSTEM;
   else
     stream->streamType = STREAM_TYPE_APPLICATION;
-
-  /* Get all attributes of the object */
-  if ((rc = immutil_saImmOmAccessorGet_2(accessorHandle, &objectName,
-                                         attribute_names, &attributes)) !=
-      SA_AIS_OK) {
-    LOG_ER("Configuration for %s not found: %s", dn.c_str(), saf_error(rc));
-    rc = SA_AIS_ERR_NOT_EXIST;
-    goto done;
-  }
 
   while ((attribute = attributes[i++]) != NULL) {
     void *value;
@@ -2910,11 +2884,11 @@ SaAisErrorT lgs_imm_init_configStreams(lgs_cb_t *cb) {
   int int_rc = 0;
   log_stream_t *stream;
   SaImmHandleT omHandle;
-  SaImmAccessorHandleT accessorHandle;
   SaVersionT immVersion = {'A', 2, 1};
   SaImmSearchHandleT immSearchHandle;
   SaImmSearchParametersT_2 objectSearch;
   SaImmAttrValuesT_2 **attributes;
+  SaImmAttrDefinitionT_2** attr_definitions;
   int wellknownStreamId = 0;
   int appStreamId = 3;
   uint32_t streamId = 0;
@@ -2929,51 +2903,68 @@ SaAisErrorT lgs_imm_init_configStreams(lgs_cb_t *cb) {
     osaf_abort(0);
   }
 
-  om_rc = immutil_saImmOmAccessorInitialize(omHandle, &accessorHandle);
-  if (om_rc != SA_AIS_OK) {
-    LOG_ER("immutil_saImmOmAccessorInitialize failed %s", saf_error(om_rc));
-    osaf_abort(0);
+  // We don't know the IMM model we are working with is the latest model
+  // or the old ones that could not have our newly added attribute names.
+  // Fetching non-existing attribute names will result error.
+  // So, we ask helps from `saImmOmClassDescriptionGet_2` to get list of
+  // attribute names of current IMM model.
+  SaImmClassCategoryT category = SA_IMM_CLASS_CONFIG;
+  om_rc = immutil_saImmOmClassDescriptionGet_2(
+      omHandle, const_cast<char*>(className), &category, &attr_definitions);
+  osafassert(om_rc == SA_AIS_OK);
+
+  // Store all attribute names, except pure runtime ones.
+  unsigned ii = 0;
+  SaImmAttrDefinitionT_2* attr_def;
+  std::vector<char*> attr_names;
+  while ((attr_def = attr_definitions[ii++]) != nullptr) {
+    if ((attr_def->attrFlags & SA_IMM_ATTR_RUNTIME) &&
+        (!(attr_def->attrFlags & SA_IMM_ATTR_CACHED))) continue;
+
+    // Contains all non-pure attributes. This list will be passed
+    // to saImmOmSearchInitialize() to fetch all their values.
+    // Having pure-runtime attribute in the list will get deadlock.
+    attr_names.push_back(attr_def->attrName);
   }
 
-  /* Search for all objects of class "SaLogStreamConfig". */
-  /**
-   * Should not base on the attribute name `safLgStrCfg`
-   * as the user can create any class having that name
-   */
+  ii = 0;
+  char* list_attr_names[attr_names.size() + 1];
+  for (auto& item : attr_names) list_attr_names[ii++] = item;
+  list_attr_names[ii] = nullptr;
+
+  /* Search for all IMM objects of class "SaLogStreamConfig". */
   objectSearch.searchOneAttr.attrName =
       const_cast<SaImmAttrNameT>("SaImmAttrClassName");
   objectSearch.searchOneAttr.attrValueType = SA_IMM_ATTR_SASTRINGT;
   objectSearch.searchOneAttr.attrValue = &className;
 
-  /**
-   * Search from root as app stream DN name can be any - maybe not under the RDN
-   * `safApp=safLogService` Therefore, searching all class under
-   * `safApp=safLogService` might miss configurable app stream eg: app stream
-   * with DN `saLgStrCfg=test`
-   */
-  if ((om_rc = immutil_saImmOmSearchInitialize_2(
-           omHandle, NULL, SA_IMM_SUBTREE,
-           SA_IMM_SEARCH_ONE_ATTR | SA_IMM_SEARCH_GET_NO_ATTR, &objectSearch,
-           NULL, /* Get no attributes */
-           &immSearchHandle)) == SA_AIS_OK) {
-    while (immutil_saImmOmSearchNext_2(immSearchHandle, &objectName,
-                                       &attributes) == SA_AIS_OK) {
-      /**
-       * With headless mode enabled, when lgsv restarts, there could be other
-       * configurable app streams. It differs from legacy mode in which no app
-       * stream could be exist at startup.
-       *
-       * With well-known streams, stream ID is in reserved numbers [0-2].
-       */
-      SaConstStringT name = osaf_extended_name_borrow(&objectName);
-      streamId =
-          is_well_know_stream(name) ? wellknownStreamId++ : appStreamId++;
-      ais_rc =
-          stream_create_and_configure(name, &stream, streamId, accessorHandle);
-      if (ais_rc != SA_AIS_OK) {
-        LOG_WA("stream_create_and_configure failed %d", ais_rc);
-        goto done;
-      }
+  // The search must be done from model root since there is no restriction
+  // of where in the IMM model a stream object can be created.
+  om_rc = immutil_saImmOmSearchInitialize_2(
+      omHandle, NULL, SA_IMM_SUBTREE,
+      SA_IMM_SEARCH_ONE_ATTR | SA_IMM_SEARCH_GET_SOME_ATTR,
+      &objectSearch,
+      list_attr_names,
+      &immSearchHandle);
+  osafassert(om_rc == SA_AIS_OK);
+
+  while (immutil_saImmOmSearchNext_2(immSearchHandle, &objectName,
+                                     &attributes) == SA_AIS_OK) {
+    /**
+     * With headless mode enabled, when lgsv restarts, there could be other
+     * configurable app streams. It differs from legacy mode in which no app
+     * stream could be exist at startup.
+     *
+     * With well-known streams, stream ID is in reserved numbers [0-2].
+     */
+    SaConstStringT name = osaf_extended_name_borrow(&objectName);
+    streamId =
+        is_well_know_stream(name) ? wellknownStreamId++ : appStreamId++;
+    ais_rc =
+        stream_create_and_configure(name, streamId, attributes);
+    if (ais_rc != SA_AIS_OK) {
+      LOG_WA("stream_create_and_configure failed %d", ais_rc);
+      goto done;
     }
   }
 
@@ -3022,11 +3013,6 @@ SaAisErrorT lgs_imm_init_configStreams(lgs_cb_t *cb) {
 
 done:
   /* Do not abort if error when finalizing */
-  om_rc = immutil_saImmOmAccessorFinalize(accessorHandle);
-  if (om_rc != SA_AIS_OK) {
-    LOG_NO("%s immutil_saImmOmAccessorFinalize() Fail %d", __FUNCTION__, om_rc);
-  }
-
   om_rc = immutil_saImmOmSearchFinalize(immSearchHandle);
   if (om_rc != SA_AIS_OK) {
     LOG_NO("%s immutil_saImmOmSearchFinalize() Fail %d", __FUNCTION__, om_rc);
