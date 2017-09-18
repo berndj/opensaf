@@ -859,11 +859,13 @@ void *saLogInitialize_1(void *arg)
 	SaLogStreamHandleT logStreamHandle1;
 	SaLogHandleT logHandle1;
 	int time_wait = 10*1000; // Wait for timeout is 10 seconds
+	SaVersionT log_version;
 
 	struct timespec timeout_time;
 	osaf_set_millis_timeout(time_wait, &timeout_time);
 	while (!osaf_is_timeout(&timeout_time)) {
-		*rt = saLogInitialize(&logHandle1, &logCallbacks, &logVersion);
+		log_version = kLogVersion;
+		*rt = saLogInitialize(&logHandle1, &logCallbacks, &log_version);
 		if (*rt != SA_AIS_ERR_TRY_AGAIN)
 			break;
 		osaf_nanosleep(&kHundredMilliseconds);
@@ -995,9 +997,10 @@ void saLogStreamOpen_BadOp(void)
 	SaAisErrorT rc;
 	char command[1000];
 	int loop;
+	SaVersionT log_version = kLogVersion;
 
 	cond_check();
-	rc = saLogInitialize(&logHandle, &logCallbacks, &logVersion);
+	rc = saLogInitialize(&logHandle, &logCallbacks, &log_version);
 	if (rc != SA_AIS_OK) {
 		fprintf(stderr, "Failed at saLogInitialize: %d \n", (int)rc);
 		test_validate(rc, SA_AIS_OK);
@@ -1048,9 +1051,10 @@ void saLogStreamClose_BadOp(void)
 	SaAisErrorT rc;
 	char command[1000];
 	int loop;
+	SaVersionT log_version = kLogVersion;
 
 	cond_check();
-	rc = saLogInitialize(&logHandle, &logCallbacks, &logVersion);
+	rc = saLogInitialize(&logHandle, &logCallbacks, &log_version);
 	if (rc != SA_AIS_OK) {
 		fprintf(stderr, "Failed at saLogInitialize: %d \n", (int)rc);
 		test_validate(rc, SA_AIS_OK);

@@ -59,11 +59,12 @@
 static void logWriteLogCallbackT(SaInvocationT invocation, SaAisErrorT error);
 
 static SaLogCallbacksT logCallbacks = {0, 0, logWriteLogCallbackT};
-static SaVersionT logVersion = {'A', 2, 3};
 
 static char *progname = "saflogger";
 static SaInvocationT cb_invocation;
 static SaAisErrorT cb_error;
+
+const SaVersionT kLogVersion = {'A', 2, 3};
 
 static SaTimeT get_current_SaTime(void)
 {
@@ -461,11 +462,14 @@ int main(int argc, char *argv[])
 	}
 
 	wait_time = 0;
-	error = saLogInitialize(&logHandle, &logCallbacks, &logVersion);
+	SaVersionT log_version = kLogVersion;
+	error = saLogInitialize(&logHandle, &logCallbacks, &log_version);
 	while (error == SA_AIS_ERR_TRY_AGAIN && wait_time < TEN_SECONDS) {
 		usleep(HUNDRED_MS);
 		wait_time += HUNDRED_MS;
-		error = saLogInitialize(&logHandle, &logCallbacks, &logVersion);
+		log_version = kLogVersion;
+		error =
+		      saLogInitialize(&logHandle, &logCallbacks, &log_version);
 	}
 
 	if (error != SA_AIS_OK) {

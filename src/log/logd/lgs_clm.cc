@@ -330,13 +330,13 @@ static const SaClmCallbacksT_4 clm_callbacks = {0, lgs_clm_track_cbk};
  * @return  SaAisErrorT
  */
 void *lgs_clm_init_thread(void *cb) {
-  static SaVersionT clmVersion = {'B', 0x04, 0x01};
   lgs_cb_t *_lgs_cb = reinterpret_cast<lgs_cb_t *>(cb);
   SaAisErrorT rc;
 
   TRACE_ENTER();
 
-  rc = saClmInitialize_4(&_lgs_cb->clm_hdl, &clm_callbacks, &clmVersion);
+  SaVersionT clm_version = kClmVersion;
+  rc = saClmInitialize_4(&_lgs_cb->clm_hdl, &clm_callbacks, &clm_version);
   while ((rc == SA_AIS_ERR_TRY_AGAIN) || (rc == SA_AIS_ERR_TIMEOUT) ||
          (rc == SA_AIS_ERR_UNAVAILABLE)) {
     if (_lgs_cb->clm_hdl != 0) {
@@ -345,7 +345,8 @@ void *lgs_clm_init_thread(void *cb) {
     }
 
     base::Sleep(base::kOneHundredMilliseconds);
-    rc = saClmInitialize_4(&_lgs_cb->clm_hdl, &clm_callbacks, &clmVersion);
+    clm_version = kClmVersion;
+    rc = saClmInitialize_4(&_lgs_cb->clm_hdl, &clm_callbacks, &clm_version);
   }
   if (rc != SA_AIS_OK) {
     LOG_ER("saClmInitialize failed with error: %d", rc);

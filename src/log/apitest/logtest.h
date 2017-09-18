@@ -65,7 +65,6 @@ extern SaNameT notificationObject;
 extern SaNameT configurationObject;
 extern SaNameT saNameT_Object_256;
 extern SaNameT saNameT_appstream_name_256;
-extern SaVersionT logVersion;
 extern SaAisErrorT rc;
 extern SaLogHandleT logHandle;
 extern SaLogStreamHandleT logStreamHandle;
@@ -77,6 +76,9 @@ extern SaSelectionObjectT selectionObject;
 extern SaNameT logSvcUsrName;
 extern SaLogRecordT genLogRecord;
 extern char log_root_path[];
+
+const static SaVersionT kLogVersion = {'A', 0x02, 0x03};
+const static SaVersionT kImmVersion = {'A', 02, 11};
 
 /* Vebose mode. If set some test cases will print extra information */
 bool verbose_flg;

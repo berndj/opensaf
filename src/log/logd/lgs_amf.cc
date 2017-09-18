@@ -438,7 +438,7 @@ static SaAisErrorT amf_healthcheck_start(lgs_cb_t *lgs_cb) {
 **************************************************************************/
 SaAisErrorT lgs_amf_init(lgs_cb_t *cb) {
   SaAmfCallbacksT amfCallbacks;
-  SaVersionT amf_version;
+  SaVersionT amf_version = kAmfVersion;
   SaAisErrorT error;
 
   TRACE_ENTER();
@@ -456,10 +456,6 @@ SaAisErrorT lgs_amf_init(lgs_cb_t *cb) {
   amfCallbacks.saAmfCSISetCallback = amf_csi_set_callback;
   amfCallbacks.saAmfComponentTerminateCallback = amf_comp_terminate_callback;
   amfCallbacks.saAmfCSIRemoveCallback = amf_csi_rmv_callback;
-
-  amf_version.releaseCode = 'B';
-  amf_version.majorVersion = 0x01;
-  amf_version.minorVersion = 0x01;
 
   /* Initialize the AMF library */
   error = saAmfInitialize(&cb->amf_hdl, &amfCallbacks, &amf_version);

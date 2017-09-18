@@ -68,12 +68,14 @@ int systemCall(const char *command)
  */
 SaAisErrorT logInitialize(void)
 {
+	SaVersionT log_version = kLogVersion;
 	SaAisErrorT rc =
-	    saLogInitialize(&logHandle, &logCallbacks, &logVersion);
+	    saLogInitialize(&logHandle, &logCallbacks, &log_version);
 	unsigned int nTries = 1;
 	while (rc == SA_AIS_ERR_TRY_AGAIN && nTries < logProfile.nTries) {
 		usleep(logProfile.retryInterval * 1000);
-		rc = saLogInitialize(&logHandle, &logCallbacks, &logVersion);
+		log_version = kLogVersion;
+		rc = saLogInitialize(&logHandle, &logCallbacks, &log_version);
 		nTries++;
 	}
 

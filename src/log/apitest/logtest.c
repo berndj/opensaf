@@ -85,8 +85,6 @@ SaLogRecordT genLogRecord = {
     .logHeader.genericHdr.logSvcUsrName = &logSvcUsrName,
     .logBuffer = &genLogBuffer};
 
-SaVersionT logVersion = {'A', 0x02, 0x03};
-SaVersionT immVersion = {'A', 2, 11};
 SaAisErrorT rc;
 SaLogHandleT logHandle;
 SaLogStreamHandleT logStreamHandle;
@@ -111,7 +109,7 @@ void init_logrootpath(void)
 
 	saAisNameLend(config, &objectName);
 	/* NOTE: immutil init osaf_assert if error */
-	(void)immutil_saImmOmInitialize(&omHandle, NULL, &immVersion);
+	(void)immutil_saImmOmInitialize(&omHandle, NULL, &kImmVersion);
 	(void)immutil_saImmOmAccessorInitialize(omHandle, &accessorHandle);
 
 	/* Get all attributes of the object */
@@ -147,7 +145,7 @@ int get_attr_value(SaNameT *inObjName, char *inAttr, void *outValue)
 	int rc = 0;
 
 	/* NOTE: immutil init osaf_assert if error */
-	(void)immutil_saImmOmInitialize(&omHandle, NULL, &immVersion);
+	(void)immutil_saImmOmInitialize(&omHandle, NULL, &kImmVersion);
 	(void)immutil_saImmOmAccessorInitialize(omHandle, &accessorHandle);
 
 	/* Get all attributes of the object */
@@ -296,7 +294,7 @@ int get_active_sc(void)
 	saAisNameLend(objname, &objectName1);
 	/* NOTE: immutil init osaf_assert if error
 	 */
-	(void)immutil_saImmOmInitialize(&omHandle, NULL, &immVersion);
+	(void)immutil_saImmOmInitialize(&omHandle, NULL, &kImmVersion);
 	(void)immutil_saImmOmAccessorInitialize(omHandle, &accessorHandle);
 
 	/* Get attributes of the object

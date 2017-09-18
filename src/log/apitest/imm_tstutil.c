@@ -22,7 +22,8 @@
 #include "base/saf_error.h"
 #include "base/osaf_extended_name.h"
 
-static SaVersionT immVersion = {'A', 2, 11};
+const SaVersionT kImmVersion = {'A', 02, 11};
+
 
 bool get_multivalue_type_string_from_imm(SaImmHandleT *omHandle,
 					 SaConstStringT objectName,
@@ -41,7 +42,7 @@ bool get_multivalue_type_string_from_imm(SaImmHandleT *omHandle,
 		/* Make sure this is a NULL pointer if no values are found */
 		*multivalue_array = NULL;
 
-		om_rc = immutil_saImmOmInitialize(omHandle, NULL, &immVersion);
+		om_rc = immutil_saImmOmInitialize(omHandle, NULL, &kImmVersion);
 		if (om_rc != SA_AIS_OK) {
 			printf("immutil_saImmOmInitialize Fail '%s'\n",
 			       saf_error(om_rc));

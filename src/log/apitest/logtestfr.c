@@ -41,8 +41,6 @@
 /*******************************************************************************
  * Global variables and defines
  */
-static SaVersionT logVersion = {'A', 0x02, 0x03};
-static SaVersionT immVersion = {'A', 2, 11};
 
 static SaLogHandleT logHandle;
 static SaLogStreamHandleT logStreamHandle;
@@ -60,6 +58,9 @@ const char logfile_name_str[] = "logtestfr";
 const char logfile_path_str[] = "logtestfr_path";
 const SaUint32T logrec_max_size = 256;
 const SaUint64T logfile_max_size = 256 * 10;
+
+const SaVersionT kLogVersion = {'A', 0x02, 0x03};
+const SaVersionT kImmVersion = {'A', 02, 11};
 
 #define STREAM_NAME_STR "safLgStr=logtestfr_stream"
 #define IMMLIST_CMD "immlist safLgStr=logtestfr_stream"
@@ -94,7 +95,7 @@ static int get_active_sc(void)
 
 	/* NOTE: immutil init osaf_assert if error
 	 */
-	(void)immutil_saImmOmInitialize(&omHandle, NULL, &immVersion);
+	(void)immutil_saImmOmInitialize(&omHandle, NULL, &kImmVersion);
 	(void)immutil_saImmOmAccessorInitialize(omHandle, &accessorHandle);
 
 	/* Get attributes of the object
@@ -193,7 +194,7 @@ void get_logRootDirectory(char *path_str)
 	void *value;
 
 	/* NOTE: immutil init osaf_assert if error */
-	(void)immutil_saImmOmInitialize(&omHandle, NULL, &immVersion);
+	(void)immutil_saImmOmInitialize(&omHandle, NULL, &kImmVersion);
 	(void)immutil_saImmOmAccessorInitialize(omHandle, &accessorHandle);
 
 	/* Get all attributes of the object */
@@ -237,6 +238,7 @@ static int init_log_open_stream(SaAisErrorT *ais_rc)
 {
 	int rc = 0;
 	int trycnt = 0;
+	SaVersionT log_version = kLogVersion;
 
 	/* Prepare callback */
 	logCallbacks.saLogWriteLogCallback = log_write_callback;
@@ -245,7 +247,7 @@ static int init_log_open_stream(SaAisErrorT *ais_rc)
 	do {
 		/* Try again loop. If other error end loop */
 		*ais_rc =
-		    saLogInitialize(&logHandle, &logCallbacks, &logVersion);
+		    saLogInitialize(&logHandle, &logCallbacks, &log_version);
 		if (*ais_rc != SA_AIS_ERR_TRY_AGAIN) {
 			break;
 		}
@@ -254,6 +256,7 @@ static int init_log_open_stream(SaAisErrorT *ais_rc)
 			/* Give up try again */
 			break;
 		}
+		log_version = kLogVersion;
 	} while (*ais_rc != SA_AIS_OK);
 	if (*ais_rc != SA_AIS_OK) {
 		fprintf(stderr, "%s Failed to initialize log service: %s\n",

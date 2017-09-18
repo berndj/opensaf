@@ -22,7 +22,6 @@
 #include "base/saf_error.h"
 #include "osaf/immutil/immutil.h"
 
-static SaVersionT immVersion = {'A', 2, 11};
 
 /**
  * Log configuration config obj <=> runtime obj
@@ -44,7 +43,7 @@ void log_rt_cf_obj_compare(void)
 	int tst_res = 0; /* Test result: 0 = PASS */
 
 	/* NOTE: immutil will osaf_assert if error */
-	(void)immutil_saImmOmInitialize(&omHandle, NULL, &immVersion);
+	(void)immutil_saImmOmInitialize(&omHandle, NULL, &kImmVersion);
 	(void)immutil_saImmOmAccessorInitialize(omHandle, &accessorHandle);
 
 	/* Count attributes in configuration object

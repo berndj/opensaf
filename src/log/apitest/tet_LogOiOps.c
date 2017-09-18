@@ -1443,11 +1443,11 @@ void saLogOi_50()
 
 static int get_filter_cnt_attr(const SaNameT *objName)
 {
-	SaVersionT immVersion = {'A', 2, 11};
+	SaVersionT imm_version = kImmVersion;
 	int filter_cnt = -1;
 	SaImmHandleT immOmHandle;
 	SaImmAccessorHandleT immAccHandle;
-	saImmOmInitialize(&immOmHandle, NULL, &immVersion);
+	saImmOmInitialize(&immOmHandle, NULL, &imm_version);
 	saImmOmAccessorInitialize(immOmHandle, &immAccHandle);
 
 	SaImmAttrNameT fobj = {"logStreamDiscardedCounter"};

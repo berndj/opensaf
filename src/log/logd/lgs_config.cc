@@ -42,7 +42,6 @@
 #include "log/logd/lgs.h"
 #include "log/logd/lgs_common.h"
 
-static SaVersionT immVersion = {'A', 2, 11};
 
 /* Mutex for making read and write of configuration data thread safe */
 pthread_mutex_t lgs_config_data_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -983,7 +982,7 @@ static void read_logsv_config_obj_2() {
 
   /* NOTE: immutil init will osaf_assert if error */
   SaAisErrorT om_rc =
-      immutil_saImmOmInitialize(&omHandle, nullptr, &immVersion);
+      immutil_saImmOmInitialize(&omHandle, nullptr, &kImmVersion);
   if (om_rc != SA_AIS_OK) {
     LOG_ER("immutil_saImmOmInitialize failed: %s", saf_error(om_rc));
     osaf_abort(0);

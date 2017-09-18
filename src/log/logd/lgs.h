@@ -80,6 +80,10 @@
   2 /* Store logs on local file system on \
        each node */
 
+const SaVersionT kAmfVersion = {'B', 0x01, 0x01};
+const SaVersionT kClmVersion = {'B', 0x04, 0x01};
+const SaVersionT kImmVersion = {'A', 0x02, 0x0B};
+
 /* ========================================================================
  *   DATA DECLARATIONS
  * ========================================================================

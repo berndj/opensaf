@@ -84,7 +84,6 @@ static SaNameT notifyingObjLd;
 static SaNameT logStreamNameLd;
 static SaLogBufferT logBufferLd;
 static SaNtfClassIdT notificationClassIdLd = {1, 2, 3};
-static SaVersionT logVersionLd = {'A', 2, 3};
 static SaInvocationT invocationLd;
 static SaAisErrorT errorLd;
 
@@ -447,13 +446,15 @@ static SaAisErrorT initLog(void)
 {
 	SaAisErrorT error;
 	unsigned int wait_time = 0;
+	SaVersionT log_version = kLogVersion;
 
-	error = saLogInitialize(&logHandleLd, &logCallbacksLd, &logVersionLd);
+	error = saLogInitialize(&logHandleLd, &logCallbacksLd, &log_version);
 	while (error == SA_AIS_ERR_TRY_AGAIN && wait_time < TEN_SECONDS) {
 		usleep(HUNDRED_MS);
 		wait_time += HUNDRED_MS;
+		log_version = kLogVersion;
 		error = saLogInitialize(&logHandleLd, &logCallbacksLd,
-					&logVersionLd);
+					&log_version);
 	}
 
 	return error;

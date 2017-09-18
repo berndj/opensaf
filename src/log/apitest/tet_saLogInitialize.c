@@ -20,20 +20,23 @@
 
 void saLogInitialize_01(void)
 {
-	rc = saLogInitialize(&logHandle, &logCallbacks, &logVersion);
+	SaVersionT log_version = kLogVersion;
+	rc = saLogInitialize(&logHandle, &logCallbacks, &log_version);
 	logFinalize();
 	test_validate(rc, SA_AIS_OK);
 }
 
 void saLogInitialize_02(void)
 {
-	rc = saLogInitialize(NULL, &logCallbacks, &logVersion);
+	SaVersionT log_version = kLogVersion;
+	rc = saLogInitialize(NULL, &logCallbacks, &log_version);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
 void saLogInitialize_03(void)
 {
-	rc = saLogInitialize(&logHandle, NULL, &logVersion);
+	SaVersionT log_version = kLogVersion;
+	rc = saLogInitialize(&logHandle, NULL, &log_version);
 	logFinalize();
 	test_validate(rc, SA_AIS_OK);
 }
@@ -46,49 +49,50 @@ void saLogInitialize_04(void)
 
 void saLogInitialize_05(void)
 {
-	rc = saLogInitialize(0, &logCallbacks, &logVersion);
+	SaVersionT log_version = kLogVersion;
+	rc = saLogInitialize(0, &logCallbacks, &log_version);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
 void saLogInitialize_06(void)
 {
-	SaVersionT version = {0, 0, 0};
+	SaVersionT log_version = {0, 0, 0};
 
-	rc = saLogInitialize(&logHandle, &logCallbacks, &version);
+	rc = saLogInitialize(&logHandle, &logCallbacks, &log_version);
 	test_validate(rc, SA_AIS_ERR_VERSION);
 }
 
 void saLogInitialize_07(void)
 {
-	SaVersionT version = {'B', 1, 1};
+	SaVersionT log_version = {'B', 1, 1};
 
-	rc = saLogInitialize(&logHandle, &logCallbacks, &version);
+	rc = saLogInitialize(&logHandle, &logCallbacks, &log_version);
 	test_validate(rc, SA_AIS_ERR_VERSION);
 }
 
 void saLogInitialize_08(void)
 {
-	SaVersionT version = {'A', 2, 1};
+	SaVersionT log_version = {'A', 2, 1};
 
-	rc = saLogInitialize(&logHandle, &logCallbacks, &version);
+	rc = saLogInitialize(&logHandle, &logCallbacks, &log_version);
 	logFinalize();
 	test_validate(rc, SA_AIS_OK);
 }
 
 void saLogInitialize_09(void)
 {
-	SaVersionT version = {'A', 3, 0};
+	SaVersionT log_version = {'A', 3, 0};
 
-	rc = saLogInitialize(&logHandle, &logCallbacks, &version);
+	rc = saLogInitialize(&logHandle, &logCallbacks, &log_version);
 	test_validate(rc, SA_AIS_ERR_VERSION);
 }
 
 void saLogInitialize_10(void)
 {
-	SaVersionT version = logVersion;
+	SaVersionT log_version = kLogVersion;
 
-	version.minorVersion = logVersion.minorVersion + 1;
-	rc = saLogInitialize(&logHandle, &logCallbacks, &version);
+	log_version.minorVersion += 1;
+	rc = saLogInitialize(&logHandle, &logCallbacks, &log_version);
 	logFinalize();
 
 	test_validate(rc, SA_AIS_ERR_VERSION);
@@ -96,9 +100,9 @@ void saLogInitialize_10(void)
 
 void saLogInitialize_11(void)
 {
-	SaVersionT version = {'A', 2};
+	SaVersionT log_version = {'A', 2};
 
-	rc = saLogInitialize(&logHandle, &logCallbacks, &version);
+	rc = saLogInitialize(&logHandle, &logCallbacks, &log_version);
 	logFinalize();
 
 	test_validate(rc, SA_AIS_OK);

@@ -27,6 +27,7 @@
 #include "base/logtrace.h"
 #include <saImmOi.h>
 #include <saImmOm.h>
+#include "log/logd/lgs.h"
 #include "osaf/immutil/immutil.h"
 #include "base/osaf_time.h"
 #include "base/osaf_poll.h"
@@ -74,8 +75,6 @@ static const SaImmClassNameT gcfg_class =
     const_cast<SaImmClassNameT>("OpensafConfig");
 static const SaImmOiImplementerNameT applier_name =
     const_cast<SaImmOiImplementerNameT>("@safLogService_appl");
-/* IMM handling */
-static SaVersionT immVersion = {'A', 2, 11};
 
 /* Network name handling */
 static char *network_name = NULL; /* Save pointer to current name */
@@ -573,6 +572,7 @@ static int read_network_name() {
   SaImmAttrValuesT_2 **attributes;
   SaImmAttrValuesT_2 *attribute;
   void *value = NULL;
+
   /* Setup search initialize parameters */
   SaImmSearchHandleT searchHandle;
   SaImmSearchParametersT_2 searchParam;
@@ -589,7 +589,7 @@ static int read_network_name() {
   /*
    * Initialize an IMM object manager
    */
-  ais_rc = immutil_saImmOmInitialize(&om_handle, NULL, &immVersion);
+  ais_rc = immutil_saImmOmInitialize(&om_handle, NULL, &kImmVersion);
   if (ais_rc != SA_AIS_OK) {
     TRACE("immutil_saImmOmInitialize FAIL %s", saf_error(ais_rc));
     rc = -1;
@@ -705,7 +705,7 @@ static int applier_init(SaImmOiHandleT *imm_appl_hdl,
   }
 
   /* Initialize OI for applier and get OI handle */
-  ais_rc = immutil_saImmOiInitialize_2(imm_appl_hdl, &callbacks, &immVersion);
+  ais_rc = immutil_saImmOiInitialize_2(imm_appl_hdl, &callbacks, &kImmVersion);
   if (ais_rc != SA_AIS_OK) {
     LOG_WA("immutil_saImmOiInitialize_2 Failed %s", saf_error(ais_rc));
     rc = -1;

@@ -75,8 +75,6 @@ static const char *log_file_format[] = {
     DEFAULT_ALM_NOT_FORMAT_EXP, DEFAULT_ALM_NOT_FORMAT_EXP,
     DEFAULT_APP_SYS_FORMAT_EXP, DEFAULT_APP_SYS_FORMAT_EXP};
 
-static SaVersionT immVersion = {'A', 2, 11};
-
 static const SaImmOiImplementerNameT implementerName =
     const_cast<SaImmOiImplementerNameT>("safLogService");
 static const SaImmClassNameT logConfig_str =
@@ -977,7 +975,7 @@ static lgs_stream_defval_t *get_SaLogStreamConfig_default() {
      * We are only interested in saLogStreamMaxLogFileSize and
      * saLogStreamFixedLogRecordSize
      */
-    rc = immutil_saImmOmInitialize(&om_handle, NULL, &immVersion);
+    rc = immutil_saImmOmInitialize(&om_handle, NULL, &kImmVersion);
     if (rc != SA_AIS_OK) {
       TRACE("immutil_saImmOmInitialize fail rc=%d", rc);
     }
@@ -2884,7 +2882,6 @@ SaAisErrorT lgs_imm_init_configStreams(lgs_cb_t *cb) {
   int int_rc = 0;
   log_stream_t *stream;
   SaImmHandleT omHandle;
-  SaVersionT immVersion = {'A', 2, 1};
   SaImmSearchHandleT immSearchHandle;
   SaImmSearchParametersT_2 objectSearch;
   SaImmAttrValuesT_2 **attributes;
@@ -2897,7 +2894,7 @@ SaAisErrorT lgs_imm_init_configStreams(lgs_cb_t *cb) {
   SaBoolT endloop = SA_FALSE, jstart = SA_TRUE;
   TRACE_ENTER();
 
-  om_rc = immutil_saImmOmInitialize(&omHandle, NULL, &immVersion);
+  om_rc = immutil_saImmOmInitialize(&omHandle, NULL, &kImmVersion);
   if (om_rc != SA_AIS_OK) {
     LOG_ER("immutil_saImmOmInitialize failed %s", saf_error(om_rc));
     osaf_abort(0);
@@ -3042,12 +3039,14 @@ void lgs_imm_init_OI_handle(SaImmOiHandleT *immOiHandle,
   TRACE_ENTER();
 
   /* Initialize IMM OI service */
-  rc = saImmOiInitialize_2(immOiHandle, &callbacks, &immVersion);
+  SaVersionT imm_version = kImmVersion;
+  rc = saImmOiInitialize_2(immOiHandle, &callbacks, &imm_version);
   while ((rc == SA_AIS_ERR_TRY_AGAIN) &&
          (msecs_waited < max_waiting_time_60s)) {
     usleep(sleep_delay_ms * 1000);
     msecs_waited += sleep_delay_ms;
-    rc = saImmOiInitialize_2(immOiHandle, &callbacks, &immVersion);
+    imm_version = kImmVersion;
+    rc = saImmOiInitialize_2(immOiHandle, &callbacks, &imm_version);
   }
   if (rc != SA_AIS_OK) {
     lgs_exit("saImmOiInitialize_2 failed", SA_AMF_COMPONENT_RESTART);
@@ -3294,7 +3293,7 @@ void lgs_search_stream_objects() {
 
   /* Intialize Om API
    */
-  ais_rc = immutil_saImmOmInitialize(&immOmHandle, NULL, &immVersion);
+  ais_rc = immutil_saImmOmInitialize(&immOmHandle, NULL, &kImmVersion);
   if (ais_rc != SA_AIS_OK) {
     LOG_WA("%s saImmOmInitialize FAIL %d", __FUNCTION__, ais_rc);
     goto done;
@@ -3482,7 +3481,7 @@ int lgs_get_streamobj_attr(SaImmAttrValuesT_2 ***attrib_out,
 
   /* Initialize Om API
    */
-  ais_rc = immutil_saImmOmInitialize(immOmHandle, NULL, &immVersion);
+  ais_rc = immutil_saImmOmInitialize(immOmHandle, NULL, &kImmVersion);
   if (ais_rc != SA_AIS_OK) {
     LOG_WA("\t%s saImmOmInitialize FAIL %d", __FUNCTION__, ais_rc);
     rc = -1;
@@ -3578,7 +3577,7 @@ SaUint32T *lgs_get_scAbsenceAllowed_attr(SaUint32T *attr_val) {
 
   /* Initialize Om API
    */
-  ais_rc = immutil_saImmOmInitialize(&immOmHandle, NULL, &immVersion);
+  ais_rc = immutil_saImmOmInitialize(&immOmHandle, NULL, &kImmVersion);
   if (ais_rc != SA_AIS_OK) {
     LOG_WA("\t%s saImmOmInitialize FAIL %d", __FUNCTION__, ais_rc);
     goto done;

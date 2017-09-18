@@ -156,12 +156,14 @@ void *create_and_close_log_handle(void *thread_num)
 {
 	SaAisErrorT rc_me = SA_AIS_OK;
 	unsigned int nTries = 1;
+	SaVersionT log_version = kLogVersion;
 
-	rc_me = saLogInitialize(&logHandle_me, &logCallbacks, &logVersion);
+	rc_me = saLogInitialize(&logHandle_me, &logCallbacks, &log_version);
 	while (rc_me == SA_AIS_ERR_TRY_AGAIN && nTries < 50) {
 		usleep(100 * 1000);
+		log_version = kLogVersion;
 		rc_me =
-		    saLogInitialize(&logHandle_me, &logCallbacks, &logVersion);
+		    saLogInitialize(&logHandle_me, &logCallbacks, &log_version);
 		nTries++;
 	}
 	if (rc_me != SA_AIS_OK) {

@@ -191,9 +191,10 @@ void saLogFilterSetCallbackT_03(void)
 	const unsigned int serverity_filter[2] = {7, 15};
 	SaUint32T v_saLogStreamSeverityFilter = 127;
 	SaLogStreamHandleT logStreamHandle[2];
+	SaVersionT log_version = kLogVersion;
 
 	logCallbacks.saLogFilterSetCallback = logFilterSetCallbackT;
-	rc = saLogInitialize(&logHandle, &logCallbacks, &logVersion);
+	rc = saLogInitialize(&logHandle, &logCallbacks, &log_version);
 	if (rc != SA_AIS_OK) {
 		test_validate(rc, SA_AIS_OK);
 		return;
@@ -305,10 +306,13 @@ void saLogFilterSetCallbackT_04(void)
 	SaLogStreamHandleT logStreamHandle[MAX_CLIENTS];
 	SaLogHandleT logHandle[MAX_CLIENTS];
 	SaSelectionObjectT selectionObject[MAX_CLIENTS];
+	SaVersionT log_version;
 
 	logCallbacks.saLogFilterSetCallback = logFilterSetCallbackT;
 	for (int i = 0; i < MAX_CLIENTS; i++) {
-		rc = saLogInitialize(&logHandle[i], &logCallbacks, &logVersion);
+		log_version = kLogVersion;
+		rc =
+		    saLogInitialize(&logHandle[i], &logCallbacks, &log_version);
 		if (rc != SA_AIS_OK) {
 			test_validate(rc, SA_AIS_OK);
 			return;

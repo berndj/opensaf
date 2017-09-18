@@ -328,7 +328,7 @@ done:
 
 /**
  * Initialize the log API
- * For API version see GLOBAL logVersion
+ * For API version see GLOBAL kLogVersion
  * No callback
  *
  * @param logHandle [out]
@@ -339,6 +339,7 @@ static SaAisErrorT tst_LogInitialize(SaLogHandleT *log_handle, int trycnt_max)
 {
 	int trycnt = 0;
 	SaAisErrorT ais_rc = SA_AIS_OK;
+	SaVersionT log_version = kLogVersion;
 
 	/* Prepare callback */
 	logCallbacks.saLogWriteLogCallback = log_write_callback;
@@ -348,7 +349,7 @@ static SaAisErrorT tst_LogInitialize(SaLogHandleT *log_handle, int trycnt_max)
 		do {
 			/* Try again loop. If other error end loop */
 			ais_rc = saLogInitialize(log_handle, &logCallbacks,
-						 &logVersion);
+						 &log_version);
 			if (ais_rc != SA_AIS_ERR_TRY_AGAIN) {
 				break;
 			}
@@ -357,10 +358,11 @@ static SaAisErrorT tst_LogInitialize(SaLogHandleT *log_handle, int trycnt_max)
 				/* Give up try again */
 				break;
 			}
+			log_version = kLogVersion;
 		} while (ais_rc != SA_AIS_OK);
 	} else {
 		ais_rc =
-		    saLogInitialize(log_handle, &logCallbacks, &logVersion);
+		    saLogInitialize(log_handle, &logCallbacks, &log_version);
 	}
 
 	return ais_rc;
@@ -1768,6 +1770,7 @@ void saLogRecov_openRtStream(void)
 	SaConstStringT data = "safLgStr=rtCleanup";
 	saAisNameLend(data, &logStreamName);
 	SaLogFileCreateAttributesT_2 appLogFileCreateAttributes;
+	SaVersionT log_version = kLogVersion;
 
 	/* Cleanup the test directory */
 	sprintf(command, "rm -rf %s/logtest_rtStream_cleanup", log_root_path);
@@ -1786,7 +1789,7 @@ void saLogRecov_openRtStream(void)
 	appLogFileCreateAttributes.maxFilesRotated = 4;
 	appLogFileCreateAttributes.logFileFmt = NULL;
 
-	rc = saLogInitialize(&logHandleRecv, &logCallbacks, &logVersion);
+	rc = saLogInitialize(&logHandleRecv, &logCallbacks, &log_version);
 	if (rc != SA_AIS_OK) {
 		fprintf(stderr, "Failed at saLogInitialize: %d\n ", (int)rc);
 		test_validate(rc, SA_AIS_OK);
