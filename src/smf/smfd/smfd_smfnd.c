@@ -230,6 +230,44 @@ uint32_t smfnd_down(SaClmNodeIdT i_node_id)
 	return NCSCC_RC_FAILURE;
 }
 
+/*
+   Log errors from smfnd_main_remote_command
+ * @param i_cmd Name of remote command that was executed
+ * @param i_timeout Max time out for the remote command in 10 ms
+ * @param i_result Result code from smfnd_main_remote_cmd
+*/
+void log_rsp_errors(const char *i_cmd, uint32_t i_timeout, uint32_t i_result) {
+  if (i_result != 0) { /* 0 = cmd OK */
+    switch (i_result & 0xffff0000) {
+      case SMFSV_CMD_EXEC_FAILED: {
+        LOG_ER("Command %s failed to start (%u)",
+               i_cmd, i_result & 0xffff);
+        break;
+      }
+      case SMFSV_CMD_TIMEOUT: {
+        LOG_ER("Command %s timed out (timeout %u ms)",
+               i_cmd, i_timeout * 10);
+        break;
+      }
+      case SMFSV_CMD_RESULT_CODE: {
+        LOG_ER("Command %s returned error %u",
+               i_cmd, i_result & 0xffff);
+        break;
+      }
+      case SMFSV_CMD_SIGNAL_TERM: {
+        LOG_ER("Command %s terminated by signal %u",
+               i_cmd, i_result & 0xffff);
+        break;
+      }
+      default: {
+        LOG_ER("Command %s failed by unknown reason %x",
+               i_cmd, i_result);
+        break;
+      }
+    } // switch
+  } // if
+}
+
 /**
  * smfnd_exec_remote_cmd
  * @param i_cmd Remote command to be executed
@@ -237,9 +275,11 @@ uint32_t smfnd_down(SaClmNodeIdT i_node_id)
  *                     the command
  * @param i_timeout Max time the command may take in 10 ms
  */
-uint32_t smfnd_exec_remote_cmd(const char *i_cmd, const SmfndNodeDest *i_smfnd,
-			       uint32_t i_timeout, uint32_t i_localTimeout)
-{
+uint32_t smfnd_main_remote_cmd(const char *i_cmd,
+                               const SmfndNodeDest *i_smfnd,
+                               uint32_t i_timeout,
+                               uint32_t i_localTimeout,
+                               bool error_log) {
 	SMFSV_EVT cmd_req_asynch;
 	SMFSV_EVT *cmd_rsp = 0;
 	uint32_t rc;
@@ -297,42 +337,30 @@ uint32_t smfnd_exec_remote_cmd(const char *i_cmd, const SmfndNodeDest *i_smfnd,
 		return SMFSV_CMD_EXEC_FAILED;
 	}
 
-	if (cmd_rsp->info.smfd.event.cmd_rsp.result != 0) { /* 0 = cmd OK */
-		switch (cmd_rsp->info.smfd.event.cmd_rsp.result & 0xffff0000) {
-		case SMFSV_CMD_EXEC_FAILED: {
-			LOG_ER("Command %s failed to start (%u)", i_cmd,
-			       cmd_rsp->info.smfd.event.cmd_rsp.result &
-				   0xffff);
-			break;
-		}
-		case SMFSV_CMD_TIMEOUT: {
-			LOG_ER("Command %s timed out (timeout %u ms)", i_cmd,
-			       i_timeout * 10);
-			break;
-		}
-		case SMFSV_CMD_RESULT_CODE: {
-			LOG_ER("Command %s returned error %u", i_cmd,
-			       cmd_rsp->info.smfd.event.cmd_rsp.result &
-				   0xffff);
-			break;
-		}
-		case SMFSV_CMD_SIGNAL_TERM: {
-			LOG_ER("Command %s terminated by signal %u", i_cmd,
-			       cmd_rsp->info.smfd.event.cmd_rsp.result &
-				   0xffff);
-			break;
-		}
-		default: {
-			LOG_ER("Command %s failed by unknown reason %x", i_cmd,
-			       cmd_rsp->info.smfd.event.cmd_rsp.result);
-			break;
-		}
-		}
-	}
-
 	rc = cmd_rsp->info.smfd.event.cmd_rsp.result;
+
+        if (error_log) {
+          log_rsp_errors(i_cmd, i_timeout, rc);
+        }
+
 	free(cmd_rsp);
 	return rc;
+}
+
+uint32_t smfnd_exec_remote_cmd(const char *i_cmd,
+                               const SmfndNodeDest *i_smfnd,
+			       uint32_t i_timeout,
+                               uint32_t i_localTimeout) {
+  return smfnd_main_remote_cmd(i_cmd, i_smfnd,
+                               i_timeout, i_localTimeout, true);
+}
+
+uint32_t smfnd_exec_remote_cmdnolog(const char *i_cmd,
+                                    const SmfndNodeDest *i_smfnd,
+                                    uint32_t i_timeout,
+                                    uint32_t i_localTimeout) {
+  return smfnd_main_remote_cmd(i_cmd, i_smfnd,
+                               i_timeout, i_localTimeout, false);
 }
 
 /**

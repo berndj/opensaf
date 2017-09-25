@@ -80,7 +80,13 @@ uint32_t smfnd_down(SaClmNodeIdT node_id);
 bool smfnd_for_name(const char *i_nodeName, SmfndNodeDest *o_nodeDest);
 uint32_t smfnd_exec_remote_cmd(const char *i_cmd, const SmfndNodeDest *i_smfnd,
                                uint32_t i_timeout, uint32_t i_localTimeout);
-
+/*
+ * Execute remote command without logging the errors of the remote command.
+*/
+uint32_t smfnd_exec_remote_cmdnolog(const char *i_cmd,
+                                    const SmfndNodeDest *i_smfnd,
+                                    uint32_t i_timeout,
+                                    uint32_t i_localTimeout);
 #ifdef __cplusplus
 }
 #endif

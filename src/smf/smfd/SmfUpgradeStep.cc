@@ -54,6 +54,7 @@
 #include "smf/smfd/SmfRollback.h"
 #include "smf/smfd/SmfUtils.h"
 #include "osaf/immutil/immutil.h"
+#include "osaf/configmake.h"
 #include "smf/smfd/smfd_smfnd.h"
 #include "smfd.h"
 #include "base/osaf_time.h"
@@ -2314,6 +2315,29 @@ bool SmfUpgradeStep::nodeReboot() {
           (*listIt).c_str());
       result = false;
       goto done;
+    }
+
+    // Wait for a good opensafd status. If retrying fails give up and reboot
+    // anyway.
+    int counter = 0;
+    while (counter < 5) {
+      TRACE("check status of opensafd");
+      std::string command = LSBINITDIR;
+      command += "/opensafd status";
+      cmdrc = smfnd_exec_remote_cmdnolog(command.c_str(), &nodeDest,
+                                         cliTimeout, localTimeout);
+      if ((cmdrc  & 0xffff0000) == SMFSV_CMD_RESULT_CODE &&
+          (cmdrc & 0xffff) != 0) {
+          // The status is not OK, try again
+          LOG_WA("opensafd status, retcode[%u] retry in 2 seconds",
+                 cmdrc & 0xffff);
+          struct timespec time = {2, 0};
+          osaf_nanosleep(&time);
+          counter += 1;
+      } else {
+        LOG_NO("opensafd status OK");
+        break;
+      }
     }
 
     /* When executing a reboot command on a node the command will never return
