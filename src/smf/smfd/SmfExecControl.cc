@@ -35,6 +35,12 @@ static std::vector<SmfUpgradeStep*> getStepsMatchingBalancedGroup(
 static SmfUpgradeStep* mergeStep(SmfUpgradeProcedure* procedure,
                                  const std::vector<SmfUpgradeStep*>& steps);
 
+static bool setBalancedExecLevel(const std::vector<std::string>& nodesforss,
+                                 int numberofss);
+
+bool preCalculateNodeList(SmfUpgradeProcedure* procedure,
+                          std::list<std::string>* o_nodes);
+
 static bool removeDuplicateActivationUnits(
     SmfUpgradeProcedure* i_newproc, SmfUpgradeStep* newStep,
     const std::list<unitNameAndState>& deact);
@@ -72,8 +78,6 @@ bool createBalancedProcs() {
   TRACE("balanced group size will be %i", chunk);
   std::vector<std::string>::iterator itr;
   std::vector<std::string>::iterator iend;
-  // Set the procedure exec level to be as high as possible
-  int procExecLvl = std::numeric_limits<int>::max() - numberofss - 1;
   int procnum = 0;
   for (itr = nodesforss.begin(); iend < nodesforss.end(); itr += chunk) {
     iend = itr + chunk;
@@ -83,17 +87,140 @@ bool createBalancedProcs() {
     }
     ssproc->setUpgradeMethod(new (std::nothrow) SmfSinglestepUpgrade);
     ssproc->setProcName("safSmfProc=SmfBalancedProc" + std::to_string(procnum));
-    ssproc->setExecLevel(std::to_string(procExecLvl));
+    // Balanced procedures may not be run in parallel
+    ssproc->setExecLevel(std::to_string(procnum));
     ssproc->setIsMergedProcedure(true);  // For cleanup purposes
     // Each new procedure holds the balanced group it steps over
     ssproc->setBalancedGroup(std::vector<std::string>(itr, iend));
     balancedprocs.push_back(ssproc);
-    procExecLvl++;
     procnum++;
   }
   for (auto proc : balancedprocs) {
     ucamp->addUpgradeProcedure(proc);
   }
+  if (!setBalancedExecLevel(nodesforss, numberofss)) {
+    LOG_ER("%s, failed to set execution level on balanced procedure",
+           __FUNCTION__);
+    return false;
+  }
+  TRACE_LEAVE();
+  return true;
+}
+
+/*
+ * Calculate and set the execution order configuration for the balanced
+ * procedures. The execution level is set to one higher than the highest of the
+ * original procedure steps that are used in balanced groups.
+ *
+ * Args:
+ *   - List of nodes to be part of the single step in a balanced upgrade
+ *   - Number of balanced groups (single steps)
+*/
+bool setBalancedExecLevel(const std::vector<std::string>& nodesforss,
+                          int numberofss) {
+  TRACE_ENTER();
+  SmfCampaign* camp = SmfCampaignThread::instance()->campaign();
+  SmfUpgradeCampaign* ucamp = camp->getUpgradeCampaign();
+  std::vector<SmfUpgradeProcedure*> merged;
+  for (auto proc : ucamp->getProcedures()) {
+    // Only operate on non balanced procedures
+    if (!proc->getBalancedGroup().empty())
+      continue;
+
+    bool ingroup = false;
+    std::list<std::string> nodes;
+    // Get the nodes the procedure will be installed on
+    if (!preCalculateNodeList(proc, &nodes)) {
+      LOG_ER("%s, failed pre calculating node list", __FUNCTION__);
+      TRACE_LEAVE();
+      return false;
+    }
+
+    // If any of the nodes are part of the balanced upgrade they are marked
+    for (auto node : nodes) {
+      if (isNodeInGroup(node, nodesforss)) {
+        ingroup = true;
+      }
+    }
+    if (ingroup) {
+      // This procedure is going to be part of a balanced upgrade
+      merged.push_back(proc);
+    }
+  }
+
+  int balanced_execlvl = 0;
+  for (auto proc : merged) {
+    if (proc->getExecLevel() > balanced_execlvl) {
+      balanced_execlvl = proc->getExecLevel();
+    }
+  }
+  balanced_execlvl += 1;
+
+  // Move the exec-level forward for other procedures so we avoid to execute in
+  // parallel with balanced procedures
+  for (auto proc : ucamp->getProcedures()) {
+    if (proc->getExecLevel() >= balanced_execlvl) {
+      proc->setExecLevel(std::to_string(proc->getExecLevel() + numberofss));
+    }
+  }
+
+  for (auto proc : ucamp->getProcedures()) {
+    if (!proc->getBalancedGroup().empty()) {
+      // This is a balanced procedure, set the new exec level
+      proc->setExecLevel(
+          std::to_string(proc->getExecLevel() + balanced_execlvl));
+    }
+  }
+  if (!merged.empty()) {
+    ucamp->sortProceduresInExecLevelOrder();
+  }
+  TRACE_LEAVE();
+  return true;
+}
+
+/*
+ * Get a list of nodes that a procedure is installing on. A shorter variation
+ * of what happens during procedure execution. Here we need it before any
+ * procedure is executed.
+ * Args:
+ *  - Procedure to calculate node list for
+ *  - Out parameter for list of node names that the procedure will install on
+ *
+ * Returns: false on unexpected errors
+*/
+bool preCalculateNodeList(SmfUpgradeProcedure* procedure,
+                          std::list<std::string>* o_nodes) {
+  TRACE_ENTER();
+  SmfUpgradeMethod *umethod = procedure->getUpgradeMethod();
+  if (umethod == nullptr) {
+    LOG_NO("%s: no upgrade method found", __FUNCTION__);
+    TRACE_LEAVE();
+    return true;
+  }
+
+  if (umethod->getUpgradeMethod() != SA_SMF_ROLLING) {
+    LOG_NO("%s: no rolling upgrade method type found", __FUNCTION__);
+    TRACE_LEAVE();
+    return true;  // single steps are not included in balanced upgrade
+  }
+
+  auto urolling = dynamic_cast<SmfRollingUpgrade*>(umethod);
+  auto bytemplate = (const SmfByTemplate*)urolling->getUpgradeScope();
+  if (bytemplate == nullptr) {
+    LOG_NO("%s: no upgrade scope by template found", __FUNCTION__);
+    TRACE_LEAVE();
+    return false;
+  }
+
+  const SmfTargetNodeTemplate* ntemplate = bytemplate->getTargetNodeTemplate();
+  if (ntemplate == nullptr) {
+    LOG_ER("%s: no node template found", __FUNCTION__);
+    TRACE_LEAVE();
+    return false;
+  }
+
+  const std::string &objectDn = ntemplate->getObjectDn();
+  procedure->calculateNodeList(objectDn, *o_nodes);
   TRACE_LEAVE();
   return true;
 }
