@@ -189,6 +189,24 @@ AM_CONDITIONAL([ENABLE_EXPERIMENTAL], [test "$enable_experimental" = yes])
 AC_SUBST([EXPERIMENTAL_ENABLED], ["$enable_experimental"])
 
 #
+# Enable/disable gcov
+#
+AC_MSG_CHECKING([whether to build with gcov])
+AC_ARG_ENABLE([gcov],
+        [AS_HELP_STRING([--enable-gcov],
+                [enable building with gcov [default=no]])],
+        [],
+        [enable_gcov=no])
+AC_MSG_RESULT([$enable_gcov])
+
+if test "$enable_gcov" = yes; then
+        AC_DEFINE([ENABLE_GCOV], 1, [Define if gcov is enabled])
+fi
+
+AM_CONDITIONAL([ENABLE_GCOV], [test "$enable_gcov" = yes])
+AC_SUBST([GCOV_ENABLED], ["$enable_gcov"])
+
+#
 # Enable/disable the Python AIS bindings
 #
 AC_MSG_CHECKING([whether to enable the Python AIS bindings])

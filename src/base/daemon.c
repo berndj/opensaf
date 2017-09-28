@@ -15,7 +15,13 @@
  * Author(s): Wind River Systems
  *
  */
+#ifdef HAVE_CONFIG_H
+#include "osaf/config.h"
+#endif
 
+#include <pthread.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <ctype.h>
 #include <sched.h>
 #include <stdio.h>
@@ -56,8 +62,6 @@
 
 static const char *internal_version_id_;
 
-extern void __gcov_flush(void) __attribute__((weak));
-
 static char fifo_file[NAME_MAX];
 static char __pidfile[NAME_MAX];
 static char __tracefile[NAME_MAX];
@@ -68,6 +72,86 @@ static int __logmask;
 static int fifo_fd = -1;
 
 static void install_fatal_signal_handlers(void);
+
+#ifdef ENABLE_GCOV
+
+// default multicast group for gcov collection
+#define DFLT_MULTICAST_GROUP "239.0.0.1"
+
+extern void __gcov_dump();
+extern void __gcov_reset();
+
+static void* gcov_flush_thread(void* arg) {
+	int listenfd;
+	const int on = 1;
+	struct sockaddr_in servaddr;
+	struct ip_mreq mreq;
+	char buf[40];
+	struct sockaddr_in addr;
+	socklen_t addr_len;
+	int multicast_port = 4712; // default multicast group for gcov collection
+	const char *multicast_port_str;
+	const char *multicast_group;
+
+	if ((multicast_group = getenv("OPENSAF_GCOV_MULTICAST_GROUP")) == NULL) {
+		multicast_group = DFLT_MULTICAST_GROUP;
+	}
+
+	if ((multicast_port_str = getenv("OPENSAF_GCOV_MULTICAST_PORT")) != NULL) {
+		multicast_port = strtol(multicast_port_str, NULL, 0);
+	}
+
+	listenfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+	if ((setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1)) {
+		syslog(LOG_ERR, "%s: setsockpot failed: %s", __FUNCTION__, strerror(errno));
+		return 0;
+	}
+
+	memset(&servaddr, 0, sizeof(servaddr));
+	servaddr.sin_family = AF_INET;
+	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	servaddr.sin_port = htons(multicast_port);
+
+	if (bind(listenfd, (struct sockaddr*) &servaddr, sizeof(servaddr)) < 0) {
+		syslog(LOG_ERR, "%s: bind failed: %s", __FUNCTION__, strerror(errno));
+		return 0;
+	}
+
+	mreq.imr_multiaddr.s_addr=inet_addr(multicast_group);
+	mreq.imr_interface.s_addr=htonl(INADDR_ANY);
+	if (setsockopt(listenfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+		syslog(LOG_ERR, "%s: setsockopt failed: %s", __FUNCTION__, strerror(errno));
+		return 0;
+	} else {
+		syslog(LOG_NOTICE, "%s: joined multicast group %s port %d\n",
+			__FUNCTION__, multicast_group, multicast_port);
+	}
+
+	for(;;) {
+		addr_len = sizeof(addr);
+		recvfrom(listenfd, &buf, sizeof(buf), 0, (struct sockaddr *) &addr, &addr_len);
+		__gcov_dump();
+		__gcov_reset();
+		syslog(LOG_NOTICE, "__gov_dump() and __gcov_reset() called");
+	}
+	return 0;
+}
+
+static void create_gcov_flush_thread(void) {
+	pthread_t thread;
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+	if (pthread_create(&thread, &attr, gcov_flush_thread, 0) != 0) {
+		syslog(LOG_ERR, "pthread_create FAILED: %s", strerror(errno));
+	}
+
+	pthread_attr_destroy(&attr);
+}
+
+#endif
 
 static void __print_usage(const char *progname, FILE *stream, int exit_code)
 {
@@ -398,6 +482,10 @@ void daemonize(int argc, char *argv[])
 
 	create_fifofile(fifo_file);
 
+#ifdef ENABLE_GCOV
+	create_gcov_flush_thread();
+#endif
+
 	/* Create the process PID file */
 	if (__create_pidfile(__pidfile) != 0)
 		exit(EXIT_FAILURE);
@@ -537,9 +625,6 @@ void daemon_exit(void)
 	unlink(fifo_file);
 	unlink(__pidfile);
 
-	if (__gcov_flush) {
-		__gcov_flush();
-	}
 	_Exit(0);
 }
 

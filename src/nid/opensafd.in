@@ -72,6 +72,13 @@ check_tipc() {
 }
 
 setup_env() {
+	# The following lines if --enable-gcov is configured
+	# If running in UML uncomment the next line
+	# echo 100 >  /proc/sys/net/ipv4/igmp_max_memberships
+	# gcov collecton is using multicast, to change default multicast group and multicast group:
+	# export OPENSAF_GCOV_MULTICAST_GROUP="224.0.0.1"
+	# export OPENSAF_GCOV_MULTICAST_PORT="4711"
+
 	# Make sure this kernel has POSIX shared memory configured
 	if [ ! -d /dev/shm ]; then
 		logger -s -t $osafprog "POSIX shared memory (/dev/shm) not enabled, exiting."

@@ -56,6 +56,12 @@ AM_CPPFLAGS = \
 
 AM_CFLAGS = -pipe -std=gnu11 @OSAF_HARDEN_FLAGS@ -Wall -Wformat=2 -Werror
 AM_CXXFLAGS = -pipe -std=gnu++11 @OSAF_HARDEN_FLAGS@ -Wall -Wformat=2 -Werror
+
+if ENABLE_GCOV
+AM_CFLAGS += --coverage
+AM_CXXFLAGS += --coverage
+endif
+
 AM_LDFLAGS = @OSAF_HARDEN_FLAGS@ -Wl,--as-needed -ldl -lrt -pthread -rdynamic
 ACLOCAL_AMFLAGS = -I m4
 OSAF_LIB_FLAGS =
