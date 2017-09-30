@@ -3917,8 +3917,6 @@ static SaAisErrorT admin_op_invoke_common(
   }
 
   immHandle = ao_node->mImmHandle;
-  adminOwnerId = ao_node->mAdminOwnerId;
-  ao_node = NULL;
 
   /* Look up client node also, to verify that the client handle
      is still active. */
@@ -3969,6 +3967,9 @@ static SaAisErrorT admin_op_invoke_common(
 
     TRACE_1("Reactive resurrect of handle %llx succeeded", immHandle);
   }
+
+  adminOwnerId = ao_node->mAdminOwnerId;
+  ao_node = NULL;
 
   if (isA2bCall && !(cl_node->isImmA2b)) {
     rc = SA_AIS_ERR_VERSION;
