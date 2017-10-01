@@ -120,7 +120,6 @@ void AVD_AVND::initialize() {
   clm_change_start_preceded = {};
   recvr_fail_sw = {};
   admin_ng = {};
-  node_up = false;
 }
 
 //

@@ -247,7 +247,6 @@ void record_node_up_msg_info(AVD_AVND *avnd, const AVD_DND_MSG *n2d_msg) {
   osafassert(avnd != nullptr);
 
   avnd->adest = n2d_msg->msg_info.n2d_node_up.adest_address;
-  avnd->node_up = true;
 
   if (n2d_msg->msg_info.n2d_node_up.msg_id >= avnd->rcv_msg_id) {
     LOG_NO("Received node_up from %x: msg_id %u",

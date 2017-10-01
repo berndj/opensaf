@@ -148,7 +148,6 @@ class AVD_AVND {
   bool is_campaign_set_for_all_sus() const;
   // Member functions.
   void node_sus_termstate_set(bool term_state) const;
-  bool node_up; // true if MDS is up, false if MDS is down
 
  private:
   void initialize();

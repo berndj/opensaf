@@ -1221,6 +1221,5 @@ void avd_node_failover(AVD_AVND *node) {
   avd_pg_node_csi_del_all(avd_cb, node);
   avd_node_down_mw_susi_failover(avd_cb, node);
   avd_node_down_appl_susi_failover(avd_cb, node);
-  node->node_up = false; // postpone deletion from node_id_db
   TRACE_LEAVE();
 }

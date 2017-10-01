@@ -247,7 +247,7 @@ static void clm_track_cb(
       case SA_CLM_CHANGE_VALIDATE:
         if (notifItem->clusterChange == SA_CLM_NODE_LEFT) {
           node = avd_node_find_nodeid(notifItem->clusterNode.nodeId);
-          if (node == nullptr || node->node_up == false) {
+          if (node == nullptr || node->node_state == AVD_AVND_STATE_ABSENT) {
             LOG_IN("%s: CLM node '%s' is not an AMF cluster member",
                    __FUNCTION__, node_name.c_str());
             goto done;
@@ -263,7 +263,7 @@ static void clm_track_cb(
 
       case SA_CLM_CHANGE_START:
         node = avd_node_find_nodeid(notifItem->clusterNode.nodeId);
-        if (node == nullptr || node->node_up == false) {
+        if (node == nullptr || node->node_state == AVD_AVND_STATE_ABSENT) {
           LOG_IN("%s: CLM node '%s' is not an AMF cluster member", __FUNCTION__,
                  node_name.c_str());
           goto done;
@@ -294,7 +294,7 @@ static void clm_track_cb(
             LOG_IN("%s: CLM node '%s' is not an AMF cluster member",
                    __FUNCTION__, node_name.c_str());
             goto done;
-          } else if (node->node_up == false) {
+          } else if (node->node_state == AVD_AVND_STATE_ABSENT) {
             LOG_IN("%s: CLM node '%s' is not an AMF cluster member; MDS down received",
                    __FUNCTION__, node_name.c_str());
             avd_node_delete_nodeid(node);
