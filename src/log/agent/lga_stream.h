@@ -23,6 +23,7 @@
 #include <saLog.h>
 #include "base/mutex.h"
 #include "log/agent/lga_common.h"
+#include "log/agent/lga_ref_counter.h"
 
 //<
 // @LogStreamInfo class
@@ -53,9 +54,13 @@
 // @LogClient.
 //
 // To avoid @this LogStreamInfo object deleted while it is being used by other
-// thread, such as one client thread is performing writing log record,
-// in the meantime, other client thread is closing that that log stream
-// or closing the owning @LogClient. (! refer to @LogAgent description for more)
+// thread, such as one client thread is performing writing log record, in the
+// meantime, other client thread is closing that that log stream or closing the
+// owning @LogClient. (! refer to @LogAgent description for more) , one special
+// object `RefCounter` is included in. Each @LogStreamInfo object owns one
+// ref_counter_object_, that object should be updated when this object is
+// using, modified or deleted.  FetchAnd<xxx>RefCounter()/RestoreRefCounter()
+// are methods to update ref_counter_object_ object.
 //
 // When SC restarts from headless, @this object will be notified to do
 // recover itself for specific @LogClient Id.
@@ -83,18 +88,20 @@ class LogStreamInfo {
   const std::string& GetStreamName() const { return stream_name_; }
 
   // Fetch and increase reference counter.
-  // Increase one if @this object is not being deleted by other thread.
-  // @updated will be set to true if there is an increase, false otherwise.
-  int32_t FetchAndIncreaseRefCounter(bool* updated);
+  int32_t FetchAndIncreaseRefCounter(const char* caller, bool* updated) {
+    return ref_counter_object_.FetchAndIncreaseRefCounter(caller, updated);
+  }
 
   // Fetch and decrease reference counter.
-  // Decrease one if @this object is not being used or deleted by other thread.
-  // @updated will be set to true if there is an decrease, false otherwise.
-  int32_t FetchAndDecreaseRefCounter(bool* updated);
+  int32_t FetchAndDecreaseRefCounter(const char* caller, bool* updated) {
+    return ref_counter_object_.FetchAndDecreaseRefCounter(caller, updated);
+  }
 
   // Restore the reference counter back.
-  // Passing @value is either (1) [increase] or (-1) [decrease]
-  void RestoreRefCounter(RefCounterDegree value, bool updated);
+  void RestoreRefCounter(const char* caller, RefCounter::Degree value,
+                         bool updated) {
+    return ref_counter_object_.RestoreRefCounter(caller, value, updated);
+  }
 
  private:
   // Set stream open flags @open_flags_
@@ -119,16 +126,9 @@ class LogStreamInfo {
   // Log stream name mentioned during open log stream
   std::string stream_name_;
 
-  // To protect @ref_counter_
-  // E.g: if @this object is being used in @saLogStreamWrite
-  // and other thread trying to delete it, will get TRY_AGAIN.
-  base::Mutex ref_counter_mutex_;
-
   // Hold information how many thread are referring to this object
-  // If the object is being deleted, the value is (-1).
-  // If the object is not being deleted/used, the value is (0)
-  // If there are N thread referring to this object, the counter will be N.
-  int32_t ref_counter_;
+  // Refer to `RefCounter` class for more info.
+  RefCounter ref_counter_object_;
 
   // Log stream open flags as defined in AIS.02.01
   SaLogStreamOpenFlagsT open_flags_;

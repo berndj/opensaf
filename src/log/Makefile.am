@@ -31,7 +31,9 @@ lib_libSaLog_la_SOURCES = \
 	src/log/agent/lga_util.cc \
 	src/log/agent/lga_mds.cc \
 	src/log/agent/lga_state.cc \
-	src/log/agent/lga_agent.cc
+	src/log/agent/lga_agent.cc \
+	src/log/agent/lga_ref_counter.cc
+
 
 nodist_EXTRA_lib_libSaLog_la_SOURCES = dummy.cc
 
@@ -66,6 +68,7 @@ noinst_HEADERS += \
 	src/log/agent/lga_agent.h \
 	src/log/agent/lga_stream.h \
 	src/log/agent/lga_state.h \
+	src/log/agent/lga_ref_counter.h \
 	src/log/common/lgsv_defs.h \
 	src/log/common/lgsv_msg.h \
 	src/log/logd/lgs.h \

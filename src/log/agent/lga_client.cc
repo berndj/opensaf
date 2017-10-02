@@ -32,7 +32,7 @@
 // LogClient
 //------------------------------------------------------------------------------
 LogClient::LogClient(const SaLogCallbacksT* cb, uint32_t id, SaVersionT ver)
-    : client_id_{id}, ref_counter_{0} {
+    : client_id_{id}, ref_counter_object_{} {
   TRACE_ENTER();
   // Reset registered callback info
   memset(&callbacks_, 0, sizeof(callbacks_));
@@ -65,13 +65,16 @@ LogClient::LogClient(const SaLogCallbacksT* cb, uint32_t id, SaVersionT ver)
   // even they are in the same thread context.
   // To avoid such risk, use RECURSIVE MUTEX for @LogClient
   pthread_mutexattr_t attr;
-  pthread_mutexattr_init(&attr);
-  pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-  pthread_mutex_init(&mutex_, nullptr);
-  pthread_mutexattr_destroy(&attr);
+  int result = pthread_mutexattr_init(&attr);
+  assert(result == 0 && "Failed to init mutex attribute");
 
-  // Initialize @ref_counter_mutex_
-  pthread_mutex_init(&ref_counter_mutex_, nullptr);
+  result = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+  assert(result == 0 && "Failed to set mutex type");
+
+  result = pthread_mutex_init(&mutex_, nullptr);
+  assert(result == 0 && "Failed to init mutex");
+
+  pthread_mutexattr_destroy(&attr);
 }
 
 LogClient::~LogClient() {
@@ -94,49 +97,7 @@ LogClient::~LogClient() {
   // Free the allocated mailbox for this client
   m_NCS_IPC_RELEASE(&mailbox_, nullptr);
 
-  pthread_mutex_destroy(&ref_counter_mutex_);
   pthread_mutex_destroy(&mutex_);
-}
-
-// Return (-1) if @this object is being deleted.
-// Otherwise, increase the reference counter.
-int32_t LogClient::FetchAndIncreaseRefCounter(bool* updated) {
-  TRACE_ENTER();
-  ScopeLock scopeLock(ref_counter_mutex_);
-  int32_t backup = ref_counter_;
-  *updated = false;
-  TRACE("%s: value = %d", __func__, ref_counter_);
-  // The @this object is being deleted.
-  if (ref_counter_ == -1) return backup;
-  ref_counter_ += 1;
-  *updated = true;
-  return backup;
-}
-
-// Return (0) if @this object is allowed to deleted
-// Otherwise, @this object is being used or being deleted by
-// other thread.
-int32_t LogClient::FetchAndDecreaseRefCounter(bool* updated) {
-  TRACE_ENTER();
-  ScopeLock scopeLock(ref_counter_mutex_);
-  int32_t backup = ref_counter_;
-  *updated = false;
-  TRACE("%s: value = %d", __func__, ref_counter_);
-  // The @this object is being used or being deleted.
-  if (ref_counter_ != 0) return backup;
-  ref_counter_ = -1;
-  *updated = true;
-  return backup;
-}
-
-void LogClient::RestoreRefCounter(RefCounterDegree value, bool updated) {
-  TRACE_ENTER();
-  if (updated == false) return;
-  ScopeLock scopeLock(ref_counter_mutex_);
-  ref_counter_ -= value;
-  TRACE("%s: value = %d", __func__, ref_counter_);
-  // Don't expect the @ref_counter_ is less than (-1)
-  assert(ref_counter_ >= -1);
 }
 
 bool LogClient::ClearMailBox(NCSCONTEXT arg, NCSCONTEXT msg) {
@@ -413,7 +374,8 @@ bool LogClient::HaveLogStreamInUse() {
   TRACE_ENTER();
   ScopeLock scopeLock(mutex_);
   for (const auto& s : stream_list_) {
-    if ((s != nullptr) && (s->ref_counter_ > 0)) return true;
+    if ((s != nullptr) && (s->ref_counter_object_.ref_counter() > 0))
+      return true;
   }
   return false;
 }

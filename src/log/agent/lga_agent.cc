@@ -56,7 +56,9 @@ class ScopeData {
     bool* is_updated;
     // The increased value if @is_updated set. The aim of using enum instead
     // of `int` type is to force the caller pass either value (1) or value (-1).
-    RefCounterDegree value;
+    RefCounter::Degree value;
+    // Who is the caller of `RestoreRefCounter`
+    const char* caller;
   };
 
   struct LogStreamInfoData {
@@ -66,7 +68,9 @@ class ScopeData {
     bool* is_updated;
     // The increased value if @is_updated set. The aim of using enum instead
     // of `int` type is to force the caller pass either value (1) or value (-1).
-    RefCounterDegree value;
+    RefCounter::Degree value;
+    // Who is the caller of `RestoreRefCounter`
+    const char* caller;
   };
 
   explicit ScopeData(LogClientData*, bool* lock = nullptr);
@@ -107,20 +111,23 @@ ScopeData::~ScopeData() {
   LogAgent::instance().EnterCriticalSection();
   LogClient* client = client_data_->client;
   bool* is_updated = client_data_->is_updated;
-  RefCounterDegree client_degree = client_data_->value;
+  RefCounter::Degree client_degree = client_data_->value;
+  const char* caller = client_data_->caller;
   if (client != nullptr) {
     // Do restore the reference counter if the client exists.
-    client->RestoreRefCounter(client_degree, *is_updated);
-    if (stream_data_ != nullptr) {
-      LogStreamInfo* stream = stream_data_->stream;
-      bool* stream_is_updated = stream_data_->is_updated;
-      RefCounterDegree stream_degree = stream_data_->value;
-      if (stream != nullptr) {
-        // Do restore the reference counter if the stream exists.
-        stream->RestoreRefCounter(stream_degree, *stream_is_updated);
-      }
-    }  // stream_data_
-  }    // client
+    client->RestoreRefCounter(caller, client_degree, *is_updated);
+  }
+
+  if (stream_data_ != nullptr) {
+    LogStreamInfo* stream = stream_data_->stream;
+    bool* stream_is_updated = stream_data_->is_updated;
+    RefCounter::Degree stream_degree = stream_data_->value;
+    const char* caller = stream_data_->caller;
+    if (stream != nullptr) {
+      // Do restore the reference counter if the stream exists.
+      stream->RestoreRefCounter(caller, stream_degree, *stream_is_updated);
+    }
+  }
   LogAgent::instance().LeaveCriticalSection();
 }
 
@@ -137,13 +144,20 @@ LogAgent::LogAgent() {
   // even they are in the same thread context.
   // To avoid such risk, use RECURSIVE MUTEX for @LogClient
   pthread_mutexattr_t attr;
-  pthread_mutexattr_init(&attr);
-  pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-  pthread_mutex_init(&mutex_, nullptr);
+  int result = pthread_mutexattr_init(&attr);
+  assert(result == 0 && "Failed to init mutex attribute");
+
+  result = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+  assert(result == 0 && "Failed to set mutex type");
+
+  result = pthread_mutex_init(&mutex_, nullptr);
+  assert(result == 0 && "Failed to init `mutex_`");
+
   pthread_mutexattr_destroy(&attr);
 
   // Initialize @get_delete_obj_sync_mutex_
-  pthread_mutex_init(&get_delete_obj_sync_mutex_, nullptr);
+  result = pthread_mutex_init(&get_delete_obj_sync_mutex_, nullptr);
+  assert(result == 0 && "Failed to init `get_delete_obj_sync_mutex_`");
 }
 
 void LogAgent::PopulateOpenParams(
@@ -419,7 +433,7 @@ SaAisErrorT LogAgent::saLogSelectionObjectGet(
   // such as Restore the reference counter after fetching & updating.
   // or unlock recovery mutex.
   ScopeData::LogClientData client_data{client, &updated,
-                                       RefCounterDegree::kIncOne};
+        RefCounter::Degree::kIncOne, __func__};
   ScopeData data{&client_data};
 
   if (selectionObject == nullptr) {
@@ -439,7 +453,7 @@ SaAisErrorT LogAgent::saLogSelectionObjectGet(
       return ais_rc;
     }
 
-    if (client->FetchAndIncreaseRefCounter(&updated) == -1) {
+    if (client->FetchAndIncreaseRefCounter(__func__, &updated) == -1) {
       // @client is being deleted. Don't touch @this client
       ais_rc = SA_AIS_ERR_TRY_AGAIN;
       return ais_rc;
@@ -470,7 +484,7 @@ SaAisErrorT LogAgent::saLogDispatch(SaLogHandleT logHandle,
   // such as Restore the reference counter fetching & updating.
   // or unlock recovery mutex.
   ScopeData::LogClientData client_data{client, &updated,
-                                       RefCounterDegree::kIncOne};
+        RefCounter::Degree::kIncOne, __func__};
   ScopeData data{&client_data};
 
   if (is_dispatch_flag_valid(dispatchFlags) == false) {
@@ -490,7 +504,7 @@ SaAisErrorT LogAgent::saLogDispatch(SaLogHandleT logHandle,
       return ais_rc;
     }
 
-    if (client->FetchAndIncreaseRefCounter(&updated) == -1) {
+    if (client->FetchAndIncreaseRefCounter(__func__, &updated) == -1) {
       // @client is being deleted. DO NOT touch this @client
       ais_rc = SA_AIS_ERR_TRY_AGAIN;
       return ais_rc;
@@ -564,7 +578,7 @@ SaAisErrorT LogAgent::saLogFinalize(SaLogHandleT logHandle) {
   // such as Restore the reference counter after fetching & updating.
   // or unlock recovery mutex.
   ScopeData::LogClientData client_data{client, &updated,
-                                       RefCounterDegree::kDecOne};
+        RefCounter::Degree::kDecOne, __func__};
   ScopeData data{&client_data, &is_locked};
 
   if (true) {
@@ -578,7 +592,7 @@ SaAisErrorT LogAgent::saLogFinalize(SaLogHandleT logHandle) {
       return ais_rc;
     }
 
-    if (client->FetchAndDecreaseRefCounter(&updated) != 0) {
+    if (client->FetchAndDecreaseRefCounter(__func__, &updated) != 0) {
       // DO NOT delete this @client as it is being used by somewhere (>0)
       // Or it is being deleted by other thread (=-1)
       ais_rc = SA_AIS_ERR_TRY_AGAIN;
@@ -812,7 +826,7 @@ SaAisErrorT LogAgent::saLogStreamOpen_2(
   // such as Restore the reference counter after fetching & updating.
   // or unlock recovery mutex.
   ScopeData::LogClientData client_data{client, &updated,
-                                       RefCounterDegree::kIncOne};
+        RefCounter::Degree::kIncOne, __func__};
   ScopeData data{&client_data, &is_locked};
 
   if (lga_is_extended_name_valid(logStreamName) == false) {
@@ -838,7 +852,7 @@ SaAisErrorT LogAgent::saLogStreamOpen_2(
       return ais_rc;
     }
 
-    if (client->FetchAndIncreaseRefCounter(&updated) == -1) {
+    if (client->FetchAndIncreaseRefCounter(__func__, &updated) == -1) {
       // @client is being deleted. DO NOT touch this @client
       ais_rc = SA_AIS_ERR_TRY_AGAIN;
       return ais_rc;
@@ -1122,9 +1136,9 @@ SaAisErrorT LogAgent::saLogWriteLogAsync(SaLogStreamHandleT logStreamHandle,
   // such as Restore the reference counter after fetching & updating.
   // or unlock recovery mutex.
   ScopeData::LogClientData client_data{client, &cUpdated,
-                                       RefCounterDegree::kIncOne};
+        RefCounter::Degree::kIncOne, __func__};
   ScopeData::LogStreamInfoData stream_data{stream, &sUpdated,
-                                           RefCounterDegree::kIncOne};
+        RefCounter::Degree::kIncOne, __func__};
   ScopeData data{&client_data, &stream_data, &is_locked};
 
   if (true) {
@@ -1146,13 +1160,13 @@ SaAisErrorT LogAgent::saLogWriteLogAsync(SaLogStreamHandleT logStreamHandle,
       return ais_rc;
     }
 
-    if (client->FetchAndIncreaseRefCounter(&cUpdated) == -1) {
+    if (client->FetchAndIncreaseRefCounter(__func__, &cUpdated) == -1) {
       // @client is being deleted. DO NOT touch this @client
       ais_rc = SA_AIS_ERR_TRY_AGAIN;
       return ais_rc;
     }
 
-    if (stream->FetchAndIncreaseRefCounter(&sUpdated) == -1) {
+    if (stream->FetchAndIncreaseRefCounter(__func__, &sUpdated) == -1) {
       ais_rc = SA_AIS_ERR_TRY_AGAIN;
       return ais_rc;
     }
@@ -1292,9 +1306,9 @@ SaAisErrorT LogAgent::saLogStreamClose(SaLogStreamHandleT logStreamHandle) {
   // such as Restore the reference counter after fetching & updating.
   // or unlock recovery mutex.
   ScopeData::LogClientData client_data{client, &cUpdated,
-                                       RefCounterDegree::kIncOne};
+        RefCounter::Degree::kIncOne, __func__};
   ScopeData::LogStreamInfoData stream_data{stream, &sUpdated,
-                                           RefCounterDegree::kDecOne};
+        RefCounter::Degree::kDecOne, __func__};
   ScopeData data{&client_data, &stream_data, &is_locked};
 
   if (true) {
@@ -1307,7 +1321,7 @@ SaAisErrorT LogAgent::saLogStreamClose(SaLogStreamHandleT logStreamHandle) {
       return ais_rc;
     }
 
-    if (stream->FetchAndDecreaseRefCounter(&sUpdated) != 0) {
+    if (stream->FetchAndDecreaseRefCounter(__func__, &sUpdated) != 0) {
       // @stream is being used somewhere (>0), DO NOT delete this @stream.
       // or @stream is being deleted on other thread (=-1)
       ais_rc = SA_AIS_ERR_TRY_AGAIN;
@@ -1322,7 +1336,7 @@ SaAisErrorT LogAgent::saLogStreamClose(SaLogStreamHandleT logStreamHandle) {
       return ais_rc;
     }
 
-    if (client->FetchAndIncreaseRefCounter(&cUpdated) == -1) {
+    if (client->FetchAndIncreaseRefCounter(__func__, &cUpdated) == -1) {
       ais_rc = SA_AIS_ERR_TRY_AGAIN;
       return ais_rc;
     }

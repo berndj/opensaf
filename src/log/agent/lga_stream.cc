@@ -28,7 +28,7 @@
 #include "mds/mds_papi.h"
 
 LogStreamInfo::LogStreamInfo(const std::string& name, uint32_t id)
-    : stream_name_{name}, ref_counter_mutex_{}, ref_counter_{0} {
+    : stream_name_{name} {
   TRACE_ENTER();
   stream_id_ = id;
   recovered_flag_ = true;
@@ -47,50 +47,6 @@ LogStreamInfo::~LogStreamInfo() {
     ncshm_destroy_hdl(NCS_SERVICE_ID_LGA, handle_);
     handle_ = 0;
   }
-}
-
-// Return (-1) if @this object is being deleted.
-// Otherwise, increase the reference counter.
-int32_t LogStreamInfo::FetchAndIncreaseRefCounter(bool* updated) {
-  TRACE_ENTER();
-  base::Lock scopeLock(ref_counter_mutex_);
-  int32_t backup = ref_counter_;
-  *updated = false;
-  TRACE("%s: value = %d", __func__, ref_counter_);
-  // The @this object is being deleted.
-  if (ref_counter_ == -1) return backup;
-  ref_counter_ += 1;
-  *updated = true;
-  return backup;
-}
-
-// Return (0) if @this object is allowed to deleted
-// Otherwise, @this object is being used or being deleted by
-// other thread.
-int32_t LogStreamInfo::FetchAndDecreaseRefCounter(bool* updated) {
-  TRACE_ENTER();
-  base::Lock scopeLock(ref_counter_mutex_);
-  int32_t backup = ref_counter_;
-  *updated = false;
-  TRACE("%s: value = %d", __func__, ref_counter_);
-  // The @this object is being used or being deleted.
-  if (ref_counter_ != 0) return backup;
-  ref_counter_ = -1;
-  *updated = true;
-  return backup;
-}
-
-void LogStreamInfo::RestoreRefCounter(RefCounterDegree value, bool updated) {
-  TRACE_ENTER();
-  if (updated == false) return;
-  base::Lock scopeLock(ref_counter_mutex_);
-  // @value is negative number in case restoring the counter
-  // for @FetchAndDecreaseRefCounter().
-  // Should be a positive number, otherwise.
-  ref_counter_ -= value;
-  TRACE("%s: value = %d", __func__, ref_counter_);
-  // Don't expect the @ref_counter_ is less than (-1)
-  assert(ref_counter_ >= -1);
 }
 
 bool LogStreamInfo::SendOpenStreamMsg(uint32_t client_id) {

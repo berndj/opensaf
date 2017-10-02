@@ -22,14 +22,6 @@
 #include "base/osaf_utility.h"
 #include "base/macros.h"
 
-// Degree of reference counter decrease/increase
-enum RefCounterDegree {
-  // Say, I want referring to object. Count me in.
-  kIncOne = 1,
-  // Say, I want to delete the object.
-  kDecOne = -1
-};
-
 // LOG server state. The state changes according to getting MDS events.
 enum class LogServerState {
   // No Active LOG server. Could happen a short time during failover/switchover.

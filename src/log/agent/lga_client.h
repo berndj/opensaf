@@ -21,13 +21,14 @@
 #include <stdint.h>
 #include <vector>
 #include <atomic>
+#include <saLog.h>
 #include "base/mutex.h"
 #include "mds/mds_papi.h"
-#include <saLog.h>
 #include "log/agent/lga_stream.h"
 #include "log/common/lgsv_msg.h"
 #include "log/common/lgsv_defs.h"
 #include "log/agent/lga_state.h"
+#include "log/agent/lga_ref_counter.h"
 
 //>
 // @LogClient class
@@ -44,7 +45,7 @@
 // After adding @this LogClient object to the database of @LogAgent,
 // The proper way to retrieve @this object is via SearchClientById()
 // or SeachClientByHandle(), and the next call MUST be
-// FetchAndUpdateObjectState() on that object to update its ref counter.
+// FetchAndUpdateRefCounter() on that object to update its ref counter.
 //
 // This object contains lot of important information about the log client,
 // such as the mailbox @mailbox_ for putting all MDS msg which belong to
@@ -57,10 +58,10 @@
 // @saLogStreamOpen successfully, and removed from the database
 // when @saLogStreamClose is called successfully.
 //
-// And each @LogClient object has one special attribute, called @ref_counter_,
-// that attribute should be updated when it is refered, modify or deleting.
-// FetchAndUpdateObjectState()/RestoreObjectState() are methods to
-// increase/restore the @ref_counter_
+// And each @LogClient object owns one special object, ref_counter_object_,
+// that object should be updated when it is referred, modified or deleted.
+// FetchAnd<xxx>RefCounter()/RestoreRefCounter() are methods to update
+// ref_counter_object_ object.
 //
 // @LogClient object can be deleted ONLY if no log stream which it owns
 // are in "being use" state (@ref_counter > 0).
@@ -144,18 +145,23 @@ class LogClient {
   bool is_stale_client() const;
 
   // Fetch and increase reference counter.
-  // Increase one if @this object is not being deleted by other thread.
-  // @updated will be set to true if there is an increase, false otherwise.
-  int32_t FetchAndIncreaseRefCounter(bool* updated);
+  // Refer to `RefCounter` class for more info.
+  int32_t FetchAndIncreaseRefCounter(const char* caller, bool* updated) {
+    return ref_counter_object_.FetchAndIncreaseRefCounter(caller, updated);
+  }
 
   // Fetch and decrease reference counter.
-  // Decrease one if @this object is not being used or deleted by other thread.
-  // @updated will be set to true if there is an decrease, false otherwise.
-  int32_t FetchAndDecreaseRefCounter(bool* updated);
+  // Refer to `RefCounter` class for more info.
+  int32_t FetchAndDecreaseRefCounter(const char* caller, bool* updated) {
+    return ref_counter_object_.FetchAndDecreaseRefCounter(caller, updated);
+  }
 
   // Restore the reference counter back.
-  // Passing @value is either (1) [increase] or (-1) [decrease]
-  void RestoreRefCounter(RefCounterDegree value, bool updated);
+  // Refer to `RefCounter` class for more info.
+  void RestoreRefCounter(const char* caller, RefCounter::Degree value,
+                         bool updated) {
+    return ref_counter_object_.RestoreRefCounter(caller, value, updated);
+  }
 
   // true if @this client does NOT recovery succcessfully.
   // false, otherwise.
@@ -233,13 +239,6 @@ class LogClient {
   // Hold all atomic data
   AtomicData atomic_data_;
 
-  // Introduce this flag to centralize deleting @this object
-  // in one place - LOG application thread.
-  // Originally, @this object would be deleted in Recovery thread
-  // if failed to recover. Do so could have race condition with
-  // LOG application thread.
-  bool fail_to_recover_;
-
   // The API version is being used by client, used for CLM status
   SaVersionT version_;
 
@@ -249,15 +248,8 @@ class LogClient {
   pthread_mutex_t mutex_;
 
   // Hold information how many thread are referring to this object
-  // If the object is being deleted, the value is (-1).
-  // If the object is not being deleted/used, the value is (0)
-  // If there are N thread referring to this object, the counter will be N.
-  int32_t ref_counter_;
-
-  // Dedicate an own mutex to protect @ref_counter_.
-  // The reason not sharing the @mutex_ is to avoid deadlock with MDS thread
-  // E.g: lock(mutex_) --> send MDS sync --> receiving ack from MDS --> deadlock
-  pthread_mutex_t ref_counter_mutex_;
+  // Refer to `RefCounter` class for more info.
+  RefCounter ref_counter_object_;
 
   // Hold all log streams belong to @this client
   std::vector<LogStreamInfo*> stream_list_;

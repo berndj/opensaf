@@ -111,8 +111,7 @@ static uint32_t lga_enc_finalize_msg(NCS_UBAID *uba, lgsv_msg_t *msg) {
   return total_bytes;
 }
 
-static uint32_t encode_sanamet(NCS_UBAID *uba, uint8_t *p8, SaNameT *name)
-{
+static uint32_t encode_sanamet(NCS_UBAID *uba, uint8_t *p8, SaNameT *name) {
   uint32_t total_bytes = 0;
   p8 = ncs_enc_reserve_space(uba, 2);
   if (!p8) {
@@ -527,7 +526,7 @@ static uint32_t lga_lgs_msg_proc(lgsv_msg_t *lgsv_msg,
 
   // @client is being deleted in other thread. DO NOT touch this.
   bool updated = false;
-  if (client->FetchAndIncreaseRefCounter(&updated) == -1) {
+  if (client->FetchAndIncreaseRefCounter(__func__, &updated) == -1) {
     LogAgent::instance().LeaveCriticalSection();
     lga_msg_destroy(lgsv_msg);
     TRACE_LEAVE();
@@ -619,7 +618,7 @@ static uint32_t lga_lgs_msg_proc(lgsv_msg_t *lgsv_msg,
       break;
   }
 
-  client->RestoreRefCounter(RefCounterDegree::kIncOne, updated);
+  client->RestoreRefCounter(__func__, RefCounter::Degree::kIncOne, updated);
   TRACE_LEAVE();
   return rc;
 }
