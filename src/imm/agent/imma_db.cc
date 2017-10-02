@@ -685,11 +685,6 @@ void imma_mark_clients_stale(IMMA_CB *cb, bool mark_exposed) {
     temp_hdl = clnode->handle;
     temp_ptr = &temp_hdl;
 
-    if (clnode->isPbe) {
-      LOG_WA("PBE lost contact with parent IMMND - Exiting");
-      exit(1);
-    }
-
     /* Process OM side CCBs */
     while ((ccb_node = (IMMA_CCB_NODE *)ncs_patricia_tree_getnext(
                 &cb->ccb_tree, (uint8_t *)ccb_temp_ptr))) {
@@ -728,7 +723,11 @@ void imma_mark_clients_stale(IMMA_CB *cb, bool mark_exposed) {
       continue;
     } /* No need to stale dispatched on this
          handle when already exposed. */
-    if (mark_exposed) {
+    if (clnode->isPbe) {
+      /* saImmOmDispatch will return ERR_BAD_HANDLE and PBE will exit */
+      LOG_WA("PBE lost contact with parent IMMND - marking handle as exposed");
+      clnode->exposed = true;
+    } else if (mark_exposed) {
       clnode->exposed = true;
       LOG_WA("marking handle as exposed");
     } else if (clnode->isImmA2x12 && clnode->clmExposed) {
