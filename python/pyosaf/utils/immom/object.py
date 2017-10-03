@@ -59,7 +59,7 @@ class ImmObject(object):
                 self.class_desc[class_name] = \
                     pyosaf.utils.immom.class_description_get(class_name)
         else:
-            raise
+            raise ValueError("Class and attributes are None")
 
         self.__dict__["rdn_attribute"] = \
             pyosaf.utils.immom.get_rdn_attribute_for_class(class_name)
