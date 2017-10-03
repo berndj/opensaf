@@ -66,9 +66,9 @@ void saLogWriteLogCallback(SaInvocationT invocation, SaAisErrorT error);
 
 static SaLogCallbacksT logCallbacks = {NULL, NULL, saLogWriteLogCallback};
 
-static SaVersionT logVersion = {'A', 2, 1};
 static SaLogHandleT logHandle;
 static SaLogStreamHandleT alarmStreamHandle;
+const SaVersionT kLogVersion = {'A', 2, 3};
 
 NtfLogger::NtfLogger() : readCounter(0) {
   if (SA_AIS_OK != initLog()) {
@@ -247,18 +247,20 @@ SaAisErrorT NtfLogger::initLog() {
   SaNameT alarmStreamName;
   osaf_extended_name_lend(SA_LOG_STREAM_ALARM, &alarmStreamName);
   int first_try = 1;
+  SaVersionT log_version = kLogVersion;
 
   TRACE_ENTER();
 
   /* Initialize the Log service */
   do {
-    result = saLogInitialize(&logHandle, &logCallbacks, &logVersion);
+    result = saLogInitialize(&logHandle, &logCallbacks, &log_version);
     if (SA_AIS_ERR_TRY_AGAIN == result) {
       if (first_try) {
         LOG_WA("saLogInitialize returns try again, retries...");
         first_try = 0;
       }
       usleep(AIS_TIMEOUT);
+      log_version = kLogVersion;
     }
   } while (SA_AIS_ERR_TRY_AGAIN == result);
 

@@ -1099,11 +1099,13 @@ SaAisErrorT ntftool_saNtfInitialize(SaNtfHandleT *ntfHandle,
 {
 	int curRetryTime = 0;
 	SaAisErrorT rc;
+	SaVersionT ntf_version = *version;
 	do {
-		rc = saNtfInitialize(ntfHandle, ntfCallbacks, version);
+		rc = saNtfInitialize(ntfHandle, ntfCallbacks, &ntf_version);
 		if (rc == SA_AIS_ERR_TRY_AGAIN) {
 			sleep(gl_apiRetry);
 			curRetryTime += gl_apiRetry;
+			ntf_version = *version;
 		} else
 			break;
 	} while (curRetryTime < gl_apiTolerance);

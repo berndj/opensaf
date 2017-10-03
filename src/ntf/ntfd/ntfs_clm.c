@@ -18,6 +18,9 @@
 #include "ntf/ntfd/ntfs_com.h"
 #include "base/osaf_time.h"
 
+const SaVersionT kClmVersion = {'B', 0x04, 0x01};
+
+
 /*
  * @brief  CLM callback for tracking node membership status.
  *	   Depending upon the membership status (joining/leaving cluster)
@@ -99,7 +102,6 @@ done:
 	return;
 }
 
-static SaVersionT clmVersion = {'B', 0x04, 0x01};
 static const SaClmCallbacksT_4 clm_callbacks = {
     0, ntfs_clm_track_cbk /*saClmClusterTrackCallback*/
 };
@@ -113,15 +115,18 @@ void *ntfs_clm_init_thread(void *cb)
 {
 	ntfs_cb_t *_ntfs_cb = (ntfs_cb_t *)cb;
 	SaAisErrorT rc = SA_AIS_OK;
+	SaVersionT clm_version = kClmVersion;
 
 	TRACE_ENTER();
 
-	rc = saClmInitialize_4(&_ntfs_cb->clm_hdl, &clm_callbacks, &clmVersion);
+	rc = saClmInitialize_4(&_ntfs_cb->clm_hdl, &clm_callbacks,
+			       &clm_version);
 	while ((rc == SA_AIS_ERR_TRY_AGAIN) || (rc == SA_AIS_ERR_TIMEOUT) ||
 	       (rc == SA_AIS_ERR_UNAVAILABLE)) {
 		osaf_nanosleep(&kHundredMilliseconds);
+		clm_version = kClmVersion;
 		rc = saClmInitialize_4(&_ntfs_cb->clm_hdl, &clm_callbacks,
-				       &clmVersion);
+				       &clm_version);
 	}
 	if (rc != SA_AIS_OK) {
 		LOG_ER("saClmInitialize failed with error: %d", rc);

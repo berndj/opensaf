@@ -39,7 +39,7 @@
 #include "ntfimcn_main.h"
 
 /* Release code, major version, minor version */
-SaVersionT ntf_version = {'A', 0x01, 0x01};
+const SaVersionT kNtfVersion = {'A', 0x01, 0x01};
 const unsigned int sleep_delay_ms = 500;
 const unsigned int max_waiting_time_ms = 7 * 1000;       /* 7 secs */
 const unsigned int max_init_waiting_time_ms = 60 * 1000; /* 60 secs */
@@ -60,6 +60,7 @@ int ntfimcn_ntf_init(ntfimcn_cb_t *cb)
 {
 	SaAisErrorT rc;
 	int internal_rc = 0;
+	SaVersionT ntf_version = kNtfVersion;
 
 	TRACE_ENTER();
 
@@ -86,6 +87,7 @@ int ntfimcn_ntf_init(ntfimcn_cb_t *cb)
 				}
 			}
 			cb->ntf_handle = 0;
+			ntf_version = kNtfVersion;
 			rc = saNtfInitialize(&cb->ntf_handle, NULL,
 					     &ntf_version);
 		}

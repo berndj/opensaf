@@ -50,7 +50,7 @@ extern ntfimcn_cb_t ntfimcn_cb; /* See ntfimcn_main.c */
  * Global, scope file
  */
 /* Release code, major version, minor version */
-#define IMM_VERSION {'A', 2, 12}
+static const SaVersionT kImmVersion = {'A', 2, 12};
 static const uint64_t sleep_delay_ms = 500;
 static const uint64_t max_waiting_time_7s = (7 * 1000);   /* 7 sec */
 static const uint64_t max_waiting_time_60s = (60 * 1000); /* 60 sec */
@@ -784,7 +784,7 @@ int ntfimcn_imm_init(ntfimcn_cb_t *cb)
 			goto done;
 		}
 		cb->immOiHandle = 0;
-		SaVersionT imm_version = IMM_VERSION;
+		SaVersionT imm_version = kImmVersion;
 		rc = saImmOiInitialize_2(&cb->immOiHandle, &callbacks,
 					 &imm_version);
 		while (
@@ -805,6 +805,7 @@ int ntfimcn_imm_init(ntfimcn_cb_t *cb)
 				}
 			}
 			cb->immOiHandle = 0;
+			imm_version = kImmVersion;
 			rc = saImmOiInitialize_2(&cb->immOiHandle, &callbacks,
 						 &imm_version);
 		}
@@ -927,7 +928,7 @@ static bool initializeImmOmHandle(SaImmHandleT* immOmHandle) {
 	struct timespec delay_ts;
 	SaAisErrorT ais_rc;
 	bool internal_rc = true;
-	SaVersionT imm_version = IMM_VERSION;
+	SaVersionT imm_version = kImmVersion;
 
 	osaf_millis_to_timespec(sleep_delay_ms, &delay_ts);
 	osaf_set_millis_timeout(max_waiting_time_60s, &timeout_ts);
@@ -939,6 +940,7 @@ static bool initializeImmOmHandle(SaImmHandleT* immOmHandle) {
 			break;
 		}
 		osaf_nanosleep(&delay_ts);
+		imm_version = kImmVersion;
 	}
 
 	if (ais_rc != SA_AIS_OK) {
