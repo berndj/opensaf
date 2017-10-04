@@ -524,7 +524,7 @@ static const SaImmOiImplementerNameT implementerName =
     (SaImmOiImplementerNameT) "safAmfService";
 static const SaImmOiImplementerNameT applierNamePrefix =
     (SaImmOiImplementerNameT) "@safAmfService";
-static SaVersionT immVersion = {'A', 2, 15};
+static const SaVersionT immVersion = {'A', 2, 15};
 
 /* This string array must match the AVSV_AMF_CLASS_ID enum */
 static const char *avd_class_names[] = {"Invalid",

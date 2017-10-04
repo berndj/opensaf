@@ -249,15 +249,16 @@ const char *avnd_failed_state_file_location(void) {
 ******************************************************************************/
 SaAisErrorT saImmOmInitialize_cond(SaImmHandleT *immHandle,
                                    const SaImmCallbacksT *immCallbacks,
-                                   SaVersionT *version) {
+                                   const SaVersionT *version) {
   if (avnd_cb->scs_absence_max_duration == 0) {
     return immutil_saImmOmInitialize(immHandle, immCallbacks, version);
   }
 
+  SaVersionT localVer = *version;
   // if headless mode is enabled, don't retry as IMMA already has a 30s
   // initial connection timeout towards IMMND. If we retry, we may
   // cause the watchdog to kill AMFND.
-  return saImmOmInitialize(immHandle, immCallbacks, version);
+  return saImmOmInitialize(immHandle, immCallbacks, &localVer);
 }
 
 /*****************************************************************************

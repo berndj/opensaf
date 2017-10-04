@@ -63,7 +63,7 @@ void free_n2d_nd_csicomp_state_info(AVSV_DND_MSG *msg);
 void free_n2d_nd_sisu_state_info(AVSV_DND_MSG *msg);
 SaAisErrorT saImmOmInitialize_cond(SaImmHandleT *immHandle,
                                    const SaImmCallbacksT *immCallbacks,
-                                   SaVersionT *version);
+                                   const SaVersionT *version);
 uint32_t avnd_cpy_SU_DN_from_DN(std::string &, const std::string &);
 SaAisErrorT amf_saImmOmAccessorInitialize(SaImmHandleT &immHandle,
                                           SaImmAccessorHandleT &accessorHandle);
