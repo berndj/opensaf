@@ -418,9 +418,6 @@ int main(int argc, char **argv)
 	int suite = ALL_SUITES, tcase = ALL_TESTS;
 	int opt_val = 0;
 	bool etst_flg = false;
-	int i = 0;
-	char *opt_str_ptr;
-	char *tok_str_ptr = NULL;
 
 	if (setenv("SA_ENABLE_EXTENDED_NAMES", "1", 1) != 0) {
 		fprintf(stderr, "Failed to set SA_ENABLE_EXTENDED_NAMES (%s)",
@@ -466,31 +463,23 @@ int main(int argc, char **argv)
 			test_list();
 			exit(0);
 		case 'e':
-			opt_str_ptr = argv[optind - 1];
-
-			tok_str_ptr = strtok(opt_str_ptr, " ");
-			for (i = 0; i < 2; i++) {
-				if (tok_str_ptr == NULL)
-					break;
-
-				if (i == 0) {
-					suite = atoi(tok_str_ptr);
-					if (suite == 0) {
-						/* Argument is not numeric or 0
-						 */
-						err_exit();
-					}
-				} else {
-					tcase = atoi(tok_str_ptr);
-					if (tcase == 0) {
-						/* Argument is not numeric or 0
-						 */
-						err_exit();
-					}
+			if (argv[optind - 1] != NULL) {
+				suite = atoi(argv[optind - 1]);
+				if (suite == 0) {
+					/* Argument is not numeric or 0
+					 */
+					err_exit();
 				}
-				tok_str_ptr = strtok(NULL, " ");
+			} else {
+					err_exit();
 			}
-
+			if (optind < argc && argv[optind] != NULL)
+				tcase = atoi(argv[optind]);
+			if (tcase == 0) {
+				/* Argument is not numeric or 0
+				 */
+				err_exit();
+			}
 			etst_flg = true;
 			add_suite_9();
 			add_suite_10();
