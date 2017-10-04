@@ -72,7 +72,7 @@ saImmOmAdminOperationContinue = decorate(saImmOm.saImmOmAdminOperationContinue)
 saImmOmAdminOperationContinueAsync = decorate(saImmOm.saImmOmAdminOperationContinueAsync)
 saImmOmAdminOperationContinuationClear = decorate(saImmOm.saImmOmAdminOperationContinuationClear)
 
-def _initialize():
+def initialize():
     ''' saImmOmInitialize with TRYAGAIN handling '''
     version = SaVersionT('A', 2, 15)
 
@@ -121,9 +121,6 @@ def get(object_name, attr_name_list=None, class_name=None):
         attribs['SaImmAttrClassName'] = class_name
 
     return ImmObject(object_name, attribs)
-
-# initialize handles needed when module is loaded
-_initialize()
 
 
 def class_description_get(class_name):
