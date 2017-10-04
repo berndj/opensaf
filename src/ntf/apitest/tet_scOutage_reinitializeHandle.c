@@ -100,6 +100,7 @@ static SaNtfObjectCreateDeleteNotificationT myObjCrDelNotification;
 static SaNtfAttributeChangeNotificationT myAttrChangeNotification;
 static SaNtfStateChangeNotificationT myStateChangeNotification;
 static SaNtfSecurityAlarmNotificationT mySecAlarmNotification;
+static SaAisErrorT global_error_id = SA_AIS_OK;
 
 extern int gl_tag_mode;
 
@@ -147,7 +148,7 @@ static SaAisErrorT check_errors()
 		errors = 0;
 	glob_errors += errors;
 	if (glob_errors) {
-		rc = SA_AIS_ERR_FAILED_OPERATION;
+		rc = global_error_id;
 		fprintf_v(stdout, "num of failed notifications: %d\n",
 			  glob_errors);
 	}
@@ -156,8 +157,10 @@ static SaAisErrorT check_errors()
 
 void saferror(SaAisErrorT rc, SaAisErrorT exp)
 {
-	if (rc != exp)
+	if (rc != exp){
 		glob_errors++;
+		global_error_id = rc;
+	}
 }
 
 static void resetCounters()
@@ -170,6 +173,7 @@ static void resetCounters()
 	ntfRecieved.objectCreateDeleteFilterHandle = 0;
 	ntfRecieved.securityAlarmFilterHandle = 0;
 	ntfRecieved.stateChangeFilterHandle = 0;
+	global_error_id = SA_AIS_OK;
 }
 
 /**
@@ -825,10 +829,12 @@ void producer_life_cycle(int test_api)
 						     &myAlarmNotification);
 	saferror(rc, SA_AIS_OK);
 
-	rc = scoutage_saNtfPtrValAllocate(
-	    &myAlarmNotification.notificationHeader,
-	    myAlarmNotification.notificationHandle);
-	saferror(rc, SA_AIS_OK);
+	if (glob_errors == 0) {
+        	rc = scoutage_saNtfPtrValAllocate(
+	        &myAlarmNotification.notificationHeader,
+	        myAlarmNotification.notificationHandle);
+	        saferror(rc, SA_AIS_OK);
+         }
 
 	/* Create security alarm notification */
 	rc = scoutage_saNtfSecurityAlarmNotificationAllocate(
