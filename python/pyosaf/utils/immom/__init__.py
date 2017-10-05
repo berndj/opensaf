@@ -31,7 +31,7 @@ from pyosaf.saImm import eSaImmScopeT, unmarshalSaImmValue, SaImmAttrNameT, \
 from pyosaf.saImmOm import SaImmHandleT, SaImmAccessorHandleT,\
     saImmOmAdminOwnerInitialize
 
-from pyosaf.utils import decorate
+from pyosaf.utils import decorate, initialize_decorate
 
 from pyosaf.utils import SafException
 from pyosaf.utils.immom.object import ImmObject
@@ -39,8 +39,9 @@ from pyosaf.utils.immom.object import ImmObject
 HANDLE = saImmOm.SaImmHandleT()
 ACCESSOR_HANDLE = SaImmAccessorHandleT()
 
+
 # Decorate IMM functions to add retry loops and error handling
-saImmOmInitialize         = decorate(saImmOm.saImmOmInitialize)
+saImmOmInitialize = initialize_decorate(saImmOm.saImmOmInitialize)
 saImmOmSelectionObjectGet = decorate(saImmOm.saImmOmSelectionObjectGet)
 saImmOmDispatch           = decorate(saImmOm.saImmOmDispatch)
 saImmOmFinalize           = decorate(saImmOm.saImmOmFinalize)
@@ -75,9 +76,7 @@ saImmOmAdminOperationContinuationClear = decorate(saImmOm.saImmOmAdminOperationC
 def initialize():
     ''' saImmOmInitialize with TRYAGAIN handling '''
     version = SaVersionT('A', 2, 15)
-
     err = saImmOmInitialize(HANDLE, None, version)
-
     err = saImmOmAccessorInitialize(HANDLE, ACCESSOR_HANDLE)
 
 

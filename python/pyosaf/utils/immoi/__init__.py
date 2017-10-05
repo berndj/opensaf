@@ -38,7 +38,7 @@ from pyosaf.utils.immom.object import ImmObject
 from pyosaf.utils.immom.ccb import marshal_c_array
 from pyosaf.utils.immom.iterator import SearchIterator
 
-from pyosaf.utils import decorate
+from pyosaf.utils import decorate, initialize_decorate
 
 from ctypes import c_char_p, c_void_p, cast, pointer
 
@@ -49,8 +49,9 @@ TRYAGAIN_CNT = 60
 
 OPENSAF_IMM_OBJECT = "opensafImm=opensafImm,safApp=safImmService"
 
+
 # Decorate the raw saImmOi* functions with retry and raising exceptions
-saImmOiInitialize_2       = decorate(saImmOi.saImmOiInitialize_2)
+saImmOiInitialize_2 = initialize_decorate(saImmOi.saImmOiInitialize_2)
 saImmOiSelectionObjectGet = decorate(saImmOi.saImmOiSelectionObjectGet)
 saImmOiDispatch           = decorate(saImmOi.saImmOiDispatch)
 saImmOiFinalize           = decorate(saImmOi.saImmOiFinalize)
@@ -71,9 +72,7 @@ saImmOiCcbSetErrorString  = decorate(saImmOi.saImmOiCcbSetErrorString)
 
 def initialize(callbacks=None):
     ''' Initializes IMM OI '''
-
     version = SaVersionT('A', 2, 15)
-
     saImmOiInitialize_2(HANDLE, callbacks, version)
 
 

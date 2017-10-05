@@ -20,12 +20,13 @@
 
 from pyosaf import saClm, saAis
 
-from pyosaf.utils import decorate
+from pyosaf.utils import decorate, initialize_decorate
+
 
 # Decorate the raw saClm* functions with retry and raising exceptions
-saClmInitialize                = decorate(saClm.saClmInitialize)
-saClmInitialize_3              = decorate(saClm.saClmInitialize_3)
-saClmInitialize_4              = decorate(saClm.saClmInitialize_4)
+saClmInitialize = initialize_decorate(saClm.saClmInitialize)
+saClmInitialize_3 = initialize_decorate(saClm.saClmInitialize_3)
+saClmInitialize_4 = initialize_decorate(saClm.saClmInitialize_4)
 saClmSelectionObjectGet        = decorate(saClm.saClmSelectionObjectGet)
 saClmDispatch                  = decorate(saClm.saClmDispatch)
 saClmFinalize                  = decorate(saClm.saClmFinalize)
@@ -131,7 +132,7 @@ def track(flags=saAis.saAis.SA_TRACK_CHANGES_ONLY):
 def get_members():
     notification_buffer = saClm.SaClmClusterNotificationBufferT_4()
 
-    saClmClusterTrack_4(HANDLE, saAis.saAis.SA_TRACK_CURRENT, 
+    saClmClusterTrack_4(HANDLE, saAis.saAis.SA_TRACK_CURRENT,
                         notification_buffer)
 
     cluster_nodes = []

@@ -20,12 +20,12 @@
 '''
 from pyosaf import saLog, saAis
 
-from pyosaf.utils import decorate
+from pyosaf.utils import decorate, initialize_decorate
 
 LOG_VERSION = saAis.SaVersionT('A', 2, 1)
 
 # Decorate LOG functions to add retry loops and error handling
-saLogInitialize         = decorate(saLog.saLogInitialize)
+saLogInitialize = initialize_decorate(saLog.saLogInitialize)
 saLogSelectionObjectGet = decorate(saLog.saLogSelectionObjectGet)
 saLogDispatch           = decorate(saLog.saLogDispatch)
 saLogFinalize           = decorate(saLog.saLogFinalize)

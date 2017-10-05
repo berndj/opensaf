@@ -22,17 +22,18 @@
 from pyosaf import saNtf, saAis
 import ctypes
 
-from pyosaf.utils import decorate
+from pyosaf.utils import decorate, initialize_decorate
 
-saNtfInitialize                 = decorate(saNtf.saNtfInitialize)
+
+saNtfInitialize = initialize_decorate(saNtf.saNtfInitialize)
 saNtfLocalizedMessageFree       = decorate(saNtf.saNtfLocalizedMessageFree)
 saNtfStateChangeNotificationFilterAllocate = decorate(saNtf.saNtfStateChangeNotificationFilterAllocate)
 saNtfNotificationUnsubscribe    = decorate(saNtf.saNtfNotificationUnsubscribe)
 saNtfNotificationReadInitialize = decorate(saNtf.saNtfNotificationReadInitialize)
-saNtfInitialize_2               = decorate(saNtf.saNtfInitialize_2)
+saNtfInitialize_2 = initialize_decorate(saNtf.saNtfInitialize_2)
 saNtfNotificationReadInitialize_2 = decorate(saNtf.saNtfNotificationReadInitialize_2)
 saNtfNotificationSubscribe      = decorate(saNtf.saNtfNotificationSubscribe)
-saNtfInitialize_3               = decorate(saNtf.saNtfInitialize_3)
+saNtfInitialize_3 = initialize_decorate(saNtf.saNtfInitialize_3)
 saNtfSelectionObjectGet         = decorate(saNtf.saNtfSelectionObjectGet)
 saNtfDispatch                   = decorate(saNtf.saNtfDispatch)
 saNtfFinalize                   = decorate(saNtf.saNtfFinalize)
@@ -135,10 +136,6 @@ def dummy_func(*args):
 
 def initialize(notification_callback=None):
     ''' Initializes the NTF library'''
-
-    # Initialize the NTF API
-    version = saAis.SaVersionT('A', 1, 1)
-
     # Assign default values for callbacks
     CALLBACKS.saNtfNotificationCallback = \
                     saNtf.SaNtfNotificationCallbackT(dummy_func)
@@ -149,6 +146,9 @@ def initialize(notification_callback=None):
     if notification_callback:
         CALLBACKS.saNtfNotificationCallback = \
                     saNtf.SaNtfNotificationCallbackT(notification_callback)
+
+    # Initialize the NTF API
+    version = saAis.SaVersionT('A', 1, 1)
 
     # Initialize the API
     saNtfInitialize(HANDLE, CALLBACKS, version)

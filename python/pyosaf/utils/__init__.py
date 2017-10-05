@@ -16,6 +16,7 @@
 ############################################################################
 
 import time
+from copy import deepcopy
 
 from pyosaf.saAis import eSaAisErrorT
 
@@ -62,6 +63,49 @@ def decorate(function):
             time.sleep(1)
             one_sec_sleeps += 1
 
+            error = function(*args)
+
+        if error != eSaAisErrorT.SA_AIS_OK:
+            raise_saf_exception(function, error)
+
+        return error
+
+    return inner
+
+
+def initialize_decorate(function):
+    ''' Decorate the given SAF initialize(handle, callbacks, version) so that
+        it retries a fixed number of times if needed with the same arguments and
+        raises an exception if it encounters any fault other than
+        SA_AIS_ERR_TRY_AGAIN.
+    '''
+
+    def inner(*args):
+        ''' Calls "function" in the lexical scope in a retry loop and raises
+            an exception if it encounters any other faults.
+
+        Args:
+            args(tuple): Argument of initialize() with format:
+                         tuple(handle, callbacks, version)
+        '''
+        # Backup current version
+        backup_version = deepcopy(args[2])
+
+        one_sec_sleeps = 0
+        error = function(*args)
+
+        while error == eSaAisErrorT.SA_AIS_ERR_TRY_AGAIN:
+            if one_sec_sleeps == TRY_AGAIN_COUNT:
+                break
+
+            time.sleep(1)
+            one_sec_sleeps += 1
+
+            # If SAF initialize() returns ERR_TRY_AGAIN, the version will be
+            # updated to the latest version, so set original version on
+            # next initialization.
+            version = deepcopy(backup_version)
+            args = args[:2] + (version,)
             error = function(*args)
 
         if error != eSaAisErrorT.SA_AIS_OK:
