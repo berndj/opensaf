@@ -2385,3 +2385,17 @@ bool AVD_SG::is_equal() const {
            (sg_redundancy_model == SA_AMF_N_WAY_ACTIVE_REDUNDANCY_MODEL)) &&
           (equal_ranked_su == true) && (saAmfSGAutoAdjust == SA_TRUE));
 }
+/**
+ * @brief       This function checks if there is any same ranked SU
+ *              which is Unlocked and can be Instantiated
+ *
+ * @param       pointer to su
+ *
+ */
+bool AVD_SG::find_instantiable_same_rank_su(AVD_SU *su) {
+  for (const auto &i_su : list_of_su) {
+    if (i_su->is_instantiable() && (i_su->saAmfSURank == su->saAmfSURank))
+      return true;
+  }
+  return false;
+}

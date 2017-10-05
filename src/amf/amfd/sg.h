@@ -450,6 +450,7 @@ class AVD_SG {
   uint32_t pref_inservice_sus() const;
   // Checks if si_equal_distribution is configured for the SG.
   bool is_equal() const;
+  bool find_instantiable_same_rank_su(AVD_SU *su);
 
  private:
   // disallow copy and assign, TODO(hafe) add common macro for this
