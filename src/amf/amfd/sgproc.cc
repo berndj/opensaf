@@ -1924,7 +1924,20 @@ uint32_t in_serv_su(AVD_SG *sg) {
   TRACE_LEAVE2("%u", in_serv);
   return in_serv;
 }
-
+/**
+ * @brief       This function checks if there is any same ranked SU
+ *              which is Unlocked and can be Instantiated
+ *
+ * @param       pointer to su
+ *
+ */
+uint32_t find_instantiable_same_rank_su(AVD_SU *su) {
+  for (const auto &i_su : su->sg_of_su->list_of_su) {
+    if (i_su->is_instantiable() && (i_su->saAmfSURank == su->saAmfSURank))
+      return true;
+  }
+  return false;
+}
 /*****************************************************************************
  * Function: avd_sg_app_su_inst_func
  *
@@ -2011,7 +2024,13 @@ uint32_t avd_sg_app_su_inst_func(AVD_CL_CB *cb, AVD_SG *sg) {
         TRACE("%u, %u", sg->pref_inservice_sus(), num_try_insvc_su);
         if (sg->pref_inservice_sus() >
             (sg_instantiated_su_count(i_su->sg_of_su) + num_try_insvc_su)) {
-          /* Try to Instantiate this SU */
+          /* If SU is in Locked State, find if there is any other SU in the same rank
+           * which can provide Service(Unlocked SU)
+           */
+          if(i_su->saAmfSUAdminState == SA_AMF_ADMIN_LOCKED) {
+            if (find_instantiable_same_rank_su(i_su))
+              continue;
+          }
           if (avd_snd_presence_msg(cb, i_su, false) == NCSCC_RC_SUCCESS) {
             num_try_insvc_su++;
           }
