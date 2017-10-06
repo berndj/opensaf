@@ -29,6 +29,7 @@
 #include "smf/smfd/SmfRollback.h"
 #include "smf/smfd/SmfUpgradeAction.h"
 #include "smf/smfd/SmfUtils.h"
+#include "base/time.h"
 
 /* ========================================================================
  *   DEFINITIONS
@@ -213,34 +214,62 @@ bool SmfCampaignWrapup::executeCampComplete() {
   // Campaign wrapup complete actions
   LOG_NO("CAMP: Start campaign complete actions (%zu)",
          m_campCompleteAction.size());
-  SaAisErrorT result;
+  base::Timer adminOpTimer(60000);
+  SaAisErrorT ais_rc = SA_AIS_OK;
+  bool rc = true;
   std::string completeRollbackDn;
   completeRollbackDn = "smfRollbackElement=CampComplete,";
   completeRollbackDn += SmfCampaignThread::instance()->campaign()->getDn();
 
-  if ((result = smfCreateRollbackElement(
-           completeRollbackDn,
-           SmfCampaignThread::instance()->getImmHandle())) != SA_AIS_OK) {
-    LOG_ER(
-        "SmfCampaignWrapup failed to create campaign complete rollback element %s, rc=%s",
-        completeRollbackDn.c_str(), saf_error(result));
-    return false;
+  while (adminOpTimer.is_timeout() == false) {
+     ais_rc = smfCreateRollbackElement(completeRollbackDn,
+              SmfCampaignThread::instance()->getImmHandle());
+     if (ais_rc == SA_AIS_ERR_TRY_AGAIN) {
+        base::Sleep(base::kFiveHundredMilliseconds);
+        continue;
+     } else if (ais_rc != SA_AIS_OK) {
+        LOG_WA("%s: SmfCampaignWrapup::executeCampComplete Fail '%s'", __FUNCTION__,
+             saf_error(ais_rc));
+        rc = false;
+        break;
+     } else {
+      // Done
+      break;
+    }
+  }
+  if (adminOpTimer.is_timeout() == true && ais_rc != SA_AIS_OK) {
+    LOG_WA("%s: SmfCampaignWrapup::executeCampComplete()  timeout Fail '%s'", __FUNCTION__,
+           saf_error(ais_rc));
   }
 
   for (auto& elem : m_campCompleteAction) {
-    if ((result = (*elem).execute(SmfCampaignThread::instance()->getImmHandle(),
-                                  &completeRollbackDn)) != SA_AIS_OK) {
-      LOG_ER("SmfCampaignWrapup campCompleteAction %d failed, rc=%s",
-             (*elem).getId(), saf_error(result));
-      return false;
+    base::Timer adminOpTimer(60000);
+    while (adminOpTimer.is_timeout() == false) {
+      ais_rc = (*elem).execute(SmfCampaignThread::instance()->getImmHandle(),
+                                  &completeRollbackDn);
+      if (ais_rc == SA_AIS_ERR_TRY_AGAIN) {
+         base::Sleep(base::kFiveHundredMilliseconds);
+         continue;
+      }else if (ais_rc != SA_AIS_OK) {
+         LOG_WA("%s: SmfCampaignWrapup::executeCampComplete Fail '%s'", __FUNCTION__,
+             saf_error(ais_rc));
+         rc = false;
+         break;
+      } else {
+        // Done
+        break;
+      }
+    }
+    if (adminOpTimer.is_timeout() == true && ais_rc != SA_AIS_OK) {
+      LOG_WA("%s: SmfCampaignWrapup::executeCampComplete(): m_campCompleteAction timeout Fail '%s'"
+                   , __FUNCTION__, saf_error(ais_rc));
     }
   }
 
   LOG_NO("CAMP: Campaign complete actions completed");
-
   TRACE_LEAVE();
 
-  return true;
+  return rc;
 }
 
 //------------------------------------------------------------------------------
