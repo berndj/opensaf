@@ -232,10 +232,7 @@ bool SmfCampaignWrapup::executeCampComplete() {
              saf_error(ais_rc));
         rc = false;
         break;
-     } else {
-      // Done
-      break;
-    }
+     }
   }
   if (adminOpTimer.is_timeout() == true && ais_rc != SA_AIS_OK) {
     LOG_WA("%s: SmfCampaignWrapup::executeCampComplete()  timeout Fail '%s'", __FUNCTION__,
@@ -250,14 +247,11 @@ bool SmfCampaignWrapup::executeCampComplete() {
       if (ais_rc == SA_AIS_ERR_TRY_AGAIN) {
          base::Sleep(base::kFiveHundredMilliseconds);
          continue;
-      }else if (ais_rc != SA_AIS_OK) {
+      } else if (ais_rc != SA_AIS_OK) {
          LOG_WA("%s: SmfCampaignWrapup::executeCampComplete Fail '%s'", __FUNCTION__,
              saf_error(ais_rc));
          rc = false;
          break;
-      } else {
-        // Done
-        break;
       }
     }
     if (adminOpTimer.is_timeout() == true && ais_rc != SA_AIS_OK) {
