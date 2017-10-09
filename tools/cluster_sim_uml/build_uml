@@ -313,6 +313,12 @@ cmd_installibs() {
 	if [ -e $d/libthread_db.so.? ]; then
 	    echo $d/libthread_db.so.? >> $deplib
 	fi
+	if [ -e $d/libffi.so.? ]; then
+	    echo $d/libffi.so.? >> $deplib
+	fi
+	if [ -e /usr$d/libffi.so.? ]; then
+	    echo /usr$d/libffi.so.? >> $deplib
+	fi
     done
 
     for n in $(cat $deplib | sort | uniq); do

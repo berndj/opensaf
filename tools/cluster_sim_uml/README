@@ -135,6 +135,12 @@ OSAF_UML_DYNAMIC_MAC to 1:
 
     export OSAF_UML_DYNAMIC_MAC=1
 
+It is possible to choose IP address range, and select IPv4 or IPv6 addresses,
+using the IPADDRBASE environment variable. For example, to use IPv6 address you
+can use the following command:
+
+    export IPADDRBASE=fe80::
+
 Running the cluster adds the following directories:
 
 repl-opensaf This directory contains a simulated shared replicated disk

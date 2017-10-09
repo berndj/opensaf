@@ -21,12 +21,25 @@ errquit() {
     exit 1
 }
 
+grep -q ::1 /etc/hosts
+ipv6_address=$?
+
 p=$(ifconfig eth0 | grep HWaddr | sed -e 's,.*HWaddr,,' |cut -d: -f6 |tr -d ' ')
 q=$(ifconfig eth0 | grep HWaddr | sed -e 's,.*HWaddr,,' |cut -d: -f5 |tr -d ' ')
 test -n "$p" || errquit "No eth0 address found"
 test -n "$q" || errquit "No eth0 address found"
-ifconfig eth0 192.168.$((0x$q)).$((0x$p)) netmask 255.255.0.0
-route add default gw 192.168.254.1
+if [ $ipv6_address -eq 0 ]; then
+#	echo 0 > /proc/sys/net/ipv6/conf/eth0/accept_dad
+	IPADDRBASE=$(tail -1 /etc/hosts| cut -d" " -f1 | sed -e 's/[^\:]*$//')
+	IPADDRSUFFIX=$(echo $q$p | sed -e 's/^0*//')
+	ifconfig eth0 up add $IPADDRBASE$IPADDRSUFFIX/64
+	route add default gw 192.168.254.1
+else
+	IPADDRBASE=$(tail -1 /etc/hosts| cut -d" " -f1 | sed -e 's/[^\.]*\.[^\.]*$//')
+	IPADDRSUFFIX=$((0x$q)).$((0x$p))
+	ifconfig eth0 $IPADDRBASE$IPADDRSUFFIX netmask 255.255.0.0
+	route add default gw ${IPADDRBASE}254.1
+fi
 
 inetd || errquit "Failed to start inetd"
 
