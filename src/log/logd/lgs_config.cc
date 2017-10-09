@@ -1489,6 +1489,8 @@ bool lgs_path_is_writeable_dir_h(const std::string &pathname) {
   if (api_rc != LGSF_SUCESS) {
     TRACE("%s - API error %s", __FUNCTION__, lgsf_retcode_str(api_rc));
     is_writeable_dir = false;
+    if (api_rc == LGSF_BUSY)
+      LOG_NO("Logsv is busy");
   } else {
     if (apipar.hdl_ret_code_out == 0)
       is_writeable_dir = false;

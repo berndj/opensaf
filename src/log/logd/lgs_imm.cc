@@ -774,11 +774,11 @@ static SaAisErrorT config_ccb_completed_modify(
         std::string pathName = *(static_cast<char **>(value));
         if (lgs_cfg_verify_root_dir(pathName) != 0) {
           report_oi_error(immOiHandle, opdata->ccbId,
-                          "pathName: %s is NOT accepted", pathName.c_str());
+                          "validation of pathName: %s fails", pathName.c_str());
           ais_rc = SA_AIS_ERR_BAD_OPERATION;
           goto done;
         }
-        TRACE("pathName: %s is accepted", pathName.c_str());
+        TRACE("validation of pathName: %s PASS", pathName.c_str());
       }
     } else if (!strcmp(attribute->attrName, LOG_DATA_GROUPNAME)) {
       if (attribute->attrValuesNumber == 0) {

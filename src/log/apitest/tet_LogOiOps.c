@@ -22,6 +22,7 @@
 #include <saImmOm.h>
 #include <limits.h>
 #include <unistd.h>
+#include "base/osaf_time.h"
 #include "base/saf_error.h"
 
 #include "logtest.h"
@@ -1626,6 +1627,8 @@ void saLogOi_502(void)
 	int rc = 0, tst_stat = 0;
 	char command[MAX_DATA];
 	char tstdir[MAX_DATA];
+	struct timespec timeout_time;
+	const int kWaitTime = 10*1000;
 
 	/* Path to test directory */
 	sprintf(tstdir, "%s/xxtest", log_root_path);
@@ -1655,28 +1658,31 @@ void saLogOi_502(void)
 		goto done;
 	}
 
-	/* Change to xxtest */
-	sprintf(
-	    command,
-	    "immcfg -a logRootDirectory=%s logConfig=1,safApp=safLogService",
-	    tstdir);
-	rc = systemCall(command);
-	if (rc != 0) {
-		fprintf(stderr, "'%s' Fail rc=%d\n", command, rc);
-		tst_stat = 1;
-		goto done;
-	}
 
-	/* Change back */
-	sprintf(
-	    command,
-	    "immcfg -a logRootDirectory=%s logConfig=1,safApp=safLogService",
-	    log_root_path);
-	rc = systemCall(command);
-	if (rc != 0) {
-		fprintf(stderr, "'%s' Fail rc=%d\n", command, rc);
-		tst_stat = 1;
-		goto done;
+	// Change to root directory to  xxtest
+	sprintf(command, "immcfg -a logRootDirectory=%s "
+			 "logConfig=1,safApp=safLogService > /dev/null 2>&1",
+			 tstdir);
+	for (int i = 0; i < 2; i++) {
+		osaf_set_millis_timeout(kWaitTime, &timeout_time);
+		// Try again in case command fails due to lgsv is busy
+		do {
+			rc = system(command);
+			if (rc == 0) break;
+			osaf_nanosleep(&kOneSecond);
+		} while (!osaf_is_timeout(&timeout_time));
+
+		if (rc != 0) {
+			fprintf(stderr, "'%s' Fail rc=%d\n", command, rc);
+			tst_stat = 1;
+			break;
+		}
+
+		// Change back
+		sprintf(command, "immcfg -a logRootDirectory=%s  logConfig=1,"
+				 "safApp=safLogService > /dev/null 2>&1",
+				 log_root_path);
+		osaf_nanosleep(&kOneSecond);
 	}
 
 done:
