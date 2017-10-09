@@ -168,7 +168,7 @@ Information about the resources:
 
   -Callback and its argument:
 
-      void (*OsafAmfSCStatusChangeCallbackT)(OsafAmfSCStatusT state)
+      void (*OsafAmfSCStatusChangeCallbackT)(OsafAmfSCStatusT status)
       where OsafAmfSCStatusT is defined as:
         typedef enum {
           OSAF_AMF_SC_PRESENT = 1,
@@ -188,7 +188,7 @@ Information about the resources:
 
 * An API to register/install above callback function:
    void osafAmfInstallSCStatusChangeCallback(SaAmfHandleT amfHandle,
-     void (*OsafAmfSCStatusChangeCallbackT)(OsafAmfSCStatusT status));
+                                             OsafAmfSCStatusChangeCallbackT callback);
    If 0 is passed as amfHandle, then callback will be invoked in the
    context of MDS thread. If a valid amfHandle is passed then callback
    will be invoked in the context of thread which is calling saAmfDispatch()

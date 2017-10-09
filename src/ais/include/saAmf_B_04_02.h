@@ -65,9 +65,13 @@ typedef enum {
     OSAF_AMF_SC_ABSENT = 2,
 } OsafAmfSCStatusT;
 
+typedef void
+(*OsafAmfSCStatusChangeCallbackT)(
+    OsafAmfSCStatusT status);
+
 extern SaAisErrorT osafAmfInstallSCStatusChangeCallback(
     SaAmfHandleT amfHandle,
-    void (*OsafAmfSCStatusChangeCallbackT)(OsafAmfSCStatusT status));
+    OsafAmfSCStatusChangeCallbackT callback);
 
 #ifdef  __cplusplus
 }

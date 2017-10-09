@@ -73,32 +73,32 @@ static void (*amf_down_cb)(void);
  * @brief  SC status change callback. It is called when cluster becomes
  *         without SCs and with SCs. It can be used by a client to know
  *         when cluster runs without SCs and with SCs.
- * @param  state.
  */
-static void (*OsafAmfSCStatusChangeCallbackT)(OsafAmfSCStatusT state);
+static OsafAmfSCStatusChangeCallbackT osafAmfSCStatusChangeCallback;
 
 //Wrapper function that AMFA uses to invoke SC status change callback.
-void osafAmfSCStatusChangeCallback_invoke(OsafAmfSCStatusT state) {
+void osafAmfSCStatusChangeCallback_invoke(OsafAmfSCStatusT status) {
   TRACE_ENTER();
-  if (OsafAmfSCStatusChangeCallbackT == nullptr) {
+  if (osafAmfSCStatusChangeCallback == nullptr) {
      TRACE("Callback not registered");
   } else {
      TRACE("Invoking SC status change callback");
     /* A client has installed a callback pointer, call it */
-    OsafAmfSCStatusChangeCallbackT(state);
+    osafAmfSCStatusChangeCallback(status);
   }
   TRACE_LEAVE();
 }
+
 bool is_osafAmfSCStatusChangeCallback_registered() {
-  if (OsafAmfSCStatusChangeCallbackT == nullptr)
+  if (osafAmfSCStatusChangeCallback == nullptr)
     return false;
   else
     return true;
 }
 
 void uninstall_osafAmfSCStatusChangeCallback() {
-  TRACE("uninstalling OsafAmfSCStatusChangeCallbackT.");
-  OsafAmfSCStatusChangeCallbackT = nullptr;
+  TRACE("uninstalling osafAmfSCStatusChangeCallback.");
+  osafAmfSCStatusChangeCallback = nullptr;
 }
 /****************************************************************************
   Name          : ava_mds_reg
@@ -1206,7 +1206,7 @@ extern "C" void ava_install_amf_down_cb(void (*cb)(void)) {
  * @brief   API for client to install SC status change callback.
  */
 SaAisErrorT osafAmfInstallSCStatusChangeCallback(SaAmfHandleT hdl,
-                                     void (*cb)(OsafAmfSCStatusT status)) {
+                                                 OsafAmfSCStatusChangeCallbackT cb) {
   TRACE_ENTER2("handle:%llx", hdl);
 
   AVA_CB *ava_cb = 0;
@@ -1237,7 +1237,8 @@ SaAisErrorT osafAmfInstallSCStatusChangeCallback(SaAmfHandleT hdl,
     goto done;
   }
   ava_cb->ava_sc_status_handle = hdl;
-  OsafAmfSCStatusChangeCallbackT = cb;
+  osafAmfSCStatusChangeCallback = cb;
+
 
 done:
   if (ava_cb) {

@@ -102,7 +102,7 @@ uint32_t ava_mds_cbk(NCSMDS_CALLBACK_INFO*);
 uint32_t ava_mds_send(struct ava_cb_tag*, AVSV_NDA_AVA_MSG*,
                       AVSV_NDA_AVA_MSG**);
 
-void osafAmfSCStatusChangeCallback_invoke(OsafAmfSCStatusT state);
+void osafAmfSCStatusChangeCallback_invoke(OsafAmfSCStatusT status);
 bool is_osafAmfSCStatusChangeCallback_registered();
 void uninstall_osafAmfSCStatusChangeCallback();
 
