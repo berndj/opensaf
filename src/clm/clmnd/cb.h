@@ -37,6 +37,8 @@
 typedef struct node_detail_t {
   SaUint32T node_id;
   SaNameT node_name;
+  SaNameT user_data;
+  SaInt8T ifs;
   SaTimeT boot_time;
   SaUint16T no_of_addresses;
   SaClmNodeAddressT address;

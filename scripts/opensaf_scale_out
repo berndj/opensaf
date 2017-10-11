@@ -35,6 +35,18 @@ export LD_LIBRARY_PATH=$libdir:$LD_LIBRARY_PATH
 # Remove the following line when customizing this script.
 exit 0
 
+# Env variable CLM_IFS contains field separator for the
+# input argument, example on usage:
+# if [ -n "$CLM_IFS" ]; then
+#    IFS=$CLM_IFS
+#    logger "Using ifs [$IFS]"
+# fi
+#
+# for arg in "$@"
+# do
+#    logger "> [$arg]"
+# done
+
 tmpdir=$(mktemp -d -t opensaf_scale_out.XXXXXXXXXX)
 destructor() {
   rm -rf "$tmpdir"
@@ -47,7 +59,7 @@ imm_xml=$tmpdir/imm.xml
 
 immfind -c SaClmNode | sed -e 's/^[^=]*=//;s/,.*$//' > "$nodes_cfg_tmp"
 for node in "$@"; do
-    node_name=$(echo "$node" | cut -d, -f2)
+    node_name=$(echo "$node" | cut -d"$CLM_IFS" -f2)
     echo "$node_name" >> "$nodes_cfg_tmp"
 done
 rm -f "$nodes_cfg"

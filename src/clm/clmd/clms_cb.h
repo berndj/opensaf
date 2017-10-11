@@ -254,6 +254,8 @@ typedef struct clms_cb_t {
   bool is_scale_out_thread_running;
   /* Full path to the scale-out script, or NULL if feature is disabled */
   char *scale_out_script;
+  /* internal field separator */
+  char ifs;
 } CLMS_CB;
 
 typedef struct clms_lock_tmr_t { SaNameT node_name; } CLMS_LOCK_TMR;

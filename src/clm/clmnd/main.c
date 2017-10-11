@@ -15,7 +15,7 @@
  *             Ericsson AB
  *
  */
-
+#include <stdio.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <saClm.h>
@@ -389,6 +389,20 @@ static uint32_t clmna_mds_enc(struct ncsmds_callback_info *info)
 			total_bytes += clmsv_encodeSaNameT(
 			    uba,
 			    &(msg->info.api_info.param.nodeup_info.node_name));
+
+			total_bytes += clmsv_encodeSaNameT(
+			    uba,
+			    &(msg->info.api_info.param.nodeup_info.user_data));
+
+			p8 = ncs_enc_reserve_space(uba, 1);
+			ncs_encode_8bit(
+			    &p8,
+			    msg->info.api_info.param.nodeup_info.ifs);
+			ncs_enc_claim_space(uba, 1);
+			total_bytes += 1;
+			TRACE("Encoded CLM_IFS: [%c] ",
+			      msg->info.api_info.param.nodeup_info.ifs);
+
 			p8 = ncs_enc_reserve_space(uba, 8);
 			ncs_encode_64bit(
 			    &p8,
@@ -508,9 +522,46 @@ static uint32_t clmna_mds_init(void)
 	return rc;
 }
 
+static void get_user_data(NODE_INFO *node)
+{
+	FILE *fp;
+
+	fp = fopen(PKGSYSCONFDIR "/clm_user_data", "r");
+	if (fp == NULL) {
+		LOG_IN("Could not open file %s - %s", PKGSYSCONFDIR "/clm_user_data",
+		       strerror(errno));
+		return;
+	}
+
+	if (fgets((char*) node->user_data.value, sizeof(node->user_data.value),
+		fp) != NULL) {
+		node->user_data.length = strnlen((char *)node->user_data.value,
+			sizeof(node->user_data.value));
+	} else {
+		LOG_WA("Could not read file %s", PKGSYSCONFDIR "/clm_user_data");
+	}
+
+	if (memchr(node->user_data.value, node->ifs, node->user_data.length) != NULL) {
+		LOG_WA("CLM IFS [%c] was found in %s", node->ifs, node->user_data.value);
+		memset(&node->user_data, 0, sizeof(SaNameT));
+	}
+
+	fclose(fp);
+
+}
+
 static int get_node_info(NODE_INFO *node)
 {
 	FILE *fp;
+	const char *ifs;
+
+	if ((ifs = getenv("CLMNA_IFS")) == NULL) {
+		node->ifs = ',';  // default field separator
+	} else {
+		node->ifs = *ifs;
+	}
+
+	get_user_data(node);
 
 	fp = fopen(PKGSYSCONFDIR "/node_name", "r");
 	if (fp == NULL) {
@@ -527,6 +578,11 @@ static int get_node_info(NODE_INFO *node)
 	fclose(fp);
 	node->node_name.length = strlen((char *)node->node_name.value);
 	TRACE("node name: '%s'", node->node_name.value);
+
+	if (memchr(node->node_name.value, node->ifs, node->node_name.length) != NULL) {
+		LOG_ER("CLM IFS [%c] was found in %s", node->ifs, node->node_name.value);
+		return -1;
+	}
 
 	fp = fopen(PKGLOCALSTATEDIR "/node_id", "r");
 	if (fp == NULL) {
@@ -561,7 +617,8 @@ static int get_node_info(NODE_INFO *node)
 		if (errno != 0 || *endptr != '\0' || *family == '\0')
 			family = NULL;
 	}
-	if (family != NULL && value != NULL) {
+	if (family != NULL && value != NULL &&
+		memchr(value, node->ifs, strlen(value)) == NULL) {
 		size_t len = strlen(value);
 		if (len > SA_CLM_MAX_ADDRESS_LENGTH)
 			len = SA_CLM_MAX_ADDRESS_LENGTH;
@@ -678,6 +735,9 @@ static void clmna_process_dummyup_msg(void)
 		msg.info.api_info.param.nodeup_info.no_of_addresses =
 		    self_node.no_of_addresses;
 		msg.info.api_info.param.nodeup_info.address = self_node.address;
+		msg.info.api_info.param.nodeup_info.user_data = self_node.user_data;
+		msg.info.api_info.param.nodeup_info.ifs = self_node.ifs;
+
 		stop_scale_out_retry_tmr();
 		start_scale_out_retry_tmr(CLMNA_JOIN_RETRY_TIME);
 		uint32_t rc = clmna_mds_msg_send(&msg);

@@ -64,11 +64,18 @@ the script will check if the new node is eligible to be added to the cluster,
 and if so add the necessary IMM objects so that the node will be able to join
 the next time it tries. The script will be called with one or more command-line
 arguments, where each argument is a comma-separated list of properties of a node
-that wishes to join the cluster. Currently, the comma-separated list in each
-command-line argument contains only two entries, but the script should be
-forwards compatible with future extensions where more entries may be added to
-the comma-separated list. The first entry in the list is the node id represented
-as a decimal number. The second entry in the list is the name of the node.
+that wishes to join the cluster. The comma separator can be changed by
+setting variable CLMNA_IFS in clmna.conf to use another field separator, the
+field separator is passed in environment variable CLM_IFS to the
+opensaf_scale_out script.
+Currently, the comma-separated list in each command-line argument contains
+four entries, node-id, node-name, node-ipaddress, user-data.
+But the script should be forwards compatible with future extensions where more
+entries may be added to the comma-separated list. The first entry in the list
+is the node id represented as a decimal number. The second entry in the list is
+the name of the node. The third entry is the IP address of the node. The fourth
+entry is optional user data that can be entered in a file named
+/etc/opensaf/clm_user_data, up to 256 characters can be given.
 
 NOTE: the script must be idempotent, i.e. it must be harmless to call it more
 than one time with the same parameters. The second call should do nothing since

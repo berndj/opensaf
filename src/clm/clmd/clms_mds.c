@@ -787,6 +787,27 @@ static uint32_t clms_dec_nodeup_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 	TRACE("nodename %s length %d",
 	      msg->info.api_info.param.nodeup_info.node_name.value,
 	      msg->info.api_info.param.nodeup_info.node_name.length);
+
+	memset(&msg->info.api_info.param.nodeup_info.user_data, 0, sizeof(SaNameT));
+	p8 = ncs_dec_flatten_space(uba, local_data, 2);
+	if (p8 != NULL) {
+		total_bytes += clmsv_decodeSaNameT(
+		    uba, &(msg->info.api_info.param.nodeup_info.user_data));
+		TRACE("userdata %s length %d",
+		      msg->info.api_info.param.nodeup_info.user_data.value,
+		      msg->info.api_info.param.nodeup_info.user_data.length);
+	}
+
+	p8 = ncs_dec_flatten_space(uba, local_data, 1);
+	uint8_t ifs = 0;
+	if (p8 != NULL) {
+		ifs = ncs_decode_8bit(&p8);
+		ncs_dec_skip_space(uba, 1);
+		total_bytes += 1;
+		TRACE("CLM_IFS : [%c] ", ifs);
+	}
+	msg->info.api_info.param.nodeup_info.ifs = ifs;
+
 	p8 = ncs_dec_flatten_space(uba, local_data, 8);
 	// Old protocol versions don't have the boot_time field. Use the current
 	// wall clock time if boot_time isn't present in the message.

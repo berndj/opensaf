@@ -139,6 +139,8 @@ typedef struct clmsv_track_info_t {
 typedef struct {
   SaUint32T node_id;
   SaNameT node_name;
+  SaNameT user_data;
+  SaInt8T ifs;         /* Internal Field Separator */
   SaTimeT boot_time;
   SaUint16T no_of_addresses;
   SaClmNodeAddressT address;

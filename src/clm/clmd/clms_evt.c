@@ -44,7 +44,7 @@ static uint32_t proc_rda_evt(CLMSV_CLMS_EVT *evt);
 static uint32_t proc_mds_quiesced_ack_msg(CLMSV_CLMS_EVT *evt);
 static uint32_t proc_node_lock_tmr_exp_msg(CLMSV_CLMS_EVT *evt);
 static uint32_t proc_node_up_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt);
-static void execute_scale_out_script(int argc, char *argv[]);
+static void execute_scale_out_script(int argc, char *argv[], char clm_ifs);
 static void *scale_out_thread(void *arg);
 static void start_scale_out_thread(CLMS_CB *cb);
 static void scale_out_node(CLMS_CB *cb,
@@ -300,15 +300,17 @@ done:
  * and the second string is the node name. This function blocks until the script
  * has exited.
  */
-static void execute_scale_out_script(int argc, char *argv[])
+static void execute_scale_out_script(int argc, char *argv[], char clm_ifs)
 {
 	struct rlimit rlim;
 	int nofile = 1024;
-	char *const env[] = {scale_out_path_env, NULL};
+	char *env[3];
+	char ifs[10];
 
 	TRACE_ENTER();
 	osafassert(argc >= 1 && argv[argc] == NULL);
-	LOG_NO("Running script %s to scale out %d node(s)", argv[0], argc - 1);
+	LOG_NO("Running script %s to scale out %d node(s), clm_ifs: [%c] ",
+		argv[0], argc - 1, clm_ifs);
 
 	if (getrlimit(RLIMIT_NOFILE, &rlim) == 0) {
 		if (rlim.rlim_cur != RLIM_INFINITY &&
@@ -326,6 +328,10 @@ static void execute_scale_out_script(int argc, char *argv[])
 	if (child_pid == 0) {
 		for (int fd = 3; fd < nofile; ++fd)
 			close(fd);
+		snprintf(ifs,  sizeof(ifs), "CLM_IFS=%c", clm_ifs);
+		env[0] = scale_out_path_env;
+		env[1] = ifs;
+		env[2] = NULL;
 		execve(argv[0], argv, env);
 		_Exit(123);
 	} else if (child_pid != (pid_t)-1) {
@@ -396,7 +402,8 @@ static void *scale_out_thread(void *arg)
 		osaf_mutex_unlock_ordie(&cb->scale_out_data_mutex);
 		if (no_of_pending_nodes == 0)
 			break;
-		execute_scale_out_script(no_of_pending_nodes + 1, argv);
+		execute_scale_out_script(no_of_pending_nodes + 1, argv,
+			cb->ifs);
 		for (size_t i = 0; i != no_of_pending_nodes; ++i) {
 			free(argv[i + 1]);
 		}
@@ -453,6 +460,8 @@ static void scale_out_node(CLMS_CB *cb,
 			   const clmsv_clms_node_up_info_t *nodeup_info)
 {
 	char node_name[SA_MAX_NAME_LENGTH];
+	char user_data[SA_MAX_NAME_LENGTH];
+	char ifs; // Internal Field Separator
 
 	TRACE_ENTER();
 	size_t name_len = nodeup_info->node_name.length < SA_MAX_NAME_LENGTH
@@ -460,6 +469,14 @@ static void scale_out_node(CLMS_CB *cb,
 			      : (SA_MAX_NAME_LENGTH - 1);
 	memcpy(node_name, nodeup_info->node_name.value, name_len);
 	node_name[name_len] = '\0';
+
+	size_t user_data_len = nodeup_info->user_data.length < SA_MAX_NAME_LENGTH
+			      ? nodeup_info->user_data.length
+			      : (SA_MAX_NAME_LENGTH - 1);
+	memcpy(user_data, nodeup_info->user_data.value, user_data_len);
+	user_data[user_data_len] = '\0';
+
+	ifs = cb->ifs = nodeup_info->ifs;
 
 	osaf_mutex_lock_ordie(&cb->scale_out_data_mutex);
 	size_t no_of_pending_nodes = cb->no_of_pending_nodes;
@@ -497,8 +514,9 @@ static void scale_out_node(CLMS_CB *cb,
 		memcpy(node_address, nodeup_info->address.value, addr_len);
 		node_address[addr_len] = '\0';
 		char *strp;
-		if (asprintf(&strp, "%" PRIu32 ",%s,%s,", nodeup_info->node_id,
-			     node_name, node_address) != -1) {
+		if (asprintf(&strp, "%" PRIu32 "%c%s%c%s%c%s%c",
+			nodeup_info->node_id, ifs, node_name,
+			ifs, node_address, ifs, user_data, ifs) != -1) {
 			LOG_NO("Queuing request to scale out node 0x%" PRIx32
 			       " (%s)",
 			       nodeup_info->node_id, node_name);
