@@ -1230,6 +1230,7 @@ static AVD_SI_DEP *sidep_new(const std::string &sidep_name,
 
   sidep = new AVD_SI_DEP();
   avd_sidep_indx_init(sidep_name, sidep);
+  sidep->name = sidep_name;
   osafassert(sidep->dep_si != nullptr);
   osafassert(sidep->spons_si != nullptr);
   sidep_db->insert(make_pair(sidep->spons_name, sidep->dep_name), sidep);
@@ -1376,10 +1377,16 @@ static void sidep_ccb_apply_cb(CcbUtilOperationData_t *opdata) {
       sidep_spons_list_del(sidep);
       sidep_db->erase(make_pair(sidep->spons_name, sidep->dep_name));
       delete sidep;
-      if (avd_cb->avail_state_avd == SA_AMF_HA_ACTIVE) {
-        /* Update the SI according to its existing sponsors state */
-        sidep_si_screen_si_dependencies(dep_si);
-        sidep_si_take_action(dep_si);
+      /* Update the dependent SI according to its existing sponsors state
+       * if this dependent SI is not in this delete ccb
+       */
+      SaNameT depSiDn;
+      osaf_extended_name_lend(dep_si->name.c_str(), &depSiDn);
+      if (ccbutil_getCcbOpDataByDN(opdata->ccbId, &depSiDn) == nullptr) {
+        if (avd_cb->avail_state_avd == SA_AMF_HA_ACTIVE) {
+          sidep_si_screen_si_dependencies(dep_si);
+          sidep_si_take_action(dep_si);
+        }
       }
       break;
 

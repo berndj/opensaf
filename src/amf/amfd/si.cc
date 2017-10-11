@@ -1091,11 +1091,40 @@ static SaAisErrorT si_ccb_completed_cb(CcbUtilOperationData_t *opdata) {
         goto done;
       }
       /* check for any SI-SI dependency configurations */
-      if (0 != si->num_dependents || si->spons_si_list != nullptr) {
-        report_ccb_validation_error(
-            opdata, "Sponsors or Dependents Exist; Cannot delete '%s'",
-            si->name.c_str());
-        goto done;
+      if (si->num_dependents != 0) {
+        if (si->is_all_dependent_si_unassigned() == false) {
+          report_ccb_validation_error(
+              opdata, "Dependent SI still has assignment; Cannot delete '%s'",
+              si->name.c_str());
+          goto done;
+        }
+      }
+      if (si->spons_si_list != nullptr) {
+        if (si->is_all_sponsor_si_unassigned() == false) {
+          report_ccb_validation_error(
+              opdata, "Sponsor SI still has assignment; Cannot delete '%s'",
+              si->name.c_str());
+          goto done;
+        }
+      }
+      if (si->num_dependents != 0 || si->spons_si_list != nullptr) {
+        /* loop through sidep_db
+         * if any sidep can't be found in ccbutildata, reject
+         */
+        for (const auto &value : *sidep_db) {
+          const AVD_SI_DEP *sidep = value.second;
+          if (si == sidep->spons_si || si == sidep->dep_si) {
+            SaNameT sidepDn;
+            osaf_extended_name_lend(sidep->name.c_str(), &sidepDn);
+            if (ccbutil_getCcbOpDataByDN(opdata->ccbId, &sidepDn) == nullptr) {
+              report_ccb_validation_error(
+                  opdata, "Dependency object '%s' must be deleted in same ccb;"
+                  " Cannot delete '%s'", sidep->name.c_str(),
+                  si->name.c_str());
+              goto done;
+            }
+          }
+        }
       }
       rc = SA_AIS_OK;
       opdata->userData = si; /* Save for later use in apply */
@@ -1568,6 +1597,33 @@ bool AVD_SI::is_sirank_valid(uint32_t newSiRank) const {
           name.c_str(), newSiRank, (*it)->name.c_str(), (*it)->saAmfSIRank);
       return false;
     }
+  }
+  return true;
+}
+
+/*
+ * @brief Check if all sponsor SIs are unassigned
+ * @return true if all are unassigned
+ */
+bool AVD_SI::is_all_sponsor_si_unassigned() const {
+  AVD_SPONS_SI_NODE *node;
+
+  for (node = spons_si_list; node; node = node->next) {
+    if (node->si->list_of_sisu != nullptr) return false;
+  }
+  return true;
+}
+
+/*
+ * @brief Check if all dependent SIs are unassigned
+ * @return true if all are unassigned
+ */
+bool AVD_SI::is_all_dependent_si_unassigned() const {
+  std::list<AVD_SI *> depsi_list;
+  get_dependent_si_list(name, depsi_list);
+  for (std::list<AVD_SI *>::const_iterator it = depsi_list.begin();
+       it != depsi_list.end(); ++it) {
+    if ((*it)->list_of_sisu != nullptr) return false;
   }
   return true;
 }
