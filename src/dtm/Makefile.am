@@ -19,6 +19,7 @@ EXTRA_DIST += \
 	src/dtm/README
 
 noinst_HEADERS += \
+	src/dtm/dtmnd/multicast.h \
 	src/dtm/dtmnd/dtm.h \
 	src/dtm/dtmnd/dtm_cb.h \
 	src/dtm/dtmnd/dtm_inter.h \
@@ -28,7 +29,6 @@ noinst_HEADERS += \
 	src/dtm/dtmnd/dtm_intra_disc.h \
 	src/dtm/dtmnd/dtm_intra_trans.h \
 	src/dtm/dtmnd/dtm_node.h \
-	src/dtm/dtmnd/dtm_socket.h \
 	src/dtm/transport/log_server.h \
 	src/dtm/transport/log_writer.h \
 	src/dtm/transport/tests/mock_logtrace.h \
@@ -63,6 +63,7 @@ bin_osafdtmd_CPPFLAGS = \
 	$(AM_CPPFLAGS)
 
 bin_osafdtmd_SOURCES = \
+	src/dtm/dtmnd/multicast.cc \
 	src/dtm/dtmnd/dtm_inter_svc.cc \
 	src/dtm/dtmnd/dtm_inter_trans.cc \
 	src/dtm/dtmnd/dtm_intra.cc \

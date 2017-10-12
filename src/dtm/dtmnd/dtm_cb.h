@@ -19,23 +19,21 @@
 #ifndef DTM_DTMND_DTM_CB_H_
 #define DTM_DTMND_DTM_CB_H_
 
-#include <netinet/in.h>
 #include <net/if.h>
+#include <netinet/in.h>
 #include <poll.h>
+#include <sys/socket.h>
 #include <cstdint>
+#include <string>
 #include "mds/mds_papi.h"
+#include "base/macros.h"
 #include "base/ncssysf_lck.h"
 #include "base/ncspatricia.h"
 #include "base/ncssysf_ipc.h"
 
-#define MAX_PORT_LENGTH 256
+class Multicast;
 
-typedef enum dtm_ip_addr_type {
-  DTM_IP_ADDR_TYPE_NONE,
-  DTM_IP_ADDR_TYPE_IPV4 = AF_INET,
-  DTM_IP_ADDR_TYPE_IPV6 = AF_INET6,
-  DTM_IP_ADDR_TYPE_MAX /* Must be last. */
-} DTM_IP_ADDR_TYPE;
+#define MAX_PORT_LENGTH 256
 
 typedef struct dtm_internode_unsent_msgs {
   struct dtm_internode_unsent_msgs *next;
@@ -49,7 +47,7 @@ typedef struct node_list {
   NODE_ID node_id;
   char node_name[256];
   char node_ip[INET6_ADDRSTRLEN];
-  DTM_IP_ADDR_TYPE i_addr_family; /* Indicates V4 or V6 */
+  sa_family_t i_addr_family; /* Indicates V4 or V6 */
   int comm_socket;
   NCS_PATRICIA_NODE pat_nodeid;
   NCS_PATRICIA_NODE pat_ip_address;
@@ -66,41 +64,45 @@ typedef struct node_list {
 } DTM_NODE_DB;
 
 /*  control block */
-typedef struct dtm_internode_cb {
+class DTM_INTERNODE_CB {
+ public:
+  DTM_INTERNODE_CB();
+  ~DTM_INTERNODE_CB();
+  bool mcast_flag() { return !mcast_addr.empty(); }
+  Multicast *multicast_;
   uint16_t cluster_id;
-  NODE_ID node_id;                      /* Self  Node Id  */
-  char node_name[_POSIX_HOST_NAME_MAX]; /* optional */
-  char ip_addr[INET6_ADDRSTRLEN];       /* ipv4 ipv6 addrBuffer */
-  char mcast_addr[INET6_ADDRSTRLEN];    /* ipv4 ipv6 addrBuffer */
-  char bcast_addr[INET6_ADDRSTRLEN];
-  char ifname[IFNAMSIZ]; /* ipv6mr_interface to */
+  NODE_ID node_id;                       // Self  Node Id
+  char node_name[_POSIX_HOST_NAME_MAX];  // optional
+  std::string ip_addr;                   // ipv4 ipv6 addrBuffer
+  std::string mcast_addr;                // ipv4 ipv6 addrBuffer
+  std::string bcast_addr;
+  std::string ifname;  // ipv6mr_interface to
   bool scope_link;
   in_port_t stream_port;
   in_port_t dgram_port_sndr;
   in_port_t dgram_port_rcvr;
-  int stream_sock;                /*  */
-  int dgram_sock_sndr;            /*  */
-  int dgram_sock_rcvr;            /*  */
-  DTM_IP_ADDR_TYPE i_addr_family; /* Indicates V4 or V6 */
-  bool mcast_flag;                /* Indicates mcast */
+  int stream_sock;
+  sa_family_t i_addr_family;  // Indicates V4 or V6
   int32_t initial_dis_timeout;
   int32_t cont_bcast_int;
   int64_t bcast_msg_freq;
-  NCS_PATRICIA_TREE nodeid_tree;  /* NODE_DB information of Nodes */
-  NCS_PATRICIA_TREE ip_addr_tree; /* NODE_DB information of Nodes */
+  NCS_PATRICIA_TREE nodeid_tree;   // NODE_DB information of Nodes
+  NCS_PATRICIA_TREE ip_addr_tree;  // NODE_DB information of Nodes
   int so_keepalive;
   NCS_LOCK cb_lock;
   int comm_keepidle_time;
   int comm_keepalive_intvl;
   int comm_keepalive_probes;
   unsigned int
-      comm_user_timeout;    // tcp socket user timeout in milliseconds [ms]
-  int32_t sock_sndbuf_size; /* The value of SO_SNDBUF */
-  int32_t sock_rcvbuf_size; /* The value of SO_RCVBUF */
+      comm_user_timeout;     // tcp socket user timeout in milliseconds [ms]
+  int32_t sock_sndbuf_size;  // The value of SO_SNDBUF
+  int32_t sock_rcvbuf_size;  // The value of SO_RCVBUF
   SYSF_MBX mbx;
   int mbx_fd;
   int epoll_fd;
-} DTM_INTERNODE_CB;
+
+  DELETE_COPY_AND_MOVE_OPERATORS(DTM_INTERNODE_CB);
+};
 
 /*extern DTM_INTERNODE_CB *dtms_gl_cb; */
 

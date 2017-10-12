@@ -19,6 +19,7 @@
 #define DTM_DTMND_DTM_INTRA_H_
 
 #include <netinet/tcp.h>
+#include <sys/socket.h>
 #include <cstdint>
 #include "dtm/dtmnd/dtm_cb.h"
 #include "mds/mds_papi.h"
@@ -48,8 +49,8 @@ typedef enum dtm_lib_types {
 } DTM_LIB_TYPES;
 
 extern uint32_t dtm_intranode_add_self_node_to_node_db(
-    NODE_ID node_id, char *node_name, char *node_ip,
-    DTM_IP_ADDR_TYPE i_addr_family);
+    NODE_ID node_id, const char *node_name, const char *node_ip,
+    sa_family_t i_addr_family);
 uint32_t dtm_intranode_reset_poll_fdlist(int fd);
 
 #endif  // DTM_DTMND_DTM_INTRA_H_

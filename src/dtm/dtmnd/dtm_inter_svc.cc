@@ -15,6 +15,7 @@
  *
  */
 
+#include <sys/socket.h>
 #include <cstdlib>
 #include "base/ncsencdec_pub.h"
 #include "base/ncssysf_ipc.h"
@@ -118,7 +119,7 @@ uint32_t dtm_internode_process_rcv_down_msg(uint8_t *buffer, uint16_t len,
  *
  */
 uint32_t dtm_node_up(NODE_ID node_id, char *node_name, char *node_ip,
-                     DTM_IP_ADDR_TYPE i_addr_family, SYSF_MBX mbx) {
+                     sa_family_t i_addr_family, SYSF_MBX mbx) {
   /* Function call from inter thread */
   /* Post the event to the mailbox of the intra_thread */
   DTM_RCV_MSG_ELEM *dtm_msg_elem = nullptr;

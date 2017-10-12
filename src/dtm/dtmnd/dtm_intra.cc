@@ -58,8 +58,9 @@ static struct pollfd *pfd_list;
 
 static int dtm_intranode_max_fd;
 
-static uint32_t dtm_intra_processing_init(char *node_name, char *node_ip,
-                                          DTM_IP_ADDR_TYPE i_addr_family,
+static uint32_t dtm_intra_processing_init(const char *node_name,
+                                          const char *node_ip,
+                                          sa_family_t i_addr_family,
                                           int32_t sndbuf_size,
                                           int32_t rcvbuf_size);
 static void dtm_intranode_processing(void *);
@@ -81,7 +82,7 @@ uint32_t dtm_socket_domain = AF_UNIX;
  */
 uint32_t dtm_service_discovery_init(DTM_INTERNODE_CB *dtms_cb) {
   return dtm_intra_processing_init(
-      dtms_cb->node_name, dtms_cb->ip_addr, dtms_cb->i_addr_family,
+      dtms_cb->node_name, dtms_cb->ip_addr.c_str(), dtms_cb->i_addr_family,
       dtms_cb->sock_sndbuf_size, dtms_cb->sock_rcvbuf_size);
 }
 
@@ -93,8 +94,8 @@ uint32_t dtm_service_discovery_init(DTM_INTERNODE_CB *dtms_cb) {
  * @return NCSCC_RC_FAILURE
  *
  */
-uint32_t dtm_intra_processing_init(char *node_name, char *node_ip,
-                                   DTM_IP_ADDR_TYPE i_addr_family,
+uint32_t dtm_intra_processing_init(const char *node_name, const char *node_ip,
+                                   sa_family_t i_addr_family,
                                    int32_t sndbuf_size, int32_t rcvbuf_size) {
   struct sockaddr_un serv_addr; /* For Unix Sock address */
   NCS_PATRICIA_PARAMS pat_tree_params;

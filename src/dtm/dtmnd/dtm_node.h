@@ -19,6 +19,7 @@
 #ifndef DTM_DTMND_DTM_NODE_H_
 #define DTM_DTMND_DTM_NODE_H_
 
+#include <sys/socket.h>
 #include <cstddef>
 #include <cstdint>
 #include "dtm/dtmnd/dtm_cb.h"
@@ -26,28 +27,17 @@
 
 extern char *dtm_validate_listening_ip_addr(DTM_INTERNODE_CB *config);
 extern uint32_t dtm_stream_nonblocking_listener(DTM_INTERNODE_CB *dtms_cb);
-extern uint32_t dtm_dgram_mcast_listener(DTM_INTERNODE_CB *dtms_cb);
-extern uint32_t dtm_dgram_mcast_sender(DTM_INTERNODE_CB *dtms_cb,
-                                       int mcast_ttl);
-extern uint32_t dtm_dgram_bcast_listener(DTM_INTERNODE_CB *dtms_cb);
-extern uint32_t dtm_dgram_bcast_sender(DTM_INTERNODE_CB *dtms_cb);
-extern uint32_t dtm_dgram_sendto_bcast(DTM_INTERNODE_CB *dtms_cb,
-                                       const void *buffer, int buffer_len);
-extern uint32_t dtm_dgram_sendto_mcast(DTM_INTERNODE_CB *dtms_cb,
-                                       const void *buffer, int buffer_len);
 extern uint32_t dtm_sockdesc_close(int sock_desc);
 extern DTM_NODE_DB *dtm_process_connect(DTM_INTERNODE_CB *dtms_cb,
                                         uint8_t *buffer, uint16_t len);
 extern DTM_NODE_DB *dtm_process_accept(DTM_INTERNODE_CB *dtms_cb,
                                        int stream_sock);
-extern ssize_t dtm_dgram_recv_bmcast(DTM_INTERNODE_CB *dtms_cb, void *buffer,
-                                     int buffer_len);
 extern uint32_t dtm_comm_socket_send(int sock_desc, const void *buffer,
                                      int buffer_len);
 extern void dtm_comm_socket_close(DTM_NODE_DB *node);
 extern uint32_t dtm_process_node_up_down(NODE_ID node_id, char *node_name,
                                          char *node_ip,
-                                         DTM_IP_ADDR_TYPE i_addr_family,
+                                         sa_family_t i_addr_family,
                                          bool comm_status);
 extern void dtm_internode_set_pollout(DTM_NODE_DB *node);
 extern void dtm_internode_clear_pollout(DTM_NODE_DB *node);

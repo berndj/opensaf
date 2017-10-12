@@ -20,6 +20,7 @@
 #define DTM_DTMND_DTM_H_
 
 #include <netinet/in.h>
+#include <sys/socket.h>
 #include <cstdint>
 #include "dtm/dtmnd/dtm_cb.h"
 #include "mds/mds_papi.h"
@@ -64,7 +65,7 @@ typedef struct dtm_rcv_msg_elem {
       char node_name[255];
       NODE_ID node_id;
       SYSF_MBX mbx;
-      DTM_IP_ADDR_TYPE i_addr_family; /* Indicates V4 or V6 */
+      sa_family_t i_addr_family; /* Indicates V4 or V6 */
       char node_ip[INET6_ADDRSTRLEN];
 
     } node;

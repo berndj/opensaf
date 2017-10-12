@@ -18,6 +18,7 @@
 #define DTM_DTMND_DTM_INTRA_DISC_H_
 
 #include <limits.h>
+#include <sys/socket.h>
 #include <cstdint>
 #include "base/ncspatricia.h"
 #include "base/ncssysf_ipc.h"
@@ -73,7 +74,7 @@ typedef DTM_LIB_UP_MSG DTM_LIB_DOWN_MSG;
 typedef struct dtm_lib_node_up_msg {
   NODE_ID node_id;
   uint64_t ref_val;
-  DTM_IP_ADDR_TYPE i_addr_family; /* Indicates V4 or V6 */
+  sa_family_t i_addr_family; /* Indicates V4 or V6 */
   char node_ip[INET6_ADDRSTRLEN];
   char node_name[_POSIX_HOST_NAME_MAX];
 } DTM_LIB_NODE_UP_MSG;
@@ -128,7 +129,7 @@ typedef struct dtm_intranode_node_db {
   char node_name[_POSIX_HOST_NAME_MAX];
   SYSF_MBX mbx;
   int fd;
-  DTM_IP_ADDR_TYPE i_addr_family;
+  sa_family_t i_addr_family;
   char node_ip[INET6_ADDRSTRLEN];
   NCS_PATRICIA_TREE dtm_rem_node_svc_tree; /* Tree of service install info */
 } DTM_INTRANODE_NODE_DB;
@@ -191,8 +192,7 @@ uint32_t dtm_process_internode_service_up_msg(uint8_t *buffer, uint16_t len,
 uint32_t dtm_process_internode_service_down_msg(uint8_t *buffer, uint16_t len,
                                                 NODE_ID node_id);
 uint32_t dtm_intranode_process_node_up(NODE_ID node_id, char *node_name,
-                                       char *node_ip,
-                                       DTM_IP_ADDR_TYPE i_addr_family,
+                                       char *node_ip, sa_family_t i_addr_family,
                                        SYSF_MBX mbx);
 uint32_t dtm_intranode_process_node_down(NODE_ID node_id);
 

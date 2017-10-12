@@ -1484,8 +1484,7 @@ static uint32_t dtm_lib_prepare_node_down_msg(DTM_LIB_NODE_DOWN_MSG *up_msg,
 
 *********************************************************/
 uint32_t dtm_intranode_process_node_up(NODE_ID node_id, char *node_name,
-                                       char *node_ip,
-                                       DTM_IP_ADDR_TYPE i_addr_family,
+                                       char *node_ip, sa_family_t i_addr_family,
                                        SYSF_MBX mbx) {
   /* Add to the node db list */
   DTM_INTRANODE_NODE_DB *node_db_info = nullptr;
@@ -2010,9 +2009,10 @@ uint32_t dtm_process_internode_service_down_msg(uint8_t *buffer, uint16_t len,
             2 - NCSCC_RC_FAILURE
 
 *********************************************************/
-uint32_t dtm_intranode_add_self_node_to_node_db(
-    NODE_ID node_id, char *node_name, char *node_ip,
-    DTM_IP_ADDR_TYPE i_addr_family) {
+uint32_t dtm_intranode_add_self_node_to_node_db(NODE_ID node_id,
+                                                const char *node_name,
+                                                const char *node_ip,
+                                                sa_family_t i_addr_family) {
   /* Add to the node db list */
   DTM_INTRANODE_NODE_DB *node_db_info = nullptr;
   TRACE_ENTER();

@@ -27,11 +27,11 @@
 #include <cstdlib>
 #include <cstring>
 #include "base/ncsencdec_pub.h"
+#include "dtm/dtmnd/multicast.h"
 #include "dtm/dtmnd/dtm.h"
 #include "dtm/dtmnd/dtm_inter.h"
 #include "dtm/dtmnd/dtm_inter_disc.h"
 #include "dtm/dtmnd/dtm_inter_trans.h"
-#include "dtm/dtmnd/dtm_socket.h"
 
 #define DTM_INTERNODE_RECV_BUFFER_SIZE 1024
 
@@ -41,10 +41,10 @@
 
 #define NODE_INFO_PKT_SIZE (NODE_INFO_HDR_SIZE + _POSIX_HOST_NAME_MAX)
 
-static void ReceiveBcastOrMcast(void);
+static void ReceiveBcastOrMcast();
 static void AcceptTcpConnections(uint8_t *node_info_hrd,
                                  int node_info_buffer_len);
-static void ReceiveFromMailbox(void);
+static void ReceiveFromMailbox();
 static void AddNodeToEpoll(DTM_INTERNODE_CB *dtms_cb, DTM_NODE_DB *node);
 static void RemoveNodeFromEpoll(DTM_INTERNODE_CB *dtms_cb, DTM_NODE_DB *node);
 
@@ -182,7 +182,7 @@ done:
  *
  */
 uint32_t dtm_process_node_up_down(NODE_ID node_id, char *node_name,
-                                  char *node_ip, DTM_IP_ADDR_TYPE i_addr_family,
+                                  char *node_ip, sa_family_t i_addr_family,
                                   bool comm_status) {
   if (comm_status == true) {
     TRACE(
@@ -354,23 +354,6 @@ void node_discovery_process(void *arg) {
   uint8_t node_info_hrd[NODE_INFO_PKT_SIZE];
 
   /*************************************************************/
-  /* Set up the initial bcast or mcast receiver socket */
-  /*************************************************************/
-
-  if (dtms_cb->mcast_flag != true) {
-    if (NCSCC_RC_SUCCESS != dtm_dgram_bcast_listener(dtms_cb)) {
-      LOG_ER("DTM:Set up the initial bcast  receiver socket   failed");
-      exit(EXIT_FAILURE);
-    }
-
-  } else {
-    if (NCSCC_RC_SUCCESS != dtm_dgram_mcast_listener(dtms_cb)) {
-      LOG_ER("DTM:Set up the initial mcast  receiver socket   failed");
-      exit(EXIT_FAILURE);
-    }
-  }
-
-  /*************************************************************/
   /* Set up the initial listening socket */
   /*************************************************************/
   if (NCSCC_RC_SUCCESS != dtm_stream_nonblocking_listener(dtms_cb)) {
@@ -378,7 +361,7 @@ void node_discovery_process(void *arg) {
     exit(EXIT_FAILURE);
   }
 
-  dgram_sock_rcvr.comm_socket = dtms_cb->dgram_sock_rcvr;
+  dgram_sock_rcvr.comm_socket = dtms_cb->multicast_->fd();
   stream_sock.comm_socket = dtms_cb->stream_sock;
   mbx_fd.comm_socket = dtms_cb->mbx_fd;
   AddNodeToEpoll(dtms_cb, &dgram_sock_rcvr);
@@ -485,12 +468,12 @@ done:
   return;
 }
 
-static void ReceiveBcastOrMcast(void) {
+static void ReceiveBcastOrMcast() {
   DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
   uint8_t inbuf[DTM_INTERNODE_RECV_BUFFER_SIZE];
   ssize_t recd_bytes;
   do {
-    recd_bytes = dtm_dgram_recv_bmcast(dtms_cb, inbuf, sizeof(inbuf));
+    recd_bytes = dtms_cb->multicast_->Receive(inbuf, sizeof(inbuf));
     if (recd_bytes >= static_cast<ssize_t>(sizeof(uint16_t))) {
       uint8_t *data1 = inbuf;
       uint16_t recd_buf_len = ncs_decode_16bit(&data1);
@@ -534,7 +517,7 @@ static void AcceptTcpConnections(uint8_t *node_info_hrd,
   }
 }
 
-static void ReceiveFromMailbox(void) {
+static void ReceiveFromMailbox() {
   DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
   DTM_SND_MSG_ELEM *msg_elem;
   while ((msg_elem = reinterpret_cast<DTM_SND_MSG_ELEM *>(

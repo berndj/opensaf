@@ -28,6 +28,8 @@
 #include "base/ncs_main_papi.h"
 #include "base/ncsencdec_pub.h"
 #include "base/osaf_poll.h"
+#include "base/time.h"
+#include "dtm/dtmnd/multicast.h"
 #include "dtm/dtmnd/dtm.h"
 #include "dtm/dtmnd/dtm_node.h"
 #include "nid/agent/nid_api.h"
@@ -44,9 +46,6 @@
  */
 
 #define DTM_CONFIG_FILE PKGSYSCONFDIR "/dtmd.conf"
-/* pack_size + cluster_id + node_id + mcast_flag +  stream_port +  i_addr_family
- * + ip_addr */
-#define DTM_BCAST_HDR_SIZE 58
 
 /* ========================================================================
  *   DATA DECLARATIONS
@@ -56,8 +55,7 @@
 NCSCONTEXT gl_node_dis_task_hdl = nullptr;
 NCSCONTEXT gl_serv_dis_task_hdl = nullptr;
 
-static DTM_INTERNODE_CB _dtms_cb;
-DTM_INTERNODE_CB *dtms_gl_cb = &_dtms_cb;
+DTM_INTERNODE_CB *dtms_gl_cb = nullptr;
 
 bool initial_discovery_phase = true;
 
@@ -65,6 +63,40 @@ bool initial_discovery_phase = true;
  *   FUNCTION PROTOTYPES
  * ========================================================================
  */
+
+DTM_INTERNODE_CB::DTM_INTERNODE_CB()
+    : multicast_{},
+      cluster_id{},
+      node_id{},
+      node_name{},
+      ip_addr{},
+      mcast_addr{},
+      bcast_addr{},
+      ifname{},
+      scope_link{},
+      stream_port{},
+      dgram_port_sndr{},
+      dgram_port_rcvr{},
+      stream_sock{},
+      i_addr_family{},
+      initial_dis_timeout{},
+      cont_bcast_int{},
+      bcast_msg_freq{},
+      nodeid_tree{},
+      ip_addr_tree{},
+      so_keepalive{},
+      cb_lock{},
+      comm_keepidle_time{},
+      comm_keepalive_intvl{},
+      comm_keepalive_probes{},
+      comm_user_timeout{},
+      sock_sndbuf_size{},
+      sock_rcvbuf_size{},
+      mbx{},
+      mbx_fd{},
+      epoll_fd{} {}
+
+DTM_INTERNODE_CB::~DTM_INTERNODE_CB() { delete multicast_; }
 
 /**
  * Function to init the dtm process
@@ -79,7 +111,6 @@ static uint32_t dtm_init(DTM_INTERNODE_CB *dtms_cb) {
   uint32_t rc = NCSCC_RC_SUCCESS;
 
   TRACE_ENTER();
-  memset(dtms_cb, 0, sizeof(DTM_INTERNODE_CB));
 
   if (ncs_leap_startup() != NCSCC_RC_SUCCESS) {
     LOG_ER("DTM: LEAP svcs startup failed \n");
@@ -98,27 +129,6 @@ done:
 
   TRACE_LEAVE2("rc : %d", rc);
   return rc;
-}
-
-static uint32_t dtm_construct_bcast_hdr(DTM_INTERNODE_CB *dtms_cb,
-                                        uint8_t *buf_ptr, int *pack_size) {
-  TRACE_ENTER();
-
-  uint8_t *data = buf_ptr;
-
-  *pack_size = DTM_BCAST_HDR_SIZE;
-
-  ncs_encode_16bit(&data, *pack_size);
-  ncs_encode_16bit(&data, dtms_cb->cluster_id);
-  ncs_encode_32bit(&data, dtms_cb->node_id);
-  ncs_encode_8bit(&data, dtms_cb->mcast_flag ? 1 : 0);
-  ncs_encode_16bit(&data, dtms_cb->stream_port);
-  ncs_encode_8bit(&data, static_cast<uint8_t>(dtms_cb->i_addr_family));
-  memcpy(data, dtms_cb->ip_addr, INET6_ADDRSTRLEN);
-
-  TRACE_LEAVE();
-
-  return NCSCC_RC_SUCCESS;
 }
 
 /**
@@ -222,29 +232,6 @@ err:
   return rc;
 }
 
-static uint32_t dtm_send_bcast_mcast(DTM_INTERNODE_CB *dtms_cb,
-                                     void *send_bcast_buffer,
-                                     size_t bcast_buf_len) {
-  uint32_t rc;
-
-  TRACE_ENTER();
-
-  if (dtms_cb->mcast_flag == true) {
-    rc = dtm_dgram_sendto_mcast(dtms_cb, send_bcast_buffer, bcast_buf_len);
-    if (NCSCC_RC_SUCCESS != rc) {
-      LOG_ER("DTM: dtm_dgram_sendto_mcast Failed rc : %d \n", rc);
-    }
-  } else {
-    rc = dtm_dgram_sendto_bcast(dtms_cb, send_bcast_buffer, bcast_buf_len);
-    if (NCSCC_RC_SUCCESS != rc) {
-      LOG_ER("DTM: dtm_dgram_sendto_bcast Failed rc : %d \n", rc);
-    }
-  }
-
-  TRACE_LEAVE();
-  return rc;
-}
-
 /**
  *  DTM process main function
  *
@@ -255,15 +242,10 @@ static uint32_t dtm_send_bcast_mcast(DTM_INTERNODE_CB *dtms_cb,
  */
 int main(int argc, char *argv[]) {
   int rc = -1;
-  uint8_t send_bcast_buffer[255];
-  int bcast_buf_len = 0;
   long int dis_time_out_usec = 0;
   int64_t dis_elapsed_time_usec = 0;
-  DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
 
   TRACE_ENTER();
-
-  memset(send_bcast_buffer, 0, 255);
 
   daemonize(argc, argv);
 
@@ -271,7 +253,10 @@ int main(int argc, char *argv[]) {
   /* Set up CB stuff  */
   /*************************************************************/
 
-  if (dtm_init(dtms_cb) != NCSCC_RC_SUCCESS) {
+  dtms_gl_cb = new DTM_INTERNODE_CB;
+  DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
+
+  if (dtms_cb == nullptr || dtm_init(dtms_cb) != NCSCC_RC_SUCCESS) {
     LOG_ER("DTM: dtm_init failed");
     goto done3;
   }
@@ -286,42 +271,13 @@ int main(int argc, char *argv[]) {
   /*************************************************************/
   /* Set up the initial bcast or mcast sender socket */
   /*************************************************************/
-
-  if (dtms_cb->mcast_flag != true) {
-    rc = dtm_dgram_bcast_sender(dtms_cb);
-    if (NCSCC_RC_SUCCESS != rc) {
-      LOG_ER("DTM:Set up the initial bcast  sender socket   failed rc : %d ",
-             rc);
-      goto done3;
-    }
-  } else {
-    /*
-       0
-       restricted to the same host
-       1
-       restricted to the same subnet
-       32
-       restricted to the same site
-       64
-       restricted to the same region
-       128
-       restricted to the same continent
-       255
-       unrestricted
-     */
-    rc = dtm_dgram_mcast_sender(dtms_cb, 64); /*TODO */
-    if (NCSCC_RC_SUCCESS != rc) {
-      LOG_ER("DTM:Set up the initial mcast sender socket  failed rc : %d ", rc);
-      goto done3;
-    }
-  }
-
-  /*************************************************************/
-  /* construct  bcast or mcast hdr */
-  /*************************************************************/
-  rc = dtm_construct_bcast_hdr(dtms_cb, send_bcast_buffer, &bcast_buf_len);
-  if (NCSCC_RC_SUCCESS != rc) {
-    LOG_ER("DTM:construct  bcast or mcast hdr  failed rc : %d", rc);
+  dtms_cb->multicast_ = new Multicast{
+      dtms_cb->cluster_id,      dtms_cb->node_id,       dtms_cb->stream_port,
+      dtms_cb->dgram_port_rcvr, dtms_cb->i_addr_family, dtms_cb->ip_addr,
+      dtms_cb->bcast_addr,      dtms_cb->mcast_addr,    dtms_cb->ifname,
+      dtms_cb->scope_link};
+  if (dtms_cb->multicast_ == nullptr || dtms_cb->multicast_->fd() < 0) {
+    LOG_ER("Failed to initialize Multicast instance");
     goto done3;
   }
 
@@ -353,15 +309,11 @@ int main(int argc, char *argv[]) {
   do {
     /* Wait up to bcast_msg_freq seconds. */
     /* Check if stdin has input. */
-    if (osaf_poll_one_fd(dtms_cb->dgram_sock_sndr, dtms_cb->bcast_msg_freq) <
-        0) {
-      LOG_ER("DTM: poll failed");
-      goto done1;
-    }
+    base::Sleep(base::MillisToTimespec(dtms_cb->bcast_msg_freq));
 
     /* Broadcast msg string in datagram to clients every 250  m
      * seconds */
-    dtm_send_bcast_mcast(dtms_cb, send_bcast_buffer, bcast_buf_len);
+    dtms_cb->multicast_->Send();
 
     dis_elapsed_time_usec =
         dis_elapsed_time_usec + (dtms_cb->bcast_msg_freq * 1000);
@@ -375,7 +327,7 @@ int main(int argc, char *argv[]) {
     if (dtms_cb->cont_bcast_int) {
       m_NCS_TASK_SLEEP(dtms_cb->cont_bcast_int);
       /* periodically send a broadcast */
-      dtm_send_bcast_mcast(dtms_cb, send_bcast_buffer, bcast_buf_len);
+      dtms_cb->multicast_->Send();
     } else {
       for (;;) pause();
     }
@@ -395,6 +347,7 @@ done2:
   }
 
 done3:
+  delete dtms_cb;
   TRACE_LEAVE();
   (void)nid_notify("TRANSPORT", NCSCC_RC_FAILURE, nullptr);
   exit(1);

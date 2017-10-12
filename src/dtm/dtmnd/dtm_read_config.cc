@@ -28,7 +28,6 @@
 #include "base/ncs_main_papi.h"
 #include "dtm/dtmnd/dtm.h"
 #include "dtm/dtmnd/dtm_node.h"
-#include "dtm/dtmnd/dtm_socket.h"
 #include "osaf/configmake.h"
 
 char match_ip[INET6_ADDRSTRLEN];
@@ -84,7 +83,7 @@ void dtm_print_config(DTM_INTERNODE_CB *config) {
   TRACE("  NODE_ID: ");
   TRACE("  %d", config->node_id);
   TRACE("  IP_ADDR: ");
-  TRACE("  %s", config->ip_addr);
+  TRACE("  %s", config->ip_addr.c_str());
   TRACE("  STREAM_PORT: ");
   TRACE("  %u", config->stream_port);
   TRACE("  DGRAM_PORT_SNDR: ");
@@ -92,7 +91,7 @@ void dtm_print_config(DTM_INTERNODE_CB *config) {
   TRACE("  DGRAM_PORT_REV: ");
   TRACE("  %u", config->dgram_port_rcvr);
   TRACE("  MCAST_ADDR: ");
-  TRACE("  %s", config->mcast_addr);
+  TRACE("  %s", config->mcast_addr.c_str());
   TRACE("  NODE_NAME: ");
   TRACE("  %s", config->node_name);
   TRACE("  DTM_SKEEPALIVE: ");
@@ -119,13 +118,6 @@ void dtm_print_config(DTM_INTERNODE_CB *config) {
   TRACE("  %d", intranode_max_processes);
 
   TRACE("DTM : ");
-}
-
-bool in6_islinklocal(struct sockaddr_in6 *sin6) {
-  if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
-    return true;
-  else
-    return false;
 }
 
 /**
@@ -160,10 +152,9 @@ char *dtm_validate_listening_ip_addr(DTM_INTERNODE_CB *config) {
       TRACE("IP addr : %s", inet_ntop(if_addr->ifa_addr->sa_family, tmp,
                                       match_ip, sizeof(match_ip)));
 
-      if (strcmp(match_ip, config->ip_addr) == 0) {
-        config->i_addr_family =
-            static_cast<DTM_IP_ADDR_TYPE>(if_addr->ifa_addr->sa_family);
-        strncpy(config->ifname, if_addr->ifa_name, IFNAMSIZ);
+      if (strcmp(match_ip, config->ip_addr.c_str()) == 0) {
+        config->i_addr_family = if_addr->ifa_addr->sa_family;
+        config->ifname = std::string(if_addr->ifa_name);
 
         // Bcast  Address
         if (if_addr->ifa_addr->sa_family == AF_INET) {
@@ -183,17 +174,18 @@ char *dtm_validate_listening_ip_addr(DTM_INTERNODE_CB *config) {
               broadaddr.s_addr == htonl(INADDR_ANY)) {
             broadaddr.s_addr = addr.s_addr | ~netmask.s_addr;
           }
-          inet_ntop(if_addr->ifa_addr->sa_family, &broadaddr,
-                    config->bcast_addr, sizeof(config->bcast_addr));
+          char bcast_addr[INET6_ADDRSTRLEN];
+          inet_ntop(if_addr->ifa_addr->sa_family, &broadaddr, bcast_addr,
+                    sizeof(bcast_addr));
+          config->bcast_addr = std::string(bcast_addr);
         } else if (if_addr->ifa_addr->sa_family == AF_INET6) {
           struct sockaddr_in6 *addr =
               reinterpret_cast<struct sockaddr_in6 *>(if_addr->ifa_addr);
-          memset(config->bcast_addr, 0, INET6_ADDRSTRLEN);
-          if (in6_islinklocal(addr) == true) {
+          if (IN6_IS_ADDR_LINKLOCAL(&addr->sin6_addr)) {
             config->scope_link = true;
-            strcpy(config->bcast_addr, IN6ADDR_LINK_LOCAL);
+            config->bcast_addr = std::string(IN6ADDR_LINK_LOCAL);
           } else {
-            strcpy(config->bcast_addr, IN6ADDR_LINK_GLOBAL);
+            config->bcast_addr = std::string(IN6ADDR_LINK_GLOBAL);
           }
           TRACE("DTM:  %s scope_link : %d    IP address : %s  sa_family : %d ",
                 if_addr->ifa_name, config->scope_link, match_ip,
@@ -201,7 +193,7 @@ char *dtm_validate_listening_ip_addr(DTM_INTERNODE_CB *config) {
         }
         TRACE(
             "DTM:  %s Validate  IP address : %s  Bcast address : %s sa_family : %d ",
-            if_addr->ifa_name, match_ip, config->bcast_addr,
+            if_addr->ifa_name, match_ip, config->bcast_addr.c_str(),
             config->i_addr_family);
 
         freeifaddrs(if_addrs);
@@ -214,7 +206,8 @@ char *dtm_validate_listening_ip_addr(DTM_INTERNODE_CB *config) {
   } else {
     TRACE("getifaddrs() failed with errno =  %i %s", errno, strerror(errno));
   }
-  LOG_ER("DTM:  Validation of  IP address failed : %s ", config->ip_addr);
+  LOG_ER("DTM:  Validation of  IP address failed : %s ",
+         config->ip_addr.c_str());
   return (nullptr);
 }
 
@@ -249,13 +242,12 @@ int dtm_read_config(DTM_INTERNODE_CB *config, const char *dtm_config_file) {
   config->comm_keepalive_intvl = KEEPALIVE_INTVL;
   config->comm_keepalive_probes = KEEPALIVE_PROBES;
   config->comm_keepidle_time = USER_TIMEOUT;
-  config->i_addr_family = DTM_IP_ADDR_TYPE_IPV4;
+  config->i_addr_family = AF_INET;
   config->bcast_msg_freq = BCAST_FRE;
   config->cont_bcast_int = CONT_BCAST_INT;
   config->initial_dis_timeout = DIS_TIME_OUT;
   config->sock_sndbuf_size = 0;
   config->sock_rcvbuf_size = 0;
-  config->mcast_flag = false;
   config->scope_link = false;
   config->node_id = m_NCS_GET_NODE_ID;
   intranode_max_processes = 100;
@@ -327,9 +319,8 @@ int dtm_read_config(DTM_INTERNODE_CB *config, const char *dtm_config_file) {
       }
       if (strncmp(line, "DTM_NODE_IP=", strlen("DTM_NODE_IP=")) == 0) {
         tag_len = strlen("DTM_NODE_IP=");
-        strncpy(config->ip_addr, &line[tag_len],
-                INET6_ADDRSTRLEN - 1); /* ipv4 ipv6 addrBuffer */
-        if (strlen(config->ip_addr) == 0) {
+        config->ip_addr = std::string(&line[tag_len]);
+        if (config->ip_addr.empty()) {
           LOG_ER("DTM:ip_addr Shouldn't be empty");
           fclose(dtm_conf_file);
           return -1;
@@ -341,12 +332,7 @@ int dtm_read_config(DTM_INTERNODE_CB *config, const char *dtm_config_file) {
 
       if (strncmp(line, "DTM_MCAST_ADDR=", strlen("DTM_MCAST_ADDR=")) == 0) {
         tag_len = strlen("DTM_MCAST_ADDR=");
-        strncpy(config->mcast_addr, &line[tag_len],
-                INET6_ADDRSTRLEN - 1); /* ipv4 ipv6 addrBuffer */
-        if (strlen(config->mcast_addr) != 0) {
-          config->mcast_flag = true;
-        }
-
+        config->mcast_addr = std::string(&line[tag_len]);
         tag = 0;
         tag_len = 0;
       }
@@ -574,7 +560,7 @@ int dtm_read_config(DTM_INTERNODE_CB *config, const char *dtm_config_file) {
   } else if ((config->stream_port) == 0) {
     LOG_ER("DTM: dtm_read_config: stream_port is missing in conf file");
     fieldmissing = 1;
-  } else if (strlen(config->ip_addr) == 0) {
+  } else if (config->ip_addr.empty()) {
     LOG_ER("DTM: dtm_read_config: ip_addr is missing in conf file");
     fieldmissing = 1;
   } else if (strlen(config->node_name) == 0) {
