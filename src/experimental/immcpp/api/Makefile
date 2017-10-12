@@ -11,12 +11,13 @@
 # See the Copying file included with the OpenSAF distribution for full
 # licensing terms.
 #
+# Author(s): Ericsson AB
+#
 
-EXTRA_DIST += \
-	src/experimental/README
+all:
+	$(MAKE) -C ../../../.. lib/libopensaf_immom.la lib/libopensaf_immoi.la \
+		bin/immcpptest bin/immcppcfg
 
-if ENABLE_EXPERIMENTAL
-
-include $(top_srcdir)/src/experimental/immcpp/api/Makefile.am
-
-endif
+check:
+	$(MAKE) -C ../../../.. bin/testimmcpp
+	../../../../bin/testimmcpp

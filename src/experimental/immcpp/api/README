@@ -1,0 +1,382 @@
+##############################################
+##         C++ IMM INTERFACES               ##
+##############################################
+
+TABLE CONTENT
+==============
+  I. Foreword
+ II. Code Structure
+III. Implementation Notes
+ IV. List Of C++ Abstraction Classes
+  V. Common Call Sequences to Perform an IMM Request
+ VI. How to Run Sample Code
+
+I) FOREWORD
+============
+A problem with the low level C IMM APIs defined in the "Service AvailabilityTM
+Forum Application Interface Specification (AIS) is that they are complicated to
+use, sequences for preparing/handling parameters, getting handles etc. must be
+done every time the API is used which has led to a lot of redundant code and
+since a lot of void pointers allocating memory etc. is involved the risk of
+making mistakes is high.  This is a collection of C++ classes that simplifies
+usage of IMM. This IMM handling is divided into abstraction levels focusing on
+what a user want to do and abstract away the complicated pointer handling, try
+again loops etc. Higher abstraction layers will also abstract away usage of API
+sequences.
+
+1) Abstraction Level 01
+--------------------------------------------------------------------------------
+Encapsulates the existing C AIS APIs into C++ classes. Simplifies parameter
+handling and handles try again mechanisms. A user must still know how to use
+API sequences and how handles depends on each other etc.
+
+2) Abstraction Level 02
+--------------------------------------------------------------------------------
+T.B.D
+
+3) Abstraction Level 03
+--------------------------------------------------------------------------------
+T.B.D
+
+
+II) CODE STRUCTURE (~/src/experimental/immcpp/api/)
+=====================================
+.
+├── common             // Common code shared by oi/om
+├── demo               // Sample code using these abstractions
+├── include            // External IMM OM/OI interfaces
+├── oi                 // Abstraction classes for C OI APIs
+├── om                 // Abstraction classes for C OM APIs
+└── tests              // Unit Tests for OM/OI abstraction interfaces
+└── README             // Documentation (This file)
+└── README-USE-CASES   // Use-cases with examples
+
+
+III) IMPLEMENTATION NOTES
+==========================
+1) Not Thread-safe
+--------------------------------------------------------------------------------
+All C++ abstraction classes are not thread-safe. Especially, do not share
+handles, admin owner names etc. between threads
+
+
+2) Automatic Clean-up
+--------------------------------------------------------------------------------
+Most abstraction classes implements automatic cleanup when the object runs out
+of scope. For example, if we construct an immom::ImmOmHandle object
+locally inside function foo() and invoke InitializeHandle() to acquire an
+IMM OM handle, then when foo() returns, FinalizeHandle() will implicitly be
+invoked in the ImmOmHandle object destructor.
+
+If user wants to re-use the IMM OM handle outside of foo()
+function, immom::ImmOmHandle object MUST be declared outside of foo() scope.
+
+This note applies to most of C++ IMM abstractions.
+
+
+3) Default Global Variable Values
+--------------------------------------------------------------------------------
+The abstraction defines two default variables, one is IMM version and the other
+is default retry control.
+
+Default IMM version is {'A', 2, 11}, and default retry control is {40, 10}
+means default interval time is 40ms, default timeout is 10s.
+
+If a user wants to set different values, the following static methods can be
+used to change them.
+a) ImmBase::ChangeDefaultImmVersion(version);
+b) RetryControl::ChangeDefaultRetryControl(retrycontrol);
+
+
+3) Enable Trace
+--------------------------------------------------------------------------------
+Export below enviroment variables to get corresponding TRACE:
+a) IMMOMCPP_TRACE_PATHNAME=path/to/imm/om/trace
+b) IMMOICPP_TRACE_PATHNAME=path/to/imm/oi/trace
+
+
+4) C++ Abstractions Are Not Yet Implemented For The Following C APIs
+--------------------------------------------------------------------------------
+All extended APIs in IMM PR documentation.
+
+
+IV) LIST OF C++ ABSTRACTION CLASSES
+===================================================
+Here is a picture showing relationship b/w classes.
+
+
+                   +---------+       +--------------+
+                   | ImmBase +-------+ RetryControl |
+                   +----^----+       +--------------+
+                        |
+                        |
+           +------------+----------------+
+           |                             |
+           |                             |
++----------+--------------+  +-----------+-------------+
+| <OM abstraction class>  |  | <OI abstraction class>  |
++-------------------------+  +-------------------------+
+
+<OM abstraction class> represents all concrete classes which represents one
+or several C IMM OM APIs, the <OI abstractions class> for C IMM OI APIs.
+
+All concrete class has to inherit from ImmBase class which contains
+common attributes or methods used by OI/OM abstraction classes.
+
+Common attributes contained in ImmBase class include SaAisErrorT code
+which holds AIS return code of IMM C API, retry control which holds
+retry information if C API returned SA_AIS_ERR_TRY_AGAIN, and other.
+ImmBase class is abstract, non-standalone.
+
+RetryControl class is very simple/short class, contains 02 attributes,
+one to tell how much time to sleep b/w retry, the other to tell maximum
+time for retry loop. When reaching the limitation, the retry loop will
+exit and whatever AIS returned code will be saved privately and can be
+retrieved by the method ais_error(), and ais_error_string().
+
+RetryControl is independent class. When user wants to have different retry value
+for specific abstraction than the default one, construct their own RetryControl
+object, and pass to its abstraction method ::SetRetryInfo();
+
+01) immom::ImmOmHandle
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/om_handle.h". The class
+implements abstractions for all IMM OM C APIs in "Library Life Cycle" category.
+
+They are:
+saImmOmInitialize();
+saImmOmSelectionObjectGet();
+saImmOmDispatch();
+saImmOmFinalize().
+
+
+02) immom::ImmOmRtClassCreate and immom::ImmOmCfgClassCreate
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/om_class_create.h". The class
+implements abstraction for the IMM OM C API: saImmOmClassCreate_2();
+
+Using immom::ImmOmRtClassCreate to create RUNTIME object class.
+Using immom::ImmOmCfgClassCreate to create CONFIGURABLE object class.
+
+
+03) immom::ImmOmClassDescriptionGet
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/om_class_description.h".
+The class implements abstractions for the IMM OM C APIs:
+saImmOmClassDescriptionGet_2();
+saImmOmClassDescriptionMemoryFree();
+
+
+04) immom::ImmOmClassDelete
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/om_class_delete.h".
+The class implements abstraction for the IMM OM C API saImmOmClassDelete();
+
+
+05) immom::ImmOmSearchHandle and immom::ImmOmSearchCriteria
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/om_search_handle.h".
+The class implements abstractions for the IMM OM C APIs:
+saImmOmSearchInitialize_2();
+saImmOmSearchFinalize();
+
+
+06) immom::ImmOmSearchNext
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/om_search_next.h".
+The class implements abstractions for the IMM OM C APIs:
+saImmOmSearchNext_2();
+
+
+07) immom::ImmOmAccessorHandle
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/om_accessor_handle.h".
+The class implements abstractions for the IMM OM C APIs:
+saImmOmAccessorInitialize();
+saImmOmAccessorFinalize()
+
+
+07) immom::ImmOmAccessorGet
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/om_accessor_get.h".
+The class implements abstractions for the IMM OM C APIs:
+saImmOmAccessorGet_2();
+
+
+08) immom::ImmOmAdminOwnerHandle
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/om_admin_owner_handle.h".
+The class implements abstractions for the IMM OM C APIs:
+saImmOmAdminOwnerInitialize();
+saImmOmAdminOwnerFinalize()
+
+
+08) immom::ImmOmAdminOwnerSet
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/om_admin_owner_set.h".
+The class implements abstractions for the IMM OM C APIs:
+saImmOmAdminOwnerSet();
+saImmOmAdminOwnerRelease()
+saImmOmAdminOwnerClear()
+
+NOTE: Regarding abstractions for saImmOmAdminOwnerRelease/Clear, in this class,
+these actions are only applicable if releasing/clearing on the objects and
+scope which are previously given at the time of ImmOmAdminOwnerSet object
+constructor, otherwise, using below classes.
+
+
+09) immom::ImmOmAdminOwnerRelease
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/om_admin_owner_release.h".
+The class implements abstractions for the IMM OM C APIs:
+saImmOmAdminOwnerRelease()
+
+
+10) immom::ImmOmAdminOwnerRelease
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/om_admin_owner_clear.h".
+The class implements abstractions for the IMM OM C APIs:
+saImmOmAdminOwnerClear()
+
+
+11) immom::ImmOmCcbHandle
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/om_ccb_handle.h".
+The class implements abstractions for the IMM OM C APIs:
+saImmOmCcbInitialize();
+saImmOmCcbApply();
+saImmOmCcbFinalize();
+
+
+12) immom::ImmOmCcbObjectCreate
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/om_ccb_object_create.h".
+The class implements abstractions for the IMM OM C APIs:
+saImmOmCcbObjectCreate_2();
+
+
+13) immom::ImmOmCcbObjectDelete
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/om_ccb_object_delete.h".
+The class implements abstractions for the IMM OM C APIs:
+saImmOmCcbObjectDelete()
+
+
+14) immom::ImmOmCcbObjectModify
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/om_ccb_object_modify.h".
+The class implements abstractions for the IMM OM C APIs:
+saImmOmCcbObjectModify_2()
+
+
+15) immom::ImmOmAdminOperation
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/om_admin_operation.h".
+The class implements abstractions for the IMM OM C APIs:
+saImmOmAdminOperationInvoke_2();
+saImmOmAdminOperationInvokeAsync_2();
+saImmOmAdminOperationContinue()
+saImmOmAdminOperationContinueAsync();
+saImmOmAdminOperationContinueClear();
+
+
+20) immoi::ImmOiHandle
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/oi_handle.h". The class
+implements abstractions for all IMM OI C APIs in "Library Life Cycle" category.
+
+They are:
+saImmOiInitialize_2();
+saImmOiSelectionObjectGet();
+saImmOiDispatch();
+saImmOiFinalize().
+
+
+21) immoi::ImmOiObjectImplementer
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/oi_implementer.h". The class
+implements abstractions for all IMM OI C APIs:
+saImmOiImplementerSet();
+saImmOiImplementerClear();
+saImmOiClassImplementerSet();
+saImmOiClassImplementerRelease();
+
+
+22) immoi::ImmOiRtObjectCreate
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/oi_runtime_object_create.h".
+The class implements abstractions for all IMM OI C APIs:
+saImmOiRtObjectCreate_2();
+
+
+23) immoi::ImmOiRtObjectDelete
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/oi_runtime_object_delete.h".
+The class implements abstractions for all IMM OI C APIs:
+saImmOiRtObjectDelete();
+
+
+24) immoi::ImmOiRtObjectDelete
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/oi_runtime_object_update.h".
+The class implements abstractions for all IMM OI C APIs:
+saImmOiRtObjectUpdate_2();
+
+
+25) immoi::ImmOiAdminOperationResult
+--------------------------------------------------------------------------------
+The class is defined in the header "~/experimental/immcpp/api/include/oi_admin_operation_result.h".
+The class implements abstractions for all IMM OI C APIs:
+saImmOiAdminOperationResult();
+saImmOiAdminOperationResult_o2();
+
+
+V) COMMON CALL SEQUENCES TO PERFORM AN IMM REQUEST
+=======================================================================
+
++--------+                     +-------------+              +---------+
+|  User  |                     | C++ abstract|              |IMM Agent|
++---+----+                     +------+------+              +----+----+
+    |                                 |                          |
+    |                                 |                          |
+    | 1. Instantiate object           |                          |
+    +--------------------------------->                          |
+    |                                 |                          |
+    |                                 |                          |
+    | 2. Setup input information      |                          |
+    +--------------------------------->                          |
+    |                                 |                          |
+    |                                 |                          |
+    | 3. Perform the request          |                          |
+    +--------------------------------->                          |
+    |                                 |                          |
+    |                                 |Send the request to IMM   |
+    |                                 +-------------------------->
+    |                                 |                          |
+    |                                 |                          |
+    |                                 |                          |
+    |4. Get AIS code/Query outputs    |                          |
+    +--------------------------------->                          |
+    |                                 |                          |
+    +                                 +                          +
+
+
+VI) USE CASES and EXPLANATION
+====================
+Refer to ~/README-USE-CASES
+
+VII) RUN SAMPLE CODE
+============================
+1) Load IMM model `immcpp_test_classes.xml`
+--------------------------------------------------------------------------------
+   immcfg -f immcpp_test_classes.xml
+
+2) Run `immcpptest` and check the results
+--------------------------------------------------------------------------------
+    immcpptest -o
+    immcpptest -i
+
+3) immcppcfg
+--------------------------------------------------------------------------------
+The command has same functionalities as `immcfg` but using C++ IMM API
+abstractions.

@@ -1,0 +1,340 @@
+##############################################
+##  USE CASES and EXPLANATION               ##
+##############################################
+
+## Use Cases for Using 1st Abstraction Interfaces ##
+
+UC00) Change Default IMM Version and Default Retry Control
+--------------------------------------------------------------------------------
+#include "experimental/immcpp/api/common/common.h"
+
+static const SaVersionT immVersion = {'A', 2, 17};
+ImmBase::ChangeDefaultImmVersion(immVersion);
+
+const ImmBase::RetryControl ctrl{base::kTwoHundredMilliseconds, 300*1000};
+ImmBase::ChangeDefaultRetryControl(ctrl);
+
+
+UC11) Initialize & Finalize OM Handle.
+--------------------------------------------------------------------------------
+#include "experimental/immcpp/api/include/om_handle.h"
+
+// Create an `ImmOmHandle` obj without imm callbacks.
+ImmOmHandle omhandleobj{immVersion};
+
+// Acquire IMM OM handle from IMM
+if (omhandleobj.InitializeHandle() == false) {
+  // ERR handling
+}
+
+// Get IMM OM handle
+SaImmHandleT omhandle = omhandleobj.GetHandle();
+
+
+UC12) Search All IMM Objects
+--------------------------------------------------------------------------------
+#include "experimental/immcpp/api/include/om_handle.h"
+#include "experimental/immcpp/api/include/om_search_handle.h"
+#include "experimental/immcpp/api/include/om_search_next.h"
+
+// Create IMM OM search handle
+ImmOmSearchHandle searchhandleobj{omhandl};
+if (searchhandleobj.InitializeHandle() == false) {
+  // ERR handling
+}
+
+// Perform search next and get result
+ImmOmSearchNext searchnextobj{searchhandleobj.GetHandle()};
+while (searchnextobj.SearchNext() == true) {
+  cout << searchnextobj.GetObjectName() << endl;
+}
+
+
+UC13) Search All IMM Objects for Given Class, and Fetch Some Attribute Values
+--------------------------------------------------------------------------------
+#include "experimental/immcpp/api/include/om_handle.h"
+#include "experimental/immcpp/api/include/om_search_handle.h"
+#include "experimental/immcpp/api/include/om_search_next.h"
+
+// Create search criteria and search handle
+ImmOmSearchCriteria setting;
+setting.SetSearchClassName("SaLogStreamConfig");
+setting.FetchAttributes({"Destination", "LogFileSize"});
+
+ImmOmSearchHandle searchhandleobj{omhandle, setting};
+if (searchhandleobj.InitializeHandle() == false) {
+  // ERR handling
+}
+
+// Perform search and get results
+ImmOmSearchNext searchnextobj{searchhandleobj.GetHandle()};
+while (searchnextobj.SearchNext() == true) {
+  searchnextobj.GetObjectName();
+  searchnextobj.GetMultipleValue<SaStringT>("Destination");
+  searchnextobj.GetSingleValue<SaUint64T>("LogFileSize");
+}
+
+UC14) Fetch Specific IMM Attribute Value from Given object
+--------------------------------------------------------------------------------
+#include "experimental/immcpp/api/include/om_handle.h"
+#include "experimental/immcpp/api/include/om_accessor_handle.h"
+#include "experimental/immcpp/api/include/om_accessor_get.h"
+
+// 1) Create accessor handle
+ImmOmAccessorHandle accessorhandle{omhandle};
+if (accessorhandle.InitializeHandle() == false) {
+  // ERR handling
+}
+
+// 2) Perform accessor get and retrieve result
+ImmOmAccessorGet accessorgetobj{accessorhandle.GetHandle(), dn};
+accessgetobj.SetAttributeNames({"safApp", "saAmfAppType"});
+if (accessgetobj.FetchAttributeValue() == false) {
+  // ERR handling
+}
+
+auto appvalue = accessgetobj.GetSingleValue<SaStringT>("safApp");
+
+
+UC15) Get Class Definition of Specific Class
+--------------------------------------------------------------------------------
+#include "experimental/immcpp/api/include/om_handle.h"
+#include "experimental/immcpp/api/include/om_class_management.h"
+
+// 1) Create the object and request class definition
+ImmOmClassDescriptionGet classdefinition{omhandle, "SaLogStreamConfig"}
+if (classdefinition.GetClassDescription() == false) {
+  // ERR handling
+}
+
+// 2) Retrieve the results
+auto value = classdefinition.GetDefaultValue<SaUinT64T>("name")
+auto alldefs = classdefinition.GetAllAttributeDefinition();
+
+
+UC16) Create Configurable/Runtime IMM Object Class
+--------------------------------------------------------------------------------
+#include "experimental/immcpp/api/include/om_handle.h"
+#include "experimental/immcpp/api/include/om_class_create.h"
+
+// 1) Create the object and request class definition
+ImmOmRtObjectCreate createobj{omhandle, "RtObjectClass"}
+SaImmAttrFlagsT flags = SA_IMM_ATTR_RDN | SA_IMM_ATTR_CACHED;
+createobj.SetAttributeProperties("rdn", flags, nullptr);
+
+uint64_t val = 10000;
+// Use default flags: SA_IMM_ATTR_CACHED | SA_IMM_ATTR_RUNTIME
+createobj.SetAttributeProperties("attr1", &val);
+
+// 2) Create Runtime object class
+if (createobj.CreateClass() == false) {
+  // ERR handling
+}
+
+// Configurable object class
+
+// 1) Create the object and setup attributes properties
+ImmOmCfgObjectCreate createobj{omhandle, "CfgObjectClass"}
+std::string rda{“test=rda”};
+SaImmAttrFlagsT flags = SA_IMM_ATTR_RDN | SA_IMM_ATTR_CONFIG;
+createobj.SetAttributeProperties("rdn", flags, &rda);
+
+SaUint64T val = 10000;
+// Use default flags: SA_IMM_ATTR_WRITABLE | SA_IMM_ATTR_CONFIG
+createobj.SetAttributeProperties("attr1", &val);
+// Multiple-value attribute
+flags = SA_IMM_ATTR_WRITABLE | SA_IMM_ATTR_MULTI_VALUE;
+createobj.SetAttributeProperties("attr2", flags, &val);
+
+// 2) Create Runtime object class
+if (createobj.CreateClass() == false) {
+  // ERR handling
+}
+
+
+UC17) Create a Configuration Object
+--------------------------------------------------------------------------------
+#include "experimental/immcpp/api/include/om_handle.h"
+#include "experimental/immcpp/api/include/om_admin_owner_handle.h"
+#include "experimental/immcpp/api/include/om_ccb_handle.h"
+#include "experimental/immcpp/api/include/om_ccb_object_create.h"
+
+immom::ImmOmAdminOwnerHandle adminobj{omhandle.GetHandle(), "OmCcbCreateTest"};
+
+// If not require validation from IMM OI, use flag = 0.
+immom::ImmOmCcbHandle ccbhandleobj{adminobj.GetHandle(), 0};
+if (ccbhandleobj.InitializeHandle() == false) {
+  // ERR handling
+}
+
+// Create and setup Ccb Object Create
+immom::ImmOmCcbObjectCreate ccbcreateobj{ccbhandleobj.GetHandle(), classname};
+ccbcreateobj.SetAttributeValue("rdn", &rdn);
+ccbcreateobj.SetAttributeValue("attr2", &au32val);
+ccbcreateobj.SetAttributeValue("attr3", &astring);
+ccbcreateobj.SetAttributeValue("attr4", vu64val);
+if (ccbcreateobj.AddObjectCreateToCcb() == false) {
+  // ERR handling
+}
+
+// Apply the changes
+ccbhandleobj.ApplyCcb();
+
+
+UC18) Modify Attribute Values of Configuration Object
+--------------------------------------------------------------------------------
+#include "experimental/immcpp/api/include/om_ccb_object_modify.h"
+
+// Replace existing attribute values to new ones
+immom::ImmOmCcbObjectModify modifyobj{ccbhandleobj.GetHandle(), dn};
+SaUint32T au32val = 10;
+modifyobj.ReplaceAttributeValue("attr2", &au32val);
+
+// Append new values to existing ones
+SaUint64T au64val = 100, au64val2 = 111;
+modifyobj.AddAttributeValue("attr4", &au64val);
+modifyobj.AddAttributeValue("mulitpleattr", {&au64val, &au64val2});
+
+// Delete values from existing ones
+modifyobj.DeleteAttributeValue("attr4", &au64val);
+
+// Perform changes
+if (modifyobj.AddObjectModifyToCcb() == false) {
+   // ERR handling
+}
+
+// Commit changes
+ccbhandleobj.ApplyCcb();
+
+UC19) Delete a Given Object
+--------------------------------------------------------------------------------
+#include "experimental/immcpp/api/include/om_ccb_object_delete.h"
+
+immom::ImmOmCcbObjectDelete ccbdeleteobj{ccbhandleobj.GetHandle()};
+if (ccbdeleteobj.AddObjectDeleteToCcb(rdn) == false) {
+  // ERR handling
+}
+
+ccbhandleobj.ApplyCcb();
+
+
+UC190) Invoke Administrative Operation
+--------------------------------------------------------------------------------
+#include "experimental/immcpp/api/include/om_admin_operation.h"
+
+// Create admin operation object which will operate on given object
+ImmOmAdminOperation adminopobj{adminhandle, dn};
+
+// Setup admin operation
+adminopobj.SetContinuationId(cid);
+adminopobj.SetAdminOperationId(aid);
+adminopobj.SetTimeout(timeout);
+
+// Perform admin operation on given object
+SaAisErrorT opcode;
+if (adminopobj.InvokeAdminOperation(&opcode) == false) {
+  // ERR handling
+}
+
+if (adminopobj.ContinueAdminOperation(&opcode) == false) {
+  // ERR handling
+}
+
+
+UC20) Set OI Implementer and Class Implementer
+--------------------------------------------------------------------------------
+#include "experimental/immcpp/api/include/oi_implementer.h"
+
+// 1) Create object implementer
+ImmOiObjectImplementer objimplementer{
+  oihandle,
+  "safLogService",                           // Implementer name
+  {"SaLogStreamConfig", "OpenSafLogConfig"}  // class names
+};
+
+// 2) Set OI & class implementers in one go
+if (objimplementer.SetImplementers() == false) {
+  // ERR handling
+}
+
+// Set only class Implementers
+if (objimplementer.SetClassImplementers() == false) {
+  // ERR handling
+}
+
+// 3) Clear OI & class implementer in one go
+objimplementer.ClearImplementers();
+
+// NOTE: Besides, there are other public interfaces
+// that allow user to set/clear only on OI implementer
+// or on given class name.
+
+
+UC21) Create a IMM Runtime Object
+--------------------------------------------------------------------------------
+#include "experimental/immcpp/api/include/oi_runtime_object_create.h"
+
+// 1) Create the object with IMM OI handle and its class name as inputs
+immoi::ImmOiRtObjectCreate createobj{oihandle, "saLogService"};
+
+// 2) Has parent? (optional)
+createobj.SetParentName("safApp=OpenSAF");
+
+static SaConstStringT rda = "immWrpTestRtObj=ImmcppTest";
+static SaUint64T uint64val = 1000;
+createobj.SetAttributeValue("Rdn", &rda);
+createobj.SetAttributeValue("SaSingle", &uint64val);
+// Multiple value
+createobj.SetAttributeValue("SaMultiple", {&uint64val, &val2});
+
+// 3) Create the object
+if (createobj.CreateObject() == false) {
+  // ERR handling
+}
+
+
+UC22) Update IMM Runtime Object Attributes' Values
+--------------------------------------------------------------------------------
+#include "experimental/immcpp/api/include/oi_runtime_object_update.h"
+
+// 1) Create IMM runtime update object
+ImmOiRtObjectUpdate update{handle, dn};
+
+// 2) Setup information
+uint64_t filesize{1000};
+std::string dest1{"dest1"};
+std::string dest2{"dest2"};
+std::vector<std::string*> dest = {&dest1, &dest2};
+
+update.ReplaceAttributeValue("filesize", &filesize);
+update.ReplaceAttributeValue("saDestination", dest);
+
+// Delete all
+update.ReplaceAttributeValue<SaUint64T>("filesize", nullptr);
+update.ReplaceAttributeValue<SaStringT>("saDestination", {});
+
+// Add values to existing ones
+update.AddAttributeValue("filesize", &filesize);
+update.AddAttributeValue("saDestination", &dest3);
+
+// Delete values from existing ones
+update.DeleteAttributeValue("filesize", &filesize);
+update.DeleteAttributeValue("saDestination", &dest3);
+
+// 3) Perform update
+if (update.UpdateObject() == false) {
+  // ERR handling
+}
+
+
+UC23) Delete IMM Runtime Object
+--------------------------------------------------------------------------------
+#include "experimental/immcpp/api/include/oi_runtime_object_delete.h"
+
+// 1) Create IMM runtime update object
+ImmOiRtObjectDelete deleteobj{handle};
+
+// 2) Delete given object name
+if (deleteobj.DeleteObject(dn) == false) {
+  // ERR handling
+}
