@@ -27,6 +27,7 @@
 #include <cstdlib>
 #include <cstring>
 #include "base/ncsencdec_pub.h"
+#include "base/osaf_utility.h"
 #include "dtm/dtmnd/multicast.h"
 #include "dtm/dtmnd/dtm.h"
 #include "dtm/dtmnd/dtm_inter.h"
@@ -452,6 +453,10 @@ void node_discovery_process(void *arg) {
       /* descriptor. */
       /*******************************************************/
       if (close_conn) {
+        if (node == &dgram_sock_rcvr || node == &stream_sock ||
+            node == &mbx_fd) {
+          osaf_abort(node->comm_socket);
+        }
         close_conn = false;
         RemoveNodeFromEpoll(dtms_cb, node);
         dtm_comm_socket_close(node);

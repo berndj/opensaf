@@ -21,6 +21,8 @@
 #include <sys/socket.h>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
+#include <set>
 #include <string>
 
 // The Multicast class implements a mechanism to send the DTM node discovery
@@ -42,7 +44,8 @@ class Multicast {
     char stream_address[kInet6AddrStrlen];
   };
 
-  // Construct an instance of Multicast, using the supplied configuration parameters.
+  // Construct an instance of Multicast, using the supplied configuration
+  // parameters.
   Multicast(uint16_t cluster_id, uint32_t node_id, in_port_t stream_port,
             in_port_t dgram_port, sa_family_t address_family,
             const std::string& stream_address, const std::string& dgram_address,
@@ -67,6 +70,48 @@ class Multicast {
   int fd() { return dgram_sock_rcvr; }
 
  private:
+  class Peer {
+   public:
+    Peer(const struct sockaddr* addr, socklen_t length)
+        : address_{new uint8_t[length]}, length_{length} {
+      memcpy(address_, addr, length);
+    }
+    Peer(const Peer& peer)
+        : address_{new uint8_t[peer.length_]}, length_{peer.length_} {
+      memcpy(address_, peer.address_, peer.length_);
+    }
+    Peer(Peer&& peer) : address_{peer.address_}, length_{peer.length_} {}
+    ~Peer() { delete[] address_; }
+    Peer& operator=(const Peer& peer) {
+      if (&peer != this) {
+        address_ = new uint8_t[peer.length_];
+        length_ = peer.length_;
+        memcpy(address_, peer.address_, peer.length_);
+      }
+      return *this;
+    }
+    Peer& operator=(Peer&& peer) {
+      address_ = peer.address_;
+      length_ = peer.length_;
+      return *this;
+    }
+    bool operator<(const Peer& peer) const {
+      return length_ == peer.length_
+                 ? (memcmp(address_, peer.address_, length_) < 0)
+                 : (length_ < peer.length_);
+    }
+    const struct sockaddr* address() const {
+      return reinterpret_cast<sockaddr*>(address_);
+    }
+    socklen_t length() const { return length_; }
+
+   private:
+    uint8_t* address_;
+    socklen_t length_;
+  };
+  enum Protocol { kBroadcast, kMulticast, kFileUnicast, kDnsUnicast };
+  bool InitializeUnicastSender();
+  bool InitializeUnicastReceiver();
   uint32_t dtm_dgram_bcast_sender();
   uint32_t dgram_enable_bcast(int sock_desc);
   uint32_t dtm_dgram_mcast_sender(int mcast_ttl);
@@ -74,6 +119,13 @@ class Multicast {
   uint32_t dgram_join_mcast_group(struct addrinfo* mcast_receiver_addr);
   uint32_t dtm_dgram_mcast_listener();
   uint32_t dtm_dgram_bcast_listener();
+  static Protocol GetProtocol(const std::string& multicast_address);
+  bool GetPeersFromFile(const std::string& path_name);
+  bool ValidateClusterName(const std::string& cluster_name);
+  static socklen_t ParseAddress(sa_family_t address_family,
+                                const std::string& address, in_port_t port,
+                                struct sockaddr_storage* addr);
+  bool GetPeersFromDns(const std::string& domain_name);
 
   uint16_t cluster_id_;
   uint32_t node_id_;
@@ -85,12 +137,11 @@ class Multicast {
   std::string multicast_address_;
   std::string ifname_;
   bool scope_link_;
+  Protocol protocol_;
+  std::set<Peer> peers_;
 
-  socklen_t dest_addr_size_;  // Holder for bcast_dest_address size ip v4 or v6
-                              // address
   int dgram_sock_sndr;
   int dgram_sock_rcvr;
-  struct sockaddr_storage dest_addr_;
 };
 
 #endif  // DTM_DTMND_MULTICAST_H_

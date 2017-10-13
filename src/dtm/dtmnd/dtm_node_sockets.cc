@@ -22,6 +22,7 @@
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <cerrno>
 #include <cstring>
 #include "base/ncsencdec_pub.h"
 #include "base/usrbuf.h"
@@ -34,6 +35,8 @@
 
 #define MYPORT "6900"
 #define MAXBUFLEN 100
+
+#define MAXPENDING 20
 
 /**
  * Close the socketr descriptors
@@ -350,30 +353,35 @@ done:
  * @return NCSCC_RC_FAILURE
  *
  */
-#define MAXPENDING 20
-
 static uint32_t stream_sock_bind(DTM_INTERNODE_CB *dtms_cb,
                                  struct addrinfo *stream_addr) {
   /* Bind to the local address and set socket to list */
   TRACE_ENTER();
-  if ((bind(dtms_cb->stream_sock, stream_addr->ai_addr,
-            stream_addr->ai_addrlen) == 0) &&
-      (listen(dtms_cb->stream_sock, MAXPENDING) == 0)) {
-    /* get local address of socket */
-    struct sockaddr_storage local_addr;
-    socklen_t addr_size = sizeof(local_addr);
-    if (getsockname(dtms_cb->stream_sock,
-                    reinterpret_cast<struct sockaddr *>(&local_addr),
-                    &addr_size) < 0) {
-      LOG_ER("DTM : getsockname() failed err :%s", strerror(errno));
-      TRACE_LEAVE2("rc :%d", NCSCC_RC_FAILURE);
+  if (bind(dtms_cb->stream_sock, stream_addr->ai_addr,
+           stream_addr->ai_addrlen) == 0) {
+    if (listen(dtms_cb->stream_sock, MAXPENDING) == 0) {
+      /* get local address of socket */
+      struct sockaddr_storage local_addr;
+      socklen_t addr_size = sizeof(local_addr);
+      if (getsockname(dtms_cb->stream_sock,
+                      reinterpret_cast<struct sockaddr *>(&local_addr),
+                      &addr_size) < 0) {
+        LOG_ER("DTM : getsockname() failed err :%s", strerror(errno));
+        TRACE_LEAVE2("rc: %d", NCSCC_RC_FAILURE);
+        return NCSCC_RC_FAILURE;
+      }
+      TRACE("DTM : Binding done for : %d", dtms_cb->stream_sock);
+    } else {
+      LOG_ER("listen(%d) failed with errno %d", dtms_cb->stream_sock, errno);
+      TRACE_LEAVE2("rc: %d", NCSCC_RC_FAILURE);
       return NCSCC_RC_FAILURE;
     }
-
-    TRACE("DTM : Binding done for : %d", dtms_cb->stream_sock);
+  } else {
+    LOG_ER("bind(%d) failed with errno %d", dtms_cb->stream_sock, errno);
+    TRACE_LEAVE2("rc: %d", NCSCC_RC_FAILURE);
+    return NCSCC_RC_FAILURE;
   }
-
-  TRACE_LEAVE2("rc :%d", NCSCC_RC_SUCCESS);
+  TRACE_LEAVE2("rc: %d", NCSCC_RC_SUCCESS);
   return NCSCC_RC_SUCCESS;
 }
 
@@ -422,7 +430,7 @@ uint32_t dtm_stream_nonblocking_listener(DTM_INTERNODE_CB *dtms_cb) {
   } else {
     rv = getaddrinfo(dtms_cb->ip_addr.c_str(), local_port_str, &addr_criteria,
                      &addr_list);
-    TRACE("DTM :ip_addr : %s local_port_str -%s", dtms_cb->ip_addr.c_str(),
+    TRACE("DTM :ip_addr : %s local_port_str :%s", dtms_cb->ip_addr.c_str(),
           local_port_str);
   }
   if (rv != 0) {
