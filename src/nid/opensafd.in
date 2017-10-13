@@ -235,8 +235,6 @@ mutex_remove() {
 }
 
 start() {
-	setup_env
-
 	if ! mutex_create; then
 		return 1
 	fi
@@ -253,6 +251,8 @@ start() {
 
 
 	[ -x $daemon ] || exit 5
+
+	setup_env
 
 	check_transport
 
