@@ -649,6 +649,11 @@ static uint32_t asapi_cache_update(ASAPi_OBJECT_INFO *pInfo,
 		m_NCS_UNLOCK(&pCache->clock,
 			     NCS_LOCK_WRITE); /* Unlock the cache */
 	} else {			      /* Node deosn't exist */
+    if (ASAPi_QUEUE_DEL == opr || ASAPi_GROUP_DEL == opr) {
+      /* no need to add node as this is a deletion */
+      return rc;
+    }
+
 		/* Allocate the Cache Informaton node */
 		pCache = m_MMGR_ALLOC_ASAPi_CACHE_INFO(asapi.my_svc_id);
 		if (!pCache) {
