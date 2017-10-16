@@ -97,8 +97,6 @@ setup_env() {
 			getent passwd $OPENSAF_USER > /dev/null && chown $OPENSAF_USER $directory
 		fi
 	done
-	rm -f $pkgpiddir/*
-	rm -f $pkglogdir/nid.log
 }
 
 clean_shm() {
@@ -235,6 +233,8 @@ mutex_remove() {
 }
 
 start() {
+	setup_env
+
 	if ! mutex_create; then
 		return 1
 	fi
@@ -249,10 +249,10 @@ start() {
 		return $RETVAL
 	fi
 
+	rm -f $pkgpiddir/*
+	rm -f $pkglogdir/nid.log
 
 	[ -x $daemon ] || exit 5
-
-	setup_env
 
 	check_transport
 
