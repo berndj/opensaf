@@ -1810,7 +1810,7 @@ retry:
 	result = cpsv_test_result(rc, API_Overwrite[i].exp_output,
 				  API_Overwrite[i].result_string, cfg_flg);
 
-	if (rc == SA_AIS_ERR_TRY_AGAIN)
+	if (rc == SA_AIS_ERR_TRY_AGAIN || rc == SA_AIS_ERR_TIMEOUT)
 		goto retry;
 
 	if (rc == SA_AIS_OK) {
