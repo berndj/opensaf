@@ -76,7 +76,10 @@ setup_env() {
 	# If running in UML uncomment the next line
 	# echo 100 >  /proc/sys/net/ipv4/igmp_max_memberships
 	# gcov collecton is using multicast, to change default multicast group and multicast group:
+	# IPv4:
 	# export OPENSAF_GCOV_MULTICAST_GROUP="224.0.0.1"
+	# IPv6:
+	# export OPENSAF_GCOV_MULTICAST_GROUP="ff02::1"
 	# export OPENSAF_GCOV_MULTICAST_PORT="4711"
 
 	# Make sure this kernel has POSIX shared memory configured

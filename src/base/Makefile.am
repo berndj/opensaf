@@ -60,6 +60,7 @@ lib_libopensaf_core_la_SOURCES += \
 	src/base/osaf_timerfd.c \
 	src/base/osaf_unicode.c \
 	src/base/osaf_utility.c \
+	src/base/osaf_gcov.c \
 	src/base/patricia.c \
 	src/base/process.cc \
 	src/base/saf_edu.c \
