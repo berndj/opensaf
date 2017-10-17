@@ -375,6 +375,7 @@ int main(int argc, char *argv[]) {
   char *ptr = NULL;
   NODE_ID node_id = 0;
   bool user_node = false;
+  unsigned int options_found = 0;
 
   struct option long_options[] = {
     {"help",                no_argument,       0, 'h'},
@@ -391,10 +392,12 @@ int main(int argc, char *argv[]) {
 
      switch (option) {
      case 's':
+             ++options_found;
              opt_char = option;
              break;
      case 'c':
      case 'u':
+             ++options_found;
              opt_char = option;
              if (optarg == NULL) {
                if ((argv[optind] != NULL) &&
@@ -427,9 +430,16 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  if (user_node == false)
+  if (user_node == false) {
     node_id = m_NCS_GET_NODE_ID; //Get local node_id
-
+  } else if (node_id == 0) {
+    std::cerr << "Invalid node" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  if (options_found > 1) {
+    std::cerr << "Too many options specified" << std::endl;
+    exit(EXIT_FAILURE);
+  }
   if (mds_get_handle() != NCSCC_RC_SUCCESS) exit(EXIT_FAILURE);
   if (mds_init() != NCSCC_RC_SUCCESS) exit(EXIT_FAILURE);
   if (get_clm_nodes() != SA_AIS_OK) exit(EXIT_FAILURE);
@@ -454,7 +464,8 @@ int main(int argc, char *argv[]) {
               if (user_node == false)
                 std::cout << "This is a Controller node"<<std::endl;
               else
-                std::cout << std::hex << node_id <<" is a Controller node"<<std::endl;
+                std::cout << "0x" << std::hex
+                  << node_id << " is a Controller node" << std::endl;
             }
             exit(EXIT_SUCCESS);
           } else {
@@ -462,7 +473,8 @@ int main(int argc, char *argv[]) {
               if (user_node == false)
                 std::cout << "This is not a Controller node"<<std::endl;
               else
-                std::cout << std::hex << node_id <<" is not a Controller node"<<std::endl;
+                std::cout << "0x" << std::hex
+                  << node_id << " is not a Controller node" << std::endl;
             }
             exit(EXIT_FAILURE);
           }
@@ -474,12 +486,14 @@ int main(int argc, char *argv[]) {
               if (user_node == false)
                 std::cout << "This node is up"<<std::endl;
               else
-                std::cout << std::hex << node_id <<" is up"<<std::endl;
+                std::cout << "0x" << std::hex
+                  << node_id << " is up" << std::endl;
             }
             exit(EXIT_SUCCESS);
           } else {
             if (print_also == true) {
-              std::cout << std::hex << node_id <<" is not up"<<std::endl;
+              std::cout << "0x" << std::hex
+                << node_id << " is not up" <<std::endl;
             }
             exit(EXIT_FAILURE);
           }
