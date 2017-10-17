@@ -396,15 +396,15 @@ int main(int argc, char *argv[]) {
      case 'c':
      case 'u':
              opt_char = option;
-	     if (optarg == NULL) {
-	       if ((argv[optind] != NULL) &&
-	           (argv[optind][0] != '-')) {
-		 node_id = strtoul(argv[optind], &ptr, 0);
-		 ++optind;
-                 user_node = true;
+             if (optarg == NULL) {
+               if ((argv[optind] != NULL) &&
+                 (argv[optind][0] != '-')) {
+                   node_id = strtoul(argv[optind], &ptr, 0);
+                   ++optind;
+                   user_node = true;
                }
-	     } else {
-	       node_id = strtoul(optarg, &ptr, 0);
+             } else {
+               node_id = strtoul(optarg, &ptr, 0);
                user_node = true;
              }
              break;
@@ -415,7 +415,7 @@ int main(int argc, char *argv[]) {
              usage(basename(argv[0]));
              exit(EXIT_SUCCESS);
      case '?':
-	     std::cout << "Try "<< basename(argv[0]) << "-h or --help for more information" << std::endl;
+             std::cout << "Try "<< basename(argv[0]) << "-h or --help for more information" << std::endl;
              exit(EXIT_FAILURE);
              break;
      }
@@ -456,7 +456,7 @@ int main(int argc, char *argv[]) {
               else
                 std::cout << std::hex << node_id <<" is a Controller node"<<std::endl;
             }
-	    exit(EXIT_SUCCESS);
+            exit(EXIT_SUCCESS);
           } else {
             if (print_also == true) {
               if (user_node == false)
@@ -464,22 +464,22 @@ int main(int argc, char *argv[]) {
               else
                 std::cout << std::hex << node_id <<" is not a Controller node"<<std::endl;
             }
-	    exit(EXIT_FAILURE);
+            exit(EXIT_FAILURE);
           }
           break;
   case 'u':
           if (std::find(avnd_up_db.begin(), avnd_up_db.end(), node_id) !=
               avnd_up_db.end()) {
             if (print_also == true) {
-             if (user_node == false)
-               std::cout << "This node is up"<<std::endl;
-             else
-               std::cout << std::hex << node_id <<" is up"<<std::endl;
-	    }
-	    exit(EXIT_SUCCESS);
+              if (user_node == false)
+                std::cout << "This node is up"<<std::endl;
+              else
+                std::cout << std::hex << node_id <<" is up"<<std::endl;
+            }
+            exit(EXIT_SUCCESS);
           } else {
             if (print_also == true) {
-                std::cout << std::hex << node_id <<" is not up"<<std::endl;
+              std::cout << std::hex << node_id <<" is not up"<<std::endl;
             }
             exit(EXIT_FAILURE);
           }
