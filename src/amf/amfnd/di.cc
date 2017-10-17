@@ -1007,15 +1007,30 @@ uint32_t avnd_di_object_upd_send(AVND_CB *cb, AVSV_PARAM_INFO *param) {
     return rc;
   }
 
-  memset(&msg, 0, sizeof(AVND_MSG));
 
   /* populate the msg */
+  memset(&msg, 0, sizeof(AVND_MSG));
   msg.info.avd = static_cast<AVSV_DND_MSG *>(calloc(1, sizeof(AVSV_DND_MSG)));
   msg.type = AVND_MSG_AVD;
   msg.info.avd->msg_type = AVSV_N2D_DATA_REQUEST_MSG;
-  msg.info.avd->msg_info.n2d_data_req.msg_id = ++(cb->snd_msg_id);
   msg.info.avd->msg_info.n2d_data_req.node_id = cb->node_info.nodeId;
   msg.info.avd->msg_info.n2d_data_req.param_info = *param;
+
+  if ((cb->is_avd_down == false) && (cb->amfd_sync_required == true)) {
+    msg.info.avd->msg_info.n2d_data_req.msg_id = 0;
+    if (avnd_diq_rec_add(cb, &msg) == nullptr) {
+      rc = NCSCC_RC_FAILURE;
+    }
+    LOG_NO(
+        "avnd_di_object_upd_send() deferred as AMF director is offline(%d),"
+        " or sync is required(%d)",
+        cb->is_avd_down, cb->amfd_sync_required);
+
+    TRACE_LEAVE2("AVD is down. %u", rc);
+    return rc;
+  } else {
+    msg.info.avd->msg_info.n2d_data_req.msg_id = ++(cb->snd_msg_id);
+  }
 
   /* send the msg to AvD */
   rc = avnd_di_msg_send(cb, &msg);
@@ -1519,9 +1534,20 @@ void avnd_diq_rec_send_buffered_msg(AVND_CB *cb) {
             pending_rec->msg.info.avd->msg_info.n2d_opr_state.rec_rcvr
                 .raw);
         ++iter;
-    } else {
-      ++iter;
-    }
+    } else if (pending_rec->msg.info.avd->msg_type == AVSV_N2D_DATA_REQUEST_MSG &&
+               pending_rec->msg.info.avd->msg_info.n2d_data_req.msg_id == 0) {
+        pending_rec->msg.info.avd->msg_info.n2d_data_req.msg_id =
+              ++(cb->snd_msg_id);
+
+        LOG_NO(
+            "Found and resend buffered Data Req msg for SU:'%s', msg_id:'%u'",
+            osaf_extended_name_borrow(&pending_rec->msg.info.avd->msg_info
+                                           .n2d_data_req.param_info.name),
+            pending_rec->msg.info.avd->msg_info.n2d_data_req.msg_id);
+       ++iter;
+     } else {
+       ++iter;
+     }
   }
 
   TRACE("retransmit message to amfd");
