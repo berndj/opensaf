@@ -47,7 +47,7 @@ lib_libopensaf_core_la_SOURCES += \
 	src/base/hj_tmr.c \
 	src/base/hj_ubaid.c \
 	src/base/log_message.cc \
-	src/base/logtrace.c \
+	src/base/logtrace.cc \
 	src/base/mutex.cc \
 	src/base/ncs_main_pub.c \
 	src/base/ncs_sprr.c \

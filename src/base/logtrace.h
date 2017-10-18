@@ -75,7 +75,7 @@ enum logtrace_categories {
  * @return int - 0 if OK, -1 otherwise
  */
 extern int logtrace_init(const char *ident, const char *pathname,
-                         unsigned int mask);
+                         unsigned mask);
 
 /**
  * logtrace_init_daemon - Initialize the logtrace system for daemons
@@ -93,7 +93,7 @@ extern int logtrace_init(const char *ident, const char *pathname,
  * @return int - 0 if OK, -1 otherwise
  */
 extern int logtrace_init_daemon(const char *ident, const char *pathname,
-                                unsigned int tracemask, int logmask);
+                                unsigned tracemask, int logmask);
 
 /**
  * trace_category_set - Set the mask used for trace filtering.
@@ -111,92 +111,92 @@ extern int logtrace_init_daemon(const char *ident, const char *pathname,
  *
  * @return int - 0 if OK, -1 otherwise
  */
-extern int trace_category_set(unsigned int category_mask);
+extern int trace_category_set(unsigned category_mask);
 
 /**
  * trace_category_get - Get the current mask used for trace filtering.
  *
  * @return int - The filtering mask value
  */
-extern unsigned int trace_category_get(void);
+extern unsigned trace_category_get(void);
 
 /* internal functions, do not use directly */
-extern void _logtrace_log(const char *file, unsigned int line, int priority,
-                          const char *format, ...)
+extern void logtrace_log(const char *file, unsigned line, int priority,
+                         const char *format, ...)
     __attribute__((format(printf, 4, 5)));
-extern void _logtrace_trace(const char *file, unsigned int line,
-                            unsigned int category, const char *format, ...)
+extern void logtrace_trace(const char *file, unsigned line, unsigned category,
+                           const char *format, ...)
     __attribute__((format(printf, 4, 5)));
 
-extern bool is_trace_enabled_(unsigned int category);
-extern void output_(const char *file, unsigned int line, int priority,
-                    int category, const char *format, va_list ap);
+extern bool is_logtrace_enabled(unsigned category);
+extern void logtrace_output(const char *file, unsigned line, int priority,
+                            int category, const char *format, va_list ap);
 
 /* LOG API. Use same levels as syslog */
 #define LOG_EM(format, args...) \
-  _logtrace_log(__FILE__, __LINE__, LOG_EMERG, (format), ##args)
+  logtrace_log(__FILE__, __LINE__, LOG_EMERG, (format), ##args)
 #define LOG_AL(format, args...) \
-  _logtrace_log(__FILE__, __LINE__, LOG_ALERT, (format), ##args)
+  logtrace_log(__FILE__, __LINE__, LOG_ALERT, (format), ##args)
 #define LOG_CR(format, args...) \
-  _logtrace_log(__FILE__, __LINE__, LOG_CRIT, (format), ##args)
+  logtrace_log(__FILE__, __LINE__, LOG_CRIT, (format), ##args)
 #define LOG_ER(format, args...) \
-  _logtrace_log(__FILE__, __LINE__, LOG_ERR, (format), ##args)
+  logtrace_log(__FILE__, __LINE__, LOG_ERR, (format), ##args)
 #define LOG_WA(format, args...) \
-  _logtrace_log(__FILE__, __LINE__, LOG_WARNING, (format), ##args)
+  logtrace_log(__FILE__, __LINE__, LOG_WARNING, (format), ##args)
 #define LOG_NO(format, args...) \
-  _logtrace_log(__FILE__, __LINE__, LOG_NOTICE, (format), ##args)
+  logtrace_log(__FILE__, __LINE__, LOG_NOTICE, (format), ##args)
 #define LOG_IN(format, args...) \
-  _logtrace_log(__FILE__, __LINE__, LOG_INFO, (format), ##args)
+  logtrace_log(__FILE__, __LINE__, LOG_INFO, (format), ##args)
 
 /* TRACE API. */
 #define TRACE(format, args...) \
-  _logtrace_trace(__FILE__, __LINE__, CAT_TRACE, (format), ##args)
+  logtrace_trace(__FILE__, __LINE__, CAT_TRACE, (format), ##args)
 #define TRACE_1(format, args...) \
-  _logtrace_trace(__FILE__, __LINE__, CAT_TRACE1, (format), ##args)
+  logtrace_trace(__FILE__, __LINE__, CAT_TRACE1, (format), ##args)
 #define TRACE_2(format, args...) \
-  _logtrace_trace(__FILE__, __LINE__, CAT_TRACE2, (format), ##args)
+  logtrace_trace(__FILE__, __LINE__, CAT_TRACE2, (format), ##args)
 #define TRACE_3(format, args...) \
-  _logtrace_trace(__FILE__, __LINE__, CAT_TRACE3, (format), ##args)
+  logtrace_trace(__FILE__, __LINE__, CAT_TRACE3, (format), ##args)
 #define TRACE_4(format, args...) \
-  _logtrace_trace(__FILE__, __LINE__, CAT_TRACE4, (format), ##args)
+  logtrace_trace(__FILE__, __LINE__, CAT_TRACE4, (format), ##args)
 #define TRACE_5(format, args...) \
-  _logtrace_trace(__FILE__, __LINE__, CAT_TRACE5, (format), ##args)
+  logtrace_trace(__FILE__, __LINE__, CAT_TRACE5, (format), ##args)
 #define TRACE_6(format, args...) \
-  _logtrace_trace(__FILE__, __LINE__, CAT_TRACE6, (format), ##args)
+  logtrace_trace(__FILE__, __LINE__, CAT_TRACE6, (format), ##args)
 #define TRACE_7(format, args...) \
-  _logtrace_trace(__FILE__, __LINE__, CAT_TRACE7, (format), ##args)
+  logtrace_trace(__FILE__, __LINE__, CAT_TRACE7, (format), ##args)
 #define TRACE_8(format, args...) \
-  _logtrace_trace(__FILE__, __LINE__, CAT_TRACE8, (format), ##args)
+  logtrace_trace(__FILE__, __LINE__, CAT_TRACE8, (format), ##args)
 
 #ifdef __cplusplus
 class Trace {
  public:
   Trace() {}
   ~Trace() {
-    if (!trace_leave_called && is_trace_enabled_(CAT_TRACE_LEAVE)) {
+    if (!trace_leave_called && is_logtrace_enabled(CAT_TRACE_LEAVE)) {
       va_list ap{};
-      output_(file_, 0, LOG_DEBUG, CAT_TRACE_LEAVE, function_, ap);
+      logtrace_output(file_, 0, LOG_DEBUG, CAT_TRACE_LEAVE, function_, ap);
     }
   }
-  void trace(const char *file, const char *function, unsigned int line,
-             unsigned int category, const char *format, ...) {
+  void trace(const char *file, const char *function, unsigned line,
+             unsigned category, const char *format, ...) {
     va_list ap;
-    if (is_trace_enabled_(category)) {
+    if (is_logtrace_enabled(category)) {
       file_ = file;
       function_ = function;
       va_start(ap, format);
-      output_(file, line, LOG_DEBUG, category, format, ap);
+      logtrace_output(file, line, LOG_DEBUG, category, format, ap);
       va_end(ap);
     }
   }
 
-  void trace_leave(const char *file, unsigned int line, unsigned int category,
+  void trace_leave(const char *file, unsigned line, unsigned category,
                    const char *format, ...) {
     va_list ap;
-    if (is_trace_enabled_(category)) {
+    if (is_logtrace_enabled(category)) {
       va_start(ap, format);
       trace_leave_called = true;
-      output_(file, line, LOG_DEBUG, category, format, ap);
+      logtrace_output(file, line, LOG_DEBUG, category, format, ap);
       va_end(ap);
     }
   }
@@ -223,15 +223,15 @@ class Trace {
                  __FUNCTION__, ##args)
 #else
 #define TRACE_ENTER() \
-  _logtrace_trace(__FILE__, __LINE__, CAT_TRACE_ENTER, "%s ", __FUNCTION__)
-#define TRACE_ENTER2(format, args...)                                 \
-  _logtrace_trace(__FILE__, __LINE__, CAT_TRACE_ENTER, "%s: " format, \
-                  __FUNCTION__, ##args)
+  logtrace_trace(__FILE__, __LINE__, CAT_TRACE_ENTER, "%s ", __FUNCTION__)
+#define TRACE_ENTER2(format, args...)                                \
+  logtrace_trace(__FILE__, __LINE__, CAT_TRACE_ENTER, "%s: " format, \
+                 __FUNCTION__, ##args)
 #define TRACE_LEAVE() \
-  _logtrace_trace(__FILE__, __LINE__, CAT_TRACE_LEAVE, "%s ", __FUNCTION__)
-#define TRACE_LEAVE2(format, args...)                                 \
-  _logtrace_trace(__FILE__, __LINE__, CAT_TRACE_LEAVE, "%s: " format, \
-                  __FUNCTION__, ##args)
+  logtrace_trace(__FILE__, __LINE__, CAT_TRACE_LEAVE, "%s ", __FUNCTION__)
+#define TRACE_LEAVE2(format, args...)                                \
+  logtrace_trace(__FILE__, __LINE__, CAT_TRACE_LEAVE, "%s: " format, \
+                 __FUNCTION__, ##args)
 #endif
 
 #ifdef __cplusplus
