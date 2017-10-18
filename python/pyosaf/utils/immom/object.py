@@ -1,6 +1,7 @@
 ############################################################################
 #
 # (C) Copyright 2014 The OpenSAF Foundation
+# (C) Copyright 2017 Ericsson AB. All rights reserved.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -14,33 +15,26 @@
 # Author(s): Ericsson
 #
 ############################################################################
-
-'''
-    IMM Object representation.
-'''
-
+""" IMM Object representation """
 from pyosaf.saImm import saImm
 import pyosaf.utils.immom
 
 
 class ImmObject(object):
-    ''' Instances of this class represents an IMM object.
-        Created by iterators and accessor reading from IMM or when
-        creating objects in IMM.
-    '''
-
-    ''' cache of class descriptions for the purpose to know if an attribute
-    is multivalue and also its type
-    '''
+    """ Instance of this class represents an IMM object.
+    Created by iterators and accessor reading from IMM or when creating objects
+    in IMM.
+    Cache class descriptions for the purpose to know if an attribute is
+    multi-value and also its type.
+    """
     class_desc = {}
 
     def __init__(self, dn=None, attributes=None, class_name=None):
-        '''
-        Constructor for IMM object.
-        attributes is a map where attribute name is key, value is a tuple
-        of (valueType, values), values is a list.
+        """ Constructor for IMM object
+        Attributes is a map where attribute name is key, value is a tuple of
+        (valueType, values), values is a list.
         class_name and attributes are mutually exclusive.
-        '''
+        """
         self.__dict__["dn"] = dn
 
         # mutually exclusive for read vs create
@@ -55,7 +49,7 @@ class ImmObject(object):
             self.__dict__["attrs"] = attributes
             class_name = attributes["SaImmAttrClassName"][1][0]
             self.__dict__["class_name"] = class_name
-            if not class_name in self.class_desc:
+            if class_name not in self.class_desc:
                 self.class_desc[class_name] = \
                     pyosaf.utils.immom.class_description_get(class_name)
         else:
@@ -64,45 +58,56 @@ class ImmObject(object):
         self.__dict__["rdn_attribute"] = \
             pyosaf.utils.immom.get_rdn_attribute_for_class(class_name)
 
-    def get_value_type(self, attrname):
-        ''' returns IMM value type of the named attribute '''
-        for attrdef in self.class_desc[self.class_name]:
-            if attrdef.attrName == attrname:
-                return attrdef.attrValueType
+    def get_value_type(self, attr_name):
+        """ Return IMM value type of the named attribute
 
-    def __attr_is_multivalue(self, attrname):
-        ''' returns True if attribute is multivalue (internal) '''
-        for attrdef in self.class_desc[self.class_name]:
-            if attrdef.attrName == attrname:
-                return attrdef.attrFlags & saImm.SA_IMM_ATTR_MULTI_VALUE
+        Args:
+            attr_name (str): Attribute name
+
+        Returns:
+            SaImmAttrNameT: Attribute value type
+        """
+        for attr_def in self.class_desc[self.class_name]:
+            if attr_def.attrName == attr_name:
+                return attr_def.attrValueType
+
+    def __attr_is_multi_value(self, attr_name):
+        """ Return True if attribute is multi-value (internal)
+
+        Args:
+            attr_name (str): Attribute name
+
+        Returns:
+            SaImmAttrFlagsT: Attribute flag
+        """
+        for attr_def in self.class_desc[self.class_name]:
+            if attr_def.attrName == attr_name:
+                return attr_def.attrFlags & saImm.SA_IMM_ATTR_MULTI_VALUE
 
     def __getattr__(self, name):
-        if not name in self.attrs:
+        if name not in self.attrs:
             raise KeyError("%s is not a valid attribute name" % name)
 
-        if self.__attr_is_multivalue(name):
-            return self.attrs[name][1]  # returns a list of values
+        if self.__attr_is_multi_value(name):
+            return self.attrs[name][1]  # return a list of values
         else:
-            if len(self.attrs[name][1]) > 0:
-                return self.attrs[name][1][0]  # returns single value
-            else:
-                return None
+            if self.attrs[name][1]:
+                return self.attrs[name][1][0]  # return a single value
+
+        return None
 
     def __getitem__(self, item):
         return self.__getattr__(item)
 
     def __contains__(self, attr_name):
         if attr_name in self.attrs:
-            if len(self.attrs[attr_name][1]) > 0:
+            if self.attrs[attr_name][1]:
                 return True
-            else:
-                return False
-        else:
-            return False
+
+        return False
 
     def __setattr__(self, key, value):
-        # Correct RDN assignments missing the RDN attribute name in the value
-        # part
+        # Correct RDN assignments missing the RDN attribute name in value
         if key == self.rdn_attribute and value.find(self.rdn_attribute) != 0:
             value = '%s=%s' % (self.rdn_attribute, value)
 

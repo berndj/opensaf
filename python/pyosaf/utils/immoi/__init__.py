@@ -1,6 +1,7 @@
 ############################################################################
 #
 # (C) Copyright 2015 The OpenSAF Foundation
+# (C) Copyright 2017 Ericsson AB. All rights reserved.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -14,110 +15,127 @@
 # Author(s): Ericsson
 #
 ############################################################################
-'''
-    IMM OI common utilitites
-'''
+"""
+IMM OI common utilities
 
-import time
+Supported functions:
+- Set/clear/release implementer for class/object
+- Create/delete/update runtime object
+- Get class/object attributes
+- Get IMM error strings
+"""
+from __future__ import print_function
 
-from pyosaf.utils import immom
+from ctypes import c_char_p, c_void_p, cast, pointer
 
-from pyosaf import saAis, saImm, saImmOi
-
-from pyosaf.saAis import SaVersionT, SaNameT, SaSelectionObjectT, \
+from pyosaf.saAis import SaStringT, SaVersionT, SaNameT, SaSelectionObjectT, \
     unmarshalSaStringTArray, eSaDispatchFlagsT
-
+from pyosaf import saImm, saImmOi
 from pyosaf.saImm import unmarshalSaImmValue, SaImmAttrNameT,      \
     SaImmAttrValuesT_2, SaImmClassNameT, SaImmSearchParametersT_2, \
     eSaImmValueTypeT, SaImmAttrDefinitionT_2, SaImmClassCategoryT, \
     SaImmAttrModificationT_2, eSaImmAttrModificationTypeT
-
 from pyosaf.saImmOi import SaImmOiHandleT, SaImmOiImplementerNameT
-
+from pyosaf.utils import immom
 from pyosaf.utils.immom.object import ImmObject
 from pyosaf.utils.immom.ccb import marshal_c_array
 from pyosaf.utils.immom.iterator import SearchIterator
-
 from pyosaf.utils import decorate, initialize_decorate
 
-from ctypes import c_char_p, c_void_p, cast, pointer
 
-SELECTION_OBJECT = SaSelectionObjectT()
-HANDLE           = SaImmOiHandleT()
-
-TRYAGAIN_CNT = 60
-
+selection_object = SaSelectionObjectT()
+handle = SaImmOiHandleT()
+TRY_AGAIN_CNT = 60
 OPENSAF_IMM_OBJECT = "opensafImm=opensafImm,safApp=safImmService"
 
-
-# Decorate the raw saImmOi* functions with retry and raising exceptions
+# Decorate pure saImmOi* API's with error-handling retry and exception raising
 saImmOiInitialize_2 = initialize_decorate(saImmOi.saImmOiInitialize_2)
 saImmOiSelectionObjectGet = decorate(saImmOi.saImmOiSelectionObjectGet)
-saImmOiDispatch           = decorate(saImmOi.saImmOiDispatch)
-saImmOiFinalize           = decorate(saImmOi.saImmOiFinalize)
-saImmOiImplementerSet     = decorate(saImmOi.saImmOiImplementerSet)
-saImmOiImplementerClear   = decorate(saImmOi.saImmOiImplementerClear)
+saImmOiDispatch = decorate(saImmOi.saImmOiDispatch)
+saImmOiFinalize = decorate(saImmOi.saImmOiFinalize)
+saImmOiImplementerSet = decorate(saImmOi.saImmOiImplementerSet)
+saImmOiImplementerClear = decorate(saImmOi.saImmOiImplementerClear)
 saImmOiClassImplementerSet = decorate(saImmOi.saImmOiClassImplementerSet)
-saImmOiClassImplementerRelease = decorate(saImmOi.saImmOiClassImplementerRelease)
+saImmOiClassImplementerRelease = \
+    decorate(saImmOi.saImmOiClassImplementerRelease)
 saImmOiObjectImplementerSet = decorate(saImmOi.saImmOiObjectImplementerSet)
-saImmOiObjectImplementerRelease = decorate(saImmOi.saImmOiObjectImplementerRelease)
-saImmOiRtObjectCreate_2   = decorate(saImmOi.saImmOiRtObjectCreate_2)
-saImmOiRtObjectDelete     = decorate(saImmOi.saImmOiRtObjectDelete)
-saImmOiRtObjectUpdate_2   = decorate(saImmOi.saImmOiRtObjectUpdate_2)
+saImmOiObjectImplementerRelease = \
+    decorate(saImmOi.saImmOiObjectImplementerRelease)
+saImmOiRtObjectCreate_2 = decorate(saImmOi.saImmOiRtObjectCreate_2)
+saImmOiRtObjectDelete = decorate(saImmOi.saImmOiRtObjectDelete)
+saImmOiRtObjectUpdate_2 = decorate(saImmOi.saImmOiRtObjectUpdate_2)
 saImmOiAdminOperationResult = decorate(saImmOi.saImmOiAdminOperationResult)
-saImmOiAdminOperationResult_o2 = decorate(saImmOi.saImmOiAdminOperationResult_o2)
+saImmOiAdminOperationResult_o2 = \
+    decorate(saImmOi.saImmOiAdminOperationResult_o2)
 saImmOiAugmentCcbInitialize = decorate(saImmOi.saImmOiAugmentCcbInitialize)
-saImmOiCcbSetErrorString  = decorate(saImmOi.saImmOiCcbSetErrorString)
+saImmOiCcbSetErrorString = decorate(saImmOi.saImmOiCcbSetErrorString)
 
 
 def initialize(callbacks=None):
-    ''' Initializes IMM OI '''
+    """ Initialize the IMM OI library
+
+    Args:
+        callbacks (SaImmOiCallbacksT_2): OI callbacks to register with IMM
+    """
     version = SaVersionT('A', 2, 15)
-    saImmOiInitialize_2(HANDLE, callbacks, version)
+    saImmOiInitialize_2(handle, callbacks, version)
 
 
-def register_applier(name):
-    ''' Registers an an applier '''
+def register_applier(app_name):
+    """ Register as an applier OI
 
-    applier_name = "@" + name
-
+    Args:
+        app_name (str): Applier name
+    """
+    applier_name = "@" + app_name
     register_implementer(applier_name)
 
-def register_implementer(name):
-    ''' Registers as an implementer '''
 
-    implementer_name = SaImmOiImplementerNameT(name)
+def register_implementer(oi_name):
+    """ Register as an implementer
 
-    saImmOiImplementerSet(HANDLE, implementer_name)
+    Args:
+        oi_name (str): Implementer name
+    """
+    implementer_name = SaImmOiImplementerNameT(oi_name)
+    saImmOiImplementerSet(handle, implementer_name)
 
 
 def get_selection_object():
-    ''' Retrieves the the selection object '''
-
-    saImmOiSelectionObjectGet(HANDLE, SELECTION_OBJECT)
+    """ Get an selection object for event polling """
+    global selection_object
+    saImmOiSelectionObjectGet(handle, selection_object)
 
 
 def implement_class(class_name):
-    ''' Registers the implementer as an OI for the given class '''
+    """ Register the implementer as an OI for the given class
 
+    Args:
+        class_name (str): Name of the class to implement
+    """
     c_class_name = SaImmClassNameT(class_name)
-
-    saImmOiClassImplementerSet(HANDLE, c_class_name)
-
-
-def dispatch(mode=eSaDispatchFlagsT.SA_DISPATCH_ALL):
-    ''' Dispatches all queued callbacks.
-    '''
-
-    saImmOiDispatch(HANDLE, mode)
+    saImmOiClassImplementerSet(handle, c_class_name)
 
 
-def create_rt_object(class_name, parent_name, obj):
-    ''' Creates a runtime object '''
+def dispatch(flags=eSaDispatchFlagsT.SA_DISPATCH_ALL):
+    """ Dispatch all queued callbacks
 
+    Args:
+        flags (eSaDispatchFlagsT): Flags specifying dispatch mode
+    """
+    saImmOiDispatch(handle, flags)
+
+
+def create_rt_object(class_name, parent_name, runtime_obj):
+    """ Create a runtime object
+
+    Args:
+        class_name (str): Class name
+        parent_name (str): Parent name
+        runtime_obj (ImmObject): Runtime object to create
+    """
     # Marshall parameters
     c_class_name = SaImmClassNameT(class_name)
-
     if parent_name:
         c_parent_name = SaNameT(parent_name)
     else:
@@ -125,9 +143,8 @@ def create_rt_object(class_name, parent_name, obj):
 
     c_attr_values = []
 
-    for name, (c_attr_type, values) in obj.attrs.items():
-
-        if values == None:
+    for name, (c_attr_type, values) in runtime_obj.attrs.items():
+        if values is None:
             values = []
         elif values == [None]:
             values = []
@@ -138,36 +155,38 @@ def create_rt_object(class_name, parent_name, obj):
 
         # Create the values struct
         c_attr = SaImmAttrValuesT_2()
-
-        c_attr.attrName         = SaImmAttrNameT(name)
-        c_attr.attrValueType    = c_attr_type
+        c_attr.attrName = SaImmAttrNameT(name)
+        c_attr.attrValueType = c_attr_type
         c_attr.attrValuesNumber = len(values)
 
-        if len(values) == 0:
+        if not values:
             c_attr.attrValues = None
         else:
             c_attr.attrValues = marshal_c_array(c_attr_type, values)
 
         c_attr_values.append(c_attr)
 
-    # Call the function
-    saImmOiRtObjectCreate_2(HANDLE, c_class_name, c_parent_name,
-                                    c_attr_values)
+    saImmOiRtObjectCreate_2(handle, c_class_name, c_parent_name, c_attr_values)
 
 
 def delete_rt_object(dn):
-    ''' Deletes a runtime object '''
+    """ Delete a runtime object
 
+    Args:
+        dn (str): Runtime object dn
+    """
     # Marshall the parameter
     c_dn = SaNameT(dn)
-
-    saImmOiRtObjectDelete(HANDLE, c_dn)
+    saImmOiRtObjectDelete(handle, c_dn)
 
 
 def update_rt_object(dn, attributes):
-    ''' Updates the given object with the given attribute modifications
-    '''
+    """ Update the specified object with the requested attribute modifications
 
+    Args:
+        dn (str): Object dn
+        attributes (dict): Dictionary of attribute modifications
+    """
     # Get the class name for the object
     class_name = get_class_name_for_dn(dn)
 
@@ -175,129 +194,171 @@ def update_rt_object(dn, attributes):
     attr_mods = []
 
     for name, values in attributes.items():
-
         if values is None:
             print("WARNING: Received no values for %s in %s" % (name, dn))
             continue
-
         if not isinstance(values, list):
             values = [values]
 
         attr_type = get_attribute_type(name, class_name)
-
         c_attr_mod = SaImmAttrModificationT_2()
-        c_attr_mod.modType = eSaImmAttrModificationTypeT.SA_IMM_ATTR_VALUES_REPLACE
-        c_attr_mod.modAttr                  = SaImmAttrValuesT_2()
-        c_attr_mod.modAttr.attrName         = SaImmAttrNameT(name)
-        c_attr_mod.modAttr.attrValueType    = attr_type
+        c_attr_mod.modType = \
+            eSaImmAttrModificationTypeT.SA_IMM_ATTR_VALUES_REPLACE
+        c_attr_mod.modAttr = SaImmAttrValuesT_2()
+        c_attr_mod.modAttr.attrName = SaImmAttrNameT(name)
+        c_attr_mod.modAttr.attrValueType = attr_type
         c_attr_mod.modAttr.attrValuesNumber = len(values)
-        c_attr_mod.modAttr.attrValues       = marshal_c_array(attr_type, values)
+        c_attr_mod.modAttr.attrValues = marshal_c_array(attr_type, values)
         attr_mods.append(c_attr_mod)
 
-    # Call the function
-    saImmOiRtObjectUpdate_2(HANDLE, SaNameT(dn), attr_mods)
+    saImmOiRtObjectUpdate_2(handle, SaNameT(dn), attr_mods)
 
 
 def report_admin_operation_result(invocation_id, result):
-    ''' Reports the result of an administrative operation '''
+    """ Report the result of an administrative operation
 
-    saImmOiAdminOperationResult(HANDLE, invocation_id, result)
+    Args:
+        invocation_id (SaInvocationT): Invocation id
+        result (SaAisErrorT): Result of admin operation
+    """
+    saImmOiAdminOperationResult(handle, invocation_id, result)
 
 
 def set_error_string(ccb_id, error_string):
-    ''' Sets the error string. This can only be called from within OI
-        callbacks from a real implementer'''
+    """ Set the error string
+    This can only be called from within OI callbacks of a real implementer.
 
-    c_error_string = saAis.SaStringT(error_string)
+    Args:
+        ccb_id (SaImmOiCcbIdT): CCB id
+        error_string (str): Error string
+    """
 
-    saImmOiCcbSetErrorString(HANDLE, ccb_id, c_error_string)
+    c_error_string = SaStringT(error_string)
+
+    saImmOiCcbSetErrorString(handle, ccb_id, c_error_string)
 
 
 def get_class_category(class_name):
-    ''' Returns the category of the given class '''
+    """ Return the category of the given class
 
-    c_attr_defs  = pointer(pointer(SaImmAttrDefinitionT_2()))
-    c_category   = SaImmClassCategoryT()
+    Args:
+        class_name (str): Class name
+
+    Returns:
+        SaAisErrorT: Return code of class category get
+    """
+    c_attr_defs = pointer(pointer(SaImmAttrDefinitionT_2()))
+    c_category = SaImmClassCategoryT()
     c_class_name = SaImmClassNameT(class_name)
 
-    immom.saImmOmClassDescriptionGet_2(immom.HANDLE, c_class_name, c_category,
+    immom.saImmOmClassDescriptionGet_2(immom.handle, c_class_name, c_category,
                                        c_attr_defs)
-
     return c_category.value
 
 
 def get_parent_name_for_dn(dn):
-    ''' returns the dn of the parent of the instance of the given dn '''
+    """ Return the parent's dn of the given object's dn
 
+    Args:
+        dn (str): Object dn
+
+    Returns:
+        str: DN of the object's parent
+    """
     if ',' in dn:
         return dn.split(',', 1)[1]
-    else:
-        return None
+
+    return None
 
 
 def get_object_names_for_class(class_name):
-    ''' Returns the instances of the given class, optionally under the given
-        root dn
+    """ Return instances of the given class
+    This is safe to call from OI callbacks.
 
-        will not read runtime attributes and is safe to call from OI callbacks
-    '''
+    Args:
+        class_name (str): Class name
 
-    # Set up and marshall the search parameter
+    Returns:
+        list: List of object names
+    """
+    # Marshall the search parameter
     c_class_name = c_char_p(class_name)
-
     c_search_param = SaImmSearchParametersT_2()
     c_search_param.searchOneAttr.attrName = "SaImmAttrClassName"
-    c_search_param.searchOneAttr.attrValueType = eSaImmValueTypeT.SA_IMM_ATTR_SASTRINGT
-    c_search_param.searchOneAttr.attrValue = cast(pointer(c_class_name), c_void_p)
+    c_search_param.searchOneAttr.attrValueType = \
+        eSaImmValueTypeT.SA_IMM_ATTR_SASTRINGT
+    c_search_param.searchOneAttr.attrValue = \
+        cast(pointer(c_class_name), c_void_p)
 
     # Create the search iterator
-    sit = SearchIterator(_search_param=c_search_param,
-                         attribute_names=['SaImmAttrClassName'])
+    found_objs = SearchIterator(search_param=c_search_param,
+                                attribute_names=['SaImmAttrClassName'])
 
-    # Return the results
-    return [s.dn for s in sit]
+    # Return the dn's of found objects
+    return [obj.dn for obj in found_objs]
+
 
 def get_class_name_for_dn(dn):
-    ''' returns the class name for an instance with the given dn '''
+    """ Return the class name for an instance with the given dn
 
+    Args:
+        dn (str): Object dn
+
+    Returns:
+        str: Class name
+    """
     obj = immom.get(dn, ["SaImmAttrClassName"])
-
-    if obj:
-        return obj.SaImmAttrClassName
-    else:
+    if not obj:
         return None
 
+    return obj.SaImmAttrClassName
+
+
 def get_object_no_runtime(dn):
-    ''' returns the IMM object with the given DN
+    """ Return the IMM object with the given dn
 
-        this is safe to call from OI callbacks as only the config attributes
-        will be read
+    This is safe to call from OI callbacks as only the config attributes will
+    be read.
+    The function needs to query the class to find config attributes. If the
+    class name is known by the caller it can be passed in. Otherwise, it will
+    be looked up.
 
-        the function needs to query the class to find config attributes. If
-        the class name is known by the caller it can be passed in. Otherwise
-        it will be looked up.
-    '''
+    Args:
+        dn (str): Object dn
 
+    Returns:
+        ImmObject: Imm object
+    """
     return immom.get(dn, ['SA_IMM_SEARCH_GET_CONFIG_ATTR'])
 
+
 def get_attribute_type(attribute, class_name):
-    ''' Returns the type of the attribute in the given class
+    """ Return the type of the attribute in the given class
+    This is safe to use from OI callbacks.
 
-        This is safe to use from OI callbacks
-    '''
+    Args:
+        attribute (str): Attribute name
+        class_name (str): Class name
 
+    Returns:
+        str: Attribute type
+    """
     class_desc = immom.class_description_get(class_name)
-
-    attr_desc = [ad for ad in class_desc if ad.attrName == attribute][0]
+    attr_desc = [attr for attr in class_desc if attr.attrName == attribute][0]
 
     return attr_desc.attrValueType
 
+
 def get_rdn_attribute_for_class(class_name):
-    ''' Returns the RDN attribute for the given class
+    """ Return the RDN attribute for the given class
+    This is safe to call from OI callbacks.
 
-        This is safe to call from OI callbacks
-    '''
+    Args:
+        class_name (str): Class name
 
+    Returns:
+        str: RDN of the class
+    """
     desc = immom.class_description_get(class_name)
 
     for attr_desc in desc:
@@ -306,9 +367,18 @@ def get_rdn_attribute_for_class(class_name):
 
     return None
 
-def unmarshall_len_array(c_array, length, value_type):
-    ''' Convert c array with a known length to a Python list. '''
 
+def unmarshal_len_array(c_array, length, value_type):
+    """ Convert C array with a known length to a Python list
+
+    Args:
+        c_array (C array): Array in C
+        length (int): Length of array
+        value_type (str): Element type in array
+
+    Returns:
+        list: The list converted from c_array
+    """
     if not c_array:
         return []
     ctype = c_array[0].__class__
@@ -321,30 +391,37 @@ def unmarshall_len_array(c_array, length, value_type):
             break
         if not ptr:
             break
-
         val = unmarshalSaImmValue(ptr, value_type)
-
         val_list.append(val)
-
         i = i + 1
 
     return val_list
 
+
 def get_available_classes_in_imm():
-    ''' Returns a list of all available classes in IMM
+    """ Return a list of all available classes in IMM
+    This is safe to call from OI callbacks.
 
-        Safe to call from OI callbacks
-    '''
-
+    Returns:
+        list: List of available classes
+    """
     opensaf_imm = immom.get(OPENSAF_IMM_OBJECT)
 
     return opensaf_imm.opensafImmClassNames
 
-def create_non_existing_imm_object(class_name, parent_name, attributes):
-    ''' Creates an ImmObject instance for an object that does not yet
-        exist in IMM.
-    '''
 
+def create_non_existing_imm_object(class_name, parent_name, attributes):
+    """ Create an ImmObject instance for an object that has not yet existed
+    in IMM
+
+    Args:
+        class_name (str): Class name
+        parent_name (str): Parent name
+        attributes (dict): Dictionary of class attributes
+
+    Returns:
+        ImmObject: Imm object
+    """
     rdn_attribute = get_rdn_attribute_for_class(class_name)
     rdn_value = attributes[rdn_attribute][0]
 

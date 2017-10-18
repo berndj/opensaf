@@ -1,6 +1,7 @@
 ############################################################################
 #
 # (C) Copyright 2014 The OpenSAF Foundation
+# (C) Copyright 2017 Ericsson AB. All rights reserved.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -14,169 +15,176 @@
 # Author(s): Ericsson
 #
 ############################################################################
-
-'''
-    IMM OM common utilitites
-'''
-
+""" IMM OM common utilities """
 import os
-import time
-from ctypes import pointer, POINTER, cast, c_char_p
+from ctypes import pointer, POINTER
 
-from pyosaf import saAis
-from pyosaf.saAis import eSaAisErrorT, SaVersionT, SaNameT, unmarshalNullArray
+from pyosaf.saAis import saAis, SaVersionT, SaNameT, SaStringT, SaAisErrorT, \
+    eSaAisErrorT, eSaBoolT, unmarshalNullArray
 from pyosaf import saImmOm, saImm
 from pyosaf.saImm import eSaImmScopeT, unmarshalSaImmValue, SaImmAttrNameT, \
     SaImmAttrValuesT_2
-from pyosaf.saImmOm import SaImmHandleT, SaImmAccessorHandleT,\
-    saImmOmAdminOwnerInitialize
-
+from pyosaf.saImmOm import SaImmAccessorHandleT
 from pyosaf.utils import decorate, initialize_decorate
-
 from pyosaf.utils import SafException
 from pyosaf.utils.immom.object import ImmObject
 
-HANDLE = saImmOm.SaImmHandleT()
-ACCESSOR_HANDLE = SaImmAccessorHandleT()
 
+handle = saImmOm.SaImmHandleT()
+accessor_handle = SaImmAccessorHandleT()
 
-# Decorate IMM functions to add retry loops and error handling
+# Decorate pure saImmOm* API's with error-handling retry and exception raising
 saImmOmInitialize = initialize_decorate(saImmOm.saImmOmInitialize)
 saImmOmSelectionObjectGet = decorate(saImmOm.saImmOmSelectionObjectGet)
-saImmOmDispatch           = decorate(saImmOm.saImmOmDispatch)
-saImmOmFinalize           = decorate(saImmOm.saImmOmFinalize)
-saImmOmClassCreate_2      = decorate(saImmOm.saImmOmClassCreate_2)
+saImmOmDispatch = decorate(saImmOm.saImmOmDispatch)
+saImmOmFinalize = decorate(saImmOm.saImmOmFinalize)
+saImmOmClassCreate_2 = decorate(saImmOm.saImmOmClassCreate_2)
 saImmOmClassDescriptionGet_2 = decorate(saImmOm.saImmOmClassDescriptionGet_2)
-saImmOmClassDescriptionMemoryFree_2 = decorate(saImmOm.saImmOmClassDescriptionMemoryFree_2)
-saImmOmClassDelete        = decorate(saImmOm.saImmOmClassDelete)
+saImmOmClassDescriptionMemoryFree_2 = \
+    decorate(saImmOm.saImmOmClassDescriptionMemoryFree_2)
+saImmOmClassDelete = decorate(saImmOm.saImmOmClassDelete)
 saImmOmSearchInitialize_2 = decorate(saImmOm.saImmOmSearchInitialize_2)
-saImmOmSearchNext_2       = decorate(saImmOm.saImmOmSearchNext_2)
-saImmOmSearchFinalize     = decorate(saImmOm.saImmOmSearchFinalize)
+saImmOmSearchNext_2 = decorate(saImmOm.saImmOmSearchNext_2)
+saImmOmSearchFinalize = decorate(saImmOm.saImmOmSearchFinalize)
 saImmOmAccessorInitialize = decorate(saImmOm.saImmOmAccessorInitialize)
-saImmOmAccessorGet_2      = decorate(saImmOm.saImmOmAccessorGet_2)
-saImmOmAccessorFinalize   = decorate(saImmOm.saImmOmAccessorFinalize)
+saImmOmAccessorGet_2 = decorate(saImmOm.saImmOmAccessorGet_2)
+saImmOmAccessorFinalize = decorate(saImmOm.saImmOmAccessorFinalize)
 saImmOmAdminOwnerInitialize = decorate(saImmOm.saImmOmAdminOwnerInitialize)
-saImmOmAdminOwnerSet      = decorate(saImmOm.saImmOmAdminOwnerSet)
-saImmOmAdminOwnerRelease  = decorate(saImmOm.saImmOmAdminOwnerRelease)
+saImmOmAdminOwnerSet = decorate(saImmOm.saImmOmAdminOwnerSet)
+saImmOmAdminOwnerRelease = decorate(saImmOm.saImmOmAdminOwnerRelease)
 saImmOmAdminOwnerFinalize = decorate(saImmOm.saImmOmAdminOwnerFinalize)
-saImmOmAdminOwnerClear    = decorate(saImmOm.saImmOmAdminOwnerClear)
-saImmOmCcbInitialize      = decorate(saImmOm.saImmOmCcbInitialize)
-saImmOmCcbObjectCreate_2  = decorate(saImmOm.saImmOmCcbObjectCreate_2)
-saImmOmCcbObjectDelete    = decorate(saImmOm.saImmOmCcbObjectDelete)
-saImmOmCcbObjectModify_2  = decorate(saImmOm.saImmOmCcbObjectModify_2)
-saImmOmCcbApply           = decorate(saImmOm.saImmOmCcbApply)
-saImmOmCcbFinalize        = decorate(saImmOm.saImmOmCcbFinalize)
+saImmOmAdminOwnerClear = decorate(saImmOm.saImmOmAdminOwnerClear)
+saImmOmCcbInitialize = decorate(saImmOm.saImmOmCcbInitialize)
+saImmOmCcbObjectCreate_2 = decorate(saImmOm.saImmOmCcbObjectCreate_2)
+saImmOmCcbObjectDelete = decorate(saImmOm.saImmOmCcbObjectDelete)
+saImmOmCcbObjectModify_2 = decorate(saImmOm.saImmOmCcbObjectModify_2)
+saImmOmCcbApply = decorate(saImmOm.saImmOmCcbApply)
+saImmOmCcbFinalize = decorate(saImmOm.saImmOmCcbFinalize)
 saImmOmCcbGetErrorStrings = decorate(saImmOm.saImmOmCcbGetErrorStrings)
 saImmOmAdminOperationInvoke_2 = decorate(saImmOm.saImmOmAdminOperationInvoke_2)
-saImmOmAdminOperationInvokeAsync_2 = decorate(saImmOm.saImmOmAdminOperationInvokeAsync_2)
+saImmOmAdminOperationInvokeAsync_2 = \
+    decorate(saImmOm.saImmOmAdminOperationInvokeAsync_2)
 saImmOmAdminOperationContinue = decorate(saImmOm.saImmOmAdminOperationContinue)
-saImmOmAdminOperationContinueAsync = decorate(saImmOm.saImmOmAdminOperationContinueAsync)
-saImmOmAdminOperationContinuationClear = decorate(saImmOm.saImmOmAdminOperationContinuationClear)
+saImmOmAdminOperationContinueAsync = \
+    decorate(saImmOm.saImmOmAdminOperationContinueAsync)
+saImmOmAdminOperationContinuationClear = \
+    decorate(saImmOm.saImmOmAdminOperationContinuationClear)
+
 
 def initialize():
-    ''' saImmOmInitialize with TRYAGAIN handling '''
+    """ Initialize the IMM OM library """
     version = SaVersionT('A', 2, 15)
-    err = saImmOmInitialize(HANDLE, None, version)
-    err = saImmOmAccessorInitialize(HANDLE, ACCESSOR_HANDLE)
+    # Initialize IMM OM handle
+    saImmOmInitialize(handle, None, version)
+    # Initialize Accessor Handle
+    saImmOmAccessorInitialize(handle, accessor_handle)
 
 
 def get(object_name, attr_name_list=None, class_name=None):
-    ''' obtain values of some attributes of the specified object '''
+    """ Obtain values of some attributes of the specified object
 
+    Args:
+        object_name (str): Object name
+        attr_name_list (list): List of attributes
+        class_name (str): Class name
+
+    Returns:
+        ImmObject: Imm object
+    """
     # Always request the SaImmAttrClassName attribute if needed
-    if attr_name_list and                             \
-       not class_name and                             \
-       not 'SaImmAttrClassName' in attr_name_list and \
-       not attr_name_list == ['SA_IMM_SEARCH_GET_CONFIG_ATTR']:
+    if attr_name_list and not class_name \
+            and 'SaImmAttrClassName' not in attr_name_list \
+            and not attr_name_list == ['SA_IMM_SEARCH_GET_CONFIG_ATTR']:
         attr_name_list.append('SaImmAttrClassName')
 
-    attrib_names = [SaImmAttrNameT(a) for a in attr_name_list]\
+    attr_names = [SaImmAttrNameT(attr) for attr in attr_name_list] \
         if attr_name_list else None
 
     attributes = pointer(pointer(SaImmAttrValuesT_2()))
 
     try:
-        err = saImmOmAccessorGet_2(ACCESSOR_HANDLE,
-                                   SaNameT(object_name),
-                                   attrib_names, attributes)
+        saImmOmAccessorGet_2(accessor_handle, SaNameT(object_name),
+                             attr_names, attributes)
     except SafException as err:
         if err.value == eSaAisErrorT.SA_AIS_ERR_NOT_EXIST:
             return None
         else:
             raise err
 
-    attribs = {}
+    attrs = {}
     attr_list = unmarshalNullArray(attributes)
     for attr in attr_list:
         attr_range = list(range(attr.attrValuesNumber))
-        attribs[attr.attrName] = [
-            attr.attrValueType,
-            [unmarshalSaImmValue(
-                attr.attrValues[val],
-                attr.attrValueType) for val in attr_range]
-            ]
+        attrs[attr.attrName] = [attr.attrValueType,
+                                [unmarshalSaImmValue(attr.attrValues[val],
+                                                     attr.attrValueType)
+                                 for val in attr_range]]
+    if 'SaImmAttrClassName' not in attrs and class_name:
+        attrs['SaImmAttrClassName'] = class_name
 
-    if not 'SaImmAttrClassName' in attribs and class_name:
-        attribs['SaImmAttrClassName'] = class_name
-
-    return ImmObject(object_name, attribs)
+    return ImmObject(object_name, attrs)
 
 
 def class_description_get(class_name):
-    ''' get class description as a python list '''
+    """ Get class description as a Python list
 
+    Args:
+        class_name (str): Class name
+
+    Returns:
+        list: List of class attributes
+    """
     attr_defs = pointer(pointer(saImm.SaImmAttrDefinitionT_2()))
     category = saImm.SaImmClassCategoryT()
-    err = saImmOmClassDescriptionGet_2(HANDLE,
-                                       class_name,
-                                       category,
-                                       attr_defs)
+    saImmOmClassDescriptionGet_2(handle, class_name, category, attr_defs)
 
-    return saAis.unmarshalNullArray(attr_defs)
+    return unmarshalNullArray(attr_defs)
 
 
 def admin_op_invoke(dn, op_id, params=None):
-    ''' invokes admin op for dn '''
+    """ Invoke admin op for dn
+
+    Args:
+        dn (str): Object dn
+        op_id (str): Operation id
+        params (list): List of parameters
+    """
     owner_handle = saImmOm.SaImmAdminOwnerHandleT()
     owner_name = saImmOm.SaImmAdminOwnerNameT(os.getlogin())
-    err = saImmOmAdminOwnerInitialize(HANDLE,
-                                      owner_name,
-                                      saAis.eSaBoolT.SA_TRUE,
-                                      owner_handle)
-
-    idx = dn.rfind(",")
-    parent_name = SaNameT(dn[idx+1:])
+    saImmOmAdminOwnerInitialize(handle, owner_name, eSaBoolT.SA_TRUE,
+                                owner_handle)
+    index = dn.rfind(",")
+    parent_name = SaNameT(dn[index+1:])
     object_names = [parent_name]
-    err = saImmOmAdminOwnerSet(owner_handle, object_names,
-                               eSaImmScopeT.SA_IMM_SUBTREE)
-
+    saImmOmAdminOwnerSet(owner_handle, object_names,
+                         eSaImmScopeT.SA_IMM_SUBTREE)
     if params is None:
         params = []
 
     object_dn = SaNameT(dn)
-    retval = saAis.SaAisErrorT()
+    retval = SaAisErrorT()
 
-    err = saImmOmAdminOperationInvoke_2(
-        owner_handle,
-        object_dn,
-        0,
-        op_id,
-        params,
-        retval,
-        saAis.saAis.SA_TIME_ONE_SECOND * 10)
+    saImmOmAdminOperationInvoke_2(owner_handle, object_dn, 0, op_id, params,
+                                  retval, saAis.SA_TIME_ONE_SECOND * 10)
 
     if retval.value != eSaAisErrorT.SA_AIS_OK:
-        print("saImmOmAdminOperationInvoke_2: %s" % \
-            eSaAisErrorT.whatis(retval.value))
+        print("saImmOmAdminOperationInvoke_2: %s" %
+              eSaAisErrorT.whatis(retval.value))
         raise SafException(retval.value)
 
-    error = saImmOmAdminOwnerFinalize(owner_handle)
+    saImmOmAdminOwnerFinalize(owner_handle)
 
 
 def get_error_strings(ccb_handle):
-    ''' Returns the current error strings '''
+    """ Return the current CCB error strings
 
-    c_strings = POINTER(saAis.SaStringT)()
+    Args:
+        ccb_handle (str): CCB handle
+
+    Returns:
+        list: List of error strings
+    """
+    c_strings = POINTER(SaStringT)()
 
     saImmOmCcbGetErrorStrings(ccb_handle, c_strings)
 
@@ -184,9 +192,15 @@ def get_error_strings(ccb_handle):
 
 
 def get_rdn_attribute_for_class(class_name):
-    ''' Returns the RDN attribute for the given class. This is safe to call
-        from OI callbacks
-    '''
+    """ Return the RDN attribute for the given class
+    This is safe to call from OI callbacks.
+
+    Args:
+        class_name (str): Class name
+
+    Returns:
+        str: RDN attribute of the class
+    """
     desc = class_description_get(class_name)
     for attr_desc in desc:
         if attr_desc.attrFlags & saImm.saImm.SA_IMM_ATTR_RDN:

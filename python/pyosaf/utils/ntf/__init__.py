@@ -1,6 +1,7 @@
 ############################################################################
 #
 # (C) Copyright 2015 The OpenSAF Foundation
+# (C) Copyright 2017 Ericsson AB. All rights reserved.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -14,71 +15,84 @@
 # Author(s): Ericsson
 #
 ############################################################################
-
-'''
-    NTF common utilities
-'''
-
-from pyosaf import saNtf, saAis
+# pylint: disable=unused-argument,too-many-arguments
+""" NTF common utilities """
 import ctypes
 
+from pyosaf.saAis import saAis, SaVersionT, SaSelectionObjectT, eSaBoolT, \
+    eSaDispatchFlagsT
+from pyosaf import saNtf
 from pyosaf.utils import decorate, initialize_decorate
 
 
+# Decorate pure saNtf* API's with error-handling retry and exception raising
 saNtfInitialize = initialize_decorate(saNtf.saNtfInitialize)
-saNtfLocalizedMessageFree       = decorate(saNtf.saNtfLocalizedMessageFree)
-saNtfStateChangeNotificationFilterAllocate = decorate(saNtf.saNtfStateChangeNotificationFilterAllocate)
-saNtfNotificationUnsubscribe    = decorate(saNtf.saNtfNotificationUnsubscribe)
-saNtfNotificationReadInitialize = decorate(saNtf.saNtfNotificationReadInitialize)
+saNtfLocalizedMessageFree = decorate(saNtf.saNtfLocalizedMessageFree)
+saNtfStateChangeNotificationFilterAllocate = \
+    decorate(saNtf.saNtfStateChangeNotificationFilterAllocate)
+saNtfNotificationUnsubscribe = decorate(saNtf.saNtfNotificationUnsubscribe)
+saNtfNotificationReadInitialize = \
+    decorate(saNtf.saNtfNotificationReadInitialize)
 saNtfInitialize_2 = initialize_decorate(saNtf.saNtfInitialize_2)
-saNtfNotificationReadInitialize_2 = decorate(saNtf.saNtfNotificationReadInitialize_2)
-saNtfNotificationSubscribe      = decorate(saNtf.saNtfNotificationSubscribe)
+saNtfNotificationReadInitialize_2 = \
+    decorate(saNtf.saNtfNotificationReadInitialize_2)
+saNtfNotificationSubscribe = decorate(saNtf.saNtfNotificationSubscribe)
 saNtfInitialize_3 = initialize_decorate(saNtf.saNtfInitialize_3)
-saNtfSelectionObjectGet         = decorate(saNtf.saNtfSelectionObjectGet)
-saNtfDispatch                   = decorate(saNtf.saNtfDispatch)
-saNtfFinalize                   = decorate(saNtf.saNtfFinalize)
-saNtfObjectCreateDeleteNotificationAllocate = decorate(saNtf.saNtfObjectCreateDeleteNotificationAllocate)
-saNtfAttributeChangeNotificationAllocate = decorate(saNtf.saNtfAttributeChangeNotificationAllocate)
-saNtfStateChangeNotificationAllocate = decorate(saNtf.saNtfStateChangeNotificationAllocate)
-saNtfStateChangeNotificationAllocate_3 = decorate(saNtf.saNtfStateChangeNotificationAllocate_3)
+saNtfSelectionObjectGet = decorate(saNtf.saNtfSelectionObjectGet)
+saNtfDispatch = decorate(saNtf.saNtfDispatch)
+saNtfFinalize = decorate(saNtf.saNtfFinalize)
+saNtfObjectCreateDeleteNotificationAllocate = \
+    decorate(saNtf.saNtfObjectCreateDeleteNotificationAllocate)
+saNtfAttributeChangeNotificationAllocate = \
+    decorate(saNtf.saNtfAttributeChangeNotificationAllocate)
+saNtfStateChangeNotificationAllocate = \
+    decorate(saNtf.saNtfStateChangeNotificationAllocate)
+saNtfStateChangeNotificationAllocate_3 = \
+    decorate(saNtf.saNtfStateChangeNotificationAllocate_3)
 saNtfAlarmNotificationAllocate = decorate(saNtf.saNtfAlarmNotificationAllocate)
-saNtfSecurityAlarmNotificationAllocate = decorate(saNtf.saNtfSecurityAlarmNotificationAllocate)
-saNtfMiscellaneousNotificationAllocate = decorate(saNtf.saNtfMiscellaneousNotificationAllocate)
-saNtfPtrValAllocate             = decorate(saNtf.saNtfPtrValAllocate)
-saNtfArrayValAllocate           = decorate(saNtf.saNtfArrayValAllocate)
-saNtfIdentifierAllocate         = decorate(saNtf.saNtfIdentifierAllocate)
-saNtfNotificationSend           = decorate(saNtf.saNtfNotificationSend)
-saNtfNotificationSendWithId     = decorate(saNtf.saNtfNotificationSendWithId)
-saNtfNotificationFree           = decorate(saNtf.saNtfNotificationFree)
-saNtfVariableDataSizeGet        = decorate(saNtf.saNtfVariableDataSizeGet)
-saNtfLocalizedMessageGet        = decorate(saNtf.saNtfLocalizedMessageGet)
-saNtfLocalizedMessageFree_2     = decorate(saNtf.saNtfLocalizedMessageFree_2)
-saNtfPtrValGet                  = decorate(saNtf.saNtfPtrValGet)
-saNtfArrayValGet                = decorate(saNtf.saNtfArrayValGet)
-saNtfObjectCreateDeleteNotificationFilterAllocate = decorate(saNtf.saNtfObjectCreateDeleteNotificationFilterAllocate)
-saNtfAttributeChangeNotificationFilterAllocate = decorate(saNtf.saNtfAttributeChangeNotificationFilterAllocate)
-saNtfStateChangeNotificationFilterAllocate_2 = decorate(saNtf.saNtfStateChangeNotificationFilterAllocate_2)
-saNtfAlarmNotificationFilterAllocate = decorate(saNtf.saNtfAlarmNotificationFilterAllocate)
-saNtfSecurityAlarmNotificationFilterAllocate = decorate(saNtf.saNtfSecurityAlarmNotificationFilterAllocate)
-saNtfNotificationFilterFree     = decorate(saNtf.saNtfNotificationFilterFree)
-saNtfNotificationSubscribe_3    = decorate(saNtf.saNtfNotificationSubscribe_3)
-saNtfNotificationReadInitialize_3 = decorate(saNtf.saNtfNotificationReadInitialize_3)
-saNtfNotificationUnsubscribe_2  = decorate(saNtf.saNtfNotificationUnsubscribe_2)
-saNtfNotificationReadNext       = decorate(saNtf.saNtfNotificationReadNext)
-saNtfNotificationReadNext_3     = decorate(saNtf.saNtfNotificationReadNext_3)
-saNtfNotificationReadFinalize   = decorate(saNtf.saNtfNotificationReadFinalize)
+saNtfSecurityAlarmNotificationAllocate = \
+    decorate(saNtf.saNtfSecurityAlarmNotificationAllocate)
+saNtfMiscellaneousNotificationAllocate = \
+    decorate(saNtf.saNtfMiscellaneousNotificationAllocate)
+saNtfPtrValAllocate = decorate(saNtf.saNtfPtrValAllocate)
+saNtfArrayValAllocate = decorate(saNtf.saNtfArrayValAllocate)
+saNtfIdentifierAllocate = decorate(saNtf.saNtfIdentifierAllocate)
+saNtfNotificationSend = decorate(saNtf.saNtfNotificationSend)
+saNtfNotificationSendWithId = decorate(saNtf.saNtfNotificationSendWithId)
+saNtfNotificationFree = decorate(saNtf.saNtfNotificationFree)
+saNtfVariableDataSizeGet = decorate(saNtf.saNtfVariableDataSizeGet)
+saNtfLocalizedMessageGet = decorate(saNtf.saNtfLocalizedMessageGet)
+saNtfLocalizedMessageFree_2 = decorate(saNtf.saNtfLocalizedMessageFree_2)
+saNtfPtrValGet = decorate(saNtf.saNtfPtrValGet)
+saNtfArrayValGet = decorate(saNtf.saNtfArrayValGet)
+saNtfObjectCreateDeleteNotificationFilterAllocate = \
+    decorate(saNtf.saNtfObjectCreateDeleteNotificationFilterAllocate)
+saNtfAttributeChangeNotificationFilterAllocate = \
+    decorate(saNtf.saNtfAttributeChangeNotificationFilterAllocate)
+saNtfStateChangeNotificationFilterAllocate_2 = \
+    decorate(saNtf.saNtfStateChangeNotificationFilterAllocate_2)
+saNtfAlarmNotificationFilterAllocate = \
+    decorate(saNtf.saNtfAlarmNotificationFilterAllocate)
+saNtfSecurityAlarmNotificationFilterAllocate = \
+    decorate(saNtf.saNtfSecurityAlarmNotificationFilterAllocate)
+saNtfNotificationFilterFree = decorate(saNtf.saNtfNotificationFilterFree)
+saNtfNotificationSubscribe_3 = decorate(saNtf.saNtfNotificationSubscribe_3)
+saNtfNotificationReadInitialize_3 = \
+    decorate(saNtf.saNtfNotificationReadInitialize_3)
+saNtfNotificationUnsubscribe_2 = decorate(saNtf.saNtfNotificationUnsubscribe_2)
+saNtfNotificationReadNext = decorate(saNtf.saNtfNotificationReadNext)
+saNtfNotificationReadNext_3 = decorate(saNtf.saNtfNotificationReadNext_3)
+saNtfNotificationReadFinalize = decorate(saNtf.saNtfNotificationReadFinalize)
 
 
-HANDLE = saNtf.SaNtfHandleT()
-SELECTION_OBJECT = saAis.SaSelectionObjectT()
-CALLBACKS = saNtf.SaNtfCallbacksT()
+handle = saNtf.SaNtfHandleT()
+selection_object = SaSelectionObjectT()
+callbacks = saNtf.SaNtfCallbacksT()
 
 
 class AdditionalInfo(object):
-    ''' Represents a piece of additional info to be included in a
-        notification
-    '''
-
+    """ Represent a piece of additional info to be included in a notification
+    """
     def __init__(self, info_id, info_type, info_value):
         self.info_id = info_id
         self.info_type = info_type
@@ -86,84 +100,87 @@ class AdditionalInfo(object):
 
 
 class StateChange(object):
-    ''' Contains information about a state change event'''
-
+    """ Contain information about a state change event """
     def __init__(self):
         pass
 
 
 class AttributeChange(object):
-    ''' Contains information about a change in an attribute'''
-
+    """ Contain information about a change in an attribute """
     def __init__(self):
         pass
 
 
 class Attribute(object):
-    ''' Contains information about the value and value type of an attribute'''
-
+    """ Contain information about the value and value type of an attribute """
     def __init__(self):
         pass
 
 
 class SecurityAlarmDetector(object):
-    ''' Represents an instance of a security alarm detector'''
-
+    """ Represent an instance of a security alarm detector """
     def __init__(self, value=None, value_type=None):
         self.value = value
         self.value_type = value_type
 
 
 class ServiceUser(object):
-    ''' Represents a service user'''
-
+    """ Represent a service user """
     def __init__(self, value=None, value_type=None):
         self.value = value
         self.value_type = value_type
 
 
 class ServiceProvider(object):
-    ''' Represents a service provider'''
-
+    """ Represent a service provider """
     def __init__(self, value=None, value_type=None):
         self.value = value
         self.value_type = value_type
 
 
 def dummy_func(*args):
-    ''' Dummy function used as a callback when no proper callbacks are set'''
+    """ Dummy function used as a callback when no proper callbacks are set """
     pass
 
-def initialize(notification_callback=None):
-    ''' Initializes the NTF library'''
-    # Assign default values for callbacks
-    CALLBACKS.saNtfNotificationCallback = \
-                    saNtf.SaNtfNotificationCallbackT(dummy_func)
-    CALLBACKS.saNtfNotificationDiscardedCallback = \
-                    saNtf.SaNtfNotificationDiscardedCallbackT(dummy_func)
 
-    # Override the notification subscribe callback if it's passed
+def initialize(notification_callback=None):
+    """ Initialize the NTF library
+
+    Args:
+        notification_callback (SaNtfNotificationCallbackT): Callback to be
+            invoked by NTF server to deliver a notification to the subscriber
+    """
+    # Assign default values for callbacks
+    callbacks.saNtfNotificationCallback = \
+        saNtf.SaNtfNotificationCallbackT(dummy_func)
+    callbacks.saNtfNotificationDiscardedCallback = \
+        saNtf.SaNtfNotificationDiscardedCallbackT(dummy_func)
+
+    # Override the default notification subscribe callback if one is provided
     if notification_callback:
-        CALLBACKS.saNtfNotificationCallback = \
+        callbacks.saNtfNotificationCallback = \
                     saNtf.SaNtfNotificationCallbackT(notification_callback)
 
-    # Initialize the NTF API
-    version = saAis.SaVersionT('A', 1, 1)
+    # Define which version of the NTF API to use
+    version = SaVersionT('A', 1, 1)
 
-    # Initialize the API
-    saNtfInitialize(HANDLE, CALLBACKS, version)
+    # Initialize the NTF interface
+    saNtfInitialize(handle, callbacks, version)
 
     # Get the selection object
-    saNtfSelectionObjectGet(HANDLE, SELECTION_OBJECT)
+    saNtfSelectionObjectGet(handle, selection_object)
 
 
 def assign_ntf_value_to_attribute(attr_value_field, value, value_type):
-    ''' Assigns the correct sub-field in the given attribute
+    """ Assign the correct sub-field in the given attribute
 
-        e.g. attr_value_field.uint8Val = ...
+    Args:
+        attr_value_field (SaNtfValueT): Object attribute value in an object
+            creation or deletion notification
+        value (variable-size C data type): Actual value of the object attribute
+        value_type (SaNtfValueTypeT): Type of the object attribute value
 
-    '''
-
+    """
     if value_type == saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_UINT8:
         attr_value_field.uint8Val = value
 
@@ -199,8 +216,21 @@ def fill_in_header(notification_handle,
                    header, notification_object, notifying_object, vendor_id,
                    major_id, minor_id, additional_text, event_type, event_time,
                    additional_info):
-    ''' Fills in the given notification header with the provided values'''
+    """ Fill in the given notification header with the provided information
 
+    Args:
+        notification_handle (SaNtfNotificationHandleT): Notification handle
+        header (SaNtfNotificationHeaderT): Notification header
+        notification_object (str): Notification object's dn
+        notifying_object (str): Notifying object's dn
+        vendor_id (SaUint32T): Vendor id
+        major_id (SaUint16T): Major id
+        minor_id (SaUint16T): Minor id
+        additional_text (str): Additional text
+        event_type (SaNtfEventTypeT): Event type
+        event_time (SaTimeT): Event time
+        additional_info (list): List of AdditionalInfo class instances
+    """
     header.eventType.contents.value = event_type
     header.notificationObject.contents.value = notification_object
     header.notificationObject.contents.length = len(notification_object)
@@ -221,23 +251,19 @@ def fill_in_header(notification_handle,
     header.thresholdInformation = None
 
     # Fill in additional info
-    if additional_info != []:
-        for i in range(0, len(additional_info)):
+    if additional_info:
+        for i, add_info in enumerate(additional_info):
+            header.additionalInfo[i].infoId = add_info.info_id
+            header.additionalInfo[i].infoType = add_info.info_type
 
-            header.additionalInfo[i].infoId = additional_info[i].info_id
-            header.additionalInfo[i].infoType = additional_info[i].info_type
-
-            dest_ptr = (ctypes.c_char * len(additional_info[i].info_value))()
+            dest_ptr = (ctypes.c_char * len(add_info.info_value))()
 
             saNtf.saNtfPtrValAllocate(notification_handle,
-                                      len(additional_info[i].info_value) + 1,
+                                      len(add_info.info_value) + 1,
                                       dest_ptr,
                                       header.additionalInfo[i].infoValue)
-
-            ctypes.memmove(ctypes.addressof(dest_ptr),
-                           additional_info[i].info_value,
-                           len(additional_info[i].info_value) + 1)
-
+            ctypes.memmove(ctypes.addressof(dest_ptr), add_info.info_value,
+                           len(add_info.info_value) + 1)
     else:
         header.additionalInfo = None
 
@@ -246,10 +272,27 @@ def send_object_create_notification(vendor_id, major_id, minor_id,
                                     additional_text="",
                                     notification_object="",
                                     notifying_object="",
-                                    attributes=[],
-                                    event_time=saAis.saAis.SA_TIME_UNKNOWN,
-                                    additional_info=[]):
-    ''' Sends a notification for a created object'''
+                                    attributes=None,
+                                    event_time=saAis.SA_TIME_UNKNOWN,
+                                    additional_info=None):
+    """ Send notification about an object creation event
+
+    Args:
+        vendor_id (SaUint32T): Vendor id
+        major_id (SaUint16T): Major id
+        minor_id (SaUint16T): Minor id
+        additional_text (str): Additional text
+        notification_object (str): Notification object's dn
+        notifying_object (str): Notifying object's dn
+        attributes (list): List of Attribute class instances
+        event_time (SaTimeT): Event time
+        additional_info (list): List of AdditionalInfo class instances
+    """
+    if attributes is None:
+        attributes = []
+
+    if additional_info is None:
+        additional_info = []
 
     _send_object_create_delete_notification(
         saNtf.eSaNtfEventTypeT.SA_NTF_OBJECT_CREATION,
@@ -262,16 +305,31 @@ def send_object_create_notification(vendor_id, major_id, minor_id,
         additional_info=additional_info)
 
 
-def send_object_delete_notification(vendor_id,
-                                    major_id,
-                                    minor_id,
+def send_object_delete_notification(vendor_id, major_id, minor_id,
                                     additional_text="",
                                     notification_object="",
                                     notifying_object="",
-                                    attributes=[],
-                                    event_time=saAis.saAis.SA_TIME_UNKNOWN,
-                                    additional_info=[]):
-    ''' Sends a notification for a deleted object'''
+                                    attributes=None,
+                                    event_time=saAis.SA_TIME_UNKNOWN,
+                                    additional_info=None):
+    """ Send notification about an object deletion event
+
+    Args:
+        vendor_id (SaUint32T): Vendor id
+        major_id (SaUint16T): Major id
+        minor_id (SaUint16T): Minor id
+        additional_text (str): Additional text
+        notification_object (str): Notification object's dn
+        notifying_object (str): Notifying object's dn
+        attributes (list): List of Attribute class instances
+        event_time (SaTimeT): Event time
+        additional_info (list): List of AdditionalInfo class instances
+    """
+    if attributes is None:
+        attributes = []
+
+    if additional_info is None:
+        additional_info = []
 
     _send_object_create_delete_notification(
         saNtf.eSaNtfEventTypeT.SA_NTF_OBJECT_DELETION,
@@ -284,30 +342,41 @@ def send_object_delete_notification(vendor_id,
         additional_info=additional_info)
 
 
-def _send_object_create_delete_notification(
-        event_type,
-        vendor_id,
-        major_id,
-        minor_id,
-        additional_text="",
-        notification_object="",
-        notifying_object="",
-        attributes=[],
-        event_time=saAis.saAis.SA_TIME_UNKNOWN,
-        additional_info=[]):
-    ''' Sends an object create delete notification'''
+def _send_object_create_delete_notification(event_type, vendor_id, major_id,
+                                            minor_id, additional_text="",
+                                            notification_object="",
+                                            notifying_object="",
+                                            attributes=None,
+                                            event_time=saAis.SA_TIME_UNKNOWN,
+                                            additional_info=None):
+    """ Common function to send notification about an object creation/deletion
+
+    Args:
+        event_type (SaNtfEventTypeT): Event type
+        vendor_id (SaUint32T): Vendor id
+        major_id (SaUint16T): Major id
+        minor_id (SaUint16T): Minor id
+        additional_text (str): Additional text
+        notification_object (str): Notification object's dn
+        notifying_object (str): Notifying object's dn
+        attributes (list): List of Attribute class instances
+        event_time (SaTimeT): Event time
+        additional_info (list): List of AdditionalInfo class instances
+    """
+
+    if attributes is None:
+        attributes = []
+
+    if additional_info is None:
+        additional_info = []
 
     # Create the notification
     notification = saNtf.SaNtfObjectCreateDeleteNotificationT()
 
-    saNtfObjectCreateDeleteNotificationAllocate(
-        HANDLE,
-        notification,
-        0,
-        len(additional_text) + 1,
-        len(additional_info),
-        len(attributes),
-        0)
+    saNtfObjectCreateDeleteNotificationAllocate(handle, notification, 0,
+                                                len(additional_text) + 1,
+                                                len(additional_info),
+                                                len(attributes), 0)
 
     # Fill in the header
     fill_in_header(notification.notificationHandle,
@@ -317,8 +386,7 @@ def _send_object_create_delete_notification(
                    event_type, event_time, additional_info)
 
     # Fill in attributes
-    for i in range(0, notification.numAttributes):
-
+    for i in range(notification.numAttributes):
         ptr = notification.objectAttributes[i]
 
         ptr.attributeId = attributes[i].attribute_id
@@ -327,7 +395,6 @@ def _send_object_create_delete_notification(
         assign_ntf_value_to_attribute(ptr.attributeValue,
                                       attributes[i].attribute_value,
                                       attributes[i].attribute_type)
-
 
     # Send the notification
     saNtfNotificationSend(notification.notificationHandle)
@@ -342,24 +409,37 @@ def send_state_change_notification(vendor_id,
                                    additional_text="",
                                    notification_object="",
                                    notifying_object="",
-                                   event_time=saAis.saAis.SA_TIME_UNKNOWN,
-                                   additional_info=[],
-                                   state_changes=[]):
-    ''' Sends a state change notification'''
+                                   event_time=saAis.SA_TIME_UNKNOWN,
+                                   additional_info=None,
+                                   state_changes=None):
+    """ Send notification about a state change event
+
+    Args:
+        vendor_id (SaUint32T): Vendor id
+        major_id (SaUint16T): Major id
+        minor_id (SaUint16T): Minor id
+        additional_text (str): Additional text
+        notification_object (str): Notification object's dn
+        notifying_object (str): Notifying object's dn
+        event_time (SaTimeT): Event time
+        additional_info (list): List of AdditionalInfo class instances
+        state_changes (list): List of StateChange class instances
+    """
+    if additional_info is None:
+        additional_info = []
+
+    if state_changes is None:
+        state_changes = []
 
     event_type = saNtf.eSaNtfEventTypeT.SA_NTF_OBJECT_STATE_CHANGE
 
     # Create the notification
     notification = saNtf.SaNtfStateChangeNotificationT()
 
-    saNtfStateChangeNotificationAllocate(
-        HANDLE,
-        notification,
-        0,
-        len(additional_text) + 1,
-        len(additional_info),
-        len(state_changes),
-        0)
+    saNtfStateChangeNotificationAllocate(handle, notification, 0,
+                                         len(additional_text) + 1,
+                                         len(additional_info),
+                                         len(state_changes), 0)
 
     # Fill in the header
     fill_in_header(notification.notificationHandle,
@@ -369,50 +449,56 @@ def send_state_change_notification(vendor_id,
                    event_time, additional_info)
 
     # Fill in state changes
-
-    for i in range(0, len(state_changes)):
-
-        notification.changedStates[i].stateId = state_changes[i].state_id
-
-        if state_changes[i].old_state_present:
-            notification.changedStates[i].oldStatePresent = saAis.eSaBoolT.SA_TRUE
-            notification.changedStates[i].oldState = state_changes[i].old_state
-
+    for i, state_change in enumerate(state_changes):
+        notification.changedStates[i].stateId = state_change.state_id
+        if state_change.old_state_present:
+            notification.changedStates[i].oldStatePresent = eSaBoolT.SA_TRUE
+            notification.changedStates[i].oldState = state_change.old_state
         else:
-            notification.changedStates[i].oldStatePresent = saAis.eSaBoolT.SA_FALSE
+            notification.changedStates[i].oldStatePresent = eSaBoolT.SA_FALSE
 
-        notification.changedStates[i].newState = state_changes[i].new_state
+        notification.changedStates[i].newState = state_change.new_state
 
-    # Send the alarm notification
+    # Send the notification
     saNtfNotificationSend(notification.notificationHandle)
 
-    # Free the alarm notification
+    # Free the notification
     saNtfNotificationFree(notification.notificationHandle)
 
 
-def send_attribute_change_notification(vendor_id,
-                                       major_id,
-                                       minor_id,
-                                       additional_text="",
-                                       notification_object="",
-                                       notifying_object="",
-                                       event_type=saNtf.eSaNtfEventTypeT.SA_NTF_ATTRIBUTE_ADDED,
-                                       event_time=saAis.saAis.SA_TIME_UNKNOWN,
-                                       additional_info=[],
-                                       changed_attributes=[]):
-    ''' Sends an attribute_change notification'''
+def send_attribute_change_notification(
+        vendor_id, major_id, minor_id, additional_text="",
+        notification_object="", notifying_object="",
+        event_type=saNtf.eSaNtfEventTypeT.SA_NTF_ATTRIBUTE_ADDED,
+        event_time=saAis.SA_TIME_UNKNOWN, additional_info=None,
+        changed_attributes=None):
+    """ Send notification about an attribute change event
+
+    Args:
+        vendor_id (SaUint32T): Vendor id
+        major_id (SaUint16T): Major id
+        minor_id (SaUint16T): Minor id
+        additional_text (str): Additional text
+        notification_object (str): Notification object's dn
+        notifying_object (str): Notifying object's dn
+        event_type (SaNtfEventTypeT): Event type
+        event_time (SaTimeT): Event time
+        additional_info (list): List of AdditionalInfo class instances
+        changed_attributes (list): List of AttributeChange class instances
+    """
+    if additional_info is None:
+        additional_info = []
+
+    if changed_attributes is None:
+        changed_attributes = []
 
     # Create the notification
     notification = saNtf.SaNtfAttributeChangeNotificationT()
 
-    saNtfAttributeChangeNotificationAllocate(
-        HANDLE,
-        notification,
-        0,
-        len(additional_text) + 1,
-        len(additional_info),
-        len(changed_attributes),
-        0)
+    saNtfAttributeChangeNotificationAllocate(handle, notification, 0,
+                                             len(additional_text) + 1,
+                                             len(additional_info),
+                                             len(changed_attributes), 0)
 
     # Fill in the header
     fill_in_header(notification.notificationHandle,
@@ -421,60 +507,69 @@ def send_attribute_change_notification(vendor_id,
                    major_id, minor_id, additional_text, event_type,
                    event_time, additional_info)
 
-
     # Fill in attributes
-    for i in range(0, len(changed_attributes)):
-
+    for i, changed_attribute in enumerate(changed_attributes):
         ptr = notification.changedAttributes[i]
 
-        ptr.attributeId = changed_attributes[i].attribute_id
-        ptr.attributeType = changed_attributes[i].attribute_type
+        ptr.attributeId = changed_attribute.attribute_id
+        ptr.attributeType = changed_attribute.attribute_type
 
-        if changed_attributes[i].old_attribute_present:
-            ptr.oldAttributePresent = saAis.eSaBoolT.SA_TRUE
+        if changed_attribute.old_attribute_present:
+            ptr.oldAttributePresent = eSaBoolT.SA_TRUE
 
-            assign_ntf_value_to_attribute(ptr.oldAttributeValue,
-                                          changed_attributes[i].old_attribute_value,
-                                          changed_attributes[i].attribute_type)
-
+            assign_ntf_value_to_attribute(
+                ptr.oldAttributeValue,
+                changed_attribute.old_attribute_value,
+                changed_attribute.attribute_type)
         else:
-            ptr.oldAttributePresent = saAis.eSaBoolT.SA_FALSE
+            ptr.oldAttributePresent = eSaBoolT.SA_FALSE
 
-        assign_ntf_value_to_attribute(ptr.newAttributeValue,
-                                      changed_attributes[i].new_attribute_value,
-                                      changed_attributes[i].attribute_type)
+        assign_ntf_value_to_attribute(
+            ptr.newAttributeValue, changed_attribute.new_attribute_value,
+            changed_attribute.attribute_type)
 
-    # Send the alarm notification
+    # Send the notification
     saNtfNotificationSend(notification.notificationHandle)
 
-    # Free the alarm notification
+    # Free the notification
     saNtfNotificationFree(notification.notificationHandle)
 
 
-def send_security_alarm_notification(vendor_id, major_id, minor_id, severity,
-                                     alarm_detector,
-                                     user,
-                                     provider,
-                                     additional_text="",
-                                     notification_object="",
-                                     notifying_object="",
-                                     event_type=saNtf.eSaNtfEventTypeT.SA_NTF_INTEGRITY_VIOLATION,
-                                     event_time=saAis.saAis.SA_TIME_UNKNOWN,
-                                     additional_info=[],
-                                     probable_cause=saNtf.eSaNtfProbableCauseT.SA_NTF_SOFTWARE_ERROR):
+def send_security_alarm_notification(
+        vendor_id, major_id, minor_id, severity, alarm_detector, user,
+        provider, additional_text="", notification_object="",
+        notifying_object="",
+        event_type=saNtf.eSaNtfEventTypeT.SA_NTF_INTEGRITY_VIOLATION,
+        event_time=saAis.SA_TIME_UNKNOWN, additional_info=None,
+        probable_cause=saNtf.eSaNtfProbableCauseT.SA_NTF_SOFTWARE_ERROR):
 
-    ''' Sends a security alarm notification'''
+    """ Send a security alarm notification
+
+    Args:
+        vendor_id (SaUint32T): Vendor id
+        major_id (SaUint16T): Major id
+        minor_id (SaUint16T): Minor id
+        severity (SaNtfSeverityT): Severity
+        alarm_detector (SecurityAlarmDetector): Alarm detector information
+        user (ServiceUser): Service user information
+        provider (ServiceProvider): Service provider information
+        additional_text (str): Additional text
+        notification_object (str): Notification object's dn
+        notifying_object (str): Notifying object's dn
+        event_type (SaNtfEventTypeT): Event type
+        event_time (SaTimeT): Event time
+        additional_info (list): List of AdditionalInfo class instances
+        probable_cause (SaNtfProbableCauseT): Probable cause
+    """
+    if additional_info is None:
+        additional_info = []
 
     # Create the notification
     notification = saNtf.SaNtfSecurityAlarmNotificationT()
 
-    saNtfSecurityAlarmNotificationAllocate(
-        HANDLE,
-        notification,
-        0,
-        len(additional_text) + 1,
-        len(additional_info),
-        0)
+    saNtfSecurityAlarmNotificationAllocate(handle, notification, 0,
+                                           len(additional_text) + 1,
+                                           len(additional_info), 0)
 
     # Fill in the header
     fill_in_header(notification.notificationHandle,
@@ -499,35 +594,41 @@ def send_security_alarm_notification(vendor_id, major_id, minor_id, severity,
                                   provider.value,
                                   provider.value_type)
 
-    # Send the alarm notification
+    # Send the notification
     saNtfNotificationSend(notification.notificationHandle)
 
-    # Free the alarm notification
+    # Free the notification
     saNtfNotificationFree(notification.notificationHandle)
 
 
-def send_alarm_notification(vendor_id, major_id, minor_id, severity,
-                            additional_text="",
-                            notification_object="",
-                            notifying_object="",
-                            event_type=saNtf.eSaNtfEventTypeT.SA_NTF_ALARM_PROCESSING,
-                            event_time=saAis.saAis.SA_TIME_UNKNOWN,
-                            additional_info=[]):
-    ''' Sends an alarm notification'''
+def send_alarm_notification(
+        vendor_id, major_id, minor_id, severity, additional_text="",
+        notification_object="", notifying_object="",
+        event_type=saNtf.eSaNtfEventTypeT.SA_NTF_ALARM_PROCESSING,
+        event_time=saAis.SA_TIME_UNKNOWN, additional_info=None):
+    """ Send an alarm notification
+
+    Args:
+        vendor_id (SaUint32T): Vendor id
+        major_id (SaUint16T): Major id
+        minor_id (SaUint16T): Minor id
+        severity (SaNtfSeverityT): Severity
+        additional_text (str): Additional text
+        notification_object (str): Notification object's dn
+        notifying_object (str): Notifying object's dn
+        event_type (SaNtfEventTypeT): Event type
+        event_time (SaTimeT): Event time
+        additional_info (list): List of AdditionalInfo class instances
+    """
+    if additional_info is None:
+        additional_info = []
 
     # Create the notification
     notification = saNtf.SaNtfAlarmNotificationT()
 
-    saNtfAlarmNotificationAllocate(
-        HANDLE,
-        notification,
-        0,
-        len(additional_text) + 1,
-        len(additional_info),
-        0,
-        0,
-        0,
-        0)
+    saNtfAlarmNotificationAllocate(handle, notification, 0,
+                                   len(additional_text) + 1,
+                                   len(additional_info), 0, 0, 0, 0)
 
     # Fill in the header
     fill_in_header(notification.notificationHandle,
@@ -541,95 +642,109 @@ def send_alarm_notification(vendor_id, major_id, minor_id, severity,
     notification.numProposedRepairActions = 0
     notification.perceivedSeverity.contents.value = severity
     notification.probableCause.contents.value = \
-                                saNtf.eSaNtfProbableCauseT.SA_NTF_DEGRADED_SIGNAL
+        saNtf.eSaNtfProbableCauseT.SA_NTF_DEGRADED_SIGNAL
 
-    # Send the alarm notification
+    # Send the notification
     saNtfNotificationSend(notification.notificationHandle)
 
-    # Free the alarm notification
+    # Free the notification
     saNtfNotificationFree(notification.notificationHandle)
 
 
 def subscribe_for_notifications(notification_types=None):
-    ''' Subscribes for notifications from NTF. The types of notifications to
-        subscribe to are passed in the notification_types list and
-        subscriptions are set up for all types if the list is empty
-    '''
+    """ Subscribe for notifications from NTF. The types of notifications to
+    subscribe to are passed in the notification_types list and subscriptions
+    are set up for all types if the list is empty.
 
+    Args:
+        notification_types (list): List of notification types
+    """
     filters = []
 
     filter_handles = saNtf.SaNtfNotificationTypeFilterHandlesT()
-
-    filter_handles.objectCreateDeleteFilterHandle = saNtf.SaNtfNotificationFilterHandleT(0)
-    filter_handles.attributeChangeFilterHandle = saNtf.SaNtfNotificationFilterHandleT(0)
-    filter_handles.stateChangeFilterHandle = saNtf.SaNtfNotificationFilterHandleT(0)
+    filter_handles.objectCreateDeleteFilterHandle = \
+        saNtf.SaNtfNotificationFilterHandleT(0)
+    filter_handles.attributeChangeFilterHandle = \
+        saNtf.SaNtfNotificationFilterHandleT(0)
+    filter_handles.stateChangeFilterHandle = \
+        saNtf.SaNtfNotificationFilterHandleT(0)
     filter_handles.alarmFilterHandle = saNtf.SaNtfNotificationFilterHandleT(0)
-    filter_handles.securityFilterHandle = saNtf.SaNtfNotificationFilterHandleT(0)
-
+    filter_handles.securityFilterHandle = \
+        saNtf.SaNtfNotificationFilterHandleT(0)
 
     # Create and allocate the alarm filter
     if not notification_types or \
        saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_ALARM in notification_types:
         notification_filter = saNtf.SaNtfAlarmNotificationFilterT()
 
-        saNtfAlarmNotificationFilterAllocate(HANDLE, notification_filter,
+        saNtfAlarmNotificationFilterAllocate(handle, notification_filter,
                                              0, 0, 0, 0, 0, 0, 0)
 
-        filter_handles.alarmFilterHandle = notification_filter.notificationFilterHandle
+        filter_handles.alarmFilterHandle = \
+            notification_filter.notificationFilterHandle
 
         filters.append(notification_filter.notificationFilterHandle)
 
     # Create and allocate the object create delete filter
     if not notification_types or \
-       saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_OBJECT_CREATE_DELETE in notification_types:
-        notification_filter = saNtf.SaNtfObjectCreateDeleteNotificationFilterT()
+       saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_OBJECT_CREATE_DELETE in \
+       notification_types:
+        notification_filter = \
+            saNtf.SaNtfObjectCreateDeleteNotificationFilterT()
 
-        saNtfObjectCreateDeleteNotificationFilterAllocate(HANDLE,
+        saNtfObjectCreateDeleteNotificationFilterAllocate(handle,
                                                           notification_filter,
                                                           0, 0, 0, 0, 0)
 
-        filter_handles.objectCreateDeleteFilterHandle = notification_filter.notificationFilterHandle
+        filter_handles.objectCreateDeleteFilterHandle = \
+            notification_filter.notificationFilterHandle
         filters.append(notification_filter.notificationFilterHandle)
 
     # Create and allocate the attribute change filter
     if not notification_types or \
-       saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_ATTRIBUTE_CHANGE in notification_types:
+       saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_ATTRIBUTE_CHANGE in \
+       notification_types:
 
         notification_filter = saNtf.SaNtfAttributeChangeNotificationFilterT()
 
-        saNtfAttributeChangeNotificationFilterAllocate(HANDLE,
+        saNtfAttributeChangeNotificationFilterAllocate(handle,
                                                        notification_filter,
                                                        0, 0, 0, 0, 0)
 
-        filter_handles.attributeChangeFilterHandle = notification_filter.notificationFilterHandle
+        filter_handles.attributeChangeFilterHandle = \
+            notification_filter.notificationFilterHandle
 
         filters.append(notification_filter.notificationFilterHandle)
 
     # Create and allocate the state change filter
     if not notification_types or \
-       saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_STATE_CHANGE in notification_types:
+       saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_STATE_CHANGE in \
+       notification_types:
 
         notification_filter = saNtf.SaNtfStateChangeNotificationFilterT()
 
-        saNtfStateChangeNotificationFilterAllocate(HANDLE,
+        saNtfStateChangeNotificationFilterAllocate(handle,
                                                    notification_filter,
                                                    0, 0, 0, 0, 0, 0)
 
-        filter_handles.stateChangeFilterHandle = notification_filter.notificationFilterHandle
+        filter_handles.stateChangeFilterHandle = \
+            notification_filter.notificationFilterHandle
 
         filters.append(notification_filter.notificationFilterHandle)
 
     # Create and allocate the security alarm filter
     if not notification_types or \
-       saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_SECURITY_ALARM in notification_types:
+       saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_SECURITY_ALARM in \
+       notification_types:
 
         notification_filter = saNtf.SaNtfSecurityAlarmNotificationFilterT()
 
-        saNtfSecurityAlarmNotificationFilterAllocate(HANDLE,
+        saNtfSecurityAlarmNotificationFilterAllocate(handle,
                                                      notification_filter,
                                                      0, 0, 0, 0, 0, 0, 0, 0, 0)
 
-        filter_handles.securityAlarmFilterHandle = notification_filter.notificationFilterHandle
+        filter_handles.securityAlarmFilterHandle = \
+            notification_filter.notificationFilterHandle
 
         filters.append(notification_filter.notificationFilterHandle)
 
@@ -644,10 +759,11 @@ def subscribe_for_notifications(notification_types=None):
         saNtfNotificationFilterFree(filter_handle)
 
 
-def dispatch(mode=saAis.eSaDispatchFlagsT.SA_DISPATCH_ALL):
-    ''' Invokes NTF callbacks for queued events. The default is to dispatch all
-        available events
-    '''
+def dispatch(flags=eSaDispatchFlagsT.SA_DISPATCH_ALL):
+    """ Invoke NTF callbacks for queued events. The default is to dispatch all
+    available events.
 
-    saNtfDispatch(HANDLE, mode)
-
+    Args:
+        flags (eSaDispatchFlagsT): Flags specifying dispatch mode
+    """
+    saNtfDispatch(handle, flags)
