@@ -122,6 +122,7 @@ noinst_HEADERS += \
 	src/base/ncsusrbuf.h \
 	src/base/os_defs.h \
 	src/base/osaf_extended_name.h \
+	src/base/osaf_gcov.h \
 	src/base/osaf_poll.h \
 	src/base/osaf_secutil.h \
 	src/base/osaf_time.h \
