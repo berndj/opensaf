@@ -783,7 +783,7 @@ uint32_t avnd_comp_clc_fsm_run(AVND_CB *cb, AVND_COMP *comp,
       case AVND_COMP_CLC_PRES_FSM_EV_CLEANUP:
         break;
       default:
-        LOG_ER("Ignoring event '%s' for '%s' during node failover",
+        LOG_NO("Ignoring event '%s' for '%s' during node failover",
                pres_state_evt[ev], comp->name.c_str());
         goto done;
     }
@@ -809,7 +809,7 @@ uint32_t avnd_comp_clc_fsm_run(AVND_CB *cb, AVND_COMP *comp,
           goto done;
         }
       default:
-        LOG_ER("Ignoring event '%s' for '%s' during node shutdown",
+        LOG_NO("Ignoring event '%s' for '%s' during node shutdown",
                pres_state_evt[ev], comp->name.c_str());
         goto done;
     }
