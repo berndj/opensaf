@@ -22,9 +22,9 @@
 //==============================================================================
 // Validate `logRecordDestinationConfiguration`
 //==============================================================================
-const char validDest[] = "desta;UNIX_SOCKET;/var/lib/opensaf/mds_log.sock";
+const char validDest[] = "desta;UNIX_SOCKET;/var/lib/opensaf/osaf_log.sock";
 // Multi destinations
-const char multiDest1[] = "desta;UNIX_SOCKET;/var/lib/opensaf/mds_log.sock";
+const char multiDest1[] = "desta;UNIX_SOCKET;/var/lib/opensaf/osaf_log.sock";
 const char multiDest2[] = "destb;UNIX_SOCKET;/var/lib/opensaf/local.sock";
 // Delete destination
 const char delDest[] = "";
@@ -35,14 +35,14 @@ const char nildest[] = "destc;UNIX_SOCKET;";
 // Abnormal cases
 //<
 // Only destination type = "unix" is supported.
-const char invalidTypeDest[] = "test;invalid;/var/lib/opensaf/mds_log.sock";
+const char invalidTypeDest[] = "test;invalid;/var/lib/opensaf/osaf_log.sock";
 // "name" & "type" must have at least.
 const char invalidFmtDest[] = "test";
 // "name" must not contain special characters
 const char invalidNameDest[] = "destA?abc;UNIX_SOCKET;";
 // Same "name" must go with same "dest" and vice versa.
 const char invalidDuplicatedDest[] =
-    "destb;UNIX_SOCKET;/var/lib/opensaf/mds_log.sock";
+    "destb;UNIX_SOCKET;/var/lib/opensaf/osaf_log.sock";
 const char nilname[] = "destc";
 
 // Configure destination command

@@ -120,7 +120,7 @@ bool MdsLog::Init() {
   base::Conf::InitFullyQualifiedDomainName();
   const std::string &fqdn = base::Conf::FullyQualifiedDomainName();
   instance_ =
-      new MdsLog{fqdn, app_name, process_id, PKGLOCALSTATEDIR "/mds_log.sock"};
+      new MdsLog{fqdn, app_name, process_id, PKGLOCALSTATEDIR "/osaf_log.sock"};
   return instance_ != nullptr;
 }
 

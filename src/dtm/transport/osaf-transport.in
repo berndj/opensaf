@@ -34,7 +34,7 @@ RETVAL=0
 binary=$pkglibdir/$osafprog
 pidfile=$pkgpiddir/$osafprog.pid
 lockfile=$lockdir/$initscript
-sockfile=$pkglocalstatedir/mds_log.sock
+sockfile=$pkglocalstatedir/osaf_log.sock
 
 start() {
 	[ -p $NIDFIFO ] || return 1

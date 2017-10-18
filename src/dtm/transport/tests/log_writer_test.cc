@@ -54,7 +54,7 @@ TEST_F(LogWriterTest, ExistingFileShouldBeAppended) {
   std::ofstream ostr(tmpdir_ + std::string("/mds.log"));
   ostr << first_line << std::endl;
   ostr.close();
-  LogWriter* log_writer = new LogWriter();
+  LogWriter* log_writer = new LogWriter("mds.log");
   memcpy(log_writer->current_buffer_position(), second_line,
          sizeof(second_line) - 1);
   log_writer->current_buffer_position()[sizeof(second_line) - 1] = '\n';

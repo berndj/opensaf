@@ -19,6 +19,7 @@
 #define DTM_TRANSPORT_LOG_SERVER_H_
 
 #include <cstddef>
+#include <map>
 #include <string>
 #include "base/macros.h"
 #include "base/unix_server_socket.h"
@@ -28,6 +29,7 @@
 // and sends them to a LogWriter instance.
 class LogServer {
  public:
+  static constexpr size_t kMaxNoOfStreams = 32;
   // @a term_fd is a file descriptor that will become readable when the program
   // should exit because it has received the SIGTERM signal.
   explicit LogServer(int term_fd);
@@ -39,9 +41,46 @@ class LogServer {
   void Run();
 
  private:
+  class LogStream {
+   public:
+    static constexpr size_t kMaxLogNameSize = 32;
+    LogStream(const std::string& log_name);
+
+    size_t log_name_size() const { return log_name_.size(); }
+    const char* log_name_data() const { return log_name_.data(); }
+    char* current_buffer_position() {
+      return log_writer_.current_buffer_position();
+    }
+    bool empty() const { return log_writer_.empty(); }
+    // Write @a size bytes of log message data in the memory pointed to by @a
+    // buffer to the MDS log file. After the log message has been written, the
+    // file will be rotated if necessary. This method performs blocking file
+    // I/O.
+    void Write(size_t size);
+    void Flush();
+    struct timespec last_flush() const {
+      return last_flush_;
+    }
+
+   private:
+    const std::string log_name_;
+    struct timespec last_flush_;
+    LogWriter log_writer_;
+  };
+  static const char* GetField(const char* buf, size_t size, int field_no,
+                              size_t* field_size);
+  LogStream* GetStream(const char* msg_id, size_t msg_id_size);
+  // Validate the log stream name, for security reasons. This method will check
+  // that the string, when used as a file name, does not traverse the directory
+  // structure (e.g. ../../../etc/passwd would be an illegal log stream
+  // name). File names starting with a dot are also disallowed, since they would
+  // result in hidden files.
+  static bool ValidateLogName(const char* msg_id, size_t msg_id_size);
   int term_fd_;
   base::UnixServerSocket log_socket_;
-  LogWriter log_writer_;
+  std::map<std::string, LogStream*> log_streams_;
+  LogStream* current_stream_;
+  size_t no_of_log_streams_;
 
   DELETE_COPY_AND_MOVE_OPERATORS(LogServer);
 };

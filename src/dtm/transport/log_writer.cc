@@ -25,10 +25,10 @@
 #include "base/getenv.h"
 #include "osaf/configmake.h"
 
-LogWriter::LogWriter()
-    : mds_log_file_{base::GetEnv<std::string>("pkglogdir", PKGLOGDIR) +
-                    "/mds.log"},
-      old_mds_log_file_{mds_log_file_ + ".1"},
+LogWriter::LogWriter(const std::string& log_name)
+    : log_file_{base::GetEnv<std::string>("pkglogdir", PKGLOGDIR) + "/" +
+                log_name},
+      old_log_file_{log_file_ + ".1"},
       fd_{-1},
       current_file_size_{0},
       current_buffer_size_{0},
@@ -44,7 +44,7 @@ void LogWriter::Open() {
   if (fd_ < 0) {
     int fd;
     do {
-      fd = open(mds_log_file(), O_WRONLY | O_CLOEXEC | O_CREAT,
+      fd = open(log_file(), O_WRONLY | O_CLOEXEC | O_CREAT,
                 S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
     } while (fd == -1 && errno == EINTR);
     if (fd >= 0) {
@@ -66,9 +66,9 @@ void LogWriter::Close() {
 
 void LogWriter::RotateLog() {
   Close();
-  unlink(old_mds_log_file());
-  if (rename(mds_log_file(), old_mds_log_file()) != 0) {
-    unlink(mds_log_file());
+  unlink(old_log_file());
+  if (rename(log_file(), old_log_file()) != 0) {
+    unlink(log_file());
   }
 }
 
