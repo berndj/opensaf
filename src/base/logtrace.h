@@ -129,8 +129,8 @@ extern void logtrace_trace(const char *file, unsigned line, unsigned category,
     __attribute__((format(printf, 4, 5)));
 
 extern bool is_logtrace_enabled(unsigned category);
-extern void logtrace_output(const char *file, unsigned line, int priority,
-                            int category, const char *format, va_list ap);
+extern void logtrace_output(const char *file, unsigned line, unsigned priority,
+                            unsigned category, const char *format, va_list ap);
 
 /* LOG API. Use same levels as syslog */
 #define LOG_EM(format, args...) \
