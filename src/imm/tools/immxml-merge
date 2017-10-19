@@ -318,7 +318,8 @@ class MergedImmDocument(BaseImmDocument):
             
         ## FIX for minidom problem with lost encoding info in saved xml document
         trace("encoding in first source xml document:%s", self.firstSourceDoc.encoding)
-        if self.firstSourceDoc.encoding == "utf-8":
+        if self.firstSourceDoc.encoding is not None and \
+           self.firstSourceDoc.encoding.lower() == "utf-8":
             xml_as_string = self.document.toxml("utf-8")
             #xml_as_string = self.document.toprettyxml("", "", "utf-8")
         else:
