@@ -289,7 +289,7 @@ void invalidDestName(void)
 //
 const char sendMsg[] = "writing a record to destination";
 const char sendCmd[] = "saflogger -y";
-const char mdsLogPath[] = "/var/log/opensaf/mds.log";
+const char logpath[] = "/var/log/opensaf/saLogSystemC";
 
 bool is_executed_on_active_node()
 {
@@ -346,7 +346,7 @@ void writeToDest(void)
 	}
 
 	// 5) Verify if that sent msg comes to the end
-	sprintf(command, "grep \"%s_%d\" %s %s", sendMsg, r, mdsLogPath,
+	sprintf(command, "grep \"%s_%d\" %s %s", sendMsg, r, logpath,
 		disable_stdout ? s_stdout : "");
 
 	int count = 0;
@@ -427,7 +427,7 @@ void writeToNoDestName(void)
 	sleep(2);
 
 	// 5) Verify if that sent msg comes to the end
-	sprintf(command, "grep \"%s_%d\" %s %s", sendMsgNoDest, r, mdsLogPath,
+	sprintf(command, "grep \"%s_%d\" %s %s", sendMsgNoDest, r, logpath,
 		disable_stdout ? s_stdout : "");
 	rc = system(command);
 	if (WEXITSTATUS(rc) == 0) {
@@ -504,7 +504,7 @@ void writeToNilDestCfg(void)
 	sleep(2);
 
 	// 5) Verify if that sent msg comes to the end
-	sprintf(command, "grep \"%s_%d\" %s %s", sendMsgNil, r, mdsLogPath,
+	sprintf(command, "grep \"%s_%d\" %s %s", sendMsgNil, r, logpath,
 		disable_stdout ? s_stdout : "");
 	rc = system(command);
 	if (WEXITSTATUS(rc) == 0) {
