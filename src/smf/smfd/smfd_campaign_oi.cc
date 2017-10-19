@@ -28,6 +28,7 @@
 #include <saImmOm.h>
 #include <saImmOi.h>
 #include "base/osaf_time.h"
+#include "base/saf_error.h"
 
 #include "osaf/configmake.h"
 #include "base/logtrace.h"
@@ -800,6 +801,7 @@ uint32_t create_campaign_objects(smfd_cb_t *cb) {
  */
 uint32_t updateImmAttr(const char *dn, SaImmAttrNameT attributeName,
                        SaImmValueTypeT attrValueType, void *value) {
+  TRACE_ENTER();
   smfd_imm_lock();
   SaAisErrorT rc = immutil_update_one_rattr(
       smfd_cb->campaignOiHandle, dn, attributeName, attrValueType, value);
@@ -815,17 +817,17 @@ uint32_t updateImmAttr(const char *dn, SaImmAttrNameT attributeName,
        */
 
       LOG_WA(
-          "updateImmAttr(): immutil_update_one_rattr FAILED, rc = %d,"
-          "OI handle will be resurrected",
-          (int)rc);
+          "%s: immutil_update_one_rattr FAILED, '%s',"
+          "OI handle will be resurrected", __FUNCTION__, saf_error(rc));
     } else {
       LOG_ER(
-          "updateImmAttr(): immutil_update_one_rattr FAILED, rc = %d, going to assert",
-          (int)rc);
+          "%s: immutil_update_one_rattr FAILED, '%s', "
+          "going to assert", __FUNCTION__, saf_error(rc));
       osafassert(0);
     }
   }
 
+  TRACE_LEAVE();
   return NCSCC_RC_SUCCESS;
 }
 
@@ -1126,7 +1128,8 @@ uint32_t read_config_and_set_control_block(smfd_cb_t *cb) {
     if (getenv("SMF_IMM_PERSIST_CMD") == NULL) {
       // Not found in smfd.conf. Set hardcoded value for backward compability
       LOG_NO(
-          "Attr SMF_IMM_PERSIST_CMD is not available in SMF config object or smfd.conf file. Use default cmd: immdump /etc/opensaf/imm.xml");
+          "Attr SMF_IMM_PERSIST_CMD is not available in SMF config object or "
+          "smfd.conf file. Use default cmd: immdump /etc/opensaf/imm.xml");
       smfImmPersistCmd = "immdump " PKGSYSCONFDIR "/imm.xml";
     } else {
       smfImmPersistCmd = getenv("SMF_IMM_PERSIST_CMD");
@@ -1243,29 +1246,38 @@ void *smfd_coi_reinit_thread(void *_cb) {
   TRACE_ENTER();
   smfd_cb_t *cb = (smfd_cb_t *)_cb;
 
-  SaAisErrorT rc = immutil_saImmOiInitialize_2(&cb->campaignOiHandle,
+  SaImmOiHandleT local_imm_oi_handle = 0;
+  SaSelectionObjectT local_campaignSelectionObject = 0;
+
+  // Do not publish the OI handle in the cb-structure before the whole
+  // init sequence is done. This is in order to avoid BAD OPERATION return code
+  // when handling RT objects in other threads. This may happen if the handle is
+  // valid (recovered) but before Implementer set is done
+  //
+
+  SaAisErrorT rc = immutil_saImmOiInitialize_2(&local_imm_oi_handle,
                                                &callbacks, &immVersion);
   if (rc != SA_AIS_OK) {
     LOG_ER("saImmOiInitialize_2 failed %u", rc);
     exit(EXIT_FAILURE);
   }
 
-  rc = immutil_saImmOiSelectionObjectGet(cb->campaignOiHandle,
-                                         &cb->campaignSelectionObject);
+  rc = immutil_saImmOiSelectionObjectGet(local_imm_oi_handle,
+                                         &local_campaignSelectionObject);
   if (rc != SA_AIS_OK) {
     LOG_ER("immutil_saImmOiSelectionObjectGet failed %u", rc);
     exit(EXIT_FAILURE);
   }
 
   if (cb->ha_state == SA_AMF_HA_ACTIVE) {
-    rc = immutil_saImmOiImplementerSet(cb->campaignOiHandle, implementerName);
+    rc = immutil_saImmOiImplementerSet(local_imm_oi_handle, implementerName);
     if (rc != SA_AIS_OK) {
       LOG_ER("immutil_saImmOiImplementerSet failed rc=%u implementer name =%s",
              rc, (char *)implementerName);
       exit(EXIT_FAILURE);
     }
 
-    rc = immutil_saImmOiClassImplementerSet(cb->campaignOiHandle,
+    rc = immutil_saImmOiClassImplementerSet(local_imm_oi_handle,
                                             campaignClassName);
     if (rc != SA_AIS_OK) {
       LOG_ER(
@@ -1274,7 +1286,7 @@ void *smfd_coi_reinit_thread(void *_cb) {
       exit(EXIT_FAILURE);
     }
 
-    rc = immutil_saImmOiClassImplementerSet(cb->campaignOiHandle,
+    rc = immutil_saImmOiClassImplementerSet(local_imm_oi_handle,
                                             smfConfigClassName);
     if (rc != SA_AIS_OK) {
       LOG_ER(
@@ -1283,7 +1295,7 @@ void *smfd_coi_reinit_thread(void *_cb) {
       exit(EXIT_FAILURE);
     }
 
-    rc = immutil_saImmOiClassImplementerSet(cb->campaignOiHandle,
+    rc = immutil_saImmOiClassImplementerSet(local_imm_oi_handle,
                                             smfSwBundleClassName);
     if (rc != SA_AIS_OK) {
       LOG_ER(
@@ -1292,7 +1304,7 @@ void *smfd_coi_reinit_thread(void *_cb) {
       exit(EXIT_FAILURE);
     }
 
-    rc = immutil_saImmOiClassImplementerSet(cb->campaignOiHandle,
+    rc = immutil_saImmOiClassImplementerSet(local_imm_oi_handle,
                                             openSafSmfExecControlClassName);
     if (rc != SA_AIS_OK) {
       LOG_ER(
@@ -1301,6 +1313,12 @@ void *smfd_coi_reinit_thread(void *_cb) {
       exit(EXIT_FAILURE);
     }
   }
+
+  // Recovery done and successful. Now the OI handle can be published
+  smfd_imm_lock();
+  cb->campaignOiHandle = local_imm_oi_handle;
+  cb->campaignSelectionObject = local_campaignSelectionObject;
+  smfd_imm_unlock();
 
   TRACE_LEAVE();
   return NULL;
