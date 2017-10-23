@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "base/osaf_gcov.h"
 #include "base/os_defs.h"
 #include "base/ncs_osprm.h"
 #include "base/logtrace.h"
@@ -152,6 +153,9 @@ int main(int argc, char **argv)
 		LOG_ER("send_lost_cm_notification() Fail");
 		imcn_exit(EXIT_FAILURE);
 	}
+
+	// Enable code coverage logging. (if --enable-gcov in configure)
+	create_gcov_flush_thread();
 
 	/*
 	 * Initiate polling

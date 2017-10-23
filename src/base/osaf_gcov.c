@@ -26,11 +26,6 @@
 #include <syslog.h>
 #include <stdlib.h>
 
-#ifdef HAVE_CONFIG_H
-#include "osaf/config.h"
-#endif
-
-#ifdef ENABLE_GCOV
 // default multicast group for gcov collection
 #define DFLT_MULTICAST_GROUP "239.0.0.1"
 #define DFLT_MULTICAST_PORT "4712"
@@ -195,5 +190,3 @@ void create_gcov_flush_thread(void) {
 
 	pthread_attr_destroy(&attr);
 }
-
-#endif  // ENABLE_GCOV

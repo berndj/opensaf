@@ -400,9 +400,8 @@ void daemonize(int argc, char *argv[])
 
 	create_fifofile(fifo_file);
 
-#ifdef ENABLE_GCOV
+	/* Enable code coverage logging. (if --enable-gcov in configure) */
 	create_gcov_flush_thread();
-#endif
 
 	/* Create the process PID file */
 	if (__create_pidfile(__pidfile) != 0)

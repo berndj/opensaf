@@ -60,7 +60,6 @@ lib_libopensaf_core_la_SOURCES += \
 	src/base/osaf_timerfd.c \
 	src/base/osaf_unicode.c \
 	src/base/osaf_utility.c \
-	src/base/osaf_gcov.c \
 	src/base/patricia.c \
 	src/base/process.cc \
 	src/base/saf_edu.c \
@@ -74,6 +73,11 @@ lib_libopensaf_core_la_SOURCES += \
 	src/base/unix_client_socket.cc \
 	src/base/unix_server_socket.cc \
 	src/base/unix_socket.cc
+
+if ENABLE_GCOV
+lib_libopensaf_core_la_SOURCES += \
+	src/base/osaf_gcov.c
+endif
 
 nodist_EXTRA_lib_libopensaf_core_la_SOURCES = dummy.cc
 

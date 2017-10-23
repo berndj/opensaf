@@ -31,6 +31,10 @@ extern "C" {
 
 extern void create_gcov_flush_thread(void);
 
+#else // gcov not enabled
+
+inline void create_gcov_flush_thread(void) {}
+
 #endif
 
 #ifdef __cplusplus
