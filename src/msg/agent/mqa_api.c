@@ -711,7 +711,6 @@ saMsgQueueOpen(SaMsgHandleT msgHandle, const SaNameT *queueName,
 		return rc;
 	}
 
-	m_MQSV_SET_SANAMET(queueName);
 	TRACE_1("queueName %s", queueName->value);
 
 	if (strncmp((char *)queueName->value, "safMq=", 6)) {
@@ -1011,7 +1010,6 @@ saMsgQueueOpenAsync(SaMsgHandleT msgHandle, SaInvocationT invocation,
 		return rc;
 	}
 
-	m_MQSV_SET_SANAMET(queueName);
 	TRACE_1("queueName %s ", queueName->value);
 
 	if (strncmp((char *)queueName->value, "safMq=", 6)) {
@@ -1370,7 +1368,6 @@ SaAisErrorT saMsgQueueStatusGet(SaMsgHandleT msgHandle,
 		return rc;
 	}
 
-	m_MQSV_SET_SANAMET(queueName);
 	TRACE_1("queueName %s ", queueName->value);
 
 	/* retrieve MQA CB */
@@ -1667,7 +1664,6 @@ SaAisErrorT saMsgQueueUnlink(SaMsgHandleT msgHandle, const SaNameT *queueName)
 		return rc;
 	}
 
-	m_MQSV_SET_SANAMET(queueName);
 	TRACE_1("queueName %s ", queueName->value);
 
 	/* retrieve MQA CB */
@@ -2189,9 +2185,6 @@ SaAisErrorT mqa_send_message(SaMsgHandleT msgHandle, const SaNameT *destination,
 		return rc;
 	}
 
-	/* To memset the bytes to zero other than the length bytes in the
-	 * SaNameT Structure */
-	m_MQSV_SET_SANAMET(destination);
 	TRACE_1("destination queue name %s", destination->value);
 
 	if (m_MQSV_IS_ACKFLAGS_NOT_VALID(ackFlags)) {
@@ -3527,9 +3520,6 @@ SaAisErrorT saMsgMessageSendReceive(SaMsgHandleT msgHandle,
 		return rc;
 	}
 
-	/* To memset the bytes to zero other than the length bytes in the
-	 * SaNameT Structure */
-	m_MQSV_SET_SANAMET(destination);
 	TRACE_1("Message send to queueName %s", destination->value);
 
 	if (m_NCS_SA_IS_VALID_TIME_DURATION(timeout) == false) {
@@ -4487,9 +4477,6 @@ SaAisErrorT saMsgQueueGroupCreate(SaMsgHandleT msgHandle,
 		return SA_AIS_ERR_INVALID_PARAM;
 	}
 
-	/* To memset the bytes to zero other than the length bytes in the
-	 * SaNameT Structure */
-	m_MQSV_SET_SANAMET(queueGroupName);
 	TRACE_1("queueGroupName %s", queueGroupName->value);
 
 	if (queueGroupName->length == 0) {
@@ -4636,9 +4623,6 @@ SaAisErrorT saMsgQueueGroupDelete(SaMsgHandleT msgHandle,
 		    "ERR_INVALID_PARAM: queueGroupName exceeds character 256");
 		return SA_AIS_ERR_INVALID_PARAM;
 	}
-	/* To memset the bytes to zero other than the length bytes in the
-	 * SaNameT Structure */
-	m_MQSV_SET_SANAMET(queueGroupName);
 	TRACE_1("queueGroupName %s", queueGroupName->value);
 
 	/* retrieve MQA CB */
@@ -4771,11 +4755,6 @@ SaAisErrorT saMsgQueueGroupInsert(SaMsgHandleT msgHandle,
 		return SA_AIS_ERR_INVALID_PARAM;
 	}
 
-	/* To memset the bytes to zero other than the length bytes in the
-	 * SaNameT Structure */
-	m_MQSV_SET_SANAMET(queueGroupName);
-
-	m_MQSV_SET_SANAMET(queueName);
 	TRACE_1("queueGroupName %s queueName %s", queueGroupName->value,
 		queueName->value);
 
@@ -4907,11 +4886,6 @@ SaAisErrorT saMsgQueueGroupRemove(SaMsgHandleT msgHandle,
 		return SA_AIS_ERR_INVALID_PARAM;
 	}
 
-	/* To memset the bytes to zero other than the length bytes in the
-	 * SaNameT Structure */
-	m_MQSV_SET_SANAMET(queueGroupName);
-
-	m_MQSV_SET_SANAMET(queueName);
 	TRACE_1("queueGroupName %s queueName %s", queueGroupName->value,
 		queueName->value);
 
@@ -5045,9 +5019,6 @@ saMsgQueueGroupTrack(SaMsgHandleT msgHandle, const SaNameT *queueGroupName,
 		return SA_AIS_ERR_INVALID_PARAM;
 	}
 
-	/* To memset the bytes to zero other than the length bytes in the
-	 * SaNameT Structure */
-	m_MQSV_SET_SANAMET(queueGroupName);
 	TRACE_1("queueGroupName %s", queueGroupName->value);
 
 	if (!(trackFlags &
@@ -5386,9 +5357,6 @@ SaAisErrorT saMsgQueueGroupTrackStop(SaMsgHandleT msgHandle,
 		return SA_AIS_ERR_INVALID_PARAM;
 	}
 
-	/* To memset the bytes to zero other than the length bytes in the
-	 * SaNameT Structure */
-	m_MQSV_SET_SANAMET(queueGroupName);
 	TRACE_1("queueGroupName %s", queueGroupName->value);
 
 	/* retrieve MQA CB */

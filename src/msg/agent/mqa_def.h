@@ -48,13 +48,6 @@
 #define m_MQSV_MQA_RETRIEVE_MQA_CB \
   ncshm_take_hdl(NCS_SERVICE_ID_MQA, gl_mqa_hdl)
 #define m_MQSV_MQA_GIVEUP_MQA_CB ncshm_give_hdl(gl_mqa_hdl)
-/* to memset the name->value[length] to remaining bytes till the end of the
- * array */
-#define m_MQSV_SET_SANAMET(name)                         \
-  {                                                      \
-    memset((void *)&name->value[name->length], 0,        \
-           (size_t)(SA_MAX_NAME_LENGTH - name->length)); \
-  }
 
 /* function prototypes for client handling*/
 MQA_CLIENT_INFO *mqa_client_tree_find_and_add(MQA_CB *mqa_cb,

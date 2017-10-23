@@ -12,8 +12,8 @@ static void saMsgVersion_01(void) {
   SaAisErrorT rc = saMsgInitialize(&msgHandle, 0, &msg1_1);
   assert(rc == SA_AIS_OK);
 
-  SaNameT queueGroupName = {sizeof("safMqg=messageQGroup") - 1,
-                            "safMqg=messageQGroup"};
+  const SaNameT queueGroupName = {sizeof("safMqg=messageQGroup") - 1,
+                                  "safMqg=messageQGroup"};
 
   rc = saMsgQueueGroupCreate(msgHandle, &queueGroupName,
                              SA_MSG_QUEUE_GROUP_ROUND_ROBIN);
