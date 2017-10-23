@@ -273,7 +273,10 @@ void add_sisu_state_info(AVND_MSG *msg, SaAmfSIAssignment *si_assign) {
                            &sisu_state->safSI);
   sisu_state->saAmfSISUHAState = si_assign->saAmfSISUHAState;
   sisu_state->assignmentAct = si_assign->assignmentAct;
-
+  LOG_NO("Synced SISU:%s,%s <%d, %d>",
+      osaf_extended_name_borrow(&si_assign->si),
+      osaf_extended_name_borrow(&si_assign->su),
+      si_assign->saAmfSISUHAState, si_assign->assignmentAct);
   sisu_state->next = msg->info.avd->msg_info.n2d_nd_sisu_state_info.sisu_list;
   msg->info.avd->msg_info.n2d_nd_sisu_state_info.sisu_list = sisu_state;
   msg->info.avd->msg_info.n2d_nd_sisu_state_info.num_sisu++;
@@ -299,7 +302,8 @@ void add_su_state_info(AVND_MSG *msg, const AVND_SU *su) {
   su_state->su_restart_cnt = su->su_restart_cnt;
   su_state->su_oper_state = su->oper;
   su_state->su_pres_state = su->pres;
-
+  LOG_NO("Synced SU:%s <%d, %d, %d>", su->name.c_str(), su->su_restart_cnt,
+      su->oper, su->pres);
   su_state->next = msg->info.avd->msg_info.n2d_nd_sisu_state_info.su_list;
   msg->info.avd->msg_info.n2d_nd_sisu_state_info.su_list = su_state;
   msg->info.avd->msg_info.n2d_nd_sisu_state_info.num_su++;
@@ -1899,11 +1903,6 @@ void avnd_sync_sisu(AVND_CB *cb) {
 
     add_su_state_info(&msg, su);
   }
-
-  LOG_NO("%d SISU states sent",
-         msg.info.avd->msg_info.n2d_nd_sisu_state_info.num_sisu);
-  LOG_NO("%d SU states sent",
-         msg.info.avd->msg_info.n2d_nd_sisu_state_info.num_su);
 
   rc = avnd_di_msg_send(cb, &msg);
   if (rc == NCSCC_RC_SUCCESS)

@@ -2309,6 +2309,7 @@ void AVD_SG::failover_absent_assignment() {
   }
 
   if (failed_su != nullptr) {
+    LOG_NO("Perform absent failover for failed SU:%s", failed_su->name.c_str());
     node_fail(avd_cb, failed_su);
     if (failed_su->is_in_service())
       failed_su->set_readiness_state(SA_AMF_READINESS_IN_SERVICE);
