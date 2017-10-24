@@ -1035,7 +1035,7 @@ static uint32_t cpnd_evt_proc_ckpt_open(CPND_CB *cb, CPND_EVT *evt,
 				TRACE_4(
 				    "cpnd ckpt rep create failed with rc:%d",
 				    rc);
-				goto ckpt_shm_node_free_error;
+				goto ckpt_node_del_error;
 			}
 		}
 		cpnd_evt_destroy(out_evt);
@@ -1098,7 +1098,7 @@ static uint32_t cpnd_evt_proc_ckpt_open(CPND_CB *cb, CPND_EVT *evt,
 				    (out_evt->info.cpnd.error != SA_AIS_OK)) {
 					send_evt.info.cpa.info.openRsp.error =
 					    out_evt->info.cpnd.error;
-					goto ckpt_shm_node_free_error;
+					goto ckpt_node_del_error;
 				} else if ((out_evt) &&
 					   (out_evt->info.cpnd.error ==
 					    SA_AIS_OK) &&
@@ -1170,6 +1170,11 @@ static uint32_t cpnd_evt_proc_ckpt_open(CPND_CB *cb, CPND_EVT *evt,
 	TRACE_4("cpnd ckpt open failure client_hdl:%llx", client_hdl);
 	goto agent_rsp;
 
+ckpt_node_del_error:
+	rc = cpnd_ckpt_node_del(cb, cp_node);
+	if (rc == NCSCC_RC_FAILURE)
+		LOG_ER("cpnd client tree del failed");
+
 ckpt_shm_node_free_error:
 	cpnd_ckpt_replica_destroy(cb, cp_node, &error);
 
@@ -1200,6 +1205,7 @@ ckpt_node_free_error:
 	if (cp_node->ret_tmr.is_active)
 		cpnd_tmr_stop(&cp_node->ret_tmr);
 	cpnd_ckpt_sec_map_destroy(&cp_node->replica_info);
+
 	m_MMGR_FREE_CPND_CKPT_NODE(cp_node);
 
 agent_rsp:
