@@ -29,11 +29,11 @@ extern "C" {
 
 #ifdef ENABLE_GCOV
 
-extern void create_gcov_flush_thread(void);
+void create_gcov_flush_thread(void);
 
 #else // gcov not enabled
 
-inline void create_gcov_flush_thread(void) {}
+static inline void create_gcov_flush_thread(void) {}
 
 #endif
 
