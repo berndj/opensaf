@@ -2793,23 +2793,11 @@ SmfAdminOperation::SmfAdminOperation(std::list<unitNameAndState> *i_allUnits)
   TRACE("%s m_NodeGroupAdminOwnerName '%s'", __FUNCTION__,
         m_admin_owner_name.c_str());
 
-  // Note:
-  // If any of the following steps fails m_creation_fail is set to true
-  // and an immediate return is done
-  // The public methods shall return fail if m_creation_fail is true
-
-  bool rc = initNodeGroupOm();
-  if (rc == false) {
-    LOG_NO("%s: initNodeGroupOm Fail", __FUNCTION__);
+  // Become admin owner using above created name
+  bool rc = initImmOmAndSetAdminOwnerName();
+  if (rc == false ) {
+    LOG_NO("%s: initAdminOwner() Fail", __FUNCTION__);
     m_creation_fail = true;
-    return;
-  }
-
-  rc = becomeAdminOwnerOfAmfClusterObj();
-  if (rc == false) {
-    LOG_NO("%s: becomeAdminOwnerOfAmfClusterObj Fail", __FUNCTION__);
-    m_creation_fail = true;
-    return;
   }
 }
 
@@ -2840,16 +2828,9 @@ bool SmfAdminOperation::lock() {
 
   createNodeAndSULockLists(SA_AMF_ADMIN_UNLOCKED);
 
-  rc = changeNodeGroupAdminState(SA_AMF_ADMIN_UNLOCKED, SA_AMF_ADMIN_LOCK);
+  rc = changeAdminState(SA_AMF_ADMIN_UNLOCKED, SA_AMF_ADMIN_LOCK);
   if (rc == false) {
-    LOG_NO("%s: changeNodeGroupAdminState() Fail %s", __FUNCTION__,
-           saf_error(m_errno));
-    goto done;
-  }
-
-  rc = adminOperationSerialized(SA_AMF_ADMIN_LOCK, m_suList);
-  if (rc == false) {
-    LOG_NO("%s: setAdminStateSUs() Fail %s", __FUNCTION__, saf_error(m_errno));
+    LOG_NO("%s setAdminState() Fail", __FUNCTION__);
   }
 
 done:
@@ -2880,17 +2861,9 @@ bool SmfAdminOperation::lock_in() {
 
   createNodeAndSULockLists(SA_AMF_ADMIN_LOCKED);
 
-  rc = changeNodeGroupAdminState(SA_AMF_ADMIN_LOCKED,
-                                 SA_AMF_ADMIN_LOCK_INSTANTIATION);
+  rc = changeAdminState(SA_AMF_ADMIN_LOCKED, SA_AMF_ADMIN_LOCK_INSTANTIATION);
   if (rc == false) {
-    LOG_NO("%s: changeNodeGroupAdminState() Fail %s", __FUNCTION__,
-           saf_error(m_errno));
-    goto done;
-  }
-
-  rc = adminOperationSerialized(SA_AMF_ADMIN_LOCK_INSTANTIATION, m_suList);
-  if (rc == false) {
-    LOG_NO("%s: setAdminStateSUs() Fail %s", __FUNCTION__, saf_error(m_errno));
+    LOG_NO("%s setAdminState() Fail", __FUNCTION__);
   }
 
 done:
@@ -2924,17 +2897,10 @@ bool SmfAdminOperation::unlock_in() {
   // Note: This actually change state to SA_AMF_ADMIN_LOCKED
   //       The admin operation is SA_AMF_ADMIN_UNLOCK_INSTANTIATION but
   //       there is no SA_AMF_ADMIN_UNLOCK_INSTANTIATION state
-  rc = changeNodeGroupAdminState(SA_AMF_ADMIN_LOCKED_INSTANTIATION,
-                                 SA_AMF_ADMIN_UNLOCK_INSTANTIATION);
+  rc = changeAdminState(SA_AMF_ADMIN_LOCKED_INSTANTIATION,
+                     SA_AMF_ADMIN_UNLOCK_INSTANTIATION);
   if (rc == false) {
-    LOG_NO("%s: changeNodeGroupAdminState() Fail %s", __FUNCTION__,
-           saf_error(m_errno));
-    goto done;
-  }
-
-  rc = adminOperationSerialized(SA_AMF_ADMIN_UNLOCK_INSTANTIATION, m_suList);
-  if (rc == false) {
-    LOG_NO("%s: setAdminStateSUs() Fail %s", __FUNCTION__, saf_error(m_errno));
+    LOG_NO("%s setAdminState() Fail", __FUNCTION__);
   }
 
 done:
@@ -2965,16 +2931,9 @@ bool SmfAdminOperation::unlock() {
 
   createNodeAndSUUnlockLists(SA_AMF_ADMIN_LOCKED);
 
-  rc = changeNodeGroupAdminState(SA_AMF_ADMIN_LOCKED, SA_AMF_ADMIN_UNLOCK);
+  rc = changeAdminState(SA_AMF_ADMIN_LOCKED, SA_AMF_ADMIN_UNLOCK);
   if (rc == false) {
-    LOG_NO("%s: changeNodeGroupAdminState() Fail %s", __FUNCTION__,
-           saf_error(m_errno));
-    goto done;
-  }
-
-  rc = adminOperationSerialized(SA_AMF_ADMIN_UNLOCK, m_suList);
-  if (rc == false) {
-    LOG_NO("%s: setAdminStateSUs() Fail %s", __FUNCTION__, saf_error(m_errno));
+    LOG_NO("%s changeAdminState() Fail", __FUNCTION__);
   }
 
 done:
@@ -3013,15 +2972,17 @@ done:
 /// SmfSetAdminState Private
 /// -----------------------------------------------
 
-/// Get all needed IMM handles. Updates corresponding member variables
-/// Return false if fail
-///
-bool SmfAdminOperation::initNodeGroupOm() {
+// Initialize an OM (get an OM handle) and become admin owner with
+// admin owner name set to the SmfAdminOperation admin owner name
+// Note: Does not set admin ownership for any object
+//       Use becomeAdminOwnerOf(object) and releaseAdminOwnerOf(object)
+//
+//
+bool SmfAdminOperation::initImmOmAndSetAdminOwnerName() {
   SaAisErrorT ais_rc = SA_AIS_ERR_TRY_AGAIN;
   int timeout_try_cnt = 6;
   bool rc = true;
 
-  TRACE_ENTER();
   // OM handle
   while (timeout_try_cnt > 0) {
     ais_rc = immutil_saImmOmInitialize(&m_omHandle, NULL, &m_immVersion);
@@ -3033,22 +2994,7 @@ bool SmfAdminOperation::initNodeGroupOm() {
     rc = false;
   }
 
-  // Accessors handle
-  if (rc == true) {
-    timeout_try_cnt = 6;
-    while (timeout_try_cnt > 0) {
-      ais_rc = immutil_saImmOmAccessorInitialize(m_omHandle, &m_accessorHandle);
-      if (ais_rc != SA_AIS_ERR_TIMEOUT) break;
-      timeout_try_cnt--;
-    }
-    if (ais_rc != SA_AIS_OK) {
-      LOG_NO("%s: saImmOmAccessorInitialize Fail %s", __FUNCTION__,
-             saf_error(ais_rc));
-      rc = false;
-    }
-  }
-
-  // Admin owner handle and Admin owner
+  // Admin owner handle and set Admin owner name
   if (rc == true) {
     timeout_try_cnt = 6;
     while (timeout_try_cnt > 0) {
@@ -3065,6 +3011,22 @@ bool SmfAdminOperation::initNodeGroupOm() {
     }
   }
 
+    return rc;
+}
+
+// Set the node group parent DN and initialize a ccb handle
+// Updates corresponding member variables
+// Return false if fail
+// Note: m_omHandle must have been initialized
+// Note: Become admin owner of AMF cluster object
+//
+bool SmfAdminOperation::becomeNgAdmOwnerAndInitCcb() {
+  SaAisErrorT ais_rc = SA_AIS_ERR_TRY_AGAIN;
+  int timeout_try_cnt = 6;
+  bool rc = true;
+
+  TRACE_ENTER();
+
   // Set parent DN for the Node group used for parallel locking and
   // Connect the admin owner if a node group already exist
   rc = setNodeGroupParentDn();
@@ -3072,9 +3034,12 @@ bool SmfAdminOperation::initNodeGroupOm() {
     LOG_NO("%s: setNodeGroupParentDn Fail", __FUNCTION__);
     rc = false;
   } else {
-    rc = becomeAdminOwnerOfAmfClusterObj();
+    // Become admin owner of node group parent dn to be able to create a node
+    // group
+    rc = becomeAdminOwnerOf(m_nodeGroupParentDn);
     if (rc == false) {
-      LOG_NO("%s: becomeAdminOwnerOfAmfClusterObj Fail", __FUNCTION__);
+      LOG_NO("%s: becomeAdminOwner of cluster object Fail",
+             __FUNCTION__);
     }
   }
 
@@ -3097,13 +3062,37 @@ bool SmfAdminOperation::initNodeGroupOm() {
   return rc;
 }
 
-// Become (temporary)admin owner of Amf Cluster object and node group
-// Needed in order to administrate a node group
+// Release the ccb handle and release admin owner for node group handling
+// Return false if fail
+// Note: m_omHandle must have been initialized
+// Note: Release admin owner of AMF cluster object
+//
+void SmfAdminOperation::releaseNgAdmOwnerAndCcb() {
+  TRACE_ENTER();
+  SaAisErrorT ais_rc = immutil_saImmOmCcbFinalize(m_ccbHandle);
+  if (ais_rc != SA_AIS_OK) {
+    LOG_NO("%s: immutil_saImmOmCcbFinalize() Fail '%s'", __FUNCTION__,
+           saf_error(ais_rc));
+  }
+
+  // Release admin owner of node group parent
+  bool rc = releaseAdminOwnerOf(m_nodeGroupParentDn);
+  if (rc == false) {
+    LOG_NO("%s: releaseAdminOwnerOfAmfClusterObj() Fail", __FUNCTION__);
+  }
+  TRACE_LEAVE();
+}
+
+// Become admin owner of one object
+//
+// Note: The admin owner handle must have been initiated. See initAdminOwner()
+//
 // Return false if Fail
-bool SmfAdminOperation::becomeAdminOwnerOfAmfClusterObj() {
-  SaNameT nodeGroupParentDn;
-  saAisNameLend(m_nodeGroupParentDn.c_str(), &nodeGroupParentDn);
-  const SaNameT *objectNames[2] = {&nodeGroupParentDn, NULL};
+bool SmfAdminOperation::becomeAdminOwnerOf(std::string& object_name) {
+  TRACE_ENTER();
+  SaNameT object_for_admin_ownership;
+  saAisNameLend(object_name.c_str(), &object_for_admin_ownership);
+  const SaNameT *objectNames[2] = {&object_for_admin_ownership, NULL};
 
   // We are taking admin owner on the parent DN of this object. This can
   // be conflicting with other threads which also want to create objects.
@@ -3119,7 +3108,7 @@ bool SmfAdminOperation::becomeAdminOwnerOfAmfClusterObj() {
 
     timeout_try_cnt--;
     TRACE(
-        "%s: adminOwnerSet returned SA_AIS_ERR_EXIST, "
+        "%s: saImmOmAdminOwnerSet returned SA_AIS_ERR_EXIST, "
         "sleep 1 second and retry",
         __FUNCTION__);
     osaf_nanosleep(&kOneSecond);
@@ -3131,27 +3120,58 @@ bool SmfAdminOperation::becomeAdminOwnerOfAmfClusterObj() {
            m_admin_owner_name.c_str(), saf_error(ais_rc));
   }
 
+  TRACE_LEAVE();
+  return rc;
+}
+
+// Release admin ownership of one object
+// Note: The admin owner handle must have been initiated. See initAdminOwner()
+//
+// Return false if Fail
+bool SmfAdminOperation::releaseAdminOwnerOf(std::string& object_name) {
+  TRACE_ENTER();
+  SaNameT object_for_admin_ownership;
+  bool rc = true;
+
+  saAisNameLend(object_name.c_str(), &object_for_admin_ownership);
+  const SaNameT *objectNames[2] = {&object_for_admin_ownership, NULL};
+
+  SaAisErrorT ais_rc = immutil_saImmOmAdminOwnerRelease(m_ownerHandle,
+                                                        objectNames,
+                                                        SA_IMM_SUBTREE);
+  if (ais_rc != SA_AIS_OK) {
+    LOG_NO("saImmOmAdminOwnerRelease Fail '%s'",
+           saf_error(ais_rc));
+    rc = false;
+  }
+
+  TRACE_LEAVE();
   return rc;
 }
 
 // Free all IMM handles that's based on the omHandle and
 // give up admin ownership of Amf Cluster object
 void SmfAdminOperation::finalizeNodeGroupOm() {
+  TRACE_ENTER();
   if (m_omHandle != 0) {
     (void)immutil_saImmOmFinalize(m_omHandle);
+    m_omHandle = 0;
   }
+  TRACE_LEAVE();
 }
 
 /// Check if the AIS return is considered a campaign error
 /// Do not Fail if any of the following AIS codes
 ///
 bool SmfAdminOperation::isRestartError(SaAisErrorT ais_rc) {
+  TRACE_ENTER();
   bool rc = true;
 
   if (ais_rc != SA_AIS_OK && ais_rc != SA_AIS_ERR_BAD_OPERATION) {
     rc = false;
   }
 
+  TRACE_LEAVE();
   return rc;
 }
 
@@ -3257,9 +3277,52 @@ void SmfAdminOperation::createUnitLists(SaAmfAdminStateT adminState,
   TRACE_LEAVE();
 }
 
-/// Return false if Fail. m_errno is set
-///
-bool SmfAdminOperation::changeNodeGroupAdminState(
+// Set given admin state using a node group or serialized:
+// - For units in m_suList serialized is used
+// - For units in m_nodeList:
+//   - One node in list use serialized
+//   - More than one node use node group
+bool SmfAdminOperation::changeAdminState(SaAmfAdminStateT fromState,
+                                      SaAmfAdminOperationIdT toState) {
+  bool rc = true;
+  TRACE_ENTER();
+
+  // Set admin state for nodes
+  if (m_nodeList.size() > 1) {
+    TRACE("%s: Use node group", __FUNCTION__);
+    rc = adminOperationNodeGroup(fromState, toState);
+    if (rc == false) {
+      LOG_NO("%s: changeNodeGroupAdminState() Fail %s", __FUNCTION__,
+             saf_error(m_errno));
+    }
+  } else if (m_nodeList.size() > 0) {
+    TRACE("%s: Use serialized for Node", __FUNCTION__);
+    rc = adminOperationSerialized(toState, m_nodeList);
+    if (rc == false) {
+      LOG_NO("%s: setAdminStateSUs() Fail %s", __FUNCTION__,
+             saf_error(m_errno));
+    }
+  }
+
+  // Set admin state for SUs
+  if ((rc == true) && (m_suList.size() > 0)) {
+    TRACE("%s: Use serialized for SUs", __FUNCTION__);
+    // Do only if nodes did not fail
+    rc = adminOperationSerialized(toState, m_suList);
+    if (rc == false) {
+      LOG_NO("%s: setAdminStateSUs() Fail %s", __FUNCTION__,
+             saf_error(m_errno));
+    }
+  }
+
+  TRACE_LEAVE();
+  return rc;
+}
+
+// Set given admin state in the m_nodeList using a node group
+// Return false if Fail. m_errno is set
+//
+bool SmfAdminOperation::adminOperationNodeGroup(
     SaAmfAdminStateT fromState, SaAmfAdminOperationIdT toState) {
   bool rc = true;
   SaAisErrorT ais_errno = SA_AIS_OK;
@@ -3283,10 +3346,35 @@ bool SmfAdminOperation::changeNodeGroupAdminState(
       (void)deleteNodeGroup();
     }
   } else {
-    TRACE("\tm_nodelist is empty!");
+    TRACE("\t m_nodelist is empty!");
   }
 
   m_errno = ais_errno;
+
+  TRACE_LEAVE();
+  return rc;
+}
+
+// Set given admin state to all units in the given unitList
+// Return false if Fail. m_ais_errno is set
+//
+bool SmfAdminOperation::adminOperationSerialized(
+    SaAmfAdminOperationIdT adminState,
+    const std::list<unitNameAndState> &i_unitList) {
+  bool rc = true;
+  m_errno = SA_AIS_OK;
+
+  TRACE_ENTER();
+
+  if (!i_unitList.empty()) {
+    for (auto &unit : i_unitList) {
+      rc = adminOperation(adminState, unit.name);
+      if (rc == false) {
+        // Failed to set admin state
+        break;
+      }
+    }
+  }
 
   TRACE_LEAVE();
   return rc;
@@ -3308,6 +3396,19 @@ SaAmfAdminStateT SmfAdminOperation::getAdminState(
   SaAmfAdminStateT *p_adminState = nullptr;
 
   m_errno = SA_AIS_OK;
+
+  // Get accessor handle
+  int timeout_try_cnt = 6;
+  SaAisErrorT ais_rc = SA_AIS_OK;
+  while (timeout_try_cnt > 0) {
+    ais_rc = immutil_saImmOmAccessorInitialize(m_omHandle, &m_accessorHandle);
+    if (ais_rc != SA_AIS_ERR_TIMEOUT) break;
+    timeout_try_cnt--;
+  }
+  if (ais_rc != SA_AIS_OK) {
+    LOG_NO("%s: saImmOmAccessorInitialize Fail %s", __FUNCTION__,
+           saf_error(ais_rc));
+  }
 
   // IMM object from i_unit.name
   SaNameT objectName;
@@ -3358,9 +3459,10 @@ SaAmfAdminStateT SmfAdminOperation::getAdminState(
 /// Return false if Fail. m_ais_errno is set
 ///
 bool SmfAdminOperation::setNodeGroupParentDn() {
-  TRACE_ENTER();
   bool rc = true;
   m_errno = SA_AIS_OK;
+
+  TRACE_ENTER();
 
   SaImmSearchHandleT searchHandle;
   SaImmAttrValuesT_2 **attributes;  // Not used. Wanted info in objectName
@@ -3401,7 +3503,8 @@ bool SmfAdminOperation::setNodeGroupParentDn() {
     TRACE("\t Object name is '%s'", tmp_str);
   }
 
-  TRACE_LEAVE2("m_nodeGroupParentDn '%s'", m_nodeGroupParentDn.c_str());
+  TRACE_LEAVE2("m_nodeGroupParentDn '%s', rc = %s",
+               m_nodeGroupParentDn.c_str(), rc == true? "true": "false");
 done:
   return rc;
 }
@@ -3485,22 +3588,32 @@ bool SmfAdminOperation::createNodeGroup(SaAmfAdminStateT i_fromState) {
   const SaImmAttrValuesT_2 *attrValues[] = {
       &safAmfNodeGroup, &saAmfNGAdminState, &saAmfNGNodeListAttr, NULL};
 
-  SaImmClassNameT className = const_cast<SaImmClassNameT>("SaAmfNodeGroup");
-  SaNameT nodeGroupParentDn;
-  osaf_extended_name_lend(m_nodeGroupParentDn.c_str(), &nodeGroupParentDn);
-  TRACE("\t m_nodeGroupParentDn '%s'", m_nodeGroupParentDn.c_str());
-
   // ------------------------------------
   // Create the node group
-  m_errno = SA_AIS_OK;
-  bool method_rc = false;
-  const uint32_t MAX_NO_RETRIES = 4;
+  // Retry if:
+  // - If a nodegroup with same name already exists
+  //   Delete existing and try again
+  // - If we get bad handle or bad operation error
+  //   Re-initialize and try again
+  const uint32_t kMaxNoRetries = 4;
   uint32_t retry_cnt = 0;
-  while (++retry_cnt <= MAX_NO_RETRIES) {
-    // Creating the node group object will fail if a previously
-    // created node group was for some reason not deleted
-    // If that's the case (SA_AIS_ERR_EXIST) try to delete the
-    // node group and try again.
+  bool method_rc = true;
+  m_errno = SA_AIS_OK;
+  while ((++retry_cnt <= kMaxNoRetries) && (method_rc == true)) {
+    // Note: OM handle and admin owner name is created in the constructor
+    if (becomeNgAdmOwnerAndInitCcb() == false) {
+      LOG_NO("%s: becomeNgAdmOwnerAndInitCcb() Fail", __FUNCTION__);
+      method_rc = false;
+      break;
+    }
+
+    // Fill in nodeGroupParentDn parameter for object create operation
+    SaImmClassNameT className = const_cast<SaImmClassNameT>("SaAmfNodeGroup");
+    SaNameT nodeGroupParentDn;
+    osaf_extended_name_lend(m_nodeGroupParentDn.c_str(), &nodeGroupParentDn);
+    TRACE("\t m_nodeGroupParentDn '%s'", m_nodeGroupParentDn.c_str());
+
+    // Create the node group
     m_errno = immutil_saImmOmCcbObjectCreate_2(m_ccbHandle, className,
                                                &nodeGroupParentDn, attrValues);
     TRACE("%s: immutil_saImmOmCcbObjectCreate_2 %s", __FUNCTION__,
@@ -3512,8 +3625,14 @@ bool SmfAdminOperation::createNodeGroup(SaAmfAdminStateT i_fromState) {
       // failed
       LOG_NO("%s: saImmOmCcbObjectCreate_2 Fail %s", __FUNCTION__,
              saf_error(m_errno));
-      bool rc = deleteNodeGroup();
-      if (rc == false) {
+      TRACE("%s: A node group unexpectedly already exist, "
+          "deleteNodeGroup", __FUNCTION__);
+
+      // Must be released so that deleteNodeGroup() can be come owner and
+      // create a CCB for deleting
+      releaseNgAdmOwnerAndCcb();
+      bool delete_rc = deleteNodeGroup();
+      if (delete_rc == false) {
         LOG_NO("%s: deleteNodeGroup() Fail", __FUNCTION__);
         method_rc = false;
         break;
@@ -3521,15 +3640,19 @@ bool SmfAdminOperation::createNodeGroup(SaAmfAdminStateT i_fromState) {
       continue;
     } else if (m_errno == SA_AIS_ERR_BAD_HANDLE ||
                m_errno == SA_AIS_ERR_BAD_OPERATION) {
+      // Reinitialize and try again
       LOG_NO("%s: saImmOmCcbObjectCreate_2 Fail %s", __FUNCTION__,
              saf_error(m_errno));
+
+      // Note: After finalize a new OM handle and admin owner name has to be
+      // created
       finalizeNodeGroupOm();
-      bool rc = initNodeGroupOm();
-      if (rc == false) {
-        LOG_NO("%s: initNodeGroupOm() Fail", __FUNCTION__);
+      if (initImmOmAndSetAdminOwnerName() == false) {
+        LOG_NO("%s: initAdminOwner() Fail", __FUNCTION__);
         method_rc = false;
         break;
       }
+
       TRACE("\t Try again after %s", saf_error(m_errno));
       continue;
     } else if (m_errno != SA_AIS_OK) {
@@ -3538,6 +3661,7 @@ bool SmfAdminOperation::createNodeGroup(SaAmfAdminStateT i_fromState) {
       method_rc = false;
       break;
     } else {
+      // The CCB is successfully created
       m_errno = saImmOmCcbApply(m_ccbHandle);
       if (m_errno != SA_AIS_OK) {
         LOG_NO("%s: saImmOmCcbApply() Fail '%s'", __FUNCTION__,
@@ -3545,14 +3669,22 @@ bool SmfAdminOperation::createNodeGroup(SaAmfAdminStateT i_fromState) {
         method_rc = false;
       } else {
         method_rc = true;
+        TRACE("%s CCB is applied", __FUNCTION__);
       }
-      break;
     }
+    break;
+  }
+  if (retry_cnt > kMaxNoRetries) {
+    // All retries failed
+    LOG_NO("%s: All retries for creating the NodeGroup Failed", __FUNCTION__);
+    method_rc = false;
   }
 
+  // Finalize the ccb and release admin ownership of node group parent
+  releaseNgAdmOwnerAndCcb();
   if (nodeName != NULL) free(nodeName);
   if (nodeNameList != NULL) free(nodeNameList);
-  TRACE_LEAVE2("rc %s", method_rc ? "Ok" : "Fail");
+  TRACE_LEAVE2("method_rc %s", method_rc ? "Ok" : "Fail");
   return method_rc;
 }
 
@@ -3560,23 +3692,25 @@ bool SmfAdminOperation::createNodeGroup(SaAmfAdminStateT i_fromState) {
 /// Return false if Fail. m_errno is set
 ///
 bool SmfAdminOperation::deleteNodeGroup() {
-  m_errno = SA_AIS_OK;
-
   TRACE_ENTER();
   std::string nodeGroupName_s =
       m_instanceNodeGroupName + "," + m_nodeGroupParentDn;
   SaNameT nodeGroupName;
   osaf_extended_name_lend(nodeGroupName_s.c_str(), &nodeGroupName);
-
   TRACE("\t Deleting nodeGroup '%s'", nodeGroupName_s.c_str());
-  bool method_rc = false;
-  const uint32_t MAX_NO_RETRIES = 3;
+
+  m_errno = SA_AIS_OK;
+  bool method_rc = true;
+  const uint32_t kMaxNoRetries = 3;
   uint32_t retry_cnt = 0;
-  while (++retry_cnt <= MAX_NO_RETRIES) {
-    // Handles including ccb handle may have been invalidated by
-    // IMM resulting in SA_AIS_ERR_BAD_HANDLE response on the
-    // delete object request.
-    // If that's the case: Try to create new handles and try again
+  while (++retry_cnt <= kMaxNoRetries) {
+    // Note: OM handle and admin owner name is created in the constructor
+    if (becomeNgAdmOwnerAndInitCcb() == false) {
+      LOG_NO("%s: initNodeGroupOm() Fail", __FUNCTION__);
+      method_rc = false;
+      break;
+    }
+
     m_errno = immutil_saImmOmCcbObjectDelete(m_ccbHandle, &nodeGroupName);
     TRACE("%s: immutil_saImmOmCcbObjectDelete %s", __FUNCTION__,
           saf_error(m_errno));
@@ -3585,13 +3719,16 @@ bool SmfAdminOperation::deleteNodeGroup() {
         m_errno == SA_AIS_ERR_BAD_OPERATION) {
       LOG_NO("%s: saImmOmCcbObjectDelete Fail %s", __FUNCTION__,
              saf_error(m_errno));
+
+      // Note: After finalize a new OM handle and admin owner name has to be
+      // created
       finalizeNodeGroupOm();
-      bool rc = initNodeGroupOm();
-      if (rc == false) {
-        LOG_NO("%s: initNodeGroupOm() Fail", __FUNCTION__);
+      if (initImmOmAndSetAdminOwnerName() == false) {
+        LOG_NO("%s: initAdminOwner() Fail", __FUNCTION__);
         method_rc = false;
         break;
       }
+
       TRACE("\t Try again after %s", saf_error(m_errno));
       continue;
     } else if (m_errno != SA_AIS_OK) {
@@ -3607,12 +3744,21 @@ bool SmfAdminOperation::deleteNodeGroup() {
         method_rc = false;
       } else {
         method_rc = true;
+        TRACE("%s CCB is applied", __FUNCTION__);
       }
-      break;
     }
+    break;
+  }
+  if (retry_cnt > kMaxNoRetries) {
+    // All retries failed
+    LOG_NO("%s: All retries for deleting the NodeGroup Failed", __FUNCTION__);
+    method_rc = false;
   }
 
-  TRACE_LEAVE2("rc %s, m_errno %s", method_rc ? "Ok" : "Fail",
+  // Finalize the ccb and release admin ownership of node group parent
+  releaseNgAdmOwnerAndCcb();
+
+  TRACE_LEAVE2("method_rc %s, m_errno %s", method_rc ? "Ok" : "Fail",
                saf_error(m_errno));
   return method_rc;
 }
@@ -3622,6 +3768,9 @@ bool SmfAdminOperation::deleteNodeGroup() {
 ///
 bool SmfAdminOperation::nodeGroupAdminOperation(
     SaAmfAdminOperationIdT adminOp) {
+
+  bool method_rc = true;
+
   TRACE_ENTER();
 
   // Create the object name
@@ -3635,85 +3784,79 @@ bool SmfAdminOperation::nodeGroupAdminOperation(
   // There are no operation parameters
   const SaImmAdminOperationParamsT_2 *params[1] = {NULL};
 
-  // ===================================
-  // Create the node group
-  const SaTimeT kNanoMillis = 1000000;
-  SaAisErrorT oi_rc = SA_AIS_OK;
-  SaAisErrorT imm_rc = SA_AIS_OK;
-  m_errno = SA_AIS_OK;
-  bool method_rc = false;
-  base::Timer adminOpTimer(smfd_cb->adminOpTimeout / kNanoMillis);
+  // Become admin ownership of the node group
+  bool admset_rc = becomeAdminOwnerOf(nodeGroupName_s);
 
-  while (adminOpTimer.is_timeout() == false) {
-    TRACE("%s: saImmOmAdminOperationInvoke_2 time left = %" PRIu64,
-          __FUNCTION__, adminOpTimer.time_left());
-    imm_rc =
-        saImmOmAdminOperationInvoke_2(m_ownerHandle, &nodeGroupName, 0, adminOp,
-                                      params, &oi_rc, smfd_cb->adminOpTimeout);
-    if ((imm_rc == SA_AIS_ERR_TRY_AGAIN) ||
-        (imm_rc == SA_AIS_OK && oi_rc == SA_AIS_ERR_TRY_AGAIN)) {
-      base::Sleep(base::MillisToTimespec(2000));
-      continue;
-    } else if (imm_rc != SA_AIS_OK) {
-      LOG_NO(
-          "%s: saImmOmAdminOperationInvoke_2 "
-          "Fail %s",
-          __FUNCTION__, saf_error(imm_rc));
-      m_errno = imm_rc;
-      break;
-    } else if (oi_rc != SA_AIS_OK) {
-      LOG_NO("%s: SaAmfAdminOperationId %d Fail %s", __FUNCTION__, adminOp,
-             saf_error(oi_rc));
-      m_errno = oi_rc;
-      break;
-    } else {
-      // Operation success
-      method_rc = true;
-      break;
-    }
-  }
-  if (adminOpTimer.is_timeout()) {
-    if ((imm_rc == SA_AIS_OK) && (oi_rc == SA_AIS_OK)) {
-      // Timeout is passed but operation is ok. This is Ok
-      method_rc = true;
-    } else if (imm_rc != SA_AIS_OK) {
-      LOG_NO("%s adminOpTimeout Fail %s", __FUNCTION__, saf_error(imm_rc));
-      m_errno = imm_rc;
-      method_rc = false;
-    } else {
-      LOG_NO("%s adminOpTimeout Fail %s", __FUNCTION__, saf_error(oi_rc));
-      m_errno = oi_rc;
-      method_rc = false;
-    }
-  }
+  if (admset_rc == true) {
 
-  TRACE_LEAVE2("%s", method_rc ? "OK" : "FAIL");
-  return method_rc;
-}
+    // ===================================
+    // Invoke admin operation
+    const SaTimeT kNanoMillis = 1000000;
+    SaAisErrorT oi_rc = SA_AIS_OK;
+    SaAisErrorT imm_rc = SA_AIS_OK;
+    m_errno = SA_AIS_OK;
+    base::Timer adminOpTimer(smfd_cb->adminOpTimeout / kNanoMillis);
 
-/// Set given admin state to all units in the given unitList
-/// Return false if Fail. m_ais_errno is set
-///
-bool SmfAdminOperation::adminOperationSerialized(
-    SaAmfAdminOperationIdT adminState,
-    const std::list<unitNameAndState> &i_unitList) {
-  bool rc = true;
-  m_errno = SA_AIS_OK;
-
-  TRACE_ENTER();
-
-  if (!i_unitList.empty()) {
-    for (auto &unit : i_unitList) {
-      rc = adminOperation(adminState, unit.name);
-      if (rc == false) {
-        // Failed to set admin state
+    while (adminOpTimer.is_timeout() == false) {
+      TRACE("%s: saImmOmAdminOperationInvoke_2 time left = %" PRIu64,
+            __FUNCTION__, adminOpTimer.time_left());
+      imm_rc =
+          saImmOmAdminOperationInvoke_2(m_ownerHandle, &nodeGroupName, 0,
+                                        adminOp, params, &oi_rc,
+                                        smfd_cb->adminOpTimeout);
+      if ((imm_rc == SA_AIS_ERR_TRY_AGAIN) ||
+          (imm_rc == SA_AIS_OK && oi_rc == SA_AIS_ERR_TRY_AGAIN)) {
+        base::Sleep(base::MillisToTimespec(2000));
+        continue;
+      } else if (imm_rc != SA_AIS_OK) {
+        LOG_NO(
+            "%s: saImmOmAdminOperationInvoke_2 Fail %s",
+            __FUNCTION__, saf_error(imm_rc));
+        m_errno = imm_rc;
+        break;
+      } else if (oi_rc != SA_AIS_OK) {
+        LOG_NO("%s: SaAmfAdminOperationId %d Fail %s", __FUNCTION__, adminOp,
+               saf_error(oi_rc));
+        m_errno = oi_rc;
+        break;
+      } else {
+        // Operation success
+        method_rc = true;
         break;
       }
     }
+    if (adminOpTimer.is_timeout()) {
+      if ((imm_rc == SA_AIS_OK) && (oi_rc == SA_AIS_OK)) {
+        // Timeout is passed but operation is ok. This is Ok
+        method_rc = true;
+      } else if (imm_rc != SA_AIS_OK) {
+        LOG_NO("%s adminOpTimeout Fail %s", __FUNCTION__, saf_error(imm_rc));
+        m_errno = imm_rc;
+        method_rc = false;
+      } else {
+        LOG_NO("%s adminOpTimeout Fail %s", __FUNCTION__, saf_error(oi_rc));
+        m_errno = oi_rc;
+        method_rc = false;
+      }
+    }
+  } else {
+    LOG_NO("%s: becomeAdminOwnerOf(%s) Fail", __FUNCTION__,
+           nodeGroupName_s.c_str());
+    method_rc = false;
   }
 
-  TRACE_LEAVE();
-  return rc;
+  if (method_rc == true) {
+    TRACE("%s Admin operation is done. Release ownership if nodegroup",
+          __FUNCTION__);
+    if (releaseAdminOwnerOf(nodeGroupName_s) == false) {
+      LOG_NO("%s: releaseAdminOwnerOf(%s) Fail", __FUNCTION__,
+             nodeGroupName_s.c_str());
+    }
+  }
+
+
+  TRACE_LEAVE2("%s", method_rc ? "OK" : "FAIL");
+  return method_rc;
 }
 
 /// Set given admin state to one unit
@@ -3736,8 +3879,7 @@ bool SmfAdminOperation::adminOperation(SaAmfAdminOperationIdT adminOperation,
 
   if (m_errno != SA_AIS_OK) {
     LOG_NO(
-        "%s: immUtil.callAdminOperation()"
-        " Fail %s, Failed unit is '%s'",
+        "%s: immUtil.callAdminOperation() Fail %s, Failed unit is '%s'",
         __FUNCTION__, saf_error(m_errno), unitName.c_str());
     rc = false;
   }

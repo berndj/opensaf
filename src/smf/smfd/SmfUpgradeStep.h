@@ -861,8 +861,11 @@ class SmfAdminOperation {
   bool restart();
 
  private:
-  bool initNodeGroupOm();
-  bool becomeAdminOwnerOfAmfClusterObj();
+  bool initImmOmAndSetAdminOwnerName();
+  bool becomeNgAdmOwnerAndInitCcb();
+  void releaseNgAdmOwnerAndCcb();
+  bool becomeAdminOwnerOf(std::string& object_name);
+  bool releaseAdminOwnerOf(std::string& object_name);
   void finalizeNodeGroupOm();
   bool isRestartError(SaAisErrorT ais_rc);
 
@@ -879,12 +882,14 @@ class SmfAdminOperation {
 
   bool deleteNodeGroup();
 
-  bool changeNodeGroupAdminState(SaAmfAdminStateT fromState,
+  bool changeAdminState(SaAmfAdminStateT fromState,
+                      SaAmfAdminOperationIdT toState);
+  bool adminOperationNodeGroup(SaAmfAdminStateT fromState,
                                  SaAmfAdminOperationIdT toState);
-  bool nodeGroupAdminOperation(SaAmfAdminOperationIdT adminState);
   // Using m_suList
   bool adminOperationSerialized(SaAmfAdminOperationIdT adminState,
                                 const std::list<unitNameAndState>& i_nodeList);
+  bool nodeGroupAdminOperation(SaAmfAdminOperationIdT adminState);
   bool adminOperation(SaAmfAdminOperationIdT adminState,
                       const std::string& unitName);
 

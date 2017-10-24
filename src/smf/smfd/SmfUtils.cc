@@ -559,6 +559,8 @@ SaAisErrorT SmfImmUtils::callAdminOperation(
   SaNameT objectName;
   int retry = 100;
 
+  TRACE_ENTER();
+
   if (i_dn.length() > GetSmfMaxDnLength()) {
     LOG_NO("callAdminOperation error, dn too long (%zu), max %zu",
            i_dn.length(), static_cast<size_t>(GetSmfMaxDnLength()));
@@ -624,6 +626,12 @@ SaAisErrorT SmfImmUtils::callAdminOperation(
   rc = returnValue;
 
 done:
+  rc = immutil_saImmOmAdminOwnerRelease(m_ownerHandle, objectNames, SA_IMM_ONE);
+  if (rc != SA_AIS_OK) {
+    LOG_NO("%s saImmOmAdminOwnerRelease Fail, rc=%s, dn=[%s]", __FUNCTION__,
+           saf_error(rc), i_dn.c_str());
+  }
+  TRACE_LEAVE();
   return rc;
 }
 
