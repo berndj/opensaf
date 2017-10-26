@@ -263,6 +263,7 @@ err:
 uint32_t avnd_send_pid_exit_evt(AVND_CB *cb, AVND_COMP_PM_REC *pm_rec) {
   AVND_EVT *evt;
   uint32_t rc = NCSCC_RC_FAILURE;
+  const SaUint64T pid = pm_rec->pid;
 
   /* create & send the timer event */
   evt = avnd_evt_create(cb, AVND_EVT_PID_EXIT, 0, 0, (void *)pm_rec, 0, 0);
@@ -271,9 +272,9 @@ uint32_t avnd_send_pid_exit_evt(AVND_CB *cb, AVND_COMP_PM_REC *pm_rec) {
   }
 
   if (rc == NCSCC_RC_SUCCESS) {
-    TRACE_1("Sent PM (PID: %lld) Exit event", pm_rec->pid);
+    TRACE_1("Sent PM (PID: %lld) Exit event", pid);
   } else {
-    LOG_ER("Failed to send PM (PID: %lld) exit event", pm_rec->pid);
+    LOG_ER("Failed to send PM (PID: %lld) exit event", pid);
   }
 
   return rc;
