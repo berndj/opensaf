@@ -28,7 +28,7 @@ else
 fi
 
 NIDSERV=TRANSPORT
-MANAGE_TIPC=${OPENSAF_MANAGE_TIPC:="yes"}
+MANAGE_TIPC=${OPENSAF_MANAGE_TIPC:-"yes"}
 RETVAL=0
 
 binary=$pkglibdir/$osafprog
@@ -43,8 +43,8 @@ start() {
 		exit 5
 	fi
 	if [ "$MDS_TRANSPORT" = "TIPC" ]; then
-		if [ $MANAGE_TIPC = "yes" ]; then
-			$pkglibdir/configure_tipc start $TIPC_ETH_IF $TIPC_NET_ID
+		$pkglibdir/configure_tipc start "$TIPC_ETH_IF" "$TIPC_NET_ID"
+		if [ "$MANAGE_TIPC" = "yes" ]; then
 			RETVAL=$? 
 			if [ $RETVAL -ne 0 ]; then
 				echo "$NID_MAGIC:$NIDSERV:$DAEMON_START_FAILED" > $NIDFIFO
