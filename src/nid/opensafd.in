@@ -33,9 +33,9 @@ lockfile_inprogress=$lockdir/$osafprog_inprogress
 amfnd_bin=$pkglibdir/osafamfnd
 amfnd_pid=$pkgpiddir/osafamfnd.pid
 
-MANAGE_TIPC=${OPENSAF_MANAGE_TIPC:="yes"}
+MANAGE_TIPC=${OPENSAF_MANAGE_TIPC:-"yes"}
 RETVAL=0
-TERMTIMEOUT=${OPENSAF_TERMTIMEOUT:=60}
+TERMTIMEOUT=${OPENSAF_TERMTIMEOUT:-60}
 
 nodetype=$(cat $pkgsysconfdir/node_type)
 nodeinitdotconf=$pkgsysconfdir/nodeinit.conf.$nodetype

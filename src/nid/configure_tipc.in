@@ -1,8 +1,9 @@
-#!/bin/bash 
+#!/bin/bash
 #
 #      -*- OpenSAF  -*-
 #
 # (C) Copyright 2008 The OpenSAF Foundation
+# Copyright Ericsson AB 2017 - All Rights Reserved.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -19,6 +20,7 @@
 . @sysconfdir@/@PACKAGE_NAME@/osafdir.conf
 . $pkgsysconfdir/nid.conf
 
+MANAGE_TIPC=${OPENSAF_MANAGE_TIPC:-"yes"}
 TIPC_MODULE=/lib/modules/$(uname -r)/kernel/net/tipc.ko
 CHASSIS_ID_FILE=$pkgsysconfdir/chassis_id
 SLOT_ID_FILE=$pkgsysconfdir/slot_id
@@ -54,12 +56,50 @@ DUPLICATE_NODE_DETECT=${TIPC_DUPLICATE_NODE_DETECT:-"NO"}
 # constants
 SHIFT4=4
 
+if [ "$#" -lt "1" ] || [ "$#" -gt "4" ]
+   then
+     echo " If you want to use TIPC in Non Networking mode"
+     echo " Usage: $0 start &"
+     echo " If you want to use TIPC in Networking mode"
+     echo " Usage: $0 start ifname[,ifname] <netid[1-9999]>"
+     echo " Example: interface eth0 and netid 7777"
+     echo " $0 start eth0 7777 &"
+     echo " Example: interface eth0 and eth1 and netid 9999"
+     echo " $0 start eth0,eth1 9999"
+     exit 1
+fi
+
+ETH_NAME=$2
+TIPC_NETID=$3
+
 # Make sure tipc-config is available, either in path or in default location
+tipc=$(which tipc 2> /dev/null)
 tipc_config=$(which tipc-config 2> /dev/null)
-if ! [ -x ${tipc_config} ]; then
+
+if ! [ -x "${tipc}" ] && ! [ -x "${tipc_config}" ]; then
+    echo "error: neither tipc nor tipc-config is available"
+    exit 1
+fi
+
+if [ "$MANAGE_TIPC" != "yes" ] && ! [ -s "$pkglocalstatedir/node_id" ]; then
+    if [ -x "${tipc}" ]; then
+	addr=$(tipc node get address | cut -d'<' -f2 | cut -d'>' -f1)
+    else
+	addr=$(tipc-config -addr | cut -d'<' -f2 | cut -d'>' -f1)
+    fi
+    addr=$(echo "$addr" | cut -d. -f3)
+    CHASSIS_ID=2
+    SLOT_ID=$((addr & 255))
+    SUBSLOT_ID=$(((addr >> 8) ^ 15))
+    printf "00%02x%02x%02x\\n" $CHASSIS_ID $((SLOT_ID & 255)) $((SUBSLOT_ID ^ ((SLOT_ID >> 8) & 15) )) > "$pkglocalstatedir/node_id"
+    exit 0
+fi
+
+if ! [ -x "${tipc_config}" ]; then
     echo "error: tipc-config is not available"
     exit 1
 fi
+
 # Get the Chassis Id and Slot Id from @sysconfdir@/@PACKAGE_NAME@/chassis_id and @sysconfdir@/@PACKAGE_NAME@/slot_id
 if ! test -f "$CHASSIS_ID_FILE"; then
    echo "$CHASSIS_ID_FILE doesnt exists, exiting ...." 
@@ -94,22 +134,6 @@ if [ "$SUBSLOT_ID" -gt "15" ] || [ "$SUBSLOT_ID" -lt "0" ]; then
     exit 1
 fi
 
-if [ "$#" -lt "1" ] ||  [ "$#" -gt "4" ]
-   then
-     echo " If you want to use TIPC in Non Networking mode"
-     echo " Usage: $0 start &"
-     echo " If you want to use TIPC in Networking mode"
-     echo " Usage: $0 start ifname[,ifname] <netid[1-9999]>"
-     echo " Example: interface eth0 and netid 7777"
-     echo " $0 start eth0 7777 &"
-     echo " Example: interface eth0 and eth1 and netid 9999"
-     echo " $0 start eth0,eth1 9999"
-     exit 1
-fi
-
-ETH_NAME=$2
-TIPC_NETID=$3
-
 if [ $# -gt 1 ] ; then 
     if [ "$TIPC_NETID" -gt "9999" ] || [ "$TIPC_NETID" -lt "1" ]  
       then 
@@ -119,7 +143,7 @@ if [ $# -gt 1 ] ; then
     fi
 fi    
 
-printf "00%02x%02x%02x\n" $CHASSIS_ID $((SLOT_ID & 255)) $((SUBSLOT_ID ^ ((SLOT_ID >> 8) & 15) )) > $pkglocalstatedir/node_id
+printf "00%02x%02x%02x\\n" $CHASSIS_ID $((SLOT_ID & 255)) $((SUBSLOT_ID ^ ((SLOT_ID >> 8) & 15) )) > "$pkglocalstatedir/node_id"
 chmod 744 $pkglocalstatedir/node_id
 if [ "$USE_SUBSLOT_ID" = "YES" ]; then
     TIPC_NODEID=$(($SLOT_ID << $SHIFT4))
