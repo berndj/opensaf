@@ -1492,13 +1492,20 @@ static uint32_t proc_node_get_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 				    .bootTimestamp = node->boot_time;
 				clm_msg.info.api_resp_info.param.node_get
 				    .initialViewNumber = node->init_view;
-			} else {
+			} else if (local_node->member == SA_FALSE) {
 				clm_msg.evt_type =
 				    CLMSV_CLMS_TO_CLMA_API_RESP_MSG;
 				clm_msg.info.api_resp_info.type =
 				    CLMSV_NODE_GET_RESP;
 				clm_msg.info.api_resp_info.rc =
 				    SA_AIS_ERR_UNAVAILABLE;
+			} else {
+				clm_msg.evt_type =
+					CLMSV_CLMS_TO_CLMA_API_RESP_MSG;
+				clm_msg.info.api_resp_info.type =
+					CLMSV_NODE_GET_RESP;
+				clm_msg.info.api_resp_info.rc =
+					SA_AIS_ERR_NOT_EXIST;
 			}
 		} else {
 			clm_msg.evt_type = CLMSV_CLMS_TO_CLMA_API_RESP_MSG;
@@ -1508,7 +1515,7 @@ static uint32_t proc_node_get_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 	} else {
 		clm_msg.evt_type = CLMSV_CLMS_TO_CLMA_API_RESP_MSG;
 		clm_msg.info.api_resp_info.type = CLMSV_NODE_GET_RESP;
-		clm_msg.info.api_resp_info.rc = SA_AIS_ERR_NOT_EXIST;
+		clm_msg.info.api_resp_info.rc = SA_AIS_ERR_UNAVAILABLE;
 	}
 
 	TRACE_LEAVE();
@@ -1573,6 +1580,16 @@ static uint32_t proc_node_get_async_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 				    ais_rc;
 				clm_msg.info.cbk_info.client_id =
 				    param->client_id;
+			} else if (local_node->member == SA_FALSE) {
+				clm_msg.evt_type = CLMSV_CLMS_TO_CLMA_CBK_MSG;
+				clm_msg.info.cbk_info.type =
+					CLMSV_NODE_ASYNC_GET_CBK;
+				clm_msg.info.cbk_info.param.node_get.inv =
+					param->inv;
+				clm_msg.info.cbk_info.param.node_get.err =
+					SA_AIS_ERR_UNAVAILABLE;
+				clm_msg.info.cbk_info.client_id =
+					param->client_id;
 			} else {
 				TRACE(
 				    "Node exists in the database but is non-member");
@@ -1582,7 +1599,7 @@ static uint32_t proc_node_get_async_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 				clm_msg.info.cbk_info.param.node_get.inv =
 				    param->inv;
 				clm_msg.info.cbk_info.param.node_get.err =
-				    SA_AIS_ERR_UNAVAILABLE;
+				    SA_AIS_ERR_NOT_EXIST;
 				clm_msg.info.cbk_info.client_id =
 				    param->client_id;
 			}
@@ -1596,11 +1613,11 @@ static uint32_t proc_node_get_async_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 			clm_msg.info.cbk_info.client_id = param->client_id;
 		}
 	} else {
-		TRACE("Node doesn't exist in the data base");
+		TRACE("Invoking process is not in cluster membership");
 		clm_msg.evt_type = CLMSV_CLMS_TO_CLMA_CBK_MSG;
 		clm_msg.info.cbk_info.type = CLMSV_NODE_ASYNC_GET_CBK;
 		clm_msg.info.cbk_info.param.node_get.inv = param->inv;
-		clm_msg.info.cbk_info.param.node_get.err = SA_AIS_ERR_NOT_EXIST;
+		clm_msg.info.cbk_info.param.node_get.err = SA_AIS_ERR_UNAVAILABLE;
 		clm_msg.info.cbk_info.client_id = param->client_id;
 	}
 	TRACE_LEAVE();
