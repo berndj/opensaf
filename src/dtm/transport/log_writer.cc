@@ -25,13 +25,13 @@
 #include "base/getenv.h"
 #include "osaf/configmake.h"
 
-LogWriter::LogWriter(const std::string& log_name)
+LogWriter::LogWriter(const std::string& log_name, size_t no_of_backups)
     : log_file_{base::GetEnv<std::string>("pkglogdir", PKGLOGDIR) + "/" +
                 log_name},
-      old_log_file_{log_file_ + ".1"},
       fd_{-1},
       current_file_size_{0},
       current_buffer_size_{0},
+      no_of_backups_{no_of_backups},
       buffer_{new char[kBufferSize]} {}
 
 LogWriter::~LogWriter() {
@@ -40,11 +40,19 @@ LogWriter::~LogWriter() {
   delete[] buffer_;
 }
 
+std::string LogWriter::log_file(size_t backup) const {
+  std::string file_name = log_file_;
+  if (backup != 0) {
+    file_name += std::string{"."} + std::to_string(backup);
+  }
+  return file_name;
+}
+
 void LogWriter::Open() {
   if (fd_ < 0) {
     int fd;
     do {
-      fd = open(log_file(), O_WRONLY | O_CLOEXEC | O_CREAT,
+      fd = open(log_file(0).c_str(), O_WRONLY | O_CLOEXEC | O_CREAT,
                 S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
     } while (fd == -1 && errno == EINTR);
     if (fd >= 0) {
@@ -66,9 +74,13 @@ void LogWriter::Close() {
 
 void LogWriter::RotateLog() {
   Close();
-  unlink(old_log_file());
-  if (rename(log_file(), old_log_file()) != 0) {
-    unlink(log_file());
+  unlink(log_file(no_of_backups_).c_str());
+  for (size_t i = no_of_backups_; i != 0; --i) {
+    std::string backup_name = log_file(i);
+    std::string previous_backup = log_file(i - 1);
+    if (rename(previous_backup.c_str(), backup_name.c_str()) != 0) {
+      unlink(previous_backup.c_str());
+    }
   }
 }
 

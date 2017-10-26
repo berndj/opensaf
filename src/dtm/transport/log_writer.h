@@ -29,7 +29,7 @@ class LogWriter {
  public:
   constexpr static const size_t kMaxMessageSize = 2 * size_t{1024};
 
-  LogWriter(const std::string& log_name);
+  LogWriter(const std::string& log_name, size_t no_of_backups);
   virtual ~LogWriter();
 
   char* current_buffer_position() { return buffer_ + current_buffer_size_; }
@@ -48,15 +48,13 @@ class LogWriter {
   void Close();
   void RotateLog();
 
-  const char* log_file() const { return log_file_.c_str(); }
-
-  const char* old_log_file() const { return old_log_file_.c_str(); }
+  std::string log_file(size_t backup) const;
 
   const std::string log_file_;
-  const std::string old_log_file_;
   int fd_;
   size_t current_file_size_;
   size_t current_buffer_size_;
+  size_t no_of_backups_;
   char* buffer_;
 
   DELETE_COPY_AND_MOVE_OPERATORS(LogWriter);

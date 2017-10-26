@@ -29,7 +29,7 @@ LogServer::LogServer(int term_fd)
           base::GetEnv<std::string>("pkglocalstatedir", PKGLOCALSTATEDIR) +
           "/osaf_log.sock"},
       log_streams_{},
-      current_stream_{new LogStream{"mds.log"}},
+      current_stream_{new LogStream{"mds.log", 1}},
       no_of_log_streams_{1} {
   log_streams_["mds.log"] = current_stream_;
 }
@@ -107,7 +107,7 @@ LogServer::LogStream* LogServer::GetStream(const char* msg_id,
   if (iter != log_streams_.end()) return iter->second;
   if (no_of_log_streams_ >= kMaxNoOfStreams) return nullptr;
   if (!ValidateLogName(msg_id, msg_id_size)) return nullptr;
-  LogStream* stream = new LogStream{log_name};
+  LogStream* stream = new LogStream{log_name, 9};
   auto result = log_streams_.insert(
       std::map<std::string, LogStream*>::value_type{log_name, stream});
   if (!result.second) osaf_abort(msg_id_size);
@@ -129,8 +129,9 @@ bool LogServer::ValidateLogName(const char* msg_id, size_t msg_id_size) {
   return no_of_dots < 2;
 }
 
-LogServer::LogStream::LogStream(const std::string& log_name)
-    : log_name_{log_name}, last_flush_{}, log_writer_{log_name} {
+LogServer::LogStream::LogStream(const std::string& log_name,
+                                size_t no_of_backups)
+    : log_name_{log_name}, last_flush_{}, log_writer_{log_name, no_of_backups} {
   if (log_name.size() > kMaxLogNameSize) osaf_abort(log_name.size());
 }
 
