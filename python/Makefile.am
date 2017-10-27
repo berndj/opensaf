@@ -62,6 +62,10 @@ pkgpyosafutilsimmoi_PYTHON = \
 	python/pyosaf/utils/immoi/implementer.py
 
 pkgpyosafutilsntf_PYTHON = \
-	python/pyosaf/utils/ntf/__init__.py
+	python/pyosaf/utils/ntf/__init__.py \
+	python/pyosaf/utils/ntf/agent.py \
+	python/pyosaf/utils/ntf/producer.py \
+	python/pyosaf/utils/ntf/subscriber.py \
+	python/pyosaf/utils/ntf/reader.py
 
 endif

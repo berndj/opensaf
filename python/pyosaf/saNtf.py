@@ -15,7 +15,7 @@
 #
 ############################################################################
 
-from ctypes import POINTER, CFUNCTYPE, Structure, Union, CDLL, c_char
+from ctypes import POINTER, CFUNCTYPE, Structure, Union, CDLL, c_char, cast
 from pyosaf.saAis import SaUint64T, SaEnumT, Enumeration, Const, BYREF, \
         SaUint32T, SaUint16T, SaBoolT, SaStringT, SaNameT, SaTimeT, SaDoubleT, \
         SaInt64T, SaUint8T, SaInt8T, SaInt16T, SaInt32T, SaFloatT, SaAnyT
@@ -655,7 +655,7 @@ class SaNtfNotificationTypeFilterHandlesT_3(Structure):
 		('securityAlarmFilterHandle', SaNtfNotificationFilterHandleT),
 		('miscellaneousFilterHandle', SaNtfNotificationFilterHandleT)]
 
-saNtf.SA_NTF_FILTER_HANDLE_NULL = None
+saNtf.SA_NTF_FILTER_HANDLE_NULL = 0
 
 #if defined(SA_NTF_A01) || defined(SA_NTF_A02)
 class _notification(Union):
