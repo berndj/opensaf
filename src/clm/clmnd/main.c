@@ -32,6 +32,7 @@
 #include "base/ncsgl_defs.h"
 #include "base/osaf_poll.h"
 #include "base/osaf_time.h"
+#include "base/osaf_extended_name.h"
 #include "clm/clmnd/cb.h"
 #include "clm/clmnd/clmna.h"
 #include "clm/clmnd/election_starter_wrapper.h"
@@ -74,6 +75,7 @@ static void clmna_handle_join_response(SaAisErrorT error,
 static void start_scale_out_retry_tmr(int64_t timeout);
 static void stop_scale_out_retry_tmr(void);
 static uint32_t clmna_mds_msg_send(CLMSV_MSG *i_msg);
+static void clmna_execute_action(const char *action);
 
 static uint32_t clmna_mds_cpy(struct ncsmds_callback_info *info)
 {
@@ -126,6 +128,22 @@ static uint32_t clmna_mds_dec(struct ncsmds_callback_info *info)
 		}
 		break;
 	}
+	case CLMSV_CLMS_TO_CLMNA_NODE_REBOOT_MSG: {
+		p8 = ncs_dec_flatten_space(uba, local_data, 4);
+		msg->info.reboot_info.node_id = ncs_decode_32bit(&p8);
+		ncs_dec_skip_space(uba, 4);
+		total_bytes += 4;
+		// Reboot will be performed by CLMS for this node.
+		if (clmna_cb->node_info.node_id ==
+		    msg->info.reboot_info.node_id) {
+			LOG_IN("Node will be rebooted");
+			osaf_safe_reboot();
+		} else {
+			LOG_IN("Node %u is going to be rebooted",
+					msg->info.reboot_info.node_id);
+		}
+		break;
+	}
 	case CLMSV_CLMS_TO_CLMA_API_RESP_MSG: {
 		p8 = ncs_dec_flatten_space(uba, local_data, 8);
 		msg->info.api_resp_info.type = ncs_decode_32bit(&p8);
@@ -147,6 +165,27 @@ static uint32_t clmna_mds_dec(struct ncsmds_callback_info *info)
 			return NCSCC_RC_FAILURE;
 		}
 	} break;
+	case CLMSV_CLMS_TO_CLMNA_ACTION_MSG: {
+		const char *action;
+
+		p8 = ncs_dec_flatten_space(uba, local_data, 4);
+		msg->info.action_info.node_id = ncs_decode_32bit(&p8);
+		ncs_dec_skip_space(uba, 4);
+		total_bytes += 4;
+
+		if (msg->info.action_info.node_id == 0
+				|| clmna_cb->node_info.node_id ==
+					msg->info.reboot_info.node_id) {
+			total_bytes += clmsv_decodeSaNameT(
+					uba, &(msg->info.action_info.action));
+
+			action = osaf_extended_name_borrow(
+					&(msg->info.action_info.action));
+			TRACE_2("Executing action: %s", action);
+			clmna_execute_action(action);
+		}
+	}
+	break;
 	default:
 		TRACE("Unknown MSG type %d", msg->evt_type);
 		free(msg);
@@ -658,6 +697,47 @@ static uint32_t clmna_mds_msg_send(CLMSV_MSG *i_msg)
 
 	TRACE_LEAVE();
 	return rc;
+}
+
+static void clmna_execute_action(const char *action) {
+	char str[1024];
+	int size;
+
+	if (!action) {
+		syslog(LOG_ERR, "Executing CLM action is NULL");
+		return;
+	}
+
+	if (strchr(action, '/')) {
+		syslog(LOG_ERR,
+				"Executing CLM action '%s' contains not allowed sign '/'",
+				action);
+		return;
+	}
+
+	size = snprintf(str, sizeof(str), PKGCLMSCRIPTDIR "/osafclm_%s", action);
+	if (size > sizeof(str)) {
+		syslog(LOG_ERR,
+				"Path for executing CLM script '%s' is longer than %ld",
+				action, sizeof(str));
+		return;
+	}
+
+	syslog(LOG_NOTICE, "Executing CLM script: %s", str);
+
+	int rc = system(str);
+	if (rc == -1) {
+		syslog(LOG_CRIT, "Executing CLM script failed with reason: %s",
+		       strerror(errno));
+	} else {
+		if (WIFEXITED(rc) && WEXITSTATUS(rc) == 0) {
+			syslog(LOG_NOTICE, "CLM script: %s successfully executed",
+			       str);
+		} else {
+			syslog(LOG_CRIT, "CLM script: %s failed, rc = %d", str,
+			       rc);
+		}
+	}
 }
 
 static void scale_out_tmr_exp(void *arg)

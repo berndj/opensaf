@@ -1338,3 +1338,36 @@ void clms_cluster_reboot(void)
 		LOG_ER("Sending cluster reboot broadcast message failed");
 	}
 }
+
+int clms_node_reboot(SaClmNodeIdT node_id)
+{
+	int rc = NCSCC_RC_FAILURE;
+	CLMSV_MSG bcast_msg;
+	bcast_msg.evt_type = CLMSV_CLMS_TO_CLMNA_NODE_REBOOT_MSG;
+	bcast_msg.info.reboot_info.node_id = node_id;
+	if ((rc = clms_mds_msg_bcast(clms_cb, &bcast_msg)) == NCSCC_RC_SUCCESS) {
+		LOG_NO("Sending node reboot broadcast message succeeded");
+	} else {
+		LOG_ER("Sending node reboot broadcast message failed");
+	}
+
+	return rc;
+}
+
+int clms_cluster_action(SaClmNodeIdT node_id, const char *action)
+{
+	/* If node_id == 0, then the action will be executed on all nodes */
+	int rc = NCSCC_RC_FAILURE;
+	CLMSV_MSG bcast_msg;
+	bcast_msg.evt_type = CLMSV_CLMS_TO_CLMNA_ACTION_MSG;
+	bcast_msg.info.action_info.node_id = node_id;
+	/* Action is up to 255 bytes. No extra memory will be allocated. */
+	osaf_extended_name_lend(action, &(bcast_msg.info.action_info.action));
+	if ((rc = clms_mds_msg_bcast(clms_cb, &bcast_msg)) == NCSCC_RC_SUCCESS) {
+		LOG_NO("Sending CLM action broadcast message succeeded");
+	} else {
+		LOG_ER("Sending CLM action reboot broadcast message failed");
+	}
+
+	return rc;
+}

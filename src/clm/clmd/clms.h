@@ -128,4 +128,6 @@ extern uint32_t clms_send_is_member_info(CLMS_CB *cb, SaClmNodeIdT node_id,
 extern void clm_imm_reinit_bg(CLMS_CB *cb);
 extern void proc_downs_during_rolechange(void);
 extern void clms_cluster_reboot(void);
+extern int clms_node_reboot(SaClmNodeIdT node_id);
+extern int clms_cluster_action(SaClmNodeIdT node_id, const char *action);
 #endif  // CLM_CLMD_CLMS_H_

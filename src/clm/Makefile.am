@@ -92,6 +92,9 @@ nodist_pkgclccli_SCRIPTS += \
 	src/clm/clmd/osaf-clmd \
 	src/clm/clmnd/osaf-clmna
 
+nodist_pkgclmscripts_SCRIPTS += \
+	scripts/clm-scripts/osafclm_test
+
 dist_pkgsysconf_DATA += \
 	src/clm/clmd/clmd.conf \
 	src/clm/clmnd/clmna.conf

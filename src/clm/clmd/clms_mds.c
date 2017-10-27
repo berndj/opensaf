@@ -643,7 +643,8 @@ uint32_t clms_mds_enc(struct ncsmds_callback_info *info)
 	ncs_enc_claim_space(uba, 4);
 	total_bytes += 4;
 
-	if (CLMSV_CLMS_TO_CLMNA_REBOOT_MSG == msg->evt_type) {
+	if (CLMSV_CLMS_TO_CLMNA_REBOOT_MSG == msg->evt_type
+			|| CLMSV_CLMS_TO_CLMNA_NODE_REBOOT_MSG == msg->evt_type) {
 		/* encode the reboot msg **/
 		p8 = ncs_enc_reserve_space(uba, 4);
 		if (!p8) {
@@ -741,6 +742,18 @@ uint32_t clms_mds_enc(struct ncsmds_callback_info *info)
 		ncs_encode_32bit(&p8, msg->info.is_member_info.client_id);
 		ncs_enc_claim_space(uba, 12);
 		total_bytes += 12;
+	} else if (CLMSV_CLMS_TO_CLMNA_ACTION_MSG == msg->evt_type) {
+		p8 = ncs_enc_reserve_space(uba, 4);
+		if (!p8) {
+			TRACE("ncs_enc_reserve_space failed");
+			goto err;
+		}
+		ncs_encode_32bit(&p8, msg->info.action_info.node_id);
+		ncs_enc_claim_space(uba, 4);
+		total_bytes += 4;
+
+		total_bytes += clmsv_encodeSaNameT(
+				uba, &(msg->info.action_info.action));
 	} else {
 		TRACE("unknown msg type %d", msg->evt_type);
 		goto err;

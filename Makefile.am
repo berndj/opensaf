@@ -78,6 +78,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgimmxmldir = $(pkgdatadir)/immxml
 pkgimmxml_svcdir = $(pkgimmxmldir)/services
 pkgclcclidir = $(pkglibdir)/clc-cli
+pkgclmscriptsdir = $(pkglibdir)/clm-scripts
 docdir = $(datadir)/doc/$(PACKAGE_NAME)-$(PACKAGE_VERSION)
 javadir = $(datadir)/java
 javadocdir = $(datadir)/javadoc
@@ -118,6 +119,7 @@ lib_libopensaf_core_la_SOURCES =
 nodist_java_DATA =
 nodist_osaf_execbin_SCRIPTS =
 nodist_pkgclccli_SCRIPTS =
+nodist_pkgclmscripts_SCRIPTS =
 nodist_pkgsysconf_DATA =
 noinst_HEADERS =
 noinst_LTLIBRARIES =
@@ -239,6 +241,7 @@ src/osaf/configmake.h: Makefile
 	echo '#define PKGIMMXMLDIR "$(pkgimmxmldir)"'; \
 	echo '#define PKGIMMXMLSVCDIR "$(pkgimmxml_svcdir)"'; \
 	echo '#define PKGCLCCLIDIR "$(pkgclcclidir)"'; \
+	echo '#define PKGCLMSCRIPTDIR "$(pkgclmscriptsdir)"'; \
 	echo '#define JAVADIR "$(javadir)"'; \
 	echo '#define JAVADOCDIR "$(javadocdir)"'; \
 	echo '#define LSBINITDIR "$(lsbinitdir)"'; \
@@ -325,12 +328,14 @@ install-data-hook: set-default-node-config
 	@for i in $$(grep -lr -e 'xxLIBDIRxx' -e 'xxLOGDIRxx' -e 'xxCLCCLIDIRxx' $(DESTDIR)$(pkgimmxml_svcdir)/*.xml) ; do \
 		sed -i 's|xxLIBDIRxx|$(pkglibdir)|g' "$$i"; \
 		sed -i 's|xxCLCCLIDIRxx|$(pkgclcclidir)|g' "$$i"; \
+		sed -i 's|xxCLMSCRIPTDIRxx|$(pkgclmscriptsdir)|g' "$$i"; \
 		sed -i 's|xxLOGDIRxx|$(pkglogdir)|g' "$$i"; \
 	done
 	@for i in $$(grep -lr -e 'xxBINDIRxx' -e 'xxLIBDIRxx' -e 'xxCLCCLIDIRxx' $(DESTDIR)$(pkgsysconfdir)/*) ; do \
 		sed --follow-symlinks -i 's|xxBINDIRxx|$(bindir)|g' "$$i"; \
 		sed --follow-symlinks -i 's|xxLIBDIRxx|$(pkglibdir)|g' "$$i"; \
 		sed --follow-symlinks -i 's|xxCLCCLIDIRxx|$(pkgclcclidir)|g' "$$i"; \
+		sed --follow-symlinks -i 's|xxCLMSCRIPTDIRxx|$(pkgclmscriptsdir)|g' "$$i"; \
 	done
 	hostname -s > $(DESTDIR)$(pkgsysconfdir)/node_name
 if !ENABLE_AIS_PLM

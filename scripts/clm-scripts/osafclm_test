@@ -1,0 +1,4 @@
+#! /bin/sh
+
+# Demo script for testing CLM action
+logger "CLM action test"

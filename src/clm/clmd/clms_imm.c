@@ -33,6 +33,8 @@ SaAisErrorT clms_node_ccb_comp_cb(CcbUtilOperationData_t *opdata);
 uint32_t clms_imm_node_unlock(CLMS_CLUSTER_NODE *nodeop);
 uint32_t clms_imm_node_lock(CLMS_CLUSTER_NODE *nodeop);
 uint32_t clms_imm_node_shutdown(CLMS_CLUSTER_NODE *nodeop);
+uint32_t clms_imm_node_reset(CLMS_CLUSTER_NODE *nodeop);
+uint32_t clms_imm_node_action(CLMS_CLUSTER_NODE *nodeop, const char *action);
 static void clms_lock_send_start_cbk(CLMS_CLUSTER_NODE *nodeop);
 static void clms_timer_ipc_send(SaNameT node_name);
 static uint32_t clms_lock_send_no_start_cbk(CLMS_CLUSTER_NODE *nodeop);
@@ -1030,23 +1032,52 @@ clms_imm_admin_op_callback(SaImmOiHandleT immOiHandle, SaInvocationT invocation,
 			   const SaImmAdminOperationParamsT_2 **params)
 {
 	CLMS_CLUSTER_NODE *nodeop;
+	SaAisErrorT err;
 	uint32_t rc = NCSCC_RC_SUCCESS;
 
 	TRACE_ENTER2("Admin callback for nodename:%s, opId:%llu",
 		     objectName->value, opId);
 
-	// E.g. immadm -o 4 safCluster=myClmCluster
+	/* Section for handling cluster operations:
+	 * E.g.
+	 * cluster reboot
+	 *   immadm -o 4 safCluster=myClmCluster
+	 * running test script in cluster
+	 *   immadm -o 5 -p saClmAction:SA_STRING_T:test safCluster=myClmCluster
+	 */
 	if (strncmp(osaf_extended_name_borrow(objectName),
 		    osaf_extended_name_borrow(&osaf_cluster->name),
 		    osaf_extended_name_length(objectName)) == 0) {
-		if (opId == SA_CLM_ADMIN_CLUSTER_RESET) {
-			LOG_WA(
-			    "Cluster reboot requested. Ordering cluster reboot");
+		switch(opId) {
+		case SA_CLM_ADMIN_RESET:
+			LOG_WA("Cluster reboot requested. Ordering cluster reboot");
 			// MDS broadcast/multi cast call is synchronous
 			clms_cluster_reboot();
 			osaf_nanosleep(&kOneSecond);
 			osaf_safe_reboot();
-		} else {
+			break;
+		case SA_CLM_ADMIN_ACTION:
+			/* The only one parameter 'saClmAction' is allowed.
+			 * The param value cannot be longer than 255 characters
+			 * and it cannot contain sign '/'
+			 */
+			if(!params || !params[0] || params[1]
+					|| params[0]->paramType != SA_IMM_ATTR_SASTRINGT
+					|| !params[0]->paramBuffer
+					|| strcmp(params[0]->paramName, "saClmAction")
+					|| strlen(*(SaStringT *)(params[0]->paramBuffer)) > 255
+					|| strchr(*(SaStringT *)(params[0]->paramBuffer), '/'))
+			{
+				immutil_saImmOiAdminOperationResult(
+						immOiHandle, invocation, SA_AIS_ERR_INVALID_PARAM);
+				goto done;
+			}
+			rc = clms_cluster_action(0, *(SaStringT *)(params[0]->paramBuffer));
+			err = (rc == NCSCC_RC_SUCCESS) ? SA_AIS_OK : SA_AIS_ERR_INTERRUPT;
+			immutil_saImmOiAdminOperationResult(
+			    immOiHandle, invocation, err);
+			break;
+		default:
 			LOG_ER("Admin Operation not supported for %s",
 			       osaf_extended_name_borrow(objectName));
 			immutil_saImmOiAdminOperationResult(
@@ -1054,6 +1085,21 @@ clms_imm_admin_op_callback(SaImmOiHandleT immOiHandle, SaInvocationT invocation,
 		}
 		goto done;
 	}
+
+	/* Section for handling node operations.
+	 * E.g.
+	 * node unlock
+	 *   immadm -o 1 safNode=PL-3,safCluster=myClmCluster
+	 * node lock
+	 *   immadm -o 2 safNode=PL-3,safCluster=myClmCluster
+	 * node shutdown
+	 *   immadm -o 3 safNode=PL-3,safCluster=myClmCluster
+	 * node reboot
+	 *   immadm -o 4 safNode=PL-3,safCluster=myClmCluster
+	 * running test script on PL-3 node
+	 *   immadm -o 5 -p saClmAction:SA_STRING_T:test \
+	 *          safNode=PL-3,safCluster=myClmCluster
+	 */
 
 	/*Lookup by the node_name and get the cluster node for CLM Admin oper */
 	nodeop = clms_node_get_by_name(objectName);
@@ -1075,7 +1121,7 @@ clms_imm_admin_op_callback(SaImmOiHandleT immOiHandle, SaInvocationT invocation,
 			immutil_saImmOiAdminOperationResult(
 			    immOiHandle, invocation, SA_AIS_ERR_INTERRUPT);
 			nodeop->admin_op = 0; /* suspending previous shutdown
-						 admin openration */
+						 admin operation */
 			break;
 		}
 	}
@@ -1117,6 +1163,54 @@ clms_imm_admin_op_callback(SaImmOiHandleT immOiHandle, SaInvocationT invocation,
 		rc = clms_imm_node_shutdown(nodeop);
 		if (rc != NCSCC_RC_SUCCESS) {
 			LOG_ER("clms_imm_node_shutdown failed");
+			goto done;
+		}
+		break;
+	case SA_CLM_ADMIN_RESET:
+		if(!nodeop->nodeup) {
+			LOG_NO("clms_imm_node_reset failed. Node %s is not up",
+					osaf_extended_name_borrow(&nodeop->node_name));
+			immutil_saImmOiAdminOperationResult(immOiHandle,
+					invocation, SA_AIS_ERR_INTERRUPT);
+			goto done;
+		}
+
+		rc = clms_node_reboot(nodeop->node_id);
+		err = (rc == NCSCC_RC_SUCCESS) ? SA_AIS_OK : SA_AIS_ERR_INTERRUPT;
+		immutil_saImmOiAdminOperationResult(immOiHandle, invocation, err);
+		if (rc != NCSCC_RC_SUCCESS) {
+			LOG_ER("clms_imm_node_reset failed");
+			goto done;
+		}
+		break;
+	case SA_CLM_ADMIN_ACTION:
+		if(!params || !params[0] || params[1]
+				|| params[0]->paramType != SA_IMM_ATTR_SASTRINGT
+				|| !params[0]->paramBuffer
+				|| strcmp(params[0]->paramName, "saClmAction")
+				|| strlen(*(SaStringT *)(params[0]->paramBuffer)) > 255
+				|| strchr(*(SaStringT *)(params[0]->paramBuffer), '/'))
+		{
+			immutil_saImmOiAdminOperationResult(
+					immOiHandle, invocation, SA_AIS_ERR_INVALID_PARAM);
+			goto done;
+		}
+
+		if(!nodeop->nodeup) {
+			LOG_NO("clms_imm_node_action failed. Node %s is not up",
+					osaf_extended_name_borrow(&nodeop->node_name));
+			immutil_saImmOiAdminOperationResult(immOiHandle,
+					invocation,
+					SA_AIS_ERR_INTERRUPT);
+			goto done;
+		}
+
+		rc = clms_cluster_action(nodeop->node_id,
+				*(SaStringT *)(params[0]->paramBuffer));
+		err = (rc == NCSCC_RC_SUCCESS) ? SA_AIS_OK : SA_AIS_ERR_INTERRUPT;
+		immutil_saImmOiAdminOperationResult( immOiHandle, invocation, err);
+		if (rc != NCSCC_RC_SUCCESS) {
+			LOG_ER("clms_imm_node_action failed");
 			goto done;
 		}
 		break;
@@ -2767,7 +2861,6 @@ done:
 	TRACE_LEAVE();
 	return rc;
 }
-
 /**
  * Start the timer for admin lock operation
  */
