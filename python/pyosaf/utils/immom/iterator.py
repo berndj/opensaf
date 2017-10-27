@@ -17,7 +17,6 @@
 ############################################################################
 """ IMM Search iterators """
 from __future__ import print_function
-import sys
 from collections import Iterator
 from ctypes import pointer, c_char_p, cast, c_void_p
 
@@ -26,16 +25,18 @@ from pyosaf.saImm import saImm, eSaImmScopeT, eSaImmValueTypeT, \
     unmarshalSaImmValue, SaImmAttrNameT, SaImmSearchParametersT_2, \
     SaImmAttrValuesT_2
 from pyosaf import saImmOm
-from pyosaf.utils import immom
-from pyosaf.utils import SafException
+from pyosaf.utils import log_err, bad_handle_retry
+from pyosaf.utils.immom import agent
 from pyosaf.utils.immom.object import ImmObject
 
 
-class SearchIterator(Iterator):
+class SearchIterator(agent.ImmOmAgentManager, Iterator):
     """ General search iterator """
     def __init__(self, root_name=None, scope=eSaImmScopeT.SA_IMM_SUBTREE,
-                 attribute_names=None, search_param=None):
-        self.search_handle = saImmOm.SaImmSearchHandleT()
+                 attribute_names=None, search_param=None, version=None):
+        """ Constructor for SearchIterator class """
+        super(SearchIterator, self).__init__(version)
+        self.search_handle = None
         if root_name is not None:
             self.root_name = SaNameT(root_name)
         else:
@@ -45,32 +46,43 @@ class SearchIterator(Iterator):
                                 for attr_name in attribute_names] \
             if attribute_names else None
 
-        search_options = saImm.SA_IMM_SEARCH_ONE_ATTR
+        self.search_options = saImm.SA_IMM_SEARCH_ONE_ATTR
         if attribute_names is None:
-            search_options |= saImm.SA_IMM_SEARCH_GET_ALL_ATTR
+            self.search_options |= saImm.SA_IMM_SEARCH_GET_ALL_ATTR
         else:
-            search_options |= saImm.SA_IMM_SEARCH_GET_SOME_ATTR
+            self.search_options |= saImm.SA_IMM_SEARCH_GET_SOME_ATTR
 
         if search_param is None:
-            search_param = SaImmSearchParametersT_2()
+            self.search_param = SaImmSearchParametersT_2()
         else:
-            search_param = search_param
+            self.search_param = search_param
 
-        try:
-            immom.saImmOmSearchInitialize_2(immom.handle, self.root_name,
-                                            self.scope, search_options,
-                                            search_param, self.attribute_names,
-                                            self.search_handle)
-        except SafException as err:
-            if err.value == eSaAisErrorT.SA_AIS_ERR_NOT_EXIST:
-                self.search_handle = None
-                raise err
-            else:
-                raise err
+    def __enter__(self):
+        """ Enter method for SearchIterator class """
+        return self
+
+    def __exit__(self, exit_type, value, traceback):
+        """ Called when Iterator is used in a 'with' statement
+            just before it exits
+
+        exit_type, value and traceback are only set if the with statement was
+        left via an exception
+        """
+        if self.search_handle is not None:
+            agent.saImmOmSearchFinalize(self.search_handle)
+            self.search_handle = None
+        if self.handle is not None:
+            agent.saImmOmFinalize(self.handle)
+            self.handle = None
 
     def __del__(self):
+        """ Destructor for SearchIterator class """
         if self.search_handle is not None:
-            immom.saImmOmSearchFinalize(self.search_handle)
+            saImmOm.saImmOmSearchFinalize(self.search_handle)
+            self.search_handle = None
+        if self.handle is not None:
+            saImmOm.saImmOmFinalize(self.handle)
+            self.handle = None
 
     def __iter__(self):
         return self
@@ -82,14 +94,13 @@ class SearchIterator(Iterator):
     def __next__(self):
         obj_name = SaNameT()
         attributes = pointer(pointer(SaImmAttrValuesT_2()))
-        try:
-            immom.saImmOmSearchNext_2(self.search_handle, obj_name, attributes)
-        except SafException as err:
-            if err.value == eSaAisErrorT.SA_AIS_ERR_NOT_EXIST:
-                raise StopIteration
-            else:
-                raise err
-
+        rc = agent.saImmOmSearchNext_2(self.search_handle, obj_name,
+                                       attributes)
+        if rc != eSaAisErrorT.SA_AIS_OK:
+            if rc != eSaAisErrorT.SA_AIS_ERR_NOT_EXIST:
+                log_err("saImmOmSearchNext_2 FAILED - %s" %
+                        eSaAisErrorT.whatis(rc))
+            raise StopIteration
         attrs = {}
         attr_list = unmarshalNullArray(attributes)
         for attr in attr_list:
@@ -99,6 +110,28 @@ class SearchIterator(Iterator):
                                                          attr.attrValueType)
                                      for val in attr_range]]
         return ImmObject(obj_name, attrs)
+
+    @bad_handle_retry
+    def init(self):
+        """ Initialize the IMM OM search iterator
+
+        Returns:
+            SaAisErrorT: Return code of the IMM OM APIs
+        """
+        # Cleanup previous resources if any
+        self.finalize()
+        rc = self.initialize()
+
+        self.search_handle = saImmOm.SaImmSearchHandleT()
+        if rc == eSaAisErrorT.SA_AIS_OK:
+            rc = agent.saImmOmSearchInitialize_2(
+                self.handle, self.root_name, self.scope, self.search_options,
+                self.search_param, self.attribute_names, self.search_handle)
+            if rc != eSaAisErrorT.SA_AIS_OK:
+                log_err("saImmOmSearchInitialize_2 FAILED - %s" %
+                        eSaAisErrorT.whatis(rc))
+                self.search_handle = None
+        return rc
 
 
 class InstanceIterator(SearchIterator):
@@ -111,15 +144,3 @@ class InstanceIterator(SearchIterator):
             eSaImmValueTypeT.SA_IMM_ATTR_SASTRINGT
         search_param.searchOneAttr.attrValue = cast(pointer(name), c_void_p)
         SearchIterator.__init__(self, root_name, search_param=search_param)
-
-
-def test():
-    """ A simple function to test the usage of InstanceIterator class """
-    instance_iter = InstanceIterator(sys.argv[1])
-    for dn, attr in instance_iter:
-        print(dn.split("=")[1])
-        print(attr, "\n")
-
-
-if __name__ == '__main__':
-    test()

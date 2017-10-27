@@ -16,8 +16,11 @@
 #
 ############################################################################
 """ IMM Object representation """
+from pyosaf.saAis import eSaAisErrorT
 from pyosaf.saImm import saImm
-import pyosaf.utils.immom
+
+from pyosaf.utils import SafException
+from pyosaf.utils.immom.agent import ImmOmAgent
 
 
 class ImmObject(object):
@@ -34,29 +37,40 @@ class ImmObject(object):
         Attributes is a map where attribute name is key, value is a tuple of
         (valueType, values), values is a list.
         class_name and attributes are mutually exclusive.
+
+        Raises:
+            SafException: If the return code of the corresponding API call(s)
+                is not SA_AIS_OK
         """
         self.__dict__["dn"] = dn
-
+        _imm_om = ImmOmAgent()
+        rc = _imm_om.init()
+        if rc != eSaAisErrorT.SA_AIS_OK:
+            raise SafException(rc)
         # mutually exclusive for read vs create
         if class_name is not None:
             assert attributes is None
             self.__dict__["attrs"] = {}
             self.__dict__["class_name"] = class_name
-            self.class_desc[class_name] = \
-                pyosaf.utils.immom.class_description_get(class_name)
+            rc, class_desc = _imm_om.get_class_description(class_name)
+            if rc != eSaAisErrorT.SA_AIS_OK:
+                raise SafException(rc)
+            self.class_desc[class_name] = class_desc
         elif attributes is not None:
             assert class_name is None
             self.__dict__["attrs"] = attributes
             class_name = attributes["SaImmAttrClassName"][1][0]
             self.__dict__["class_name"] = class_name
             if class_name not in self.class_desc:
-                self.class_desc[class_name] = \
-                    pyosaf.utils.immom.class_description_get(class_name)
+                rc, class_desc = _imm_om.get_class_description(class_name)
+                if rc != eSaAisErrorT.SA_AIS_OK:
+                    raise SafException(rc)
+                self.class_desc[class_name] = class_desc
         else:
             raise ValueError("Class and attributes are None")
 
         self.__dict__["rdn_attribute"] = \
-            pyosaf.utils.immom.get_rdn_attribute_for_class(class_name)
+            _imm_om.get_rdn_attribute_for_class(class_name)
 
     def get_value_type(self, attr_name):
         """ Return IMM value type of the named attribute
@@ -108,8 +122,10 @@ class ImmObject(object):
 
     def __setattr__(self, key, value):
         # Correct RDN assignments missing the RDN attribute name in value
-        if key == self.rdn_attribute and value.find(self.rdn_attribute) != 0:
-            value = '%s=%s' % (self.rdn_attribute, value)
+
+        if key == self.rdn_attribute:
+            if str(value).find(self.rdn_attribute) != 0:
+                value = '%s=%s' % (self.rdn_attribute, value)
 
         value_type = self.get_value_type(key)
         if isinstance(value, list):

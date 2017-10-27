@@ -48,7 +48,9 @@ pkgpyosafutilsimmom_PYTHON = \
 	python/pyosaf/utils/immom/__init__.py \
 	python/pyosaf/utils/immom/ccb.py \
 	python/pyosaf/utils/immom/iterator.py \
-	python/pyosaf/utils/immom/object.py
+	python/pyosaf/utils/immom/object.py \
+	python/pyosaf/utils/immom/agent.py \
+	python/pyosaf/utils/immom/accessor.py
 
 pkgpyosafutilsclm_PYTHON = \
 	python/pyosaf/utils/clm/__init__.py

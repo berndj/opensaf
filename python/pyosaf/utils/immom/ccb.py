@@ -17,16 +17,17 @@
 ############################################################################
 """ Class representing an IMM CCB """
 from __future__ import print_function
-import sys
-from ctypes import c_void_p, pointer, cast
+from ctypes import c_void_p, pointer, cast, POINTER
 
-from pyosaf.saAis import eSaAisErrorT, eSaBoolT, SaNameT, SaStringT, \
-    SaDoubleT, SaTimeT, SaUint64T, SaInt64T, SaUint32T, SaInt32T, SaFloatT
+from pyosaf.saAis import eSaAisErrorT, SaNameT, SaStringT, SaFloatT, \
+    unmarshalNullArray, SaDoubleT, SaTimeT, SaUint64T, SaInt64T, SaUint32T, \
+    SaInt32T, SaVersionT
 from pyosaf.saImm import eSaImmScopeT, eSaImmValueTypeT, SaImmAttrValuesT_2
 from pyosaf import saImm
 from pyosaf import saImmOm
-from pyosaf.utils import immom
-from pyosaf.utils import SafException
+from pyosaf.utils.immom import agent
+from pyosaf.utils.immom.accessor import ImmOmAccessor
+from pyosaf.utils import log_err, bad_handle_retry
 
 
 def _value_to_ctype_ptr(value_type, value):
@@ -39,8 +40,6 @@ def _value_to_ctype_ptr(value_type, value):
     Returns:
         c_void_p: ctype pointer which points to value
     """
-    if sys.version_info > (3,):
-        long = int
     if value_type is eSaImmValueTypeT.SA_IMM_ATTR_SAINT32T:
         ctypeptr = cast(pointer(SaInt32T(value)), c_void_p)
     elif value_type is eSaImmValueTypeT.SA_IMM_ATTR_SAUINT32T:
@@ -86,21 +85,15 @@ def marshal_c_array(value_type, value_list):
 
 class Ccb(object):
     """ Class representing an ongoing CCB """
-    def __init__(self, flags=saImm.saImm.SA_IMM_CCB_REGISTERED_OI):
-        self.owner_handle = saImmOm.SaImmAdminOwnerHandleT()
-        owner_name = saImmOm.SaImmAdminOwnerNameT("DummyName")
-
-        immom.saImmOmAdminOwnerInitialize(immom.handle, owner_name,
-                                          eSaBoolT.SA_TRUE, self.owner_handle)
-        self.ccb_handle = saImmOm.SaImmCcbHandleT()
-
-        if flags:
-            ccb_flags = saImmOm.SaImmCcbFlagsT(flags)
-        else:
-            ccb_flags = saImmOm.SaImmCcbFlagsT(0)
-
-        immom.saImmOmCcbInitialize(self.owner_handle, ccb_flags,
-                                   self.ccb_handle)
+    def __init__(self, flags=saImm.saImm.SA_IMM_CCB_REGISTERED_OI,
+                 version=None):
+        self.init_version = version if version else SaVersionT('A', 2, 15)
+        self.imm_om = None
+        self.admin_owner = None
+        self.accessor = None
+        self.ccb_handle = None
+        self.ccb_flags = saImmOm.SaImmCcbFlagsT(flags) if flags else \
+            saImmOm.SaImmCcbFlagsT(0)
 
     def __enter__(self):
         """ Called when Ccb is used in a 'with' statement as follows:
@@ -123,54 +116,226 @@ class Ccb(object):
             self.__del__()
 
     def __del__(self):
-        """ Finalize the CCB """
-        immom.saImmOmAdminOwnerFinalize(self.owner_handle)
+        """ Destructor for CBB class
 
+        Finalize the the CCB
+        """
+        if self.ccb_handle is not None:
+            saImmOm.saImmOmCcbFinalize(self.ccb_handle)
+            self.ccb_handle = None
+        if self.admin_owner:
+            del self.admin_owner
+        if self.imm_om:
+            del self.imm_om
+
+    def clear_admin_owner(self, obj_name, scope=eSaImmScopeT.SA_IMM_SUBTREE):
+        """ Clear the admin owner for the set of object identified by the scope
+        and obj_name parameters
+
+        Args:
+            obj_name (str): Object name
+            scope (SaImmScopeT): Scope of the clear operation
+
+        Returns:
+            SaAisErrorT: Return code of the corresponding IMM API call(s)
+        """
+        return self.imm_om.clear_admin_owner(obj_name, scope)
+
+    def finalize(self):
+        """ Finalize the CCB handle
+
+        Returns:
+            SaAisErrorT: Return code of the saImmOmCcbFinalize() API call
+        """
+        rc = eSaAisErrorT.SA_AIS_OK
+        if self.ccb_handle:
+            rc = agent.saImmOmCcbFinalize(self.ccb_handle)
+            if rc != eSaAisErrorT.SA_AIS_OK:
+                log_err("saImmOmCcbFinalize FAILED - %s" %
+                        eSaAisErrorT.whatis(rc))
+            elif rc == eSaAisErrorT.SA_AIS_OK \
+                    or rc == eSaAisErrorT.SA_AIS_ERR_BAD_HANDLE:
+                # If the Finalize() call returned BAD_HANDLE, the handle should
+                # already become stale and invalid, so we reset it anyway.
+                self.ccb_handle = None
+
+        return rc
+
+    @bad_handle_retry
+    def init(self, owner_name=""):
+        """ Initialize the IMM OM interface needed for CCB operations
+
+        Args:
+            owner_name (str): Name of the admin owner
+
+        Return:
+            SaAisErrorT: Return code of the corresponding IMM API calls
+        """
+        # Clean previous resources if any
+        self.finalize()
+        self.imm_om = agent.ImmOmAgent(self.init_version)
+        rc = self.imm_om.init()
+        if rc == eSaAisErrorT.SA_AIS_OK:
+            _om_handle = self.imm_om.get_handle()
+            self.admin_owner = agent.ImmOmAdminOwner(_om_handle, owner_name)
+            self.admin_owner.initialize()
+            if rc == eSaAisErrorT.SA_AIS_OK:
+                _owner_handle = self.admin_owner.get_handle()
+                self.ccb_handle = saImmOm.SaImmCcbHandleT()
+
+                rc = agent.saImmOmCcbInitialize(
+                    _owner_handle, self.ccb_flags, self.ccb_handle)
+                if rc != eSaAisErrorT.SA_AIS_OK:
+                    log_err("saImmOmCcbInitialize FAILED - %s" %
+                            eSaAisErrorT.whatis(rc))
+        return rc
+
+    @bad_handle_retry
     def create(self, obj, parent_name=None):
         """ Create the CCB object
 
         Args:
             obj (ImmObject): Imm object
             parent_name (str): Parent name
+
+        Return:
+            SaAisErrorT: Return code of the corresponding IMM API calls
         """
+        rc = eSaAisErrorT.SA_AIS_OK
         if parent_name is not None:
+            rc = self.admin_owner.set_owner(parent_name)
             parent_name = SaNameT(parent_name)
-            object_names = [parent_name]
-            immom.saImmOmAdminOwnerSet(self.owner_handle, object_names,
-                                       eSaImmScopeT.SA_IMM_SUBTREE)
-        else:
-            parent_name = None
 
-        attr_values = []
-        for attr_name, type_values in obj.attrs.items():
-            values = type_values[1]
-            attr = SaImmAttrValuesT_2()
-            attr.attrName = attr_name
-            attr.attrValueType = type_values[0]
-            attr.attrValuesNumber = len(values)
-            attr.attrValues = marshal_c_array(attr.attrValueType, values)
-            attr_values.append(attr)
+        if rc == eSaAisErrorT.SA_AIS_OK:
+            attr_values = []
+            for attr_name, type_values in obj.attrs.items():
+                values = type_values[1]
+                attr = SaImmAttrValuesT_2()
+                attr.attrName = attr_name
+                attr.attrValueType = type_values[0]
 
-        immom.saImmOmCcbObjectCreate_2(self.ccb_handle,
-                                       obj.class_name,
-                                       parent_name,
-                                       attr_values)
+                attr.attrValuesNumber = len(values)
+                attr.attrValues = marshal_c_array(attr.attrValueType, values)
+                attr_values.append(attr)
 
+            rc = agent.saImmOmCcbObjectCreate_2(self.ccb_handle,
+                                                obj.class_name,
+                                                parent_name,
+                                                attr_values)
+            if rc != eSaAisErrorT.SA_AIS_OK:
+                log_err("saImmOmCcbObjectCreate_2 FAILED - %s" %
+                        eSaAisErrorT.whatis(rc))
+
+        if rc == eSaAisErrorT.SA_AIS_ERR_BAD_HANDLE:
+            init_rc = self.init()
+            # If the re-initialization of agent handle succeeds, we still need
+            # to return BAD_HANDLE to the users, so that they would re-try the
+            # failed operation. Otherwise, the true error code is returned
+            # to the user to decide further actions.
+            if init_rc != eSaAisErrorT.SA_AIS_OK:
+                rc = init_rc
+
+        return rc
+
+    @bad_handle_retry
     def delete(self, object_name):
         """ Add a delete operation of the object with the given DN to the CCB
 
         Args:
             object_name (str): Object name
+
+        Return:
+            SaAisErrorT: Return code of the corresponding IMM API calls
         """
         if object_name is None:
-            raise SafException(eSaAisErrorT.SA_AIS_ERR_NOT_EXIST)
+            return eSaAisErrorT.SA_AIS_ERR_NOT_EXIST
 
-        object_name = SaNameT(object_name)
-        object_names = [object_name]
+        rc = self.admin_owner.set_owner(object_name)
+        if rc == eSaAisErrorT.SA_AIS_OK:
+            obj_name = SaNameT(object_name)
+            rc = agent.saImmOmCcbObjectDelete(self.ccb_handle, obj_name)
+            if rc != eSaAisErrorT.SA_AIS_OK:
+                log_err("saImmOmCcbObjectDelete FAILED - %s" %
+                        eSaAisErrorT.whatis(rc))
 
-        immom.saImmOmAdminOwnerSet(self.owner_handle, object_names,
-                                   eSaImmScopeT.SA_IMM_SUBTREE)
-        immom.saImmOmCcbObjectDelete(self.ccb_handle, object_name)
+        if rc == eSaAisErrorT.SA_AIS_ERR_BAD_HANDLE:
+            init_rc = self.init()
+            # If the re-initialization of agent handle succeeds, we still need
+            # to return BAD_HANDLE to the users, so that they would re-try the
+            # failed operation. Otherwise, the true error code is returned
+            # to the user to decide further actions.
+            if init_rc != eSaAisErrorT.SA_AIS_OK:
+                rc = init_rc
+
+        return rc
+
+    @bad_handle_retry
+    def _modify(self, object_name, attr_name, values, mod_type):
+        """ Modify an existing object
+
+        Args:
+            object_name (str): Object name
+            attr_name (str): Attribute name
+            values (list): List of attribute values
+            mod_type (eSaImmAttrModificationTypeT): Modification type
+        Return:
+            SaAisErrorT: Return code of the corresponding IMM API call(s)
+        """
+        if object_name is None:
+            rc = eSaAisErrorT.SA_AIS_ERR_INVALID_PARAM
+        else:
+            if not self.accessor:
+                self.accessor = ImmOmAccessor(self.init_version)
+                self.accessor.init()
+
+            # Get the attribute value type by reading the object's class
+            # description
+            rc, obj = self.accessor.get(object_name)
+            if rc == eSaAisErrorT.SA_AIS_OK:
+                class_name = obj.SaImmAttrClassName
+                _, attr_def_list = \
+                    self.imm_om.get_class_description(class_name)
+                value_type = None
+                for attr_def in attr_def_list:
+                    if attr_def.attrName == attr_name:
+                        value_type = attr_def.attrValueType
+                        break
+                if value_type:
+                    rc = self.admin_owner.set_owner(object_name,
+                                                    eSaImmScopeT.SA_IMM_ONE)
+
+            if rc == eSaAisErrorT.SA_AIS_OK:
+                # Make sure the values field is a list
+                if not isinstance(values, list):
+                    values = [values]
+
+                attr_mods = []
+                attr_mod = saImmOm.SaImmAttrModificationT_2()
+                attr_mod.modType = mod_type
+                attr_mod.modAttr = SaImmAttrValuesT_2()
+                attr_mod.modAttr.attrName = attr_name
+                attr_mod.modAttr.attrValueType = value_type
+                attr_mod.modAttr.attrValuesNumber = len(values)
+                attr_mod.modAttr.attrValues = marshal_c_array(value_type,
+                                                              values)
+                attr_mods.append(attr_mod)
+                object_name = SaNameT(object_name)
+                rc = agent.saImmOmCcbObjectModify_2(self.ccb_handle,
+                                                    object_name, attr_mods)
+                if rc != eSaAisErrorT.SA_AIS_OK:
+                    log_err("saImmOmCcbObjectModify_2 FAILED - %s" %
+                            eSaAisErrorT.whatis(rc))
+
+            if rc == eSaAisErrorT.SA_AIS_ERR_BAD_HANDLE:
+                init_rc = self.init()
+                # If the re-initialization of agent handle succeeds, we still
+                # need to return BAD_HANDLE to the users, so that they would
+                # re-try the failed operation. Otherwise, the true error code
+                # is returned to the user to decide further actions.
+                if init_rc != eSaAisErrorT.SA_AIS_OK:
+                    rc = init_rc
+
+        return rc
 
     def modify_value_add(self, object_name, attr_name, values):
         """ Add to the CCB an ADD modification of an existing object
@@ -179,51 +344,13 @@ class Ccb(object):
             object_name (str): Object name
             attr_name (str): Attribute name
             values (list): List of attribute values
+
+        Return:
+            SaAisErrorT: Return code of the corresponding IMM API calls
         """
-        assert object_name
-
-        # Make sure the values field is a list
-        if not isinstance(values, list):
-            values = [values]
-
-        # First try to get the attribute value type by reading
-        # the object's class description
-        try:
-            obj = immom.get(object_name)
-        except SafException as err:
-            print("failed: %s" % err)
-            return
-
-        object_name = SaNameT(object_name)
-        object_names = [object_name]
-        class_name = obj.SaImmAttrClassName
-        value_type = None
-        attr_def_list = immom.class_description_get(class_name)
-        for attr_def in attr_def_list:
-            if attr_def.attrName == attr_name:
-                value_type = attr_def.attrValueType
-                break
-
-        if value_type is None:
-            raise SafException(eSaAisErrorT.SA_AIS_ERR_NOT_EXIST,
-                               "attribute '%s' does not exist" % attr_name)
-
-        immom.saImmOmAdminOwnerSet(self.owner_handle, object_names,
-                                   eSaImmScopeT.SA_IMM_ONE)
-        attr_mods = []
-
-        attr_mod = saImmOm.SaImmAttrModificationT_2()
-        attr_mod.modType = \
+        mod_type = \
             saImm.eSaImmAttrModificationTypeT.SA_IMM_ATTR_VALUES_ADD
-        attr_mod.modAttr = SaImmAttrValuesT_2()
-        attr_mod.modAttr.attrName = attr_name
-        attr_mod.modAttr.attrValueType = value_type
-        attr_mod.modAttr.attrValuesNumber = len(values)
-        attr_mod.modAttr.attrValues = marshal_c_array(value_type, values)
-
-        attr_mods.append(attr_mod)
-
-        immom.saImmOmCcbObjectModify_2(self.ccb_handle, object_name, attr_mods)
+        return self._modify(object_name, attr_name, values, mod_type)
 
     def modify_value_replace(self, object_name, attr_name, values):
         """ Add to the CCB an REPLACE modification of an existing object
@@ -232,51 +359,13 @@ class Ccb(object):
             object_name (str): Object name
             attr_name (str): Attribute name
             values (list): List of attribute values
+
+        Return:
+            SaAisErrorT: Return code of the corresponding IMM API calls
         """
-        assert object_name
-
-        # Make sure the values field is a list
-        if not isinstance(values, list):
-            values = [values]
-
-        # First try to get the attribute value type by reading
-        # the object's class description
-        try:
-            obj = immom.get(object_name)
-        except SafException as err:
-            print("failed: %s" % err)
-            return
-
-        object_name = SaNameT(object_name)
-        object_names = [object_name]
-        class_name = obj.SaImmAttrClassName
-        value_type = None
-        attr_def_list = immom.class_description_get(class_name)
-        for attr_def in attr_def_list:
-            if attr_def.attrName == attr_name:
-                value_type = attr_def.attrValueType
-                break
-
-        if value_type is None:
-            raise SafException(eSaAisErrorT.SA_AIS_ERR_NOT_EXIST,
-                               "attribute '%s' does not exist" % attr_name)
-
-        immom.saImmOmAdminOwnerSet(self.owner_handle, object_names,
-                                   eSaImmScopeT.SA_IMM_ONE)
-        attr_mods = []
-
-        attr_mod = saImmOm.SaImmAttrModificationT_2()
-        attr_mod.modType = \
+        mod_type = \
             saImm.eSaImmAttrModificationTypeT.SA_IMM_ATTR_VALUES_REPLACE
-        attr_mod.modAttr = SaImmAttrValuesT_2()
-        attr_mod.modAttr.attrName = attr_name
-        attr_mod.modAttr.attrValueType = value_type
-        attr_mod.modAttr.attrValuesNumber = len(values)
-        attr_mod.modAttr.attrValues = marshal_c_array(value_type, values)
-
-        attr_mods.append(attr_mod)
-
-        immom.saImmOmCcbObjectModify_2(self.ccb_handle, object_name, attr_mods)
+        return self._modify(object_name, attr_name, values, mod_type)
 
     def modify_value_delete(self, object_name, attr_name, values):
         """ Add to the CCB an DELETE modification of an existing object
@@ -285,66 +374,44 @@ class Ccb(object):
             object_name (str): Object name
             attr_name (str): Attribute name
             values (list): List of attribute values
+
+        Return:
+            SaAisErrorT: Return code of the corresponding IMM API calls
         """
-        assert object_name
-
-        # Make sure the values field is a list
-        if not isinstance(values, list):
-            values = [values]
-
-        # First try to get the attribute value type by reading
-        # the object's class description
-        try:
-            obj = immom.get(object_name)
-        except SafException as err:
-            print("failed: %s" % err)
-            return
-
-        object_name = SaNameT(object_name)
-        object_names = [object_name]
-        class_name = obj.SaImmAttrClassName
-        value_type = None
-        attr_def_list = immom.class_description_get(class_name)
-        for attr_def in attr_def_list:
-            if attr_def.attrName == attr_name:
-                value_type = attr_def.attrValueType
-                break
-
-        if value_type is None:
-            raise SafException(eSaAisErrorT.SA_AIS_ERR_NOT_EXIST,
-                               "attribute '%s' does not exist" % attr_name)
-
-        immom.saImmOmAdminOwnerSet(self.owner_handle, object_names,
-                                   eSaImmScopeT.SA_IMM_ONE)
-        attr_mods = []
-
-        attr_mod = saImmOm.SaImmAttrModificationT_2()
-        attr_mod.modType = \
+        mod_type = \
             saImm.eSaImmAttrModificationTypeT.SA_IMM_ATTR_VALUES_DELETE
-        attr_mod.modAttr = SaImmAttrValuesT_2()
-        attr_mod.modAttr.attrName = attr_name
-        attr_mod.modAttr.attrValueType = value_type
-        attr_mod.modAttr.attrValuesNumber = len(values)
-        attr_mod.modAttr.attrValues = marshal_c_array(value_type, values)
-
-        attr_mods.append(attr_mod)
-
-        immom.saImmOmCcbObjectModify_2(self.ccb_handle, object_name, attr_mods)
+        return self._modify(object_name, attr_name, values, mod_type)
 
     def apply(self):
-        """ Apply the CCB """
-        immom.saImmOmCcbApply(self.ccb_handle)
+        """ Apply the CCB
 
+        Return:
+            SaAisErrorT: Return code of the APIs
+        """
+        rc = agent.saImmOmCcbApply(self.ccb_handle)
+        if rc != eSaAisErrorT.SA_AIS_OK:
+            log_err("saImmOmCcbApply FAILED - %s" % eSaAisErrorT.whatis(rc))
 
-def test():
-    """ A simple function to test the usage of Ccb class """
-    ccb = Ccb()
-    ccb.modify_value_replace("safAmfCluster=myAmfCluster",
-                             "saAmfClusterStartupTimeout",
-                             [10000000000])
-    ccb.apply()
-    del ccb
+        if rc == eSaAisErrorT.SA_AIS_ERR_BAD_HANDLE:
+            init_rc = self.init()
+            # If the re-initialization of agent handle succeeds, we still
+            # need to return BAD_HANDLE to the users, so that they would
+            # re-try the failed operation. Otherwise, the true error code
+            # is returned to the user to decide further actions.
+            if init_rc != eSaAisErrorT.SA_AIS_OK:
+                rc = init_rc
 
+        return rc
 
-if __name__ == '__main__':
-    test()
+    def get_error_strings(self):
+        """ Return the current CCB error strings
+
+        Returns:
+            SaAisErrorT: Return code of the saImmOmCcbGetErrorStrings() call
+            list: List of error strings
+        """
+        c_strings = POINTER(SaStringT)()
+
+        rc = agent.saImmOmCcbGetErrorStrings(self.ccb_handle, c_strings)
+
+        return rc, unmarshalNullArray(c_strings)

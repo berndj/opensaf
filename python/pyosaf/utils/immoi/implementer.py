@@ -24,130 +24,18 @@ import itertools
 from pyosaf.saAis import eSaAisErrorT, unmarshalNullArray
 from pyosaf import saImm, saImmOi
 from pyosaf.saImm import eSaImmValueTypeT, eSaImmAttrModificationTypeT, \
-    eSaImmClassCategoryT
-from pyosaf.utils import immom, immoi, SafException
+    eSaImmClassCategoryT, SaImmClassNameT
+from pyosaf.saImmOi import SaImmOiImplementerNameT
+from pyosaf.utils import immom, immoi, SafException, decorate, bad_handle_retry
+from pyosaf.utils.immoi import OiAgent
+from pyosaf.utils.immom.object import ImmObject
+
+
+saImmOiClassImplementerSet = decorate(saImmOi.saImmOiClassImplementerSet)
+saImmOiImplementerSet = decorate(saImmOi.saImmOiImplementerSet)
 
 
 implementer_instance = None
-completed_ccbs = {}
-ccbs = {}
-
-
-def _collect_full_transaction(ccb_id):
-    """ Go through a completed CCB and summarize the full transaction as seen
-    by the OI
-
-    Args:
-        ccb_id (str): CCB id
-
-    Returns:
-    {'instances_after' : instances,
-     'created': created,
-     'deleted': deleted,
-     'updated': updated}
-    """
-    # Collect current state
-    all_objects_now = []
-
-    created = []
-    deleted = []
-    updated = []
-
-    # Go through current instances
-    for class_name in implementer_instance.class_names:
-        dns = immoi.get_object_names_for_class(class_name)
-        for dn in dns:
-            obj = immoi.get_object_no_runtime(dn)
-
-            all_objects_now.append(obj)
-
-    # Collect proposed state by applying changes on current state
-    for operation in ccbs[ccb_id]:
-        operation_type = operation['type']
-
-        # Handle object create operation
-        if operation_type == 'CREATE':
-            parent = operation['parent']
-            class_name = operation['className']
-            attributes = operation['attributes']
-            rdn_attr = immoi.get_rdn_attribute_for_class(class_name)
-            rdn_value = attributes[rdn_attr][0]
-
-            if parent:
-                dn = '%s,%s' % (rdn_value, parent)
-            else:
-                dn = rdn_value
-
-            instance = immoi.create_non_existing_imm_object(class_name, parent,
-                                                            attributes)
-            created.append(instance)
-            deleted = [obj for obj in deleted if obj.dn != dn]
-
-        # Handle object delete operation
-        elif operation_type == 'DELETE':
-            dn = operation['dn']
-            deleted.append(immom.get(dn))
-            created = [obj for obj in created if obj.dn != dn]
-            updated = [obj for obj in updated if obj.dn != dn]
-
-        # Handle object modify operation
-        elif operation_type == 'MODIFY':
-            dn = operation['dn']
-            modifications = operation['modification']
-
-            for attr_modification in modifications:
-                mod_type = attr_modification['modification']
-                attribute = attr_modification['attribute']
-                values = attr_modification['values']
-
-                # Find affected object
-                affected_instance = None
-                affected_instances = [obj for obj in all_objects_now
-                                      if obj.dn == dn]
-
-                if not affected_instances:
-                    print('ERROR: Failed to find object %s affected by modify '
-                          'operation' % dn)
-                else:
-                    affected_instance = affected_instances[0]
-                    if affected_instance not in updated:
-                        updated.append(affected_instance)
-
-                if mod_type == \
-                        eSaImmAttrModificationTypeT.SA_IMM_ATTR_VALUES_ADD:
-                    curr_value = affected_instance.__getattr__(attribute)
-                    curr_value.append(values)
-                    affected_instance.__setattr__(attribute, curr_value)
-
-                elif mod_type == \
-                        eSaImmAttrModificationTypeT.SA_IMM_ATTR_VALUES_DELETE:
-                    for value in values:
-                        curr_value = affected_instance.__getattr__(attribute)
-                        curr_value.remove(value)
-                        affected_instance.__setattr__(attribute, curr_value)
-
-                elif mod_type == \
-                        eSaImmAttrModificationTypeT.SA_IMM_ATTR_VALUES_REPLACE:
-                    affected_instance.__setattr__(attribute, values)
-
-    # Return the summary
-    instances_after = []
-
-    for modify_obj in itertools.chain(all_objects_now, created):
-        is_deleted = False
-        for obj in deleted:
-            if obj.dn == modify_obj.dn:
-                is_deleted = True
-
-        if not is_deleted:
-            instances_after.append(modify_obj)
-
-    out = {'instances_after': instances_after,
-           'created': created,
-           'deleted': deleted,
-           'updated': updated}
-
-    return out
 
 
 class AdminOperationParameter(object):
@@ -157,312 +45,6 @@ class AdminOperationParameter(object):
         self.name = name
         self.type = param_type
         self.value = value
-
-
-# Set up callbacks
-def admin_operation_callback(oi_handle, c_invocation_id, c_name,
-                             c_operation_id, c_params):
-    """ Callback for administrative operations
-
-    Args:
-        oi_handle (SaImmOiHandleT): OI handle
-        c_invocation_id (SaInvocationT): Invocation id
-        c_name (SaNameT): Pointer to object name
-        c_operation_id (SaImmAdminOperationIdT): Operation id
-        c_params (SaImmAdminOperationParamsT_2): Pointer to an array of
-            pointers to parameter descriptors
-    """
-    # Unmarshal parameters
-    invocation_id = c_invocation_id
-    name = \
-        saImm.unmarshalSaImmValue(c_name, eSaImmValueTypeT.SA_IMM_ATTR_SANAMET)
-    operation_id = c_operation_id
-
-    params = []
-
-    for param in unmarshalNullArray(c_params):
-        param_name = param.paramName
-        param_type = param.paramType
-        param_buffer = param.paramBuffer
-
-        value = saImm.unmarshalSaImmValue(param_buffer, param_type)
-        parameter = AdminOperationParameter(param_name, param_type, value)
-        params.append(parameter)
-
-    # Invoke the operation
-    result = implementer_instance.admin_operation(operation_id, name, params)
-
-    # Report the result
-    try:
-        immoi.report_admin_operation_result(invocation_id, result)
-    except SafException as err:
-        print("ERROR: Failed to report that %s::%s returned %s (%s)" %
-              (name, invocation_id, result, err.msg))
-
-
-def ccb_abort_callback(oi_handle, ccb_id):
-    """ Callback for aborted CCB
-    The aborted CCB will be removed from the cache.
-
-    Args:
-        oi_handle (SaImmOiHandleT): OI handle
-        ccb_id (SaImmOiCcbIdT): CCB id
-    """
-    del ccbs[ccb_id]
-
-
-def ccb_apply_callback(oi_handle, ccb_id):
-    """ Callback for apply of CCBs
-
-    Args:
-        oi_handle (SaImmOiHandleT): OI handle
-        ccb_id (SaImmOiCcbIdT): CCB id
-    """
-    all_instances = []
-
-    for class_name in implementer_instance.class_names:
-        dns = immoi.get_object_names_for_class(class_name)
-        for dn in dns:
-            obj = immoi.get_object_no_runtime(dn)
-            all_instances.append(obj)
-
-    updated = completed_ccbs[ccb_id]['updated']
-    created = completed_ccbs[ccb_id]['added']
-    deleted = completed_ccbs[ccb_id]['removed']
-
-    # Remove the CCB from the caches
-    del ccbs[ccb_id]
-    del completed_ccbs[ccb_id]
-
-    # Tell the implementer to apply the changes
-    return implementer_instance.on_apply(all_instances, updated,
-                                         created, deleted)
-
-
-def attr_update_callback(oi_handle, c_name, c_attr_names):
-    """ Callback for attribute update operation
-
-    Args:
-        oi_handle (SaImmOiHandleT): OI handle
-        c_name (SaNameT): Pointer to object name
-        c_attr_names (SaImmAttrNameT): Pointer to array of attribute names
-
-    Returns:
-        SaAisErrorT: Return code of the attribute update callback
-    """
-    # Unmarshal parameters
-    name = \
-        saImm.unmarshalSaImmValue(c_name, eSaImmValueTypeT.SA_IMM_ATTR_SANAMET)
-    attr_names = unmarshalNullArray(c_attr_names)
-
-    # Get the class of the object
-    class_name = immoi.get_class_name_for_dn(name)
-
-    # Get the values from the user and report back
-    attributes = {}
-
-    for attr_name in attr_names:
-        values = implementer_instance.on_runtime_values_get(name, class_name,
-                                                            attr_name)
-        if values is None:
-            return eSaAisErrorT.SA_AIS_ERR_UNAVAILABLE
-        if not isinstance(values, list):
-            values = [values]
-
-        attributes[attr_name] = values
-
-    # Report the updated values for the attributes
-    try:
-        immoi.update_rt_object(name, attributes)
-        return eSaAisErrorT.SA_AIS_OK
-    except SafException:
-        return eSaAisErrorT.SA_AIS_ERR_FAILED_OPERATION
-
-
-def ccb_delete_callback(oi_handle, ccb_id, c_name):
-    """ Callback for object delete operation
-
-    Args:
-        oi_handle (SaImmOiHandleT): OI handle
-        ccb_id (SaImmOiCcbIdT): CCB id
-        c_name (SaNameT): Pointer to object name
-
-    Returns:
-        SaAisErrorT: Return code of the object delete callback
-    """
-    # Unmarshal the parameters
-    name = \
-        saImm.unmarshalSaImmValue(c_name, eSaImmValueTypeT.SA_IMM_ATTR_SANAMET)
-
-    # Create a new CCB in the cache if needed
-    if ccb_id not in list(ccbs.keys()):
-        ccbs[ccb_id] = []
-
-    # Cache the operation
-    ccbs[ccb_id].append({'type': 'DELETE',
-                         'dn': name})
-
-    # Tell the implementer about the operation
-    return implementer_instance.on_delete_added(name)
-
-
-def ccb_modify_callback(oi_handle, ccb_id, c_name, c_attr_modification):
-    """ Callback for object modify operation
-
-    Args:
-        oi_handle (SaImmOiHandleT): OI handle
-        ccb_id (SaImmOiCcbIdT): CCB id
-        c_name (SaNameT): Pointer to object name
-        c_attr_modification (SaImmAttrModificationT_2): Pointer to an array of
-            pointers to descriptors of the modifications to perform
-
-    Returns:
-        SaAisErrorT: Return code of the object modify callback
-    """
-    # Unmarshal the parameters
-    name = \
-        saImm.unmarshalSaImmValue(c_name, eSaImmValueTypeT.SA_IMM_ATTR_SANAMET)
-
-    attribute_modifications = []
-    implementer_objection = None
-
-    for attr in unmarshalNullArray(c_attr_modification):
-        attr_name = attr.modAttr.attrName
-        attr_type = attr.modAttr.attrValueType
-        mod_type = attr.modType
-        attr_values = immoi.unmarshal_len_array(attr.modAttr.attrValues,
-                                                attr.modAttr.attrValuesNumber,
-                                                attr.modAttr.attrValueType)
-        attribute_modifications.append({'attribute': attr_name,
-                                        'type': attr_type,
-                                        'modification': mod_type,
-                                        'values': attr_values})
-
-        # Tell the implementer about the modification
-        result = implementer_instance.on_modify_added(attr_name, mod_type,
-                                                      attr_values)
-        if result != eSaAisErrorT.SA_AIS_OK:
-            implementer_objection = result
-
-    # Create a new CCB in the cache if needed
-    if ccb_id not in list(ccbs.keys()):
-        ccbs[ccb_id] = []
-
-    # Store the modifications in the cache
-    ccbs[ccb_id].append({'type': 'MODIFY',
-                         'dn': name,
-                         'modification': attribute_modifications})
-
-    # Respond and say if this is accepted by the implementer
-    if implementer_objection:
-        return implementer_objection
-
-    return eSaAisErrorT.SA_AIS_OK
-
-
-def ccb_create_callback(oi_handle, ccb_id, class_name,
-                        c_parent, c_attr_values):
-    """ Callback for object create operation
-
-    Args:
-        oi_handle (SaImmOiHandleT): OI handle
-        ccb_id (SaImmOiCcbIdT): CCB id
-        class_name (SaImmClassNameT): Class name
-        c_parent (SaNameT): Pointer to name of object's parent
-        c_attr_values (SaImmAttrValuesT_2): Pointer to an array of pointers to
-            attribute descriptors
-
-    Returns:
-        SaAisErrorT: Return code of the object create callback
-    """
-    # Unmarshal parameters
-    parent = saImm.unmarshalSaImmValue(c_parent,
-                                       eSaImmValueTypeT.SA_IMM_ATTR_SANAMET)
-    attributes = {}
-
-    for attr in unmarshalNullArray(c_attr_values):
-        attr_name = attr.attrName
-        attr_type = attr.attrValueType
-        nr_values = attr.attrValuesNumber
-
-        attr_values = immoi.unmarshal_len_array(attr.attrValues, nr_values,
-                                                attr_type)
-        if attr_values:
-            attributes[attr_name] = attr_values
-        else:
-            attributes[attr_name] = None
-
-    # Fill in any missing attributes
-    description = immom.class_description_get(class_name)
-
-    for attribute in description:
-        if attribute.attrName not in attributes:
-            attributes[attribute.attrName] = None
-
-    # Create a new CCB in the cache if needed
-    if ccb_id not in list(ccbs.keys()):
-        ccbs[ccb_id] = []
-
-    # Cache the create operation
-    ccbs[ccb_id].append({'type': 'CREATE',
-                         'parent': parent,
-                         'className': class_name,
-                         'attributes': attributes})
-
-    # Tell the implementer about the operation
-    obj = immoi.create_non_existing_imm_object(class_name, parent, attributes)
-
-    return implementer_instance.on_create_added(class_name, parent, obj)
-
-
-def ccb_completed_callback(oi_handle, ccb_id):
-    """ Callback for completed CCB
-    Validate any configured containments and call the configured on_validate
-    function
-
-    Args:
-        oi_handle (SaImmOiHandleT): OI handle
-        ccb_id (SaImmOiCcbIdT): CCB id
-
-    Returns:
-        SaAisErrorT: Return code of the CCB-completed validation
-    """
-    # Get a summary of the changes in the CCB
-    summary = _collect_full_transaction(ccb_id)
-    instances = summary['instances_after']
-    created = summary['created']
-    deleted = summary['deleted']
-    updated = summary['updated']
-
-    # Store added, removed, updated for apply
-    completed_ccbs[ccb_id] = {'added': created,
-                              'removed': deleted,
-                              'updated': updated}
-
-    # Perform validation on the full transaction
-    return implementer_instance.validate(ccb_id, instances, updated,
-                                         created, deleted)
-
-
-# OI callbacks
-callbacks = saImmOi.SaImmOiCallbacksT_2()
-
-callbacks.saImmOiCcbAbortCallback = \
-    saImmOi.SaImmOiCcbAbortCallbackT(ccb_abort_callback)
-callbacks.saImmOiCcbApplyCallback = \
-    saImmOi.SaImmOiCcbApplyCallbackT(ccb_apply_callback)
-callbacks.saImmOiCcbCompletedCallback = \
-    saImmOi.SaImmOiCcbCompletedCallbackT(ccb_completed_callback)
-callbacks.saImmOiCcbObjectCreateCallback = \
-    saImmOi.SaImmOiCcbObjectCreateCallbackT_2(ccb_create_callback)
-callbacks.saImmOiCcbObjectDeleteCallback = \
-    saImmOi.SaImmOiCcbObjectDeleteCallbackT(ccb_delete_callback)
-callbacks.saImmOiCcbObjectModifyCallback = \
-    saImmOi.SaImmOiCcbObjectModifyCallbackT_2(ccb_modify_callback)
-callbacks.saImmOiRtAttrUpdateCallback = \
-    saImmOi.SaImmOiRtAttrUpdateCallbackT(attr_update_callback)
-callbacks.saImmOiAdminOperationCallback = \
-    saImmOi.SaImmOiAdminOperationCallbackT_2(admin_operation_callback)
 
 
 def admin_operation_decorate(class_name, op_id):
@@ -588,7 +170,7 @@ class Constraints(object):
             return False
 
         # Validate containments affected by create or delete
-        deleted_objs = [immoi.get_object_no_runtime(obj) for obj in deleted]
+        deleted_objs = [immoi.get_object_no_runtime(dn) for dn in deleted]
 
         for obj in itertools.chain(created, deleted_objs):
             parent_name = immoi.get_parent_name_for_dn(obj.dn)
@@ -614,7 +196,7 @@ class Constraints(object):
             if parent_obj:
                 parent_class = parent_obj[0].class_name
             else:
-                parent_class = immoi.get_class_name_for_dn(parent_name)
+                parent_class = immoi.get_class_name_for_dn(dn=parent_name)
 
             # Ignore children where no constraint is defined for the child or
             # the parent
@@ -657,13 +239,16 @@ class Constraints(object):
                                    error_string)
 
 
-class Implementer(object):
+class Implementer(OiAgent):
     """ Class representing an object implementer """
     def __init__(self, class_names=None, name="wrapper", on_create=None,
                  on_delete=None, on_modify=None, on_validate=None,
                  on_apply=None, on_runtime_values_get=None,
                  admin_operations=None, constraints=None):
         """ Create an Implementer instance """
+        # Initialize OI agent
+        super(Implementer, self).__init__()
+
         self.class_names = class_names
         self.name = name
         self.on_create_cb = on_create
@@ -674,12 +259,449 @@ class Implementer(object):
         self.on_runtime_values_get_cb = on_runtime_values_get
         self.admin_operations = admin_operations
         self.constraints = constraints
+        self.completed_ccbs = {}
+        self.ccbs = {}
+        self.implemented_names = []
 
         global implementer_instance
         implementer_instance = self
 
+        # Register OI callbacks
+        self._register_callbacks()
+
         # Initialize OI API and register as implementer for the classes
         self._register()
+
+    def _register_callbacks(self):
+        """ Register OI callbacks """
+        # OI callbacks
+        self.callbacks = saImmOi.SaImmOiCallbacksT_2()
+
+        self.callbacks.saImmOiCcbAbortCallback = \
+            saImmOi.SaImmOiCcbAbortCallbackT(self._ccb_abort_callback)
+        self.callbacks.saImmOiCcbApplyCallback = \
+            saImmOi.SaImmOiCcbApplyCallbackT(self._ccb_apply_callback)
+        self.callbacks.saImmOiCcbCompletedCallback = \
+            saImmOi.SaImmOiCcbCompletedCallbackT(self._ccb_completed_callback)
+        self.callbacks.saImmOiCcbObjectCreateCallback = \
+            saImmOi.SaImmOiCcbObjectCreateCallbackT_2(
+                self._ccb_create_callback)
+        self.callbacks.saImmOiCcbObjectDeleteCallback = \
+            saImmOi.SaImmOiCcbObjectDeleteCallbackT(self._ccb_delete_callback)
+        self.callbacks.saImmOiCcbObjectModifyCallback = \
+            saImmOi.SaImmOiCcbObjectModifyCallbackT_2(
+                self._ccb_modify_callback)
+        self.callbacks.saImmOiRtAttrUpdateCallback = \
+            saImmOi.SaImmOiRtAttrUpdateCallbackT(self._attr_update_callback)
+        self.callbacks.saImmOiAdminOperationCallback = \
+            saImmOi.SaImmOiAdminOperationCallbackT_2(
+                self._admin_operation_callback)
+
+    @staticmethod
+    def _admin_operation_callback(oi_handle, c_invocation_id, c_name,
+                                  c_operation_id, c_params):
+        """ Callback for administrative operations
+
+        Args:
+            oi_handle (SaImmOiHandleT): OI handle
+            c_invocation_id (SaInvocationT): Invocation id
+            c_name (SaNameT): Pointer to object name
+            c_operation_id (SaImmAdminOperationIdT): Operation id
+            c_params (SaImmAdminOperationParamsT_2): Pointer to an array of
+                pointers to parameter descriptors
+        """
+        # Unmarshal parameters
+        invocation_id = c_invocation_id
+        name = \
+            saImm.unmarshalSaImmValue(c_name,
+                                      eSaImmValueTypeT.SA_IMM_ATTR_SANAMET)
+        operation_id = c_operation_id
+
+        params = []
+
+        for param in unmarshalNullArray(c_params):
+            param_name = param.paramName
+            param_type = param.paramType
+            param_buffer = param.paramBuffer
+
+            value = saImm.unmarshalSaImmValue(param_buffer, param_type)
+            parameter = AdminOperationParameter(param_name, param_type, value)
+            params.append(parameter)
+
+        # Invoke the operation
+        result = implementer_instance.admin_operation(operation_id, name,
+                                                      params)
+
+        # Report the result
+        try:
+            immoi.report_admin_operation_result(invocation_id, result)
+        except SafException as err:
+            print("ERROR: Failed to report that %s::%s returned %s (%s)" %
+                  (name, invocation_id, result, err.msg))
+
+    def _ccb_abort_callback(self, oi_handle, ccb_id):
+        """ Callback for aborted CCB
+        The aborted CCB will be removed from the cache.
+
+        Args:
+            oi_handle (SaImmOiHandleT): OI handle
+            ccb_id (SaImmOiCcbIdT): CCB id
+        """
+        del self.ccbs[ccb_id]
+
+    def _ccb_apply_callback(self, oi_handle, ccb_id):
+        """ Callback for apply of CCBs
+
+        Args:
+            oi_handle (SaImmOiHandleT): OI handle
+            ccb_id (SaImmOiCcbIdT): CCB id
+        """
+        all_instances = []
+
+        for class_name in implementer_instance.class_names:
+            dns = immoi.get_object_names_for_class(class_name)
+            for dn in dns:
+                dn_in_str = str(dn.value)
+                obj = immoi.get_object_no_runtime(dn_in_str)
+                all_instances.append(obj)
+
+        updated = self.completed_ccbs[ccb_id]['updated']
+        created = self.completed_ccbs[ccb_id]['added']
+        deleted = self.completed_ccbs[ccb_id]['removed']
+
+        # Remove the CCB from the caches
+        del self.ccbs[ccb_id]
+        del self.completed_ccbs[ccb_id]
+
+        # Tell the implementer to apply the changes
+        return implementer_instance.on_apply(all_instances, updated,
+                                             created, deleted)
+
+    def _attr_update_callback(self, oi_handle, c_name, c_attr_names):
+        """ Callback for attribute update operation
+
+        Args:
+            oi_handle (SaImmOiHandleT): OI handle
+            c_name (SaNameT): Pointer to object name
+            c_attr_names (SaImmAttrNameT): Pointer to array of attribute names
+
+        Returns:
+            SaAisErrorT: Return code of the attribute update callback
+        """
+        # Unmarshal parameters
+        name = \
+            saImm.unmarshalSaImmValue(c_name,
+                                      eSaImmValueTypeT.SA_IMM_ATTR_SANAMET)
+        attr_names = unmarshalNullArray(c_attr_names)
+
+        # Get the class of the object
+        class_name = immoi.get_class_name_for_dn(dn=name)
+
+        # Get the values from the user and report back
+        attributes = {}
+
+        for attr_name in attr_names:
+            values = implementer_instance.on_runtime_values_get(name,
+                                                                class_name,
+                                                                attr_name)
+            if values is None:
+                return eSaAisErrorT.SA_AIS_ERR_UNAVAILABLE
+            if not isinstance(values, list):
+                values = [values]
+
+            attributes[attr_name] = values
+
+        # Report the updated values for the attributes
+        try:
+            self.update_runtime_object(name, attributes)
+            return eSaAisErrorT.SA_AIS_OK
+        except SafException:
+            return eSaAisErrorT.SA_AIS_ERR_FAILED_OPERATION
+
+    def _ccb_delete_callback(self, oi_handle, ccb_id, c_name):
+        """ Callback for object delete operation
+
+        Args:
+            oi_handle (SaImmOiHandleT): OI handle
+            ccb_id (SaImmOiCcbIdT): CCB id
+            c_name (SaNameT): Pointer to object name
+
+        Returns:
+            SaAisErrorT: Return code of the object delete callback
+        """
+        # Unmarshal the parameters
+        name = \
+            saImm.unmarshalSaImmValue(c_name,
+                                      eSaImmValueTypeT.SA_IMM_ATTR_SANAMET)
+
+        # Create a new CCB in the cache if needed
+        if ccb_id not in list(self.ccbs.keys()):
+            self.ccbs[ccb_id] = []
+
+        # Cache the operation
+        self.ccbs[ccb_id].append({'type': 'DELETE', 'dn': name})
+
+        # Tell the implementer about the operation
+        return implementer_instance.on_delete_added(name)
+
+    def _ccb_modify_callback(self, oi_handle, ccb_id, c_name,
+                             c_attr_modification):
+        """ Callback for object modify operation
+
+        Args:
+            oi_handle (SaImmOiHandleT): OI handle
+            ccb_id (SaImmOiCcbIdT): CCB id
+            c_name (SaNameT): Pointer to object name
+            c_attr_modification (SaImmAttrModificationT_2): Pointer to an array
+                of pointers to descriptors of the modifications to perform
+
+        Returns:
+            SaAisErrorT: Return code of the object modify callback
+        """
+        # Unmarshal the parameters
+        name = \
+            saImm.unmarshalSaImmValue(c_name,
+                                      eSaImmValueTypeT.SA_IMM_ATTR_SANAMET)
+
+        attribute_modifications = []
+        implementer_objection = None
+
+        for attr in unmarshalNullArray(c_attr_modification):
+            attr_name = attr.modAttr.attrName
+            attr_type = attr.modAttr.attrValueType
+            mod_type = attr.modType
+            attr_values = immoi.unmarshal_len_array(
+                attr.modAttr.attrValues, attr.modAttr.attrValuesNumber,
+                attr.modAttr.attrValueType)
+            attribute_modifications.append({'attribute': attr_name,
+                                            'type': attr_type,
+                                            'modification': mod_type,
+                                            'values': attr_values})
+
+            # Tell the implementer about the modification
+            result = implementer_instance.on_modify_added(attr_name, mod_type,
+                                                          attr_values)
+            if result != eSaAisErrorT.SA_AIS_OK:
+                implementer_objection = result
+
+        # Create a new CCB in the cache if needed
+        if ccb_id not in list(self.ccbs.keys()):
+            self.ccbs[ccb_id] = []
+
+        # Store the modifications in the cache
+        self.ccbs[ccb_id].append({'type': 'MODIFY',
+                                  'dn': name,
+                                  'modification': attribute_modifications})
+
+        # Respond and say if this is accepted by the implementer
+        if implementer_objection:
+            return implementer_objection
+
+        return eSaAisErrorT.SA_AIS_OK
+
+    def _ccb_create_callback(self, oi_handle, ccb_id, class_name,
+                             c_parent, c_attr_values):
+        """ Callback for object create operation
+
+        Args:
+            oi_handle (SaImmOiHandleT): OI handle
+            ccb_id (SaImmOiCcbIdT): CCB id
+            class_name (SaImmClassNameT): Class name
+            c_parent (SaNameT): Pointer to name of object's parent
+            c_attr_values (SaImmAttrValuesT_2): Pointer to an array of pointers
+                                                to attribute descriptors
+
+        Returns:
+            SaAisErrorT: Return code of the object create callback
+        """
+        # Unmarshal parameters
+        parent = saImm.unmarshalSaImmValue(
+            c_parent, eSaImmValueTypeT.SA_IMM_ATTR_SANAMET)
+        attributes = {}
+
+        for attr in unmarshalNullArray(c_attr_values):
+            attr_name = attr.attrName
+            attr_type = attr.attrValueType
+            nr_values = attr.attrValuesNumber
+
+            attr_values = immoi.unmarshal_len_array(attr.attrValues,
+                                                    nr_values,
+                                                    attr_type)
+            if attr_values:
+                attributes[attr_name] = attr_values
+            else:
+                attributes[attr_name] = None
+
+        # Fill in any missing attributes
+        description = immom.class_description_get(class_name)
+
+        for attribute in description:
+            if attribute.attrName not in attributes:
+                attributes[attribute.attrName] = None
+
+        # Create a new CCB in the cache if needed
+        if ccb_id not in list(self.ccbs.keys()):
+            self.ccbs[ccb_id] = []
+
+        # Cache the create operation
+        self.ccbs[ccb_id].append({'type': 'CREATE',
+                                  'parent': parent,
+                                  'className': class_name,
+                                  'attributes': attributes})
+
+        # Tell the implementer about the operation
+        obj = immoi.create_non_existing_imm_object(class_name, parent,
+                                                   attributes)
+
+        return implementer_instance.on_create_added(class_name, parent, obj)
+
+    def _ccb_completed_callback(self, oi_handle, ccb_id):
+        """ Callback for completed CCB
+
+        Validate any configured containments and call the configured
+        on_validate function
+
+        Args:
+            oi_handle (SaImmOiHandleT): OI handle
+            ccb_id (SaImmOiCcbIdT): CCB id
+
+        Returns:
+            SaAisErrorT: Return code of the CCB-completed validation
+        """
+        # Get a summary of the changes in the CCB
+        summary = self._collect_full_transaction(ccb_id)
+        instances = summary['instances_after']
+        created = summary['created']
+        deleted = summary['deleted']
+        updated = summary['updated']
+
+        # Store added, removed, updated for apply
+        self.completed_ccbs[ccb_id] = {'added': created,
+                                       'removed': deleted,
+                                       'updated': updated}
+
+        # Perform validation on the full transaction
+        return implementer_instance.validate(ccb_id, instances, updated,
+                                             created, deleted)
+
+    def _collect_full_transaction(self, ccb_id):
+        """ Go through a completed CCB and summarize the full transaction as
+            seen by the OI
+
+        Args:
+            ccb_id (str): CCB id
+
+        Returns:
+        {'instances_after' : instances,
+         'created': created,
+         'deleted': deleted,
+         'updated': updated}
+        """
+        # Collect current state
+        all_objects_now = []
+
+        created = []
+        deleted = []
+        updated = []
+
+        # Go through current instances
+        for class_name in implementer_instance.class_names:
+            dns = immoi.get_object_names_for_class(class_name)
+            for dn in dns:
+                dn_in_str = str(dn.value)
+                obj = immoi.get_object_no_runtime(dn_in_str)
+                all_objects_now.append(obj)
+
+        # Collect proposed state by applying changes on current state
+        for operation in self.ccbs[ccb_id]:
+            operation_type = operation['type']
+
+            # Handle object create operation
+            if operation_type == 'CREATE':
+                parent = operation['parent']
+                class_name = operation['className']
+                attributes = operation['attributes']
+                rdn_attr = immoi.get_rdn_attribute_for_class(
+                    class_name=class_name)
+                rdn_value = attributes[rdn_attr][0]
+
+                if parent:
+                    dn = '%s,%s' % (rdn_value, parent)
+                else:
+                    dn = rdn_value
+
+                instance = immoi.create_non_existing_imm_object(
+                    class_name, parent, attributes)
+                created.append(instance)
+                deleted = [obj for obj in deleted if obj.dn != dn]
+
+            # Handle object delete operation
+            elif operation_type == 'DELETE':
+                dn = operation['dn']
+                deleted.append(ImmObject(class_name=class_name, dn=dn))
+                created = [obj for obj in created if obj.dn != dn]
+                updated = [obj for obj in updated if obj.dn != dn]
+
+            # Handle object modify operation
+            elif operation_type == 'MODIFY':
+                dn = operation['dn']
+                modifications = operation['modification']
+
+                for attr_modification in modifications:
+                    mod_type = attr_modification['modification']
+                    attribute = attr_modification['attribute']
+                    values = attr_modification['values']
+
+                    # Find affected object
+                    affected_instance = None
+                    affected_instances = [obj for obj in all_objects_now
+                                          if obj.dn == dn]
+
+                    if not affected_instances:
+                        print('ERROR: Failed to find object %s affected by '
+                              'modify operation' % dn)
+                    else:
+                        affected_instance = affected_instances[0]
+                        if affected_instance not in updated:
+                            updated.append(affected_instance)
+
+                    if mod_type == \
+                            eSaImmAttrModificationTypeT.SA_IMM_ATTR_VALUES_ADD:
+                        curr_value = affected_instance.__getattr__(attribute)
+                        curr_value.append(values)
+                        affected_instance.__setattr__(attribute, curr_value)
+
+                    elif mod_type == eSaImmAttrModificationTypeT.\
+                            SA_IMM_ATTR_VALUES_DELETE:
+                        for value in values:
+                            curr_value = affected_instance.__getattr__(
+                                attribute)
+                            curr_value.remove(value)
+                            affected_instance.__setattr__(
+                                attribute, curr_value)
+
+                    elif mod_type == eSaImmAttrModificationTypeT.\
+                            SA_IMM_ATTR_VALUES_REPLACE:
+                        affected_instance.__setattr__(attribute, values)
+
+        # Return the summary
+        instances_after = []
+
+        for modify_obj in itertools.chain(all_objects_now, created):
+            is_deleted = False
+            for obj in deleted:
+                if obj.dn == modify_obj.dn:
+                    is_deleted = True
+
+            if not is_deleted:
+                instances_after.append(modify_obj)
+
+        out = {'instances_after': instances_after,
+               'created': created,
+               'deleted': deleted,
+               'updated': updated}
+
+        return out
 
     def get_implemented_classes(self):
         """ Return a list of the classes this implementer implements
@@ -687,17 +709,23 @@ class Implementer(object):
         Returns:
             list: List of class name
         """
-        return self.class_names
+        return self.implemented_names
 
-    def implement_class(self, class_name):
+    def set_class_implementer(self, class_name):
         """ Add the given class_name to the list of classes this implementer
         implements
 
         Args:
             class_name (str): Class name
+
+        Returns:
+            SaAisErrorT: Return code of class implementer set
         """
-        immoi.implement_class(class_name)
-        self.class_names.append(class_name)
+        c_class_name = SaImmClassNameT(class_name)
+        rc = saImmOiClassImplementerSet(self.handle, c_class_name)
+        if rc == eSaAisErrorT.SA_AIS_OK:
+            self.implemented_names.append(class_name)
+        return rc
 
     def set_constraints(self, constraints):
         """ Set constraints to be verified by the OI """
@@ -743,7 +771,8 @@ class Implementer(object):
         """
         if self.on_modify_cb:
             try:
-                self.on_modify_cb(attribute_name, modification_type, values)
+                return self.on_modify_cb(attribute_name,
+                                         modification_type, values)
             except SafException as err:
                 return err.value
 
@@ -763,7 +792,7 @@ class Implementer(object):
         """
         if self.on_delete_cb:
             try:
-                self.on_delete_cb(dn)
+                return self.on_delete_cb(dn)
             except SafException as err:
                 return err.value
 
@@ -781,7 +810,7 @@ class Implementer(object):
         """
         if self.on_create_cb:
             try:
-                self.on_create_cb(class_name, parent_name, obj)
+                return self.on_create_cb(class_name, parent_name, obj)
             except SafException as err:
                 return err.value
 
@@ -891,43 +920,58 @@ class Implementer(object):
         # Report that the operation is not supported
         return eSaAisErrorT.SA_AIS_ERR_NOT_SUPPORTED
 
+    @bad_handle_retry
     def _register(self):
         """ Initialize IMM OI and register as an OI for the configured classes
+
+        Returns:
+            SaAisErrorT: Return code of Implementer register
         """
         # Initialize the OI API
-        immoi.initialize(callbacks)
+        rc = self.initialize()
 
         # Ensure that all classes are configuration classes
-        runtime_classes = [item for item in self.class_names
-                           if immoi.get_class_category(item) ==
-                           eSaImmClassCategoryT.SA_IMM_CLASS_RUNTIME]
+        runtime_classes = None
+        if self.class_names is not None:
+            runtime_classes = [item for item in self.class_names
+                               if immoi.get_class_category(item) ==
+                               eSaImmClassCategoryT.SA_IMM_CLASS_RUNTIME]
         if runtime_classes:
             raise Exception("ERROR: Can't be an applier for runtime "
                             "classes %s" % runtime_classes)
 
         # Become an implementer
-        immoi.register_implementer(self.name)
-
-        # Get the selection objects
-        immoi.get_selection_object()
+        if rc == eSaAisErrorT.SA_AIS_OK:
+            rc = self._register_implementer(self.name)
 
         available_classes = immoi.get_available_classes_in_imm()
 
-        for class_name in self.class_names:
+        if rc == eSaAisErrorT.SA_AIS_OK:
+            if self.class_names is not None:
+                for class_name in self.class_names:
+                    if class_name in available_classes:
+                        rc = self.set_class_implementer(class_name)
+                        if rc != eSaAisErrorT.SA_AIS_OK:
+                            break
+                    else:
+                        print("WARNING: %s is missing in IMM. Not becoming "
+                              "implementer." % class_name)
+        return rc
 
-            if class_name in available_classes:
-                immoi.implement_class(class_name)
-            else:
-                print("WARNING: %s is missing in IMM. Not becoming "
-                      "implementer." % class_name)
+    def _register_implementer(self, oi_name):
+        """ Register as an implementer
 
-    @staticmethod
-    def get_selection_object():
-        """ Return the selection object """
-        return immoi.selection_object.value
+        Args:
+            oi_name (str): Implementer name
 
-    @staticmethod
-    def update_runtime_attributes(dn, attributes):
+        Returns:
+            SaAisErrorT: Return code of implementer set
+        """
+        implementer_name = SaImmOiImplementerNameT(oi_name)
+        rc = saImmOiImplementerSet(self.handle, implementer_name)
+        return rc
+
+    def update_runtime_attributes(self, dn, attributes):
         """ Update the given runtime attributes for the specified dn
 
         Args:
@@ -936,44 +980,47 @@ class Implementer(object):
         """
         # Report the updates
         try:
-            immoi.update_rt_object(dn, attributes)
+            self.update_runtime_object(dn, attributes)
         except SafException as err:
             print("ERROR: Failed to update runtime attributes of %s: %s" %
                   (dn, err))
 
-    @staticmethod
-    def create(obj):
+    def create(self, obj):
         """ Create the runtime object with provided information
 
         Args:
             obj (ImmObject): Object to create
+
+        Returns:
+            SaAisErrorT: Return code of implementer object create
         """
         # Get the parent name for the object
         parent_name = immoi.get_parent_name_for_dn(obj.dn)
         class_name = obj.class_name
 
         # Create the object
-        immoi.create_rt_object(class_name, parent_name, obj)
+        return self.create_runtime_object(class_name, parent_name, obj)
 
-    @staticmethod
-    def delete(dn):
+    def delete(self, dn):
         """ Delete a runtime object with the given dn
 
         Args:
             dn (str): Object dn
-        """
-        immoi.delete_rt_object(dn)
 
-    @staticmethod
-    def _start_dispatch_loop():
+        Returns:
+            SaAisErrorT: Return code of implementer object delete
+        """
+        return self.delete_runtime_object(dn)
+
+    def _start_dispatch_loop(self):
         """ Start an infinite dispatch loop """
-        read_fds = [immoi.selection_object.value]
+        read_fds = [self.selection_object.value]
 
         # Handle updates
         while read_fds:
             read_evt, _, _ = select.select(read_fds, [], read_fds)
             if read_evt:
-                immoi.dispatch()
+                self.dispatch()
 
     def _validate_constraints(self, all_instances, updated, created, deleted):
         """ Validate configured constraints
@@ -1006,12 +1053,16 @@ class Applier(Implementer):
         """ Empty validate handler as appliers cannot validate """
         return eSaAisErrorT.SA_AIS_OK
 
+    @bad_handle_retry
     def _register(self):
         """ Initialize IMM-OI interface and register as an applier for the
         configured classes
+
+        Returns:
+            SaAisErrorT: Return code of applier register
         """
         # Initialize the OI API
-        immoi.initialize(callbacks)
+        rc = self.initialize()
 
         # Ensure that all classes are configuration classes
         runtime_classes = [item for item in self.class_names
@@ -1021,17 +1072,29 @@ class Applier(Implementer):
             raise Exception("ERROR: Can't be an applier for runtime classes %s"
                             % runtime_classes)
         # Become an applier
-        immoi.register_applier(self.name)
-
-        # Get the selection object
-        immoi.get_selection_object()
+        if rc == eSaAisErrorT.SA_AIS_OK:
+            rc = self._register_applier(self.name)
 
         # Register as applier for each class
         available_classes = immoi.get_available_classes_in_imm()
 
         for class_name in self.class_names:
             if class_name in available_classes:
-                immoi.implement_class(class_name)
+                self.set_class_implementer(class_name)
             else:
                 print("WARNING: %s is missing in IMM. Not becoming applier." %
                       class_name)
+        return rc
+
+    def _register_applier(self, app_name):
+        """ Register as an applier OI
+
+        Args:
+            app_name (str): Applier name
+
+        Returns:
+            SaAisErrorT: Return code of applier set
+        """
+        applier_name = "@" + app_name
+        rc = self._register_implementer(applier_name)
+        return rc
