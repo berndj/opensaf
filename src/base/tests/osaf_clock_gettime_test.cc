@@ -16,10 +16,15 @@
  */
 
 #include <cerrno>
+#include <cstdlib>
 #include "base/osaf_time.h"
 #include "base/osaf_utility.h"
 #include "base/tests/mock_clock_gettime.h"
 #include "gtest/gtest.h"
+
+void osaf_abort(long) {
+  abort();
+}
 
 TEST(OsafClockGettime, ReadRealtimeClock) {
   time_t sec = 123456789;

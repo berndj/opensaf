@@ -223,8 +223,7 @@ bin_core_common_test_CPPFLAGS = \
 
 bin_core_common_test_LDFLAGS = \
 	$(AM_LDFLAGS) \
-	src/base/lib_libopensaf_core_la-osaf_time.lo \
-	src/base/lib_libopensaf_core_la-osaf_utility.lo
+	src/base/lib_libopensaf_core_la-osaf_time.lo
 
 bin_core_common_test_SOURCES = \
 	src/base/tests/mock_clock_gettime.cc \

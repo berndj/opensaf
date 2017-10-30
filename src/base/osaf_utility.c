@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "base/ncssysf_def.h"
+#include "base/osaf_time.h"
 #include "osaf/configmake.h"
 
 void osaf_abort(long i_cause)
@@ -52,6 +53,11 @@ void osaf_safe_reboot(void)
 		} else {
 			syslog(LOG_CRIT, "Command: %s failed, rc = %d", str,
 			       rc);
+			rc = -1;
 		}
 	}
+	if (rc != -1) osaf_nanosleep(&kOneMinute);
+	opensaf_reboot(
+		0, NULL,
+		"Shutdown did not complete successfully within one minute");
 }
