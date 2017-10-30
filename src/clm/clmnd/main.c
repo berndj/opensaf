@@ -30,6 +30,7 @@
 #include "base/ncs_util.h"
 #include "base/ncsencdec_pub.h"
 #include "base/ncsgl_defs.h"
+#include "base/ncssysf_def.h"
 #include "base/osaf_poll.h"
 #include "base/osaf_time.h"
 #include "base/osaf_extended_name.h"
@@ -888,6 +889,7 @@ int main(int argc, char *argv[])
 	SaAisErrorT error;
 	int term_fd;
 
+	opensaf_reboot_prepare();
 	daemonize(argc, argv);
 
 	/* Initialize some basic stuff */

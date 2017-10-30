@@ -29,6 +29,7 @@
 #include <string.h>
 #include <time.h>
 #include "base/daemon.h"
+#include "base/ncssysf_def.h"
 #include "base/osaf_time.h"
 #include "clm/clmd/clms.h"
 #include "nid/agent/nid_api.h"
@@ -471,6 +472,7 @@ int main(int argc, char *argv[])
 	int term_fd;
 	int timeout = -1;
 
+	opensaf_reboot_prepare();
 	daemonize(argc, argv);
 
 	if (setenv("SA_ENABLE_EXTENDED_NAMES", "1", 1)) {
