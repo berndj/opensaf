@@ -47,6 +47,13 @@ test $(id -u) -ne 0 && icmd=$(which sudo 2> /dev/null)
 
 opensaf_safe_reboot()
 {
+	# Phase one: stop IMM to prevent sync
+	logger -t "opensaf_reboot" "Stopping IMMND"
+	$icmd pkill -STOP osafimmnd
+	# Wait until IMM has been stopped on all nodes in the cluster
+	sleep 5
+	# Phase two: IMM is stopped on all nodes, so now we can safely reboot
+	# the cluster
 	logger -t "opensaf_reboot" "Rebooting local node using $icmd /sbin/shutdown -r now"
 	$icmd /sbin/shutdown -r now
 }
