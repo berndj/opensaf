@@ -420,11 +420,21 @@ void saLogWriteLogAsync_19(void)
 {
 	SaInvocationT invocation = 0;
 	char logBuf[SA_LOG_MAX_RECORD_SIZE + 10];
+	SaLogBufferT logBuffer = {
+		.logBuf = (SaUint8T *)logBuf,
+		.logBufSize = sizeof(logBuf),
+	};
+
+	SaLogRecordT logRecord = {
+		.logTimeStamp = SA_TIME_UNKNOWN,
+		.logHdrType = SA_LOG_GENERIC_HEADER,
+		.logHeader.genericHdr.notificationClassId = NULL,
+		.logHeader.genericHdr.logSeverity = SA_LOG_SEV_INFO,
+		.logHeader.genericHdr.logSvcUsrName = &logSvcUsrName,
+		.logBuffer = &logBuffer};
 
 	memset(logBuf, 'A', sizeof(logBuf));
 	logBuf[sizeof(logBuf) - 1] = '\0';
-	genLogRecord.logBuffer->logBuf = (SaUint8T *)&logBuf;
-	genLogRecord.logBuffer->logBufSize = SA_LOG_MAX_RECORD_SIZE + 10;
 
 	rc = logInitialize();
 	if (rc != SA_AIS_OK) {
@@ -437,7 +447,7 @@ void saLogWriteLogAsync_19(void)
 		test_validate(rc, SA_AIS_OK);
 		goto done;
 	}
-	rc = saLogWriteLogAsync(logStreamHandle, invocation, 0, &genLogRecord);
+	rc = saLogWriteLogAsync(logStreamHandle, invocation, 0, &logRecord);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 
 done:

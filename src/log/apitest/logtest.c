@@ -77,6 +77,12 @@ static SaLogBufferT genLogBuffer = {
 
 SaNameT logSvcUsrName;
 
+/*
+ * NOTE: Don't move this global pointer genLogrecord.logBuffer->logBuf.
+ * Do so could have impact on other test cases using this global data.
+ * e.g: if you move logBuffer->logBuf to your local data, writing to
+ * this memory in other test case will get "invalid write".
+ */
 SaLogRecordT genLogRecord = {
     .logTimeStamp = SA_TIME_UNKNOWN,
     .logHdrType = SA_LOG_GENERIC_HEADER,

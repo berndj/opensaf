@@ -304,7 +304,7 @@ void writeToDest(void)
 	int rc;
 	char command[1000];
 	bool disable_stdout = true;
-	SaConstStringT s_stdout = "1> /dev/null";
+	SaConstStringT s_stdout = " > /dev/null 2>&1";
 
 	if (is_executed_on_active_node() == false) {
 		fprintf(
@@ -382,7 +382,7 @@ void writeToNoDestName(void)
 	int rc;
 	char command[1000];
 	bool disable_stdout = true;
-	SaConstStringT s_stdout = "1> /dev/null";
+	SaConstStringT s_stdout = " > /dev/null 2>&1";
 
 	if (is_executed_on_active_node() == false) {
 		fprintf(

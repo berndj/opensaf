@@ -79,7 +79,7 @@ void saLogWriteLogCallbackT_01(void)
 		goto done;
 	}
 	strcpy((char *)genLogRecord.logBuffer->logBuf, __FUNCTION__);
-	genLogRecord.logBuffer->logBufSize = strlen(__FUNCTION__);
+	genLogRecord.logBuffer->logBufSize = strlen(__FUNCTION__) + 1;
 
 	struct timespec timeout_time;
 	osaf_set_millis_timeout(2 * kWaitTime, &timeout_time);
@@ -153,7 +153,7 @@ void saLogWriteLogCallbackT_02(void)
 	}
 
 	strcpy((char *)genLogRecord.logBuffer->logBuf, __FUNCTION__);
-	genLogRecord.logBuffer->logBufSize = strlen(__FUNCTION__);
+	genLogRecord.logBuffer->logBufSize = strlen(__FUNCTION__) + 1;
 
 	struct timespec timeout_time;
 	osaf_set_millis_timeout(2 * kWaitTime, &timeout_time);
