@@ -719,7 +719,7 @@ static void clmna_execute_action(const char *action) {
 	size = snprintf(str, sizeof(str), PKGCLMSCRIPTDIR "/osafclm_%s", action);
 	if (size > sizeof(str)) {
 		syslog(LOG_ERR,
-				"Path for executing CLM script '%s' is longer than %ld",
+				"Path for executing CLM script '%s' is longer than %zu",
 				action, sizeof(str));
 		return;
 	}
