@@ -1300,13 +1300,14 @@ void avnd_di_msg_ack_process(AVND_CB *cb, uint32_t mid) {
 
     // matching record
     if (msg_id == mid) {
+      cb->dnd_list.erase(iter);
+      // iter is now invalid, exit iterator loop asap
       if (rec->msg.info.avd->msg_type == AVSV_N2D_NODE_DOWN_MSG) {
         // first to stop timer to avoid processing timeout event
         // then perform last step clean up
         avnd_stop_tmr(cb, &rec->resp_tmr);
         avnd_last_step_clean(cb);
       }
-      cb->dnd_list.erase(iter);
       TRACE("remove msg %u from queue", msg_id);
       avnd_diq_rec_del(cb, rec);
       break;
