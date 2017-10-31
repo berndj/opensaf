@@ -3838,73 +3838,65 @@ void modStrLogFileFmt_05(void)
 }
 
 /**
- * Change logStreamFileFormat attribute, then create application stream
- * with logFileFmt set to NULL. Write a log record to that stream.
+ * Verify that the default format string with the time-zone and millisecond info
+ * in a log record are correctly formatted
  *
- * Check whether written log file format is reflected correctly
- * with one defined by logStreamFileFormat.
- *
+ * Steps:
+ *  1. Backup 'logStreamFileFormat' of configuration object
+ *  2. Modify 'logStreamFileFormat' of configuration object with new format that
+ *     has time-zone and millisecond info
+ *  3. Create app stream with logFileFmt set to NULL then write a log record to
+ *     this stream by command saflogger
+ *  4. Verify that written log file format is reflected correctly with default
+ *     format (one defined by logStreamFileFormat in configuration object) by
+ *     checking time-zone and millisecond info in log record are correctly
+ *     formatted.
+ *  5. Restore the original 'logStreamFileFormat'
  */
-void verDefaultLogFileFmt(void)
+void verTimeZoneMilliInDefaultLogFileFmt(void)
 {
 	int rc;
 	char command[MAX_DATA];
-	char appLogPath[MAX_DATA];
 	char v_logStreamFileFormat[MAX_DATA] = "";
-	/* Enable timezone and millisecond token - @Cz @Ck */
+	// Enable time-zone and millisecond token - @Cz @Ck
 	const char *modLogStrFileFmt =
 	    "@Cr @Ch:@Cn:@Cs @Cm/@Cd/@CY @Cz @Ck @Sv @Sl @Cb";
-/*
-  The description for this macro is same as one for VERIFY_CMD.
-  Except, it includes close timestamp.
-*/
-#define VERIFY_CMD_                                                            \
-	"find %s -type f -mmin -1"                                             \
-	" | egrep \"%s_[0-9]{8}_[0-9]{6}_[0-9]{8}_[0-9]{6}\\.log$\""           \
-	" | xargs egrep  \" %s \""                                             \
-	" 1> /dev/null"
+	const char *app_stream_name = "safLgStr=verDefaultLogFileFmt";
 
-	/* Get current value of the attribute */
+	// Get current value of the attribute
 	get_attr_value(&configurationObject, "logStreamFileFormat",
 		       &v_logStreamFileFormat);
 
-	/* Modify the attribute */
+	// Modify the 'logStreamFileFormat' attribute of configuration
+	// that has time-zone and millisecond info
 	sprintf(command, "immcfg -a logStreamFileFormat=\"%s\" %s",
 		modLogStrFileFmt, SA_LOG_CONFIGURATION_OBJECT);
 
-	rc = system(command);
-	if (WEXITSTATUS(rc) == 0) {
-		/* Send an system log to app stream */
-		rc = system("saflogger -a safLgStr=verDefaultLogFileFmt");
-		if (WEXITSTATUS(rc)) {
-			/* Failed to send log record to app stream */
-			fprintf(stderr, "Failed to invoke saflogger -a\n");
-			rc_validate(WEXITSTATUS(rc), 0);
+	rc = systemCall(command);
+	if (rc == 0) {
+		// Create app stream and write log record to it by saflogger
+		sprintf(command, "saflogger -a %s", app_stream_name);
+		rc = systemCall(command);
+		if (rc != 0) {
+			rc_validate(rc, 0);
 			return;
 		}
 
-		char tZoneMillP[MAX_DATA];
-		sprintf(tZoneMillP, "%s %s", TIMEZ_PATTERN, MILLI_PATTERN);
-
-		/* Verify the content of log file if it is reflected with right
-		 * format */
-		sprintf(appLogPath, "%s/saflogger", log_root_path);
-		sprintf(command, VERIFY_CMD_, appLogPath,
-			"safLgStr=verDefaultLogFileFmt", tZoneMillP);
-
-		rc = system(command);
-		if (rc == -1) {
-			/* Failed to execute command on the shell. Report error,
-			 * then exit */
-			fprintf(
-			    stderr,
-			    "Failed to execute command (%s) on the shell. \n",
-			    VERIFY_CMD_);
+		// Find the log file and check if the format time-zone and
+		// millisecond info is written correctly
+		sprintf(command, "find %s/saflogger -type f -mmin -1 "
+				 "| egrep \"%s_[0-9]{8}_[0-9]{6}.*\\.log$\" "
+				 "| xargs egrep  \" %s %s \" "
+				 "1> /dev/null",
+				 log_root_path, app_stream_name,
+				 TIMEZ_PATTERN, MILLI_PATTERN);
+		rc = systemCall(command);
+		if (rc != 0) {
 			test_validate(rc, 0);
 			return;
 		}
 
-		/* Restore the attribute to previous value */
+		// Restore the attribute to previous value
 		m_restoreData(configurationObject, "logStreamFileFormat",
 			      &v_logStreamFileFormat, SA_IMM_ATTR_SASTRINGT);
 		rc_validate(WEXITSTATUS(rc), 0);
@@ -5635,8 +5627,8 @@ __attribute__((constructor)) static void saOiOperations_constructor(void)
 	test_case_add(
 	    4, verNetworkName_01,
 	    "CCB Object Modify, saLogStreamLogFileFormat, network name token (@Cp)");
-	test_case_add(4, verDefaultLogFileFmt,
-		      "Application stream with default log file format");
+	test_case_add(4, verTimeZoneMilliInDefaultLogFileFmt,
+		      "Application stream with time-zone and millisecond in default format");
 	test_case_add(
 	    4, verLogFileName,
 	    "CCB Object Modify, saLogStreamFileName with special character. ER");
