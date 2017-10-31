@@ -34,7 +34,7 @@
 %define _initddir @initscriptdir@
 %define _pkgdatadir %{_datadir}/%{name}
 %define _pkgclcclidir %{_pkglibdir}/clc-cli
-#define _pkgclmscriptsdir %{_pkglibdir}/clm-scripts
+%define _pkgclmscriptsdir %{_pkglibdir}/clm-scripts
 %if %is_immxml
 %define _pkgimmxmldir %{_datadir}/%{name}/immxml
 %define _pkgimmxml_svcdir %{_datadir}/%{name}/immxml/services
@@ -1075,6 +1075,7 @@ fi
 %config(noreplace) %{_pkgsysconfdir}/clmna.conf
 %{_pkglibdir}/osafclmna
 %{_pkgclcclidir}/osaf-clmna
+%{_pkgclmscriptsdir}/osafclm_test
 
 
 %if %is_ais_evt
