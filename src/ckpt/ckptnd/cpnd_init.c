@@ -55,6 +55,7 @@ static uint32_t cpnd_cb_db_destroy(CPND_CB *cb);
 
 static bool cpnd_clear_mbx(NCSCONTEXT arg, NCSCONTEXT msg);
 
+static SaAisErrorT cpnd_ntf_init(void);
 static SaAisErrorT cpnd_clm_init(void);
 
 static SaAisErrorT cpnd_start_clm_init_bg();
@@ -239,6 +240,13 @@ static uint32_t cpnd_lib_init(CPND_CREATE_INFO *info)
 		goto cpnd_ipc_att_fail;
 	}
 
+	/* Initialize the NTF service */
+	rc = cpnd_ntf_init();
+	if (rc != SA_AIS_OK) {
+		LOG_ER("cpnd ntf init failed with return value:%d", rc);
+		goto cpnd_ntf_init_fail;
+	}
+
 	/* Initalize the CLM service */
 	rc = cpnd_clm_init();
 	if (rc != SA_AIS_OK) {
@@ -325,6 +333,7 @@ cpnd_mds_fail:
 cpnd_clm_init_fail:
 	m_NCS_IPC_DETACH(&cb->cpnd_mbx, cpnd_clear_mbx, cb);
 
+cpnd_ntf_init_fail:
 cpnd_ipc_att_fail:
 	m_NCS_IPC_RELEASE(&cb->cpnd_mbx, NULL);
 
@@ -602,6 +611,54 @@ void cpnd_main_process(CPND_CB *cb)
 	}
 	TRACE_LEAVE();
 	return;
+}
+
+/****************************************************************************
+ * Name          : cpnd_ntf_init
+ *
+ * Description   : This function initializes NTF
+ *
+ * Arguments     : -
+ *
+ * Return Values : -
+ *
+ * Notes         : None.
+ *****************************************************************************/
+static SaAisErrorT cpnd_ntf_init(void)
+{
+	SaAisErrorT rc = SA_AIS_OK;
+
+	TRACE_ENTER();
+
+	do {
+		CPND_CB *cb = m_CPND_TAKE_CPND_CB;
+		SaVersionT ntf_version = { 'A', 1, 1 };
+		SaNtfHandleT ntfHandle;
+		int retries = 5;
+
+    		while (retries--) {
+			rc = saNtfInitialize(&ntfHandle, 0, &ntf_version);
+			if (rc == SA_AIS_OK) {
+				break;
+			} else if (rc == SA_AIS_ERR_TRY_AGAIN) {
+				osaf_nanosleep(&kOneSecond);
+			} else {
+				LOG_WA("saNtfInitialize returned %u", rc);
+				break;
+			}
+		}
+
+		if (rc != SA_AIS_OK) {
+			LOG_ER("cpnd clm init failed with return value:%d", rc);
+			break;
+		}
+
+		cb->ntf_hdl = ntfHandle;
+	} while (false);
+
+	TRACE_LEAVE();
+
+	return rc;
 }
 
 /****************************************************************************

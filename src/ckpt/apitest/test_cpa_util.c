@@ -2910,3 +2910,193 @@ int test_red_ckptDispatch(int i, CONFIG_FLAG cfg_flg)
 
 	return result;
 }
+
+static struct SafCheckpointNtf NTF_API_Initialize[] = {
+	[CKPT_NTF_RESOURCES_EXHAUSTED] = {
+		&tcd.ntfHandle,
+		&tcd.ntfSelObj,
+		SA_CKPT_SECTION_RESOURCES_EXHAUSTED
+	},
+
+	[CKPT_NTF_RESOURCES_AVAILABLE] = {
+		&tcd.ntfHandle,
+		&tcd.ntfSelObj,
+		SA_CKPT_SECTION_RESOURCES_AVAILABLE
+	}
+};
+
+static void ntfCallback(SaNtfSubscriptionIdT subscriptionId,
+                        const SaNtfNotificationsT *notification)
+{
+	do {
+		if (notification->notificationType != SA_NTF_TYPE_STATE_CHANGE) {
+			NTF_API_Initialize[subscriptionId].result = TEST_FAIL;
+			break;
+		}
+
+		if (notification->notification.stateChangeNotification.notificationHeader.notificationClassId->vendorId != SA_NTF_VENDOR_ID_SAF) {
+			NTF_API_Initialize[subscriptionId].result = TEST_FAIL;
+			break;
+		}
+
+		if (notification->notification.stateChangeNotification.notificationHeader.notificationClassId->majorId != SA_SVC_CKPT) {
+			NTF_API_Initialize[subscriptionId].result = TEST_FAIL;
+			break;
+		}
+
+		if (notification->notification.stateChangeNotification.numStateChanges != 1) {
+			NTF_API_Initialize[subscriptionId].result = TEST_FAIL;
+			break;
+		}
+
+		if (*notification->notification.stateChangeNotification.sourceIndicator != SA_NTF_OBJECT_OPERATION) {
+			NTF_API_Initialize[subscriptionId].result = TEST_FAIL;
+			break;
+		}
+
+		if (notification->notification.stateChangeNotification.changedStates[0].stateId != SA_CKPT_CHECKPOINT_STATUS) {
+			NTF_API_Initialize[subscriptionId].result = TEST_FAIL;
+			break;
+		}
+
+		if (strcmp(saAisNameBorrow(notification->notification.stateChangeNotification.notificationHeader.notifyingObject), "safApp=safCkptService")) {
+			NTF_API_Initialize[subscriptionId].result = TEST_FAIL;
+			break;
+		}
+
+		if (tcd.ntfTest == CKPT_NTF_RESOURCES_EXHAUSTED) {
+			if (notification->notification.stateChangeNotification.notificationHeader.notificationClassId->minorId != 0x65) {
+				NTF_API_Initialize[subscriptionId].result = TEST_FAIL;
+				break;
+			}
+
+			if (notification->notification.stateChangeNotification.changedStates[0].newState != SA_CKPT_SECTION_RESOURCES_EXHAUSTED) {
+				NTF_API_Initialize[subscriptionId].result = TEST_FAIL;
+				break;
+			}
+
+			if (notification->notification.stateChangeNotification.changedStates[0].oldStatePresent != SA_FALSE) {
+				NTF_API_Initialize[subscriptionId].result = TEST_FAIL;
+				break;
+			}
+		} else if (tcd.ntfTest == CKPT_NTF_RESOURCES_AVAILABLE) {
+			if (notification->notification.stateChangeNotification.notificationHeader.notificationClassId->minorId != 0x66) {
+				NTF_API_Initialize[subscriptionId].result = TEST_FAIL;
+				break;
+			}
+
+			if (notification->notification.stateChangeNotification.changedStates[0].newState != SA_CKPT_SECTION_RESOURCES_AVAILABLE) {
+				NTF_API_Initialize[subscriptionId].result = TEST_FAIL;
+				break;
+			}
+
+			if (notification->notification.stateChangeNotification.changedStates[0].oldStatePresent != SA_TRUE) {
+				NTF_API_Initialize[subscriptionId].result = TEST_FAIL;
+				break;
+			}
+
+			if (notification->notification.stateChangeNotification.changedStates[0].oldState != SA_CKPT_SECTION_RESOURCES_EXHAUSTED) {
+				NTF_API_Initialize[subscriptionId].result = TEST_FAIL;
+				break;
+			}
+		} else {
+			assert(false);
+			break;
+		}
+	} while (false);
+}
+
+int test_ckptNtfStateChange(int i, CONFIG_FLAG cfg_flg)
+{
+	SaAisErrorT rc;
+	int result = TEST_PASS;
+	fd_set read_fd;
+
+	FD_ZERO(&read_fd);
+	FD_SET(tcd.ntfSelObj, &read_fd);
+	rc = select(tcd.ntfSelObj + 1, &read_fd, NULL, NULL, NULL);
+	if (rc == -1) {
+		m_TEST_CPSV_PRINTF("Select FAILED\n");
+		return TEST_FAIL;
+	}
+
+	tcd.ntfTest = i;
+
+	rc = saNtfDispatch(tcd.ntfHandle, SA_DISPATCH_ALL);
+
+	if (rc != SA_AIS_OK)
+		result = TEST_FAIL;
+	else
+		result = NTF_API_Initialize[i].result;
+
+	return result;
+}
+
+int test_ckptNtfInit(int i, CONFIG_FLAG cfg_flg)
+{
+	int result = TEST_PASS;
+
+	do {
+		SaNtfHandleT ntfHandle;
+		SaNtfCallbacksT callbacks = {
+			ntfCallback,
+			0
+		};
+		SaVersionT version = { 'A', 1, 0 };
+		SaNtfStateChangeNotificationFilterT stateChangeFilter;
+		SaSelectionObjectT ntfSelObj;
+
+		SaAisErrorT rc = saNtfInitialize(&ntfHandle, &callbacks, &version);
+		if (rc != SA_AIS_OK) {
+			result = TEST_FAIL;
+			break;
+		}
+
+		rc = saNtfStateChangeNotificationFilterAllocate(
+			ntfHandle, &stateChangeFilter, 0, 0, 0, 0, 0, 0);
+
+		if (rc != SA_AIS_OK) {
+			result = TEST_FAIL;
+			break;
+		}
+
+		SaNtfNotificationTypeFilterHandlesT notificationFilterHandles =
+	       	{
+			0, 0, stateChangeFilter.notificationFilterHandle, 0, 0
+		};
+
+		rc = saNtfNotificationSubscribe(&notificationFilterHandles, i);
+
+		if (rc != SA_AIS_OK) {
+			result = TEST_FAIL;
+			break;
+		}
+
+		rc = saNtfNotificationFilterFree(stateChangeFilter.notificationFilterHandle);
+		if (rc != SA_AIS_OK) {
+			result = TEST_FAIL;
+			break;
+		}
+
+		rc = saNtfSelectionObjectGet(ntfHandle, &ntfSelObj);
+		if (rc != SA_AIS_OK) {
+			result = TEST_FAIL;
+			break;
+		}
+
+		*NTF_API_Initialize[i].ntfHandle = ntfHandle;
+		*NTF_API_Initialize[i].ntfSelObj = ntfSelObj;
+	} while (false);
+
+	return result;
+}
+
+int test_ckptNtfCleanup(int i, CONFIG_FLAG cfg_flg)
+{
+	int result = TEST_PASS;
+	int rc = saNtfFinalize(*NTF_API_Initialize[i].ntfHandle);
+	if (rc != SA_AIS_OK)
+		result = TEST_FAIL;
+
+	return result;
+}

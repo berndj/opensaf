@@ -477,6 +477,109 @@ void cpnd_process_evt(CPSV_EVT *evt)
 }
 
 /****************************************************************************
+ * Name          : sendStateChangeNotification
+ *
+ * Description   : send an NTF state change notification
+ *
+ * Arguments     : CPND_CB *cb - CPND CB pointer
+ *                 CPND_CKPT_NODE *node - Checkpoint Node
+ *                 SaCkptCheckpointStatusT status - notification status
+ *
+ * Return Values : None.
+ *
+ * Notes         : None.
+ *****************************************************************************/
+static void sendStateChangeNotification(CPND_CB *cb,
+					CPND_CKPT_NODE *node,
+					SaCkptCheckpointStatusT status)
+{
+	if ((status == SA_CKPT_SECTION_RESOURCES_EXHAUSTED &&
+		!node->resourceExhaustedSent) ||
+		(status == SA_CKPT_SECTION_RESOURCES_AVAILABLE &&
+		!node->resourceAvailableSent)) {
+		do {
+			char *name = 0;
+
+			SaNtfStateChangeNotificationT ntfStateChange = { 0 };
+
+			SaAisErrorT rc = saNtfStateChangeNotificationAllocate(
+				cb->ntf_hdl,
+				&ntfStateChange,
+				1, /* numCorrelated Notifications */
+				0, /* length addition text */
+				0, /* num additional info */
+				1, /* num of state changes */
+				0); /* variable data size */
+
+			if (rc != SA_AIS_OK) {
+				LOG_ER("saNtfStateChangeNotificationAllocate failed: %i", rc);
+				break;
+			}
+
+			*ntfStateChange.notificationHeader.eventType =
+				SA_NTF_OBJECT_STATE_CHANGE;
+
+			name = malloc(strlen(node->ckpt_name) + 1);
+			strcpy(name, node->ckpt_name);
+			name[strlen(node->ckpt_name)] = '\0';
+			osaf_extended_name_steal(
+				name,
+				ntfStateChange.notificationHeader.notificationObject);
+
+			name = malloc(sizeof("safApp=safCkptService"));
+			strcpy(name, "safApp=safCkptService");
+			name[sizeof("safApp=safCkptService") - 1] = '\0';
+			osaf_extended_name_steal(
+				name,
+				ntfStateChange.notificationHeader.notifyingObject);
+
+			ntfStateChange.notificationHeader.notificationClassId->vendorId =
+				SA_NTF_VENDOR_ID_SAF;
+			ntfStateChange.notificationHeader.notificationClassId->majorId =
+				SA_SVC_CKPT;
+			ntfStateChange.notificationHeader.notificationClassId->minorId =
+				(status == SA_CKPT_SECTION_RESOURCES_EXHAUSTED) ?
+					0x65 : 0x66;
+
+			*ntfStateChange.sourceIndicator = SA_NTF_OBJECT_OPERATION;
+
+			ntfStateChange.changedStates[0].stateId =
+				SA_CKPT_CHECKPOINT_STATUS;
+
+			ntfStateChange.changedStates[0].oldStatePresent =
+				(status == SA_CKPT_SECTION_RESOURCES_EXHAUSTED) ?
+					SA_FALSE : SA_TRUE;
+
+			if (status == SA_CKPT_SECTION_RESOURCES_AVAILABLE) {
+				ntfStateChange.changedStates[0].oldState =
+					SA_CKPT_SECTION_RESOURCES_EXHAUSTED;
+			}
+
+			ntfStateChange.changedStates[0].newState = status;
+
+			rc = saNtfNotificationSend(ntfStateChange.notificationHandle);
+
+			if (rc != SA_AIS_OK)
+				LOG_ER("saNtfNotificationSend failed: %i", rc);
+			else {
+				if (status == SA_CKPT_SECTION_RESOURCES_EXHAUSTED) {
+					node->resourceExhaustedSent = true;
+					node->resourceAvailableSent = false;
+				} else {
+					node->resourceAvailableSent = true;
+					node->resourceExhaustedSent = false;
+				}
+			}
+
+			rc = saNtfNotificationFree(ntfStateChange.notificationHandle);
+
+			if (rc != SA_AIS_OK)
+				LOG_ER("saNtfNotificationFree failed: %i", rc);
+		} while (false);
+	}
+}
+
+/****************************************************************************
  * Name          : cpnd_evt_proc_ckpt_init
  *
  * Description   : Function to process the SaCkptInitialize from clients
@@ -2670,6 +2773,9 @@ static uint32_t cpnd_evt_proc_ckpt_sect_create(CPND_CB *cb, CPND_EVT *evt,
 			send_evt.info.cpa.type = CPA_EVT_ND2A_SEC_CREATE_RSP;
 			send_evt.info.cpa.info.sec_creat_rsp.error =
 			    SA_AIS_ERR_NO_SPACE;
+			sendStateChangeNotification(cb,
+							cp_node,
+							SA_CKPT_SECTION_RESOURCES_EXHAUSTED);
 			goto agent_rsp;
 		}
 
@@ -2704,6 +2810,9 @@ static uint32_t cpnd_evt_proc_ckpt_sect_create(CPND_CB *cb, CPND_EVT *evt,
 					    CPA_EVT_ND2A_SEC_CREATE_RSP;
 					send_evt.info.cpa.info.sec_creat_rsp
 					    .error = SA_AIS_ERR_NO_SPACE;
+					sendStateChangeNotification(cb,
+						cp_node,
+						SA_CKPT_SECTION_RESOURCES_EXHAUSTED);
 					goto agent_rsp;
 				}
 
@@ -3154,6 +3263,10 @@ static uint32_t cpnd_evt_proc_ckpt_sect_delete(CPND_CB *cb, CPND_EVT *evt,
 		if (sec_info->ckpt_sec_exptmr.is_active)
 			cpnd_tmr_stop(&sec_info->ckpt_sec_exptmr);
 		m_CPND_FREE_CKPT_SECTION(sec_info);
+
+		sendStateChangeNotification(cb,
+			cp_node,
+			SA_CKPT_SECTION_RESOURCES_AVAILABLE);
 	} else {
 		TRACE_4("cpnd ckpt sect del failed for sec_id:%s,ckpt_id:%llx",
 			evt->info.sec_delReq.sec_id.id, cp_node->ckpt_id);

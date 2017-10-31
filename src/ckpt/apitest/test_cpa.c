@@ -7711,6 +7711,118 @@ final1:
 	test_validate(result, TEST_PASS);
 }
 
+static void cpsv_it_ntf_01(void)
+{
+	int result;
+	printHead("To verify notification received when max number of sections is reached");
+	result = test_ckptInitialize(CKPT_INIT_SUCCESS_T, TEST_CONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final1;
+
+	result =
+	    test_ckptOpen(CKPT_OPEN_ALL_CREATE_SUCCESS_T, TEST_CONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final2;
+
+	result = test_ckptOpen(CKPT_OPEN_ALL_WRITE_SUCCESS_T, TEST_CONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final3;
+
+	result = test_ckptSectionCreate(CKPT_SECTION_CREATE_SUCCESS_T,
+					TEST_CONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final3;
+
+	result = test_ckptSectionCreate(CKPT_SECTION_CREATE_SUCCESS3_T,
+					TEST_CONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final3;
+
+	result = test_ckptNtfInit(CKPT_NTF_RESOURCES_EXHAUSTED,
+		       			TEST_NONCONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final3;
+
+	result = test_ckptSectionCreate(CKPT_SECTION_CREATE_NO_SPACE_T,
+					TEST_NONCONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final4;
+
+	result = test_ckptNtfStateChange(CKPT_NTF_RESOURCES_EXHAUSTED,
+                                   TEST_NONCONFIG_MODE);
+
+final4:
+	test_ckptNtfCleanup(CKPT_NTF_RESOURCES_EXHAUSTED, TEST_NONCONFIG_MODE);
+final3:
+	test_ckpt_cleanup(CPSV_CLEAN_ALL_REPLICAS_CKPT);
+final2:
+	test_cpsv_cleanup(CPSV_CLEAN_INIT_SUCCESS_T);
+final1:
+	printResult(result);
+	test_validate(result, TEST_PASS);
+}
+
+static void cpsv_it_ntf_02(void)
+{
+	int result;
+	printHead("To verify notification received when sections are available"
+		       " again");
+	result = test_ckptInitialize(CKPT_INIT_SUCCESS_T, TEST_CONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final1;
+
+	result =
+	    test_ckptOpen(CKPT_OPEN_ALL_CREATE_SUCCESS_T, TEST_CONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final2;
+
+	result = test_ckptOpen(CKPT_OPEN_ALL_WRITE_SUCCESS_T, TEST_CONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final3;
+
+	result = test_ckptSectionCreate(CKPT_SECTION_CREATE_SUCCESS_T,
+					TEST_CONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final3;
+
+	result = test_ckptSectionCreate(CKPT_SECTION_CREATE_SUCCESS3_T,
+					TEST_CONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final3;
+
+	result = test_ckptNtfInit(CKPT_NTF_RESOURCES_AVAILABLE,
+		       			TEST_NONCONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final3;
+
+	result = test_ckptSectionCreate(CKPT_SECTION_CREATE_NO_SPACE_T,
+					TEST_NONCONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final4;
+
+	result = test_ckptNtfStateChange(CKPT_NTF_RESOURCES_EXHAUSTED,
+                                   TEST_NONCONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final4;
+
+	result = test_ckptSectionDelete(CKPT_DEL_SUCCESS_T, TEST_CONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final4;
+
+	result = test_ckptNtfStateChange(CKPT_NTF_RESOURCES_AVAILABLE,
+                                   TEST_NONCONFIG_MODE);
+
+final4:
+	test_ckptNtfCleanup(CKPT_NTF_RESOURCES_AVAILABLE, TEST_NONCONFIG_MODE);
+final3:
+	test_ckpt_cleanup(CPSV_CLEAN_ALL_REPLICAS_CKPT);
+final2:
+	test_cpsv_cleanup(CPSV_CLEAN_INIT_SUCCESS_T);
+final1:
+	printResult(result);
+	test_validate(result, TEST_PASS);
+}
+
 /********** END OF TEST CASES ************/
 
 __attribute__((constructor)) static void ckpt_cpa_test_constructor(void)
@@ -8308,4 +8420,14 @@ __attribute__((constructor)) static void ckpt_cpa_test_constructor(void)
 	test_case_add(
 	    24, cpsv_it_arrclbk_02,
 	    "To verify the arrival callback when NULL clbk is passed");
+
+	test_suite_add(25, "CKPT Notifications");
+	test_case_add(25,
+			cpsv_it_ntf_01,
+			"To verify that Resource Exhausted Notification is "
+			"received");
+	test_case_add(25,
+			cpsv_it_ntf_02,
+			"To verify that Resource Available Notification is "
+			"received");
 }

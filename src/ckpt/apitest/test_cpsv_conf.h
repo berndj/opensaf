@@ -143,6 +143,11 @@ struct cpsv_testcase_data {
   SaAisErrorT sync_clbk_err;
   int arr_clbk_flag;
   int arr_clbk_err;
+
+  // NTF data
+  SaNtfHandleT ntfHandle;
+  SaSelectionObjectT ntfSelObj;
+  int ntfTest;
 };
 
 struct cpsv_testcase_data tcd;
@@ -170,6 +175,9 @@ extern int test_ckptSynchronizeAsync(int i, CONFIG_FLAG cfg_flg);
 extern int test_ckptIterationInit(int i, CONFIG_FLAG cfg_flg);
 extern int test_ckptIterationNext(int i, CONFIG_FLAG cfg_flg);
 extern int test_ckptIterationFin(int i, CONFIG_FLAG cfg_flg);
+extern int test_ckptNtfInit(int i, CONFIG_FLAG cfg_flg);
+extern int test_ckptNtfCleanup(int i, CONFIG_FLAG cfg_flg);
+extern int test_ckptNtfStateChange(int i, CONFIG_FLAG cfg_flg);
 extern int test_red_ckptInitialize(int i, CONFIG_FLAG cfg_flg);
 extern int test_red_ckptSelectionObject(int i, CONFIG_FLAG cfg_flg);
 extern int test_red_ckptDispatch(int i, CONFIG_FLAG cfg_flg);

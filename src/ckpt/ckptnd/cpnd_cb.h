@@ -201,6 +201,8 @@ typedef struct cpnd_ckpt_node {
   CPND_TMR ret_tmr;
   bool is_restart;
   bool is_ckpt_onscxb;
+  bool resourceExhaustedSent;
+  bool resourceAvailableSent;
   uint32_t cur_state;
   uint32_t oth_state;
   /*   uint32_t                               read_lck_cnt; */
@@ -312,6 +314,7 @@ typedef struct cpnd_cb_tag {
   SaSelectionObjectT clm_sel_obj;
   SaClmNodeIdT nodeid;
   SaAmfHandleT amf_hdl; /* AMF handle, obtained thru AMF init        */
+  SaNtfHandleT ntf_hdl;
   uint8_t *cpnd_res_shm_name;
   bool cpnd_first_time;
   bool read_lck_flag;

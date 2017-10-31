@@ -155,6 +155,7 @@ bin_osafckptnd_LDADD = \
 	lib/libckpt_common.la \
 	lib/libSaAmf.la \
 	lib/libSaClm.la \
+	lib/libSaNtf.la \
 	lib/libosaf_common.la \
 	lib/libSaImmOi.la \
 	lib/libSaImmOm.la \
@@ -212,6 +213,7 @@ bin_ckpttest_SOURCES = \
 bin_ckpttest_LDADD = \
 	lib/libapitest.la \
 	lib/libSaCkpt.la \
+	lib/libSaNtf.la \
 	lib/libopensaf_core.la
 
 endif

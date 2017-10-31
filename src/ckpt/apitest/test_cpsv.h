@@ -18,6 +18,7 @@
 
 #include "saAmf.h"
 #include "saCkpt.h"
+#include "saNtf.h"
 #include "string.h"
 #include "stdio.h"
 #include "math.h"
@@ -248,6 +249,13 @@ struct SafCheckpointReadLarge {
   char *result_string;
 };
 
+struct SafCheckpointNtf {
+  SaNtfHandleT *ntfHandle;
+  SaSelectionObjectT *ntfSelObj;
+  SaCkptCheckpointStatusT expectedStatus;
+  int result;
+};
+
 typedef enum {
   CKPT_INIT_SUCCESS_T = 1,
   CKPT_INIT_NULL_CBKS_T,
@@ -380,6 +388,11 @@ typedef enum {
   CKPT_SECTION_CREATE_LONG_SECION_ID_SUCCESS_T,
   CKPT_SECTION_CREATE_TOO_LONG_SECION_ID_SUCCESS_T,
 } CKPT_SECTION_CREATE_TC_TYPE;
+
+typedef enum {
+  CKPT_NTF_RESOURCES_EXHAUSTED,
+  CKPT_NTF_RESOURCES_AVAILABLE
+} CKPT_NTF_TC_TYPE;
 
 typedef enum {
   CKPT_EXP_BAD_HANDLE_T = 1,
