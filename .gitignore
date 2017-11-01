@@ -45,6 +45,7 @@
 /osafdir.conf
 /osafdir.conf-t
 /py-compile
+/python/pylint.res
 /rpms/
 /src/amf/amfd/osaf-amfd
 /src/amf/amfnd/osaf-amfnd
