@@ -434,7 +434,13 @@ checkpatch:
 	perl "$$builddir/bin/checkpatch.pl" --no-tree --file --ignore SPLIT_STRING --summary-file $$(cat "$$builddir/checkpatch_files.txt") 1>&2; \
 	true
 
-.PHONY: cppcheck.xml cppcheck cpplint shellcheck checkpatch
+pylint:
+	@srcdir=$$(cd $(top_srcdir); pwd; cd - > /dev/null); \
+	cd "$$srcdir/python"; find . -name '*.py' | xargs pylint --rcfile=pylintrc --output-format=text > pylint.res; \
+	true
+	@echo "The pylint result can be found in the file python/pylint.res"
+
+.PHONY: cppcheck.xml cppcheck cpplint shellcheck checkpatch pylint
 
 clean-local:
 	-rm -f $(PACKAGE_NAME)-$(PACKAGE_VERSION).tar.gz
