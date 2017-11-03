@@ -1687,7 +1687,7 @@ int avnd_comp_config_reinit(AVND_COMP *comp) {
   ** At first time instantiation of OpenSAF components we cannot go
   ** to IMM since we would deadloack.
   */
-  if (comp->config_is_valid) {
+  if (comp->config_is_valid || comp->su->is_ncs == true) {
     res = 0;
     goto done1;
   }
