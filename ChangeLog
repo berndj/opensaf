@@ -1,6 +1,8 @@
 OpenSAF 5.17.11 (released 2017-11-03)
 -------------------------------------
 
+    * clm: fix RPM build [#2649]
+    * amfnd: fix segv in ncs_tmr_stop V2 [#2658]
     * clm: fix the build on 32-bit linux caused #2649 [#2649]
     * clm: Call opensaf_reboot_prepare() so that fallback reboot will work [#2542]
     * base: Use fallback reboot when safe reboot fails [#2542]
