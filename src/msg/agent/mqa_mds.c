@@ -502,6 +502,20 @@ static uint32_t mqa_mds_rcv(MQA_CB *cb, MDS_CALLBACK_RECEIVE_INFO *rcv_info)
 	} else if (evt->type == MQSV_EVT_MQP_REQ) {
 		cb->clm_node_joined =
 		    evt->msg.mqp_req.info.clmNotify.node_joined;
+
+		if (!cb->clm_node_joined) {
+			/* tell all clients they are stale now */
+                        MQA_CLIENT_INFO *client_info;
+                        SaMsgHandleT msgHandle = 0;
+                        for (client_info =
+                                 mqa_client_tree_find_next(cb, msgHandle);
+                             client_info;
+                             client_info = mqa_client_tree_find_next(
+                                 cb, client_info->msgHandle)) {
+                                client_info->isStale = true;
+                        }
+                }
+
 		return rc;
 	}
 

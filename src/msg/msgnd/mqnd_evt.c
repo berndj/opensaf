@@ -438,7 +438,11 @@ static uint32_t mqnd_evt_proc_mqp_qopen(MQND_CB *cb, MQSV_EVT *evt)
 	ASAPi_OPR_INFO opr;
 	TRACE_ENTER();
 
-	if (cb->is_restart_done)
+	if (!cb->clm_node_joined) {
+		TRACE("node is not cluster member");
+		err = SA_AIS_ERR_UNAVAILABLE;
+		goto error1;
+	} else if (cb->is_restart_done)
 		err = SA_AIS_OK;
 	else {
 		mqp_req = &evt->msg.mqp_req;
@@ -556,7 +560,11 @@ static uint32_t mqnd_evt_proc_mqp_qclose(MQND_CB *cb, MQSV_EVT *evt)
 		goto send_rsp;
 	}
 
-	if (cb->is_restart_done)
+	if (!cb->clm_node_joined) {
+		TRACE("node is not cluster member");
+		err = SA_AIS_ERR_UNAVAILABLE;
+		goto send_rsp;
+	} else if (cb->is_restart_done)
 		err = SA_AIS_OK;
 	else {
 		err = SA_AIS_ERR_TRY_AGAIN;
@@ -625,7 +633,11 @@ static uint32_t mqnd_evt_proc_unlink(MQND_CB *cb, MQSV_EVT *evt)
 
 	ulink_req = &evt->msg.mqp_req.info.unlinkReq;
 
-	if (cb->is_restart_done)
+	if (!cb->clm_node_joined) {
+		TRACE("node is not cluster member");
+		err = SA_AIS_ERR_UNAVAILABLE;
+		goto send_rsp;
+	} else if (cb->is_restart_done)
 		err = SA_AIS_OK;
 	else {
 		LOG_ER(
@@ -868,7 +880,11 @@ static uint32_t mqnd_evt_proc_status_req(MQND_CB *cb, MQSV_EVT *evt)
 
 	sts_req = &evt->msg.mqp_req.info.statusReq;
 
-	if (cb->is_restart_done)
+	if (!cb->clm_node_joined) {
+		TRACE("node is not cluster member");
+		err = SA_AIS_ERR_UNAVAILABLE;
+		goto send_rsp;
+	} else if (cb->is_restart_done)
 		err = SA_AIS_OK;
 	else {
 		err = SA_AIS_ERR_TRY_AGAIN;
@@ -1111,7 +1127,11 @@ static uint32_t mqnd_evt_proc_send_msg(MQND_CB *cb, MQSV_DSEND_EVT *evt)
 	else
 		snd_msg = &evt->info.sndMsgAsync.SendMsg;
 
-	if (!cb->is_restart_done) {
+	if (!cb->clm_node_joined) {
+		TRACE("node is not cluster member");
+		err = SA_AIS_ERR_UNAVAILABLE;
+		goto send_resp;
+	} else if (!cb->is_restart_done) {
 		LOG_ER(
 		    "%s:%u: ERR_TRY_AGAIN: MQND is not completely Initialized",
 		    __FILE__, __LINE__);
@@ -1583,7 +1603,11 @@ static uint32_t mqnd_evt_proc_qattr_get(MQND_CB *cb, MQSV_EVT *evt)
 
 	qattr_req = &evt->msg.mqnd_ctrl.info.qattr_get;
 
-	if (cb->is_restart_done)
+	if (!cb->clm_node_joined) {
+		TRACE("node is not cluster member");
+		err = SA_AIS_ERR_UNAVAILABLE;
+		goto send_rsp;
+	} else if (cb->is_restart_done)
 		err = SA_AIS_OK;
 	else {
 		LOG_ER(
@@ -1649,7 +1673,11 @@ static uint32_t mqnd_evt_proc_ret_time_set(MQND_CB *cb, MQSV_EVT *evt)
 	MQSV_EVT rsp_evt;
 	TRACE_ENTER();
 
-	if (cb->is_restart_done)
+	if (!cb->clm_node_joined) {
+		TRACE("node is not cluster member");
+		err = SA_AIS_ERR_UNAVAILABLE;
+		goto send_rsp;
+	} else if (cb->is_restart_done)
 		err = SA_AIS_OK;
 	else {
 		LOG_ER(

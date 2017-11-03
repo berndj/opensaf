@@ -205,6 +205,7 @@ noinst_HEADERS += \
 bin_msgtest_SOURCES = \
   src/msg/apitest/msgtest.c \
   src/msg/apitest/test_saMsgVersionT.cc \
+  src/msg/apitest/test_ErrUnavailable.cc \
   src/msg/apitest/tet_mqa_conf.c \
   src/msg/apitest/tet_mqsv_util.c \
   src/msg/apitest/tet_mqa.c

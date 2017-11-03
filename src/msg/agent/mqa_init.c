@@ -681,6 +681,32 @@ MQA_CLIENT_INFO *mqa_client_tree_find_and_add(MQA_CB *mqa_cb,
 }
 
 /****************************************************************************
+  Name          : mqa_client_tree_find_next
+
+  Description   : This routine gets the next client from the tree
+
+  Arguments     :
+		  mqa_cb : pointer to the mqa control block.
+		  hdl_id : the handle id.
+
+  Return Values : returns the MQA_CLIENT_INFO node.
+
+  Notes         : The caller takes the cb lock before calling this function
+
+******************************************************************************/
+MQA_CLIENT_INFO *mqa_client_tree_find_next(MQA_CB *mqa_cb, SaMsgHandleT hdl_id)
+{
+	MQA_CLIENT_INFO *client_info = NULL;
+	TRACE_ENTER();
+
+	client_info = (MQA_CLIENT_INFO *)ncs_patricia_tree_getnext(
+	    &mqa_cb->mqa_client_tree, (uint8_t *)&hdl_id);
+
+	TRACE_LEAVE();
+	return client_info;
+}
+
+/****************************************************************************
   Name          : mqa_track_tree_find_and_add
 
   Description   : This routine adds/searches the new group track element to the

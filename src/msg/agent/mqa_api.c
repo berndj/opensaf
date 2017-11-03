@@ -256,6 +256,7 @@ SaAisErrorT saMsgInitialize(SaMsgHandleT *msgHandle,
 	}
 
 	if (rc == SA_AIS_OK) {
+		mqa_cb->clm_node_joined = true;
 
 		/* create the client node and populate it */
 		client_info = mqa_client_tree_find_and_add(mqa_cb, 0, true);
@@ -280,6 +281,8 @@ SaAisErrorT saMsgInitialize(SaMsgHandleT *msgHandle,
 			mqa_client_tree_delete_node(mqa_cb, client_info);
 			goto final3;
 		}
+
+		client_info->isStale = false;
 
 		if (msgCallbacks)
 			client_info->msgCallbacks = *msgCallbacks;
@@ -373,8 +376,8 @@ SaAisErrorT saMsgSelectionObjectGet(SaMsgHandleT msgHandle,
 		goto done;
 	}
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			goto done;
 		}
@@ -461,8 +464,8 @@ SaAisErrorT saMsgDispatch(SaMsgHandleT msgHandle,
 	}
 
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			m_NCS_UNLOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE);
 			goto done;
@@ -805,8 +808,8 @@ saMsgQueueOpen(SaMsgHandleT msgHandle, const SaNameT *queueName,
 	}
 
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			goto done;
 		}
@@ -1086,8 +1089,8 @@ saMsgQueueOpenAsync(SaMsgHandleT msgHandle, SaInvocationT invocation,
 	}
 
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			goto done;
 		}
@@ -1240,9 +1243,10 @@ SaAisErrorT saMsgQueueClose(SaMsgQueueHandleT queueHandle)
 
 	if (queue_node->client_info->version.majorVersion ==
 	    MQA_MAJOR_VERSION) {
-		if ((!mqa_cb->clm_node_joined) &&
+		if ((!mqa_cb->clm_node_joined ||
+			queue_node->client_info->isStale) &&
 		    (!queue_node->client_info->finalize)) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			m_NCS_UNLOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE);
 			m_MQSV_MQA_GIVEUP_MQA_CB;
@@ -1398,8 +1402,8 @@ SaAisErrorT saMsgQueueStatusGet(SaMsgHandleT msgHandle,
 	}
 
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			goto done;
 		}
@@ -1551,8 +1555,9 @@ SaAisErrorT saMsgQueueRetentionTimeSet(SaMsgQueueHandleT queueHandle,
 
 	if (queue_node->client_info->version.majorVersion ==
 	    MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined ||
+			queue_node->client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			m_NCS_UNLOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE);
 			m_MQSV_MQA_GIVEUP_MQA_CB;
@@ -1697,8 +1702,8 @@ SaAisErrorT saMsgQueueUnlink(SaMsgHandleT msgHandle, const SaNameT *queueName)
 	}
 
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			goto done;
 		}
@@ -2469,8 +2474,8 @@ SaAisErrorT saMsgMessageSend(SaMsgHandleT msgHandle, const SaNameT *destination,
 	}
 
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			goto done;
 		}
@@ -2561,8 +2566,8 @@ SaAisErrorT saMsgMessageSendAsync(SaMsgHandleT msgHandle,
 	}
 
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			goto done;
 		}
@@ -2685,7 +2690,8 @@ SaAisErrorT mqa_receive_message(SaMsgQueueHandleT queueHandle,
 
 	if (queue_node->client_info->version.majorVersion ==
 	    MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
+		if (!mqa_cb->clm_node_joined ||
+			queue_node->client_info->isStale) {
 			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			goto done;
@@ -3335,8 +3341,9 @@ SaAisErrorT saMsgMessageCancel(SaMsgQueueHandleT queueHandle)
 	}
 	if (queue_node->client_info->version.majorVersion ==
 	    MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined ||
+			queue_node->client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			m_NCS_UNLOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE);
 			m_MQSV_MQA_GIVEUP_MQA_CB;
@@ -3581,8 +3588,8 @@ SaAisErrorT saMsgMessageSendReceive(SaMsgHandleT msgHandle,
 	}
 
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			m_NCS_UNLOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE);
 			m_MQSV_MQA_GIVEUP_MQA_CB;
@@ -4302,8 +4309,8 @@ SaAisErrorT saMsgMessageReply(SaMsgHandleT msgHandle,
 		return rc;
 	}
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			m_MQSV_MQA_GIVEUP_MQA_CB;
 			return rc;
@@ -4390,8 +4397,8 @@ SaAisErrorT saMsgMessageReplyAsync(SaMsgHandleT msgHandle,
 		return rc;
 	}
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			m_MQSV_MQA_GIVEUP_MQA_CB;
 			return rc;
@@ -4536,8 +4543,8 @@ SaAisErrorT saMsgQueueGroupCreate(SaMsgHandleT msgHandle,
 	}
 
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			m_NCS_UNLOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE);
 			goto done;
@@ -4658,8 +4665,8 @@ SaAisErrorT saMsgQueueGroupDelete(SaMsgHandleT msgHandle,
 	}
 
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			m_NCS_UNLOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE);
 			goto done;
@@ -4791,8 +4798,8 @@ SaAisErrorT saMsgQueueGroupInsert(SaMsgHandleT msgHandle,
 	}
 
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			m_NCS_UNLOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE);
 			goto done;
@@ -4922,8 +4929,8 @@ SaAisErrorT saMsgQueueGroupRemove(SaMsgHandleT msgHandle,
 	}
 
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			m_NCS_UNLOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE);
 			goto done;
@@ -5071,8 +5078,8 @@ saMsgQueueGroupTrack(SaMsgHandleT msgHandle, const SaNameT *queueGroupName,
 	}
 
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			m_NCS_UNLOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE);
 			goto done;
@@ -5390,8 +5397,8 @@ SaAisErrorT saMsgQueueGroupTrackStop(SaMsgHandleT msgHandle,
 	}
 
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			m_NCS_UNLOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE);
 			goto done1;
@@ -5503,8 +5510,8 @@ saMsgQueueGroupNotificationFree(SaMsgHandleT msgHandle,
 	}
 
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			goto done;
 		}
@@ -5569,8 +5576,8 @@ SaAisErrorT saMsgMessageDataFree(SaMsgHandleT msgHandle, void *data)
 	}
 
 	if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
-		if (!mqa_cb->clm_node_joined) {
-			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
+		if (!mqa_cb->clm_node_joined || client_info->isStale) {
+			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			goto done;
 		}

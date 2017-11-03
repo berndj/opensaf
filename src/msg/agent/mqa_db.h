@@ -94,6 +94,7 @@ typedef struct mqa_client_info {
   SYSF_MBX callbk_mbx;
   NCS_PATRICIA_TREE mqa_track_tree;
   uint8_t finalize;
+  bool isStale;
   SaVersionT version;
 
 } MQA_CLIENT_INFO;

@@ -52,6 +52,7 @@
 /* function prototypes for client handling*/
 MQA_CLIENT_INFO *mqa_client_tree_find_and_add(MQA_CB *mqa_cb,
                                               SaMsgHandleT hdl_id, bool flag);
+MQA_CLIENT_INFO *mqa_client_tree_find_next(MQA_CB *, SaMsgHandleT);
 uint32_t mqa_client_tree_delete_node(MQA_CB *mqa_cb,
                                      MQA_CLIENT_INFO *client_info);
 void mqa_queue_reader(NCSCONTEXT context);
