@@ -1767,7 +1767,8 @@ uint32_t SG_2N::susi_success_sg_realign(AVD_SU *su, AVD_SU_SI_REL *susi,
       if ((state == SA_AMF_HA_ACTIVE) &&
           (cb->node_id_avd == su->su_on_node->node_info.nodeId)) {
         /* This is as a result of failover, start CLM tracking*/
-        (void)avd_clm_track_start();
+        if (avd_clm_track_start(cb) == SA_AIS_ERR_TRY_AGAIN)
+          Fifo::queue(new ClmTrackStart());
       }
 
       // Set active_services_exist at error conditions e.g. controller fail-over

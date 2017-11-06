@@ -475,46 +475,63 @@ done:
   return error;
 }
 
-SaAisErrorT avd_clm_track_start(void) {
+SaAisErrorT avd_clm_track_start(AVD_CL_CB* cb) {
   SaUint8T trackFlags = SA_TRACK_CURRENT | SA_TRACK_CHANGES_ONLY |
                         SA_TRACK_VALIDATE_STEP | SA_TRACK_START_STEP;
 
   TRACE_ENTER();
-  SaAisErrorT error =
-      saClmClusterTrack_4(avd_cb->clmHandle, trackFlags, nullptr);
+  SaAisErrorT error = SA_AIS_OK;
+
+  if (cb->is_clm_track_started == true) {
+    // abort all pending and unsuccessful jobs that stop tracking
+    // because at this moment, amfd wants to start cluster tracking
+    Fifo::remove(cb, JOB_TYPE_CLM);
+  }
+
+  error = saClmClusterTrack_4(cb->clmHandle, trackFlags, nullptr);
   if (error != SA_AIS_OK) {
     if (error == SA_AIS_ERR_TRY_AGAIN || error == SA_AIS_ERR_TIMEOUT ||
         error == SA_AIS_ERR_UNAVAILABLE) {
       LOG_WA("Failed to start cluster tracking %u", error);
+      error = SA_AIS_ERR_TRY_AGAIN;
     } else {
       LOG_ER("Failed to start cluster tracking %u", error);
     }
   } else {
-    avd_cb->is_clm_track_started = true;
+    cb->is_clm_track_started = true;
   }
   TRACE_LEAVE();
   return error;
 }
 
-SaAisErrorT avd_clm_track_stop(void) {
+SaAisErrorT avd_clm_track_stop(AVD_CL_CB* cb) {
   TRACE_ENTER();
-  SaAisErrorT error = saClmClusterTrackStop(avd_cb->clmHandle);
+  SaAisErrorT error = SA_AIS_OK;
+
+  if (cb->is_clm_track_started == false) {
+    // abort all pending and unsuccessful jobs that start tracking
+    // because at this moment, amfd wants to sttop cluster tracking
+    Fifo::remove(cb, JOB_TYPE_CLM);
+  }
+
+  error = saClmClusterTrackStop(cb->clmHandle);
   if (error != SA_AIS_OK) {
     if (error == SA_AIS_ERR_TRY_AGAIN || error == SA_AIS_ERR_TIMEOUT ||
         error == SA_AIS_ERR_UNAVAILABLE) {
       LOG_WA("Failed to stop cluster tracking %u", error);
+      error = SA_AIS_ERR_TRY_AGAIN;
     } else if (error == SA_AIS_ERR_NOT_EXIST) {
       /* track changes was not started or stopped successfully */
       LOG_WA("Failed to stop cluster tracking %u", error);
-      avd_cb->is_clm_track_started = false;
+      cb->is_clm_track_started = false;
+      error = SA_AIS_OK;
     } else {
       LOG_ER("Failed to stop cluster tracking %u", error);
     }
   } else {
     TRACE("Sucessfully stops cluster tracking");
-    avd_cb->is_clm_track_started = false;
+    cb->is_clm_track_started = false;
   }
-
   TRACE_LEAVE();
   return error;
 }
@@ -550,7 +567,7 @@ static void *avd_clm_init_thread(void *arg) {
 
   if (cb->avail_state_avd == SA_AMF_HA_ACTIVE) {
     for (;;) {
-      error = avd_clm_track_start();
+      error = avd_clm_track_start(cb);
       if (error == SA_AIS_ERR_TRY_AGAIN || error == SA_AIS_ERR_TIMEOUT ||
           error == SA_AIS_ERR_UNAVAILABLE) {
         osaf_nanosleep(&kHundredMilliseconds);
@@ -583,4 +600,46 @@ SaAisErrorT avd_start_clm_init_bg(void) {
 
   pthread_attr_destroy(&attr);
   return SA_AIS_OK;
+}
+
+AvdJobDequeueResultT ClmTrackStart::exec(const AVD_CL_CB* cb) {
+  AvdJobDequeueResultT res;
+  TRACE_ENTER();
+
+  SaAisErrorT rc = avd_clm_track_start(const_cast<AVD_CL_CB*>(cb));
+  if (rc == SA_AIS_OK) {
+    delete Fifo::dequeue();
+    res = JOB_EXECUTED;
+  } else if (rc == SA_AIS_ERR_TRY_AGAIN) {
+    TRACE("TRY-AGAIN");
+    res = JOB_ETRYAGAIN;
+  } else {
+    delete Fifo::dequeue();
+    LOG_ER("%s: ClmTrackStart FAILED %u", __FUNCTION__, rc);
+    res = JOB_ERR;
+  }
+
+  TRACE_LEAVE();
+  return res;
+}
+
+AvdJobDequeueResultT ClmTrackStop::exec(const AVD_CL_CB* cb) {
+  AvdJobDequeueResultT res;
+  TRACE_ENTER();
+
+  SaAisErrorT rc = avd_clm_track_stop(const_cast<AVD_CL_CB*>(cb));
+  if (rc == SA_AIS_OK) {
+    delete Fifo::dequeue();
+    res = JOB_EXECUTED;
+  } else if (rc == SA_AIS_ERR_TRY_AGAIN) {
+    TRACE("TRY-AGAIN");
+    res = JOB_ETRYAGAIN;
+  } else {
+    delete Fifo::dequeue();
+    LOG_ER("%s: ClmTrackStop FAILED %u", __FUNCTION__, rc);
+    res = JOB_ERR;
+  }
+
+  TRACE_LEAVE();
+  return res;
 }

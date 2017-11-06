@@ -461,6 +461,34 @@ AvdJobDequeueResultT Fifo::executeAll(const AVD_CL_CB *cb, AvdJobTypeT job_type)
   return ret;
 }
 
+void Fifo::remove(const AVD_CL_CB *cb, AvdJobTypeT job_type) {
+
+  Job *ajob, *firstjob;
+
+  TRACE_ENTER();
+  firstjob = nullptr;
+
+  while ((ajob = peek()) != nullptr) {
+    if (ajob->getJobType() == job_type) {
+      delete Fifo::dequeue();
+    } else {
+      // push back
+      ajob = Fifo::dequeue();
+      Fifo::queue(ajob);
+
+      // check if we have gone through all jobs of queue
+      if (firstjob == nullptr) {
+        firstjob = ajob;
+      } else {
+        if (firstjob == ajob)
+          break;
+      }
+    }
+  }
+
+  TRACE_LEAVE();
+}
+
 AvdJobDequeueResultT Fifo::executeAdminResp(const AVD_CL_CB *cb) {
   Job *ajob;
   AvdJobDequeueResultT ret = JOB_EXECUTED;

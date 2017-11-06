@@ -1066,7 +1066,8 @@ uint32_t amfd_switch_actv_qsd(AVD_CL_CB *cb) {
   /*  Mark AVD as Quiesced. */
   cb->avail_state_avd = SA_AMF_HA_QUIESCED;
 
-  avd_clm_track_stop();
+  if (avd_clm_track_stop(cb) == SA_AIS_ERR_TRY_AGAIN)
+    Fifo::queue(new ClmTrackStop());
 
   /* Go ahead and set mds role as already the NCS SU has been switched */
   if (NCSCC_RC_SUCCESS !=
@@ -1105,7 +1106,6 @@ uint32_t amfd_switch_actv_qsd(AVD_CL_CB *cb) {
 
 uint32_t amfd_switch_qsd_stdby(AVD_CL_CB *cb) {
   uint32_t status = NCSCC_RC_SUCCESS;
-  SaAisErrorT ais_rc;
   TRACE_ENTER();
   LOG_NO("Switching Quiesced --> StandBy");
 
@@ -1138,12 +1138,8 @@ uint32_t amfd_switch_qsd_stdby(AVD_CL_CB *cb) {
     avd_pg_node_csi_del_all(cb, avnd);
   }
 
-  if (cb->is_clm_track_started == true) {
-    ais_rc = avd_clm_track_stop();
-    if (ais_rc != SA_AIS_OK && ais_rc != SA_AIS_ERR_NOT_EXIST) {
-      LOG_ER("Failed to stop cluster tracking after switch over");
-    }
-  }
+  if (avd_clm_track_stop(cb) == SA_AIS_ERR_TRY_AGAIN)
+    Fifo::queue(new ClmTrackStop());
 
   LOG_NO("Controller switch over done");
   saflog(LOG_NOTICE, amfSvcUsrName, "Controller switch over done at %x",
@@ -1274,9 +1270,9 @@ uint32_t amfd_switch_stdby_actv(AVD_CL_CB *cb) {
   if (NCSCC_RC_SUCCESS != avd_rde_set_role(SA_AMF_HA_ACTIVE)) {
     LOG_ER("rde role change failed from stdy -> Active");
   }
-
-  if (avd_clm_track_start() != SA_AIS_OK) {
+  if (avd_clm_track_start(cb) == SA_AIS_ERR_TRY_AGAIN) {
     LOG_ER("Switch Standby --> Active, clm track start failed");
+    Fifo::queue(new ClmTrackStart());
     avd_d2d_chg_role_rsp(cb, NCSCC_RC_FAILURE, SA_AMF_HA_ACTIVE);
     return NCSCC_RC_FAILURE;
   }
