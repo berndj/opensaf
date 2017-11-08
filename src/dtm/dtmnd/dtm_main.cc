@@ -282,21 +282,21 @@ int main(int argc, char *argv[]) {
   }
 
   /*************************************************************/
-  /* Set up the initial node_discovery_task  */
-  /*************************************************************/
-  rc = dtm_node_discovery_task_create();
-  if (NCSCC_RC_SUCCESS != rc) {
-    LOG_ER("DTM: node_discovery thread CREATE failed rc : %d ", rc);
-    goto done2;
-  }
-
-  /*************************************************************/
   /* Set up the initialservice_discovery_task */
   /*************************************************************/
   rc = dtm_service_discovery_init(dtms_cb);
   if (NCSCC_RC_SUCCESS != rc) {
     LOG_ER("DTM:service_discovery thread CREATE failed rc : %d ", rc);
     goto done1;
+  }
+
+  /*************************************************************/
+  /* Set up the initial node_discovery_task  */
+  /*************************************************************/
+  rc = dtm_node_discovery_task_create();
+  if (NCSCC_RC_SUCCESS != rc) {
+    LOG_ER("DTM: node_discovery thread CREATE failed rc : %d ", rc);
+    goto done2;
   }
 
   rc = nid_notify("TRANSPORT", NCSCC_RC_SUCCESS, nullptr);
