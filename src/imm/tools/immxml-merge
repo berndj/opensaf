@@ -21,7 +21,7 @@ import re,  sys, getopt, shutil
 import xml.dom.minidom
 from baseimm import *           # Base class and functions for Merge and validation utils
 from subprocess import call
-
+from datetime import datetime
   
 class Options(BaseOptions):
     #traceOn = False
@@ -293,42 +293,42 @@ class MergedImmDocument(BaseImmDocument):
             trace("sorting the classes & objects in resulting xml document")
             self.classList.sort()
             self.objectList.sort()
-        
+
         trace("Number of classes in resulting xml document:%d", len(self.classList))        
-            
+
         # iterate over all objects again to validate again when all objects are parsed from inputfiles
         #if Options.disableParentDnValidation==False:
         #    self.postValidateObjectList()
         #### I think there should not be imm validation functionality in merge tool (use validate_immfile instead)
-        
+
+        print_info_stderr("encoding in first source xml document:%s", self.firstSourceDoc.encoding)
+        tmpOutputFilename = Options.outputFilename+".tmp"
+        file_object = open(tmpOutputFilename, "w")
+
+        if self.firstSourceDoc.encoding is not None and \
+           self.firstSourceDoc.encoding.lower() == "utf-8":
+           encoding = "utf-8"
+           heading = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+        else:
+           encoding = None
+           heading = "<?xml version=\"1.0\"?>"
+
+        file_object.write(heading)
+        file_object.write(self.imm_content_element.toxml(encoding).replace("/>",">")+"\n")
         for class_element_tuple in self.classList:
             if (Options.keepCommentElements):
                 for textNode in class_element_tuple[1][0]:
-                    self.imm_content_element.appendChild(textNode) 
-            self.imm_content_element.appendChild(class_element_tuple[1][1])
-
+                    file_object.write(textNode.toxml(encoding)+"\n")
+            file_object.write(class_element_tuple[1][1].toxml(encoding)+"\n")
         for object_element_tuple in self.objectList:
             if (Options.keepCommentElements):
                 for textNode in object_element_tuple[1][0]:
-                    self.imm_content_element.appendChild(textNode) 
-            self.imm_content_element.appendChild(object_element_tuple[1][1])
-        
-        tmpOutputFilename = Options.outputFilename+".tmp"
-        file_object = open(tmpOutputFilename, "w")
-            
-        ## FIX for minidom problem with lost encoding info in saved xml document
-        trace("encoding in first source xml document:%s", self.firstSourceDoc.encoding)
-        if self.firstSourceDoc.encoding is not None and \
-           self.firstSourceDoc.encoding.lower() == "utf-8":
-            xml_as_string = self.document.toxml("utf-8")
-            #xml_as_string = self.document.toprettyxml("", "", "utf-8")
-        else:
-            xml_as_string = self.document.toxml()
-            
-        file_object.write(xml_as_string)
+                    file_object.write(textNode.toxml(encoding)+"\n")
+            file_object.write(object_element_tuple[1][1].toxml(encoding)+"\n")
+        file_object.write("</imm:IMM-contents>")
         file_object.close()
         trace("Stored resulting xml document in tmp file: %s", tmpOutputFilename)
-        
+
         if Options.isXmlLintFound:
             #command = "/bin/sh -c 'XMLLINT_INDENT=\"    \" ; export XMLLINT_INDENT; /usr/bin/xmllint --format "+tmpOutputFilename+" --output "+Options.outputFilename +"'"
             if self.formatXmlFileWithXmlLint(tmpOutputFilename, Options.outputFilename) != 0:
@@ -342,13 +342,13 @@ class MergedImmDocument(BaseImmDocument):
 
         trace("Number of classes parsed:%d stored:%d", self.classes_parsed, len(self.classList))
         trace("Number of objects parsed:%d stored:%d", self.objects_parsed, len(self.objectList))
-        
+
         diff_classes = self.classes_parsed-len(self.classList)
         diff_objects = self.objects_parsed-len(self.objectList)
         print_info_stderr("Note! Merge ignored %d classes (parsed:%d stored:%d)", diff_classes, self.classes_parsed, len(self.classList) )
         print_info_stderr("Note! Merge ignored %d objects (parsed:%d stored:%d)", diff_objects, self.objects_parsed, len(self.objectList) )
         
-        
+
         trace("Stored formatted xml document in file: %s", Options.outputFilename)
         
         if Options.isXmlLintFound and Options.schemaFilename != None:
@@ -509,7 +509,7 @@ def main(argv):
              
     ## store the resulting document with collected class and objects elements
     mergedDoc.saveResult()
-    print_info_stderr("Successfully merged input files!")
+    print_info_stderr("{0} Successfully merged input files!".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]))
     return 0
 
 
