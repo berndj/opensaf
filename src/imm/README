@@ -720,6 +720,10 @@ An application/service must design for a static set of OIs implying a
 static set of OI names, including a static set of applier OIs and
 a static set of applier names.
 
+In OpenSAF 5.17.11, a new feature for removing disconnected applies is added
+to IMM. The feature can be enabled to remove disconnected appliers from the
+cluster after applier timeout expires.
+
 Another difference between regular regular implementers and appliers,
 is that regular implementer names and their binding to a set of objects
 will survive a cluster restart, whereas applier names and their binding
@@ -1582,7 +1586,7 @@ consolidate duplicates instead of just check and reject upgrades that
 encounter duplicates. If the imm service where to do such consolidation,
 it would mutate the values of application data without informing the OI
 of such changes. We dont see that as acceptable and predictable behavior.
-The approach taken is insted to make it the apllications responsibility to
+The approach taken is instead to make it the applications responsibility to
 eliminate duplicates before the schema change attempt, possibly as a prior
 application step in the campaign.
 
@@ -2954,6 +2958,80 @@ with Enhanced cluster management(#439).
 In case of CLM node lock, and HEADLESS is triggered after CLM node lock, then CLM locked 
 node is nullified. The node is considered as HEADLESS and all other agent functions 
 supported in HEADLESS are supported.
+
+Notes on upgrading to OpenSAF 5.17.11
+=====================================
+OpenSAF 5.17.11 adds new attribute flag allowing the removal of disconnected
+appliers (#2579). During a rolling upgrade from an earlier OpenSAF release
+to the 5.17.11 release there will be nodes executing the older release concurrently
+with nodes executing OpenSAF 5.17.11. Nodes executing the earlier release will not
+recognize the new attribute flag originating from nodes executing 5.17.11.
+
+Because of this upgrade issue, the new attribute flag added in OpenSAF 5.17.11 is
+not allowed unless a flag is toggled on in the opensafImmNostdFlags runtime
+attribute in the object:
+
+   opensafImm=opensafImm,safApp=safImmService.
+
+The following is the shell command:
+
+        immadm -o 1 -p opensafImmNostdFlags:SA_UINT32_T:1024 \
+           opensafImm=opensafImm,safApp=safImmService
+
+This will set bit 10 of the 'opensafImmNostdFlags' runtime attribute inside the immsv.
+Operation-id '1' invoked on the object:
+
+ 'opensafImm=opensafImm,safApp=safImmService'
+
+has the meaning of 'flags-ON'. Operation-id '2' has the meaning of 'flags-OFF'.
+This flag (and possibly other relevant flags) needs to be toggled ON when the upgrade
+to OpenSAF 5.17.11 has been successfully completed. This would be in some final step of
+the upgrade. Any cluster start/restart of an OpenSAF 5.17.11 system will always
+automatically toggle on relevant flags.
+
+An imm xml file containing the extended class definition for OpensafImm has
+been added at samples/immsv/OpensafImm_Upgrade_5.17.11.xml.
+
+In summary:
+
+Bit 1 controls schema (imm class) changes allowed or not (normally off/0).
+Bit 2 controls OpenSAF4.1 protocols allowed or not (normally on/1).
+Bit 3 controls OpenSAF4.3 protocols allowed or not (normally on/1).
+Bit 4 controls 2PBE oneSafe2PBE, see 2PBE feature in OpenSAF4.4 above (normally off/0).
+Bit 5 controls OpenSAF4.5 protocols allowed or not (normally on/1).
+Bit 6 controls OpenSAF4.6 protocols allowed or not (normally on/1).
+Bit 7 controls OpenSAF4.7 protocols allowed or not (normally on/1).
+Bit 8 controls OpenSAF5.0 protocols allowed or not (normally on/1).
+Bit 9 controls OpenSAF5.1 protocols allowed or not (normally on/1).
+Bit 10 controls OpenSAF5.17.11 protocols allowed or not (normally on/1).
+
+Removal of disconnected applier (5.17.11)
+=================================================
+Once an implementer is created, it resides in the system to the cluster
+restart. There is no way to remove implementers from the system. Applier is
+a special type of implementers and the same feature applies to appliers.
+
+Applier names usually contain the node name where they are created to avoid
+the collision with the same appliers on other nodes. In systems where new
+nodes come with new names every time they join the cluster, this can be
+a problem and the limit of 3000 implementer and appliers can be reached.
+
+The new feature is introduced in 5.17.11 which will handle the time for
+keeping disconnected appliers in the system. When the time expires,
+disconnected appliers will be removed from the system.
+
+The applier timeout is configurable, and it is set in the new attribute
+minApplierTimeout in IMM object. If minApplierTimeout attribute is set to 0,
+the removal of disconnected appliers is disabled. The unit in counting
+the timeout is in seconds.
+
+With enabling the removal of disconnected appliers, there might be a risk that
+some applications in the cluster rely on reattaching appliers. This will not
+work if an application tries to reattach appliers after the applier timeout
+expires.
+
+To be possible to use this new feature, bit 10 must be set in
+opensafImmNostdFlags attribute in IMM object.
 
 ----------------------------------------
 DEPENDENCIES
