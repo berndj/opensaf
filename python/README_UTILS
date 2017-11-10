@@ -1,0 +1,215 @@
+/*      -*- OpenSAF  -*-
+ *
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. This file and program are licensed
+ * under the GNU Lesser General Public License Version 2.1, February 1999.
+ * The complete license can be accessed from the following location:
+ * http://opensource.org/licenses/lgpl-license.php
+ * See the Copying file included with the OpenSAF distribution for full
+ * licensing terms.
+ *
+ */
+
+GENERAL
+-------
+This README describes the general features and usage of the pyosaf utils.
+Ticket: https://sourceforge.net/p/opensaf/tickets/2602/
+
+STRUCTURE
+---------
+.
+`-- pyosaf
+    `-- utils
+        |-- __init__.py
+        |-- clm
+        |   `-- __init__.py
+        |-- immoi
+        |   |-- __init__.py
+        |   `-- implementer.py
+        |-- immom
+        |   |-- __init__.py
+        |   |-- accessor.py
+        |   |-- agent.py
+        |   |-- ccb.py
+        |   |-- iterator.py
+        |   `-- object.py
+        |-- log
+        |   |-- __init__.py
+        |   `-- logger.py
+        `-- ntf
+            |-- __init__.py
+            |-- agent.py
+            |-- producer.py
+            |-- reader.py
+            `-- subscriber.py
+
+NOTES
+-----
+- pyosaf utils is refactored to take advantage of object-oriented programming.
+
+- The old functional interfaces are still kept for backward compatibility, but
+are marked as "deprecated", and may be removed in the next OpenSAF release.
+
+- pyosaf utils now returns error codes instead of raising SafException.
+To keep the compability, the functions marked with "deprecated" still raise
+SafException in case of errors.
+
+- This README only provides a general description of how to use the pyosaf
+utils. Samples will be updated in order to provide more details.
+
+DESCRIPTIONS
+------------
+- pyosaf utils provides a self-retry error handling mechanism with some
+configurable parameters:
+
+1) MAX_RETRY_TIME: an environment variable specifying the maximum retry time
+on a recoverable error.
+A default value (60 seconds) is used if a user-defined value is not set
+before any pyosaf.utils modules are imported.
+
+2) RETRY_INTERVAL: an environment variable specifying the wait-time between
+each retry.
+A default value (1 second) is used if a user-defined value is not set
+before any pyosaf utils.modules are imported.
+
+In case an error still occurs after MAX_RETRY_TIME time, pyosaf utils stops
+retrying and returns the error code to the caller.
+- The error handling is applied for these error codes:
+1) SA_AIS_ERR_TRY_AGAIN
+2) SA_AIS_ERR_NO_RESOURCES
+3) SA_AIS_ERR_BUSY
+4) SA_AIS_ERR_FAILED_OPERATION: pyosaf utils only retries in case of an IMM CCB
+resource-abort.
+5) SA_AIS_ERR_BAD_HANDLE: pyosaf utils retries most of BAD_HANDLE cases.
+
+CLM class descriptions:
+========================
+1) ClmAgent provides CLM functions to the users at a higher level,
+and relieving the users of the need to manage the life cycle of the CLM agent.
+- Example:
+from pyosaf.utils.clm import ClmAgent
+clma = ClmAgent()
+clma.init()
+rc, cluster_nodes = clma.get_members()
+
+IMM-OI class descriptions:
+===========================
+1) Implementer (implementer.py) represents an object implementer.
+- Example:
+from pyosaf.utils.immoi.implementer import Implementer
+time_implementer = Implementer(name="TimeReporter")
+obj = ImmObject(class_name=class_name, dn=dn)
+obj.hours = hours
+obj.minutes = minutes
+obj.seconds = seconds
+obj.timeId = "timeId=1"
+time_implementer.create(obj)
+
+2) Applier (implementer.py) represents an object applier.
+- Example:
+from pyosaf.utils.immoi.implementer import Applier
+echo_applier = Applier(on_apply=handle_apply,
+                       class_names=classes_to_listen_to,
+                       name="ImmListener")
+echo_applier.enter_dispatch_loop()
+
+IMM-OM class descriptions:
+==========================
+1) ImmOmAccessor(accesor.py) provides functions of the ImmOmAccessor interface.
+- Example:
+from pyosaf.utils.immom.accessor import ImmOmAccessor
+accessor = ImmOmAccessor()
+accessor.init()
+rc, imm_obj = accessor.get("sampleClassId=1")
+
+2) ImmOmAgent(agent.py) provides functions to manage the life cycle of
+the IMM OM.
+- Example:
+from pyosaf.utils.immom.agent import ImmOmAgent
+agent = ImmOmAgent()
+agent.init()
+agent.clear_admin_owner("sampleClassId=1")
+
+3) Ccb(ccb.py) provides functions to manage a CCB.
+- Example:
+from pyosaf.utils.immom.ccb import Ccb
+ccb = Ccb(flags=None)
+obj = ImmObject(dn=dn, class_name=class_name)
+setattr(obj, "pingPongId", dn)
+ccb.init()
+ccb.create(obj=obj)
+ccb.apply()
+
+4) SearchIterator(iterator.py) searches IMM OM class/object/attributes.
+- Example:
+from pyosaf.utils.immom.iterator import SearchIterator
+search_iter = SearchIterator(root_name="sampleClassId=1")
+search_iter.init()
+imm_obj_list = list(search_iter)
+
+5) ImmOject(object.py) represents an IMM object.
+- Example:
+from pyosaf.utils.immom.object import ImmObject
+obj = ImmObject(dn=dn, class_name=class_name)
+setattr(obj, "pingPongId", dn)
+
+LOG class descriptions:
+=======================
+1) SafLogger (logger.py) provides functions of the LOG interface.
+- Example:
+from pyosaf.utils.log.logger import SafLogger
+saflog = SafLogger()
+saflog.init()
+saflog.open_stream()
+saflog.log("pyosaf utils")
+
+NTF class descriptions:
+=======================
+1) NtfProducer (producer.py) provides functions of the NTF Producer interface.
+- Example:
+from pyosaf.utils.ntf.producer import NtfProducer
+ntf_producer = NtfProducer()
+ntf_producer.init()
+# Set attributes for alarm notification
+ntf_producer.set_*()
+...
+ntf_producer.send_alarm_notification()
+
+2) NtfReader (reader.py) provides functions of the NTF Reader interface.
+- Example:
+from pyosaf.utils.ntf.reader import NtfReader
+ntf_reader = NtfReader()
+ntf_reader.init()
+ntf_reader.read()
+ntf_list = list(ntf_reader)
+
+3) NtfSubscriber (subscriber.py) provides functions of the NTF Subscriber
+interface.
+- Example:
+from pyosaf.utils.ntf.subscriber import NtfSubscriber
+def print_subscriber_info(subscription_id, notification_type, ntf_info):
+    # Print notification here
+    ...
+
+subscriber = NtfSubscriber()
+subscriber.init(print_subscriber_info, None)
+subscriber.subscribe(666)
+
+# Get selection object for the implementer
+selection_object = subscriber.get_selection_object().value
+
+# Wait for next OI event or one second timeout
+inputs = [selection_object]
+outputs = []
+
+# Loop and wait for notifications
+while True:
+
+    readable, writable, exceptional = \
+        select.select(inputs, outputs, inputs, 0)
+
+    if selection_object in readable:
+        subscriber.dispatch(eSaDispatchFlagsT.SA_DISPATCH_ALL)
