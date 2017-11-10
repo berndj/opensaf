@@ -49,10 +49,11 @@
 
 #include "msg/msgd/mqd.h"
 #include "mqd_imm.h"
+#include "mqd_ntf.h"
 
 MQDLIB_INFO gl_mqdinfo;
 
-enum { FD_TERM = 0, FD_AMF, FD_MBCSV, FD_MBX, FD_CLM, NUM_FD };
+enum { FD_TERM = 0, FD_AMF, FD_MBCSV, FD_MBX, FD_CLM, FD_NTF, NUM_FD };
 
 static struct pollfd fds[NUM_FD];
 static nfds_t nfds = NUM_FD;
@@ -146,10 +147,48 @@ static SaAisErrorT mqd_clm_init(MQD_CB *cb)
 		TRACE_1("saClmClusterTrack success");
 	} while (false);
 
-	if (saErr != SA_AIS_OK && !cb->clm_hdl)
+	if (saErr != SA_AIS_OK && cb->clm_hdl)
 		saClmFinalize(cb->clm_hdl);
 
 	return saErr;
+}
+
+static SaAisErrorT mqd_ntf_init(MQD_CB *cb)
+{
+	SaAisErrorT rc = SA_AIS_OK;
+	TRACE_ENTER();
+
+	do {
+		SaVersionT ntfVersion = { 'A', 1, 1 };
+		SaNtfCallbacksT callbacks = {
+			mqdNtfNotificationCallback,
+			0
+		};
+
+		rc = saNtfInitialize(&cb->ntfHandle, &callbacks, &ntfVersion);
+		if (rc != SA_AIS_OK) {
+			LOG_ER("saNtfInitialize failed with error %u", rc);
+			break;
+		}
+
+		rc = saNtfSelectionObjectGet(cb->ntfHandle, &cb->ntf_sel_obj);
+		if (SA_AIS_OK != rc) {
+			LOG_ER("saNtfSelectionObjectGet failed with error %u",
+			       rc);
+			break;
+		}
+
+		rc = mqdInitNtfSubscriptions(cb->ntfHandle);
+		if (rc != SA_AIS_OK)
+			break;
+	} while (false);
+
+	if (rc != SA_AIS_OK && cb->ntfHandle)
+		saNtfFinalize(cb->ntfHandle);
+
+	TRACE_LEAVE();
+
+	return rc;
 }
 
 /****************************************************************************\
@@ -306,6 +345,16 @@ static uint32_t mqd_lib_init(void)
 		mqd_cb_shut(pMqd);
 		return NCSCC_RC_FAILURE;
 	}
+
+	if (mqd_ntf_init(pMqd) != SA_AIS_OK) {
+		mqd_asapi_unbind();
+		saAmfFinalize(pMqd->amf_hdl);
+		saClmFinalize(pMqd->clm_hdl);
+		ncshm_give_hdl(pMqd->hdl);
+		mqd_cb_shut(pMqd);
+		return NCSCC_RC_FAILURE;
+	}
+
 	if ((rc = initialize_for_assignment(pMqd, pMqd->ha_state)) !=
 	    NCSCC_RC_SUCCESS) {
 		LOG_ER("initialize_for_assignment FAILED %u", (unsigned)rc);
@@ -493,6 +542,8 @@ void mqd_main_process(uint32_t hdl)
 		fds[FD_CLM].events = POLLIN;
 		fds[FD_MBCSV].fd = pMqd->mbcsv_sel_obj;
 		fds[FD_MBCSV].events = POLLIN;
+		fds[FD_NTF].fd = pMqd->ntf_sel_obj;
+		fds[FD_NTF].events = POLLIN;
 
 		int ret = poll(fds, nfds, -1);
 		if (ret == -1) {
@@ -522,6 +573,15 @@ void mqd_main_process(uint32_t hdl)
 				LOG_ER("saClmDispatch failed: %u", err);
 			}
 		}
+
+		if (fds[FD_NTF].revents & POLLIN) {
+			/* dispatch all the NTF pending function */
+			err = saNtfDispatch(pMqd->ntfHandle, SA_DISPATCH_ALL);
+			if (err != SA_AIS_OK) {
+				LOG_ER("saNtfDispatch failed: %u", err);
+			}
+		}
+
 		/* dispatch all the MBCSV pending callbacks */
 		if (fds[FD_MBCSV].revents & POLLIN) {
 			mbcsv_arg.i_op = NCS_MBCSV_OP_DISPATCH;

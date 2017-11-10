@@ -74,6 +74,7 @@ typedef struct mqnd_queue_info {
   SaMsgQueueHandleT listenerHandle; /* Listener queue handle */
   SaNameT queueName;
   SaSizeT size[SA_MSG_MESSAGE_LOWEST_PRIORITY + 1]; /* Size of the queue */
+  SaMsgQueueThresholdsT thresholds;
   SaMsgQueueStatusT queueStatus;        /* Status info of the queue */
   SaMsgQueueSendingStateT sendingState; /* Sending state is removed from B.1.1,
                                            but used internally */
@@ -91,6 +92,8 @@ typedef struct mqnd_queue_info {
   uint32_t numberOfFullErrors[SA_MSG_MESSAGE_LOWEST_PRIORITY + 1];
   SaUint64T totalQueueSize;
   uint32_t shm_queue_index;
+  bool capacityReachedSent;
+  bool capacityAvailableSent;
 } MQND_QUEUE_INFO;
 
 typedef struct mqnd_qhndl_node {
@@ -127,6 +130,7 @@ typedef struct mqnd_queue_ckpt_info {
   SaMsgQueueHandleT listenerHandle; /* Listener queue handle */
   SaNameT queueName;
   SaSizeT size[SA_MSG_MESSAGE_LOWEST_PRIORITY + 1]; /* Size of the queue */
+  SaMsgQueueThresholdsT thresholds;
   SaMsgQueueCreationFlagsT creationFlags;
   SaTimeT creationTime; /* Queue Creation time */
   SaTimeT retentionTime;
@@ -145,6 +149,8 @@ typedef struct mqnd_queue_ckpt_info {
   QueueStatsShm; /* Structure to store queue stats in shared memory */
   MQND_TMR qtransfer_complete_tmr; /* Q Transfer Complete Timer */
   uint32_t valid; /* To verify whether the checkpoint info is valid or not */
+  bool capacityReachedSent;
+  bool capacityAvailableSent;
 } MQND_QUEUE_CKPT_INFO;
 
 typedef struct mqnd_shm_info {

@@ -97,6 +97,7 @@ noinst_HEADERS += \
 	src/msg/msgd/mqd_dl_api.h \
 	src/msg/msgd/mqd_imm.h \
 	src/msg/msgd/mqd_mem.h \
+	src/msg/msgd/mqd_ntf.h \
 	src/msg/msgd/mqd_red.h \
 	src/msg/msgd/mqd_saf.h \
 	src/msg/msgd/mqd_tmr.h \
@@ -158,6 +159,7 @@ bin_osafmsgnd_LDADD = \
 	lib/libmsg_common.la \
 	lib/libSaAmf.la \
 	lib/libSaClm.la \
+	lib/libSaNtf.la \
 	lib/libosaf_common.la \
 	lib/libSaImmOi.la \
 	lib/libSaImmOm.la \
@@ -182,7 +184,8 @@ bin_osafmsgd_SOURCES = \
 	src/msg/msgd/mqd_mds.c \
 	src/msg/msgd/mqd_red.c \
 	src/msg/msgd/mqd_saf.c \
-	src/msg/msgd/mqd_tmr.c
+	src/msg/msgd/mqd_tmr.c \
+	src/msg/msgd/mqd_ntf.cc
 
 bin_osafmsgd_LDADD = \
 	lib/libmsg_common.la \
@@ -191,6 +194,7 @@ bin_osafmsgd_LDADD = \
 	lib/libosaf_common.la \
 	lib/libSaImmOi.la \
 	lib/libSaImmOm.la \
+	lib/libSaNtf.la \
 	lib/libopensaf_core.la
 
 if ENABLE_TESTS
@@ -205,6 +209,7 @@ noinst_HEADERS += \
 bin_msgtest_SOURCES = \
   src/msg/apitest/msgtest.c \
   src/msg/apitest/test_saMsgVersionT.cc \
+  src/msg/apitest/test_CapacityThresholds.cc \
   src/msg/apitest/test_ErrUnavailable.cc \
   src/msg/apitest/tet_mqa_conf.c \
   src/msg/apitest/tet_mqsv_util.c \
@@ -212,6 +217,7 @@ bin_msgtest_SOURCES = \
 
 bin_msgtest_LDADD = \
   lib/libSaMsg.la \
+  lib/libSaNtf.la \
   lib/libopensaf_core.la \
   lib/libapitest.la
 

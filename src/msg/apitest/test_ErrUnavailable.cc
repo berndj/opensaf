@@ -504,6 +504,59 @@ static void saErrUnavailable_25(void)
   assert(rc == SA_AIS_OK);
 }
 
+static void saErrUnavailable_26(void)
+{
+  SaMsgHandleT msgHandle;
+  SaAisErrorT rc = saMsgInitialize(&msgHandle, 0, &msg3_1);
+  assert(rc == SA_AIS_OK);
+
+  SaMsgQueueHandleT queueHandle;
+  rc = saMsgQueueOpen(msgHandle,
+                      &queueName,
+                      &creationAttributes,
+                      SA_MSG_QUEUE_CREATE,
+                      SA_TIME_END,
+                      &queueHandle);
+  assert(rc == SA_AIS_OK);
+
+  lockUnlockNode(true);
+  const SaMsgQueueThresholdsT thresholds = {
+	{ 5, 5, 5, 5 },
+	{ 5, 5, 5, 5 }
+  };
+  rc = saMsgQueueCapacityThresholdsSet(queueHandle, &thresholds);
+  test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
+  lockUnlockNode(false);
+
+  rc = saMsgFinalize(msgHandle);
+  assert(rc == SA_AIS_OK);
+}
+
+static void saErrUnavailable_27(void)
+{
+  SaMsgHandleT msgHandle;
+  SaAisErrorT rc = saMsgInitialize(&msgHandle, 0, &msg3_1);
+  assert(rc == SA_AIS_OK);
+
+  SaMsgQueueHandleT queueHandle;
+  rc = saMsgQueueOpen(msgHandle,
+                      &queueName,
+                      &creationAttributes,
+                      SA_MSG_QUEUE_CREATE,
+                      SA_TIME_END,
+                      &queueHandle);
+  assert(rc == SA_AIS_OK);
+
+  lockUnlockNode(true);
+  SaMsgQueueThresholdsT thresholds;
+  rc = saMsgQueueCapacityThresholdsGet(queueHandle, &thresholds);
+  test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
+  lockUnlockNode(false);
+
+  rc = saMsgFinalize(msgHandle);
+  assert(rc == SA_AIS_OK);
+}
+
 static void saErrUnavailable_30(void)
 {
   lockUnlockNode(true);
@@ -940,6 +993,59 @@ static void saErrUnavailable_54(void)
   assert(rc == SA_AIS_OK);
 }
 
+static void saErrUnavailable_55(void)
+{
+  SaMsgHandleT msgHandle;
+  SaAisErrorT rc = saMsgInitialize(&msgHandle, 0, &msg3_1);
+  assert(rc == SA_AIS_OK);
+
+  SaMsgQueueHandleT queueHandle;
+  rc = saMsgQueueOpen(msgHandle,
+                      &queueName,
+                      &creationAttributes,
+                      SA_MSG_QUEUE_CREATE,
+                      SA_TIME_END,
+                      &queueHandle);
+  assert(rc == SA_AIS_OK);
+
+  lockUnlockNode(true);
+  lockUnlockNode(false);
+  const SaMsgQueueThresholdsT thresholds = {
+	{ 5, 5, 5, 5 },
+	{ 5, 5, 5, 5 }
+  };
+  rc = saMsgQueueCapacityThresholdsSet(queueHandle, &thresholds);
+  test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
+
+  rc = saMsgFinalize(msgHandle);
+  assert(rc == SA_AIS_OK);
+}
+
+static void saErrUnavailable_56(void)
+{
+  SaMsgHandleT msgHandle;
+  SaAisErrorT rc = saMsgInitialize(&msgHandle, 0, &msg3_1);
+  assert(rc == SA_AIS_OK);
+
+  SaMsgQueueHandleT queueHandle;
+  rc = saMsgQueueOpen(msgHandle,
+                      &queueName,
+                      &creationAttributes,
+                      SA_MSG_QUEUE_CREATE,
+                      SA_TIME_END,
+                      &queueHandle);
+  assert(rc == SA_AIS_OK);
+
+  lockUnlockNode(true);
+  lockUnlockNode(false);
+  SaMsgQueueThresholdsT thresholds;
+  rc = saMsgQueueCapacityThresholdsGet(queueHandle, &thresholds);
+  test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
+
+  rc = saMsgFinalize(msgHandle);
+  assert(rc == SA_AIS_OK);
+}
+
 
 __attribute__((constructor)) static void saErrUnavailable_constructor(void)
 {
@@ -969,9 +1075,9 @@ __attribute__((constructor)) static void saErrUnavailable_constructor(void)
   test_case_add(26, saErrUnavailable_23, "saMsgMessageSendReceive");
   test_case_add(26, saErrUnavailable_24, "saMsgMessageReply");
   test_case_add(26, saErrUnavailable_25, "saMsgMessageReplyAsync");
-#if 0
   test_case_add(26, saErrUnavailable_26, "saMsgQueueCapacityThresholdsSet");
   test_case_add(26, saErrUnavailable_27, "saMsgQueueCapacityThresholdsGet");
+#if 0
   test_case_add(26, saErrUnavailable_28, "saMsgMetadataSizeGet");
   test_case_add(26, saErrUnavailable_29, "saMsgLimitGet");
 #endif
@@ -1000,9 +1106,9 @@ __attribute__((constructor)) static void saErrUnavailable_constructor(void)
   test_case_add(26, saErrUnavailable_52, "saMsgMessageSendReceive (stale)");
   test_case_add(26, saErrUnavailable_53, "saMsgMessageReply (stale)");
   test_case_add(26, saErrUnavailable_54, "saMsgMessageReplyAsync (stale)");
-#if 0
   test_case_add(26, saErrUnavailable_55, "saMsgQueueCapacityThresholdsSet (stale)");
   test_case_add(26, saErrUnavailable_56, "saMsgQueueCapacityThresholdsGet (stale)");
+#if 0
   test_case_add(26, saErrUnavailable_57, "saMsgMetadataSizeGet (stale)");
   test_case_add(26, saErrUnavailable_58, "saMsgLimitGet (stale)");
 #endif

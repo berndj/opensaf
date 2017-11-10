@@ -42,6 +42,8 @@ static uint32_t mqnd_evt_proc_update_stats_shm(MQND_CB *cb,
 					       MQSV_DSEND_EVT *evt);
 static uint32_t mqnd_evt_proc_cb_dump(void);
 static uint32_t mqnd_evt_proc_ret_time_set(MQND_CB *cb, MQSV_EVT *evt);
+static uint32_t mqnd_evt_proc_cap_set(MQND_CB *, MQSV_EVT *);
+static uint32_t mqnd_evt_proc_cap_get(MQND_CB *, MQSV_EVT *);
 static void mqnd_dump_queue_status(MQND_CB *cb, SaMsgQueueStatusT *queueStatus,
 				   uint32_t offset);
 static void mqnd_dump_timer_info(MQND_TMR tmr);
@@ -185,6 +187,12 @@ static uint32_t mqnd_proc_mqp_req_msg(MQND_CB *cb, MQSV_EVT *evt)
 		break;
 	case MQP_EVT_Q_RET_TIME_SET_REQ:
 		rc = mqnd_evt_proc_ret_time_set(cb, evt);
+		break;
+	case MQP_EVT_CAP_SET_REQ:
+		rc = mqnd_evt_proc_cap_set(cb, evt);
+		break;
+	case MQP_EVT_CAP_GET_REQ:
+		rc = mqnd_evt_proc_cap_get(cb, evt);
 		break;
 	default:
 		LOG_ER("%s:%u: unrecognized message type: %d", __FILE__,
@@ -946,6 +954,191 @@ send_rsp:
 }
 
 /****************************************************************************
+ * Name          : sendStateChangeNotification
+ *
+ * Description   : Send state change notification for queues
+ *
+ * Arguments     : MQND_CB *cb - MQND CB pointer
+ *                 MQND_QUEUE_INFO *qInfo - queue info struct
+ *                 SaMsgMessageCapacityStatusT - status to send
+ *
+ * Return Values : None.
+ *
+ * Notes         : None.
+ *****************************************************************************/
+static void sendStateChangeNotification(MQND_CB *cb,
+					MQND_QUEUE_INFO *qInfo,
+					SaMsgMessageCapacityStatusT status)
+{
+	SaNtfHandleT ntfHandle = 0;
+
+	do {
+		SaVersionT ntfVersion = { 'A', 1, 1 };
+
+		/* do we need to send it? */
+		if ((status == SA_MSG_QUEUE_CAPACITY_REACHED &&
+			qInfo->capacityReachedSent) ||
+			(status == SA_MSG_QUEUE_CAPACITY_AVAILABLE &&
+			qInfo->capacityAvailableSent)) {
+			break;
+		}
+
+		SaAisErrorT rc = saNtfInitialize(&ntfHandle, 0, &ntfVersion);
+
+		if (rc != SA_AIS_OK) {
+			LOG_ER("saNtfInitialize failed: %i", rc);
+			break;
+		}
+
+		const SaNameT notifyingObject = {
+			sizeof("safApp=safMsgService") - 1,
+			"safApp=safMsgService"
+		};
+
+		SaNtfStateChangeNotificationT ntfStateChange = { 0 };
+
+		rc = saNtfStateChangeNotificationAllocate(
+			ntfHandle,
+			&ntfStateChange,
+			1, /* numCorrelated Notifications */
+			0, /* length addition text */
+			0, /* num additional info */
+			1, /* num of state changes */
+			0); /* variable data size */
+
+		if (rc != SA_AIS_OK) {
+			LOG_ER("saNtfStateChangeNotificationAllocate "
+				"failed: %i", rc);
+			break;
+		}
+
+		*ntfStateChange.notificationHeader.eventType =
+			SA_NTF_OBJECT_STATE_CHANGE;
+
+		memcpy(ntfStateChange.notificationHeader.notificationObject,
+				&qInfo->queueName,
+				sizeof(SaNameT));
+
+		memcpy(ntfStateChange.notificationHeader.notifyingObject,
+			&notifyingObject,
+			sizeof(SaNameT));
+
+		ntfStateChange.notificationHeader.notificationClassId->vendorId =
+			SA_NTF_VENDOR_ID_SAF;
+		ntfStateChange.notificationHeader.notificationClassId->majorId =
+			SA_SVC_MSG;
+		ntfStateChange.notificationHeader.notificationClassId->minorId =
+			(status == SA_MSG_QUEUE_CAPACITY_REACHED) ?
+			0x65 : 0x66;
+
+		*ntfStateChange.sourceIndicator = SA_NTF_OBJECT_OPERATION;
+
+		ntfStateChange.changedStates[0].stateId =
+			SA_MSG_DEST_CAPACITY_STATUS;
+
+		ntfStateChange.changedStates[0].oldStatePresent =
+			(status == SA_MSG_QUEUE_CAPACITY_REACHED) ?
+			SA_FALSE : SA_TRUE;
+
+		if (status == SA_MSG_QUEUE_CAPACITY_AVAILABLE) {
+			ntfStateChange.changedStates[0].oldState =
+				SA_MSG_QUEUE_CAPACITY_REACHED;
+		}
+
+		ntfStateChange.changedStates[0].newState = status;
+
+		rc = saNtfNotificationSend(ntfStateChange.notificationHandle);
+
+		if (rc != SA_AIS_OK)
+			LOG_ER("saNtfNotificationSend failed: %i", rc);
+		else {
+			if (status == SA_MSG_QUEUE_CAPACITY_REACHED) {
+				qInfo->capacityReachedSent = true;
+				qInfo->capacityAvailableSent = false;
+			} else {
+				qInfo->capacityReachedSent = false;
+				qInfo->capacityAvailableSent = true;
+			}
+		}
+
+		rc = saNtfNotificationFree(ntfStateChange.notificationHandle);
+
+		if (rc != SA_AIS_OK)
+			LOG_ER("saNtfNotificationFree failed: %i", rc);
+	} while (false);
+
+	if (ntfHandle) {
+		SaAisErrorT rc = saNtfFinalize(ntfHandle);
+
+		if (rc != SA_AIS_OK)
+			LOG_ER("saNtfFinalize failed: %i", rc);
+	}
+}
+
+/****************************************************************************
+ * Name          : checkCapacity
+ *
+ * Description   : Function to check whether we need to send state change
+ *                 notification.
+ *
+ * Arguments     : MQND_CB *cb - MQND CB pointer
+ *                 MQND_QUEUE_INFO *qInfo - queue info
+ *
+ * Return Values : None.
+ *
+ * Notes         : None.
+ *****************************************************************************/
+static void checkCapacity(MQND_CB *cb, MQND_QUEUE_INFO *qInfo)
+{
+	int i;
+	uint32_t offset = qInfo->shm_queue_index;
+	MQND_QUEUE_CKPT_INFO *shm_base_addr = cb->mqnd_shm.shm_base_addr;
+	bool sendNotification = true;
+	SaMsgMessageCapacityStatusT capacityType =
+		SA_MSG_QUEUE_CAPACITY_REACHED;
+
+	TRACE_ENTER();
+
+	/* send capacity notifications */
+	for (i = SA_MSG_MESSAGE_HIGHEST_PRIORITY;
+		i <= SA_MSG_MESSAGE_LOWEST_PRIORITY;
+		i++)
+	{
+		TRACE("capacityReached[%i]: %llu capacityAvailable: %llu "
+				"queueUsed: %llu",
+				i,
+				qInfo->thresholds.capacityReached[i],
+				qInfo->thresholds.capacityAvailable[i],
+				shm_base_addr[offset].QueueStatsShm.
+                                	saMsgQueueUsage[i].queueUsed);
+		if (!qInfo->capacityReachedSent &&
+			qInfo->thresholds.capacityReached[i] >=
+		       		shm_base_addr[offset].QueueStatsShm.
+				saMsgQueueUsage[i].queueUsed) {
+			/* only send notification if all are full */
+			sendNotification = false;
+			TRACE("not sending notification");
+			break;
+		} else if (!qInfo->capacityAvailableSent &&
+				qInfo->thresholds.capacityAvailable[i] >
+					shm_base_addr[offset].QueueStatsShm.
+					saMsgQueueUsage[i].queueUsed) {
+			/* send notification if at least one comes available */
+			TRACE("sending available notification");
+			sendNotification = true;
+			capacityType = SA_MSG_QUEUE_CAPACITY_AVAILABLE;
+			break;
+		}
+	}
+
+	TRACE("sendNotification: %i", sendNotification);
+	if (sendNotification)
+		sendStateChangeNotification(cb, qInfo, capacityType);
+
+	TRACE_LEAVE();
+}
+
+/****************************************************************************
  * Name          : mqnd_evt_proc_update_stats_shm
  *
  * Description   : Function to update stats of queue in shm when message is
@@ -998,7 +1191,10 @@ static uint32_t mqnd_evt_proc_update_stats_shm(MQND_CB *cb, MQSV_DSEND_EVT *evt)
 
 	statsReq = &evt->info.statsReq;
 
-	if (cb->is_restart_done)
+	if (!cb->clm_node_joined) {
+		err = SA_AIS_ERR_UNAVAILABLE;
+		goto done;
+	} else if (cb->is_restart_done)
 		err = SA_AIS_OK;
 	else {
 		err = SA_AIS_ERR_TRY_AGAIN;
@@ -1038,6 +1234,8 @@ static uint32_t mqnd_evt_proc_update_stats_shm(MQND_CB *cb, MQSV_DSEND_EVT *evt)
 		rc = NCSCC_RC_FAILURE;
 		goto done;
 	}
+
+	checkCapacity(cb, &qnode->qinfo);
 
 done:
 
@@ -1292,6 +1490,9 @@ static uint32_t mqnd_evt_proc_send_msg(MQND_CB *cb, MQSV_DSEND_EVT *evt)
 
 	mqnd_send_msg_update_stats_shm(cb, qnode, snd_msg->message.size,
 				       snd_msg->message.priority);
+
+	checkCapacity(cb, &qnode->qinfo);
+
 send_resp:
 	/* If the error happens in SendReceive case while sending the message
 	   then return the response from here and don't wait for the reply
@@ -1735,6 +1936,162 @@ send_rsp:
 		    evt->sinfo.dest);
 	else
 		TRACE_1("Queue Attribute get: Mds Send Response Success");
+
+	TRACE_LEAVE2("Returned with return code %u", rc);
+	return rc;
+}
+
+/****************************************************************************
+ * Name          : mqnd_evt_proc_cap_set
+ *
+ * Description   : Function to set capacity thresholds of queue
+ *
+ * Arguments     :
+ *
+ * Return Values : NCSCC_RC_SUCCESS/Error.
+ *
+ * Notes         : None.
+ *****************************************************************************/
+static uint32_t mqnd_evt_proc_cap_set(MQND_CB *cb, MQSV_EVT *evt)
+{
+	SaAisErrorT err = SA_AIS_OK;
+	MQSV_EVT rsp_evt;
+	uint32_t rc = NCSCC_RC_SUCCESS;
+	TRACE_ENTER();
+
+	do {
+		MQND_QUEUE_NODE *qnode = NULL;
+		int i;
+
+		if (!cb->clm_node_joined) {
+			err = SA_AIS_ERR_UNAVAILABLE;
+			break;
+		} else if (cb->is_restart_done) {
+			err = SA_AIS_OK;
+		} else {
+			LOG_ER("%s:%u: ERR_TRY_AGAIN: MQND is not completely "
+					"Initialized",
+		    			__FILE__, __LINE__);
+			err = SA_AIS_ERR_TRY_AGAIN;
+			break;
+		}
+
+		mqnd_queue_node_get(cb,
+				evt->msg.mqp_req.info.retTimeSetReq.queueHandle,
+				&qnode);
+
+		/* If queue not found */
+		if (!qnode) {
+			LOG_ER("ERR_BAD_HANDLE: Get queue node Failed");
+			err = SA_AIS_ERR_BAD_HANDLE;
+			break;
+		}
+
+		/*
+		 * capacityAvailable and capacityReached have already been
+		 * checked in the agent with regards to each other
+		 */
+		for (i = SA_MSG_MESSAGE_HIGHEST_PRIORITY;
+				i <= SA_MSG_MESSAGE_LOWEST_PRIORITY;
+				i++)
+		{
+			if (qnode->qinfo.size[i] <
+				evt->msg.mqp_req.info.capacity.thresholds.capacityReached[i]) {
+				TRACE("size is less than capacity reached");
+				err = SA_AIS_ERR_INVALID_PARAM;
+				break;
+			}
+		}
+
+		if (err != SA_AIS_OK)
+			break;
+
+		qnode->qinfo.thresholds =
+			evt->msg.mqp_req.info.capacity.thresholds;
+	} while (false);
+
+	/*Send the resp to MQA */
+	memset(&rsp_evt, 0, sizeof(MQSV_EVT));
+
+	rsp_evt.type = MQSV_EVT_MQP_RSP;
+	rsp_evt.msg.mqp_rsp.type = MQP_EVT_CAP_SET_RSP;
+	rsp_evt.msg.mqp_rsp.error = err;
+
+	rc = mqnd_mds_send_rsp(cb, &evt->sinfo, &rsp_evt);
+
+	if (rc != NCSCC_RC_SUCCESS)
+		LOG_ER(
+		    "Queue Capacity set :Mds Send Response Failed %" PRIx64,
+		    evt->sinfo.dest);
+	else
+		TRACE_1("Queue Capacity set: Mds Send Response Success");
+
+	TRACE_LEAVE2("Returned with return code %u", rc);
+	return rc;
+}
+
+/****************************************************************************
+ * Name          : mqnd_evt_proc_cap_get
+ *
+ * Description   : Function to get capacity thresholds of queue
+ *
+ * Arguments     :
+ *
+ * Return Values : NCSCC_RC_SUCCESS/Error.
+ *
+ * Notes         : None.
+ *****************************************************************************/
+static uint32_t mqnd_evt_proc_cap_get(MQND_CB *cb, MQSV_EVT *evt)
+{
+	SaAisErrorT err = SA_AIS_OK;
+	MQSV_EVT rsp_evt;
+	MQND_QUEUE_NODE *qnode = NULL;
+	uint32_t rc = NCSCC_RC_SUCCESS;
+
+	TRACE_ENTER();
+
+	do {
+		if (!cb->clm_node_joined) {
+			err = SA_AIS_ERR_UNAVAILABLE;
+			break;
+		} else if (cb->is_restart_done) {
+			err = SA_AIS_OK;
+		} else {
+			LOG_ER("%s:%u: ERR_TRY_AGAIN: MQND is not completely "
+					"Initialized",
+		    			__FILE__, __LINE__);
+			err = SA_AIS_ERR_TRY_AGAIN;
+			break;
+		}
+
+		mqnd_queue_node_get(cb,
+				evt->msg.mqp_req.info.retTimeSetReq.queueHandle,
+				&qnode);
+
+		/* If queue not found */
+		if (!qnode) {
+			LOG_ER("ERR_BAD_HANDLE: Get queue node Failed");
+			err = SA_AIS_ERR_BAD_HANDLE;
+			break;
+		}
+	} while (false);
+
+	/*Send the resp to MQA */
+	memset(&rsp_evt, 0, sizeof(MQSV_EVT));
+
+	rsp_evt.type = MQSV_EVT_MQP_RSP;
+	rsp_evt.msg.mqp_rsp.type = MQP_EVT_CAP_GET_RSP;
+	rsp_evt.msg.mqp_rsp.error = err;
+	rsp_evt.msg.mqp_rsp.info.capacity.thresholds = qnode->qinfo.thresholds;
+
+	rc = mqnd_mds_send_rsp(cb, &evt->sinfo, &rsp_evt);
+
+	if (rc != NCSCC_RC_SUCCESS)
+		LOG_ER(
+		    "Queue Capacity get :Mds Send Response Failed %" PRIx64,
+		    evt->sinfo.dest);
+	else
+		TRACE_1("Queue Capacity get: Mds Send Response Success");
 
 	TRACE_LEAVE2("Returned with return code %u", rc);
 	return rc;

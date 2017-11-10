@@ -34,6 +34,7 @@
 #include <stdbool.h>
 #include <saClm.h>
 #include <saImmOi.h>
+#include <saNtf.h>
 
 #define MQSV_MQD_MBCSV_VERSION 1
 #define MQSV_MQD_MBCSV_VERSION_MIN 1
@@ -91,6 +92,7 @@ typedef struct mqd_qinfo {
   NCS_QUEUE ilist; /* Queue/Group element list */
   NCS_QUEUE tlist; /* List of the user who opted track */
   SaTimeT creationTime;
+  bool capacityReached;
 } MQD_OBJ_INFO;
 
 typedef struct mqd_object_elem {
@@ -146,6 +148,7 @@ typedef struct mqd_cb {
   SaClmHandleT clm_hdl;
   SaAmfHAStateT ha_state; /* Present AMF HA state of the component */
   SaNameT comp_name;
+  SaNtfHandleT ntfHandle;
 
   NCS_MBCSV_HDL mbcsv_hdl;       /*MBCSV handle for Redundancy of initialize  */
   NCS_MBCSV_CKPT_HDL o_ckpt_hdl; /*Opened Checkpoint Handle */
@@ -171,6 +174,7 @@ typedef struct mqd_cb {
   SaSelectionObjectT imm_sel_obj; /*Selection object to wait for
                                      IMM events */
   SaSelectionObjectT clm_sel_obj;
+  SaSelectionObjectT ntf_sel_obj;
   bool fully_initialized;
 } MQD_CB;
 

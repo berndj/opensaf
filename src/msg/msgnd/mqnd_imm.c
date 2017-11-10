@@ -460,7 +460,6 @@ SaAisErrorT mqnd_create_runtime_MsgQPriorityobject(SaStringT rname,
 						   SaImmOiHandleT immOiHandle)
 {
 	SaAisErrorT rc = SA_AIS_OK;
-	SaUint64T def_val = 0;
 	int i = 0;
 	SaImmAttrValueT arr1[1], arr2[1], arr3[1], arr4[1];
 	SaImmAttrValuesT_2 attr_mqprio, attr_mqprioSize, attr_capavail,
@@ -484,8 +483,8 @@ SaAisErrorT mqnd_create_runtime_MsgQPriorityobject(SaStringT rname,
 
 		arr1[0] = &mqprdn;
 		arr2[0] = &(qnode->qinfo.size[i]);
-		arr3[0] = &def_val; /* not implemented */
-		arr4[0] = &def_val; /* not implemented */
+		arr3[0] = &qnode->qinfo.thresholds.capacityAvailable[i];
+		arr4[0] = &qnode->qinfo.thresholds.capacityReached[i];
 
 		attr_mqprio.attrName = "safMqPrio";
 		attr_mqprio.attrValueType = SA_IMM_ATTR_SASTRINGT;

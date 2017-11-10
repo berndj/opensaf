@@ -79,6 +79,10 @@ uint32_t mqnd_queue_create(MQND_CB *cb, MQP_OPEN_REQ *open, MDS_DEST *rcvr_mqa,
 	     i <= SA_MSG_MESSAGE_LOWEST_PRIORITY; i++) {
 		qnode->qinfo.totalQueueSize += open->creationAttributes.size[i];
 		qnode->qinfo.size[i] = open->creationAttributes.size[i];
+		qnode->qinfo.thresholds.capacityReached[i] =
+			qnode->qinfo.size[i];
+		qnode->qinfo.thresholds.capacityAvailable[i] =
+			qnode->qinfo.size[i];
 		qnode->qinfo.queueStatus.saMsgQueueUsage[i].queueSize =
 		    open->creationAttributes.size[i];
 	}

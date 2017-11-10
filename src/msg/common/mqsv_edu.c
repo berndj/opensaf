@@ -477,7 +477,8 @@ static int mqsv_mqp_req_test_type_fnc(NCSCONTEXT arg)
 	       LCL_TEST_JUMP_OFFSET_MQP_EVT_TRANSFER_QUEUE_COMPLETE = 60,
 	       LCL_TEST_JUMP_OFFSET_MQP_EVT_UPDATE_STATS = 62,
 	       LCL_TEST_JUMP_OFFSET_MQP_EVT_RET_TIME_SET_REQ = 65,
-	       LCL_TEST_JUMP_OFFSET_MQP_EVT_CLM_NOTIFY = 67 };
+	       LCL_TEST_JUMP_OFFSET_MQP_EVT_CLM_NOTIFY = 67,
+	       LCL_TEST_JUMP_OFFSET_MQP_EVT_CAPACITY = 68 };
 	MQP_REQ_TYPE type;
 
 	if (arg == NULL)
@@ -516,6 +517,9 @@ static int mqsv_mqp_req_test_type_fnc(NCSCONTEXT arg)
 		return LCL_TEST_JUMP_OFFSET_MQP_EVT_RET_TIME_SET_REQ;
 	case MQP_EVT_CLM_NOTIFY:
 		return LCL_TEST_JUMP_OFFSET_MQP_EVT_CLM_NOTIFY;
+	case MQP_EVT_CAP_SET_REQ:
+	case MQP_EVT_CAP_GET_REQ:
+		return LCL_TEST_JUMP_OFFSET_MQP_EVT_CAPACITY;
 
 	default:
 		break;
@@ -572,6 +576,55 @@ static uint32_t mqsv_edp_samsgqueuecreationattributest(
 	}
 	rc = m_NCS_EDU_RUN_RULES(hdl, edu_tkn,
 				 mqsv_samsgqueuecreationattributes_rules,
+				 struct_ptr, ptr_data_len, buf_env, op, o_err);
+	return rc;
+}
+
+/*****************************************************************************
+
+  PROCEDURE NAME:   mqsv_edp_samsgqueuethresholdst
+
+  DESCRIPTION:      EDU program handler for "SaMsgQueueThresholdsT" data. This
+function is invoked by EDU for performing encode/decode operation on
+"SaMsgQueueThresholdsT" data.
+
+  RETURNS:          NCSCC_RC_SUCCESS/NCSCC_RC_FAILURE
+
+*****************************************************************************/
+static uint32_t mqsv_edp_samsgqueuethresholdst(
+    EDU_HDL *hdl, EDU_TKN *edu_tkn, NCSCONTEXT ptr, uint32_t *ptr_data_len,
+    EDU_BUF_ENV *buf_env, EDP_OP_TYPE op, EDU_ERR *o_err)
+{
+	uint32_t rc = NCSCC_RC_SUCCESS;
+	SaMsgQueueThresholdsT *struct_ptr = NULL, **d_ptr = NULL;
+	EDU_INST_SET mqsv_samsgqueuethresholds_rules[] = {
+	    {EDU_START, mqsv_edp_samsgqueuethresholdst, 0, 0, 0,
+	     sizeof(SaMsgQueueThresholdsT), 0, NULL},
+	    {EDU_EXEC, m_NCS_EDP_SASIZET, EDQ_ARRAY, 0, 0,
+	     (long)&((SaMsgQueueThresholdsT *)0)->capacityReached,
+	     SA_MSG_MESSAGE_LOWEST_PRIORITY + 1, NULL},
+	    {EDU_EXEC, m_NCS_EDP_SASIZET, EDQ_ARRAY, 0, 0,
+	     (long)&((SaMsgQueueThresholdsT *)0)->capacityAvailable,
+	     SA_MSG_MESSAGE_LOWEST_PRIORITY + 1, NULL},
+	    {EDU_END, 0, 0, 0, 0, 0, 0, NULL},
+	};
+
+	if (op == EDP_OP_TYPE_ENC) {
+		struct_ptr = (SaMsgQueueThresholdsT *)ptr;
+	} else if (op == EDP_OP_TYPE_DEC) {
+		d_ptr = (SaMsgQueueThresholdsT **)ptr;
+		if (*d_ptr == NULL) {
+			/* This should have already been a valid pointer. */
+			*o_err = EDU_ERR_MEM_FAIL;
+			return NCSCC_RC_FAILURE;
+		}
+		memset(*d_ptr, '\0', sizeof(SaMsgQueueThresholdsT));
+		struct_ptr = *d_ptr;
+	} else {
+		struct_ptr = ptr;
+	}
+	rc = m_NCS_EDU_RUN_RULES(hdl, edu_tkn,
+				 mqsv_samsgqueuethresholds_rules,
 				 struct_ptr, ptr_data_len, buf_env, op, o_err);
 	return rc;
 }
@@ -802,6 +855,13 @@ static uint32_t mqsv_edp_mqp_req(EDU_HDL *hdl, EDU_TKN *edu_tkn, NCSCONTEXT ptr,
 	    {EDU_EXEC, ncs_edp_uns32, 0, 0, 0,
 	     (long)&((MQP_REQ_MSG *)0)->info.clmNotify.node_joined, 0, NULL},
 
+	    /* MQP_EVT_CAP_REQ */
+	    {EDU_EXEC, m_NCS_EDP_SAMSGQUEUEHANDLET, 0, 0, 0,
+	     (long)&((MQP_REQ_MSG *)0)->info.capacity.queueHandle, 0, NULL},
+	    {EDU_EXEC, mqsv_edp_samsgqueuethresholdst, 0, 0, 0,
+	     (long)&((MQP_REQ_MSG *)0)->info.capacity.thresholds,
+	     0, NULL},
+
 	    {EDU_END, 0, 0, 0, 0, 0, 0, NULL},
 
 	};
@@ -956,7 +1016,7 @@ static int mqsv_mqp_rsp_test_type_fnc(NCSCONTEXT arg)
 	       LCL_TEST_JUMP_OFFSET_MQP_EVT_TRANSFER_QUEUE_RSP,
 	       LCL_TEST_JUMP_OFFSET_MQP_EVT_ND_RESTART_RSP = 29,
 	       LCL_TEST_JUMP_OFFSET_MQP_EVT_RET_TIME_SET_RSP,
-
+	       LCL_TEST_JUMP_OFFSET_MQP_EVT_CAP_RSP = 32
 	};
 	MQP_RSP_TYPE type;
 
@@ -988,6 +1048,9 @@ static int mqsv_mqp_rsp_test_type_fnc(NCSCONTEXT arg)
 		return LCL_TEST_JUMP_OFFSET_MQP_EVT_ND_RESTART_RSP;
 	case MQP_EVT_Q_RET_TIME_SET_RSP:
 		return LCL_TEST_JUMP_OFFSET_MQP_EVT_RET_TIME_SET_RSP;
+	case MQP_EVT_CAP_SET_RSP:
+	case MQP_EVT_CAP_GET_RSP:
+		return LCL_TEST_JUMP_OFFSET_MQP_EVT_CAP_RSP;
 	default:
 		break;
 	}
@@ -1108,6 +1171,13 @@ static uint32_t mqsv_edp_mqp_rsp(EDU_HDL *hdl, EDU_TKN *edu_tkn, NCSCONTEXT ptr,
 	    {EDU_EXEC, m_NCS_EDP_SAMSGQUEUEHANDLET, 0, 0, 0,
 	     (long)&((MQP_RSP_MSG *)0)->info.retTimeSetRsp.queueHandle, 0,
 	     NULL},
+
+	    /* MQP_EVT_CAP_RSP */
+	    {EDU_EXEC, m_NCS_EDP_SAMSGQUEUEHANDLET, 0, 0, 0,
+	     (long)&((MQP_RSP_MSG *)0)->info.capacity.queueHandle, 0, NULL},
+	    {EDU_EXEC, mqsv_edp_samsgqueuethresholdst, 0, 0, 0,
+	     (long)&((MQP_RSP_MSG *)0)->info.capacity.thresholds,
+	     0, NULL},
 
 	    {EDU_END, 0, 0, 0, 0, 0, 0, NULL},
 	};
