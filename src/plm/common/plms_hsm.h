@@ -44,9 +44,9 @@ typedef struct {
   SaNtfHandleT plm_ntf_hdl;
 } PLMS_HSM_CB;
 
-PLMS_HSM_CB *hsm_cb;
+extern PLMS_HSM_CB *hsm_cb;
 
-HSM_HA_STATE hsm_ha_state;
+extern HSM_HA_STATE hsm_ha_state;
 
 /* Function Declarations */
 SaUint32T plms_hsm_initialize(PLMS_HPI_CONFIG *hpi_cfg);

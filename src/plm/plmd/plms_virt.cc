@@ -26,6 +26,7 @@
 #include <cstring>
 #include <fstream>
 #include <set>
+#include "osaf/configmake.h"
 #include "osaf/immutil/immutil.h"
 #include "plm/common/plms_virt.h"
 #include "plm/common/plms.h"

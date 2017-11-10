@@ -108,7 +108,8 @@ nodist_EXTRA_lib_libplms_hpi_la_SOURCES = dummy.cc
 
 lib_libplms_hpi_la_LIBADD = \
 	lib/libplmc.la \
-	lib/libplmc_utils.la
+	lib/libplmc_utils.la \
+	@HPI_LIBS@
 
 lib_LTLIBRARIES += lib/libSaPlm.la
 
@@ -204,7 +205,6 @@ bin_osafplmd_SOURCES = \
 	src/plm/plmd/plms_virt.cc
 
 bin_osafplmd_LDADD = \
-	@HPI_LIBS@ \
 	@LIBVIRT_LIBS@ \
 	lib/libosaf_common.la \
 	lib/libopensaf_core.la \

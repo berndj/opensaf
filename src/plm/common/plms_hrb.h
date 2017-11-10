@@ -53,7 +53,7 @@ typedef struct plms_hrb_cb {
   SYSF_MBX mbx; /* PLMS HRBs mailbox  */
 } PLMS_HRB_CB;
 
-PLMS_HRB_CB *hrb_cb;
+extern PLMS_HRB_CB *hrb_cb;
 
 /* Function Declarations */
 SaUint32T plms_hrb_initialize(void);
