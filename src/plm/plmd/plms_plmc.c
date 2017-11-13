@@ -615,8 +615,7 @@ SaUint32T plms_plmc_tcp_disconnect_process(PLMS_ENTITY *ent)
 			}
 
 			/* Terminate all the dependent EEs.*/
-			if (NCSCC_RC_SUCCESS !=
-			    plms_is_chld(ent, head->plm_entity)) {
+			if (plms_is_chld(ent, head->plm_entity)) {
 				ret_err = plms_ee_term(head->plm_entity, false,
 						       true /*mngt_cbk*/);
 				if (NCSCC_RC_SUCCESS != ret_err) {
@@ -2605,8 +2604,7 @@ SaUint32T plms_ee_term_failed_tmr_exp(PLMS_ENTITY *ent)
 			    SA_PLM_NTFID_STATE_CHANGE_DEP);
 
 			/* Terminate all the dependent EEs.*/
-			if (NCSCC_RC_SUCCESS !=
-			    plms_is_chld(ent, head->plm_entity)) {
+			if (plms_is_chld(ent, head->plm_entity)) {
 				ret_err = plms_ee_term(head->plm_entity, false,
 						       true /*mngt_cbk*/);
 				if (NCSCC_RC_SUCCESS != ret_err) {

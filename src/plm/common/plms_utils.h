@@ -17,7 +17,7 @@
 #define PLM_COMMON_PLMS_UTILS_H_
 
 uint32_t plms_anc_chld_dep_adm_flag_is_set(PLMS_ENTITY *, PLMS_GROUP_ENTITY *);
-uint32_t plms_is_chld(PLMS_ENTITY *, PLMS_ENTITY *);
+bool plms_is_chld(const PLMS_ENTITY *, const PLMS_ENTITY *);
 void plms_affected_ent_list_get(PLMS_ENTITY *, PLMS_GROUP_ENTITY **, SaBoolT);
 uint32_t plms_chld_get(PLMS_ENTITY *, PLMS_GROUP_ENTITY **);
 uint32_t plms_aff_he_find(PLMS_GROUP_ENTITY *, PLMS_GROUP_ENTITY **);
@@ -34,7 +34,7 @@ void plms_aff_ent_exp_rdness_state_ow(PLMS_GROUP_ENTITY *);
 void plms_ent_exp_rdness_state_ow(PLMS_ENTITY *);
 void plms_aff_ent_mark_unmark(PLMS_GROUP_ENTITY *, SaBoolT);
 void plms_trk_info_free(PLMS_TRACK_INFO *);
-SaBoolT plms_is_ent_in_ent_list(PLMS_GROUP_ENTITY *, PLMS_ENTITY *);
+SaBoolT plms_is_ent_in_ent_list(const PLMS_GROUP_ENTITY *, const PLMS_ENTITY *);
 uint32_t plms_move_ent_to_insvc(PLMS_ENTITY *, SaUint8T *);
 void plms_move_chld_ent_to_insvc(PLMS_ENTITY *, PLMS_GROUP_ENTITY **, SaUint8T,
                                  SaUint8T);

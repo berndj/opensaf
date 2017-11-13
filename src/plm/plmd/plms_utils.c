@@ -840,9 +840,9 @@ void plms_aff_chld_ent_list_get(PLMS_ENTITY *root_ent, PLMS_ENTITY *ent,
 @return		: false - If ent is not a child of root.
 		  true - If ent is a child of root.
 ******************************************************************************/
-SaUint32T plms_is_chld(PLMS_ENTITY *root, PLMS_ENTITY *ent)
+bool plms_is_chld(const PLMS_ENTITY *root, const PLMS_ENTITY *ent)
 {
-	SaUint32T ret_err;
+	bool is_child;
 	PLMS_GROUP_ENTITY *chld_list = NULL;
 
 	TRACE_ENTER2("Root Entity: %s", root->dn_name_str);
@@ -851,12 +851,12 @@ SaUint32T plms_is_chld(PLMS_ENTITY *root, PLMS_ENTITY *ent)
 	if (NULL == chld_list)
 		return false;
 
-	ret_err = plms_is_ent_in_ent_list(chld_list, ent);
+	is_child = plms_is_ent_in_ent_list(chld_list, ent);
 
 	plms_ent_list_free(chld_list);
 
-	TRACE_LEAVE2("Return Val: %d", ret_err);
-	return ret_err;
+	TRACE_LEAVE2("Return Val: %d", is_child);
+	return is_child;
 }
 
 /******************************************************************************
@@ -2839,9 +2839,10 @@ void plms_trk_info_free(PLMS_TRACK_INFO *trk_info)
 @return		: true - If ent is present in list.
 		  false - If ent is not present in list.
 ******************************************************************************/
-SaBoolT plms_is_ent_in_ent_list(PLMS_GROUP_ENTITY *list, PLMS_ENTITY *ent)
+SaBoolT plms_is_ent_in_ent_list(const PLMS_GROUP_ENTITY *list,
+		const PLMS_ENTITY *ent)
 {
-	PLMS_GROUP_ENTITY *tail;
+	const PLMS_GROUP_ENTITY *tail;
 
 	tail = list;
 	while (tail) {
