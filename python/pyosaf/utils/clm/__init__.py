@@ -44,6 +44,38 @@ saClmClusterNodeGetAsync = decorate(saClm.saClmClusterNodeGetAsync)
 saClmResponse_4 = decorate(saClm.saClmResponse_4)
 
 
+class ClusterNode(object):
+    """ Class representing a CLM cluster node """
+
+    def __init__(self, node_id, node_address, node_name, execution_environment,
+                 member, boot_timestamp, initial_view_number):
+        """ Constructor for ClusterNode class
+
+        Args:
+            node_id (SaClmNodeIdT): Node identifier
+            node_address (SaClmNodeAddressT): Node network communication
+                address
+            node_name (SaNameT): Node name
+            execution_environment (SaNameT): DN of the PLM execution
+                environment that hosts the node
+            member (SaBoolT): Indicate whether this is a CLM member node (True)
+                or not (False)
+            boot_timestamp (SaTimeT): Timestamp at which the node was last
+                booted
+            initial_view_number (SaUint64T): View number of the latest
+                membership transition when this configured node joined the
+                cluster membership
+        """
+        self.node_id = node_id
+        self.node_address_value = node_address.value
+        self.node_address_family = node_address.family
+        self.node_name = node_name.value
+        self.execution_environment = execution_environment
+        self.member = member
+        self.boot_timestamp = boot_timestamp
+        self.initial_view_number = initial_view_number
+
+
 class ClmAgentManager(object):
     """ This class manages the life cycle of a CLM agent, and also acts as
     a proxy handler for CLM callbacks """
@@ -105,7 +137,7 @@ class ClmAgentManager(object):
                 notification = notification_buffer.notification[i]
                 clm_cluster_node = notification.clusterNode
                 cluster_node = \
-                    create_cluster_node_instance(clm_cluster_node)
+                    self.create_cluster_node_instance(clm_cluster_node)
                 node_state = (cluster_node, notification.clusterChange)
 
                 node_list.append(node_state)
@@ -133,7 +165,7 @@ class ClmAgentManager(object):
             error = c_error
 
             cluster_node = \
-                create_cluster_node_instance(c_cluster_node.contents)
+                self.create_cluster_node_instance(c_cluster_node.contents)
 
             # Send the node info to user's callback function
             self.node_get_function(invocation, cluster_node, error)
@@ -221,13 +253,32 @@ class ClmAgentManager(object):
             rc = saClmFinalize(self.handle)
             if rc != eSaAisErrorT.SA_AIS_OK:
                 log_err("saClmFinalize FAILED - %s" % eSaAisErrorT.whatis(rc))
-            elif rc == eSaAisErrorT.SA_AIS_OK \
+            if rc == eSaAisErrorT.SA_AIS_OK \
                     or rc == eSaAisErrorT.SA_AIS_ERR_BAD_HANDLE:
                 # If the Finalize() call returned BAD_HANDLE, the handle should
                 # already become stale and invalid, so we reset it anyway.
                 self.handle = None
 
         return rc
+
+    @staticmethod
+    def create_cluster_node_instance(clm_cluster_node):
+        """ Create ClusterNode object from cluster node information
+
+        Args:
+            clm_cluster_node (SaClmClusterNodeT): Cluster node information
+
+        Returns:
+            ClusterNode: An object containing cluster node information
+        """
+        return ClusterNode(
+            node_id=clm_cluster_node.nodeId,
+            node_address=clm_cluster_node.nodeAddress,
+            node_name=clm_cluster_node.nodeName,
+            execution_environment=clm_cluster_node.executionEnvironment,
+            member=clm_cluster_node.member,
+            boot_timestamp=clm_cluster_node.bootTimestamp,
+            initial_view_number=clm_cluster_node.initialViewNumber)
 
 
 class ClmAgent(ClmAgentManager):
@@ -327,7 +378,8 @@ class ClmAgent(ClmAgentManager):
                 notification = notification_buffer.notification[i]
                 clm_cluster_node = notification.clusterNode
 
-                cluster_node = create_cluster_node_instance(clm_cluster_node)
+                cluster_node = \
+                    self.create_cluster_node_instance(clm_cluster_node)
 
                 cluster_nodes.append(cluster_node)
         else:
@@ -379,7 +431,7 @@ class ClmAgent(ClmAgentManager):
         """
         rc = saClmClusterTrackStop(self.handle)
         if rc != eSaAisErrorT.SA_AIS_OK:
-            log_err("saClmClusterTrack_4 FAILED - %s" %
+            log_err("saClmClusterTrackStop FAILED - %s" %
                     eSaAisErrorT.whatis(rc))
 
         if rc == eSaAisErrorT.SA_AIS_ERR_BAD_HANDLE:
@@ -415,56 +467,29 @@ class ClmAgent(ClmAgentManager):
 
         return rc
 
-
-class ClusterNode(object):
-    """ Class representing a CLM cluster node """
-
-    def __init__(self, node_id, node_address, node_name, execution_environment,
-                 member, boot_timestamp, initial_view_number):
-        """ Constructor for ClusterNode class
+    def get_node_info(self, node_id, time_out):
+        """ Get information of a specific cluster member node.
 
         Args:
-            node_id (SaClmNodeIdT): Node identifier
-            node_address (SaClmNodeAddressT): Node network communication
-                address
-            node_name (SaNameT): Node name
-            execution_environment (SaNameT): DN of the PLM execution
-                environment that hosts the node
-            member (SaBoolT): Indicate whether this is a CLM member node (True)
-                or not (False)
-            boot_timestamp (SaTimeT): Timestamp at which the node was last
-                booted
-            initial_view_number (SaUint64T): View number of the latest
-                membership transition when this configured node joined the
-                cluster membership
+            node_id (SaClmNodeIdT): Node id
+            time_out (SaTimeT): Time-out (in nanosecond) for
+                saClmClusterNodeGet_4 operation
+
+        Returns:
+            SaAisErrorT: Return code of the saClmClusterNodeGet_4() API call.
+            ClusterNode: Node info or None if node with `node id` is not found.
         """
-        self.node_id = node_id
-        self.node_address_value = node_address.value
-        self.node_address_family = node_address.family
-        self.node_name = node_name.value
-        self.execution_environment = execution_environment
-        self.member = member
-        self.boot_timestamp = boot_timestamp
-        self.initial_view_number = initial_view_number
+        clm_cluster_node = saClm.SaClmClusterNodeT_4()
 
+        rc = saClmClusterNodeGet_4(self.handle, node_id, time_out,
+                                   clm_cluster_node)
+        if rc != eSaAisErrorT.SA_AIS_OK:
+            log_err("saClmClusterNodeGet() FAILED - %s" %
+                    eSaAisErrorT.whatis(rc))
+            return rc, None
 
-def create_cluster_node_instance(clm_cluster_node):
-    """ Create ClusterNode object from cluster node information
-
-    Args:
-        clm_cluster_node (SaClmClusterNodeT): Cluster node information
-
-    Returns:
-        ClusterNode: An object containing cluster node information
-    """
-    return ClusterNode(
-        node_id=clm_cluster_node.nodeId,
-        node_address=clm_cluster_node.nodeAddress,
-        node_name=clm_cluster_node.nodeName,
-        execution_environment=clm_cluster_node.executionEnvironment,
-        member=clm_cluster_node.member,
-        boot_timestamp=clm_cluster_node.bootTimestamp,
-        initial_view_number=clm_cluster_node.initialViewNumber)
+        cluster_node = self.create_cluster_node_instance(clm_cluster_node)
+        return rc, cluster_node
 
 
 @deprecate
