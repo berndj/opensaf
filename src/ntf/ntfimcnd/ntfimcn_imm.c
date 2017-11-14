@@ -160,7 +160,7 @@ static SaAisErrorT getClassDescription(const SaImmClassNameT className,
  */
 static char *get_rdn_attr_name(const SaImmClassNameT className)
 {
-	SaAisErrorT rc;
+	SaAisErrorT rc  = SA_AIS_OK;
 	int i = 0;
 
 	SaImmAttrDefinitionT_2 **attrDescr;
@@ -191,7 +191,7 @@ static char *get_rdn_attr_name(const SaImmClassNameT className)
 	/* Get class description */
 	rc = getClassDescription(className, &attrDescr);
 	if (rc != SA_AIS_OK) {
-		LOG_ER("saImmOmClassDescriptionGet_2 failed %s", saf_error(rc));
+		LOG_ER("getClassDescription failed %s", saf_error(rc));
 		goto error;
 	}
 
@@ -234,7 +234,17 @@ error:
 	 *       osafassert()
 	 */
 	LOG_ER("%s Failed", __FUNCTION__);
-	osafassert(0);
+	if ( rc == SA_AIS_ERR_NOT_EXIST ) {
+		LOG_NO("osafntfimcnd restarting due to error %s.",
+			saf_error(rc));
+		_exit(EXIT_FAILURE);
+	}
+	else
+	{
+		// core dump will be generated for all other errors which will be used
+		// for further analysis of the error.
+		osafassert(0);
+	}
 	return 0; /* Dummy */
 }
 
