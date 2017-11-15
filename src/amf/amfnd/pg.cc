@@ -149,8 +149,9 @@ uint32_t avnd_evt_ava_pg_start_evh(AVND_CB *cb, AVND_EVT *evt) {
   TRACE_ENTER();
 
   // if headless, return TRY_AGAIN to application
-  if (cb->is_avd_down == true) {
-    LOG_NO("Director is down. Return try again for PG start.");
+  if (cb->is_avd_down == true || cb->amfd_sync_required == true) {
+    LOG_NO("Director is down(%d), or sync is required(%d). Return try again"
+        "for PG start.", cb->is_avd_down, cb->amfd_sync_required);
     rc = avnd_amf_resp_send(cb, AVSV_AMF_PG_START, SA_AIS_ERR_TRY_AGAIN, 0,
                             &api_info->dest, &evt->mds_ctxt, nullptr, false);
     TRACE_LEAVE();
@@ -242,8 +243,9 @@ uint32_t avnd_evt_ava_pg_stop_evh(AVND_CB *cb, AVND_EVT *evt) {
   TRACE_ENTER();
 
   // if headless, return TRY_AGAIN to application
-  if (cb->is_avd_down == true) {
-    LOG_NO("Director is down. Return try again for PG stop.");
+  if (cb->is_avd_down == true || cb->amfd_sync_required == true) {
+    LOG_NO("Director is down(%d), or sync is required(%d). Return try again"
+        "for PG stop.", cb->is_avd_down, cb->amfd_sync_required);
     rc = avnd_amf_resp_send(cb, AVSV_AMF_PG_STOP, SA_AIS_ERR_TRY_AGAIN, 0,
                             &api_info->dest, &evt->mds_ctxt, nullptr, false);
     TRACE_LEAVE();
