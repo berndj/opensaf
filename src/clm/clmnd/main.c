@@ -215,6 +215,14 @@ static uint32_t clmna_mds_dec_flat(struct ncsmds_callback_info *info)
 static uint32_t clmna_mds_rcv(struct ncsmds_callback_info *mds_cb_info)
 {
 	CLMSV_MSG *msg = (CLMSV_MSG *)mds_cb_info->info.receive.i_msg;
+
+	if (msg->evt_type == CLMSV_CLMS_TO_CLMNA_REBOOT_MSG ||
+		msg->evt_type == CLMSV_CLMS_TO_CLMNA_NODE_REBOOT_MSG ||
+		msg->evt_type == CLMSV_CLMS_TO_CLMNA_ACTION_MSG) {
+		free(msg);
+		return NCSCC_RC_SUCCESS;
+	}
+
 	CLMNA_EVT *evt = calloc(1, sizeof(CLMNA_EVT));
 	evt->type = CLMNA_EVT_JOIN_RESPONSE;
 	evt->join_response.rc = msg->info.api_resp_info.rc;
