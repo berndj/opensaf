@@ -417,7 +417,7 @@ int main(int argc, char *argv[])
 		case 't':
 			timeout = strtoul(optarg, &ptr, 0);
 			if (*optarg == '\0' || *ptr != '\0') {
-				fprintf(stderr, "error: input wrong data format!\n");
+				fprintf(stderr, "error - input wrong data format!\n");
 				exit(EXIT_FAILURE);
 			}
 			timeout = timeout * 1000;
@@ -454,12 +454,12 @@ int main(int argc, char *argv[])
 		rc = saClmClusterNodeGet_4(clm_handle, node_id,
 				((timeout == -1) ? (TIME_OUT) : timeout), &clusterNode);
 		if (rc == SA_AIS_ERR_NOT_EXIST) {
-			fprintf(stdout, "Node id 0x%x is not in cluster membership\n", node_id);
-			exit(EXIT_SUCCESS);
+			fprintf(stderr, "node id 0x%x is not in cluster membership!\n", node_id);
 		} else if (rc == SA_AIS_ERR_UNAVAILABLE) {
-			fprintf(stdout, "error - invoking clmprint from non-member node\n");
-			exit(EXIT_FAILURE);
-		} else if (rc != SA_AIS_OK) {
+			fprintf(stderr, "invoking clmprint from non-member node!\n");
+		}
+
+		if (rc != SA_AIS_OK) {
 			fprintf(stderr, "error - clmprint:: saClmClusterNodeGet_4 failed, rc = %d\n", rc);
 			exit(EXIT_FAILURE);
 		}
@@ -470,13 +470,13 @@ int main(int argc, char *argv[])
 	case 'a':
 		rc = saClmClusterNodeGetAsync(clm_handle, INVOCATION_ID, node_id);
 		if (rc == SA_AIS_ERR_NOT_EXIST) {
-			fprintf(stdout, "Node id 0x%x is not in cluster membership\n", node_id);
-			exit(EXIT_SUCCESS);
+			fprintf(stderr, "node id 0x%x is not in cluster membership!\n", node_id);
 		} else if (rc == SA_AIS_ERR_UNAVAILABLE) {
-			fprintf(stdout, "error - invoking clmprint from non-member node\n");
-			exit(EXIT_FAILURE);
-		} else if (rc != SA_AIS_OK) {
-			fprintf(stderr, "error - clmprint :: saClmClusterNodeGetAsync failed, rc = %d\n", rc);
+			fprintf(stderr, "invoking clmprint from non-member node!\n");
+		}
+
+		if (rc != SA_AIS_OK) {
+			fprintf(stderr, "error - clmprint:: saClmClusterNodeGetAsync failed, rc = %d\n", rc);
 			exit(EXIT_FAILURE);
 		}
 
@@ -487,9 +487,10 @@ int main(int argc, char *argv[])
 		clusterNotificationBuffer.numberOfItems = SIZE_NOTIFICATIONS;
 		rc = saClmClusterTrack_4(clm_handle, SA_TRACK_CURRENT, &clusterNotificationBuffer);
 		if (rc == SA_AIS_ERR_UNAVAILABLE) {
-			fprintf(stdout, "error - invoking clmprint from non-member node\n");
-			exit(EXIT_FAILURE);
-		} else if (rc != SA_AIS_OK) {
+			fprintf(stderr, "invoking clmprint from non-member node!\n");
+		}
+
+		if (rc != SA_AIS_OK) {
 			fprintf(stderr, "error - clmprint:: saClmClusterTrack_4 failed, rc = %d\n", rc);
 			exit(EXIT_FAILURE);
 		}
@@ -505,9 +506,10 @@ int main(int argc, char *argv[])
 	case 'm':
 		rc = saClmClusterTrack_4(clm_handle, trackFlags, NULL);
 		if (rc == SA_AIS_ERR_UNAVAILABLE) {
-			fprintf(stdout, "error - invoking clmprint from non-member node\n");
-			exit(EXIT_FAILURE);
-		} else if (rc != SA_AIS_OK) {
+			fprintf(stderr, "invoking clmprint from non-member node!\n");
+		}
+
+		if (rc != SA_AIS_OK) {
 			fprintf(stderr, "error - clmprint:: saClmClusterTrack_4 failed, rc = %d\n", rc);
 			exit(EXIT_FAILURE);
 		}
