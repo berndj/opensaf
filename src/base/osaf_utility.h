@@ -30,6 +30,8 @@
 extern "C" {
 #endif
 
+#define kClmClusterRebootInProgress "clm_cluster_reboot_in_progress"
+enum { kDfltClusterRebootWaitTimeSec = 3 };
 enum { kOsafUseSafeReboot = 1 };
 
 /**
@@ -70,6 +72,9 @@ extern void osaf_abort(long i_cause) __attribute__((
     nothrow, noreturn));
 
 extern void osaf_safe_reboot(void) __attribute__((nothrow));
+
+extern void osaf_wait_for_active_to_start(void);
+extern void osaf_create_cluster_reboot_in_progress_file(void);
 
 static inline void osaf_mutex_lock_ordie(pthread_mutex_t* io_mutex) {
   int result = pthread_mutex_lock(io_mutex);

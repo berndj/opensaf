@@ -1625,6 +1625,8 @@ int main(int argc, char *argv[]) {
 
   TRACE_ENTER();
 
+  osaf_wait_for_active_to_start();
+
 #ifdef RLIMIT_RTPRIO
   struct rlimit mylimit;
   mylimit.rlim_max = mylimit.rlim_cur = sched_get_priority_max(SCHED_RR);
