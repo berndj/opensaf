@@ -125,6 +125,7 @@ static uint32_t clmna_mds_dec(struct ncsmds_callback_info *info)
 		// Reboot will be performed by CLMS for this node.
 		if (clmna_cb->node_info.node_id !=
 		    msg->info.reboot_info.node_id) {
+			osaf_create_cluster_reboot_in_progress_file();
 			osaf_safe_reboot();
 		}
 		break;
