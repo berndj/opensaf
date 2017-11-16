@@ -9,6 +9,7 @@ ExecStop=@initscriptdir@/opensafd stop
 Type=forking
 PIDFile=@localstatedir@/run/opensaf/osafamfnd.pid
 ControlGroup=cpu:/
+TimeoutStartSec=3hours
 
 [Install]
 WantedBy=multi-user.target
