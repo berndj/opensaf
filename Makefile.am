@@ -66,6 +66,8 @@ AM_LDFLAGS = @OSAF_HARDEN_FLAGS@ -Wl,--as-needed -ldl -lrt -pthread -rdynamic
 ACLOCAL_AMFLAGS = -I m4
 OSAF_LIB_FLAGS =
 
+FORMAT = "text"
+
 systemdversion = $(systemdmodversion)
 #
 # Define some useful directory prefixes/suffixes
@@ -436,7 +438,7 @@ checkpatch:
 
 pylint:
 	@srcdir=$$(cd $(top_srcdir); pwd; cd - > /dev/null); \
-	cd "$$srcdir/python"; find . -name '*.py' | xargs pylint --rcfile=pylintrc --output-format=text > pylint.res; \
+	cd "$$srcdir/python"; find . -name '*.py' | xargs pylint --rcfile=pylintrc --output-format=$(FORMAT) > pylint.res; \
 	true
 	@echo "The pylint result can be found in the file python/pylint.res"
 

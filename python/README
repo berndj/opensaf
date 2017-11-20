@@ -228,3 +228,11 @@ for attr in unmarshalNullArray(attrDefs):
 		unmarshalSaImmValue(attr.attrDefaultValue, attr.attrValueType)
 
 saImmOmClassDescriptionMemoryFree_2(omHandle, attrDefs)
+
+
+To run pylint use the following command:
+
+make pylint (defaults to text)
+make pylint FORMAT=html (note: no longer supported since pylint-1.7.x)
+make pylint FORMAT=parseable
+make pylint FORMAT=json
