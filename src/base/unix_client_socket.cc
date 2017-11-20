@@ -22,8 +22,8 @@
 
 namespace base {
 
-UnixClientSocket::UnixClientSocket(const std::string& path)
-    : UnixSocket{path} {}
+UnixClientSocket::UnixClientSocket(const std::string& path, Mode mode)
+    : UnixSocket{path, mode} {}
 
 UnixClientSocket::~UnixClientSocket() {}
 

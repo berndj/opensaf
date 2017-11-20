@@ -94,7 +94,7 @@ TraceLog::TraceLog(const std::string &fqdn, const std::string &app_name,
       proc_id_{base::LogMessage::ProcId{std::to_string(proc_id)}},
       msg_id_{base::LogMessage::MsgId{msg_id}},
       sequence_id_{1},
-      log_socket_{socket_name},
+      log_socket_{socket_name, base::UnixSocket::kBlocking},
       buffer_{},
       mutex_{} {}
 
@@ -196,8 +196,9 @@ void logtrace_output(const char *file, unsigned line, unsigned priority,
 
   assert(priority <= LOG_DEBUG && category < CAT_MAX);
 
-  snprintf(preamble, sizeof(preamble), "[%d:%s:%04u] %s %s", gettid(), file,
-           line, global::prefix_name[priority + category], format);
+  if (strncmp(file, "src/", 4) == 0) file += 4;
+  snprintf(preamble, sizeof(preamble), "%d:%s:%u %s %s", gettid(), file, line,
+           global::prefix_name[priority + category], format);
   TraceLog::Log(static_cast<base::LogMessage::Severity>(priority), preamble,
                 ap);
 }

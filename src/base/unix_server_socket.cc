@@ -23,8 +23,8 @@
 
 namespace base {
 
-UnixServerSocket::UnixServerSocket(const std::string& path)
-    : UnixSocket{path} {}
+UnixServerSocket::UnixServerSocket(const std::string& path, Mode mode)
+    : UnixSocket{path, mode} {}
 
 UnixServerSocket::~UnixServerSocket() {
   if (get_fd() >= 0) UnixServerSocket::CloseHook();

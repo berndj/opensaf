@@ -78,7 +78,7 @@ MdsLog::MdsLog(const std::string &fqdn, const char *app_name, uint32_t proc_id,
       app_name_{base::LogMessage::AppName{app_name}},
       proc_id_{base::LogMessage::ProcId{std::to_string(proc_id)}},
       sequence_id_{1},
-      log_socket_{socket_name},
+      log_socket_{socket_name, base::UnixSocket::kNonblocking},
       buffer_{},
       mutex_{} {}
 

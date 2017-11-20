@@ -28,7 +28,7 @@ class UnixClientSocket : public UnixSocket {
  public:
   // Set the path name for this client socket. Note that this call does not
   // create the socket - you need to call Send() or Recv() for that to happen.
-  explicit UnixClientSocket(const std::string& path);
+  explicit UnixClientSocket(const std::string& path, Mode mode);
   // Closes the client socket if it was open, but does not delete the socket
   // from the file system.
   virtual ~UnixClientSocket();
