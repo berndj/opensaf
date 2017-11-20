@@ -72,7 +72,8 @@ void UnixSocketTest::ServerThread() {
     base::Sleep(kOneMicrosecond);
     for (int j = 0; j != 100; ++j) {
       ssize_t result = server_->Recv(buf, sizeof(buf));
-      EXPECT_EQ(result, sizeof(buf));
+      EXPECT_GE(result, 0);
+      EXPECT_EQ(static_cast<size_t>(result), sizeof(buf));
     }
   }
 }
@@ -156,7 +157,8 @@ TEST_F(UnixSocketTest, BlockingSend) {
   for (int i = 0; i != 10; ++i) {
     for (int j = 0; j != 100; ++j) {
       ssize_t result = client->Send(buf, sizeof(buf));
-      EXPECT_EQ(result, sizeof(buf));
+      EXPECT_GE(result, 0);
+      EXPECT_EQ(static_cast<size_t>(result), sizeof(buf));
     }
   }
   delete client;
