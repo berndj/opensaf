@@ -2,6 +2,7 @@
 #      -*- OpenSAF  -*-
 #
 # (C) Copyright 2010 The OpenSAF Foundation
+# (C) Copyright Ericsson AB 2015, 2016, 2017. All rights reserved.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -13,16 +14,19 @@
 # licensing terms.
 #
 # Author(s): Wind River Systems
+#            Ericsson AB
 #
-
+# pylint: disable=invalid-name
+""" Tokenize alphanumeric words in patch file """
+from __future__ import print_function
 import re
 import sys
 
-# Validates only on lines that are patch addition (e.g. + foo)
-pattern = re.compile("\+\s.*")
+# Validate only on lines that are patch additions (e.g. + foo)
+pattern = re.compile(r"\+\s.*")
 
 m = pattern.match(sys.argv[1])
 if m:
-	# Tokenize all alphanumeric words for banned word lookup
-	for word in re.findall("\s*(\w+).?\(", m.group(0)):
-		print word
+    # Tokenize all alphanumeric words for banned word lookup
+    for word in re.findall(r"\s*(\w+).?\(", m.group(0)):
+        print (word)

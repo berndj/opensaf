@@ -1,50 +1,58 @@
 #! /usr/bin/env python
-
-'''
-      -*- OpenSAF  -*-
-
- (C) Copyright 2009 The OpenSAF Foundation
-
- This program is distributed in the hope that it will be useful, but
- WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- or FITNESS FOR A PARTICULAR PURPOSE. This file and program are licensed
- under the GNU Lesser General Public License Version 2.1, February 1999.
- The complete license can be accessed from the following location:
- http://opensource.org/licenses/lgpl-license.php
- See the Copying file included with the OpenSAF distribution for full
- licensing terms.
-
- Author(s): Ericsson AB
-'''
-
-
-import re, os, sys, getopt, shutil
-from baseimm import *           # Base class and functions for Merge and validation utils
+#      -*- OpenSAF  -*-
+#
+# (C) Copyright 2009 The OpenSAF Foundation
+# (C) Copyright Ericsson AB 2017. All rights reserved.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. This file and program are licensed
+# under the GNU Lesser General Public License Version 2.1, February 1999.
+# The complete license can be accessed from the following location:
+# http://opensource.org/licenses/lgpl-license.php
+# See the Copying file included with the OpenSAF distribution for full
+# licensing terms.
+#
+# Author(s): Ericsson AB
+#
+# pylint: disable=invalid-name,unused-argument
+""" immxml-validate tool """
+from __future__ import print_function
+import os
+import sys
+import getopt
 import xml.dom.minidom
-from subprocess import call
+from baseimm import BaseOptions, BaseImmDocument, trace, retrieve_file_names, \
+    print_info_stderr, abort_script, verify_input_file_read_access
 
 
-  
 class Options(BaseOptions):
-    #traceOn = False
+    """ immxml-validate options """
     schemaFilename = None
     isXmlLintFound = True
     ignoreAttributeRefs = False
     ignoreRdnAssociationRefs = False
-    
+
     @staticmethod
-    def printOptionSettings():
-        return BaseOptions.printOptionSettings()+' schemaFilename: %s\n' % (Options.schemaFilename)
+    def print_option_settings():
+        return BaseOptions.print_option_settings() + ' schemaFilename: %s\n' \
+                                                     % Options.schemaFilename
+
 
 class AbortFileException(Exception):
+    """ Exception to raise when aborting file """
     def __init__(self, value):
+        Exception.__init__(self)
         self.value = value
+
     def __str__(self):
-        return repr(self.value)             
+        return repr(self.value)
+
 
 class ImmDocument(BaseImmDocument):
-       
+    """ This class contains methods to validate an IMM XML file """
     def __init__(self):
+        """ Class constructor """
         self.imm_content_element = None
         self.classList = []
         self.classDict = {}
@@ -52,405 +60,463 @@ class ImmDocument(BaseImmDocument):
         self.objectDnNameDict = {}
         self.validateFailed = False
 
-    def initialize(self):
+    @staticmethod
+    def initialize():
+        """ Initialize the validation process """
         trace("initialize()")
-             
-    def addClass(self, classElement, otherNodes):
-        className = classElement.getAttribute("name")
-        trace("className: %s nodeType:%d nodeName:%s", className, classElement.nodeType, classElement.nodeName)
-                
-        # check if class exist in dictionary map
-        if className in self.classDict:
-            # check if class clash is "acceptable"
+
+    @staticmethod
+    def check_class_clash_acceptable(class_element, class_name):
+        """ Check if class clash is acceptable. TBD """
+        pass
+
+    def add_class(self, class_element, other_nodes):
+        """ Add class to the list of classes to validate """
+        class_name = class_element.getAttribute("name")
+        trace("className: %s nodeType: %d nodeName: %s", class_name,
+              class_element.nodeType, class_element.nodeName)
+
+        # Check if class exists in dictionary map
+        if class_name in self.classDict:
+            # Check if class clash is "acceptable"
             # i.e. should we bail out or not??
-            if self.checkClassClashAcceptable(classElement, className):
-                self.validate_failed("found duplicate class : %s", className)
+            if self.check_class_clash_acceptable(class_element, class_name):
+                self.validate_failed("Found duplicate class : %s", class_name)
         else:
-            attrlist = []
-            attributeDict = {}
-            rdnType = None
-            for attribute in classElement.childNodes:
-                attrname = None
-                attrtype = None
+            attr_list = []
+            attribute_dict = {}
+            rdn_type = None
+            for attribute in class_element.childNodes:
+                attr_name = None
+                attr_type = None
                 if attribute.nodeName == "rdn":
                     for element in attribute.childNodes:
                         if element.nodeName == "type":
-                            rdnType = element.firstChild.nodeValue                
+                            rdn_type = element.firstChild.nodeValue
                 elif attribute.nodeName == "attr":
                     for element in attribute.childNodes:
                         if element.nodeName == "name":
-                           attrname = element.firstChild.nodeValue
-                           if attrname in attrlist:
-                               raise Exception("Attribute '%s' is defined more than once in class '%s'" % (attrname, className))
-                           attrlist.append(attrname);
-                        elif element.nodeName == "type": 
-                           attrtype = element.firstChild.nodeValue
+                            attr_name = element.firstChild.nodeValue
+                            if attr_name in attr_list:
+                                raise Exception("Attribute '%s' is defined "
+                                                "more than once in class '%s'"
+                                                % (attr_name, class_name))
+                            attr_list.append(attr_name)
+                        elif element.nodeName == "type":
+                            attr_type = element.firstChild.nodeValue
 
-                        if attrname != None and attrtype != None:
-                            attributeDict[attrname] = attrtype
+                        if attr_name is not None and attr_type is not None:
+                            attribute_dict[attr_name] = attr_type
                             break
 
-            del attrlist
+            del attr_list
 
-            classDefDict = {}
-            self.classDict[className] = classDefDict
-            self.classDict[className]["attributes"] = attributeDict
-            self.classDict[className]["rdn"] = rdnType
-            # add to ordered list
-            self.classList.append((className, (otherNodes, classElement)))
+            class_def_dict = {}
+            self.classDict[class_name] = class_def_dict
+            self.classDict[class_name]["attributes"] = attribute_dict
+            self.classDict[class_name]["rdn"] = rdn_type
+            # Add to ordered list
+            self.classList.append((class_name, (other_nodes, class_element)))
 
-    def addObject(self, objectElement, otherNodes):
-        className = objectElement.getAttribute("class")
-        trace("DUMPING Object with className: %s \n %s", className, objectElement.toxml())
-                
-        attrList = []
-        objectDnElement = None
-        ## find "dn" childnode
-        for childNode in objectElement.childNodes:
-            if childNode.nodeName == "dn" and objectDnElement == None:
-                objectDnElement = childNode
-            elif childNode.nodeName == "attr":
-                for attrChild in childNode.childNodes:
-                    if attrChild.nodeName == "name":
-                        if attrChild.firstChild.nodeValue in attrList:
-                            raise Exception("Attribute '%s' is defined more than once in object" % (attrChild.firstChild.nodeValue))
-                        attrList.append(attrChild.firstChild.nodeValue)
+    def add_object(self, object_element, other_nodes):
+        """ Add object to the list of objects to validate """
+        class_name = object_element.getAttribute("class")
+        trace("DUMPING Object with className: %s\n %s", class_name,
+              object_element.toxml())
 
-        del attrList
+        attr_list = []
+        object_dn_element = None
+        # Find "dn" child node
+        for child_node in object_element.childNodes:
+            if child_node.nodeName == "dn" and object_dn_element is None:
+                object_dn_element = child_node
+            elif child_node.nodeName == "attr":
+                for attr_child in child_node.childNodes:
+                    if attr_child.nodeName == "name":
+                        if attr_child.firstChild.nodeValue in attr_list:
+                            raise Exception("Attribute '%s' is defined more "
+                                            "than once in object" %
+                                            attr_child.firstChild.nodeValue)
+                        attr_list.append(attr_child.firstChild.nodeValue)
 
-        if objectDnElement == None or className == None or objectDnElement.firstChild == None:
-            self.validate_failed("Failed to find classname or the dn childnode in object:%s. " ,objectElement.toxml())
-     
-        
-        
-        # objectDnName = objectDnElement.nodeValue
-        ### NOTE dn name should be the nodeValue of objectDnName...
-        ## however minidom probably gets confused by the equal sign in dn value
-        # so it ends up adding a text node as a child......   
-        objectDnName = objectDnElement.firstChild.nodeValue
-        trace("objectDn key: %s", objectDnName)
-        
-        trace("objectDnElement: %s", objectDnElement.toxml())
-        
-        # classname must exist in dictionary map
-        if className not in self.classDict:
-            self.validate_failed("failed to find class '%s' in %s", className, objectElement.toxml())
-        
-            
-        if objectDnName in self.objectDnNameDict:
-            self.validate_failed("found duplicate object : %s", objectElement.toxml())
+        del attr_list
 
-        self.validateAndStoreDn(objectDnName, objectDnElement, className)
-                    
-        # add to the complete object to ordered list (keyed by classname for sorting)
-        #self.objectList.append((className+objectDnName, objectElement))
-        self.objectList.append((objectDnName, (otherNodes, objectElement)))
+        if object_dn_element is None or class_name is None \
+                or object_dn_element.firstChild is None:
+            self.validate_failed("Failed to find class name or the dn child "
+                                 "node in object: %s. ",
+                                 object_element.toxml())
 
+        # object_dn_name = object_dn_element.nodeValue
+        # NOTE: dn name should be the nodeValue of object_dn_name
+        # However minidom probably gets confused by the equal sign in dn value
+        # so it ends up adding a text node as a child.
+        object_dn_name = object_dn_element.firstChild.nodeValue
+        trace("objectDn key: %s", object_dn_name)
+        trace("objectDnElement: %s", object_dn_element.toxml())
 
-    def validateAndStoreDn(self, objectDnName, objectDnElement, className):        
-        commaIndex = -1
-        dnLen = len(objectDnName)
-        if dnLen > 256:
-            self.validate_failed("length of dn is %d (max 256): %s", len(objectDnName), objectDnName)
-            
-        
-        # search for first unescaped comma (if any)
-        for i in range(0, dnLen):
-            if objectDnName[i] == ',':
-                if i > 1 and objectDnName[i-1] != '\\':
-                    commaIndex = i
+        # class_name must exist in dictionary map
+        if class_name not in self.classDict:
+            self.validate_failed("Failed to find class '%s' in %s",
+                                 class_name, object_element.toxml())
+
+        if object_dn_name in self.objectDnNameDict:
+            self.validate_failed("Found duplicate object: %s",
+                                 object_element.toxml())
+
+        self.validate_and_store_dn(object_dn_name, object_dn_element,
+                                   class_name)
+
+        # Add the complete object to ordered list
+        # (keyed by class_name for sorting)
+        # self.objectList.append((class_name + object_dn_name, object_element))
+        self.objectList.append((object_dn_name, (other_nodes, object_element)))
+
+    def validate_and_store_dn(self, object_dn_name, object_dn_element,
+                              class_name):
+        """ Validate and store object's dn """
+        comma_index = -1
+        dn_len = len(object_dn_name)
+        if dn_len > 256:
+            self.validate_failed("Length of dn is %d (max 256): %s", dn_len,
+                                 object_dn_name)
+
+        # Search for first unescaped comma (if any)
+        for i in range(0, dn_len):
+            if object_dn_name[i] == ',':
+                if i > 1 and object_dn_name[i - 1] != '\\':
+                    comma_index = i
                     break
-        
-        if commaIndex == -1:
-            trace("Found root element (no unescaped commas): %s", objectDnName)
-            # Looks alright, add element to "dn" dictionary
-            self.objectDnNameDict[objectDnName] = objectDnElement
-            return
-        
-        objectOwnerPart = objectDnName[commaIndex+1:] 
-        objectIdPart = objectDnName[:commaIndex]
-        trace("ObjectDN: %s objectOwner: %s objectIdPart:%s", objectDnName, objectOwnerPart, objectIdPart)
 
-        
-        # store all dn's even if it is SA_NAME_T 
-        # this means even the association references is stored as objects which could be parents
-        # move length checking (64 bytes) to postValidate... 
-        self.objectDnNameDict[objectDnName] = objectDnElement    
-            
-        
+        if comma_index == -1:
+            trace("Found root element (no unescaped commas): %s",
+                  object_dn_name)
+            # Looks alright, add element to "dn" dictionary
+            self.objectDnNameDict[object_dn_name] = object_dn_element
+            return
+
+        object_owner_part = object_dn_name[comma_index + 1:]
+        object_id_part = object_dn_name[:comma_index]
+        trace("ObjectDN: %s objectOwner: %s objectIdPart: %s", object_dn_name,
+              object_owner_part, object_id_part)
+
+        # Store all dn's even if it is SA_NAME_T
+        # This means even the association references are stored as objects
+        # which could be parents
+        # move length checking (64 bytes) to post_validate()
+        self.objectDnNameDict[object_dn_name] = object_dn_element
+
         # NOTE for some imm.xml file (for example as result of immdump tool)
-        # the object dn's are not ordered in a way that it is possible to validate ownership
-        # while parsing the inputfiles.
-        # Instead it must be performed after the input files are completely parsed
+        # the object dn's are not ordered in a way that it is possible to
+        # validate ownership while parsing the input files. Instead it must be
+        # performed after the input files are completely parsed.
         # validate(): Do this type of IMM validation in one go afterwards
-                 
-        return            
-   
+        return
+
     def validate_failed(self, *args):
+        """ Print validation failed message to stderr and
+        set validateFailed flag """
         printf_args = []
         for i in range(1, len(args)):
             printf_args.append(args[i])
-        
-        formatStr = "\nValidation failed: " + args[0]
-        print >> sys.stderr, formatStr % tuple(printf_args)
-        #sys.exit(2)
-        # no more exit, set failedFlag True
+
+        format_str = "\nValidation failed: " + args[0]
+        print (format_str % tuple(printf_args), file=sys.stderr)
+        # sys.exit(2)
+        # no more exit, set failedFlag to True
         self.validateFailed = True
 
     def abort_file(self, *args):
+        """ Abort file validation and raise exception """
         self.validate_failed(*args)
         raise AbortFileException("Aborting current file!")
-    
-        
-    def postValidateObjectList(self):
 
-        for tupleNode in self.objectList:
-            objectElement = tupleNode[1][1]
-            className = objectElement.getAttribute("class")
-            
-            objectDnElement = None
-            ## find "dn" childnode
-            for childNode in objectElement.childNodes:
-                if childNode.nodeName == "dn":
-                    objectDnElement = childNode
-                    if objectDnElement.firstChild == None:
-                        # this is really a workaround for minidom bug?: assume dn name should be the nodeValue of objectDnName but with minidom that is not true...
-                        raise Exception("Cannot find child element of dn element (required by minidom)")
-                    objectDnName = objectDnElement.firstChild.nodeValue
-                    trace("objectDnElement: %s", objectDnElement.toxml())
-                    trace("objectDn key: %s", objectDnName)
-                    # validate dn w.r.t ownership
-                    self.postValidateDn(objectDnName, objectDnElement, className)
-                    #break
-                elif childNode.nodeName == "attr":
-                    nameOfAttributeToValidate = None
-                    for element in childNode.childNodes:
+    def post_validate_object_list(self):
+        """ Post-validate object list """
+        for tuple_node in self.objectList:
+            object_element = tuple_node[1][1]
+            class_name = object_element.getAttribute("class")
+            attributes = self.classDict[class_name]["attributes"]
+
+            object_dn_element = None
+            # Find "dn" child node
+            for child_node in object_element.childNodes:
+                if child_node.nodeName == "dn":
+                    object_dn_element = child_node
+                    if object_dn_element.firstChild is None:
+                        # This is really a workaround for minidom bug?:
+                        # Assume dn name should be the nodeValue of
+                        # object_dn_name but with minidom that is not true.
+                        raise Exception("Cannot find child element of dn "
+                                        "element (required by minidom)")
+                    object_dn_name = object_dn_element.firstChild.nodeValue
+                    trace("objectDnElement: %s", object_dn_element.toxml())
+                    trace("objectDn key: %s", object_dn_name)
+                    # Validate dn w.r.t ownership
+                    self.post_validate_dn(object_dn_name, object_dn_element,
+                                          class_name)
+                    # break
+                elif child_node.nodeName == "attr":
+                    name_of_attribute_to_validate = None
+                    for element in child_node.childNodes:
                         if element.nodeName == "name":
-                            attrname = element.firstChild.nodeValue
-                            if attrname in self.classDict[className]["attributes"]:    
-                                if self.classDict[className]["attributes"][attrname] == "SA_NAME_T":
-                                    nameOfAttributeToValidate = attrname
+                            attr_name = element.firstChild.nodeValue
+                            if attr_name in attributes:
+                                if attributes[attr_name] == "SA_NAME_T":
+                                    name_of_attribute_to_validate = attr_name
                                 else:
-                                    # attribute exist in classDict but type is not further validated 
+                                    # Attribute exists in classDict but type is
+                                    # not further validated
                                     break
                             else:
-                                self.postValidateMissingAttribute(attrname, className, objectDnElement)
-                        elif element.nodeName == "value": 
-                           nodeValue = element.firstChild.nodeValue
-                           self.postValidateAttributeSaNameT(nameOfAttributeToValidate, nodeValue, className, objectDnElement)
-                           # multiple values allowed....no break
-                    
-                                        
-        trace("postValidateObjectList() complete!")
-    
-    def postValidateAttributeSaNameT(self, attributeName, attributeValue, className, objectElement):
-        if Options.ignoreAttributeRefs == True:
-            return
-        
-        if attributeValue not in self.objectDnNameDict:
-            self.validate_failed("NOTE:  The object with rdn '%s' referred in attribute %s does not exist (The attribute is element in object with class: %s dn: %s)", attributeValue, attributeName, className, objectElement.toxml())
-    
-    def postValidateMissingAttribute(self, attributeName, className, objectElement): 
-            self.validate_failed("NOTE:  The attribute %s does not exist in class definition (The attribute is element in object with class: %s dn: %s)", attributeName, className, objectElement.toxml())
-                   
+                                self.post_validate_missing_attribute(
+                                    attr_name, class_name, object_dn_element)
+                        elif element.nodeName == "value":
+                            node_value = element.firstChild.nodeValue
+                            self.post_validate_attribute_sa_name_t(
+                                name_of_attribute_to_validate, node_value,
+                                class_name, object_dn_element)
+                            # Multiple values allowed....no break
 
-    def postValidateDn(self, objectDnName, objectDnElement, className):        
-        commaIndex = -1            
-        dnLen = len(objectDnName)
-        
-        # search for first unescaped comma (if any)
-        for i in range(0, dnLen):
-            if objectDnName[i] == ',':
-                if i > 1 and objectDnName[i-1] != '\\':
-                    commaIndex = i
+        trace("post_validate_object_list() complete!")
+
+    def post_validate_attribute_sa_name_t(self, attribute_name,
+                                          attribute_value, class_name,
+                                          object_element):
+        """ Post-validate SaNameT attribute """
+        if Options.ignoreAttributeRefs:
+            return
+
+        if attribute_value not in self.objectDnNameDict:
+            self.validate_failed("NOTE: The object with rdn '%s' referred in "
+                                 "attribute %s does not exist (The attribute "
+                                 "is element in object with class: %s dn: %s)",
+                                 attribute_value, attribute_name, class_name,
+                                 object_element.toxml())
+
+    def post_validate_missing_attribute(self, attribute_name, class_name,
+                                        object_element):
+        """ Post-validate missing attribute """
+        self.validate_failed("NOTE: The attribute %s does not exist in class "
+                             "definition (The attribute is element in object "
+                             "with class: %s dn: %s)", attribute_name,
+                             class_name, object_element.toxml())
+
+    def post_validate_dn(self, object_dn_name, object_dn_element, class_name):
+        """ Post-validate dn """
+        comma_index = -1
+        dn_len = len(object_dn_name)
+
+        # Search for first unescaped comma (if any)
+        for i in range(0, dn_len):
+            if object_dn_name[i] == ',':
+                if i > 1 and object_dn_name[i - 1] != '\\':
+                    comma_index = i
                     break
-        
-        if commaIndex == -1:
-            trace("Found root element (no unescaped commas): %s", objectDnName)
+
+        if comma_index == -1:
+            trace("Found root element (no unescaped commas): %s",
+                  object_dn_name)
             return
-        
-        objectOwnerPart = objectDnName[commaIndex+1:] 
-        objectPart = objectDnName[:commaIndex]
-        trace("ObjectDN: %s objectOwner: %s objectPart:%s", objectDnName, objectOwnerPart, objectPart)
 
-        # owner should exist for both SA_NAME_T and SA_STRING_T
-        if objectOwnerPart not in self.objectDnNameDict:
-            print_info_stderr("validate Dn in %s", objectDnElement.toxml())
-            self.validate_failed("Parent to %s is not found %s", objectDnName, objectDnElement.toxml())
+        object_owner_part = object_dn_name[comma_index + 1:]
+        object_part = object_dn_name[:comma_index]
+        trace("ObjectDN: %s objectOwner: %s objectPart: %s", object_dn_name,
+              object_owner_part, object_part)
 
-        trace("postValidateDn() OK parentPart %s found in objectDnNameDict", objectOwnerPart)        
+        # Owner should exist for both SA_NAME_T and SA_STRING_T
+        if object_owner_part not in self.objectDnNameDict:
+            print_info_stderr("Validate dn in %s", object_dn_element.toxml())
+            self.validate_failed("Parent to %s is not found in %s",
+                                 object_dn_name, object_dn_element.toxml())
 
-        # But in case dn is a SA_NAME_T also the objectIdPart 
-        # should exist in dictionary....
-        if self.classDict[className]["rdn"] == "SA_NAME_T":
-            # find value of association (remove association name)
-            equalSignIndex = objectPart.find("=")
-            objectName = objectPart[:equalSignIndex]
-            objectValue = objectPart[equalSignIndex+1:]
-            objectValueEqualSignIndex = objectValue.find("=")
-             
+        trace("post_validate_dn() OK parentPart %s found in objectDnNameDict",
+              object_owner_part)
+
+        # But in case dn is a SA_NAME_T also the objectIdPart should exist
+        # in dictionary
+        if self.classDict[class_name]["rdn"] == "SA_NAME_T":
+            # Find value of association (remove association name)
+            equal_sign_index = object_part.find("=")
+            # object_name = object_part[:equal_sign_index]
+            object_value = object_part[equal_sign_index + 1:]
+            object_value_equal_sign_index = object_value.find("=")
+
             # x=y vs x=y=z
-            if objectValueEqualSignIndex != -1:
-                if Options.ignoreRdnAssociationRefs == False: 
-                    associationValue = objectValue
-                    # remove escaping
-                    unescapedDN = associationValue.replace('\\','')
-                    if unescapedDN not in self.objectDnNameDict:
-                        print_info_stderr("validate Dn in %s", objectDnElement.toxml())
-                        self.validate_failed("The associated object %s is not found %s", unescapedDN, objectDnElement.toxml())
-                    trace("postValidateDn() OK  The associated object %s is found in objectDnNameDict (Dn has type SA_NAME_T)", unescapedDN)
+            if object_value_equal_sign_index != -1:
+                if not Options.ignoreRdnAssociationRefs:
+                    association_value = object_value
+                    # Remove escape characters
+                    unescaped_dn = association_value.replace('\\', '')
+                    if unescaped_dn not in self.objectDnNameDict:
+                        print_info_stderr("Validate dn in %s",
+                                          object_dn_element.toxml())
+                        self.validate_failed("The associated object %s is not "
+                                             "found in %s", unescaped_dn,
+                                             object_dn_element.toxml())
+                    trace("post_validate_dn() OK  The associated object %s is "
+                          "found in objectDnNameDict (dn has type SA_NAME_T)",
+                          unescaped_dn)
             else:
-                if len(objectValue) > 64:   
-                    print_info_stderr("validate Dn in %s", objectDnElement.toxml())
-                    self.validate_failed("length of object value is %d (max 64): %s", len(objectPart), objectValue)
+                if len(object_value) > 64:
+                    print_info_stderr("Validate dn in %s",
+                                      object_dn_element.toxml())
+                    self.validate_failed("Length of object value is %d "
+                                         "(max 64): %s", len(object_part),
+                                         object_value)
+        return
 
-        
-        return            
-
-
-        
-    def processInputfile(self, filename):
+    def process_input_file(self, file_name):
+        """ Process IMM XML input file """
         trace("")
-        trace("processInputfile() :%s", filename)
-        
-        if Options.isXmlLintFound and Options.schemaFilename != None:
-            if self.validateXmlFileWithSchema(filename, Options.schemaFilename) != 0:
-                self.abort_file("failed to validate input file %s: with xml schema", filename)
+        trace("process_input_file(): %s", file_name)
+
+        if Options.isXmlLintFound and Options.schemaFilename is not None:
+            if self.validate_xml_file_with_schema(file_name,
+                                                  Options.schemaFilename) != 0:
+                self.abort_file("Failed to validate input file %s with xml "
+                                "schema", file_name)
         else:
-            self.verifyInputXmlDocumentFileIsParsable(filename)
+            self.verify_input_xml_document_file_is_parsable(file_name)
 
-        doc = xml.dom.minidom.parse(filename)
-                
-                
-        ## Fast forward to imm:contents element
+        doc = xml.dom.minidom.parse(file_name)
+
+        # Fast forward to imm:contents element
         for element in doc.childNodes:
-            otherNodes = []
-            if (element.nodeName == self.imm_content_element_name):
-                for childElement in element.childNodes:
-                    trace("imm:contents loop..... Nodename:%s NodeValue%s", childElement.nodeName, childElement.nodeValue)
-                    if (childElement.nodeName == "class"):
-                        self.addClass(childElement, otherNodes)
-                        otherNodes = []
-                    elif (childElement.nodeName == "object"):
-                        self.addObject(childElement, otherNodes)
-                        otherNodes = []
+            other_nodes = []
+            if element.nodeName == self.imm_content_element_name:
+                for child_element in element.childNodes:
+                    trace("imm:contents loop.....NodeName: %s NodeValue: %s",
+                          child_element.nodeName, child_element.nodeValue)
+                    if child_element.nodeName == "class":
+                        self.add_class(child_element, other_nodes)
+                        other_nodes = []
+                    elif child_element.nodeName == "object":
+                        self.add_object(child_element, other_nodes)
+                        other_nodes = []
                     else:
-                        # probably text nodes....ignore if whitespace only
-                        childElementStr = childElement.nodeValue.lstrip().rstrip()
-                        #if len(childElementStr) > 1:
-                            #otherNodes.append(childElement)
-                        otherNodes.append(childElement)
+                        # Probably text nodes
+                        # Ignore if whitespace only
+                        # child_element_str = \
+                        #     child_element.nodeValue.lstrip().rstrip()
+                        # if len(child_element_str) > 1:
+                        #     other_nodes.append(child_element)
+                        other_nodes.append(child_element)
 
-        
         return 0
-        
 
-    def postProcessValidate(self):
-        # iterate over all objects again to validate again when all objects are parsed from inputfiles
-        self.postValidateObjectList()
-                    
-#### end of class ImmDocument
+    def post_process_validate(self):
+        """ Post validation process """
+        # Iterate over all objects again to validate again when all objects are
+        # parsed from input files
+        self.post_validate_object_list()
 
-def printUsage():
-  print "usage: immxml-validate [options] filename[s]"
-  print """
-      --schema            validate inputfiles with the supplied
-                          xsd schema file
-  -t, --trace             print trace information to stderr
-  --ignore-attribute-refs 
-                          specifying this option then the tool skips to
-                          validate that SA_NAME_T attributes references 
-                          existing objects  
-  --ignore-rdn-association-refs
-                          specifying this option then the tool skips to
-                          validate that SA_NAME_T rdn association references 
-                          existing objects  
-  -v, --version           print version information and exit
-  -h, --help              display this help and exit
- 
+# End of ImmDocument class
+
+
+def print_usage():
+    """ Print usage of immxml-validate tool """
+    print ("usage: immxml-validate [options] filename[s]")
+    print ("""
+    --schema            validate input files with the supplied xsd schema file
+
+    -t, --trace         print trace information to stderr
+
+    --ignore-attribute-refs
+                        if this option is specified, the tool skips to validate
+                        that SA_NAME_T attributes references existing objects
+
+    --ignore-rdn-association-refs
+                        if this option is specified, the tool skips to validate
+                        that SA_NAME_T rdn association references existing
+                        objects
+
+    -v, --version       print version information and exit
+
+    -h, --help          display this help and exit
+
    See http://devel.opensaf.org/ for information and updates.
-"""
- 
-def printVersion():
-  print "immxml-validate version 0.5.1"
+   """)
 
 
+def print_version():
+    """ Print version of immxml-validate tool """
+    print ("immxml-validate version 0.5.1")
 
-def main(argv):    
+
+def main(argv):
+    """ Main program """
     try:
-        opts, args = getopt.getopt(argv, "thvso", ["trace", "help", "version", "schema=", "ignore-attribute-refs", "ignore-rdn-association-refs"])
-    except getopt.GetoptError, err:
-        # print help information and exit:
+        opts, args = getopt.getopt(argv, "thv",
+                                   ["trace", "help", "version", "schema=",
+                                    "ignore-attribute-refs",
+                                    "ignore-rdn-association-refs"])
+    except getopt.GetoptError as err:
+        # Print help information and exit
         print_info_stderr("%s", str(err))
-        printUsage()
+        print_usage()
         sys.exit(2)
-    
-    
-    for o, v in opts:
-        if o in ["-t", "--trace"]:
+
+    for opt, value in opts:
+        if opt in ["-t", "--trace"]:
             BaseOptions.traceOn = True
-        if o in ("--schema"):
-            Options.schemaFilename = v
-        if o in ("--ignore-attribute-refs"):
+        if opt == "--schema":
+            Options.schemaFilename = value
+        if opt == "--ignore-attribute-refs":
             Options.ignoreAttributeRefs = True
-        if o in ("--ignore-rdn-association-refs"):
+        if opt == "--ignore-rdn-association-refs":
             Options.ignoreRdnAssociationRefs = True
-        if o in ["-v", "--version"]:
-            printVersion()
+        if opt in ["-v", "--version"]:
+            print_version()
             sys.exit(0)
-        elif o in ["-h", "--help"]:
-            printUsage()
+        elif opt in ["-h", "--help"]:
+            print_usage()
             sys.exit(0)
- 
-    # cannot trace these until -t, Options.traceOn is effective (or not)
+
+    # Cannot trace these until -t, Options.traceOn is effective (or not)
     trace("opts:%s", opts)
     trace("args:%s", args)
     trace("sys.path:%s", sys.path)
-     
-    if len(args) == 0:
-        printUsage()
+
+    if not args:
+        print_usage()
         sys.exit(2)
-    
-            
-    trace("Option object: \n %s", Options.printOptionSettings())
-    
-    
-    if os.path.exists('/usr/bin/xmllint') == False:
-        if (Options.schemaFilename != None ):
-            abort_script("Cannot find the required linux command /usr/bin/xmllint. --schema option requires xmllint, Exiting!")
-                    
-    fileList = retrieveFilenames(args)
-    
-    trace("starting to process files::\n")
-    atLeastOneFileFailed = False
-    for fileName in fileList:
+
+    trace("Option object:\n %s", Options.print_option_settings())
+
+    if not os.path.exists('/usr/bin/xmllint'):
+        if Options.schemaFilename is not None:
+            abort_script("Cannot find the required linux command "
+                         "/usr/bin/xmllint. '--schema' option requires "
+                         "xmllint, Exiting!")
+
+    file_list = retrieve_file_names(args)
+
+    trace("Starting to process files...\n")
+    at_least_one_file_failed = False
+    for file_name in file_list:
         try:
             doc = ImmDocument()
-            verifyInputFileReadAcess(fileName)
-            doc.initialize();
-            
-            doc.processInputfile(fileName)
-            if doc.validateFailed == False:
-                doc.postProcessValidate()
+            verify_input_file_read_access(file_name)
+            doc.initialize()
+            doc.process_input_file(file_name)
+            if not doc.validateFailed:
+                doc.post_process_validate()
         except AbortFileException:
             doc.validateFailed = True
-        
-         
-        if doc.validateFailed == True:
-            atLeastOneFileFailed = True
-            print_info_stderr("Validation failed of file:%s", fileName)
+
+        if doc.validateFailed:
+            at_least_one_file_failed = True
+            print_info_stderr("Validation failed for file: %s", file_name)
         else:
-            print_info_stderr("Validation succeded of file:%s", fileName)
-            
-        trace("Done with file:%s", fileName)
-       
-    if atLeastOneFileFailed == True:
+            print_info_stderr("Validation succeeded for file: %s", file_name)
+
+        trace("Done with file: %s", file_name)
+
+    if at_least_one_file_failed:
         sys.exit(2)
     else:
         return 0
-
-
-
 
 
 if __name__ == "__main__":

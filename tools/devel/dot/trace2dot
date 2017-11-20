@@ -2,7 +2,7 @@
 #
 #
 # (C) Copyright 2015 The OpenSAF Foundation
-# Copyright Ericsson AB 2015, 2016, 2017 - All Rights Reserved.
+# (C) Copyright Ericsson AB 2015, 2016, 2017. All rights reserved.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -15,24 +15,25 @@
 #
 # Author(s): Ericsson AB
 #
-#
 """
- trace2dot creates a runtime call graph using an opensaf trace file as input
- and produces a dot file. The generated dot file can be viewed graphically using e.g. dotty.
+trace2dot creates a runtime call graph using an opensaf trace file as input and
+produces a dot file. The generated dot file can be viewed graphically using
+tool such as dotty.
 
- Example:
- Create a dot file, amfd_trace.dot from osafamfd trace file. Start from function saClmDispatch.
- $ trace2dot -t osafamfd -f saClmDispatch -d amfd_trace.dot
- $ dotty amfd_trace.dot
-
+Example:
+Create a dot file, amfd_trace.dot from osafamfd trace file. Start from function
+saClmDispatch.
+$ trace2dot -t osafamfd -f saClmDispatch -d amfd_trace.dot
+$ dotty amfd_trace.dot
 """
+from __future__ import print_function
 import sys
 import os
 import argparse
 
 
 def run(trace_file, from_function, dot_file):
-    ''' TBD '''
+    """ TBD """
     infile = open(trace_file)
 
     if dot_file:
@@ -50,9 +51,9 @@ def run(trace_file, from_function, dot_file):
 
 
 def check_infile(trace_file):
-    '''  Rudimentary check for missing TRACE_ENTER/TRACE_LEAVE. Will not
-         check for e.g. returns before TRACE_LEAVE.
-    '''
+    """ Rudimentary check for missing TRACE_ENTER/TRACE_LEAVE.
+    Will not check for, e.g. return statements, before TRACE_LEAVE.
+    """
     infile = open(trace_file)
     trace_enter = set()
     trace_leave = set()
@@ -79,7 +80,7 @@ def check_infile(trace_file):
 
 
 def process_infile(infile, from_function, outfile):
-    '''  TBD '''
+    """  TBD """
     function_names = []
     from_func_found = False
 
@@ -96,12 +97,16 @@ def process_infile(infile, from_function, outfile):
 
                 function_names.append(func_enter)
 
-                if len(function_names) > 1:
+                if function_names:
                     outfile.write(
-                        func_enter + ' [ordering=out, color=grey, shape=box, label="' + func_enter + '"];\n')
+                        func_enter +
+                        ' [ordering=out, color=grey, shape=box, label="' +
+                        func_enter + '"];\n')
                 else:
                     outfile.write(
-                        func_enter + ' [ordering=out, color=red, shape=box, label="' + func_enter + '"];\n')
+                        func_enter +
+                        ' [ordering=out, color=red, shape=box, label="' +
+                        func_enter + '"];\n')
 
             if items[5] == '<<':
                 func_leave = items[6].rstrip(':')
@@ -109,22 +114,24 @@ def process_infile(infile, from_function, outfile):
                     if from_function == func_leave:
                         break
 
-                if len(function_names) > 0:
+                if function_names:
                     func_enter = function_names.pop()
                     if func_enter != func_leave:
-                        print('%s %s %s' % (func_enter, ' has no matching TRACE_LEAVE, found ', func_leave))
+                        print('%s %s %s' %
+                              (func_enter,
+                               ' has no matching TRACE_LEAVE, found ',
+                               func_leave))
                         outfile.write(func_leave + ' -> ' + func_enter + '\n')
 
                     else:
-                        if len(function_names) > 0:
+                        if function_names:
                             caller = function_names[len(function_names) - 1]
                             outfile.write(caller + ' -> ' + func_enter + '\n')
 
 
 def file_exists(filename):
-    '''Check if arg is a valid file that already exists on the file
-    system.
-    '''
+    """ Check if arg is a valid file that already exists on the file system.
+    """
     if not os.path.exists(filename):
         raise argparse.ArgumentTypeError(
             "The file %s does not exist!" % filename)
@@ -133,18 +140,20 @@ def file_exists(filename):
 
 
 def main():
-    ''' program main '''
+    """ Main program """
 
     parser = argparse.ArgumentParser(
-        description="Create runtime callgraph from OpenSAF trace file")
+        description="Create runtime call graph from OpenSAF trace file")
 
     parser.add_argument('-t', '--tracefile', nargs='+',
                         type=file_exists, help='OpenSAF trace file')
     parser.add_argument('-f', '--fromfunction', nargs='+',
-                        help='Show runtime callgraph from function')
-    parser.add_argument('-d', '--dotfile', nargs='+', help='Result file in dot format')
-    parser.add_argument('-c', '--checkfile', nargs='+',
-                        type=file_exists, help='Check infile for matching trace_enter trace_leave')
+                        help='Show runtime call graph from function')
+    parser.add_argument('-d', '--dotfile', nargs='+',
+                        help='Result file in dot format')
+    parser.add_argument('-c', '--checkfile', nargs='+', type=file_exists,
+                        help='Check infile for matching '
+                             'trace_enter trace_leave')
 
     args = parser.parse_args()
 
@@ -165,6 +174,7 @@ def main():
     if args.tracefile:
         trace_file = args.tracefile[0]
         run(trace_file, from_function, dot_file)
+
 
 if __name__ == '__main__':
     main()
