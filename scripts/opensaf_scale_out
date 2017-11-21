@@ -36,15 +36,17 @@ export LD_LIBRARY_PATH=$libdir:$LD_LIBRARY_PATH
 exit 0
 
 # Env variable CLM_IFS contains field separator for the
-# input argument, example on usage:
-# if [ -n "$CLM_IFS" ]; then
-#    IFS=$CLM_IFS
-#    logger "Using ifs [$IFS]"
-# fi
-#
-# for arg in "$@"
-# do
-#    logger "> [$arg]"
+# input argument, for example:
+# save_ifs=$IFS
+# for node in "$@"
+#  do
+#     logger "> [$node]"
+#     IFS=","
+#     for arg in $node
+#      do
+#        logger ">> $arg"
+#      done
+#     IFS=$save_ifs
 # done
 
 tmpdir=$(mktemp -d -t opensaf_scale_out.XXXXXXXXXX)
