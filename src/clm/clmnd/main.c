@@ -582,11 +582,12 @@ static void get_user_data(NODE_INFO *node)
 		return;
 	}
 
-	if (fgets((char*) node->user_data.value, sizeof(node->user_data.value),
-		fp) != NULL) {
-		node->user_data.length = strnlen((char *)node->user_data.value,
-			sizeof(node->user_data.value));
+	size_t size = fread((char*) node->user_data.value, sizeof(char),
+			    sizeof(node->user_data.value) - 1, fp);
+	if (size > 0) {
+		node->user_data.length = size;
 	} else {
+		node->user_data.length = 0;
 		LOG_WA("Could not read file %s", PKGSYSCONFDIR "/clm_user_data");
 	}
 

@@ -75,7 +75,7 @@ entries may be added to the comma-separated list. The first entry in the list
 is the node id represented as a decimal number. The second entry in the list is
 the name of the node. The third entry is the IP address of the node. The fourth
 entry is optional user data that can be entered in a file named
-/etc/opensaf/clm_user_data, up to 256 characters can be given.
+/etc/opensaf/clm_user_data, up to 255 characters can be given.
 
 NOTE: the script must be idempotent, i.e. it must be harmless to call it more
 than one time with the same parameters. The second call should do nothing since
