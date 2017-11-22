@@ -61,6 +61,7 @@ pkgpyosafutilslog_PYTHON = \
 
 pkgpyosafutilsimmoi_PYTHON = \
 	python/pyosaf/utils/immoi/__init__.py \
+	python/pyosaf/utils/immoi/agent.py \
 	python/pyosaf/utils/immoi/implementer.py
 
 pkgpyosafutilsntf_PYTHON = \

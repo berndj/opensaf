@@ -28,23 +28,23 @@ from pyosaf.utils.immom import agent
 from pyosaf.utils.immom.object import ImmObject
 
 
-class ImmOmAccessor(agent.ImmOmAgentManager):
+class Accessor(agent.OmAgentManager):
     """ This class provides functions of the ImmOm Accessor interface """
     def __init__(self, version=None):
-        """ Constructor for ImmOmAccessor class
+        """ Constructor for Accessor class
 
         Args:
             version (SaVersionT): IMM OM version
         """
-        super(ImmOmAccessor, self).__init__(version)
+        super(Accessor, self).__init__(version)
         self.accessor_handle = None
 
     def __enter__(self):
-        """ Enter method for ImmOmAccessor class """
+        """ Enter method for Accessor class """
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        """ Exit method for ImmOmAccessor class
+        """ Exit method for Accessor class
 
         Finalize the accessor handle and the IMM OM agent handle
         """
@@ -56,7 +56,7 @@ class ImmOmAccessor(agent.ImmOmAgentManager):
             self.handle = None
 
     def __del__(self):
-        """ Destructor for ImmOmAccessor class
+        """ Destructor for Accessor class
 
         Finalize the accessor handle and the IMM OM agent handle
         """
@@ -115,10 +115,8 @@ class ImmOmAccessor(agent.ImmOmAgentManager):
         rc = agent.saImmOmAccessorGet_2(self.accessor_handle,
                                         SaNameT(object_name),
                                         attr_names, attributes)
-        if rc != eSaAisErrorT.SA_AIS_OK:
-            log_err("saImmOmAccessorGet_2 FAILED - %s" %
-                    eSaAisErrorT.whatis(rc))
-        else:
+
+        if rc == eSaAisErrorT.SA_AIS_OK:
             attrs = {}
             attr_list = unmarshalNullArray(attributes)
             for attr in attr_list:
@@ -130,6 +128,17 @@ class ImmOmAccessor(agent.ImmOmAgentManager):
                                          for val in attr_range]]
             if 'SaImmAttrClassName' not in attrs and class_name:
                 attrs['SaImmAttrClassName'] = class_name
-            imm_obj = ImmObject(object_name, attrs)
+            imm_obj = ImmObject(dn=object_name, attributes=attrs)
+
+        if rc == eSaAisErrorT.SA_AIS_ERR_BAD_HANDLE:
+            init_rc = self.init()
+            # If the re-initialization of agent handle succeeds, we still need
+            # to return BAD_HANDLE to the users, so that they would re-try the
+            # failed operation. Otherwise, the true error code is returned
+            # to the user to decide further actions.
+            if init_rc != eSaAisErrorT.SA_AIS_OK:
+                log_err("saImmOmAccessorGet_2 FAILED - %s" %
+                        eSaAisErrorT.whatis(rc))
+                rc = init_rc
 
         return rc, imm_obj

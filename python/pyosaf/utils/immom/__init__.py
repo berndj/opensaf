@@ -21,7 +21,7 @@ from pyosaf.saAis import eSaAisErrorT
 from pyosaf.utils import deprecate, SafException
 from pyosaf.utils.immom import agent
 from pyosaf.utils.immom.object import ImmObject
-from pyosaf.utils.immom.accessor import ImmOmAccessor
+from pyosaf.utils.immom.accessor import Accessor
 
 
 # Decorate pure saImmOm* API's with error-handling retry and exception raising
@@ -70,7 +70,7 @@ def initialize():
         SafException: If any IMM OM API call did not return SA_AIS_OK
     """
     global _om_agent
-    _om_agent = agent.ImmOmAgent()
+    _om_agent = agent.OmAgent()
 
     # Initialize IMM OM handle and return the API return code
     rc = _om_agent.init()
@@ -93,7 +93,7 @@ def get(object_name, attr_name_list=None, class_name=None):
     Raises:
         SafException: If any IMM OM API call did not return SA_AIS_OK
     """
-    _accessor = ImmOmAccessor()
+    _accessor = Accessor()
     _accessor.init()
     rc, imm_object = _accessor.get(object_name, attr_name_list, class_name)
 
@@ -116,13 +116,10 @@ def class_description_get(class_name):
     Raises:
         SafException: If any IMM OM API call did not return SA_AIS_OK
     """
-    class_attrs = []
     if _om_agent is None:
-        # SA_AIS_ERR_INIT is returned if user calls this function without first
-        # calling initialize()
-        rc = eSaAisErrorT.SA_AIS_ERR_INIT
-    else:
-        rc, class_attrs = _om_agent.get_class_description(class_name)
+        initialize()
+
+    rc, class_attrs = _om_agent.get_class_description(class_name)
 
     if rc != eSaAisErrorT.SA_AIS_OK:
         raise SafException(rc)
@@ -143,11 +140,9 @@ def admin_op_invoke(dn, op_id, params=None):
         SafException: If any IMM OM API call did not return SA_AIS_OK
     """
     if _om_agent is None:
-        # SA_AIS_ERR_INIT is returned if user calls this function without first
-        # calling initialize()
-        rc = eSaAisErrorT.SA_AIS_ERR_INIT
-    else:
-        rc = _om_agent.invoke_admin_operation(dn, op_id, params)
+        initialize()
+
+    rc = _om_agent.invoke_admin_operation(dn, op_id, params)
 
     if rc != eSaAisErrorT.SA_AIS_OK:
         raise SafException(rc)
@@ -163,16 +158,14 @@ def get_rdn_attribute_for_class(class_name):
 
     Returns:
         str: RDN attribute of the class
-
-    Raises:
-        SafException: If an OM agent was not initialized first
     """
     if _om_agent is None:
-        raise SafException(eSaAisErrorT.SA_AIS_ERR_INIT)
+        initialize()
 
     return _om_agent.get_rdn_attribute_for_class(class_name)
 
 
+@deprecate
 def get_class_category(class_name):
     """ Return the category of the given class
 
@@ -181,11 +174,8 @@ def get_class_category(class_name):
 
     Returns:
         SaImmClassCategoryT: Class category
-
-    Raises:
-        SafException: If an OM agent was not initialized first
     """
     if _om_agent is None:
-        raise SafException(eSaAisErrorT.SA_AIS_ERR_INIT)
+        initialize()
 
     return _om_agent.get_class_category(class_name)

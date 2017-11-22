@@ -20,7 +20,7 @@ from pyosaf.saAis import eSaAisErrorT
 from pyosaf.saImm import saImm
 
 from pyosaf.utils import SafException
-from pyosaf.utils.immom.agent import ImmOmAgent
+from pyosaf.utils.immom.agent import OmAgent
 
 
 class ImmObject(object):
@@ -43,7 +43,7 @@ class ImmObject(object):
                 is not SA_AIS_OK
         """
         self.__dict__["dn"] = dn
-        _imm_om = ImmOmAgent()
+        _imm_om = OmAgent()
         rc = _imm_om.init()
         if rc != eSaAisErrorT.SA_AIS_OK:
             raise SafException(rc)

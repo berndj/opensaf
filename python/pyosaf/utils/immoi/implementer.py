@@ -21,21 +21,19 @@ from __future__ import print_function
 import select
 import itertools
 
-from pyosaf.saAis import eSaAisErrorT, unmarshalNullArray
+from pyosaf.saAis import eSaAisErrorT, unmarshalNullArray, \
+    unmarshalSaStringTArray
 from pyosaf import saImm, saImmOi
 from pyosaf.saImm import eSaImmValueTypeT, eSaImmAttrModificationTypeT, \
-    eSaImmClassCategoryT, SaImmClassNameT
+    eSaImmClassCategoryT, SaImmClassNameT, unmarshalSaImmValue
 from pyosaf.saImmOi import SaImmOiImplementerNameT
-from pyosaf.utils import immom, immoi, SafException, decorate, bad_handle_retry
+from pyosaf.utils import SafException, decorate, bad_handle_retry, log_err
 from pyosaf.utils.immoi import OiAgent
 from pyosaf.utils.immom.object import ImmObject
 
 
 saImmOiClassImplementerSet = decorate(saImmOi.saImmOiClassImplementerSet)
 saImmOiImplementerSet = decorate(saImmOi.saImmOiImplementerSet)
-
-
-implementer_instance = None
 
 
 class AdminOperationParameter(object):
@@ -101,12 +99,13 @@ class _ContainmentConstraint(object):
         self.upper = upper
 
 
-class Constraints(object):
+class Constraints(OiAgent):
     """ Class defining constraints for changes to the instances implemented by
     the OI
     """
     def __init__(self):
         """ Create an empty Constraints instance """
+        super(Constraints, self).__init__()
         self.containments = {}
         self.cardinality = {}
 
@@ -153,7 +152,7 @@ class Constraints(object):
                 if ',' not in child.dn:
                     continue
 
-                if immoi.get_parent_name_for_dn(child.dn) == _parent_name \
+                if self.get_parent_name_for_dn(child.dn) == _parent_name \
                         and child.class_name == _class_name:
                     _current_children.append(child)
 
@@ -170,10 +169,10 @@ class Constraints(object):
             return False
 
         # Validate containments affected by create or delete
-        deleted_objs = [immoi.get_object_no_runtime(dn) for dn in deleted]
+        deleted_objs = [self.get_object_no_runtime(dn) for dn in deleted]
 
         for obj in itertools.chain(created, deleted_objs):
-            parent_name = immoi.get_parent_name_for_dn(obj.dn)
+            parent_name = self.get_parent_name_for_dn(obj.dn)
 
             # Handle the case where there is no parent
             if not parent_name:
@@ -196,7 +195,7 @@ class Constraints(object):
             if parent_obj:
                 parent_class = parent_obj[0].class_name
             else:
-                parent_class = immoi.get_class_name_for_dn(dn=parent_name)
+                parent_class = self.get_class_name_for_dn(dn=parent_name)
 
             # Ignore children where no constraint is defined for the child or
             # the parent
@@ -244,10 +243,10 @@ class Implementer(OiAgent):
     def __init__(self, class_names=None, name="wrapper", on_create=None,
                  on_delete=None, on_modify=None, on_validate=None,
                  on_apply=None, on_runtime_values_get=None,
-                 admin_operations=None, constraints=None):
+                 admin_operations=None, constraints=None, version=None):
         """ Create an Implementer instance """
         # Initialize OI agent
-        super(Implementer, self).__init__()
+        super(Implementer, self).__init__(version=version)
 
         self.class_names = class_names
         self.name = name
@@ -263,14 +262,43 @@ class Implementer(OiAgent):
         self.ccbs = {}
         self.implemented_names = []
 
-        global implementer_instance
-        implementer_instance = self
-
         # Register OI callbacks
         self._register_callbacks()
 
         # Initialize OI API and register as implementer for the classes
-        self._register()
+        rc = self._register()
+        if rc != eSaAisErrorT.SA_AIS_OK:
+            raise Exception("ERROR: Can't register a implementer")
+
+    @staticmethod
+    def unmarshal_len_array(c_array, length, value_type):
+        """ Convert C array with a known length to a Python list
+
+        Args:
+            c_array (C array): Array in C
+            length (int): Length of array
+            value_type (str): Element type in array
+
+        Returns:
+            list: The list converted from c_array
+        """
+        if not c_array:
+            return []
+        ctype = c_array[0].__class__
+        if ctype is str:
+            return unmarshalSaStringTArray(c_array)
+        val_list = []
+        i = 0
+        for ptr in c_array:
+            if i == length:
+                break
+            if not ptr:
+                break
+            val = unmarshalSaImmValue(ptr, value_type)
+            val_list.append(val)
+            i = i + 1
+
+        return val_list
 
     def _register_callbacks(self):
         """ Register OI callbacks """
@@ -297,8 +325,7 @@ class Implementer(OiAgent):
             saImmOi.SaImmOiAdminOperationCallbackT_2(
                 self._admin_operation_callback)
 
-    @staticmethod
-    def _admin_operation_callback(oi_handle, c_invocation_id, c_name,
+    def _admin_operation_callback(self, oi_handle, c_invocation_id, c_name,
                                   c_operation_id, c_params):
         """ Callback for administrative operations
 
@@ -329,12 +356,11 @@ class Implementer(OiAgent):
             params.append(parameter)
 
         # Invoke the operation
-        result = implementer_instance.admin_operation(operation_id, name,
-                                                      params)
+        result = self.admin_operation(operation_id, name, params)
 
         # Report the result
         try:
-            immoi.report_admin_operation_result(invocation_id, result)
+            self.report_admin_operation_result(invocation_id, result)
         except SafException as err:
             print("ERROR: Failed to report that %s::%s returned %s (%s)" %
                   (name, invocation_id, result, err.msg))
@@ -358,11 +384,10 @@ class Implementer(OiAgent):
         """
         all_instances = []
 
-        for class_name in implementer_instance.class_names:
-            dns = immoi.get_object_names_for_class(class_name)
+        for class_name in self.implemented_names:
+            dns = self.get_object_names_for_class(class_name)
             for dn in dns:
-                dn_in_str = str(dn.value)
-                obj = immoi.get_object_no_runtime(dn_in_str)
+                obj = self.get_object_no_runtime(dn)
                 all_instances.append(obj)
 
         updated = self.completed_ccbs[ccb_id]['updated']
@@ -374,8 +399,7 @@ class Implementer(OiAgent):
         del self.completed_ccbs[ccb_id]
 
         # Tell the implementer to apply the changes
-        return implementer_instance.on_apply(all_instances, updated,
-                                             created, deleted)
+        return self.on_apply(all_instances, updated, created, deleted)
 
     def _attr_update_callback(self, oi_handle, c_name, c_attr_names):
         """ Callback for attribute update operation
@@ -395,15 +419,13 @@ class Implementer(OiAgent):
         attr_names = unmarshalNullArray(c_attr_names)
 
         # Get the class of the object
-        class_name = immoi.get_class_name_for_dn(dn=name)
+        class_name = self.get_class_name_for_dn(dn=name)
 
         # Get the values from the user and report back
         attributes = {}
 
         for attr_name in attr_names:
-            values = implementer_instance.on_runtime_values_get(name,
-                                                                class_name,
-                                                                attr_name)
+            values = self.on_runtime_values_get(name, class_name, attr_name)
             if values is None:
                 return eSaAisErrorT.SA_AIS_ERR_UNAVAILABLE
             if not isinstance(values, list):
@@ -442,7 +464,7 @@ class Implementer(OiAgent):
         self.ccbs[ccb_id].append({'type': 'DELETE', 'dn': name})
 
         # Tell the implementer about the operation
-        return implementer_instance.on_delete_added(name)
+        return self.on_delete_added(name)
 
     def _ccb_modify_callback(self, oi_handle, ccb_id, c_name,
                              c_attr_modification):
@@ -470,7 +492,7 @@ class Implementer(OiAgent):
             attr_name = attr.modAttr.attrName
             attr_type = attr.modAttr.attrValueType
             mod_type = attr.modType
-            attr_values = immoi.unmarshal_len_array(
+            attr_values = self.unmarshal_len_array(
                 attr.modAttr.attrValues, attr.modAttr.attrValuesNumber,
                 attr.modAttr.attrValueType)
             attribute_modifications.append({'attribute': attr_name,
@@ -479,8 +501,7 @@ class Implementer(OiAgent):
                                             'values': attr_values})
 
             # Tell the implementer about the modification
-            result = implementer_instance.on_modify_added(attr_name, mod_type,
-                                                          attr_values)
+            result = self.on_modify_added(attr_name, mod_type, attr_values)
             if result != eSaAisErrorT.SA_AIS_OK:
                 implementer_objection = result
 
@@ -524,16 +545,15 @@ class Implementer(OiAgent):
             attr_type = attr.attrValueType
             nr_values = attr.attrValuesNumber
 
-            attr_values = immoi.unmarshal_len_array(attr.attrValues,
-                                                    nr_values,
-                                                    attr_type)
+            attr_values = self.unmarshal_len_array(attr.attrValues,
+                                                   nr_values, attr_type)
             if attr_values:
                 attributes[attr_name] = attr_values
             else:
                 attributes[attr_name] = None
 
         # Fill in any missing attributes
-        description = immom.class_description_get(class_name)
+        _, description = self.imm_om.get_class_description(class_name)
 
         for attribute in description:
             if attribute.attrName not in attributes:
@@ -550,10 +570,10 @@ class Implementer(OiAgent):
                                   'attributes': attributes})
 
         # Tell the implementer about the operation
-        obj = immoi.create_non_existing_imm_object(class_name, parent,
-                                                   attributes)
+        obj = self.create_non_existing_imm_object(class_name, parent,
+                                                  attributes)
 
-        return implementer_instance.on_create_added(class_name, parent, obj)
+        return self.on_create_added(class_name, parent, obj)
 
     def _ccb_completed_callback(self, oi_handle, ccb_id):
         """ Callback for completed CCB
@@ -581,8 +601,7 @@ class Implementer(OiAgent):
                                        'updated': updated}
 
         # Perform validation on the full transaction
-        return implementer_instance.validate(ccb_id, instances, updated,
-                                             created, deleted)
+        return self.validate(ccb_id, instances, updated, created, deleted)
 
     def _collect_full_transaction(self, ccb_id):
         """ Go through a completed CCB and summarize the full transaction as
@@ -605,11 +624,10 @@ class Implementer(OiAgent):
         updated = []
 
         # Go through current instances
-        for class_name in implementer_instance.class_names:
-            dns = immoi.get_object_names_for_class(class_name)
+        for class_name in self.implemented_names:
+            dns = self.get_object_names_for_class(class_name)
             for dn in dns:
-                dn_in_str = str(dn.value)
-                obj = immoi.get_object_no_runtime(dn_in_str)
+                obj = self.get_object_no_runtime(dn)
                 all_objects_now.append(obj)
 
         # Collect proposed state by applying changes on current state
@@ -621,7 +639,7 @@ class Implementer(OiAgent):
                 parent = operation['parent']
                 class_name = operation['className']
                 attributes = operation['attributes']
-                rdn_attr = immoi.get_rdn_attribute_for_class(
+                rdn_attr = self.imm_om.get_rdn_attribute_for_class(
                     class_name=class_name)
                 rdn_value = attributes[rdn_attr][0]
 
@@ -630,7 +648,7 @@ class Implementer(OiAgent):
                 else:
                     dn = rdn_value
 
-                instance = immoi.create_non_existing_imm_object(
+                instance = self.create_non_existing_imm_object(
                     class_name, parent, attributes)
                 created.append(instance)
                 deleted = [obj for obj in deleted if obj.dn != dn]
@@ -725,6 +743,9 @@ class Implementer(OiAgent):
         rc = saImmOiClassImplementerSet(self.handle, c_class_name)
         if rc == eSaAisErrorT.SA_AIS_OK:
             self.implemented_names.append(class_name)
+        else:
+            log_err("saImmOiClassImplementerSet FAILED - %s" %
+                    eSaAisErrorT.whatis(rc))
         return rc
 
     def set_constraints(self, constraints):
@@ -862,7 +883,7 @@ class Implementer(OiAgent):
             # Let the user code validate the CCB (if configured)
             self.on_validate(instances, updated, created, deleted)
         except SafException as err:
-            immoi.set_error_string(ccb_id, err.msg)
+            self.set_error_string(ccb_id, err.msg)
             return err.value
         except Exception:
             return eSaAisErrorT.SA_AIS_ERR_FAILED_OPERATION
@@ -887,7 +908,7 @@ class Implementer(OiAgent):
             SaAisErrorT: Return code of admin operation
         """
         # Get the class name
-        class_name = immoi.get_class_name_for_dn(object_name)
+        class_name = self.get_class_name_for_dn(object_name)
 
         # Find and execute a matching admin operation
         if self.admin_operations:
@@ -928,13 +949,13 @@ class Implementer(OiAgent):
             SaAisErrorT: Return code of Implementer register
         """
         # Initialize the OI API
-        rc = self.initialize()
+        rc = self.re_initialize()
 
         # Ensure that all classes are configuration classes
         runtime_classes = None
         if self.class_names is not None:
             runtime_classes = [item for item in self.class_names
-                               if immoi.get_class_category(item) ==
+                               if self.imm_om.get_class_category(item) ==
                                eSaImmClassCategoryT.SA_IMM_CLASS_RUNTIME]
         if runtime_classes:
             raise Exception("ERROR: Can't be an applier for runtime "
@@ -944,7 +965,7 @@ class Implementer(OiAgent):
         if rc == eSaAisErrorT.SA_AIS_OK:
             rc = self._register_implementer(self.name)
 
-        available_classes = immoi.get_available_classes_in_imm()
+        available_classes = self.get_available_classes_in_imm()
 
         if rc == eSaAisErrorT.SA_AIS_OK:
             if self.class_names is not None:
@@ -969,6 +990,10 @@ class Implementer(OiAgent):
         """
         implementer_name = SaImmOiImplementerNameT(oi_name)
         rc = saImmOiImplementerSet(self.handle, implementer_name)
+
+        if rc != eSaAisErrorT.SA_AIS_OK:
+            log_err("saImmOiClassImplementerSet FAILED - %s" %
+                    eSaAisErrorT.whatis(rc))
         return rc
 
     def update_runtime_attributes(self, dn, attributes):
@@ -995,7 +1020,7 @@ class Implementer(OiAgent):
             SaAisErrorT: Return code of implementer object create
         """
         # Get the parent name for the object
-        parent_name = immoi.get_parent_name_for_dn(obj.dn)
+        parent_name = self.get_parent_name_for_dn(obj.dn)
         class_name = obj.class_name
 
         # Create the object
@@ -1041,12 +1066,14 @@ class Implementer(OiAgent):
 class Applier(Implementer):
     """ Class representing an applier """
     def __init__(self, class_names, name="wrapper", on_create=None,
-                 on_delete=None, on_modify=None, on_apply=None):
+                 on_delete=None, on_modify=None, on_apply=None,
+                 version=None):
         """ Constructor for Applier instance """
         # Initialize the base class
         Implementer.__init__(self, class_names=class_names, name=name,
                              on_create=on_create, on_delete=on_delete,
-                             on_modify=on_modify, on_apply=on_apply)
+                             on_modify=on_modify, on_apply=on_apply,
+                             version=version)
 
     @staticmethod
     def _validate(ccb_id, instances, updated, created, deleted):
@@ -1062,11 +1089,11 @@ class Applier(Implementer):
             SaAisErrorT: Return code of applier register
         """
         # Initialize the OI API
-        rc = self.initialize()
+        rc = self.re_initialize()
 
         # Ensure that all classes are configuration classes
         runtime_classes = [item for item in self.class_names
-                           if immoi.get_class_category(item) ==
+                           if self.imm_om.get_class_category(item) ==
                            eSaImmClassCategoryT.SA_IMM_CLASS_RUNTIME]
         if runtime_classes:
             raise Exception("ERROR: Can't be an applier for runtime classes %s"
@@ -1076,7 +1103,7 @@ class Applier(Implementer):
             rc = self._register_applier(self.name)
 
         # Register as applier for each class
-        available_classes = immoi.get_available_classes_in_imm()
+        available_classes = self.get_available_classes_in_imm()
 
         for class_name in self.class_names:
             if class_name in available_classes:

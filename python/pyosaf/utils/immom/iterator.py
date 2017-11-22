@@ -30,7 +30,7 @@ from pyosaf.utils.immom import agent
 from pyosaf.utils.immom.object import ImmObject
 
 
-class SearchIterator(agent.ImmOmAgentManager, Iterator):
+class SearchIterator(agent.OmAgentManager, Iterator):
     """ General search iterator """
     def __init__(self, root_name=None, scope=eSaImmScopeT.SA_IMM_SUBTREE,
                  attribute_names=None, search_param=None, version=None):
@@ -109,7 +109,7 @@ class SearchIterator(agent.ImmOmAgentManager, Iterator):
                                     [unmarshalSaImmValue(attr.attrValues[val],
                                                          attr.attrValueType)
                                      for val in attr_range]]
-        return ImmObject(obj_name, attrs)
+        return ImmObject(str(obj_name), attrs)
 
     @bad_handle_retry
     def init(self):

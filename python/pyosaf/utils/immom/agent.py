@@ -64,10 +64,10 @@ saImmOmAdminOperationContinuationClear = \
     decorate(saImmOm.saImmOmAdminOperationContinuationClear)
 
 
-class ImmOmAgentManager(object):
+class OmAgentManager(object):
     """ This class manages the life cycle of an IMM OM agent """
     def __init__(self, version=None):
-        """ Constructor for ImmOmAgentManager class
+        """ Constructor for OmAgentManager class
 
         Args:
             version (SaVersionT): IMM OM API version
@@ -79,11 +79,11 @@ class ImmOmAgentManager(object):
         self.selection_object = None
 
     def __enter__(self):
-        """ Enter method for ImmOmAgentManager class """
+        """ Enter method for OmAgentManager class """
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        """ Exit method for ImmOmAgentManager class
+        """ Exit method for OmAgentManager class
 
         Finalize the IMM OM agent handle
         """
@@ -92,7 +92,7 @@ class ImmOmAgentManager(object):
             self.handle = None
 
     def __del__(self):
-        """ Destructor for ImmOmAgentManager class
+        """ Destructor for OmAgentManager class
 
         Finalize the IMM OM agent handle
         """
@@ -149,7 +149,8 @@ class ImmOmAgentManager(object):
             if rc != eSaAisErrorT.SA_AIS_OK:
                 log_err("saImmOmFinalize FAILED - %s" %
                         eSaAisErrorT.whatis(rc))
-            elif rc == eSaAisErrorT.SA_AIS_OK \
+
+            if rc == eSaAisErrorT.SA_AIS_OK \
                     or rc == eSaAisErrorT.SA_AIS_ERR_BAD_HANDLE:
                 # If the Finalize() call returned BAD_HANDLE, the handle should
                 # already become stale and invalid, so we reset it anyway.
@@ -157,7 +158,7 @@ class ImmOmAgentManager(object):
         return rc
 
 
-class ImmOmAgent(ImmOmAgentManager):
+class OmAgent(OmAgentManager):
     """ This class acts as a high-level IMM OM agent, providing IMM OM
     functions to the users at a higher level, and relieving the users of the
     need to manage the life cycle of the IMM OM agent """
@@ -265,8 +266,8 @@ class ImmOmAgent(ImmOmAgentManager):
         Returns:
             SaAisErrorT: Return code of the corresponding IMM API call(s)
         """
-        _owner = ImmOmAdminOwner(self.handle)
-        rc = _owner.initialize()
+        _owner = OmAdminOwner(self.handle)
+        rc = _owner.init()
         if rc == eSaAisErrorT.SA_AIS_OK:
             index = dn.rfind(",")
             object_rdn = dn[index+1:]
@@ -314,10 +315,10 @@ class ImmOmAgent(ImmOmAgentManager):
         return c_category.value
 
 
-class ImmOmAdminOwner(object):
+class OmAdminOwner(object):
     """ This class encapsulates the ImmOm Admin Owner interface """
     def __init__(self, imm_handle, owner_name=""):
-        """ Constructor for ImmOmAdminOwner class
+        """ Constructor for OmAdminOwner class
 
         Args:
             imm_handle (SaImmHandleT): IMM OM agent handle
@@ -333,11 +334,11 @@ class ImmOmAdminOwner(object):
         self.owner_handle = None
 
     def __enter__(self):
-        """ Enter method for ImmOmAdminOwner class """
+        """ Enter method for OmAdminOwner class """
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        """ Exit method for ImmOmAdminOwner class
+        """ Exit method for OmAdminOwner class
 
         Finalize the admin owner handle
         """
@@ -346,7 +347,7 @@ class ImmOmAdminOwner(object):
             self.owner_handle = None
 
     def __del__(self):
-        """ Destructor for ImmOmAdminOwner class
+        """ Destructor for OmAdminOwner class
 
         Finalize the admin owner handle
         """
@@ -354,7 +355,7 @@ class ImmOmAdminOwner(object):
             saImmOm.saImmOmAdminOwnerFinalize(self.owner_handle)
             self.owner_handle = None
 
-    def initialize(self):
+    def init(self):
         """ Initialize the IMM admin owner interface
 
         Return:

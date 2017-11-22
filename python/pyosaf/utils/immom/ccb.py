@@ -21,12 +21,13 @@ from ctypes import c_void_p, pointer, cast, POINTER
 
 from pyosaf.saAis import eSaAisErrorT, SaNameT, SaStringT, SaFloatT, \
     unmarshalNullArray, SaDoubleT, SaTimeT, SaUint64T, SaInt64T, SaUint32T, \
-    SaInt32T, SaVersionT
+    SaInt32T
 from pyosaf.saImm import eSaImmScopeT, eSaImmValueTypeT, SaImmAttrValuesT_2
 from pyosaf import saImm
 from pyosaf import saImmOm
 from pyosaf.utils.immom import agent
-from pyosaf.utils.immom.accessor import ImmOmAccessor
+from pyosaf.utils.immom.agent import OmAgent
+from pyosaf.utils.immom.accessor import Accessor
 from pyosaf.utils import log_err, bad_handle_retry
 
 
@@ -83,12 +84,11 @@ def marshal_c_array(value_type, value_list):
     return c_array
 
 
-class Ccb(object):
+class Ccb(OmAgent):
     """ Class representing an ongoing CCB """
     def __init__(self, flags=saImm.saImm.SA_IMM_CCB_REGISTERED_OI,
                  version=None):
-        self.init_version = version if version else SaVersionT('A', 2, 15)
-        self.imm_om = None
+        super(Ccb, self).__init__(version=version)
         self.admin_owner = None
         self.accessor = None
         self.ccb_handle = None
@@ -120,46 +120,11 @@ class Ccb(object):
 
         Finalize the the CCB
         """
-        if self.ccb_handle is not None:
-            saImmOm.saImmOmCcbFinalize(self.ccb_handle)
+        if self.handle is not None:
+            saImmOm.saImmOmFinalize(self.handle)
+            self.handle = None
+            self.admin_owner = None
             self.ccb_handle = None
-        if self.admin_owner:
-            del self.admin_owner
-        if self.imm_om:
-            del self.imm_om
-
-    def clear_admin_owner(self, obj_name, scope=eSaImmScopeT.SA_IMM_SUBTREE):
-        """ Clear the admin owner for the set of object identified by the scope
-        and obj_name parameters
-
-        Args:
-            obj_name (str): Object name
-            scope (SaImmScopeT): Scope of the clear operation
-
-        Returns:
-            SaAisErrorT: Return code of the corresponding IMM API call(s)
-        """
-        return self.imm_om.clear_admin_owner(obj_name, scope)
-
-    def finalize(self):
-        """ Finalize the CCB handle
-
-        Returns:
-            SaAisErrorT: Return code of the saImmOmCcbFinalize() API call
-        """
-        rc = eSaAisErrorT.SA_AIS_OK
-        if self.ccb_handle:
-            rc = agent.saImmOmCcbFinalize(self.ccb_handle)
-            if rc != eSaAisErrorT.SA_AIS_OK:
-                log_err("saImmOmCcbFinalize FAILED - %s" %
-                        eSaAisErrorT.whatis(rc))
-            elif rc == eSaAisErrorT.SA_AIS_OK \
-                    or rc == eSaAisErrorT.SA_AIS_ERR_BAD_HANDLE:
-                # If the Finalize() call returned BAD_HANDLE, the handle should
-                # already become stale and invalid, so we reset it anyway.
-                self.ccb_handle = None
-
-        return rc
 
     @bad_handle_retry
     def init(self, owner_name=""):
@@ -171,26 +136,22 @@ class Ccb(object):
         Return:
             SaAisErrorT: Return code of the corresponding IMM API calls
         """
-        # Clean previous resources if any
-        self.finalize()
-        self.imm_om = agent.ImmOmAgent(self.init_version)
-        rc = self.imm_om.init()
+        rc = super(Ccb, self).init()
         if rc == eSaAisErrorT.SA_AIS_OK:
-            _om_handle = self.imm_om.get_handle()
-            self.admin_owner = agent.ImmOmAdminOwner(_om_handle, owner_name)
-            self.admin_owner.initialize()
+            self.admin_owner = agent.OmAdminOwner(self.handle, owner_name)
+            rc = self.admin_owner.init()
+
             if rc == eSaAisErrorT.SA_AIS_OK:
                 _owner_handle = self.admin_owner.get_handle()
                 self.ccb_handle = saImmOm.SaImmCcbHandleT()
 
-                rc = agent.saImmOmCcbInitialize(
-                    _owner_handle, self.ccb_flags, self.ccb_handle)
+                rc = agent.saImmOmCcbInitialize(_owner_handle, self.ccb_flags,
+                                                self.ccb_handle)
                 if rc != eSaAisErrorT.SA_AIS_OK:
                     log_err("saImmOmCcbInitialize FAILED - %s" %
                             eSaAisErrorT.whatis(rc))
         return rc
 
-    @bad_handle_retry
     def create(self, obj, parent_name=None):
         """ Create the CCB object
 
@@ -237,7 +198,6 @@ class Ccb(object):
 
         return rc
 
-    @bad_handle_retry
     def delete(self, object_name):
         """ Add a delete operation of the object with the given DN to the CCB
 
@@ -269,7 +229,6 @@ class Ccb(object):
 
         return rc
 
-    @bad_handle_retry
     def _modify(self, object_name, attr_name, values, mod_type):
         """ Modify an existing object
 
@@ -285,7 +244,7 @@ class Ccb(object):
             rc = eSaAisErrorT.SA_AIS_ERR_INVALID_PARAM
         else:
             if not self.accessor:
-                self.accessor = ImmOmAccessor(self.init_version)
+                self.accessor = Accessor(self.init_version)
                 self.accessor.init()
 
             # Get the attribute value type by reading the object's class
@@ -293,8 +252,7 @@ class Ccb(object):
             rc, obj = self.accessor.get(object_name)
             if rc == eSaAisErrorT.SA_AIS_OK:
                 class_name = obj.SaImmAttrClassName
-                _, attr_def_list = \
-                    self.imm_om.get_class_description(class_name)
+                _, attr_def_list = self.get_class_description(class_name)
                 value_type = None
                 for attr_def in attr_def_list:
                     if attr_def.attrName == attr_name:
