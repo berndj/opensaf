@@ -56,6 +56,7 @@ typedef enum {
 typedef enum {
   JOB_TYPE_IMM = 1,  /* A IMM job */
   JOB_TYPE_NTF = 2, /* A NTF job */
+  JOB_TYPE_CLM = 3, /* A CLM job */
   JOB_TYPE_ANY
 } AvdJobTypeT;
 
@@ -165,6 +166,8 @@ class Fifo {
 
   static AvdJobDequeueResultT execute(const AVD_CL_CB *cb);
   static AvdJobDequeueResultT executeAll(const AVD_CL_CB *cb,
+      AvdJobTypeT job_type = JOB_TYPE_ANY);
+  static void remove(const AVD_CL_CB *cb,
       AvdJobTypeT job_type = JOB_TYPE_ANY);
   static AvdJobDequeueResultT executeAdminResp(const AVD_CL_CB *cb);
 
