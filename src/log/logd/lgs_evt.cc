@@ -335,9 +335,9 @@ int lgs_client_delete_by_mds_dest(MDS_DEST mds_dest, time_t *closetime_ptr) {
   TRACE_ENTER2("mds_dest %" PRIx64, mds_dest);
   /* Loop through Client DB */
   ClientMap *clientMap(reinterpret_cast<ClientMap *>(client_db));
-  for (const auto &value : *clientMap) {
-    rp = value.second;
-
+  for (auto it = clientMap->begin(); it != clientMap->end(); ) {
+    rp = it->second;
+    it++;
     if (m_NCS_MDS_DEST_EQUAL(&rp->mds_dest, &mds_dest))
       rc = lgs_client_delete(rp->client_id, closetime_ptr);
   }
