@@ -63,7 +63,8 @@ static void *pcs_rda_callback_cb = nullptr;
 static PCSRDA_RETURN_CODE rda_callback_task(RDA_CALLBACK_CB *rda_callback_cb);
 static PCSRDA_RETURN_CODE pcs_rda_reg_callback(uint32_t cb_handle,
                                                PCS_RDA_CB_PTR rda_cb_ptr,
-                                               void **task_cb);
+                                               void **task_cb,
+                                               SaAmfHAStateT *ha_state);
 static PCSRDA_RETURN_CODE pcs_rda_unreg_callback(void *task_cb);
 static PCSRDA_RETURN_CODE rda_read_msg(int sockfd, char *msg, int size);
 static PCSRDA_RETURN_CODE rda_write_msg(int sockfd, char *msg);
@@ -71,7 +72,9 @@ static PCSRDA_RETURN_CODE rda_parse_msg(const char *pmsg,
                                         RDE_RDA_CMD_TYPE *cmd_type, int *value);
 static PCSRDA_RETURN_CODE rda_connect(int *sockfd);
 static PCSRDA_RETURN_CODE rda_disconnect(int sockfd);
-static PCSRDA_RETURN_CODE rda_callback_req(int sockfd);
+static PCSRDA_RETURN_CODE rda_callback_req(int sockfd, PCS_RDA_ROLE *role);
+static uint32_t pcs_rda_role_to_amf_ha_state(PCS_RDA_ROLE role,
+                                        SaAmfHAStateT *ha_state);
 
 /*****************************************************************************
 
@@ -97,6 +100,7 @@ static PCSRDA_RETURN_CODE rda_callback_task(RDA_CALLBACK_CB *rda_callback_cb) {
   bool conn_lost = false;
   RDE_RDA_CMD_TYPE cmd_type = RDE_RDA_UNKNOWN;
   PCS_RDA_CB_INFO cb_info;
+  PCS_RDA_ROLE role;
 
   while (!rda_callback_cb->task_terminate) {
     /*
@@ -128,7 +132,7 @@ static PCSRDA_RETURN_CODE rda_callback_task(RDA_CALLBACK_CB *rda_callback_cb) {
       /*
        ** Send callback reg request messgae
        */
-      rc = rda_callback_req(rda_callback_cb->sockfd);
+      rc = rda_callback_req(rda_callback_cb->sockfd, &role);
       if (rc != PCSRDA_RC_SUCCESS) {
         rda_disconnect(rda_callback_cb->sockfd);
         rda_callback_cb->sockfd = -1;
@@ -140,6 +144,18 @@ static PCSRDA_RETURN_CODE rda_callback_task(RDA_CALLBACK_CB *rda_callback_cb) {
        */
       retry_count = 0;
       conn_lost = false;
+      /*
+       * Inform application the role change during lost connection
+       */
+      if (role != static_cast<PCS_RDA_ROLE>(value)) {
+        value = static_cast<int>(role);
+        cb_info.cb_type = PCS_RDA_ROLE_CHG_IND;
+        cb_info.info.io_role = role;
+
+        (*rda_callback_cb->callback_ptr)(rda_callback_cb->callback_handle,
+                                          &cb_info,
+                                          PCSRDA_RC_SUCCESS);
+      }
     }
 
     /*
@@ -196,10 +212,11 @@ static PCSRDA_RETURN_CODE rda_callback_task(RDA_CALLBACK_CB *rda_callback_cb) {
  *****************************************************************************/
 static PCSRDA_RETURN_CODE pcs_rda_reg_callback(uint32_t cb_handle,
                                                PCS_RDA_CB_PTR rda_cb_ptr,
-                                               void **task_cb) {
+                                               void **task_cb, SaAmfHAStateT *ha_state) {
   PCSRDA_RETURN_CODE rc = PCSRDA_RC_SUCCESS;
   int sockfd = -1;
   bool is_task_spawned = false;
+  PCS_RDA_ROLE role;
   RDA_CALLBACK_CB *rda_callback_cb = nullptr;
 
   if (*task_cb != nullptr) return PCSRDA_RC_CALLBACK_ALREADY_REGD;
@@ -226,11 +243,13 @@ static PCSRDA_RETURN_CODE pcs_rda_reg_callback(uint32_t cb_handle,
     /*
      ** Send callback reg request messgae
      */
-    rc = rda_callback_req(sockfd);
+    rc = rda_callback_req(sockfd, &role);
     if (rc != PCSRDA_RC_SUCCESS) {
       break;
     }
-
+    if (ha_state != nullptr) {
+      pcs_rda_role_to_amf_ha_state(role, ha_state);
+    }
     /*
      ** Allocate callback control block
      */
@@ -587,7 +606,7 @@ static PCSRDA_RETURN_CODE rda_disconnect(int sockfd) {
  NOTES:
 
  *****************************************************************************/
-static PCSRDA_RETURN_CODE rda_callback_req(int sockfd) {
+static PCSRDA_RETURN_CODE rda_callback_req(int sockfd, PCS_RDA_ROLE *role) {
   char msg[64] = {0};
   int value = -1;
   RDE_RDA_CMD_TYPE cmd_type = RDE_RDA_UNKNOWN;
@@ -613,6 +632,7 @@ static PCSRDA_RETURN_CODE rda_callback_req(int sockfd) {
   if (cmd_type != RDE_RDA_REG_CB_ACK) {
     return PCSRDA_RC_CALLBACK_REG_FAILED;
   }
+  *role = static_cast<PCS_RDA_ROLE>(value);
 
   return PCSRDA_RC_SUCCESS;
 }
@@ -751,10 +771,30 @@ uint32_t rda_get_role(SaAmfHAStateT *ha_state) {
   uint32_t rc = NCSCC_RC_SUCCESS;
   PCS_RDA_ROLE role;
 
+  if (ha_state == nullptr) return NCSCC_RC_FAILURE;
+
   if (pcs_rda_get_role(&role) != PCSRDA_RC_SUCCESS) {
     rc = NCSCC_RC_FAILURE;
     goto done;
   }
+
+  rc = pcs_rda_role_to_amf_ha_state(role, ha_state);
+
+done:
+  return rc;
+}
+
+uint32_t rda_register_callback(uint32_t cb_handle, PCS_RDA_CB_PTR rda_cb_ptr,
+    SaAmfHAStateT *ha_state) {
+  if (pcs_rda_reg_callback(cb_handle, rda_cb_ptr, &pcs_rda_callback_cb,
+      ha_state) == PCSRDA_RC_SUCCESS)
+    return NCSCC_RC_SUCCESS;
+  else
+    return NCSCC_RC_FAILURE;
+}
+
+uint32_t pcs_rda_role_to_amf_ha_state(PCS_RDA_ROLE role,
+    SaAmfHAStateT *ha_state) {
 
   switch (role) {
     case PCS_RDA_ACTIVE:
@@ -772,17 +812,7 @@ uint32_t rda_get_role(SaAmfHAStateT *ha_state) {
     default:
       return NCSCC_RC_FAILURE;
   }
-
-done:
-  return rc;
-}
-
-uint32_t rda_register_callback(uint32_t cb_handle, PCS_RDA_CB_PTR rda_cb_ptr) {
-  if (pcs_rda_reg_callback(cb_handle, rda_cb_ptr, &pcs_rda_callback_cb) ==
-      PCSRDA_RC_SUCCESS)
-    return NCSCC_RC_SUCCESS;
-  else
-    return NCSCC_RC_FAILURE;
+  return NCSCC_RC_SUCCESS;
 }
 
 /****************************************************************************
@@ -819,7 +849,8 @@ PCSRDA_RETURN_CODE pcs_rda_request(PCS_RDA_REQ *pcs_rda_req) {
     case PCS_RDA_REGISTER_CALLBACK:
       ret = pcs_rda_reg_callback(pcs_rda_req->callback_handle,
                                  pcs_rda_req->info.call_back,
-                                 &pcs_rda_callback_cb);
+                                 &pcs_rda_callback_cb,
+                                 nullptr);
       break;
 
     case PCS_RDA_UNREGISTER_CALLBACK:
