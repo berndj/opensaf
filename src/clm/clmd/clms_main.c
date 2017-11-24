@@ -336,16 +336,12 @@ static uint32_t clms_init(void)
 		goto done;
 	}
 
-	if ((rc = rda_get_role(&clms_cb->ha_state)) != NCSCC_RC_SUCCESS) {
-		LOG_ER("rda_get_role FAILED");
-		goto done;
-	}
-	TRACE("Current RDA Role %d", clms_cb->ha_state);
-
-	if ((rc = rda_register_callback(0, rda_cb, &clms_cb->ha_state)) != NCSCC_RC_SUCCESS) {
+	if ((rc = rda_register_callback(0, rda_cb, &clms_cb->ha_state))
+	    != NCSCC_RC_SUCCESS) {
 		LOG_ER("rda_register_callback FAILED %u", rc);
 		goto done;
 	}
+	TRACE("Current RDA Role %d", clms_cb->ha_state);
 
 	/* Create the mailbox used for communication with CLMS */
 	if ((rc = m_NCS_IPC_CREATE(&clms_cb->mbx)) != NCSCC_RC_SUCCESS) {

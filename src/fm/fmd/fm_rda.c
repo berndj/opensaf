@@ -20,7 +20,8 @@
 #include <syslog.h>
 #include "rde/agent/rda_papi.h"
 #include "base/logtrace.h"
-
+extern void rda_cb(uint32_t cb_hdl, PCS_RDA_CB_INFO *cb_info,
+       PCSRDA_RETURN_CODE error_code);
 /****************************************************************************
  * Name          : fm_rda_init
  *
@@ -37,10 +38,11 @@ uint32_t fm_rda_init(FM_CB *fm_cb)
 	uint32_t rc;
 	SaAmfHAStateT ha_state;
 	TRACE_ENTER();
-	if ((rc = rda_get_role(&ha_state)) != NCSCC_RC_SUCCESS) {
-		LOG_ER("rda_get_role FAILED");
+	if ((rc = rda_register_callback(0, rda_cb, &ha_state)) != NCSCC_RC_SUCCESS) {
+		syslog(LOG_ERR, "rda_register_callback FAILED %u", rc);
 		goto done;
 	}
+
 	switch (ha_state) {
 	case SA_AMF_HA_ACTIVE:
 		fm_cb->role = PCS_RDA_ACTIVE;

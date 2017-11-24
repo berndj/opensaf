@@ -212,7 +212,8 @@ static PCSRDA_RETURN_CODE rda_callback_task(RDA_CALLBACK_CB *rda_callback_cb) {
  *****************************************************************************/
 static PCSRDA_RETURN_CODE pcs_rda_reg_callback(uint32_t cb_handle,
                                                PCS_RDA_CB_PTR rda_cb_ptr,
-                                               void **task_cb, SaAmfHAStateT *ha_state) {
+                                               void **task_cb,
+                                               SaAmfHAStateT *ha_state) {
   PCSRDA_RETURN_CODE rc = PCSRDA_RC_SUCCESS;
   int sockfd = -1;
   bool is_task_spawned = false;

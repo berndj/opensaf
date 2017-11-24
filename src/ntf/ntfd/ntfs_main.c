@@ -202,12 +202,8 @@ static uint32_t initialize()
 		goto done;
 	}
 
-	if ((rc = rda_get_role(&ntfs_cb->ha_state)) != NCSCC_RC_SUCCESS) {
-		LOG_ER("rda_get_role FAILED");
-		goto done;
-	}
-
-	if ((rc = rda_register_callback(0, rda_cb, &ntfs_cb->ha_state)) != NCSCC_RC_SUCCESS) {
+	if ((rc = rda_register_callback(0, rda_cb, &ntfs_cb->ha_state))
+	    != NCSCC_RC_SUCCESS) {
 		LOG_ER("rda_register_callback FAILED %u", rc);
 		goto done;
 	}

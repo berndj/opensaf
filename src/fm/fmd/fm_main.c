@@ -64,6 +64,8 @@ static void fm_evt_proc_rda_callback(FM_CB *, FM_EVT *);
 static void fm_tmr_exp(void *);
 void handle_mbx_event(void);
 extern uint32_t fm_amf_init(FM_AMF_CB *fm_amf_cb);
+void rda_cb(uint32_t cb_hdl, PCS_RDA_CB_INFO *cb_info,
+       PCSRDA_RETURN_CODE error_code);
 uint32_t gl_fm_hdl;
 static NCS_SEL_OBJ usr1_sel_obj;
 
@@ -87,7 +89,7 @@ static void sigusr1_handler(int sig)
  * @param cb_info
  * @param error_code
  */
-static void rda_cb(uint32_t cb_hdl, PCS_RDA_CB_INFO *cb_info,
+void rda_cb(uint32_t cb_hdl, PCS_RDA_CB_INFO *cb_info,
 		   PCSRDA_RETURN_CODE error_code)
 {
 	uint32_t rc;
@@ -217,11 +219,6 @@ int main(int argc, char *argv[])
 		fm_cb->control_tipc = true;
 	else
 		fm_cb->control_tipc = false;
-
-	if ((rc = rda_register_callback(0, rda_cb, NULL)) != NCSCC_RC_SUCCESS) {
-		syslog(LOG_ERR, "rda_register_callback FAILED %u", rc);
-		goto fm_init_failed;
-	}
 
 	if (nid_started &&
 	    (rc = ncs_sel_obj_create(&usr1_sel_obj)) != NCSCC_RC_SUCCESS) {
