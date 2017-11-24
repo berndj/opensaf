@@ -116,5 +116,4 @@ extern FM_CB *fm_cb;
  *****************************************************************/
 uint32_t fm_rda_init(FM_CB *);
 uint32_t fm_rda_set_role(FM_CB *, PCS_RDA_ROLE);
-
 #endif  // FM_FMD_FM_CB_H_

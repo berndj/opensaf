@@ -102,14 +102,15 @@ extern struct ImmutilWrapperProfile immutilWrapperProfile;
 static struct pollfd fds[FD_NUM];
 static nfds_t nfds = FD_NUM;
 static NCS_SEL_OBJ usr1_sel_obj;
-
+void rda_cb(uint32_t cb_hdl, PCS_RDA_CB_INFO *cb_info,
+                   PCSRDA_RETURN_CODE error_code);
 /**
  * Callback from RDA. Post a message/event to the lgs mailbox.
  * @param cb_hdl
  * @param cb_info
  * @param error_code
  */
-static void rda_cb(uint32_t cb_hdl, PCS_RDA_CB_INFO *cb_info,
+void rda_cb(uint32_t cb_hdl, PCS_RDA_CB_INFO *cb_info,
                    PCSRDA_RETURN_CODE error_code) {
   uint32_t rc;
   lgsv_lgs_evt_t *evt;
@@ -308,11 +309,6 @@ static uint32_t log_initialize(void) {
    */
   if (lgs_cb_init(lgs_cb) != NCSCC_RC_SUCCESS) {
     LOG_ER("lgs_cb_init FAILED");
-    goto done;
-  }
-
-  if ((rc = rda_register_callback(0, rda_cb, &lgs_cb->ha_state)) != NCSCC_RC_SUCCESS) {
-    LOG_ER("rda_register_callback FAILED %u", rc);
     goto done;
   }
 

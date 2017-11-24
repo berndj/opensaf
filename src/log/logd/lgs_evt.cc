@@ -53,6 +53,8 @@ static const LGSV_LGS_LGA_API_MSG_HANDLER lgs_lga_api_msg_dispatcher[] = {
     proc_stream_close_msg, proc_write_log_async_msg,
 };
 
+extern void rda_cb(uint32_t cb_hdl, PCS_RDA_CB_INFO *cb_info,
+                   PCSRDA_RETURN_CODE error_code);
 /**
  * Check if the log version is valid
  * @param version
@@ -621,8 +623,9 @@ uint32_t lgs_cb_init(lgs_cb_t *lgs_cb) {
   lgs_cb->log_version.majorVersion = LOG_MAJOR_VERSION;
   lgs_cb->log_version.minorVersion = LOG_MINOR_VERSION;
 
-  if ((rc = rda_get_role(&lgs_cb->ha_state)) != NCSCC_RC_SUCCESS) {
-    LOG_ER("rda_get_role FAILED");
+  if ((rc = rda_register_callback(0, rda_cb, &lgs_cb->ha_state))
+      != NCSCC_RC_SUCCESS) {
+    LOG_ER("rda_register_callback FAILED %u", rc);
     goto done;
   }
 
