@@ -125,11 +125,13 @@ extern uint32_t rda_get_role(SaAmfHAStateT *ha_state);
  * change
  * @param cb_handle passed to callback function
  * @param rda_cb_ptr callback function
+ * @param ha_state current AMF HA role from RDE
  *
  * @return uint32_t NCSCC_RC_SUCCESS/NCSCC_RC_FAILURE
  */
 extern uint32_t rda_register_callback(uint32_t cb_handle,
-                                      PCS_RDA_CB_PTR rda_cb_ptr);
+                                      PCS_RDA_CB_PTR rda_cb_ptr,
+                                      SaAmfHAStateT *ha_state);
 
 #ifdef __cplusplus
 }

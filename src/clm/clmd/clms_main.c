@@ -342,7 +342,7 @@ static uint32_t clms_init(void)
 	}
 	TRACE("Current RDA Role %d", clms_cb->ha_state);
 
-	if ((rc = rda_register_callback(0, rda_cb)) != NCSCC_RC_SUCCESS) {
+	if ((rc = rda_register_callback(0, rda_cb, &clms_cb->ha_state)) != NCSCC_RC_SUCCESS) {
 		LOG_ER("rda_register_callback FAILED %u", rc);
 		goto done;
 	}

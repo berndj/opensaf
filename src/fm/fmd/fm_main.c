@@ -218,7 +218,7 @@ int main(int argc, char *argv[])
 	else
 		fm_cb->control_tipc = false;
 
-	if ((rc = rda_register_callback(0, rda_cb)) != NCSCC_RC_SUCCESS) {
+	if ((rc = rda_register_callback(0, rda_cb, NULL)) != NCSCC_RC_SUCCESS) {
 		syslog(LOG_ERR, "rda_register_callback FAILED %u", rc);
 		goto fm_init_failed;
 	}

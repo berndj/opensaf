@@ -577,7 +577,7 @@ static uint32_t initialize(void) {
     goto done;
   }
 
-  if ((rc = rda_register_callback(0, rda_cb)) != NCSCC_RC_SUCCESS) {
+  if ((rc = rda_register_callback(0, rda_cb, &role)) != NCSCC_RC_SUCCESS) {
     LOG_ER("rda_register_callback FAILED %u", rc);
     goto done;
   }
