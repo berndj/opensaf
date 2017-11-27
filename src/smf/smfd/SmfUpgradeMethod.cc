@@ -173,11 +173,30 @@ void SmfUpgradeScope::removeSwAddRemoveDuplicates(
   std::set<std::string> toBeRemoved;
 
   // Find out which bundles are specified in both swAdd and SwRemove.
-  // Create a set of DN, since the comparison is based on that.
+  // Create a set of DN's if their Amf Nodes in swAdd and swRemove exactly same and match.
   for (auto &elemAdd : io_addList) {
+    bool sameNodesInAddRemoveSw = false;
     for (auto &elemRemove : io_removeList) {
       const std::string &swAddBundleDn = elemAdd.getBundleDn();
       if (swAddBundleDn == elemRemove.getBundleDn()) {
+         for (auto &itAdd : elemAdd.getPlmExecEnvList()) {
+           const std::string& i_addNodeDn = itAdd.getAmfNode();
+             for (auto itRemove : elemRemove.getPlmExecEnvList()) {
+               const std::string& i_removeNodeDn = itRemove.getAmfNode();
+               if (i_addNodeDn == i_removeNodeDn) {
+                 sameNodesInAddRemoveSw = true;
+                 TRACE("SmfUpgradeScope::removeSwAddRemoveDuplicates(): node DN's %s are same ", i_addNodeDn.c_str());
+                 break;
+               }
+             }
+             if (sameNodesInAddRemoveSw == false) {
+               break;
+             }
+         }
+         if (sameNodesInAddRemoveSw == false) {
+           continue;
+         }
+
         TRACE(
             "SmfUpgradeScope::removeSwAddRemoveDuplicates(): Bundle=%s found in <swAdd> and <swRemove> within a procedure, remove from both lists\n",
             swAddBundleDn.c_str());
