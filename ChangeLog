@@ -1,3 +1,23 @@
+OpenSAF 5.17.11.1 (released 2017-11-28)
+---------------------------------------
+
+    * rde: Remove rda_get_role before rda_register_callback [#2687]
+    * rde: Add current role in response of register request [#2687]
+    * amfd: Add retry mechanism for ClmTrackStart/Stop as job queue V2 [#2631]
+    * pyosaf: Create a pylint makefile target for pyosaf V2 [#2636]
+    * base: Make pylint output format selectable V2 [#2686]
+    * clm: Fix clm_user_data to not truncate data V2 [#2684]
+    * pyosaf: add README for high level python interfaces [#2674]
+    * base: Fix build problem on GCC 7.1.1 [#2637]
+    * base: Send logtrace message in blocking mode to avoid dropped messages [#2637]
+    * base: Add TimeoutStartSec to opensafd.service [#2678]
+    * clm: clmprint does not work as expected [#2651]
+    * nid: Correctly handle the case when OPENSAF_MANAGE_TIPC=no [#2680]
+    * clm: WA Two active controllers observed at cluster [#2677]
+    * clm: Fix unexpected join response error when executing immadm -o 4, 5 commands [#2661]
+    * dtm: Fix segv in osafdtmd [#2669]
+    * imm: update README with IMM changes in OpenSAF 5.17.11 and rename IMM schema [#2665]
+
 OpenSAF 5.17.11 (released 2017-11-03)
 -------------------------------------
 
