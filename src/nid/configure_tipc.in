@@ -69,9 +69,6 @@ if [ "$#" -lt "1" ] || [ "$#" -gt "4" ]
      exit 1
 fi
 
-ETH_NAME=$2
-TIPC_NETID=$3
-
 # Make sure tipc-config is available, either in path or in default location
 tipc=$(which tipc 2> /dev/null)
 tipc_config=$(which tipc-config 2> /dev/null)
@@ -92,8 +89,14 @@ if [ "$MANAGE_TIPC" != "yes" ] && ! [ -s "$pkglocalstatedir/node_id" ]; then
     SLOT_ID=$((addr & 255))
     SUBSLOT_ID=$(((addr >> 8) ^ 15))
     printf "00%02x%02x%02x\\n" $CHASSIS_ID $((SLOT_ID & 255)) $((SUBSLOT_ID ^ ((SLOT_ID >> 8) & 15) )) > "$pkglocalstatedir/node_id"
+fi
+
+if [ "$MANAGE_TIPC" != "yes" ]; then
     exit 0
 fi
+
+ETH_NAME=$2
+TIPC_NETID=$3
 
 if ! [ -x "${tipc_config}" ]; then
     echo "error: tipc-config is not available"

@@ -27,7 +27,8 @@ LogServer::LogServer(int term_fd)
     : term_fd_{term_fd},
       log_socket_{
           base::GetEnv<std::string>("pkglocalstatedir", PKGLOCALSTATEDIR) +
-          "/osaf_log.sock"},
+              "/osaf_log.sock",
+          base::UnixSocket::kNonblocking},
       log_streams_{},
       current_stream_{new LogStream{"mds.log", 1}},
       no_of_log_streams_{1} {

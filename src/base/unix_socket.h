@@ -29,11 +29,13 @@
 
 namespace base {
 
-// A class implementing non-blocking operations on a UNIX domain socket. This
-// class is not thread-safe and must be protected by a mutex if shared between
-// multiple threads.
+// A class implementing operations on a UNIX domain socket. This class is not
+// thread-safe and must be protected by a mutex if shared between multiple
+// threads. You can select to use either blocking or non-blocking mode.
 class UnixSocket {
  public:
+  // I/O mode for Send and Receive socket operations.
+  enum Mode { kNonblocking, kBlocking };
   // Close the socket.
   virtual ~UnixSocket();
   // Returns the current file descriptor for this UNIX socket, or -1 if the
@@ -48,12 +50,12 @@ class UnixSocket {
     if (sock < 0) sock = Open();
     return sock;
   }
-  // Send a message in non-blocking mode. This call will open the socket if it
-  // was not already open. The EINTR error code from the send() libc function is
-  // handled by retrying the send() call in a loop. In case of other errors, -1
-  // is returned and errno contains one of the codes listed in the recv() libc
-  // function. The socket will be closed in case the error was not EINTR, EAGAIN
-  // or EWOULDBLOCK.
+  // Send a message in blocking or non-blocking mode. This call will open the
+  // socket if it was not already open. The EINTR error code from the send()
+  // libc function is handled by retrying the send() call in a loop. In case of
+  // other errors, -1 is returned and errno contains one of the codes listed in
+  // the recv() libc function. The socket will be closed in case the error was
+  // not EINTR, EAGAIN or EWOULDBLOCK.
   ssize_t Send(const void* buffer, size_t length) {
     int sock = fd();
     ssize_t result = -1;
@@ -65,12 +67,12 @@ class UnixSocket {
     }
     return result;
   }
-  // Receive a message in non-blocking mode. This call will open the socket if
-  // it was not already open. The EINTR error code from the recv() libc function
-  // is handled by retrying the recv() call in a loop. In case of other errors,
-  // -1 is returned and errno contains one of the codes listed in the recv()
-  // libc function. The socket will be closed in case the error was not EINTR,
-  // EAGAIN or EWOULDBLOCK.
+  // Receive a message in blocking or non-blocking mode. This call will open the
+  // socket if it was not already open. The EINTR error code from the recv()
+  // libc function is handled by retrying the recv() call in a loop. In case of
+  // other errors, -1 is returned and errno contains one of the codes listed in
+  // the recv() libc function. The socket will be closed in case the error was
+  // not EINTR, EAGAIN or EWOULDBLOCK.
   ssize_t Recv(void* buffer, size_t length) {
     int sock = fd();
     ssize_t result = -1;
@@ -84,7 +86,7 @@ class UnixSocket {
   }
 
  protected:
-  explicit UnixSocket(const std::string& path);
+  explicit UnixSocket(const std::string& path, Mode mode);
   virtual bool OpenHook(int sock);
   virtual void CloseHook();
   const struct sockaddr* addr() const {
@@ -102,6 +104,7 @@ class UnixSocket {
   struct sockaddr_un addr_;
   struct timespec last_failed_open_;
   int saved_errno_;
+  Mode mode_;
 
   DELETE_COPY_AND_MOVE_OPERATORS(UnixSocket);
 };

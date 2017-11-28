@@ -233,7 +233,8 @@ TEST(WriteToDestination, HaveDestNameAndDestCfg) {
   std::string origin{""};
 
   // Create the server listen to the local socket
-  static base::UnixServerSocket server{"/tmp/test.sock"};
+  static base::UnixServerSocket server{"/tmp/test.sock",
+                                       base::UnixSocket::kNonblocking};
   server.fd();
 
   const std::vector<std::string> dest{"test;UNIX_SOCKET;/tmp/test.sock"};
@@ -247,7 +248,7 @@ TEST(WriteToDestination, HaveDestNameAndDestCfg) {
                : "";
 
   // Origin is FQDN = <hostname>[.<networkname>]
-  origin = std::string {data.hostname} + nkname;
+  origin = std::string{data.hostname} + nkname;
 
   info.msgid = data.msgid;
   info.log_record = data.logrec;
@@ -333,7 +334,8 @@ TEST(GetDestinationStatus, AddMultipleDestinationWithDestReceiver) {
                                        "test1;UNIX_SOCKET;", "test2;NILDEST;"};
 
   // Create the server listen to the local socket
-  static base::UnixServerSocket server{"/tmp/test.sock"};
+  static base::UnixServerSocket server{"/tmp/test.sock",
+                                       base::UnixSocket::kNonblocking};
   server.fd();
   CfgDestination(vdest, ModifyType::kReplace);
 
@@ -352,7 +354,8 @@ TEST(GetDestinationStatus, RemoveDestFromMultipleDestinationWithDestReceiver) {
                                        "test1;UNIX_SOCKET;", "test2;NILDEST;"};
 
   // Create the server listen to the local socket
-  static base::UnixServerSocket server{"/tmp/test.sock"};
+  static base::UnixServerSocket server{"/tmp/test.sock",
+                                       base::UnixSocket::kNonblocking};
   server.fd();
 
   // Add destination configurations, then delete one.

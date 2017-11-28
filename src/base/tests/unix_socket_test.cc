@@ -23,6 +23,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <thread>
+#include "base/time.h"
+#include "base/unix_client_socket.h"
 #include "base/unix_server_socket.h"
 #include "gtest/gtest.h"
 
@@ -54,12 +57,31 @@ class UnixSocketTest : public ::testing::Test {
     }
   }
 
+  static void ServerThread();
+
   std::string tmpdir_;
+  static base::UnixServerSocket* server_;
 };
+
+base::UnixServerSocket* UnixSocketTest::server_ = nullptr;
+
+void UnixSocketTest::ServerThread() {
+  char buf[256] = {};
+  const timespec kOneMicrosecond{0, 100};
+  for (int i = 0; i != 10; ++i) {
+    base::Sleep(kOneMicrosecond);
+    for (int j = 0; j != 100; ++j) {
+      ssize_t result = server_->Recv(buf, sizeof(buf));
+      EXPECT_GE(result, 0);
+      EXPECT_EQ(static_cast<size_t>(result), sizeof(buf));
+    }
+  }
+}
 
 TEST_F(UnixSocketTest, DestructorShallUnlinkSocket) {
   ASSERT_FALSE(SocketExists());
-  base::UnixServerSocket* sock = new base::UnixServerSocket(SocketName());
+  base::UnixServerSocket* sock =
+      new base::UnixServerSocket(SocketName(), base::UnixSocket::kNonblocking);
   EXPECT_FALSE(SocketExists());
   char buf[32];
   sock->Recv(buf, sizeof(buf));
@@ -81,7 +103,8 @@ TEST_F(UnixSocketTest, OpenShallUnlinkExistingSocket) {
       0);
   ASSERT_EQ(close(sock), 0);
   EXPECT_TRUE(SocketExists());
-  base::UnixServerSocket* server = new base::UnixServerSocket(SocketName());
+  base::UnixServerSocket* server =
+      new base::UnixServerSocket(SocketName(), base::UnixSocket::kNonblocking);
   char buf[32];
   ssize_t result = server->Recv(buf, sizeof(buf));
   int saved_errno = errno;
@@ -93,12 +116,14 @@ TEST_F(UnixSocketTest, OpenShallUnlinkExistingSocket) {
 
 TEST_F(UnixSocketTest, DontUnlinkExistingSocketIfServerStillAlive) {
   ASSERT_FALSE(SocketExists());
-  base::UnixServerSocket* sock = new base::UnixServerSocket(SocketName());
+  base::UnixServerSocket* sock =
+      new base::UnixServerSocket(SocketName(), base::UnixSocket::kNonblocking);
   char buf[32];
   ssize_t result = sock->Recv(buf, sizeof(buf));
   EXPECT_EQ(result, -1);
   EXPECT_EQ(errno, EAGAIN);
-  base::UnixServerSocket* sock2 = new base::UnixServerSocket(SocketName());
+  base::UnixServerSocket* sock2 =
+      new base::UnixServerSocket(SocketName(), base::UnixSocket::kNonblocking);
   result = sock2->Recv(buf, sizeof(buf));
   EXPECT_EQ(result, -1);
   EXPECT_EQ(errno, EADDRINUSE);
@@ -110,9 +135,35 @@ TEST_F(UnixSocketTest, DontUnlinkExistingSocketIfServerStillAlive) {
 
 TEST_F(UnixSocketTest, FdMethodShallOpenTheSocket) {
   ASSERT_FALSE(SocketExists());
-  base::UnixServerSocket* sock = new base::UnixServerSocket(SocketName());
+  base::UnixServerSocket* sock =
+      new base::UnixServerSocket(SocketName(), base::UnixSocket::kNonblocking);
   int fd = sock->fd();
   EXPECT_GE(fd, 0);
   EXPECT_TRUE(SocketExists());
   delete sock;
+}
+
+TEST_F(UnixSocketTest, BlockingSend) {
+  ASSERT_FALSE(SocketExists());
+  server_ =
+      new base::UnixServerSocket(SocketName(), base::UnixSocket::kBlocking);
+  int server_fd = server_->fd();
+  EXPECT_GE(server_fd, 0);
+  EXPECT_TRUE(SocketExists());
+  std::thread server_thread{ServerThread};
+  base::UnixClientSocket* client =
+      new base::UnixClientSocket(SocketName(), base::UnixSocket::kBlocking);
+  char buf[256] = {};
+  for (int i = 0; i != 10; ++i) {
+    for (int j = 0; j != 100; ++j) {
+      ssize_t result = client->Send(buf, sizeof(buf));
+      EXPECT_GE(result, 0);
+      EXPECT_EQ(static_cast<size_t>(result), sizeof(buf));
+    }
+  }
+  delete client;
+  EXPECT_TRUE(SocketExists());
+  server_thread.join();
+  delete server_;
+  EXPECT_FALSE(SocketExists());
 }

@@ -47,7 +47,7 @@ static const char kDelimeter[] = ";";
 //==============================================================================
 UnixSocketHandler::UnixSocketHandler(const char* socket_name)
     : sock_path_{socket_name},
-      sock_{socket_name},
+      sock_{socket_name, base::UnixSocket::kNonblocking},
       status_{DestinationStatus::kFailed} {
   // Open the unix socket & and flush the destination status to @status_
   Open();
