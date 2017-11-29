@@ -41,7 +41,7 @@ exit 0
 # for node in "$@"
 #  do
 #     logger "> [$node]"
-#     IFS=","
+#     IFS=$CLM_IFS
 #     for arg in $node
 #      do
 #        logger ">> $arg"
@@ -61,7 +61,7 @@ imm_xml=$tmpdir/imm.xml
 
 immfind -c SaClmNode | sed -e 's/^[^=]*=//;s/,.*$//' > "$nodes_cfg_tmp"
 for node in "$@"; do
-    node_name=$(echo "$node" | cut -d"$CLM_IFS" -f2)
+    node_name=$(echo -n "$node" | awk -F "$CLM_IFS" 'BEGIN{RS="^$"} {print $2}')
     echo "$node_name" >> "$nodes_cfg_tmp"
 done
 rm -f "$nodes_cfg"
