@@ -4384,6 +4384,12 @@ SaAisErrorT plms_imm_init(void)
 {
 	SaAisErrorT rc = SA_AIS_OK;
 
+	extern struct ImmutilWrapperProfile immutilWrapperProfile;
+
+	immutilWrapperProfile.errorsAreFatal = false;
+	immutilWrapperProfile.retryInterval = 1000;
+	immutilWrapperProfile.nTries = 180;
+
 	TRACE_ENTER();
 
 	do {
