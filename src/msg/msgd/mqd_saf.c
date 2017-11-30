@@ -268,12 +268,12 @@ void mqd_saf_csi_set_cb(SaInvocationT invocation, const SaNameT *compName,
 						}
 					}
 				}
-				if (pNdNode->info.is_node_down == true) {
+
+				if (pNdNode->info.is_node_down == true)
 					mqd_tmr_stop(&pNdNode->info.timer);
-					mqd_del_node_down_info(pMqd, nodeid);
-					mqd_red_db_node_del(pMqd, pNdNode);
-				}
-				if (pNdNode->info.is_clm_down == true) {
+
+				if (pNdNode->info.is_clm_down ||
+						pNdNode->info.is_node_down) {
 					mqd_red_db_node_del(pMqd, pNdNode);
 					mqd_del_node_down_info(pMqd, nodeid);
 				}
