@@ -292,10 +292,13 @@ uint32_t initialize_for_assignment(smfd_cb_t *cb, SaAmfHAStateT ha_state) {
   if (cb->fully_initialized || ha_state == SA_AMF_HA_QUIESCED) {
     goto done;
   }
+
+  LOG_NO("MDS %s: smfd_mds_init()", __FUNCTION__);
   if ((rc = smfd_mds_init(cb)) != NCSCC_RC_SUCCESS) {
-    LOG_ER("clms_mds_init FAILED %d", rc);
+    LOG_ER("MDS %s: clms_mds_init FAILED %d", __FUNCTION__, rc);
     goto done;
   }
+  LOG_NO("%s: smfd_mds_init() Done", __FUNCTION__);
   cb->fully_initialized = true;
 done:
   TRACE_LEAVE2("rc = %u", rc);

@@ -248,6 +248,8 @@ static uint32_t mds_svc_event(struct ncsmds_callback_info *info)
 			if (m_MDS_DEST_IS_AN_ADEST(svc_evt->i_dest))
 				return NCSCC_RC_SUCCESS;
 			cb->smfd_dest = svc_evt->i_dest;
+			LOG_NO("MDS %s: NCSMDS_UP i_dest = 0x%" PRIx64,
+				__FUNCTION__, svc_evt->i_dest);
 		}
 		break;
 
@@ -265,6 +267,8 @@ static uint32_t mds_svc_event(struct ncsmds_callback_info *info)
 			if (m_MDS_DEST_IS_AN_ADEST(svc_evt->i_dest))
 				return NCSCC_RC_SUCCESS;
 			cb->smfd_dest = 0;
+			LOG_NO("MDS %s: NCSMDS_DOWN smfd_dest = 0",
+				__FUNCTION__);
 		}
 		break;
 	default:
@@ -348,10 +352,11 @@ uint32_t mds_get_handle(smfnd_cb_t *cb)
 	rc = ncsada_api(&arg);
 
 	if (rc != NCSCC_RC_SUCCESS) {
-		LOG_ER("mds_get_handle: get handle FAILED\n");
+		LOG_ER("MDS %s: get handle FAILED", __FUNCTION__);
 		return rc;
 	}
 	cb->mds_handle = arg.info.adest_get_hdls.o_mds_pwe1_hdl;
+	LOG_NO("MDS %s: Done", __FUNCTION__);
 	return rc;
 }
 
@@ -434,8 +439,9 @@ void mds_unregister(smfnd_cb_t *cb)
 	arg.i_op = MDS_UNINSTALL;
 
 	if (ncsmds_api(&arg) != NCSCC_RC_SUCCESS) {
-		LOG_ER("mds_unregister: uninstall adest FAILED\n");
+		LOG_ER("MDS %s: uninstall adest FAILED", __FUNCTION__);
 	}
+	LOG_NO("MDS %s: Done", __FUNCTION__);
 	return;
 }
 
@@ -456,21 +462,24 @@ uint32_t smfnd_mds_init(smfnd_cb_t *cb)
 
 	TRACE_ENTER();
 
+	LOG_NO("MDS %s: mds_get_handle()", __FUNCTION__);
 	rc = mds_get_handle(cb);
 
 	if (rc != NCSCC_RC_SUCCESS) {
-		LOG_ER("smfnd_mds_init: get mds handle FAILED\n");
+		LOG_ER("MDS %s: get mds handle FAILED", __FUNCTION__);
 		goto done;
 	}
 
+	LOG_NO("MDS %s: mds_register()", __FUNCTION__);
 	rc = mds_register(cb);
 
 	if (rc != NCSCC_RC_SUCCESS) {
-		LOG_ER("smfnd_mds_init: mds register FAILED\n");
+		LOG_ER("MDS %s: mds register FAILED", __FUNCTION__);
 		goto done;
 	}
 
 done:
+	LOG_NO("MDS %s: Done", __FUNCTION__);
 	TRACE_LEAVE();
 	return rc;
 }
@@ -489,6 +498,7 @@ done:
 uint32_t smfnd_mds_finalize(smfnd_cb_t *cb)
 {
 	/* Destroy the Destination of SMFND */
+	LOG_NO("MDS %s: mds_unregister()", __FUNCTION__);
 	mds_unregister(cb);
 	return NCSCC_RC_SUCCESS;
 }

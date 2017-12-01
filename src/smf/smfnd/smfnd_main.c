@@ -125,6 +125,7 @@ static uint32_t initialize_smfnd(void)
 	}
 
 	/* Initialize mds communication */
+	LOG_NO("MDS %s: smfnd_mds_init()", __FUNCTION__);
 	if ((rc = smfnd_mds_init(smfnd_cb)) != NCSCC_RC_SUCCESS) {
 		TRACE("smfnd_mds_init FAILED %d", rc);
 		return rc;

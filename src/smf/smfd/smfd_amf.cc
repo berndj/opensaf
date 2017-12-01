@@ -150,6 +150,7 @@ static SaAisErrorT amf_quiesced_state_handler(smfd_cb_t *cb,
    */
   mds_role = cb->mds_role;
   cb->mds_role = V_DEST_RL_QUIESCED;
+  LOG_NO("MDS %s: smfd_mds_change_role()", __FUNCTION__);
   if ((ncscc_rc = smfd_mds_change_role(cb)) != NCSCC_RC_SUCCESS) {
     LOG_ER("smfd_mds_change_role [V_DEST_RL_QUIESCED] FAILED");
     ais_rc = SA_AIS_ERR_FAILED_OPERATION;
@@ -275,6 +276,7 @@ static void amf_csi_set_callback(SaInvocationT invocation,
     role_change = false;
 
   if (role_change == true) {
+    LOG_NO("MDS %s: smfd_mds_change_role()", __FUNCTION__);
     if ((rc = smfd_mds_change_role(smfd_cb)) != NCSCC_RC_SUCCESS) {
       TRACE("smfd_mds_change_role FAILED");
       error = SA_AIS_ERR_FAILED_OPERATION;

@@ -389,9 +389,11 @@ static uint32_t mds_vdest_create(smfd_cb_t *cb)
 	/* Create VDEST */
 	uint32_t rc = ncsvda_api(&arg);
 	if (NCSCC_RC_SUCCESS != rc) {
-		LOG_ER("mds_vdest_create: create vdest for SMFD FAILED\n");
+		LOG_ER("MDS %s: mds_vdest_create: create vdest for SMFD FAILED",
+			__FUNCTION__);
 		return rc;
 	}
+	LOG_NO("MDS %s: VDEST created", __FUNCTION__);
 
 	cb->mds_handle = arg.info.vdest_create.o_mds_pwe1_hdl;
 	return rc;
@@ -432,7 +434,8 @@ uint32_t mds_register(smfd_cb_t *cb)
 	    SMFD_MDS_PVT_SUBPART_VERSION;
 
 	if (ncsmds_api(&svc_info) == NCSCC_RC_FAILURE) {
-		LOG_ER("smfd_mds_register: mds install SMFD FAILED\n");
+		LOG_ER("MDS %s: smfd_mds_register: mds install SMFD FAILED",
+			__FUNCTION__);
 		return NCSCC_RC_FAILURE;
 	}
 
@@ -446,8 +449,9 @@ uint32_t mds_register(smfd_cb_t *cb)
 	svc_info.info.svc_subscribe.i_svc_ids = smfd_id;
 
 	if (ncsmds_api(&svc_info) == NCSCC_RC_FAILURE) {
-		LOG_ER(
-		    "smfd_mds_register: MDS Subscribe for redundancy Failed");
+		LOG_ER("MDS %s: smfd_mds_register: MDS Subscribe for redundancy"
+			" Failed", __FUNCTION__);
+		LOG_NO("MDS %s: 1. mds_unregister()", __FUNCTION__);
 		mds_unregister(cb);
 		return NCSCC_RC_FAILURE;
 	}
@@ -462,11 +466,14 @@ uint32_t mds_register(smfd_cb_t *cb)
 	svc_info.info.svc_subscribe.i_svc_ids = smfnd_id;
 
 	if (ncsmds_api(&svc_info) == NCSCC_RC_FAILURE) {
-		LOG_ER("smfd_mds_register: mds subscribe SMFD FAILED\n");
+		LOG_ER("MDS %s: smfd_mds_register: mds subscribe SMFD FAILED",
+			__FUNCTION__);
+		LOG_NO("MDS %s: 2. mds_unregister()", __FUNCTION__);
 		mds_unregister(cb);
 		return NCSCC_RC_FAILURE;
 	}
 
+	LOG_NO("MDS %s: mds registration is done", __FUNCTION__);
 	return NCSCC_RC_SUCCESS;
 }
 
@@ -495,7 +502,10 @@ void mds_unregister(smfd_cb_t *cb)
 	arg.i_op = MDS_UNINSTALL;
 
 	if (ncsmds_api(&arg) != NCSCC_RC_SUCCESS) {
-		LOG_ER("smfd_mds_unregister: mds uninstall FAILED\n");
+		LOG_ER("MDS %s: smfd_mds_unregister: mds uninstall FAILED",
+			__FUNCTION__);
+	} else {
+		LOG_NO("MDS %s: mds is unregistered", __FUNCTION__);
 	}
 	return;
 }
@@ -518,6 +528,7 @@ uint32_t smfd_mds_init(smfd_cb_t *cb)
 	TRACE_ENTER();
 
 	/* Create the VDEST for SMFD */
+	LOG_NO("MDS %s: mds_vdest_create()", __FUNCTION__);
 	rc = mds_vdest_create(cb);
 	if (rc != NCSCC_RC_SUCCESS) {
 		LOG_ER(" smfd_mds_init: named vdest create FAILED\n");
@@ -525,9 +536,11 @@ uint32_t smfd_mds_init(smfd_cb_t *cb)
 	}
 
 	/* Register MDS communication */
+	LOG_NO("MDS %s: mds_register()", __FUNCTION__);
 	rc = mds_register(cb);
 	if (rc != NCSCC_RC_SUCCESS) {
-		LOG_ER(" smfd_mds_init: mds register FAILED\n");
+		LOG_ER("MDS %s: smfd_mds_init: mds register FAILED",
+			__FUNCTION__);
 		goto done;
 	}
 
@@ -537,6 +550,7 @@ uint32_t smfd_mds_init(smfd_cb_t *cb)
 	else
 		cb->mds_role = V_DEST_RL_STANDBY;
 
+	LOG_NO("MDS %s: smfd_mds_change_role()", __FUNCTION__);
 	rc = smfd_mds_change_role(cb);
 	if (rc != NCSCC_RC_SUCCESS) {
 		LOG_ER("MDS role change to %d FAILED\n", cb->mds_role);
@@ -568,8 +582,11 @@ uint32_t smfd_mds_change_role(smfd_cb_t *cb)
 	arg.req = NCSVDA_VDEST_CHG_ROLE;
 	arg.info.vdest_chg_role.i_vdest = cb->mds_dest;
 	arg.info.vdest_chg_role.i_new_role = cb->mds_role;
+	uint32_t rc = ncsvda_api(&arg);
+	LOG_NO("MDS %s: Setting; arg.info.vdest_chg_role.i_vdest = 0x%" PRIx64
+		", ncsvda_api() rc = %d", __FUNCTION__, cb->mds_dest, rc);
 
-	return ncsvda_api(&arg);
+	return rc;
 }
 
 /****************************************************************************
@@ -596,6 +613,7 @@ static uint32_t mds_vdest_destroy(smfd_cb_t *cb)
 		LOG_ER("NCSVDA_VDEST_DESTROY failed");
 		return rc;
 	}
+	LOG_NO("%s: VDEST Destroyed", __FUNCTION__);
 
 	return rc;
 }
@@ -616,6 +634,7 @@ uint32_t smfd_mds_finalize(smfd_cb_t *cb)
 	uint32_t rc;
 
 	/* Destroy the virtual Destination of SMFD */
+	LOG_NO("MDS %s: mds_vdest_destroy()", __FUNCTION__);
 	rc = mds_vdest_destroy(cb);
 	return rc;
 }
