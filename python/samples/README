@@ -1,28 +1,30 @@
 Sample code in this directory:
 
 amf_demo:
-	Drop-in replacement for C-compiled version; written in python.
-	You can use the same clc-cli script as is used for the C-version:
-		opensaf-staging/samples/avsv/amf_demo_script
+        Drop-in replacement for C-compiled version; written in python.
+        You can use the same clc-cli script and model(xml file) as are used for
+        the C-version:
+            opensaf-code/samples/amf/sa_aware/amf_demo_script
+            opensaf-code/samples/amf/sa_aware/AppConfig-2N.xml
 
 immadm:
-	CLI utility that simulates the C-version of the utility.
-	Run 'immadm --help' for specific options and arguments.
+        CLI utility that simulates the C-version of the utility.
+        Run 'immadm --help' for specific options and arguments.
 
 immlist:
-	CLI utility that simulates the C-version of the utility.
-	Run 'immlist --help' for specific options and arguments.
+        CLI utility that simulates the C-version of the utility.
+        Run 'immlist --help' for specific options and arguments.
 
 immbase.py:
-	Module required by immadm and immlist; contains logging interface and
-	other services.
+        Module required by immadm and immlist; contains logging interface and
+        other services.
 
 clm-tool:
         CLI utility that can be used that demonstrates how to fetch a list of
-        current members of the cluster and how to monitor changes to the 
+        current members of the cluster and how to monitor changes to the
         cluster. Run 'clm-tool --help' for specific options and arguments.
 
-imm-listener: 
+imm-listener:
         The Imm Lister OI demonstrates how to build an
         applier. It listens to changes to SampleClass1 and simply
         prints them on stdout. It's an applier which means that it
@@ -50,7 +52,7 @@ time-reporter:
         from an OI and inclusion of the OI logic into a select loop
         owned by the application. It creates a runtime object timeId=1
         of the class TimeSample and updates its hours, minutes and
-        seconds attributes once every second. 
+        seconds attributes once every second.
         Run 'time-reporter --help' for specific options and arguments
 
 ping-pong:
@@ -80,13 +82,13 @@ ntfsend:
         'ntfsend --help' for specific options and arguments.
 
 ntfsubscribe:
-	The ntfsubscribe sample application is a copy of the
-	ntfsubscribe tool, implemented in Python. It listens for
-	notifications and logs received notifications in the
-	terminal. Run 'ntfsubscribe --help'.
+        The ntfsubscribe sample application is a copy of the
+        ntfsubscribe tool, implemented in Python. It listens for
+        notifications and logs received notifications in the
+        terminal. Run 'ntfsubscribe --help'.
 
 Logging for all apps/utils goes to /var/log/opensaf/saflog/saLogSystem*.log
 
-The IMM OI samples use the classes defined in the classes.xml file. Load it with immcfg -f classes.xml before trying them. 
+The IMM OI samples use the classes defined in the classes.xml file. Load it with immcfg -f classes.xml before trying them.
 
 Each sample OI is implemented in two versions, one using straight callbacks and one using a class that subclasses Implementer or Applier. The latter is named <oi-name>-inheritance-impl
