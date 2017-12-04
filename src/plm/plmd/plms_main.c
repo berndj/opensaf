@@ -482,12 +482,13 @@ int main(int argc, char *argv[])
 	fds[FD_AMF].fd = plms_cb->nid_started ? plms_cb->usr1_sel_obj.rmv_obj
 					      : plms_cb->amf_sel_obj;
 	fds[FD_AMF].events = POLLIN;
-	fds[FD_MBCSV].fd = plms_cb->mbcsv_sel_obj;
-	fds[FD_MBCSV].events = POLLIN;
 	fds[FD_MBX].fd = mbx_fd.rmv_obj;
 	fds[FD_MBX].events = POLLIN;
 
 	while (1) {
+		fds[FD_MBCSV].fd = plms_cb->mbcsv_sel_obj;
+		fds[FD_MBCSV].events = POLLIN;
+
 		if (plms_cb->oi_hdl != 0) {
 			fds[FD_IMM].fd = plms_cb->imm_sel_obj;
 			fds[FD_IMM].events = POLLIN;
