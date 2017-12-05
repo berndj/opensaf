@@ -237,6 +237,8 @@ static uint32_t mds_svc_event(struct ncsmds_callback_info *info)
 	MDS_CALLBACK_SVC_EVENT_INFO *svc_evt = &info->info.svc_evt;
 
 	switch (svc_evt->i_change) {
+	case NCSMDS_NEW_ACTIVE:
+		LOG_NO("MDS %s: NCSMDS_NEW_ACTIVE", __FUNCTION__);
 	case NCSMDS_UP:
 		/* TODO: No lock is taken. This might be dangerous.*/
 		if (NCSMDS_SVC_ID_SMFA == svc_evt->i_svc_id) {
@@ -248,7 +250,8 @@ static uint32_t mds_svc_event(struct ncsmds_callback_info *info)
 			if (m_MDS_DEST_IS_AN_ADEST(svc_evt->i_dest))
 				return NCSCC_RC_SUCCESS;
 			cb->smfd_dest = svc_evt->i_dest;
-			LOG_NO("MDS %s: NCSMDS_UP i_dest = 0x%" PRIx64,
+			LOG_NO("MDS %s: NCSMDS_SVC_ID_SMFD "
+				"dest = 0x%" PRIx64,
 				__FUNCTION__, svc_evt->i_dest);
 		}
 		break;
@@ -256,7 +259,7 @@ static uint32_t mds_svc_event(struct ncsmds_callback_info *info)
 	case NCSMDS_DOWN:
 		/* TODO: No lock is taken. This might be dangerous.*/
 		/* TODO: Need to clean up the cb->cbk_list, otherwise there will
-		 be memory leak. For the time being we are storing only conut of
+		 be memory leak. For the time being we are storing only count of
 		 agents, not the adest of agents and hence it is not possible to
 		 clean up cbk_list.*/
 		if (NCSMDS_SVC_ID_SMFA == svc_evt->i_svc_id) {
