@@ -657,6 +657,20 @@ extern "C" SaUint32T plms_ee_isolate_vm(const PLMS_ENTITY *entity) {
   return rc;
 }
 
+extern "C" void plms_delete_vms(void) {
+  TRACE_ENTER();
+
+  for (PlmsVmmMap::iterator it(plmsVmmMap.begin());
+       it != plmsVmmMap.end();
+       ++it) {
+    delete it->second;
+  }
+
+  plmsVmmMap.clear();
+
+  TRACE_LEAVE();
+}
+
 PlmsVmmConfig::PlmsVmmConfig(const std::string &e, const std::string &s)
     : ee(e), session(s) {}
 

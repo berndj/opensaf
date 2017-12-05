@@ -4122,6 +4122,9 @@ void plms_proc_quiesced_standby_role_change()
 	}
 	TRACE_2("Freed all the HE, EE and Dependency objects");
 
+	/* free the child EEs */
+	plms_delete_vms();
+
 	/* remove all the nodes in patricia tree plms_cb->base_he_info */
 	while ((he_base_info = (PLMS_HE_BASE_INFO *)ncs_patricia_tree_getnext(
 		    &plms_cb->base_he_info, (SaUint8T *)0)) != NULL) {

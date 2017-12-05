@@ -528,6 +528,7 @@ void plms_modify_vmm_obj(const SaNameT *, SaImmAttrModificationT_2 **attrs);
 void plms_modify_vm_obj(const SaNameT *, SaImmAttrModificationT_2 **attrs);
 void plms_delete_vmm_obj(const SaNameT *);
 void plms_delete_vm_obj(const SaNameT *);
+void plms_delete_vms(void);
 SaAisErrorT plms_validate_modify_vmm_obj(SaImmOiCcbIdT, const SaNameT *,
                                          const SaImmAttrModificationT_2 **);
 SaAisErrorT plms_validate_modify_vm_obj(SaImmOiCcbIdT, const SaNameT *,
