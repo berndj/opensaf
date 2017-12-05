@@ -73,7 +73,7 @@ class ImmDocument(BaseImmDocument):
     def add_class(self, class_element, other_nodes):
         """ Add class to the list of classes to validate """
         class_name = class_element.getAttribute("name")
-        trace("className: %s nodeType: %d nodeName: %s", class_name,
+        trace("className:%s nodeType:%d nodeName:%s", class_name,
               class_element.nodeType, class_element.nodeName)
 
         # Check if class exists in dictionary map
@@ -81,7 +81,7 @@ class ImmDocument(BaseImmDocument):
             # Check if class clash is "acceptable"
             # i.e. should we bail out or not??
             if self.check_class_clash_acceptable(class_element, class_name):
-                self.validate_failed("Found duplicate class : %s", class_name)
+                self.validate_failed("Found duplicate class: %s", class_name)
         else:
             attr_list = []
             attribute_dict = {}
@@ -144,7 +144,7 @@ class ImmDocument(BaseImmDocument):
         if object_dn_element is None or class_name is None \
                 or object_dn_element.firstChild is None:
             self.validate_failed("Failed to find class name or the dn child "
-                                 "node in object: %s. ",
+                                 "node in object: %s",
                                  object_element.toxml())
 
         # object_dn_name = object_dn_element.nodeValue
@@ -321,7 +321,7 @@ class ImmDocument(BaseImmDocument):
 
         object_owner_part = object_dn_name[comma_index + 1:]
         object_part = object_dn_name[:comma_index]
-        trace("ObjectDN: %s objectOwner: %s objectPart: %s", object_dn_name,
+        trace("ObjectDN:%s objectOwner:%s objectPart:%s", object_dn_name,
               object_owner_part, object_part)
 
         # Owner should exist for both SA_NAME_T and SA_STRING_T
@@ -386,7 +386,7 @@ class ImmDocument(BaseImmDocument):
             other_nodes = []
             if element.nodeName == self.imm_content_element_name:
                 for child_element in element.childNodes:
-                    trace("imm:contents loop.....NodeName: %s NodeValue: %s",
+                    trace("imm:contents loop.....NodeName:%s NodeValue:%s",
                           child_element.nodeName, child_element.nodeValue)
                     if child_element.nodeName == "class":
                         self.add_class(child_element, other_nodes)
@@ -474,9 +474,9 @@ def main(argv):
             sys.exit(0)
 
     # Cannot trace these until -t, Options.traceOn is effective (or not)
-    trace("opts:%s", opts)
-    trace("args:%s", args)
-    trace("sys.path:%s", sys.path)
+    trace("opts: %s", opts)
+    trace("args: %s", args)
+    trace("sys.path: %s", sys.path)
 
     if not args:
         print_usage()

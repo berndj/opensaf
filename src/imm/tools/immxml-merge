@@ -113,7 +113,7 @@ class MergedImmDocument(BaseImmDocument):
         """ Add classes matching pattern """
         class_name = class_element.getAttribute("name")
         self.classes_parsed = self.classes_parsed + 1
-        trace("className: %s nodeType:%d nodeName:%s", class_name,
+        trace("className:%s nodeType:%d nodeName:%s", class_name,
               class_element.nodeType, class_element.nodeName)
 
         if self.regexpObj is not None:
@@ -129,7 +129,7 @@ class MergedImmDocument(BaseImmDocument):
                       Options.grep_class)
                 return
 
-        trace("match ok :%s", class_name)
+        trace("match ok: %s", class_name)
 
         # Check if class exists in dictionary map
         if class_name in self.classDict:
@@ -146,7 +146,7 @@ class MergedImmDocument(BaseImmDocument):
     def add_object(self, object_element, other_nodes):
         """ Add objects matching pattern """
         class_name = object_element.getAttribute("class")
-        trace("DUMPING Object with className: %s \n %s", class_name,
+        trace("DUMPING Object with className: %s\n %s", class_name,
               object_element.toxml())
         self.objects_parsed = self.objects_parsed + 1
 
@@ -160,7 +160,7 @@ class MergedImmDocument(BaseImmDocument):
         if object_dn_element is None or class_name is None \
                 or object_dn_element.firstChild is None:
             abort_script("Failed to find class name or the dn child node in "
-                         "object:%s. ", object_element.toxml())
+                         "object: %s", object_element.toxml())
 
         # object_dn_name = object_dn_element.nodeValue
         # NOTE: dn name should be the nodeValue of object_dn_name
@@ -176,10 +176,10 @@ class MergedImmDocument(BaseImmDocument):
             if not Options.ignoreMissingClass:
                 if Options.grep_class is not None:
                     trace("Ignoring object with class not matching pattern "
-                          "className:%s", class_name)
+                          "className: %s", class_name)
                     return
                 else:
-                    abort_script("Failed to find class referred in: \n %s",
+                    abort_script("Failed to find class referred in: %s",
                                  object_element.toxml())
                 trace("zzz")
             else:
@@ -199,7 +199,7 @@ class MergedImmDocument(BaseImmDocument):
                       object_dn_name, Options.grep_dn)
                 return
 
-        trace("match ok :%s", object_dn_name)
+        trace("match ok: %s", object_dn_name)
 
         if object_dn_name in self.objectDnNameDict:
             if self.check_object_clash_acceptable(object_dn_name):
@@ -219,7 +219,7 @@ class MergedImmDocument(BaseImmDocument):
             object_list_key_list = [self.get_dn_sort_prefix(object_dn_name),
                                     class_name, object_dn_name]
             object_list_key = ''.join(object_list_key_list)
-            # objectListKey = self.get_dn_sort_prefix(objectDnName)+className
+            # objectListKey = self.get_dn_sort_prefix(objectDnName) + className
             trace("Object sort order key: %s", object_list_key)
 
         self.objectList.append((object_list_key,
@@ -277,12 +277,12 @@ class MergedImmDocument(BaseImmDocument):
     def process_input_file(self, file_name):
         """ Process input file """
         trace("")
-        trace("process_input_file in file: %s", file_name)
+        trace("process_input_file for file: %s", file_name)
 
         if Options.isXmlLintFound and Options.schemaFilename is not None:
             if self.validate_xml_file_with_schema(file_name,
                                                   Options.schemaFilename) != 0:
-                abort_script("Failed to validate input file %s:", file_name)
+                abort_script("Failed to validate input file: %s", file_name)
         else:
             self.verify_input_xml_document_file_is_parsable(file_name)
 
@@ -297,7 +297,7 @@ class MergedImmDocument(BaseImmDocument):
             other_nodes = []
             if element.nodeName == self.imm_content_element_name:
                 for child_element in element.childNodes:
-                    trace("imm:contents loop.....nodeName: %s nodeValue: %s",
+                    trace("imm:contents loop.....nodeName:%s nodeValue:%s",
                           child_element.nodeName, child_element.nodeValue)
                     if child_element.nodeName == "class":
                         self.add_class(child_element, other_nodes)
@@ -354,7 +354,7 @@ class MergedImmDocument(BaseImmDocument):
 
         print_info_stderr("encoding in first source xml document: %s",
                           self.firstSourceDoc.encoding)
-        tmp_output_file_name = Options.outputFilename+".tmp"
+        tmp_output_file_name = Options.outputFilename + ".tmp"
         file_object = open(tmp_output_file_name, "w")
 
         if self.firstSourceDoc.encoding is not None \
@@ -367,7 +367,7 @@ class MergedImmDocument(BaseImmDocument):
 
         file_object.write(heading)
         file_object.write(
-            self.imm_content_element.toxml(encoding).replace("/>", ">")+"\n")
+            self.imm_content_element.toxml(encoding).replace("/>", ">") + "\n")
         for class_element_tuple in self.classList:
             if Options.keepCommentElements:
                 for textNode in class_element_tuple[1][0]:
@@ -409,10 +409,10 @@ class MergedImmDocument(BaseImmDocument):
         diff_classes = self.classes_parsed - len(self.classList)
         diff_objects = self.objects_parsed - len(self.objectList)
         print_info_stderr("Note! Merge ignored %d classes "
-                          "(parsed: %d stored: %d)", diff_classes,
+                          "(parsed:%d stored:%d)", diff_classes,
                           self.classes_parsed, len(self.classList))
         print_info_stderr("Note! Merge ignored %d objects "
-                          "(parsed: %d stored: %d)", diff_objects,
+                          "(parsed:%d stored:%d)", diff_objects,
                           self.objects_parsed, len(self.objectList))
 
         trace("Stored formatted xml document in file: %s",
@@ -588,7 +588,7 @@ def main(argv):
                          "Exiting!")
 
     file_list = retrieve_file_names(args)
-    trace("Starting to process files::\n")
+    trace("Starting to process files\n")
     # Create an Object to store classes and objects during process of
     # input files
     merged_doc = MergedImmDocument()

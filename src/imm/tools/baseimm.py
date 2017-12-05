@@ -84,7 +84,8 @@ class BaseImmDocument(object):
     @staticmethod
     def format_xml_file_with_xmllint(in_file_name, out_file_name):
         """ Format xml file with xmllint """
-        trace("formatXmlFileWithXmlLint() prettify xml file:%s", in_file_name)
+        trace("format_xml_file_with_xmllint() prettify xml file: %s",
+              in_file_name)
 
         # "prettify" the result file with xmllint
         # (due to inadequate python/minidom prettify functionality)
@@ -123,7 +124,7 @@ class BaseImmDocument(object):
         doc = open(file_name)
         str_list = []
         imm_contents_tag_found = False
-        # imm_contents_tag_replaced = False
+        imm_contents_tag_replaced = False
         for _line in doc:
             line = _line
             if not imm_contents_tag_found:
@@ -140,18 +141,19 @@ class BaseImmDocument(object):
 
         xml_str = ' '.join(str_list)
 
-        # if Options.schemaFilename is not None:
-        #     if imm_contents_tag_replaced:
-        #         print_info_stderr("Cannot validate input file '%s' with "
-        #                           "schema file because of missing namespace "
-        #                           "specification in element "
-        #                           "<imm:IMM-contents>. \nProceeding with "
-        #                           "processing of modified input data!",
-        #                           file_name)
-        #     else:
-        #         if self.validate_xml_file(file_name) != 0:
-        #             abort_script("Failed to validate the input file: %s",
-        #                          file_name)
+        if Options.schemaFilename is not None:
+            if imm_contents_tag_replaced:
+                print_info_stderr("Cannot validate input file '%s' with "
+                                  "schema file because of missing namespace "
+                                  "specification in element "
+                                  "<imm:IMM-contents>. \nProceeding with "
+                                  "processing of modified input data!",
+                                  file_name)
+            else:
+                if self.validate_xml_file(file_name) != 0:
+                    abort_script("Failed to validate the input file: %s",
+                                 file_name)
+
         return xml.dom.minidom.parseString(xml_str)
 
     @staticmethod
@@ -188,7 +190,7 @@ def trace(*args):
 
 def retrieve_file_names(args):
     """ Retrieve file names """
-    trace("Before glob args:%s", args)
+    trace("Before glob args: %s", args)
     # Wildcard expansion for WIN support, however not tested....
     file_list = glob.glob(args[0])
     trace("After glob file list: %s length: %d", file_list, len(file_list))
