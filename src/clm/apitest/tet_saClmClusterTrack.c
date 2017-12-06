@@ -528,7 +528,7 @@ void saClmClusterTrack_14(void)
 
 	fds[0].fd = (int)selectionObject;
 	fds[0].events = POLLIN;
-	ret = poll(fds, 1, 3000);
+	ret = poll(fds, 1, 60000);
 	assert(ret == 1);
 
 	safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
@@ -631,7 +631,7 @@ void saClmClusterTrack_21(void)
 
 	while (1) {
 		printf("waiting on poll");
-		ret = poll(fds, 1, 3000);
+		ret = poll(fds, 1, 60000);
 		assert(ret == 1);
 		if (fds[0].revents & POLLIN)
 			break;
@@ -671,7 +671,7 @@ void saClmClusterTrack_22(void)
 	}
 
 	while (1) {
-		ret = poll(fds, 1, 3000);
+		ret = poll(fds, 1, 60000);
 		assert(ret == 1);
 		if (fds[0].revents & POLLIN)
 			break;
@@ -705,7 +705,7 @@ void saClmClusterTrack_23(void)
 	}
 
 	while (1) {
-		ret = poll(fds, 1, 3000);
+		ret = poll(fds, 1, 60000);
 		assert(ret == 1);
 		if (fds[0].revents & POLLIN)
 			break;
@@ -741,7 +741,7 @@ void saClmClusterTrack_24(void)
 		printf("thread creation failed");
 	}
 	while (1) {
-		ret = poll(fds, 1, 3000);
+		ret = poll(fds, 1, 60000);
 		assert(ret == 1);
 		if (fds[0].revents & POLLIN) {
 			break;
@@ -755,7 +755,7 @@ void saClmClusterTrack_24(void)
 	fds[0].fd = (int)selectionObject;
 	fds[0].events = POLLIN;
 	while (1) {
-		ret = poll(fds, 1, 3000);
+		ret = poll(fds, 1, 60000);
 		assert(ret == 1);
 		if (fds[0].revents & POLLIN) {
 			break;
@@ -794,7 +794,7 @@ void saClmClusterTrack_25(void)
 	}
 
 	while (1) {
-		ret = poll(fds, 1, 3000);
+		ret = poll(fds, 1, 60000);
 		assert(ret == 1);
 		if (fds[0].revents & POLLIN) {
 			break;
@@ -808,7 +808,7 @@ void saClmClusterTrack_25(void)
 	fds[0].fd = (int)selectionObject;
 	fds[0].events = POLLIN;
 	while (1) {
-		ret = poll(fds, 1, 3000);
+		ret = poll(fds, 1, 60000);
 		assert(ret == 1);
 		if (fds[0].revents & POLLIN) {
 			break;
@@ -847,7 +847,7 @@ void saClmClusterTrack_27(void)
 	}
 
 	while (1) {
-		ret = poll(fds, 1, 3000);
+		ret = poll(fds, 1, 60000);
 		assert(ret == 1);
 		if (fds[0].revents & POLLIN) {
 			break;
@@ -861,7 +861,7 @@ void saClmClusterTrack_27(void)
 	fds[0].fd = (int)selectionObject;
 	fds[0].events = POLLIN;
 	while (1) {
-		ret = poll(fds, 1, 3000);
+		ret = poll(fds, 1, 60000);
 		assert(ret == 1);
 		if (fds[0].revents & POLLIN) {
 			break;
@@ -899,7 +899,7 @@ void saClmClusterTrack_28(void)
 	}
 
 	while (1) {
-		ret = poll(fds, 1, 3000);
+		ret = poll(fds, 1, 60000);
 		assert(ret == 1);
 		if (fds[0].revents & POLLIN) {
 			break;
@@ -913,7 +913,7 @@ void saClmClusterTrack_28(void)
 	fds[0].fd = (int)selectionObject;
 	fds[0].events = POLLIN;
 	while (1) {
-		ret = poll(fds, 1, 3000);
+		ret = poll(fds, 1, 60000);
 		assert(ret == 1);
 		if (fds[0].revents & POLLIN) {
 			break;
@@ -956,7 +956,7 @@ void saClmClusterTrack_31(void)
 		printf("thread creation failed");
 	}
 	while (1) {
-		ret = poll(fds, 1, 3000);
+		ret = poll(fds, 1, 60000);
 		if (ret == 1) {
 			printf("test timed out\n");
 			fflush(stdout);
@@ -974,7 +974,7 @@ void saClmClusterTrack_31(void)
 	fds[0].fd = (int)selectionObject;
 	fds[0].events = POLLIN;
 	while (1) {
-		ret = poll(fds, 1, 3000);
+		ret = poll(fds, 1, 60000);
 		if (ret == 1) {
 			printf("test timed out\n");
 			fflush(stdout);
@@ -993,7 +993,7 @@ void saClmClusterTrack_31(void)
 	fds[0].fd = (int)selectionObject;
 	fds[0].events = POLLIN;
 	while (1) {
-		ret = poll(fds, 1, 3000);
+		ret = poll(fds, 1, 60000);
 		if (ret == 1) {
 			printf("test timed out\n");
 			fflush(stdout);
