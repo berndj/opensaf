@@ -163,6 +163,22 @@ uint32_t mdtm_global_frag_num;
 
 const unsigned int MAX_RECV_THRESHOLD = 30;
 
+static bool get_tipc_port_id(int sock, uint32_t* port_id) {
+	struct sockaddr_tipc addr;
+	socklen_t sz = sizeof(addr);
+
+	memset(&addr, 0, sizeof(addr));
+	*port_id = 0;
+	if (0 > getsockname(sock, (struct sockaddr *)&addr, &sz)) {
+		syslog(LOG_ERR, "MDTM:TIPC Failed to get socket name, err: %s",
+		       strerror(errno));
+		return false;
+	}
+
+	*port_id = addr.addr.id.ref;
+	return true;
+}
+
 /*********************************************************
 
   Function NAME: mdtm_tipc_init
@@ -182,11 +198,7 @@ uint32_t mdtm_tipc_init(NODE_ID nodeid, uint32_t *mds_tipc_ref)
 
 	NCS_PATRICIA_PARAMS pat_tree_params;
 
-	struct sockaddr_tipc addr;
-	socklen_t sz = sizeof(addr);
-
 	memset(&tipc_cb, 0, sizeof(tipc_cb));
-	*mds_tipc_ref = 0;
 
 	/* Added to assist the shutdown bug */
 	mdtm_ref_hdl_list_hdr = NULL;
@@ -225,19 +237,14 @@ uint32_t mdtm_tipc_init(NODE_ID nodeid, uint32_t *mds_tipc_ref)
 	}
 
 	/* Code for getting the self tipc random number */
-	memset(&addr, 0, sizeof(addr));
-	if (0 > getsockname(tipc_cb.BSRsock, (struct sockaddr *)&addr, &sz)) {
-		syslog(LOG_ERR,
-		       "MDTM:TIPC Failed to get the BSR Sockname  err :%s",
-		       strerror(errno));
+	if (!get_tipc_port_id(tipc_cb.BSRsock, mds_tipc_ref)) {
 		close(tipc_cb.Dsock);
 		close(tipc_cb.BSRsock);
 		return NCSCC_RC_FAILURE;
 	}
-	*mds_tipc_ref = addr.addr.id.ref;
 
 	tipc_cb.adest = ((uint64_t)(nodeid)) << 32;
-	tipc_cb.adest |= addr.addr.id.ref;
+	tipc_cb.adest |= *mds_tipc_ref;
 	tipc_cb.node_id = nodeid;
 	get_adest_details(tipc_cb.adest, tipc_cb.adest_details);
 
@@ -1860,8 +1867,11 @@ uint32_t mds_mdtm_svc_install_tipc(PW_ENV_ID pwe_id, MDS_SVC_ID svc_id,
 	server_addr.addr.nameseq.lower = server_inst;
 	server_addr.addr.nameseq.upper = server_inst;
 
-	m_MDS_LOG_INFO("MDTM: install_tipc : <%u,%u,%u>", server_type,
-		       server_inst, server_inst);
+	/* The self tipc random port number */
+	uint32_t port_id = 0;
+	get_tipc_port_id(tipc_cb.BSRsock, &port_id);
+	m_MDS_LOG_NOTIFY("MDTM: install_tipc : <p:%u,s:%u,i:%u>", port_id,
+			 server_type, server_inst);
 
 	if (0 != bind(tipc_cb.BSRsock, (struct sockaddr *)&server_addr,
 		      sizeof(server_addr))) {
