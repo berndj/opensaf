@@ -28,21 +28,28 @@ namespace base {
 
 UnixSocket::UnixSocket(const std::string& path, Mode mode)
     : fd_{-1},
-      addr_{AF_UNIX, {}},
+      addr_{},
+      addrlen_{},
       last_failed_open_{},
       saved_errno_{},
       mode_{mode} {
-  if (path.size() < sizeof(addr_.sun_path)) {
-    memcpy(addr_.sun_path, path.c_str(), path.size() + 1);
-  } else {
-    addr_.sun_path[0] = '\0';
-  }
+  addrlen_ = SetAddress(path, &addr_);
+}
+
+UnixSocket::UnixSocket(const sockaddr_un& addr, socklen_t addrlen, Mode mode)
+    : fd_{-1},
+      addr_{},
+      addrlen_{addrlen},
+      last_failed_open_{},
+      saved_errno_{},
+      mode_{mode} {
+  memcpy(&addr_, &addr, addrlen);
 }
 
 int UnixSocket::Open() {
   int sock = fd_;
   if (sock < 0) {
-    if (addr_.sun_path[0] != '\0') {
+    if (addrlen_ != 0) {
       struct timespec current_time = ReadMonotonicClock();
       if (TimespecToMillis(current_time - last_failed_open_) != 0) {
         sock = socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, 0);
@@ -73,7 +80,7 @@ int UnixSocket::Open() {
 UnixSocket::~UnixSocket() {
   if (fd_ >= 0) close(fd_);
   fd_ = -1;
-  addr_.sun_path[0] = '\0';
+  addrlen_ = 0;
 }
 
 void UnixSocket::Close() {

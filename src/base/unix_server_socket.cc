@@ -26,23 +26,33 @@ namespace base {
 UnixServerSocket::UnixServerSocket(const std::string& path, Mode mode)
     : UnixSocket{path, mode} {}
 
+UnixServerSocket::UnixServerSocket(const sockaddr_un& addr, socklen_t addrlen,
+                                   Mode mode)
+    : UnixSocket{addr, addrlen, mode} {}
+
 UnixServerSocket::~UnixServerSocket() {
-  if (get_fd() >= 0) UnixServerSocket::CloseHook();
+  if (get_fd() >= 0) Unlink();
 }
 
 bool UnixServerSocket::OpenHook(int sock) {
-  int tmp_sock = socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, 0);
-  int connect_result;
-  int connect_errno;
-  do {
-    connect_result = connect(tmp_sock, addr(), addrlen());
-    connect_errno = errno;
-  } while (connect_result != 0 && connect_errno == EINTR);
-  close(tmp_sock);
-  if (connect_result != 0 && connect_errno == ECONNREFUSED) unlink(path());
+  if (!IsAbstract()) {
+    int tmp_sock = socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, 0);
+    int connect_result;
+    int connect_errno;
+    do {
+      connect_result = connect(tmp_sock, addr(), addrlen());
+      connect_errno = errno;
+    } while (connect_result != 0 && connect_errno == EINTR);
+    close(tmp_sock);
+    if (connect_result != 0 && connect_errno == ECONNREFUSED) Unlink();
+  }
   return bind(sock, addr(), addrlen()) == 0;
 }
 
-void UnixServerSocket::CloseHook() { unlink(path()); }
+void UnixServerSocket::CloseHook() { Unlink(); }
+
+void UnixServerSocket::Unlink() {
+  if (!IsAbstract()) unlink(path());
+}
 
 }  // namespace base

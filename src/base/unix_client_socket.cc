@@ -25,6 +25,10 @@ namespace base {
 UnixClientSocket::UnixClientSocket(const std::string& path, Mode mode)
     : UnixSocket{path, mode} {}
 
+UnixClientSocket::UnixClientSocket(const sockaddr_un& addr, socklen_t addrlen,
+                                   Mode mode)
+    : UnixSocket{addr, addrlen, mode} {}
+
 UnixClientSocket::~UnixClientSocket() {}
 
 bool UnixClientSocket::OpenHook(int sock) {

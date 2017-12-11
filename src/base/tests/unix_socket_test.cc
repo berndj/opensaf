@@ -167,3 +167,40 @@ TEST_F(UnixSocketTest, BlockingSend) {
   delete server_;
   EXPECT_FALSE(SocketExists());
 }
+
+TEST_F(UnixSocketTest, SendToRecvFromAbstract) {
+  std::string abstract_name = std::string{"\0", 1} +
+                              std::string{"unix_socket_test."} +
+                              std::to_string(getpid());
+  base::UnixServerSocket* abstract =
+      new base::UnixServerSocket(abstract_name, base::UnixSocket::kNonblocking);
+  int abstract_fd = abstract->fd();
+  EXPECT_GE(abstract_fd, 0);
+  ASSERT_FALSE(SocketExists());
+  server_ =
+      new base::UnixServerSocket(SocketName(), base::UnixSocket::kNonblocking);
+  int server_fd = server_->fd();
+  EXPECT_GE(server_fd, 0);
+  EXPECT_TRUE(SocketExists());
+  char buf[256] = {};
+  struct sockaddr_un dest_addr;
+  socklen_t dest_addrlen =
+      base::UnixSocket::SetAddress(SocketName(), &dest_addr);
+  EXPECT_GT(dest_addrlen, 0u);
+  EXPECT_LT(dest_addrlen, sizeof(dest_addr));
+  ssize_t result = abstract->SendTo(buf, sizeof(buf), &dest_addr, dest_addrlen);
+  EXPECT_GE(result, 0);
+  EXPECT_EQ(static_cast<size_t>(result), sizeof(buf));
+  struct sockaddr_un src_addr;
+  socklen_t src_addrlen = sizeof(src_addr);
+  result = server_->RecvFrom(buf, sizeof(buf), &src_addr, &src_addrlen);
+  EXPECT_GE(result, 0);
+  EXPECT_EQ(static_cast<size_t>(result), sizeof(buf));
+  EXPECT_EQ(src_addrlen, sizeof(src_addr.sun_family) + abstract_name.size());
+  std::string path = base::UnixSocket::GetAddress(src_addr, src_addrlen);
+  EXPECT_EQ(path, abstract_name);
+  delete abstract;
+  EXPECT_TRUE(SocketExists());
+  delete server_;
+  EXPECT_FALSE(SocketExists());
+}

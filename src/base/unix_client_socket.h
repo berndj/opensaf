@@ -26,9 +26,14 @@ namespace base {
 // A class implementing a non-blocking UNIX domain client socket.
 class UnixClientSocket : public UnixSocket {
  public:
-  // Set the path name for this client socket. Note that this call does not
+  // Set the path name for this server socket. Note that this call does not
   // create the socket - you need to call Send() or Recv() for that to happen.
-  explicit UnixClientSocket(const std::string& path, Mode mode);
+  // Abstract addresses are supported by passing '\0' as the first byte in @a
+  // path.
+  UnixClientSocket(const std::string& path, Mode mode);
+  // Set the socket address for this server socket. Note that this call does not
+  // create the socket - you need to call Send() or Recv() for that to happen.
+  UnixClientSocket(const sockaddr_un& addr, socklen_t addrlen, Mode mode);
   // Closes the client socket if it was open, but does not delete the socket
   // from the file system.
   virtual ~UnixClientSocket();

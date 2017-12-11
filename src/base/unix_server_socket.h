@@ -28,7 +28,12 @@ class UnixServerSocket : public UnixSocket {
  public:
   // Set the path name for this server socket. Note that this call does not
   // create the socket - you need to call Send() or Recv() for that to happen.
-  explicit UnixServerSocket(const std::string& path, Mode mode);
+  // Abstract addresses are supported by passing '\0' as the first byte in @a
+  // path.
+  UnixServerSocket(const std::string& path, Mode mode);
+  // Set the socket address for this server socket. Note that this call does not
+  // create the socket - you need to call Send() or Recv() for that to happen.
+  UnixServerSocket(const sockaddr_un& addr, socklen_t addrlen, Mode mode);
   // Closes the server socket if it was open, and deletes the socket from the
   // file system.
   virtual ~UnixServerSocket();
@@ -36,6 +41,9 @@ class UnixServerSocket : public UnixSocket {
  protected:
   virtual bool OpenHook(int sock);
   virtual void CloseHook();
+
+ private:
+  void Unlink();
 };
 
 }  // namespace base
