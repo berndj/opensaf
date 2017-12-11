@@ -18,11 +18,14 @@
 #ifndef DTM_TRANSPORT_LOG_SERVER_H_
 #define DTM_TRANSPORT_LOG_SERVER_H_
 
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <cstddef>
 #include <map>
 #include <string>
 #include "base/macros.h"
 #include "base/unix_server_socket.h"
+#include "dtm/common/osaflog_protocol.h"
 #include "dtm/transport/log_writer.h"
 
 // This class implements a loop that receives log messages over a UNIX socket
@@ -76,11 +79,17 @@ class LogServer {
   // name). File names starting with a dot are also disallowed, since they would
   // result in hidden files.
   static bool ValidateLogName(const char* msg_id, size_t msg_id_size);
+  void ExecuteCommand(const char* command, size_t size,
+                      const struct sockaddr_un& addr, socklen_t addrlen);
+  static bool ValidateAddress(const struct sockaddr_un& addr,
+                              socklen_t addrlen);
+  std::string ExecuteCommand(const std::string& command);
   int term_fd_;
   base::UnixServerSocket log_socket_;
   std::map<std::string, LogStream*> log_streams_;
   LogStream* current_stream_;
   size_t no_of_log_streams_;
+  static const Osaflog::ClientAddressConstantPrefix address_header_;
 
   DELETE_COPY_AND_MOVE_OPERATORS(LogServer);
 };

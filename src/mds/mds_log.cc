@@ -41,9 +41,9 @@
 #include "base/osaf_utility.h"
 #include "base/time.h"
 #include "base/unix_client_socket.h"
+#include "dtm/common/osaflog_protocol.h"
 #include "mds/mds_dt2c.h"
 #include "mds/mds_papi.h"
-#include "osaf/configmake.h"
 
 class MdsLog {
  public:
@@ -120,7 +120,7 @@ bool MdsLog::Init() {
   base::Conf::InitFullyQualifiedDomainName();
   const std::string &fqdn = base::Conf::FullyQualifiedDomainName();
   instance_ =
-      new MdsLog{fqdn, app_name, process_id, PKGLOCALSTATEDIR "/osaf_log.sock"};
+      new MdsLog{fqdn, app_name, process_id, Osaflog::kServerSocketPath};
   return instance_ != nullptr;
 }
 

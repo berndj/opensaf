@@ -45,7 +45,7 @@
 #include "base/osaf_utility.h"
 #include "base/time.h"
 #include "base/unix_client_socket.h"
-#include "osaf/configmake.h"
+#include "dtm/common/osaflog_protocol.h"
 
 namespace global {
 
@@ -132,7 +132,7 @@ bool TraceLog::Init() {
   base::Conf::InitFullyQualifiedDomainName();
   const std::string &fqdn = base::Conf::FullyQualifiedDomainName();
   instance_ = new TraceLog{fqdn, app_name, process_id, global::msg_id,
-                           PKGLOCALSTATEDIR "/osaf_log.sock"};
+                           Osaflog::kServerSocketPath};
   return instance_ != nullptr;
 }
 

@@ -19,7 +19,7 @@ EXTRA_DIST += \
 	src/dtm/README
 
 noinst_HEADERS += \
-	src/dtm/dtmnd/multicast.h \
+	src/dtm/common/osaflog_protocol.h \
 	src/dtm/dtmnd/dtm.h \
 	src/dtm/dtmnd/dtm_cb.h \
 	src/dtm/dtmnd/dtm_inter.h \
@@ -29,11 +29,25 @@ noinst_HEADERS += \
 	src/dtm/dtmnd/dtm_intra_disc.h \
 	src/dtm/dtmnd/dtm_intra_trans.h \
 	src/dtm/dtmnd/dtm_node.h \
+	src/dtm/dtmnd/multicast.h \
 	src/dtm/transport/log_server.h \
 	src/dtm/transport/log_writer.h \
 	src/dtm/transport/tests/mock_logtrace.h \
 	src/dtm/transport/tests/mock_osaf_poll.h \
 	src/dtm/transport/transport_monitor.h
+
+bin_PROGRAMS += bin/osaflog
+
+bin_osaflog_CXXFLAGS = $(AM_CXXFLAGS)
+
+bin_osaflog_CPPFLAGS = \
+	$(AM_CPPFLAGS)
+
+bin_osaflog_SOURCES = \
+	src/dtm/tools/osaflog.cc
+
+bin_osaflog_LDADD = \
+	lib/libopensaf_core.la
 
 osaf_execbin_PROGRAMS += bin/osafdtmd bin/osaftransportd
 nodist_pkgclccli_SCRIPTS += \

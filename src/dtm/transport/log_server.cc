@@ -18,17 +18,16 @@
 
 #include "dtm/transport/log_server.h"
 #include <cstring>
-#include "base/getenv.h"
 #include "base/osaf_poll.h"
 #include "base/time.h"
+#include "dtm/common/osaflog_protocol.h"
 #include "osaf/configmake.h"
+
+const Osaflog::ClientAddressConstantPrefix LogServer::address_header_{};
 
 LogServer::LogServer(int term_fd)
     : term_fd_{term_fd},
-      log_socket_{
-          base::GetEnv<std::string>("pkglocalstatedir", PKGLOCALSTATEDIR) +
-              "/osaf_log.sock",
-          base::UnixSocket::kNonblocking},
+      log_socket_{Osaflog::kServerSocketPath, base::UnixSocket::kNonblocking},
       log_streams_{},
       current_stream_{new LogStream{"mds.log", 1}},
       no_of_log_streams_{1} {
@@ -44,24 +43,31 @@ void LogServer::Run() {
   do {
     for (int i = 0; i < 256; ++i) {
       char* buffer = current_stream_->current_buffer_position();
-      ssize_t result = log_socket_.Recv(buffer, LogWriter::kMaxMessageSize);
+      struct sockaddr_un src_addr;
+      socklen_t addrlen = sizeof(src_addr);
+      ssize_t result = log_socket_.RecvFrom(buffer, LogWriter::kMaxMessageSize,
+                                            &src_addr, &addrlen);
       if (result < 0) break;
-      while (result != 0 && buffer[result - 1] == '\n') --result;
-      if (static_cast<size_t>(result) != LogWriter::kMaxMessageSize) {
-        buffer[result++] = '\n';
+      if (result == 0 || buffer[0] != '?') {
+        while (result != 0 && buffer[result - 1] == '\n') --result;
+        if (static_cast<size_t>(result) != LogWriter::kMaxMessageSize) {
+          buffer[result++] = '\n';
+        } else {
+          buffer[result - 1] = '\n';
+        }
+        size_t msg_id_size;
+        const char* msg_id = GetField(buffer, result, 5, &msg_id_size);
+        if (msg_id == nullptr) continue;
+        LogStream* stream = GetStream(msg_id, msg_id_size);
+        if (stream == nullptr) continue;
+        if (stream != current_stream_) {
+          memcpy(stream->current_buffer_position(), buffer, result);
+          current_stream_ = stream;
+        }
+        current_stream_->Write(result);
       } else {
-        buffer[result - 1] = '\n';
+        ExecuteCommand(buffer, result, src_addr, addrlen);
       }
-      size_t msg_id_size;
-      const char* msg_id = GetField(buffer, result, 5, &msg_id_size);
-      if (msg_id == nullptr) continue;
-      LogStream* stream = GetStream(msg_id, msg_id_size);
-      if (stream == nullptr) continue;
-      if (stream != current_stream_) {
-        memcpy(stream->current_buffer_position(), buffer, result);
-        current_stream_ = stream;
-      }
-      current_stream_->Write(result);
     }
     struct timespec current = base::ReadMonotonicClock();
     struct timespec last_flush = current;
@@ -128,6 +134,36 @@ bool LogServer::ValidateLogName(const char* msg_id, size_t msg_id_size) {
     if (c == '.') ++no_of_dots;
   }
   return no_of_dots < 2;
+}
+
+void LogServer::ExecuteCommand(const char* command, size_t size,
+                               const struct sockaddr_un& addr,
+                               socklen_t addrlen) {
+  if (ValidateAddress(addr, addrlen)) {
+    std::string cmd_result = ExecuteCommand(std::string{command, size});
+    log_socket_.SendTo(cmd_result.data(), cmd_result.size(), &addr, addrlen);
+  }
+}
+
+bool LogServer::ValidateAddress(const struct sockaddr_un& addr,
+                                socklen_t addrlen) {
+  if (addrlen == sizeof(Osaflog::ClientAddress)) {
+    return memcmp(&addr, &address_header_, sizeof(address_header_)) == 0;
+  } else {
+    return false;
+  }
+}
+
+std::string LogServer::ExecuteCommand(const std::string& command) {
+  if (command == "?flush") {
+    for (const auto& s : log_streams_) {
+      LogStream* stream = s.second;
+      stream->Flush();
+    }
+    return std::string{"!flush"};
+  } else {
+    return std::string{"!not_supported"};
+  }
 }
 
 LogServer::LogStream::LogStream(const std::string& log_name,
