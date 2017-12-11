@@ -56,7 +56,7 @@ void LogServer::Run() {
           buffer[result - 1] = '\n';
         }
         size_t msg_id_size;
-        const char* msg_id = GetField(buffer, result, 5, &msg_id_size);
+        const char* msg_id = Osaflog::GetField(buffer, result, 5, &msg_id_size);
         if (msg_id == nullptr) continue;
         LogStream* stream = GetStream(msg_id, msg_id_size);
         if (stream == nullptr) continue;
@@ -86,21 +86,6 @@ void LogServer::Run() {
     pfd[1].fd = log_socket_.fd();
     osaf_ppoll(pfd, 2, empty ? nullptr : &timeout, nullptr);
   } while ((pfd[0].revents & POLLIN) == 0);
-}
-
-const char* LogServer::GetField(const char* buf, size_t size, int field_no,
-                                size_t* field_size) {
-  while (field_no != 0) {
-    const char* pos = static_cast<const char*>(memchr(buf, ' ', size));
-    if (pos == nullptr) return nullptr;
-    ++pos;
-    size -= pos - buf;
-    buf = pos;
-    --field_no;
-  }
-  const char* pos = static_cast<const char*>(memchr(buf, ' ', size));
-  *field_size = (pos != nullptr) ? (pos - buf) : size;
-  return buf;
 }
 
 LogServer::LogStream* LogServer::GetStream(const char* msg_id,

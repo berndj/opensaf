@@ -17,7 +17,9 @@
 #define DTM_COMMON_OSAFLOG_PROTOCOL_H_
 
 #include <sys/socket.h>
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include "osaf/configmake.h"
 
 namespace Osaflog {
@@ -44,6 +46,24 @@ struct __attribute__((__packed__)) ClientAddress {
   uint64_t random;
   uint32_t pid;
 };
+
+// Returns a pointer the space-separated field with index @a field_no within
+// @buf of size @a size, or nullptr if @a buf does not contain enough fields. @a
+// field_size is an output parameter where the length of the field is returned.
+static inline const char* GetField(const char* buf, size_t size, int field_no,
+                                   size_t* field_size) {
+  while (field_no != 0) {
+    const char* pos = static_cast<const char*>(memchr(buf, ' ', size));
+    if (pos == nullptr) return nullptr;
+    ++pos;
+    size -= pos - buf;
+    buf = pos;
+    --field_no;
+  }
+  const char* pos = static_cast<const char*>(memchr(buf, ' ', size));
+  *field_size = (pos != nullptr) ? (pos - buf) : size;
+  return buf;
+}
 
 }  // namespace Osaflog
 

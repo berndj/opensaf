@@ -70,8 +70,6 @@ class LogServer {
     struct timespec last_flush_;
     LogWriter log_writer_;
   };
-  static const char* GetField(const char* buf, size_t size, int field_no,
-                              size_t* field_size);
   LogStream* GetStream(const char* msg_id, size_t msg_id_size);
   // Validate the log stream name, for security reasons. This method will check
   // that the string, when used as a file name, does not traverse the directory
