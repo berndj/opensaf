@@ -24,6 +24,8 @@
 
 . /etc/opensaf/osafdir.conf
 
+export LD_LIBRARY_PATH=$libdir:$LD_LIBRARY_PATH
+
 # NOTE: This script is a customization point between OpenSAF and a target
 # system and should be changed according to the needs of such system.
 
@@ -54,6 +56,8 @@ opensaf_safe_reboot()
 	sleep 5
 	# Phase two: IMM is stopped on all nodes, so now we can safely reboot
 	# the cluster
+	# Flush OpenSAF internal log server messages to disk.
+	$bindir/osaflog --flush
 	logger -t "opensaf_reboot" "Rebooting local node using $icmd /sbin/shutdown -r now"
 	$icmd /sbin/shutdown -r now
 }
@@ -129,6 +133,9 @@ else
 		$icmd pkill -STOP osafamfnd
 		$icmd pkill -STOP osafamfd
 		$icmd pkill -STOP osaffmd
+
+		# Flush OpenSAF internal log server messages to disk.
+		$bindir/osaflog --flush
 
 		# Reboot (not shutdown) system WITH file system sync
 		$icmd /sbin/reboot -f
