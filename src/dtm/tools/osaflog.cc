@@ -246,9 +246,9 @@ bool PrettyPrint(FILE* stream) {
 }
 
 bool PrettyPrint(const char* line, size_t size) {
-  size_t date_size;
+  size_t date_size = 0;
   const char* date_field = Osaflog::GetField(line, size, 1, &date_size);
-  size_t msg_size;
+  size_t msg_size = 0;
   const char* msg_field = Osaflog::GetField(line, size, 8, &msg_size);
   char pretty_date[33];
   if (date_field == nullptr || date_size < 19 ||
