@@ -1452,6 +1452,7 @@ fi
 %{_bindir}/clm-find
 %{_bindir}/clm-state
 %{_bindir}/clmprint
+%{_bindir}/osaflog
 %if %is_ais_smf
 %{_bindir}/smf-adm
 %{_bindir}/smf-find
