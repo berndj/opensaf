@@ -282,6 +282,9 @@ static uint32_t ckpt_proc_node_csync_rec(CLMS_CB *cb, CLMS_CKPT_REC *data)
 	CLMSV_CKPT_NODE *param = &data->param.node_csync_rec;
 	CLMS_CLUSTER_NODE *node = NULL, *tmp_node = NULL;
 	uint32_t rc = NCSCC_RC_SUCCESS;
+#ifdef ENABLE_AIS_PLM
+	SaNameT *entityNames = NULL;
+#endif
 
 	TRACE_ENTER2("node_name:%s", param->node_name.value);
 
@@ -315,6 +318,21 @@ static uint32_t ckpt_proc_node_csync_rec(CLMS_CB *cb, CLMS_CKPT_REC *data)
 					LOG_ER("Patricia add failed");
 				}
 		}
+#ifdef ENABLE_AIS_PLM
+		/* Add it to the plm entity group */
+		entityNames = &node->ee_name;
+		if (clms_cb->reg_with_plm == SA_TRUE) {
+			SaAisErrorT aisrc = saPlmEntityGroupAdd(
+					clms_cb->ent_group_hdl,
+					entityNames,
+					1,
+					SA_PLM_GROUP_SINGLE_ENTITY);
+			if (aisrc != SA_AIS_OK) {
+				LOG_ER("saPlmEntityGroupAdd FAILED rc = %d",
+						aisrc);
+			}
+		}
+#endif
 	}
 	TRACE_LEAVE();
 	return NCSCC_RC_SUCCESS;
@@ -357,7 +375,7 @@ static uint32_t ckpt_proc_node_del_rec(CLMS_CB *cb, CLMS_CKPT_REC *data)
 		rc = saPlmEntityGroupRemove(clms_cb->ent_group_hdl, entityNames,
 					    1);
 		if (rc != SA_AIS_OK) {
-			LOG_ER("saPlmEntityGroupAdd FAILED rc = %d", rc);
+			LOG_ER("saPlmEntityGroupRemove FAILED rc = %d", rc);
 			return rc;
 		}
 	}

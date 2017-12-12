@@ -2291,7 +2291,7 @@ SaAisErrorT clms_node_ccb_apply_cb(CcbUtilOperationData_t *opdata)
 			rc = saPlmEntityGroupRemove(clms_cb->ent_group_hdl,
 						    entityNames, 1);
 			if (rc != SA_AIS_OK) {
-				LOG_ER("saPlmEntityGroupAdd FAILED rc = %d",
+				LOG_ER("saPlmEntityGroupRemove FAILED rc = %d",
 				       rc);
 				return rc;
 			}

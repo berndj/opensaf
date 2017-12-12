@@ -992,7 +992,7 @@ static uint32_t proc_mds_node_evt(CLMSV_CLMS_EVT *evt)
 		if (delete_existing_nodedown_records(node_id) == true) {
 			TRACE_LEAVE();
 			return rc;
-		} else if (node->member == SA_FALSE) {
+		} else if (node->member == SA_FALSE && node->admin_state != SA_CLM_ADMIN_UNLOCKED) {
 			/* One possibility is that an admin operation has made
 			 * this a non-member */
 			TRACE_LEAVE();
