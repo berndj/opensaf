@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/eventfd.h>
+#include "base/logtrace.h"
 #include "plm/plmcd/plmc_lib_internal.h"
 #include "plm/plmcd/plmc_cmds.h"
 
@@ -44,8 +46,6 @@ int do_command(char *ee_id, int (*cb)(tcp_msg *), char *cmd,
 	       PLMC_cmd_idx cmd_enum)
 {
 	thread_entry *tentry;
-	pthread_attr_t client_mgr_attr;
-	pthread_t plmc_client_mgr_id;
 	tentry = find_thread_entry(ee_id);
 
 	if (tentry == NULL) {
@@ -56,15 +56,6 @@ int do_command(char *ee_id, int (*cb)(tcp_msg *), char *cmd,
 		syslog(LOG_ERR, "plmc_lib: encountered an error getting a "
 				"lock for a client");
 		return (PLMC_API_LOCK_FAILED);
-	}
-	/* Check if there are pending work */
-	if (tentry->thread_d.done == 0) {
-		if (pthread_mutex_unlock(&tentry->thread_d.td_lock) != 0) {
-			syslog(LOG_ERR, "plmc_lib: encountered an error "
-					"unlocking a mutex for a client");
-			return (PLMC_API_UNLOCK_FAILED);
-		}
-		return (PLMC_API_CLIENT_BUSY);
 	}
 
 	/* Check if there is valid socket */
@@ -80,27 +71,8 @@ int do_command(char *ee_id, int (*cb)(tcp_msg *), char *cmd,
 	strncpy(tentry->thread_d.command, cmd, PLMC_CMD_NAME_MAX_LENGTH);
 	tentry->thread_d.command[PLMC_CMD_NAME_MAX_LENGTH - 1] = '\0';
 	tentry->thread_d.callback = cb;
-	tentry->thread_d.done = 0;
 
-	/* Initialize and start the client_mgr_thread */
-	pthread_attr_init(&client_mgr_attr);
-	pthread_attr_setdetachstate(&client_mgr_attr, PTHREAD_CREATE_DETACHED);
-	if (pthread_create(&(plmc_client_mgr_id), &client_mgr_attr,
-			   plmc_client_mgr, (void *)tentry) != 0) {
-		syslog(LOG_ERR, "plmc_lib: Could not create a "
-				"new client mgr thread for connection");
-		send_error(PLMC_LIBERR_SYSTEM_RESOURCES,
-			   PLMC_LIBACT_CLOSE_SOCKET, ee_id, cmd_enum);
-		/* Unlock mutex */
-		if (pthread_mutex_unlock(&tentry->thread_d.td_lock) != 0) {
-			syslog(LOG_ERR, "plmc_lib: encountered an error "
-					"unlocking when updated "
-					"thread_id");
-		}
-		return (PLMC_API_FAILURE);
-	}
-	/* Update the thread_entry with the thread ID */
-	tentry->thread_d.td_id = plmc_client_mgr_id;
+	plmc_client_mgr(tentry);
 
 	/* Unlock */
 	if (pthread_mutex_unlock(&tentry->thread_d.td_lock) != 0) {
@@ -164,23 +136,27 @@ int plmc_initialize(int (*connect_cb)(char *, char *), int (*udp_cb)(udp_msg *),
 	callbacks.udp_cb = udp_cb;
 	callbacks.err_cb = err_cb;
 
-	/* Set these threads detached as we don't want to join them */
 	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+	tcp_listener_stop_fd = eventfd(0, EFD_NONBLOCK);
+
+	if (tcp_listener_stop_fd < 0) {
+		LOG_ER("eventfd failed: %i", errno);
+		return PLMC_API_FAILURE;
+	}
+
+	TRACE("tcp_listener_stop_fd: %i", tcp_listener_stop_fd);
 
 	/* Create the threads */
 	if (pthread_create(&(tcp_listener_id), &attr, plmc_tcp_listener,
 			   NULL) != 0) {
 		syslog(LOG_ERR, "plmc_lib: Could not create a new thread "
 				"when initializing");
+		pthread_attr_destroy(&attr);
 		return (PLMC_API_FAILURE);
 	}
-	if (pthread_create(&(plmc_connection_mgr_id), &attr,
-			   plmc_connection_mgr, NULL) != 0) {
-		syslog(LOG_ERR, "plmc_lib: Could not create a new thread "
-				"when initializing");
-		return (PLMC_API_FAILURE);
-	}
+
+	pthread_attr_destroy(&attr);
 	return (PLMC_API_SUCCESS);
 }
 /* CHANGE - move all logic to a single function and call it from
@@ -399,18 +375,44 @@ int plmc_plmcd_restart(char *ee_id, int (*cb)(tcp_msg *))
 
 int plmc_destroy()
 {
-	int i = 0;
-	if (pthread_cancel(udp_listener_id) != 0) {
-		i = 1;
+	int rc = 0, s = 0;
+	uint64_t stop = 1;
+	TRACE_ENTER();
+
+	s = write(udp_listener_stop_fd, &stop, sizeof(stop));
+
+	if (s < 0) {
+		LOG_ER("write failed: %i: stopping udp_listener thread", errno);
+		rc = 1;
+	} else {
+		TRACE("waiting for udp thread to stop");
+		rc = pthread_join(udp_listener_id, 0);
+		if (rc != 0)
+			LOG_ER("joining udp thread failed: %i", rc);
+		else
+			TRACE("udp thread stopped");
 	}
-	if (pthread_cancel(tcp_listener_id) != 0) {
-		i = 1;
+
+	s = write(tcp_listener_stop_fd, &stop, sizeof(stop));
+
+	if (s < 0) {
+		LOG_ER("write failed: %i: stopping tcp_listener thread", errno);
+		rc = 1;
+	} else {
+		TRACE("waiting for tcp thread to stop");
+		rc = pthread_join(tcp_listener_id, 0);
+		if (rc != 0)
+			LOG_ER("joining tcp thread failed: %i", rc);
+		else
+			TRACE("tcp thread stopped");
 	}
+
 #ifdef PLMC_LIB_DEBUG
 	fprintf(plmc_lib_debug, "Closing the debug file\n");
 	/* Close the debug file */
 	sleep(2);
 	fclose(plmc_lib_debug);
 #endif
-	return i;
+	TRACE_LEAVE2("rc: %i", rc);
+	return rc;
 }

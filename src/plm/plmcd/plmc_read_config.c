@@ -85,6 +85,7 @@ int plmc_read_config(char *plmc_config_file, PLMC_config_data *config)
 	config->tcp_keepidle_time = KEEPIDLE_TIME;
 	config->tcp_keepalive_intvl = KEEPALIVE_INTVL;
 	config->tcp_keepalive_probes = KEEPALIVE_PROBES;
+	config->tcp_user_timeout = USER_TIMEOUT;
 
 	/*
 	 * Set timeout to a negative value so we can detect if the value
@@ -161,6 +162,8 @@ int plmc_read_config(char *plmc_config_file, PLMC_config_data *config)
 				tag = TCP_KEEPALIVE_INTVL;
 			if (strcmp(line, "[tcp_keepalive_probes]") == 0)
 				tag = TCP_KEEPALIVE_PROBES;
+			if (strcmp(line, "[tcp_user_timeout]") == 0)
+				tag = TCP_USER_TIMEOUT_VALUE;
 		} else {
 			/* Set the value of the tag in config data structure. */
 			switch (tag) {
@@ -322,6 +325,16 @@ int plmc_read_config(char *plmc_config_file, PLMC_config_data *config)
 				}
 				tag = 0;
 				break;
+			case TCP_USER_TIMEOUT_VALUE:
+				config->tcp_user_timeout = atoi(line);
+				if (config->tcp_user_timeout < 1) {
+					syslog(LOG_ERR,
+					       "tcp_user_timeout "
+					       "must be a positive integer");
+					return -1;
+				}
+				tag = 0;
+				break;
 			default:
 				break;
 			}
@@ -449,6 +462,9 @@ void plmc_print_config(PLMC_config_data *config)
 
 	printf("  [tcp_keepalive_probes]\n");
 	printf("  %d\n", config->tcp_keepalive_probes);
+
+	printf("  [tcp_user_timeout]\n");
+	printf("  %d\n", config->tcp_user_timeout);
 
 	printf("\n");
 }

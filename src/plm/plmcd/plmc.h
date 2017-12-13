@@ -37,6 +37,7 @@
 #define KEEPIDLE_TIME 7200
 #define KEEPALIVE_INTVL 75
 #define KEEPALIVE_PROBES 9
+#define USER_TIMEOUT 5000
 
 /* Tag value and message data lengths. */
 #define PLMC_MAX_TAG_LEN 256
@@ -92,6 +93,7 @@ typedef enum {
   TCP_KEEPIDLE_TIME,
   TCP_KEEPALIVE_INTVL,
   TCP_KEEPALIVE_PROBES,
+  TCP_USER_TIMEOUT_VALUE
 } PLMC_config_tags;
 
 /* This struct holds the contents of the plmcd.conf configuration file. */
@@ -113,6 +115,7 @@ typedef struct {
   int tcp_keepidle_time;
   int tcp_keepalive_intvl;
   int tcp_keepalive_probes;
+  int tcp_user_timeout;
 } PLMC_config_data;
 
 /* The PLMC daemon command numerical index. */

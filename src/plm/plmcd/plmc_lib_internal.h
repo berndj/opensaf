@@ -33,7 +33,8 @@ typedef struct cb_functions_struct {
 
 extern char *plmc_config_file;
 extern PLMC_config_data config;
-extern pthread_t tcp_listener_id, udp_listener_id, plmc_connection_mgr_id;
+extern pthread_t tcp_listener_id, udp_listener_id;
+extern int tcp_listener_stop_fd, udp_listener_stop_fd;
 
 /********************************************************************
  * This struct is used for the data entry that a client_mgr thread
@@ -42,13 +43,10 @@ extern pthread_t tcp_listener_id, udp_listener_id, plmc_connection_mgr_id;
  ********************************************************************/
 typedef struct thread_data_struct {
   pthread_mutex_t td_lock; /* single thread lock */
-  pthread_t td_id;
   char ee_id[PLMC_EE_ID_MAX_LENGTH];
   char command[PLMC_CMD_NAME_MAX_LENGTH];
   int (*callback)(tcp_msg *);
   int socketfd;
-  int done;
-  int kill;
 } thread_data;
 
 typedef struct thread_entry_struct thread_entry;
@@ -63,12 +61,9 @@ struct thread_entry_struct {
   thread_entry *previous;
 };
 
-thread_entry *find_thread_entry(char *ee_id);
-thread_entry *create_thread_entry(char *ee_id, int sock);
-int delete_thread_entry(char *ee_id);
+thread_entry *find_thread_entry(const char *ee_id);
 void delete_all_thread_entries();
 void *plmc_tcp_listener(void *arguments);
-void *plmc_connection_mgr(void *arguments);
-void *plmc_client_mgr(void *arguments);
+void plmc_client_mgr(thread_entry *);
 int send_error(int error, int action, char *ee_id, PLMC_cmd_idx cmd_enum);
 #endif  // PLM_PLMCD_PLMC_LIB_INTERNAL_H_

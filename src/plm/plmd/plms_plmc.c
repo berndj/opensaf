@@ -293,6 +293,10 @@ SaUint32T plms_plmc_terminated_process(PLMS_ENTITY *ent)
 	if (plms_rdness_flag_is_set(ent, SA_PLM_RF_MANAGEMENT_LOST))
 		plms_ee_terminated_mngt_flag_clear(ent);
 
+	plms_readiness_state_set(ent, SA_PLM_READINESS_OUT_OF_SERVICE,
+				 NULL, SA_NTF_OBJECT_OPERATION,
+				 SA_PLM_NTFID_STATE_CHANGE_ROOT);
+
 	TRACE_LEAVE2("Return Val: %d", ret_err);
 	return ret_err;
 }
