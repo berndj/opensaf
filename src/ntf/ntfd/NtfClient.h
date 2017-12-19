@@ -65,6 +65,8 @@ class NtfClient {
   bool IsA11Client() const;
   void set_client_version(SaVersionT *ver);
   SaVersionT *getSafVersion();
+  void SetClientDownFlag();
+  bool GetClientDownFlag();
 
  private:
   void newReaderResponse(SaAisErrorT *error, unsigned int readerId,
@@ -79,6 +81,10 @@ class NtfClient {
 
   MDS_DEST mdsDest_;
   SaVersionT safVersion_;
+
+  // The flag to indicate that the client down and is going to deleted
+  bool client_down_flag_;
+
   typedef std::map<SaNtfSubscriptionIdT, NtfSubscription *> SubscriptionMap;
   SubscriptionMap subscriptionMap;
 

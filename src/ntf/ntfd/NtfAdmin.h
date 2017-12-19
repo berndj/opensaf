@@ -62,6 +62,8 @@ class NtfAdmin {
   void notificationLoggedConfirmed(SaNtfIdentifierT notificationId);
   void clientRemoved(unsigned int clientId);
   void clientRemoveMDS(MDS_DEST mds_dest);
+  void ClientsDownRemoved(MDS_DEST mds_dest);
+  void SetClientsDownFlag(MDS_DEST mds_dest);
   void subscriptionRemoved(unsigned int clientId,
                            SaNtfSubscriptionIdT subscriptionId,
                            MDS_SYNC_SND_CTXT *mdsCtxt);
@@ -118,6 +120,10 @@ class NtfAdmin {
   unsigned int clientIdCounter;
   std::list<NODE_ID *>
       member_node_list; /*To maintain NCS node_ids of CLM memeber nodes.*/
+
+  // This protects in case modifying the client with down flag and
+  // adding/removing client client
+  pthread_mutex_t client_down_mutex;
 };
 
 #endif  // NTF_NTFD_NTFADMIN_H_

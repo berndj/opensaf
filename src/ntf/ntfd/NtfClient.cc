@@ -36,9 +36,8 @@
  *                   Flag that is set if the client is located on this node.
  */
 NtfClient::NtfClient(unsigned int clientId, MDS_DEST mds_dest)
-    : readerId_(0), mdsDest_(mds_dest) {
-  clientId_ = clientId;
-  mdsDest_ = mds_dest;
+    : clientId_(clientId), readerId_(0),
+      mdsDest_(mds_dest), client_down_flag_(false) {
   TRACE_3("NtfClient::NtfClient NtfClient %u created mdest: %" PRIu64,
           clientId_, mdsDest_);
 }
@@ -461,3 +460,9 @@ void NtfClient::set_client_version(SaVersionT* ver) { safVersion_ = *ver; }
  * @return ptr to SaVersionT.
  */
 SaVersionT* NtfClient::getSafVersion() { return &safVersion_; }
+
+
+void NtfClient::SetClientDownFlag() { client_down_flag_ = true; }
+
+
+bool NtfClient::GetClientDownFlag() { return client_down_flag_;}

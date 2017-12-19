@@ -104,8 +104,12 @@ static uint32_t proc_ntfa_updn_mds_msg(ntfsv_ntfs_evt_t *evt)
 	case NTFSV_NTFS_EVT_NTFA_UP:
 		break;
 	case NTFSV_NTFS_EVT_NTFA_DOWN:
-		/* Remove this NTFA entry from our processing lists */
-		clientRemoveMDS(evt->fr_dest);
+		// Remove the clients belong to the ntfa down with MDS_DEST
+		if (ntfs_cb->ha_state == SA_AMF_HA_STANDBY) {
+			ClientsDownRemoved(evt->fr_dest);
+		} else {
+			clientRemoveMDS(evt->fr_dest);
+		}
 		break;
 	default:
 		TRACE("Unknown evt type!!!");

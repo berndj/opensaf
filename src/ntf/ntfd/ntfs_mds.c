@@ -16,8 +16,9 @@
  */
 
 #include "base/ncsencdec_pub.h"
-#include "ntfs.h"
 #include "ntf/common/ntfsv_enc_dec.h"
+#include "ntf/ntfd/ntfs.h"
+#include "ntf/ntfd/ntfs_com.h"
 
 #define NTFS_SVC_PVT_SUBPART_VERSION 1
 #define NTFS_WRT_NTFA_SUBPART_VER_AT_MIN_MSG_FMT 1
@@ -964,6 +965,14 @@ static uint32_t mds_svc_event(struct ncsmds_callback_info *info)
 			    info->info.svc_evt.i_node_id;
 			evt->info.mds_info.mds_dest_id =
 			    info->info.svc_evt.i_dest;
+
+			// Set flag for client down at standby node then ntfd
+			// just removes only the downed clients. This is helpful
+			// in some cases ntfd receives this event after
+			// checkpoint of initializing new client
+			if (ntfs_cb->ha_state == SA_AMF_HA_STANDBY) {
+				SetClientsDownFlag(evt->fr_dest);
+			}
 
 			/* Push the event and we are done */
 			if (m_NCS_IPC_SEND(&ntfs_cb->mbx, evt,

@@ -29,6 +29,7 @@
 
 #include "ntf/ntfd/NtfAdmin.h"
 #include "base/logtrace.h"
+#include "base/osaf_utility.h"
 #include "ntf/common/ntfsv_mem.h"
 
 NtfAdmin *NtfAdmin::theNtfAdmin = NULL;
@@ -42,6 +43,9 @@ NtfAdmin::NtfAdmin() {
   // initilalize variables
   notificationIdCounter = 0;
   clientIdCounter = 0;
+
+  // Initialize @client_down_mutex
+  pthread_mutex_init(&client_down_mutex, nullptr);
 }
 
 NtfAdmin::~NtfAdmin() {}
@@ -95,10 +99,13 @@ void NtfAdmin::clientAdded(unsigned int clientId, MDS_DEST mdsDest,
     rc = SA_AIS_ERR_EXIST;
   } else {
     // store new client in clientMap
+    osaf_mutex_lock_ordie(&client_down_mutex);
     clientMap[client->getClientId()] = client;
+    osaf_mutex_unlock_ordie(&client_down_mutex);
     TRACE_1("NtfAdmin::clientAdded client %u added, clientMap size is %u",
             client->getClientId(), (unsigned int)clientMap.size());
   }
+
   if (NULL != mdsCtxt) {
     client_added_res_lib(rc, clientId, mdsDest, mdsCtxt, version);
   }
@@ -418,18 +425,22 @@ void NtfAdmin::notificationLoggedConfirmed(SaNtfIdentifierT notificationId) {
  */
 void NtfAdmin::clientRemoved(unsigned int clientId) {
   // find client
+  TRACE_ENTER2("client_id: %d", clientId);
   ClientMap::iterator pos;
   pos = clientMap.find(clientId);
   if (pos != clientMap.end()) {
     // client found
+    osaf_mutex_lock_ordie(&client_down_mutex);
     NtfClient *client = pos->second;
     delete client;
     // remove client from client map
     clientMap.erase(pos);
+    osaf_mutex_unlock_ordie(&client_down_mutex);
   } else {
     TRACE_2("NtfAdmin::clientRemoved client %u not found", clientId);
     return;
   }
+
   // notifications do not need to be sent to that client, remove them
   // scan through all notifications, remove subscriptions belonging to
   //  the removed client
@@ -463,6 +474,46 @@ void NtfAdmin::clientRemoveMDS(MDS_DEST mds_dest) {
       }
     }
   } while (found);
+  TRACE_LEAVE();
+}
+
+/**
+  * Remove the clients that belong to the ntfa down at standby node.
+  *
+  * @param mds_dest
+  */
+void NtfAdmin::ClientsDownRemoved(MDS_DEST mds_dest) {
+  TRACE_ENTER2("MDS_DEST: %" PRIu64, mds_dest);
+  auto it = clientMap.begin();
+
+  while (it != clientMap.end()) {
+    NtfClient *client = it->second;
+    ++it;  // Increase here to avoid invalid iterator after client removed
+    if (client->getMdsDest() == mds_dest && client->GetClientDownFlag()) {
+      clientRemoved(client->getClientId());
+    }
+  }
+  TRACE_LEAVE();
+}
+
+/**
+ * Set flag for the clients that belong to the ntfa down. This is set on mds
+ * thread and the clients are removed in ntfd thread.
+ * Help to prevent the disorder of coming between NTFSV_NTFS_EVT_NTFA_DOWN event
+ * and checkpoint of NTFSV_NTFS_NTFSV_MSG requests. (Ticket #2705)
+ *
+ * @param mds_dest
+ */
+void NtfAdmin::SetClientsDownFlag(MDS_DEST mds_dest) {
+  TRACE_ENTER();
+  osaf_mutex_lock_ordie(&client_down_mutex);
+  for (const auto &it : clientMap) {
+    NtfClient *client = it.second;
+    if (client->getMdsDest() == mds_dest) {
+      client->SetClientDownFlag();
+    }
+  }
+  osaf_mutex_unlock_ordie(&client_down_mutex);
   TRACE_LEAVE();
 }
 
@@ -987,9 +1038,20 @@ void clientRemoved(unsigned int clientId) {
   osafassert(NtfAdmin::theNtfAdmin != NULL);
   NtfAdmin::theNtfAdmin->clientRemoved(clientId);
 }
+
 void clientRemoveMDS(MDS_DEST mds_dest) {
   osafassert(NtfAdmin::theNtfAdmin != NULL);
   NtfAdmin::theNtfAdmin->clientRemoveMDS(mds_dest);
+}
+
+void ClientsDownRemoved(MDS_DEST mds_dest) {
+  osafassert(NtfAdmin::theNtfAdmin != NULL);
+  NtfAdmin::theNtfAdmin->ClientsDownRemoved(mds_dest);
+}
+
+void SetClientsDownFlag(MDS_DEST mds_dest) {
+  osafassert(NtfAdmin::theNtfAdmin != NULL);
+  NtfAdmin::theNtfAdmin->SetClientsDownFlag(mds_dest);
 }
 
 void subscriptionRemoved(unsigned int clientId,
