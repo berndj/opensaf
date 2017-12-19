@@ -1,6 +1,6 @@
 #      -*- OpenSAF  -*-
 #
-# Copyright Ericsson AB 2017 - All Rights Reserved.
+# (C) Copyright 2017 The OpenSAF Foundation
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -11,23 +11,9 @@
 # See the Copying file included with the OpenSAF distribution for full
 # licensing terms.
 #
-
-all:
-	$(MAKE) -C ../../.. \
-		lib/libSaAmf.la \
-		lib/libSaCkpt.la \
-		lib/libSaClm.la \
-		lib/libSaEvt.la \
-		lib/libSaImmOi.la \
-		lib/libSaImmOm.la \
-		lib/libSaLck.la \
-		lib/libSaLog.la \
-		lib/libSaMsg.la \
-		lib/libSaNtf.la \
-		lib/libSaPlm.la \
-		lib/libSaSmf.la \
-		lib/libais.la
+# Author(s): Ericsson AB
+#
 
 check:
-	$(MAKE) -C ../.. bin/testlib
-	../../bin/testlib
+	$(MAKE) -C ../../.. bin/testlib
+	../../../bin/testlib

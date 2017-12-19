@@ -90,3 +90,26 @@ lib_libais_la_SOURCES = \
 	src/ais/aisa_api.c
 
 nodist_EXTRA_lib_libais_la_SOURCES = dummy.cc
+
+noinst_HEADERS += \
+	src/ais/try_again_decorator.h
+
+TESTS += bin/testlib
+
+bin_testlib_CXXFLAGS = \
+	$(AM_CXXFLAGS)
+
+bin_testlib_CPPFLAGS = \
+	$(AM_CPPFLAGS) \
+	-I$(GTEST_DIR)/include
+
+bin_testlib_LDFLAGS = \
+	$(AM_LDFLAGS)
+
+bin_testlib_SOURCES = \
+	src/ais/tests/try_again_decorator_test.cc
+
+bin_testlib_LDADD = \
+	$(GTEST_DIR)/lib/libgtest.la \
+	$(GTEST_DIR)/lib/libgtest_main.la \
+	lib/libopensaf_core.la
