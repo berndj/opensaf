@@ -950,7 +950,7 @@ static void immd_accept_node(IMMD_CB *cb, IMMD_IMMND_INFO_NODE *node_info,
 		proc_rc = immd_mds_msg_send(cb, NCSMDS_SVC_ID_IMMND,
 					    node_info->immnd_dest, &accept_evt);
 		if (proc_rc != NCSCC_RC_SUCCESS) {
-			LOG_ER("Failed to send accept message to IMMND %x",
+			LOG_WA("Failed to send accept message to IMMND %x",
 			       node_info->immnd_key);
 			goto done;
 		}
