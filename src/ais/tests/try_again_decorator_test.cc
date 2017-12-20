@@ -19,7 +19,7 @@
 #include "gtest/gtest.h"
 
 namespace {
-unsigned test_counter = 0;
+int test_counter = 0;
 };
 
 extern "C" SaAisErrorT TestMethod() {
