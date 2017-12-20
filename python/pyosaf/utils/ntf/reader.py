@@ -131,6 +131,14 @@ class NtfReader(NtfConsumer, Iterator):
         """
         self.search_criteria = search_criteria
 
+    def set_search_direction(self, search_direction):
+        """ Set the notification search direction
+
+        Args:
+            search_direction (SaNtfSearchDirectionT): Search direction
+        """
+        self.search_direction = search_direction
+
     @bad_handle_retry
     def read(self, notification_types=None):
         """ Start reading NTF notifications with the types specified in the
@@ -162,19 +170,22 @@ class NtfReader(NtfConsumer, Iterator):
                     and security_alarm_type not in notification_types:
                 return eSaAisErrorT.SA_AIS_ERR_NOT_SUPPORTED
 
+        rc = eSaAisErrorT.SA_AIS_OK
         # Generate the alarm notification filter
         if notification_types is None or alarm_type in notification_types:
-            self._generate_alarm_filter()
+            rc = self._generate_alarm_filter()
 
         # Generate the security alarm notification filter
-        if notification_types is None \
-                or security_alarm_type in notification_types:
-            self._generate_security_alarm_filter()
+        if rc == eSaAisErrorT.SA_AIS_OK:
+            if notification_types is None \
+                    or security_alarm_type in notification_types:
+                rc = self._generate_security_alarm_filter()
 
-        self.read_handle = saNtf.SaNtfReadHandleT()
-        rc = ntf.saNtfNotificationReadInitialize(self.search_criteria,
-                                                 self.filter_handles,
-                                                 self.read_handle)
+        if rc == eSaAisErrorT.SA_AIS_OK:
+            self.read_handle = saNtf.SaNtfReadHandleT()
+            rc = ntf.saNtfNotificationReadInitialize(self.search_criteria,
+                                                     self.filter_handles,
+                                                     self.read_handle)
         if rc == eSaAisErrorT.SA_AIS_ERR_BAD_HANDLE:
             init_rc = self.init()
             # If the re-initialization of agent handle succeeds, we still need

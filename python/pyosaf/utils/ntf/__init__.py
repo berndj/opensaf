@@ -106,6 +106,9 @@ def send_object_create_notification(vendor_id, major_id, minor_id,
     if rc != eSaAisErrorT.SA_AIS_OK:
         raise SafException(rc)
 
+    # Clear the internally saved notification information
+    _ntf_producer.clear_info()
+
     return rc
 
 
@@ -157,6 +160,9 @@ def send_object_delete_notification(vendor_id, major_id, minor_id,
     rc = _ntf_producer.send_object_create_delete_notification()
     if rc != eSaAisErrorT.SA_AIS_OK:
         raise SafException(rc)
+
+    # Clear the internally saved notification information
+    _ntf_producer.clear_info()
 
     return rc
 
@@ -210,6 +216,9 @@ def send_attribute_change_notification(
     rc = _ntf_producer.send_attribute_change_notification()
     if rc != eSaAisErrorT.SA_AIS_OK:
         raise SafException(rc)
+
+    # Clear the internally saved notification information
+    _ntf_producer.clear_info()
 
     return rc
 
@@ -266,6 +275,9 @@ def send_state_change_notification(vendor_id,
     if rc != eSaAisErrorT.SA_AIS_OK:
         raise SafException(rc)
 
+    # Clear the internally saved notification information
+    _ntf_producer.clear_info()
+
     return rc
 
 
@@ -315,6 +327,9 @@ def send_alarm_notification(
     rc = _ntf_producer.send_alarm_notification()
     if rc != eSaAisErrorT.SA_AIS_OK:
         raise SafException(rc)
+
+    # Clear the internally saved notification information
+    _ntf_producer.clear_info()
 
     return rc
 
@@ -377,6 +392,9 @@ def send_security_alarm_notification(
     rc = _ntf_producer.send_security_alarm_notification()
     if rc != eSaAisErrorT.SA_AIS_OK:
         raise SafException(rc)
+
+    # Clear the internally saved notification information
+    _ntf_producer.clear_info()
 
     return rc
 

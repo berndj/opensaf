@@ -160,7 +160,7 @@ class NtfConsumer(ntf.NtfAgent):
             perceived_severities (list(SaNtfSeverityT)): List of alarm
                 severities
         """
-        self.filter_info.probable_cause_list = perceived_severities
+        self.filter_info.perceived_severity_list = perceived_severities
 
     def set_filter_trends(self, trends):
         """ Set data for the trends field in the notification filter header of
@@ -396,7 +396,7 @@ class NtfConsumer(ntf.NtfAgent):
             len(self.filter_info.probable_cause_list),
             len(self.filter_info.severity_list), 0, 0, 0)
         if rc != eSaAisErrorT.SA_AIS_OK:
-            log_err("saNtfAlarmNotificationFilterAllocate FAILED, "
+            log_err("saNtfSecurityAlarmNotificationFilterAllocate FAILED, "
                     "rc = %s" % eSaAisErrorT.whatis(rc))
         else:
             self.filter_handles.securityAlarmFilterHandle = \
@@ -495,17 +495,19 @@ class NtfConsumer(ntf.NtfAgent):
         """
         ntf_info = ntf.NotificationInfo()
         ntf_info.event_type = ntf_header.eventType.contents.value
-        ntf_info.notification_object = \
-            ntf_header.notificationObject.contents.value
-        ntf_info.notifying_object = \
-            ntf_header.notifyingObject.contents.value
+        ntf_info.notification_object = ntf_header.notificationObject.contents
+        ntf_info.notifying_object = ntf_header.notifyingObject.contents
         ntf_info.ntf_class_id = \
             ntf_header.notificationClassId.contents
         ntf_info.event_time = ntf_header.eventTime.contents.value
         ntf_info.notification_id = \
             ntf_header.notificationId.contents.value
-        ntf_info.additional_text = \
-            ntf_header.additionalText[0:ntf_header.lengthAdditionalText]
+
+        additional_text_str = \
+            ctypes.create_string_buffer(ntf_header.lengthAdditionalText)
+        ctypes.memmove(additional_text_str, ntf_header.additionalText,
+                       ntf_header.lengthAdditionalText)
+        ntf_info.additional_text = additional_text_str.value
 
         for i in range(ntf_header.numAdditionalInfo):
             c_add_info = ntf_header.additionalInfo[i]
@@ -603,10 +605,6 @@ class NtfConsumer(ntf.NtfAgent):
         """
         ntf_handle = c_ntf.notificationHandle
         ntf_info.probable_cause = c_ntf.probableCause.contents.value
-
-        for i in range(c_ntf.numSpecificProblems):
-            ntf_info.specific_problems.append(
-                c_ntf.specificProblems[i])
         ntf_info.perceived_severity = c_ntf.perceivedSeverity.contents.value
         ntf_info.trend = c_ntf.trend.contents.value
 
@@ -633,6 +631,18 @@ class NtfConsumer(ntf.NtfAgent):
             threshold_info.arm_time = c_threshold_info.armTime
 
             ntf_info.threshold_information = threshold_info
+
+        for i in range(c_ntf.numSpecificProblems):
+            c_specific_problem = c_ntf.specificProblems[i]
+            spec_problem = ntf.SpecificProblem()
+            spec_problem.problem_id = c_specific_problem.problemId
+            spec_problem.problem_class_id = c_specific_problem.problemClassId
+            spec_problem.problem_type = c_specific_problem.problemType
+            spec_problem.problem_value = \
+                self._get_ntf_value(ntf_handle,
+                                    c_specific_problem.problemValue,
+                                    c_specific_problem.problemType)
+            ntf_info.specific_problems.append(spec_problem)
 
         for i in range(c_ntf.numMonitoredAttributes):
             c_attr = c_ntf.monitoredAttributes[i]
@@ -758,8 +768,15 @@ class NtfSubscriber(NtfConsumer):
         else:
             return
 
+        # Make a deep copy of the parsed notification for use after freeing it
+        ntf_info_copy = deepcopy(ntf_info)
+
         # Send the ntf info to user's callback function
-        self.ntf_notif_function(subscription_id, notification_type, ntf_info)
+        self.ntf_notif_function(subscription_id, notification_type,
+                                ntf_info_copy)
+
+        # Free the notification after parsing for needed information
+        ntf.saNtfNotificationFree(notification.notificationHandle)
 
     def _ntf_notif_discarded_callback(self, c_subscription_id,
                                       c_notification_type, c_number_discarded,
@@ -823,7 +840,7 @@ class NtfSubscriber(NtfConsumer):
         if rc == eSaAisErrorT.SA_AIS_OK:
             rc = self._fetch_sel_obj()
             if rc == eSaAisErrorT.SA_AIS_ERR_BAD_HANDLE:
-                self._re_init()
+                rc = self._re_init()
         return rc
 
     @bad_handle_retry

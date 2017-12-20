@@ -112,13 +112,14 @@ class NotificationInfo(object):
         self.probable_cause = \
             saNtf.eSaNtfProbableCauseT.SA_NTF_UNSPECIFIED_REASON
         self.specific_problems = []
-        self.perceived_severity = saNtf.eSaNtfSeverityT.SA_NTF_SEVERITY_MINOR
-        self.trend = None
+        self.perceived_severity = \
+            saNtf.eSaNtfSeverityT.SA_NTF_SEVERITY_INDETERMINATE
+        self.trend = saNtf.eSaNtfSeverityTrendT.SA_NTF_TREND_NO_CHANGE
         self.threshold_information = None
         self.monitored_attrs = []
         self.proposed_repair_actions = []
         # Security alarm info
-        self.severity = saNtf.eSaNtfSeverityT.SA_NTF_SEVERITY_MINOR
+        self.severity = saNtf.eSaNtfSeverityT.SA_NTF_SEVERITY_INDETERMINATE
         self.security_alarm_detector = None
         self.service_user = None
         self.service_provider = None
@@ -491,7 +492,7 @@ class NtfAgent(object):
             rc = saNtfFinalize(self.handle)
             if rc != eSaAisErrorT.SA_AIS_OK:
                 log_err("saNtfFinalize FAILED - %s" % eSaAisErrorT.whatis(rc))
-            elif rc == eSaAisErrorT.SA_AIS_OK \
+            if rc == eSaAisErrorT.SA_AIS_OK \
                     or rc == eSaAisErrorT.SA_AIS_ERR_BAD_HANDLE:
                 # If the Finalize() call returned BAD_HANDLE, the handle should
                 # already become stale and invalid, so we reset it anyway

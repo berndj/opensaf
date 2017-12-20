@@ -58,7 +58,7 @@ class NtfProducer(ntf.NtfAgent):
             attr_value.uint8Val = int(value)
 
         elif value_type == saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_INT8:
-            attr_value.int8Val = int(value)
+            attr_value.int8Val = value
 
         elif value_type == saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_UINT16:
             attr_value.uint16Val = int(value)
@@ -73,7 +73,7 @@ class NtfProducer(ntf.NtfAgent):
             attr_value.int32Val = int(value)
 
         elif value_type == saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_FLOAT:
-            attr_value.floatVal = int(value)
+            attr_value.floatVal = float(value)
 
         elif value_type == saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_UINT64:
             attr_value.uint64Val = int(value)
@@ -82,11 +82,11 @@ class NtfProducer(ntf.NtfAgent):
             attr_value.int64Val = int(value)
 
         elif value_type == saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_DOUBLE:
-            attr_value.doubleVal = int(value)
+            attr_value.doubleVal = float(value)
 
-        elif value_type == saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_LDAP_NAME or \
-            value_type == saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_STRING or \
-                value_type == saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_IPADDRESS:
+        elif value_type == saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_LDAP_NAME \
+                or value_type == saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_STRING \
+                or value_type == saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_IPADDRESS:
             len_value = len(value)
             dest_ptr = SaVoidPtr()
             rc = ntf.saNtfPtrValAllocate(ntf_handle, len_value + 1, dest_ptr,
@@ -230,8 +230,8 @@ class NtfProducer(ntf.NtfAgent):
         """ Fill in the thresholdInformation field in alarm notification
 
         Args:
-            threshold_information (list(ThresholdInformation)): List of
-                ThresholdInformation structures
+            threshold_information (ThresholdInformation):
+                A ThresholdInformation structure
         """
         self.ntf_info.threshold_information = threshold_information
 
@@ -375,8 +375,6 @@ class NtfProducer(ntf.NtfAgent):
             if rc != eSaAisErrorT.SA_AIS_OK:
                 log_err("saNtfNotificationSend FAILED, rc = %s" %
                         eSaAisErrorT.whatis(rc))
-            else:
-                self.clear_info()
 
             # Free the notification
             ntf.saNtfNotificationFree(notification.notificationHandle)
@@ -446,9 +444,6 @@ class NtfProducer(ntf.NtfAgent):
                 log_err("saNtfNotificationSend FAILED, rc = %s" %
                         eSaAisErrorT.whatis(rc))
 
-            else:
-                self.clear_info()
-
             # Free the notification
             ntf.saNtfNotificationFree(notification.notificationHandle)
 
@@ -508,8 +503,6 @@ class NtfProducer(ntf.NtfAgent):
             if rc != eSaAisErrorT.SA_AIS_OK:
                 log_err("saNtfNotificationSend FAILED, rc = %s" %
                         eSaAisErrorT.whatis(rc))
-            else:
-                self.clear_info()
 
             # Free the notification
             ntf.saNtfNotificationFree(notification.notificationHandle)
@@ -554,24 +547,26 @@ class NtfProducer(ntf.NtfAgent):
             notification.probableCause.contents.value = \
                 self.ntf_info.probable_cause
 
+            notification.perceivedSeverity.contents.value = \
+                self.ntf_info.perceived_severity
+
+            if self.ntf_info.trend is not None:
+                notification.trend.contents.value = self.ntf_info.trend
+
             for i, problem in enumerate(self.ntf_info.specific_problems):
                 ptr = notification.specificProblems[i]
                 ptr.problemId = problem.problem_id
-                ptr.problemClassId.vendorId = problem.problem_class_id.vendorId
-                ptr.problemClassId.majorId = problem.problem_class_id.majorId
-                ptr.problemClassId.minorId = problem.problem_class_id.minorId
+                if problem.problem_class_id is not None:
+                    prob_class_id = problem.problem_class_id
+                    ptr.problemClassId.vendorId = prob_class_id.vendorId
+                    ptr.problemClassId.majorId = prob_class_id.majorId
+                    ptr.problemClassId.minorId = prob_class_id.minorId
                 ptr.problemType = problem.problem_type
                 self._assign_ntf_value(
                     notification.notificationHandle, ptr.problemValue,
                     problem.problem_value, problem.problem_type)
 
-            notification.perceivedSeverity.contents.value = \
-                self.ntf_info.perceived_severity
-
-            if self.ntf_info.trend:
-                notification.trend.contents.value = self.ntf_info.trend
-
-            if self.ntf_info.threshold_information:
+            if self.ntf_info.threshold_information is not None:
                 ptr = notification.thresholdInformation.contents
                 ptr.thresholdId = \
                     self.ntf_info.threshold_information.threshold_id
@@ -591,9 +586,6 @@ class NtfProducer(ntf.NtfAgent):
                     self.ntf_info.threshold_information.observed_value,
                     ptr.thresholdValueType)
                 ptr.armTime = self.ntf_info.threshold_information.arm_time
-
-            notification.perceivedSeverity.contents.value = \
-                self.ntf_info.perceived_severity
 
             for i, attribute in enumerate(self.ntf_info.monitored_attrs):
                 ptr = notification.monitoredAttributes[i]
@@ -620,8 +612,6 @@ class NtfProducer(ntf.NtfAgent):
             if rc != eSaAisErrorT.SA_AIS_OK:
                 log_err("saNtfNotificationSend FAILED, rc = %s" %
                         eSaAisErrorT.whatis(rc))
-            else:
-                self.clear_info()
 
             # Free the notification
             ntf.saNtfNotificationFree(notification.notificationHandle)
@@ -663,7 +653,7 @@ class NtfProducer(ntf.NtfAgent):
                 self.ntf_info.probable_cause
             notification.severity.contents.value = self.ntf_info.severity
 
-            if self.ntf_info.security_alarm_detector:
+            if self.ntf_info.security_alarm_detector is not None:
                 notification.securityAlarmDetector.contents.valueType = \
                     self.ntf_info.security_alarm_detector.value_type
                 self._assign_ntf_value(
@@ -672,14 +662,15 @@ class NtfProducer(ntf.NtfAgent):
                     self.ntf_info.security_alarm_detector.value,
                     self.ntf_info.security_alarm_detector.value_type)
 
-            if self.ntf_info.service_user:
+            if self.ntf_info.service_user is not None:
                 notification.serviceUser.contents.valueType = \
                     self.ntf_info.service_user.value_type
                 self._assign_ntf_value(notification.notificationHandle,
                                        notification.serviceUser.contents.value,
                                        self.ntf_info.service_user.value,
                                        self.ntf_info.service_user.value_type)
-            if self.ntf_info.service_provider:
+
+            if self.ntf_info.service_provider is not None:
                 notification.serviceProvider.contents.valueType = \
                     self.ntf_info.service_provider.value_type
                 self._assign_ntf_value(
@@ -693,8 +684,6 @@ class NtfProducer(ntf.NtfAgent):
             if rc != eSaAisErrorT.SA_AIS_OK:
                 log_err("saNtfNotificationSend FAILED, rc = %s" %
                         eSaAisErrorT.whatis(rc))
-            else:
-                self.clear_info()
 
             # Free the notification
             ntf.saNtfNotificationFree(notification.notificationHandle)
