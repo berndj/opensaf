@@ -1,251 +1,680 @@
 #! /usr/bin/env python
+############################################################################
+#
+# (C) Copyright 2018 Ericsson AB. All rights reserved.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. This file and program are licensed
+# under the GNU Lesser General Public License Version 2.1, February 1999.
+# The complete license can be accessed from the following location:
+# http://opensource.org/licenses/lgpl-license.php
+# See the Copying file included with the OpenSAF distribution for full
+# licensing terms.
+#
+# Author(s): Ericsson
+#
+############################################################################
+"""
+ntfsend tool used to send a type of NTF notification
 
+Run ntfsend -h/--help for more detail on usage
+"""
+from __future__ import print_function
+import sys
 import argparse
 import time
 
-from pyosaf import saNtf, saAis
-from pyosaf.utils import ntf
+from pyosaf import saNtf
+from pyosaf.saAis import eSaAisErrorT
+from pyosaf.utils.ntf import agent as ntf
+from pyosaf.utils.ntf.producer import NtfProducer
+
+NOTIFICATIONS_TYPE_MASK = saNtf.saNtf.SA_NTF_NOTIFICATIONS_TYPE_MASK
 
 
-def construct_additional_info(additional_info_string):
-    ''' Constructs an AdditionalInfo instance from the given string.
+class InputValidation(object):
+    """ This class consists of methods to validate different types of input
+    argument for the ntfsend tool
+    """
+    @staticmethod
+    def validate_ntf_class_id(arg):
+        """ Validate the input NtfClassId with format
+        'VENDOR_ID.MAJOR_ID.MINOR_ID'
 
-        The string must be of the format ID,TYPE,VALUE
-    '''
+        Args:
+            arg (str): The NtfClassId to validate
 
-    info_id = int(additional_info_string.split(',')[0])
-    info_type = int(additional_info_string.split(',')[1])
-    info_value = ','.join(additional_info_string.split(',')[2:])
+        Returns:
+            SaNtfClassIdT: The validated NtfClassId
+        """
+        if arg.count('.') != 2:
+            msg = "%r is not in correct format " \
+                  "'VENDOR_ID.MAJOR_ID.MINOR_ID'" % arg
+            raise argparse.ArgumentTypeError(msg)
+        if not arg.split('.')[0] or not arg.split('.')[1] \
+                or not arg.split('.')[2]:
+            msg = "%r does not have enough required values" % arg
+            raise argparse.ArgumentTypeError(msg)
 
-    return ntf.AdditionalInfo(info_id, info_type, info_value)
+        # Validate element type
+        try:
+            vendor_id = int(arg.split('.')[0])
+            major_id = int(arg.split('.')[1])
+            minor_id = int(arg.split('.')[2])
+        except ValueError:
+            msg = "%r must consist of all integers" % arg
+            raise argparse.ArgumentTypeError(msg)
+
+        return saNtf.SaNtfClassIdT(vendor_id, major_id, minor_id)
+
+    @staticmethod
+    def validate_id_type_value(arg):
+        """ Validate the input argument with format 'ID,TYPE,VALUE'
+
+        Args:
+            arg (str): The argument to validate
+
+        Returns:
+            tuple: The validated argument as (ID, TYPE, VALUE)
+        """
+        if arg.count(',') != 2:
+            msg = "%r is not in correct format 'ID,TYPE,VALUE'" % arg
+            raise argparse.ArgumentTypeError(msg)
+        if not arg.split(',')[0] or not arg.split(',')[1] \
+                or not arg.split(',')[2]:
+            msg = "%r does not have enough required values" % arg
+            raise argparse.ArgumentTypeError(msg)
+
+        # Validate element type
+        try:
+            _id = int(arg.split(',')[0])
+        except ValueError:
+            msg = "%r - ID must be an integer" % arg
+            raise argparse.ArgumentTypeError(msg)
+
+        try:
+            _type = int(arg.split(',')[1])
+            if _type not in saNtf.eSaNtfValueTypeT.reverse_lookup:
+                msg = "%r - TYPE is not a valid SaNtfValueTypeT type" % arg
+                raise argparse.ArgumentTypeError(msg)
+        except ValueError:
+            msg = "%r - TYPE must be an integer" % arg
+            raise argparse.ArgumentTypeError(msg)
+
+        _value = arg.split(',')[2]
+
+        return _id, _type, _value
+
+    @staticmethod
+    def validate_type_value(arg):
+        """ Validate the input argument with format 'TYPE,VALUE'
+
+        Args:
+            arg (str): The argument to validate
+
+        Returns:
+            tuple: The validated argument as (TYPE, VALUE)
+        """
+        if arg.count(',') != 1:
+            msg = "%r is not in correct format 'TYPE,VALUE'" % arg
+            raise argparse.ArgumentTypeError(msg)
+        if not arg.split(',')[0] or not arg.split(',')[1]:
+            msg = "%r does not have enough required values" % arg
+            raise argparse.ArgumentTypeError(msg)
+
+        # Validate TYPE element
+        try:
+            _type = int(arg.split(',')[0])
+            if _type not in saNtf.eSaNtfValueTypeT.reverse_lookup:
+                msg = "%r - TYPE is not a valid SaNtfValueTypeT type" % arg
+                raise argparse.ArgumentTypeError(msg)
+        except ValueError:
+            msg = "%r - TYPE must be an integer" % arg
+            raise argparse.ArgumentTypeError(msg)
+
+        _value = arg.split(',')[1]
+
+        return _type, _value
+
+    @staticmethod
+    def validate_changed_attribute(arg):
+        """ Validate the input changedAttributes argument with format
+        'ID,TYPE,OLD_PRESENT,OLD_VAL,NEW_VAL'
+
+        Args:
+            arg (str): The changedAttributes argument to validate
+
+        Returns:
+            tuple: The validated changedAttributes argument as
+                (ID, TYPE, OLD_PRESENT, OLD_VALUE, NEW_VALUE)
+        """
+        if arg.count(',') != 4:
+            msg = "%r is not in correct format " \
+                  "'ID,TYPE,OLD_PRESENT,OLD_VAL,NEW_VAL'" % arg
+            raise argparse.ArgumentTypeError(msg)
+        if not arg.split(',')[0] or not arg.split(',')[1] \
+                or not arg.split(',')[2] or not arg.split(',')[4]:
+            msg = "%r does not have enough required values" % arg
+            raise argparse.ArgumentTypeError(msg)
+
+        # Validate element type
+        try:
+            _id = int(arg.split(',')[0])
+        except ValueError:
+            msg = "%r - ID must be an integer" % arg
+            raise argparse.ArgumentTypeError(msg)
+
+        try:
+            _type = int(arg.split(',')[1])
+            if _type not in saNtf.eSaNtfValueTypeT.reverse_lookup:
+                msg = "%r - TYPE is not a valid SaNtfValueTypeT type" % arg
+                raise argparse.ArgumentTypeError(msg)
+        except ValueError:
+            msg = "%r - TYPE must be an integer" % arg
+            raise argparse.ArgumentTypeError(msg)
+
+        if arg.split(',')[2] not in ['True', 'False']:
+            msg = "%r - OLD_PRESENT must be either 'True' or 'False'" % arg
+            raise argparse.ArgumentTypeError(msg)
+        _old_present = True if arg.split(',')[2] == 'True' else False
+
+        _old_value = arg.split(',')[3]
+        if _old_present and not _old_value:
+            msg = "%r - OLD_VAL is missing for OLD_PRESENT=True" % arg
+            raise argparse.ArgumentTypeError(msg)
+
+        _new_value = arg.split(',')[4]
+
+        return _id, _type, _old_present, _old_value, _new_value
+
+    @staticmethod
+    def validate_changed_state(arg):
+        """ Validate the input changedStates argument with format
+        'ID,OLD_PRESENT,OLD_STATE,NEW_STATE'
+
+        Args:
+            arg (str): The changedStates argument to validate
+
+        Returns:
+            tuple: The validated changedStates argument as
+                (ID, OLD_PRESENT, OLD_STATE, NEW_STATE)
+        """
+        if arg.count(',') != 3:
+            msg = "%r is not in correct format " \
+                  "'ID,OLD_PRESENT,OLD_STATE,NEW_STATE'" % arg
+            raise argparse.ArgumentTypeError(msg)
+        if not arg.split(',')[0] or not arg.split(',')[1] \
+                or not arg.split(',')[3]:
+            msg = "%r does not have enough required values" % arg
+            raise argparse.ArgumentTypeError(msg)
+
+        # Validate element type
+        try:
+            _id = int(arg.split(',')[0])
+        except ValueError:
+            msg = "%r - ID must be an integer" % arg
+            raise argparse.ArgumentTypeError(msg)
+
+        if arg.split(',')[1] not in ['True', 'False']:
+            msg = "%r - OLD_PRESENT must be either 'True' or 'False'" % arg
+            raise argparse.ArgumentTypeError(msg)
+        _old_present = True if arg.split(',')[1] == 'True' else False
+
+        if _old_present:
+            try:
+                if not arg.split(',')[2]:
+                    msg = "%r - OLD_STATE is missing for " \
+                          "OLD_PRESENT=True" % arg
+                    raise argparse.ArgumentTypeError(msg)
+                _old_state = int(arg.split(',')[2])
+            except ValueError:
+                msg = "%r - OLD_STATE must be an integer" % arg
+                raise argparse.ArgumentTypeError(msg)
+        else:
+            _old_state = arg.split(',')[2]
+
+        try:
+            _new_state = int(arg.split(',')[3])
+        except ValueError:
+            msg = "%r - NEW_STATE must be an integer" % arg
+            raise argparse.ArgumentTypeError(msg)
+
+        return _id, _old_present, _old_state, _new_state
+
+    @staticmethod
+    def validate_specific_problem(arg):
+        """ Validate the input specificProblems argument with format
+        'ID,TYPE,VALUE[,VENDOR_ID.MAJOR_ID.MINOR_ID]'
+
+        Args:
+            arg (str): The specificProblems argument to validate
+
+        Returns:
+            tuple: The validated specificProblems argument as
+                (ID, TYPE, VALUE, SaNtfClassIdT) if problemClassId is provided,
+                or (ID, TYPE, VALUE, None) if problemClassId is not provided
+        """
+        if arg.count(',') < 2 or arg.count(',') > 3:
+            msg = "%r is not in correct format " \
+                  "'ID,TYPE,VALUE[,VENDOR_ID.MAJOR_ID.MINOR_ID]'" % arg
+            raise argparse.ArgumentTypeError(msg)
+        if not arg.split(',')[0] or not arg.split(',')[1] \
+                or not arg.split(',')[2]:
+            msg = "%r does not have enough required values" % arg
+            raise argparse.ArgumentTypeError(msg)
+
+        arg_list = arg.split(',')
+        # Validate the required ID,TYPE,VALUE part
+        required_part = ','.join(arg_list[:3])
+        _id, _type, _value = \
+            InputValidation.validate_id_type_value(required_part)
+
+        # Validate the problemClassId part, if provided
+        if len(arg_list) == 4 and arg_list[3]:
+            _class_id = InputValidation.validate_ntf_class_id(arg_list[3])
+        else:
+            _class_id = None
+
+        return _id, _type, _value, _class_id
+
+    @staticmethod
+    def validate_threshold_information(arg):
+        """ Validate the input thresholdInformation argument with format
+        'ID,TYPE,THRES_VALUE,HYST,OBSRV_VALUE[,ARM_TIME]'
+
+        Args:
+            arg (str): The thresholdInformation argument to validate
+
+        Returns:
+            tuple: The validated thresholdInformation argument as
+                (ID, TYPE, THRES_VALUE, HYST, OBSRV_VALUE, ARM_TIME) if
+                armTime is provided, or
+                (ID, TYPE, THRES_VALUE, HYST, OBSRV_VALUE, CURRENT_TIME) if
+                armTime is not provided
+        """
+        if arg.count(',') < 4 or arg.count(',') > 5:
+            msg = "%r is not in correct format " \
+                  "'ID,TYPE,THRES_VALUE,HYST,OBSRV_VALUE[,ARM_TIME]'" % arg
+            raise argparse.ArgumentTypeError(msg)
+        if not arg.split(',')[0] or not arg.split(',')[1] \
+                or not arg.split(',')[2] or not arg.split(',')[3] \
+                or not arg.split(',')[4]:
+            msg = "%r does not have enough required values" % arg
+            raise argparse.ArgumentTypeError(msg)
+
+        arg_list = arg.split(',')
+        # Validate the required ID,TYPE,VALUE part
+        required_part = ','.join(arg_list[:3])
+        _id, _type, _thres_value = \
+            InputValidation.validate_id_type_value(required_part)
+
+        _thres_hyst = arg_list[3]
+        _obsrv_value = arg_list[4]
+
+        if len(arg_list) == 6 and arg_list[5]:
+            _arm_time = arg_list[5]
+        else:
+            _arm_time = int(time.time() * 10**9)
+
+        return _id, _type, _thres_value, _thres_hyst, _obsrv_value, _arm_time
 
 
-if __name__ == '__main__':
+def fill_notification_header():
+    """ Fill the notification header with user-provided or default values """
+    producer.set_event_type(event_type)
+    if args.notificationObject is not None:
+        producer.set_notification_object(args.notificationObject)
+    if args.notifyingObject is not None:
+        producer.set_notifying_object(args.notifyingObject)
+    if args.notificationClassId is not None:
+        producer.set_class_id(args.notificationClassId)
+    if args.eventTime is not None:
+        producer.set_event_time(args.eventTime)
+    if args.additionalText is not None:
+        producer.set_additional_text(args.additionalText)
+    if additional_info:
+        producer.set_additional_info(additional_info)
 
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(
-        description='ntfsend is a SAF NTF client used to send a notificaiton.')
 
-    parser.add_argument('--notificationType', '-T', metavar='0x1000...0x5000',
-                        default='0x4000',
-                        help='numeric value of SaNtfNotificationTypeT'
-                        '(obj_create_del=0x1000,attr_ch,state_ch,al,sec_al=0x5000)')
-    parser.add_argument('--eventType', '-e', metavar='4096...24589',
-                        help='numeric value of SaNtfEventTypeT'
-                        '(SA_NTF_OBJECT_NOTIFICATIONS_START...SA_NTF_HPI_EVENT_OTHER)')
-    parser.add_argument('--eventTime', '-E', metavar='TIME',
-                        default=saAis.saAis.SA_TIME_UNKNOWN,
-                        help='numeric value of SaTimeT')
-    parser.add_argument('--notificationClassId', '-c', metavar='VE,MA,MI',
-                        default='162,1,1',
-                        help='vendorid, majorid, minorid')
-    parser.add_argument('--notificationObject', '-n', metavar='NOT_OBJ',
-                        default="",
-                        help='notification object (string value)')
-    parser.add_argument('--notifyingObject', '-N', metavar='NOTIFY_OBJ',
-                        default="",
-                        help='notififying object (string value)')
-    parser.add_argument('--additionalText', '-a', metavar='TEXT',
-                        default="",
-                        help='additional text (string value)')
-    parser.add_argument('--probableCause', '-p', metavar='0..74',
-                        help='numeric value SaNtfProbableCauseT'
-                        'SA_NTF_ADAPTER_ERROR to SA_NTF_UNSPECIFIED_REASON')
-    parser.add_argument('--perceivedSeverity', '-s', metavar='0...5',
-                        type=int, default='4',
-                        help='severity numeric value'
-                        '(clear=0,ind,warn,min,maj,crit=5)')
-    parser.add_argument('--repeatSends', '-r', metavar='NUM',
-                        default=1, type=int,
-                        help='send the same notifification NUM times')
-    parser.add_argument('--burstTimeout', '-b', metavar='TIME',
-                        default=0, type=int,
-                        help='send burst of NUM repeatSends '
-                        '[default: 1] and sleep TIME (usec)'
-                        'between each burst, will continue for ever')
-    parser.add_argument('--additionalInfo', '-i', metavar='ID,TYPE,VALUE',
-                        help='additional information'
-                        'ID: SaNtfElementIdT integer value'
-                        'TYPE: numeric value SaNtfValueTypeT, only '
-                        'SA_NTF_VALUE_STRING=11 is supported')
+def send_notification(notif_type_desc):
+    """ Send notification(s) of a specific type
 
-    args = parser.parse_args()
+    Args:
+        notif_type_desc (str): Type of notification to send
+    """
+    ntf_send = {'Object Create/Delete Notification':
+                    producer.send_object_create_delete_notification,
+                'Attribute Change Notification':
+                    producer.send_attribute_change_notification,
+                'State Change Notification':
+                    producer.send_state_change_notification,
+                'Alarm Notification':
+                    producer.send_alarm_notification,
+                'Security Alarm Notification':
+                    producer.send_security_alarm_notification}
 
-    # Fill in arguments
-    vendor_id = int(args.notificationClassId.split(',')[0])
-    major_id = int(args.notificationClassId.split(',')[1])
-    minor_id = int(args.notificationClassId.split(',')[2])
+    repeat_count = 0
+    if args.burstTimeout:
+        print("*** Send burst of %d notifications every %4.3f seconds ***\n" %
+              (args.repeatSends, (args.burstTimeout / 1000000.0)))
+    while True:
+        try:
+            # Send the notification for 'repeatSends' times
+            for _ in range(args.repeatSends):
+                send_rc = ntf_send[notif_type_desc]()
+                if send_rc != eSaAisErrorT.SA_AIS_OK:
+                    print("ERROR: ntfsend FAILED, rc = %s\n" %
+                          eSaAisErrorT.whatis(send_rc))
+                    sys.exit(1)
+                repeat_count += 1
+                print("Send %s successfully! send_count=%d" %
+                      (notif_type_desc, repeat_count))
+            print()
+            # Keep sending the same notification forever if burstTimeout is set
+            if not args.burstTimeout:
+                break
+            time.sleep(args.burstTimeout / 1000000.0)
+        except KeyboardInterrupt:
+            sys.exit(0)
 
-    event_time = int(args.eventTime)
 
-    severity = int(args.perceivedSeverity)
+# Define command line arguments for ntfsend
+parser = argparse.ArgumentParser(
+    usage='%(prog)s [options]',
+    description='A SAF NTF client used to send notifications.\nWithout any '
+                'argument, a default alarm notification will be sent.',
+    formatter_class=argparse.RawTextHelpFormatter)
+parser.add_argument('-T', '--notificationType', metavar='0x1000-0x5000',
+                    default='0x4000', choices=['0x1000', '0x2000', '0x3000',
+                                               '0x4000', '0x5000'],
+                    help='hexadecimal value of SaNtfNotificationTypeT\n'
+                         '(obj_create_delete=0x1000,attr_change,state_change,'
+                         'alarm,sec_alarm=0x5000)')
+parser.add_argument('-e', '--eventType', metavar='4096-20485',
+                    type=int, default=16384,
+                    choices=sorted(saNtf.eSaNtfEventTypeT.reverse_lookup)[:22],
+                    help='numeric value of SaNtfEventTypeT\n'
+                         '(SA_NTF_OBJECT_NOTIFICATIONS_START to '
+                         'SA_NTF_TIME_VIOLATION)')
+parser.add_argument('-E', '--eventTime', metavar='TIME', type=int,
+                    help='numeric value of SaTimeT in nanosecond')
+parser.add_argument('-c', '--notificationClassId',
+                    type=InputValidation.validate_ntf_class_id,
+                    metavar='VENDOR_ID.MAJOR_ID.MINOR_ID',
+                    help='notification class identifier\n'
+                         'VENDOR_ID: SaUint32T integer value\n'
+                         'MAJOR_ID: SaUint16T integer value\n'
+                         'MINOR_ID: SaUint16T integer value')
+parser.add_argument('-n', '--notificationObject', metavar='NOTIFICATION_OBJ',
+                    type=str, help='notification object (string value)')
+parser.add_argument('-N', '--notifyingObject', metavar='NOTIFYING_OBJ',
+                    type=str, help='notifying object (string value)')
+parser.add_argument('-a', '--additionalText', metavar='TEXT', type=str,
+                    help='additional text (string value)')
+parser.add_argument('-i', '--additionalInfo', metavar='ID,TYPE,VALUE',
+                    type=InputValidation.validate_id_type_value, nargs='+',
+                    help='additional information\n'
+                         'ID: SaNtfElementIdT integer value\n'
+                         'TYPE: numeric value of SaNtfValueTypeT\n'
+                         'VALUE: additional info value')
+parser.add_argument('-I', '--sourceIndicator', metavar='1-3',
+                    type=int, choices=range(1, 4),
+                    help='numeric value of SaNtfSourceIndicatorT\n'
+                         '(SA_NTF_OBJECT_OPERATION to '
+                         'SA_NTF_UNKNOWN_OPERATION)')
+parser.add_argument('--objectAttributes', metavar='ID,TYPE,VALUE',
+                    type=InputValidation.validate_id_type_value, nargs='+',
+                    help='object create/delete attributes\n'
+                         'ID: SaNtfElementIdT integer value\n'
+                         'TYPE: numeric value of SaNtfValueTypeT\n'
+                         'VALUE: object attribute value')
+parser.add_argument('--changedAttributes',
+                    metavar='ID,TYPE,OLD_PRESENT,OLD_VALUE,NEW_VALUE',
+                    type=InputValidation.validate_changed_attribute, nargs='+',
+                    help='changed attributes of AttributeChange notification\n'
+                         'ID: SaNtfElementIdT integer value\n'
+                         'TYPE: numeric value of SaNtfValueTypeT\n'
+                         'OLD_PRESENT: boolean value (True or False)\n'
+                         'OLD_VALUE: old attribute value '
+                         '(ignored if OLD_PRESENT=False)\n'
+                         'NEW_VALUE: new attribute value')
+parser.add_argument('--changedStates',
+                    metavar='ID,OLD_PRESENT,OLD_STATE,NEW_STATE',
+                    type=InputValidation.validate_changed_state, nargs='+',
+                    help='changed states of StateChange notification\n'
+                         'ID: SaNtfElementIdT integer value\n'
+                         'OLD_PRESENT: boolean value (True or False)\n'
+                         'OLD_STATE: SaUint16T integer value '
+                         '(ignored if OLD_PRESENT=False)\n'
+                         'NEW_STATE: SaUint16T integer value')
+parser.add_argument('-p', '--probableCause', metavar='0-74',
+                    type=int, choices=range(75),
+                    help='numeric value of SaNtfProbableCauseT\n'
+                         '(SA_NTF_ADAPTER_ERROR to SA_NTF_UNSPECIFIED_REASON)')
+parser.add_argument('-s', '--perceivedSeverity', metavar='0-5',
+                    type=int, choices=range(6),
+                    help='numeric value of SaNtfSeverityT\n'
+                         '(SA_NTF_SEVERITY_CLEARED to '
+                         'SA_NTF_SEVERITY_CRITICAL)')
+parser.add_argument('-t', '--trend', metavar='0-2', type=int,
+                    default=1, choices=range(3),
+                    help='numeric value of SaNtfSeverityTrendT\n'
+                         '(SA_NTF_TREND_MORE_SEVERE to '
+                         'SA_NTF_TREND_LESS_SEVERE)')
+parser.add_argument('--monitoredAttributes', metavar='ID,TYPE,VALUE',
+                    type=InputValidation.validate_id_type_value, nargs='+',
+                    help='monitored attributes of alarm notification\n'
+                         'ID: SaNtfElementIdT integer value\n'
+                         'TYPE: numeric value of SaNtfValueTypeT\n'
+                         'VALUE: monitored attribute value')
+parser.add_argument('--specificProblems',
+                    metavar='ID,TYPE,VALUE[,VENDOR_ID.MAJOR_ID.MINOR_ID]',
+                    type=InputValidation.validate_specific_problem, nargs='+',
+                    help='specific problems of alarm notification '
+                         '(the problemClassId is optional)\n'
+                         'ID: SaNtfElementIdT integer value\n'
+                         'TYPE: numeric value of SaNtfValueTypeT\n'
+                         'VALUE: specific problem value\n'
+                         'VENDOR_ID: SaUint32T integer value\n'
+                         'MAJOR_ID: SaUint16T integer value\n'
+                         'MINOR_ID: SaUint16T integer value')
+parser.add_argument('--thresholdInformation',
+                    metavar='ID,TYPE,THRES_VALUE,HYST,OBSRV_VALUE[,ARM_TIME]',
+                    type=InputValidation.validate_threshold_information,
+                    help='threshold information of alarm notification '
+                         '(the armTime is optional)\n'
+                         'ID: SaNtfElementIdT integer value\n'
+                         'TYPE: numeric value of SaNtfValueTypeT\n'
+                         'THRES_VALUE: threshold value\n'
+                         'HYST: threshold hysteresis value\n'
+                         'OBSRV_VALUE: observed value\n'
+                         'ARM_TIME: arm time value in nanosecond')
+parser.add_argument('--proposedRepairActions', metavar='ID,TYPE,VALUE',
+                    type=InputValidation.validate_id_type_value, nargs='+',
+                    help='proposed repair actions of alarm notification\n'
+                         'ID: SaNtfElementIdT integer value\n'
+                         'TYPE: numeric value of SaNtfValueTypeT\n'
+                         'VALUE: proposed repair action value')
+parser.add_argument('-S', '--severity', metavar='1-5',
+                    type=int, choices=range(1, 6),
+                    help='numeric value of SaNtfSeverityT for security alarm\n'
+                         '(SA_NTF_SEVERITY_INDETERMINATE to '
+                         'SA_NTF_SEVERITY_CRITICAL)')
+parser.add_argument('--securityAlarmDetector', metavar='TYPE,VALUE',
+                    type=InputValidation.validate_type_value,
+                    help='security alarm detector of security alarm '
+                         'notification\n'
+                         'TYPE: numeric value of SaNtfValueTypeT\n'
+                         'VALUE: security alarm detector value')
+parser.add_argument('--serviceUser', metavar='TYPE,VALUE',
+                    type=InputValidation.validate_type_value,
+                    help='service user of security alarm notification\n'
+                         'TYPE: numeric value of SaNtfValueTypeT\n'
+                         'VALUE: service user value')
+parser.add_argument('--serviceProvider', metavar='TYPE,VALUE',
+                    type=InputValidation.validate_type_value,
+                    help='service provider of security alarm notification\n'
+                         'TYPE: numeric value of SaNtfValueTypeT\n'
+                         'VALUE: service provider value')
+parser.add_argument('-r', '--repeatSends', metavar='NUM', default=1, type=int,
+                    help='send the same notification NUM times')
+parser.add_argument('-b', '--burstTimeout', metavar='TIME', default=0,
+                    type=int, help='send burst of NUM repeatSends (default=1) '
+                                   'and sleep TIME (usec)\n'
+                                   'between each burst, will continue forever')
 
-    additional_text = args.additionalText
-    notification_object = args.notificationObject
-    notifying_object = args.notifyingObject
+# Parse command line arguments for user input, if any
+# Default values will be used otherwise
+args = parser.parse_args()
 
-    # Initialize the NTF library
-    ntf.initialize()
+notification_type = int(args.notificationType, 0)
+event_type = args.eventType
+if (event_type & NOTIFICATIONS_TYPE_MASK) != notification_type:
+    print("ERROR: Either eventType or notificationType is missing, or they "
+          "do not correspond with each other\n")
+    sys.exit(0)
 
-    # Send the notification
-    ntf_type = int(args.notificationType, 0)
+additional_info = []
+if args.additionalInfo is not None:
+    for add_info in args.additionalInfo:
+        info_id = add_info[0]
+        info_type = add_info[1]
+        info_value = add_info[2]
+        additional_info.append(
+            ntf.AdditionalInfo(info_id, info_type, info_value))
 
-    if ntf_type == saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_OBJECT_CREATE_DELETE:
+# Initialize an NTF producer
+producer = NtfProducer()
+init_rc = producer.init()
+if init_rc != eSaAisErrorT.SA_AIS_OK:
+    print("ERROR: saNtfInitialize FAILED, rc = %s\n" %
+          eSaAisErrorT.whatis(init_rc))
+    sys.exit(1)
 
-        # Create sample attributes
-        attributes = []
+# Fill the notification header with user-provided or default values
+fill_notification_header()
 
-        attr1 = ntf.Attribute()
+if notification_type \
+        == saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_OBJECT_CREATE_DELETE:
+    if args.sourceIndicator is not None:
+        producer.set_source_indicator(args.sourceIndicator)
+    if args.objectAttributes is not None:
+        obj_attributes = []
+        for obj_attr in args.objectAttributes:
+            attr_id = obj_attr[0]
+            attr_type = obj_attr[1]
+            attr_value = obj_attr[2]
+            obj_attributes.append(
+                ntf.Attribute(attr_id, attr_type, attr_value))
+        producer.set_object_attributes(obj_attributes)
+    # Send object create/delete notification
+    send_notification("Object Create/Delete Notification")
 
-        attr1.attribute_id = 1
-        attr1.attribute_type = saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_INT16
-        attr1.attribute_value = 23
+elif notification_type \
+        == saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_ATTRIBUTE_CHANGE:
+    if args.sourceIndicator is not None:
+        producer.set_source_indicator(args.sourceIndicator)
+    if args.changedAttributes is not None:
+        changed_attributes = []
+        for ch_attr in args.changedAttributes:
+            ch_attr_id = ch_attr[0]
+            ch_attr_type = ch_attr[1]
+            old_attr_present = ch_attr[2]
+            old_attr_value = ch_attr[3]
+            new_attr_value = ch_attr[4]
+            changed_attributes.append(
+                ntf.AttributeChange(ch_attr_id, ch_attr_type, new_attr_value,
+                                    old_attr_present, old_attr_value))
+        producer.set_changed_attributes(changed_attributes)
+    # Send attribute change notification
+    send_notification("Attribute Change Notification")
 
-        attributes.append(attr1)
+elif notification_type \
+        == saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_STATE_CHANGE:
+    if args.sourceIndicator is not None:
+        producer.set_source_indicator(args.sourceIndicator)
+    if args.changedStates is not None:
+        state_changes = []
+        for ch_state in args.changedStates:
+            state_id = ch_state[0]
+            old_state_present = ch_state[1]
+            old_state = ch_state[2]
+            new_state = ch_state[3]
+            state_changes.append(ntf.StateChange(state_id, new_state,
+                                                 old_state_present, old_state))
+        producer.set_state_changes(state_changes)
+    # Send state change notification
+    send_notification("State Change Notification")
 
-        attr2 = ntf.Attribute()
+elif notification_type == saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_ALARM:
+    if args.probableCause is not None:
+        producer.set_probable_cause(args.probableCause)
+    if args.perceivedSeverity is not None:
+        producer.set_perceived_severity(args.perceivedSeverity)
+    if args.trend is not None:
+        producer.set_trend(args.trend)
+    if args.monitoredAttributes is not None:
+        monitored_attrs = []
+        for mon_attr in args.monitoredAttributes:
+            mon_attr_id = mon_attr[0]
+            mon_attr_type = mon_attr[1]
+            mon_attr_value = mon_attr[2]
+            monitored_attrs.append(
+                ntf.Attribute(mon_attr_id, mon_attr_type, mon_attr_value))
+        producer.set_monitored_attributes(monitored_attrs)
+    if args.specificProblems is not None:
+        specific_problems = []
+        for problem in args.specificProblems:
+            prob_id = problem[0]
+            prob_type = problem[1]
+            prob_value = problem[2]
+            prob_class_id = problem[3]
+            specific_problems.append(
+                ntf.SpecificProblem(prob_id, prob_class_id,
+                                    prob_type, prob_value))
+        producer.set_specific_problems(specific_problems)
+    if args.thresholdInformation is not None:
+        threshold_id = args.thresholdInformation[0]
+        threshold_type = args.thresholdInformation[1]
+        threshold_value = args.thresholdInformation[2]
+        threshold_hysteresis = args.thresholdInformation[3]
+        observed_value = args.thresholdInformation[4]
+        arm_time = args.thresholdInformation[5]
+        threshold_info = \
+            ntf.ThresholdInformation(threshold_id, threshold_type,
+                                     threshold_value, threshold_hysteresis,
+                                     observed_value, arm_time)
+        producer.set_threshold_information(threshold_info)
+    if args.proposedRepairActions is not None:
+        proposed_repair_actions = []
+        for repair_action in args.proposedRepairActions:
+            action_id = repair_action[0]
+            action_type = repair_action[1]
+            action_value = repair_action[2]
+            proposed_repair_actions.append(
+                ntf.ProposedRepairAction(action_id, action_type, action_value))
+        producer.set_proposed_repair_actions(proposed_repair_actions)
+    # Send alarm notification
+    send_notification("Alarm Notification")
 
-        attr2.attribute_id = 2
-        attr2.attribute_type = saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_INT32
-        attr2.attribute_value = -3
-
-        attributes.append(attr2)
-
-        # Create sample additional info
-        additional_info = []
-        if args.additionalInfo:
-            additional_info.append(construct_additional_info(args.additionalInfo))
-
-        # Send the notification
-        for i in range(0, args.repeatSends):
-            ntf.send_object_create_notification(vendor_id,
-                                                major_id,
-                                                minor_id, 
-                                                additional_text=additional_text,
-                                                notification_object=notification_object,
-                                                notifying_object=notifying_object,
-                                                attributes=attributes,
-                                                event_time=event_time,
-                                                additional_info=additional_info)
-
-            time.sleep(args.burstTimeout)
-
-    elif ntf_type == saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_SECURITY_ALARM:
-
-        # Create security alarm sample fields
-
-        detector = ntf.SecurityAlarmDetector(
-            value=15,
-            value_type=saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_INT32
-        )
-
-        user = ntf.ServiceUser(
-            value=-2,
-            value_type=saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_INT16
-        )
-
-        provider = ntf.ServiceProvider(
-            value=128,
-            value_type=saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_UINT32
-        )
-
-        # Send the notification
-        for i in range(0, args.repeatSends):
-            ntf.send_security_alarm_notification(vendor_id, major_id, minor_id, severity,
-                                                 detector, user, provider,
-                                                 additional_text=additional_text,
-                                                 notification_object=notification_object,
-                                                 notifying_object=notifying_object,
-                                                 event_time=event_time)
-
-            time.sleep(args.burstTimeout)
-
-    elif ntf_type == saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_ALARM:
-
-        for i in range(0, args.repeatSends):
-            ntf.send_alarm_notification(vendor_id, major_id, minor_id, severity,
-                                        additional_text=additional_text,
-                                        notification_object=notification_object,
-                                        notifying_object=notifying_object,
-                                        event_time=event_time)
-
-            time.sleep(args.burstTimeout)
-
-    elif ntf_type == saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_ATTRIBUTE_CHANGE:
-
-        # Fill in sample attribute changes
-
-        attr0 = ntf.AttributeChange()
-
-        attr0.attribute_id = 0
-        attr0.attribute_type = saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_INT32
-        attr0.old_attribute_present = saAis.eSaBoolT.SA_FALSE
-        attr0.new_attribute_value = 1
-
-        attr1 = ntf.AttributeChange()
-
-        attr1.attribute_id = 1
-        attr1.attribute_type = saNtf.eSaNtfValueTypeT.SA_NTF_VALUE_INT32
-        attr1.old_attribute_present = saAis.eSaBoolT.SA_TRUE
-        attr1.old_attribute_value = 8
-        attr1.new_attribute_value = -4
-
-        changed_attributes = [attr0, attr1]
-
-        # Send the notification
-        for i in range(0, args.repeatSends):
-            ntf.send_attribute_change_notification(vendor_id, major_id, minor_id,
-                                                   additional_text=additional_text,
-                                                   notification_object=notification_object,
-                                                   notifying_object=notifying_object,
-                                                   event_time=event_time,
-                                                   changed_attributes=changed_attributes)
-
-            time.sleep(args.burstTimeout)
-
-    elif ntf_type == saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_STATE_CHANGE:
-
-        # Fill in sample state changes
-        changes = []
-
-        change0 = ntf.StateChange()
-
-        change0.state_id = 1
-        change0.old_state_present = False
-        change0.new_state = 0
-
-        change1 = ntf.StateChange()
-
-        change1.state_id = 2
-        change1.old_state_present = False
-        change1.new_state = 5
-
-        change2 = ntf.StateChange()
-
-        change2.state_id = 1
-        change2.old_state_present = True
-        change2.old_state = 0
-        change2.new_state = 1
-
-        change3 = ntf.StateChange()
-
-        change3.state_id = 2
-        change3.old_state_present = True
-        change3.old_state = 5
-        change3.new_state = 10
-
-        changes.append(change0)
-        changes.append(change1)
-        changes.append(change2)
-        changes.append(change3)
-
-        # Send the notification
-        for i in range(0, args.repeatSends):
-            ntf.send_state_change_notification(vendor_id, major_id, minor_id,
-                                               additional_text=additional_text,
-                                               notification_object=notification_object,
-                                               notifying_object=notifying_object,
-                                               event_time=event_time,
-                                               state_changes=changes)
-
-            time.sleep(args.burstTimeout)
+elif notification_type \
+        == saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_SECURITY_ALARM:
+    if args.probableCause is not None:
+        producer.set_probable_cause(args.probableCause)
+    if args.severity is not None:
+        producer.set_severity(args.severity)
+    if args.securityAlarmDetector is not None:
+        sec_alarm_detector = \
+            ntf.SecurityAlarmDetector(args.securityAlarmDetector[1],
+                                      args.securityAlarmDetector[0])
+        producer.set_security_alarm_detector(sec_alarm_detector)
+    if args.serviceUser is not None:
+        srv_user = ntf.ServiceUser(args.serviceUser[1], args.serviceUser[0])
+        producer.set_service_user(srv_user)
+    if args.serviceProvider is not None:
+        srv_provider = ntf.ServiceProvider(args.serviceProvider[1],
+                                           args.serviceProvider[0])
+        producer.set_service_provider(srv_provider)
+    # Send security alarm notification
+    send_notification("Security Alarm Notification")

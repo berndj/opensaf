@@ -1,0 +1,411 @@
+#! /usr/bin/env python
+############################################################################
+#
+# (C) Copyright 2018 Ericsson AB. All rights reserved.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. This file and program are licensed
+# under the GNU Lesser General Public License Version 2.1, February 1999.
+# The complete license can be accessed from the following location:
+# http://opensource.org/licenses/lgpl-license.php
+# See the Copying file included with the OpenSAF distribution for full
+# licensing terms.
+#
+# Author(s): Ericsson
+#
+############################################################################
+# pylint: disable=unused-argument
+"""
+ntfread tool used to read alarm and/or security alarm notifications from NTF
+
+Run ntfread -h/--help for more detail on usage
+"""
+from __future__ import print_function
+import sys
+import argparse
+from datetime import datetime, tzinfo, timedelta
+
+from pyosaf import saNtf
+from pyosaf.saAis import eSaAisErrorT
+from pyosaf.utils.ntf.reader import NtfReader
+
+
+class UTCOffsetTZ(tzinfo):
+    """ Time zone represented as UTC hour-offset """
+    def __init__(self, hour_offset):
+        """ UTCOffsetTZ constructor """
+        self._hour_offset = hour_offset
+        super(UTCOffsetTZ, self).__init__()
+
+    def utcoffset(self, dt):
+        """ Return offset of local time from UTC, in minutes east of UTC """
+        return timedelta(hours=self._hour_offset)
+
+    def dst(self, dt):
+        """ Return the daylight saving time (DST) adjustment, in minutes east
+        of UTC, or None if DST information isn't known
+        """
+        return timedelta(0)
+
+    def tzname(self, dt):
+        """ Return the time zone name represented in UTC hour-offset format as
+        'UTC+/-offset'
+        """
+        if self._hour_offset > 0:
+            tzname = "UTC+%02d:00" % self._hour_offset
+        elif self._hour_offset < 0:
+            tzname = "UTC-%02d:00" % self._hour_offset
+        else:  # hour_offset = 0
+            tzname = "UTC"
+
+        return tzname
+
+
+def satime_to_readable_datetime(sa_time, format_str=None):
+    """ Convert the given SaTimeT time value to readable datetime string
+    representation in ISO 8601 format
+
+    Args:
+        sa_time (SaTimeT): SaTimeT time value
+        format_str (str): Format string for datetime output representation
+
+    Returns:
+        str: Datetime representation in format specified by format_str, or in
+             ISO 8601 format 'YYYY-MM-DDTHH:MM:SS' if format_str not provided
+    """
+    time_sec = sa_time / 10**9  # Convert the time from nsec to sec 1000000000
+
+    # Calculate the UTC offset for time zone information
+    naive_dt = datetime.fromtimestamp(time_sec)
+    utc_offset = (naive_dt - datetime.utcfromtimestamp(time_sec))
+    hour_offset = utc_offset.total_seconds() // 3600
+    utc_offset_tz = UTCOffsetTZ(hour_offset)
+
+    aware_dt = naive_dt.replace(tzinfo=utc_offset_tz)
+
+    if format_str is not None:
+        return aware_dt.strftime(format_str)
+
+    return aware_dt.isoformat(' ')
+
+
+def _validate_ntf_class_id(arg):
+    """ Validate the input NtfClassId with format 'VENDOR_ID.MAJOR_ID.MINOR_ID'
+
+    Args:
+        arg (str): The NtfClassId to validate
+
+    Returns:
+        SaNtfClassIdT: The validated NtfClassId
+    """
+    if arg.count('.') != 2:
+        msg = "%r is not in correct format 'VENDOR_ID.MAJOR_ID.MINOR_ID'" % arg
+        raise argparse.ArgumentTypeError(msg)
+    if not arg.split('.')[0] or not arg.split('.')[1] or not arg.split('.')[2]:
+        msg = "%r does not have enough required values" % arg
+        raise argparse.ArgumentTypeError(msg)
+
+    # Validate element type
+    try:
+        vendor_id = int(arg.split('.')[0])
+        major_id = int(arg.split('.')[1])
+        minor_id = int(arg.split('.')[2])
+    except ValueError:
+        msg = "%r must consist of all integers" % arg
+        raise argparse.ArgumentTypeError(msg)
+
+    return saNtf.SaNtfClassIdT(vendor_id, major_id, minor_id)
+
+
+def print_notification_header(header_info):
+    """ Print information of the header in the received notification
+
+    Args:
+        header_info (NotificationInfo): NotificationInfo structure containing
+            information of the notification header
+    """
+    dt_format_str = "%c %Z"
+    print ('notificationId = %d\n'
+           'eventType = %s\n'
+           'notificationObject = "%s"\n'
+           'notifyingObject = "%s"\n'
+           'notificationClassId = %d.%d.%d\n'
+           'eventTime = %d (%s)\n'
+           'additionalText = "%s"' %
+           (header_info.notification_id,
+            saNtf.eSaNtfEventTypeT.whatis(header_info.event_type),
+            header_info.notification_object,
+            header_info.notifying_object,
+            header_info.ntf_class_id.vendorId,
+            header_info.ntf_class_id.majorId,
+            header_info.ntf_class_id.minorId,
+            header_info.event_time,
+            satime_to_readable_datetime(header_info.event_time, dt_format_str),
+            header_info.additional_text))
+    if header_info.additional_info:
+        print("numAdditionalInfo = %d" % len(header_info.additional_info))
+        for add_info in header_info.additional_info:
+            print ("- Info ID: %d\n"
+                   "  Info Type: %s (%d)\n"
+                   "  Info Value: %s" %
+                   (add_info.info_id,
+                    saNtf.eSaNtfValueTypeT.whatis(add_info.info_type),
+                    add_info.info_type,
+                    add_info.info_value))
+    print()
+
+
+def print_alarm_notification(notification):
+    """ Print information of the alarm notification found from reading NTF
+
+    Args:
+        notification (NotificationInfo): NotificationInfo structure containing
+            information of the found alarm notification
+    """
+    print("===  %s - Alarm  ===" %
+          satime_to_readable_datetime(notification.event_time))
+    print_notification_header(notification)
+    print("probableCause = %s" %
+          saNtf.eSaNtfProbableCauseT.whatis(notification.probable_cause))
+    print("perceivedSeverity = %s" %
+          saNtf.eSaNtfSeverityT.whatis(notification.perceived_severity))
+
+    if args.verbose:
+        print("trend = %s" %
+              saNtf.eSaNtfSeverityTrendT.whatis(notification.trend))
+        print("thresholdInformation:\n"
+              "- Threshold ID: %d\n"
+              "  Threshold Value Type: %s (%d)\n"
+              "  Threshold Value: %s\n"
+              "  Threshold Hysteresis: %s\n"
+              "  Observed Value: %s\n"
+              "  Arm Time: %s" %
+              (notification.threshold_information.threshold_id,
+               saNtf.eSaNtfValueTypeT.whatis(
+                   notification.threshold_information.threshold_value_type),
+               notification.threshold_information.threshold_value_type,
+               notification.threshold_information.threshold_value,
+               notification.threshold_information.threshold_hysteresis,
+               notification.threshold_information.observed_value,
+               satime_to_readable_datetime(
+                   notification.threshold_information.arm_time)))
+        print("numSpecificProblems = %d" % len(notification.specific_problems))
+        for spec_problem in notification.specific_problems:
+            print("- Problem ID: %d\n"
+                  "  Problem Class ID: %d.%d.%d\n"
+                  "  Problem Type: %s (%d)\n"
+                  "  Problem Value: %s" %
+                  (spec_problem.problem_id,
+                   spec_problem.problem_class_id.vendorId,
+                   spec_problem.problem_class_id.majorId,
+                   spec_problem.problem_class_id.minorId,
+                   saNtf.eSaNtfValueTypeT.whatis(spec_problem.problem_type),
+                   spec_problem.problem_type, spec_problem.problem_value))
+        print("numMonitoredAttributes = %d" %
+              len(notification.monitored_attrs))
+        for monitored_attr in notification.monitored_attrs:
+            print("- Attribute ID: %d\n"
+                  "  Attribute Type: %s (%d)\n"
+                  "  Attribute Value: %s" %
+                  (monitored_attr.attribute_id,
+                   saNtf.eSaNtfValueTypeT.whatis(
+                       monitored_attr.attribute_type),
+                   monitored_attr.attribute_type,
+                   monitored_attr.attribute_value))
+        print("numProposedRepairActions = %d" %
+              len(notification.proposed_repair_actions))
+        for repair_action in notification.proposed_repair_actions:
+            print("- Action ID: %d\n"
+                  "  Action Value Type: %s (%d)\n"
+                  "  Action Value: %s" %
+                  (repair_action.action_id,
+                   saNtf.eSaNtfValueTypeT.whatis(
+                       repair_action.action_value_type),
+                   repair_action.action_value_type,
+                   repair_action.action_value))
+
+
+def print_security_alarm_notification(notification):
+    """ Print information of the security alarm notification found from reading
+    NTF
+
+    Args:
+        notification (NotificationInfo): NotificationInfo structure containing
+            information of the found security alarm notification
+    """
+    print("===  %s - Security Alarm  ===" %
+          satime_to_readable_datetime(notification.event_time))
+    print_notification_header(notification)
+    print("probableCause = %s\n"
+          "severity = %s\n"
+          "Security Alarm Detector Type: %s (%d)\n"
+          "Security Alarm Detector Value: %s\n"
+          "Service User Type: %s (%d)\n"
+          "Service User Value: %s\n"
+          "Service Provider Type: %s (%d)\n"
+          "Service Provider Value: %s" %
+          (saNtf.eSaNtfProbableCauseT.whatis(notification.probable_cause),
+           saNtf.eSaNtfSeverityT.whatis(notification.severity),
+           saNtf.eSaNtfValueTypeT.whatis(
+               notification.security_alarm_detector.value_type),
+           notification.security_alarm_detector.value_type,
+           notification.security_alarm_detector.value,
+           saNtf.eSaNtfValueTypeT.whatis(notification.service_user.value_type),
+           notification.service_user.value_type,
+           notification.service_user.value,
+           saNtf.eSaNtfValueTypeT.whatis(
+               notification.service_provider.value_type),
+           notification.service_provider.value_type,
+           notification.service_provider.value))
+
+
+# Define command line arguments for ntfread
+parser = argparse.ArgumentParser(
+    usage='%(prog)s [options]',
+    description='A SAF NTF client used to read alarm and/or security alarm '
+                'notifications from NTF,\nwhich match optionally provided '
+                'filter argument(s).\nWithout any argument, all alarm and '
+                'security alarm notifications will be read by default.',
+    formatter_class=argparse.RawTextHelpFormatter)
+parser.add_argument('-a', '--alarmOnly', action='store_true',
+                    help='read alarm notifications only')
+parser.add_argument('-y', '--securityAlarmOnly', action='store_true',
+                    help='read security alarm notifications only')
+parser.add_argument('-m', '--searchMode', metavar='1-7', type=int,
+                    choices=range(1, 8),
+                    help='numeric value of SaNtfSearchModeT\n'
+                         '(SA_NTF_SEARCH_BEFORE_OR_AT_TIME to '
+                         'SA_NTF_SEARCH_ONLY_FILTER)')
+parser.add_argument('-T', '--eventTime', metavar='TIME', type=int,
+                    help='notification time (in nanosecond) to search for')
+parser.add_argument('-i', '--notificationId', metavar='NOTIF_ID', type=int,
+                    help='notification id to search for')
+parser.add_argument('-e', '--alarmEventTypes', metavar='16384-16389',
+                    type=int, nargs='+', choices=range(16384, 16390),
+                    help='numeric value of alarm SaNtfEventTypeT\n'
+                         '(SA_NTF_ALARM_NOTIFICATIONS_START to '
+                         'SA_NTF_ALARM_ENVIRONMENT)')
+parser.add_argument('-E', '--securityAlarmEventTypes', metavar='20480-20485',
+                    type=int, nargs='+', choices=range(20480, 20486),
+                    help='numeric value of security alarm SaNtfEventTypeT\n'
+                         '(SA_NTF_SECURITY_ALARM_NOTIFICATIONS_START to '
+                         'SA_NTF_TIME_VIOLATION)')
+parser.add_argument('-c', '--notificationClassIds',
+                    type=_validate_ntf_class_id,
+                    metavar='VENDOR_ID.MAJOR_ID.MINOR_ID', nargs='+',
+                    help='notification class identifier\n'
+                         'VENDOR_ID: SaUint32T integer value\n'
+                         'MAJOR_ID: SaUint16T integer value\n'
+                         'MINOR_ID: SaUint16T integer value')
+parser.add_argument('-n', '--notificationObjects', metavar='NOTIFICATION_OBJ',
+                    type=str, nargs='+',
+                    help='notification object (string value)')
+parser.add_argument('-N', '--notifyingObjects', metavar='NOTIFYING_OBJ',
+                    type=str, nargs='+',
+                    help='notifying object (string value)')
+parser.add_argument('-p', '--probableCauses', metavar='0-74',
+                    type=int, nargs='+', choices=range(75),
+                    help='numeric value of SaNtfProbableCauseT\n'
+                         '(SA_NTF_ADAPTER_ERROR to SA_NTF_UNSPECIFIED_REASON)')
+parser.add_argument('-s', '--perceivedSeverities', metavar='0-5', type=int,
+                    nargs='+', choices=range(6),
+                    help='numeric value of alarm SaNtfSeverityT\n'
+                         '(clear=0,ind,warn,min,maj,critical=5)')
+parser.add_argument('-t', '--trends', metavar='0-2', type=int,
+                    nargs='+', choices=range(3),
+                    help='numeric value of SaNtfSeverityTrendT')
+parser.add_argument('-S', '--severities', metavar='0-5', type=int,
+                    nargs='+', choices=range(6),
+                    help='numeric value of security alarm SaNtfSeverityT\n'
+                         '(clear=0,ind,warn,min,maj,critical=5)')
+parser.add_argument('-g', '--searchYounger', action='store_true',
+                    help='SA_NTF_SEARCH_YOUNGER\n'
+                         '(search in descending chronological order w.r.t '
+                         'previously read notification)')
+parser.add_argument('-v', '--verbose', action='store_true',
+                    help='print all information from alarm notifications')
+
+# Parse command line arguments for user input, if any
+args = parser.parse_args()
+
+notification_type = None
+if args.alarmOnly and args.securityAlarmOnly:
+    print ("ERROR: Cannot use both --alarmOnly and --securityAlarmOnly\n")
+    sys.exit(0)
+elif args.alarmOnly:
+    notification_type = saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_ALARM
+elif args.securityAlarmOnly:
+    notification_type = \
+        saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_SECURITY_ALARM
+
+search_mode = args.searchMode
+event_time = args.eventTime if args.eventTime is not None else 0
+notif_id = args.notificationId if args.notificationId is not None else 0
+
+search_criteria = None
+if search_mode is not None:
+    search_criteria = \
+        saNtf.SaNtfSearchCriteriaT(search_mode, event_time, notif_id)
+
+event_types = args.alarmEventTypes
+if args.securityAlarmEventTypes is not None:
+    if event_types is not None:
+        for evt_type in args.securityAlarmEventTypes:
+            event_types.append(evt_type)
+    else:
+        event_types = args.securityAlarmEventTypes
+
+# Initialize an NTF reader
+reader = NtfReader()
+init_rc = reader.init()
+if init_rc != eSaAisErrorT.SA_AIS_OK:
+    print("ERROR: saNtfInitialize FAILED, rc = %s\n" %
+          eSaAisErrorT.whatis(init_rc))
+    sys.exit(1)
+
+# Set notification read filter values, if any, provided by the users
+if search_criteria is not None:
+    reader.set_search_criteria(search_criteria)
+if args.searchYounger:
+    reader.set_search_direction(
+        saNtf.eSaNtfSearchDirectionT.SA_NTF_SEARCH_YOUNGER)
+if event_types is not None:
+    reader.set_filter_event_types(event_types)
+if args.notificationClassIds is not None:
+    reader.set_filter_ntf_class_ids(args.notificationClassIds)
+if args.notificationObjects is not None:
+    reader.set_filter_notification_objects(args.notificationObjects)
+if args.notifyingObjects is not None:
+    reader.set_filter_notifying_objects(args.notifyingObjects)
+if args.probableCauses is not None:
+    reader.set_filter_probable_causes(args.probableCauses)
+if args.perceivedSeverities is not None:
+    reader.set_filter_perceived_severities(args.perceivedSeverities)
+if args.trends is not None:
+    reader.set_filter_trends(args.trends)
+if args.severities is not None:
+    reader.set_filter_severities(args.severities)
+
+# Start reading notifications
+if notification_type is not None:
+    rc = reader.read([notification_type])
+else:
+    rc = reader.read()
+
+if rc != eSaAisErrorT.SA_AIS_OK:
+    print("ERROR: Reading notifications FAILED, rc = %s\n" %
+          eSaAisErrorT.whatis(rc))
+    sys.exit(1)
+
+# Print out the found notifications
+for notif_type, notif_info in reader:
+    print()
+    if notif_type == saNtf.eSaNtfNotificationTypeT.SA_NTF_TYPE_ALARM:
+        print_alarm_notification(notif_info)
+    else:
+        print_security_alarm_notification(notif_info)
+    print()
+
+# Finalize the reader
+reader.finalize()
