@@ -298,6 +298,7 @@ rpm: prep-rpm-dir
 endif
 
 all-local:
+	mkdir -p $(top_builddir)/lib
 	echo "$(pkglibdir)" > $(top_builddir)/lib/$(PACKAGE_NAME)-$(host_cpu).conf
 
 install-data-local:
