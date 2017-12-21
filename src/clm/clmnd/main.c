@@ -634,19 +634,7 @@ static int get_node_info(NODE_INFO *node)
 		return -1;
 	}
 
-	fp = fopen(PKGLOCALSTATEDIR "/node_id", "r");
-	if (fp == NULL) {
-		LOG_ER("Could not open file %s - %s",
-		       PKGLOCALSTATEDIR "node_id", strerror(errno));
-		return -1;
-	}
-
-	if (EOF == fscanf(fp, "%x", &node->node_id)) {
-		fclose(fp);
-		LOG_ER("Could not get node id - %s", strerror(errno));
-		return -1;
-	}
-	fclose(fp);
+	node->node_id = ncs_get_node_id();
 	TRACE("node id: 0x%" PRIx32, node->node_id);
 	struct timespec boot_time;
 	osaf_get_boot_time(&boot_time);
@@ -913,13 +901,13 @@ int main(int argc, char *argv[])
 	if (getenv("SA_AMF_COMPONENT_NAME") == NULL)
 		clmna_cb->nid_started = true;
 
-	if (get_node_info(&clmna_cb->node_info) != 0) {
-		rc = NCSCC_RC_FAILURE;
+	if ((rc = ncs_agents_startup()) != NCSCC_RC_SUCCESS) {
+		LOG_ER("ncs_agents_startup FAILED");
 		goto done;
 	}
 
-	if ((rc = ncs_agents_startup()) != NCSCC_RC_SUCCESS) {
-		LOG_ER("ncs_agents_startup FAILED");
+	if (get_node_info(&clmna_cb->node_info) != 0) {
+		rc = NCSCC_RC_FAILURE;
 		goto done;
 	}
 
