@@ -102,8 +102,6 @@ extern void ncs_os_atomic_dec(uint32_t *p_uns32);
 #define NCS_OS_POSIX_MQD uint32_t
 #define NCS_OS_POSIX_TIMESPEC struct timespec
 
-#define __NCSINC_LINUX__
-
 /*****************************************************************************
  **                                                                         **
  **                                                                         **

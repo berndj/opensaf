@@ -78,7 +78,6 @@ enum { kMaxSlotsSubslots = 4096 };
 
 typedef uint64_t MDS_DEST;
 typedef uint32_t NCS_NODE_ID;
-typedef uint8_t NCS_CHASSIS_ID;
 typedef uint32_t SlotSubslotId;
 
 /* m_NCS_NODE_ID_FROM_MDS_DEST: Returns node-id if the MDS_DEST provided

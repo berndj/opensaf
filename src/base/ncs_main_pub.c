@@ -57,58 +57,6 @@
 #include "base/ncs_main_pub.h"
 #include "base/osaf_utility.h"
 
-#if (NCS_AVA == 1)
-#include "amf/agent/ava_dl_api.h"
-#endif
-
-#if (NCS_AVND == 1)
-#include "avnd_dl_api.h"
-#endif
-
-#if (NCS_MBCSV == 1)
-#include "mbc/mbcsv_dl_api.h"
-#endif
-
-#if (NCS_GLA == 1)
-#include "gla_dl_api.h"
-#endif
-
-#if (NCS_GLD == 1)
-#include "gld_dl_api.h"
-#endif
-
-#if (NCS_GLND == 1)
-#include "glnd_dl_api.h"
-#endif
-
-#if (NCS_MQA == 1)
-#include "mqa_dl_api.h"
-#endif
-
-#if (NCS_MQD == 1)
-#include "mqd_dl_api.h"
-#endif
-
-#if (NCS_CPA == 1)
-#include "cpa_dl_api.h"
-#endif
-
-#if (NCS_CPD == 1)
-#include "cpd_dl_api.h"
-#endif
-
-#if (NCS_CPND == 1)
-#include "cpnd_dl_api.h"
-#endif
-
-#if (NCS_EDA == 1)
-#include "eda_dl_api.h"
-#endif
-
-#if (NCS_EDS == 1)
-#include "eds_dl_api.h"
-#endif
-
 /**************************************************************************\
 
        L O C A L      D A T A    S T R U C T U R E S
@@ -137,28 +85,10 @@ typedef struct ncs_main_pub_cb {
 	NCS_AGENT_DATA mbca;
 } NCS_MAIN_PUB_CB;
 
-typedef struct ncs_sys_params {
-	SlotSubslotId slot_subslot_id;
-	NCS_CHASSIS_ID shelf_id;
-	NCS_NODE_ID node_id;
-	uint32_t cluster_id;
-	uint32_t pcon_id;
-} NCS_SYS_PARAMS;
-
 static uint32_t mainget_node_id(uint32_t *node_id);
-static uint32_t ncs_set_config_root(void);
-static uint32_t ncs_util_get_sys_params(NCS_SYS_PARAMS *sys_params);
 static uint32_t ncs_non_core_agents_startup(void);
-static void ncs_get_sys_params_arg(NCS_SYS_PARAMS *sys_params);
-static uint32_t ncs_update_sys_param_args(void);
-
-static char ncs_config_root[MAX_NCS_CONFIG_FILEPATH_LEN + 1];
 
 static NCS_MAIN_PUB_CB gl_ncs_main_pub_cb;
-
-/* Global argument definitions */
-char *gl_pargv[NCS_MAIN_MAX_INPUT];
-uint32_t gl_pargc = 0;
 
 /* mutex for synchronising agent startup and shutdown */
 static pthread_mutex_t s_agent_startup_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -179,9 +109,6 @@ unsigned int ncs_agents_startup(void)
 		return rc;
 
 	rc = ncs_non_core_agents_startup();
-	if (rc != NCSCC_RC_SUCCESS)
-		return rc;
-
 	return rc;
 }
 
@@ -238,11 +165,13 @@ unsigned int ncs_leap_startup(void)
 	}
 
 	/* Get & Update system specific arguments */
-	if (ncs_update_sys_param_args() != NCSCC_RC_SUCCESS) {
-		TRACE_4("ERROR: Update System Param args \n");
+	if (mainget_node_id(&gl_ncs_main_pub_cb.my_nodeid) !=
+	    NCSCC_RC_SUCCESS) {
+		TRACE_4("Not able to get the NODE ID\n");
 		osaf_mutex_unlock_ordie(&s_agent_startup_mutex);
 		return NCSCC_RC_FAILURE;
 	}
+	TRACE("NCS:NODE_ID=0x%08X\n", gl_ncs_main_pub_cb.my_nodeid);
 	gl_ncs_main_pub_cb.leap_use_count = 1;
 
 	osaf_mutex_unlock_ordie(&s_agent_startup_mutex);
@@ -278,8 +207,8 @@ unsigned int ncs_mds_startup(void)
 
 	memset(&lib_create, 0, sizeof(lib_create));
 	lib_create.i_op = NCS_LIB_REQ_CREATE;
-	lib_create.info.create.argc = gl_pargc;
-	lib_create.info.create.argv = gl_pargv;
+	lib_create.info.create.argc = 0;
+	lib_create.info.create.argv = NULL;
 
 	/* STEP : Initialize the MDS layer */
 	if (mds_lib_req(&lib_create) != NCSCC_RC_SUCCESS) {
@@ -418,7 +347,6 @@ unsigned int ncs_mbca_shutdown(void)
 	memset(&lib_destroy, 0, sizeof(lib_destroy));
 	lib_destroy.i_op = NCS_LIB_REQ_DESTROY;
 	lib_destroy.info.destroy.dummy = 0;
-	;
 
 	if (gl_ncs_main_pub_cb.mbca.lib_req != NULL)
 		rc = (*gl_ncs_main_pub_cb.mbca.lib_req)(&lib_destroy);
@@ -464,8 +392,6 @@ void ncs_leap_shutdown()
 	gl_ncs_main_pub_cb.core_started = false;
 
 	osaf_mutex_unlock_ordie(&s_agent_startup_mutex);
-
-	return;
 }
 
 /***************************************************************************\
@@ -476,7 +402,6 @@ void ncs_leap_shutdown()
 void ncs_mds_shutdown()
 {
 	NCS_LIB_REQ_INFO lib_destroy;
-	uint32_t tmp_ctr;
 
 	osaf_mutex_lock_ordie(&s_agent_startup_mutex);
 
@@ -497,13 +422,7 @@ void ncs_mds_shutdown()
 	gl_ncs_main_pub_cb.mds_use_count = 0;
 	gl_ncs_main_pub_cb.core_started = false;
 
-	for (tmp_ctr = 0; tmp_ctr < gl_pargc; tmp_ctr++)
-		free(gl_pargv[tmp_ctr]);
-	gl_pargc = 0;
-
 	osaf_mutex_unlock_ordie(&s_agent_startup_mutex);
-
-	return;
 }
 
 /***************************************************************************\
@@ -534,7 +453,7 @@ unsigned int ncs_core_agents_shutdown()
 	gl_ncs_main_pub_cb.core_use_count = 0;
 
 	osaf_mutex_unlock_ordie(&s_leap_core_mutex);
-	return (NCSCC_RC_SUCCESS);
+	return NCSCC_RC_SUCCESS;
 }
 
 /***************************************************************************\
@@ -551,242 +470,20 @@ NCS_NODE_ID ncs_get_node_id(void)
 	return gl_ncs_main_pub_cb.my_nodeid;
 }
 
-uint32_t file_get_word(FILE **fp, char *o_chword)
-{
-	int temp_char;
-	unsigned int temp_ctr = 0;
-try_again:
-	temp_ctr = 0;
-	temp_char = getc(*fp);
-	while ((temp_char != EOF) && (temp_char != '\n') &&
-	       (temp_char != ' ') && (temp_char != '\0')) {
-		o_chword[temp_ctr] = (char)temp_char;
-		temp_char = getc(*fp);
-		temp_ctr++;
-	}
-	o_chword[temp_ctr] = '\0';
-	if (temp_char == EOF) {
-		return (NCS_MAIN_EOF);
-	}
-	if (temp_char == '\n') {
-		return (NCS_MAIN_ENTER_CHAR);
-	}
-	if (o_chword[0] == 0x0)
-		goto try_again;
-	return (0);
-}
-
-uint32_t file_get_string(FILE **fp, char *o_chword)
-{
-	int temp_char;
-	unsigned int temp_ctr = 0;
-try_again:
-	temp_ctr = 0;
-	temp_char = getc(*fp);
-	while ((temp_char != EOF) && (temp_char != '\n') &&
-	       (temp_char != '\0')) {
-		o_chword[temp_ctr] = (char)temp_char;
-		temp_char = getc(*fp);
-		temp_ctr++;
-	}
-	o_chword[temp_ctr] = '\0';
-	if (temp_char == EOF) {
-		return (NCS_MAIN_EOF);
-	}
-	if (temp_char == '\n') {
-		return (NCS_MAIN_ENTER_CHAR);
-	}
-	if (o_chword[0] == 0x0)
-		goto try_again;
-	return (0);
-}
-
 uint32_t mainget_node_id(uint32_t *node_id)
 {
-	FILE *fp;
-	char get_word[256];
-	uint32_t res = NCSCC_RC_SUCCESS;
-	uint32_t d_len, f_len;
+	uint32_t res = NCSCC_RC_FAILURE;
 
-#ifdef __NCSINC_LINUX__
-#if (MDS_MULTI_HUB_PER_OS_INSTANCE == 1)
-	{
-		char *tmp = getenv("NCS_SIM_NODE_ID");
-		if (tmp != NULL) {
-			TRACE(
-			    "\nNCS: Reading node_id(%s) from environment var.\n",
-			    tmp);
-			*node_id = atoi(tmp);
-			return NCSCC_RC_SUCCESS;
+	FILE *fp = fopen(PKGLOCALSTATEDIR "/node_id", "r");
+
+	if (fp != NULL) {
+		if (fscanf(fp, "%x", node_id) == 1) {
+			res = NCSCC_RC_SUCCESS;
 		}
-	}
-#endif
-	d_len = strlen(ncs_config_root);
-	f_len = strlen("/node_id");
-	if ((d_len + f_len) >= MAX_NCS_CONFIG_FILEPATH_LEN) {
-		TRACE_4("\n Filename too long \n");
-		return NCSCC_RC_FAILURE;
-	}
-	/* Hack ncs_config_root to construct path */
-	sprintf(ncs_config_root + d_len, "%s", "/node_id");
-
-	/* LSB changes. Pick nodeid from PKGLOCALSTATEDIR */
-
-	fp = fopen(NODE_ID_FILE, "r");
-
-	/* Reverse hack ncs_config_root to original value */
-	ncs_config_root[d_len] = 0;
-#else
-	fp = fopen("c:\\ncs\\node_id", "r");
-#endif
-	if (fp == NULL) {
-		res = NCSCC_RC_FAILURE;
-	} else {
-		do {
-			file_get_word(&fp, get_word);
-
-			if (sscanf((const char *)&get_word, "%x", node_id) !=
-			    1) {
-				res = NCSCC_RC_FAILURE;
-				break;
-			}
-			fclose(fp);
-
-		} while (0);
+		fclose(fp);
 	}
 
-	return (res);
-}
-
-static uint32_t ncs_set_config_root(void)
-{
-	char *tmp;
-	static bool config_root_init = false;
-
-	if (config_root_init == true)
-		return NCSCC_RC_SUCCESS;
-	else
-		config_root_init = true;
-
-	tmp = getenv("NCS_SIMULATION_CONFIG_ROOTDIR");
-	if (tmp != NULL) {
-		if (strlen(tmp) >= MAX_NCS_CONFIG_ROOTDIR_LEN) {
-			TRACE_4("Config directory root name too long\n");
-			return NCSCC_RC_FAILURE;
-		}
-		sprintf(ncs_config_root, "%s", tmp);
-
-		TRACE("\nNCS: Using %s as config directory root\n",
-		      ncs_config_root);
-	} else {
-		sprintf(ncs_config_root, "/%s", NCS_DEF_CONFIG_FILEPATH);
-	}
-
-	return NCSCC_RC_SUCCESS;
-}
-
-uint32_t ncs_util_get_sys_params(NCS_SYS_PARAMS *sys_params)
-{
-	char *tmp_ptr;
-
-	memset(sys_params, 0, sizeof(NCS_SYS_PARAMS));
-
-	if (ncs_set_config_root() != NCSCC_RC_SUCCESS) {
-		TRACE_4("Unable to set config root \n");
-		return NCSCC_RC_FAILURE;
-	}
-
-	if (mainget_node_id(&sys_params->node_id) != NCSCC_RC_SUCCESS) {
-		TRACE_4("Not able to get the NODE ID\n");
-		return (NCSCC_RC_FAILURE);
-	}
-
-	if ((tmp_ptr = getenv("NCS_PCON_ID")) != NULL) {
-		sys_params->pcon_id = atoi(tmp_ptr);
-	} else {
-		sys_params->pcon_id = NCS_MAIN_DEF_PCON_ID;
-	}
-
-	return NCSCC_RC_SUCCESS;
-}
-
-void ncs_get_sys_params_arg(NCS_SYS_PARAMS *sys_params)
-{
-	uint32_t tmp_ctr;
-	uint32_t orig_argc;
-	NCS_SYS_PARAMS params;
-	char *ptr;
-	int argc = 0;
-	char argv[256];
-
-	orig_argc = gl_pargc;
-	for (tmp_ctr = 0; tmp_ctr < NCS_MAX_INPUT_ARG_DEF; tmp_ctr++) {
-		gl_pargv[(gl_pargc) + tmp_ctr] =
-		    (char *)malloc(NCS_MAX_STR_INPUT);
-		memset(gl_pargv[(gl_pargc) + tmp_ctr], 0, NCS_MAX_STR_INPUT);
-	}
-	gl_pargc += tmp_ctr;
-
-	/* Check argv[argc-1] through argv[1] */
-	for (; argc > 1; argc--) {
-		char *p_field = strstr(&argv[argc - 1], "NODE_ID=");
-		if (p_field != NULL) {
-			if (sscanf(p_field + strlen("NODE_ID="), "%d",
-				   &params.node_id) == 1)
-				sys_params->node_id = params.node_id;
-			continue;
-		} else
-			p_field = strstr(&argv[argc - 1], "PCON_ID=");
-		if (p_field != NULL) {
-			if (sscanf(p_field + strlen("PCON_ID="), "%d",
-				   &params.pcon_id) == 1)
-				sys_params->pcon_id = params.pcon_id;
-			continue;
-		} else {
-			/* else store whatever comes */
-			gl_pargv[gl_pargc] = (char *)malloc(NCS_MAX_STR_INPUT);
-			memset(gl_pargv[gl_pargc], 0, NCS_MAX_STR_INPUT);
-			strcpy(gl_pargv[gl_pargc], &argv[argc - 1]);
-			gl_pargc = (gl_pargc) + 1;
-		}
-	}
-
-	if ((ptr = getenv("NCS_ENV_NODE_ID")) != NULL)
-		sys_params->node_id = atoi(ptr);
-
-	TRACE("NCS:NODE_ID=0x%08X\n", sys_params->node_id);
-
-	gl_ncs_main_pub_cb.my_nodeid = sys_params->node_id;
-
-	sys_params->shelf_id = GetChassisIdFromNodeId(sys_params->node_id);
-	sys_params->slot_subslot_id =
-	    GetSlotSubslotIdFromNodeId(sys_params->node_id);
-
-	sprintf(gl_pargv[orig_argc + 0], "NONE");
-	sprintf(gl_pargv[orig_argc + 1], "CLUSTER_ID=%d",
-		sys_params->cluster_id);
-	sprintf(gl_pargv[orig_argc + 2], "SHELF_ID=%d", sys_params->shelf_id);
-	sprintf(gl_pargv[orig_argc + 3], "SLOT_ID=%d",
-		sys_params->slot_subslot_id);
-	sprintf(gl_pargv[orig_argc + 4], "NODE_ID=%d", sys_params->node_id);
-	sprintf(gl_pargv[orig_argc + 5], "PCON_ID=%d", sys_params->pcon_id);
-
-	return;
-}
-
-uint32_t ncs_update_sys_param_args(void)
-{
-	NCS_SYS_PARAMS sys_params;
-
-	/* Get the system specific parameters */
-	if (ncs_util_get_sys_params(&sys_params) != NCSCC_RC_SUCCESS) {
-		return NCSCC_RC_FAILURE;
-	}
-
-	/* Frame input arguments */
-	ncs_get_sys_params_arg(&sys_params);
-
-	return NCSCC_RC_SUCCESS;
+	return res;
 }
 
 /***************************************************************************\

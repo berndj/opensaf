@@ -87,12 +87,6 @@ void ncs_leap_shutdown(void);
 NCS_NODE_ID ncs_get_node_id(void);
 #define m_NCS_GET_NODE_ID ncs_get_node_id()
 
-static inline NCS_CHASSIS_ID GetChassisIdFromNodeId(NCS_NODE_ID node_id) {
-  uint32_t kChassisMask = 0xff;
-  uint32_t chassis_id = (((uint32_t)node_id) >> 16) & kChassisMask;
-  return chassis_id;
-}
-
 static inline SlotSubslotId GetSlotSubslotIdFromNodeId(NCS_NODE_ID node_id) {
   uint32_t kSubslotMask = 0xf;
   uint32_t kSlotMask = 0xff;
