@@ -31,13 +31,14 @@ extern "C" SaAisErrorT TestOtherMethod() {
   return (++test_counter % 2 ) ? SA_AIS_ERR_TRY_AGAIN : SA_AIS_ERR_UNAVAILABLE;
 }
 
+// This test case will take more than one minute!
 TEST(make_decorator, DefaultControl) {
-  // Default interval = 40ms, timeout = 10 * 1000ms
+  // Default interval = 100ms, timeout = 60 * 1000ms
   auto DecorTestMethod = ais::make_decorator(::TestMethod);
 
   EXPECT_EQ(DecorTestMethod(), SA_AIS_ERR_TRY_AGAIN);
-  EXPECT_GE(test_counter, 200);
-  EXPECT_LE(test_counter, 250);
+  EXPECT_GE(test_counter, 400);
+  EXPECT_LE(test_counter, 601);
   test_counter = 0;
 }
 
@@ -47,6 +48,7 @@ class MyTryAgain {
     return (code != SA_AIS_ERR_TRY_AGAIN && code != SA_AIS_ERR_UNAVAILABLE);
   }
 
+  // The interval at leat should be 100ms, but this is just for testing.
   constexpr static uint64_t kIntervalMs = 10;
   constexpr static uint64_t kTimeoutMs  = 100;
 };
@@ -65,6 +67,5 @@ TEST(make_decorator, GivenRetryControl) {
 
   EXPECT_GE(test_counter, 5);
   EXPECT_LE(test_counter, 10);
-
   test_counter = 0;
 }

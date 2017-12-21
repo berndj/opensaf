@@ -68,10 +68,10 @@ class DefaultRetryPolicy {
     return (code != SA_AIS_ERR_TRY_AGAIN);
   }
 
-  // Sleep time between retries (ms)
-  constexpr static uint64_t kIntervalMs = 40;
-  // Timeout for the retry (ms)
-  constexpr static uint64_t kTimeoutMs  = 10 * 1000ull;
+  // Sleep time between retries (ms). Default is 100ms.
+  constexpr static uint64_t kIntervalMs = 100;
+  // Timeout for the retry (ms). Default is one minute.
+  constexpr static uint64_t kTimeoutMs  = 60 * 1000;
 };
 
 template <class T, class Policy = DefaultRetryPolicy> class Decorator;
