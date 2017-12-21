@@ -363,7 +363,6 @@ uint32_t mds_lib_req(NCS_LIB_REQ_INFO *req)
 	char *p_field = NULL;
 	uint32_t
 	    node_id = 0,
-	    cluster_id,
 	    mds_tipc_ref =
 		0; /* this mds tipc ref is random num part of the TIPC id */
 	uint32_t status = NCSCC_RC_SUCCESS;
@@ -389,36 +388,7 @@ uint32_t mds_lib_req(NCS_LIB_REQ_INFO *req)
 		/* Extract parameters from req and fill adest and pcon_id */
 
 		/* Get Node_id */
-		p_field = (char *)ncs_util_search_argv_list(
-		    req->info.create.argc, req->info.create.argv, "NODE_ID=");
-		if (p_field != NULL) {
-			if (sscanf(p_field + strlen("NODE_ID="), "%d",
-				   &node_id) != 1) {
-				syslog(
-				    LOG_ERR,
-				    "MDS:LIB_CREATE: Problem in NODE_ID argument\n");
-				mds_mcm_destroy();
-				osaf_mutex_unlock_ordie(&gl_mds_library_mutex);
-				return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
-			}
-		}
-
-		/* Get Cluster_id */
-		p_field = NULL;
-		p_field = (char *)ncs_util_search_argv_list(
-		    req->info.create.argc, req->info.create.argv,
-		    "CLUSTER_ID=");
-		if (p_field != NULL) {
-			if (sscanf(p_field + strlen("CLUSTER_ID="), "%d",
-				   &cluster_id) != 1) {
-				syslog(
-				    LOG_ERR,
-				    "MDS:LIB_CREATE: Problem in CLUSTER_ID argument\n");
-				mds_mcm_destroy();
-				osaf_mutex_unlock_ordie(&gl_mds_library_mutex);
-				return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
-			}
-		}
+		node_id = ncs_get_node_id();
 
 		FILE *fp;
 #ifdef ENABLE_TIPC_TRANSPORT
