@@ -589,7 +589,7 @@ void avd_node_down_evh(AVD_CL_CB *cb, AVD_EVT *evt)
       LOG_ER("%s:%u: %u", __FILE__, __LINE__, node->node_info.nodeId);
     }
   }
-
+  avd_node_state_set(node, AVD_AVND_STATE_SHUTTING_DOWN);
 done:
   avsv_dnd_msg_free(n2d_msg);
   evt->info.avnd_msg = nullptr;
