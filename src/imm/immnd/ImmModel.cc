@@ -19476,10 +19476,38 @@ SaAisErrorT ImmModel::finalizeSync(ImmsvOmFinalizeSync* req, bool isCoord,
                 "finalizeSync, ignoring",
                 info->mImplementerName.c_str(), info->mId);
             continue;
+          } else if (ii->id == 0 && ii->nodeId == 0 && ii->mds_dest == 0) {
+            /* Implementer set is requested just before finalizeSync, and it
+             * arrives on nodes after finalizeSync sends implementer info with
+             * all 0. So, ignore the implementer record in finalizeSync as it
+             * is obsolete.
+             */
+            LOG_WA("implementerSet '%s' id: %u has arrived "
+                   "after fynalizeSync broadcast and "
+                   "before finalizeSync arrived to the sync-client, ignoring",
+                   info->mImplementerName.c_str(), info->mId);
+            continue;
+          } else if (info->mId == 0 && info->mNodeId == 0 &&
+                     info->mMds_dest == 0) {
+            /* Implementer clear is requested just before finalizeSync, and it
+             * arrives on nodes after finalizeSync sends implementer info with
+             * old set. So, ignore the implementer record in finalizeSync as it
+             * is obsolete.
+             */
+            LOG_WA("implementerClear '%s' id: %u has arrived "
+                   "after fynalizeSync broadcast and "
+                   "before finalizeSync arrived to the sync-client, ignoring",
+                   info->mImplementerName.c_str(), ii->id);
+            continue;
           } else {
             LOG_WA(
-                "Invalid implementer detected at sync client by finalizeSync -"
-                " exiting");
+                "Mismatched implementer '%s' detected at sync client by"
+                "finalizeSync, info: id(%u, %u), nodeid(0x%x, 0x%x),"
+                "mdsdest(%" PRIx64", %" PRIx64 ") - exiting",
+                info->mImplementerName.c_str(),
+                info->mId, ii->id,
+                info->mNodeId, ii->nodeId,
+                (uint64_t)info->mMds_dest, (uint64_t)ii->mds_dest);
             err = SA_AIS_ERR_BAD_OPERATION;
             goto done;
           }
