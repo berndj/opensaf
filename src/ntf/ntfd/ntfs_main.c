@@ -270,6 +270,8 @@ uint32_t initialize_for_assignment(ntfs_cb_t *cb, SaAmfHAStateT ha_state)
 	}
 	cb->ha_state = ha_state;
 	init_ntfimcn(ha_state);
+	initAdmin();
+	saflog_init();
 	if ((rc = ntfs_mds_init(cb, ha_state)) != NCSCC_RC_SUCCESS) {
 		LOG_ER("ntfs_mds_init FAILED %d", rc);
 		goto done;
@@ -279,8 +281,6 @@ uint32_t initialize_for_assignment(ntfs_cb_t *cb, SaAmfHAStateT ha_state)
 		ntfs_mds_finalize(cb);
 		goto done;
 	}
-	initAdmin();
-	saflog_init();
 
 	cb->fully_initialized = true;
 done:
