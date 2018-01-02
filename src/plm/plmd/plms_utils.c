@@ -3009,9 +3009,14 @@ void plms_move_chld_ent_to_insvc(PLMS_ENTITY *chld_ent,
 				 SaUint8T inst_chld_ee, SaUint8T inst_dep_ee)
 {
 	SaUint32T ret_err;
+
+	TRACE_ENTER();
+
 	/* Terminating condition. */
-	if (NULL == chld_ent)
+	if (NULL == chld_ent) {
+		TRACE_LEAVE();
 		return;
+	}
 
 	/* If chld_ent is already insvc then return.*/
 	if (plms_is_rdness_state_set(chld_ent, SA_PLM_READINESS_IN_SERVICE)) {
@@ -3040,6 +3045,7 @@ void plms_move_chld_ent_to_insvc(PLMS_ENTITY *chld_ent,
 		LOG_ER("Entity %s can not be moved to insvc, as parent is \
 		not in service",
 		       chld_ent->dn_name_str);
+		TRACE_LEAVE();
 		return;
 	}
 	/* If the min dependency condition is matched.
@@ -3068,16 +3074,19 @@ void plms_move_chld_ent_to_insvc(PLMS_ENTITY *chld_ent,
 		       chld_ent->dn_name_str);
 		/* Min dependency condition is not matched. Hence
 		can not go insvc. So return from here.*/
+		TRACE_LEAVE();
 		return;
 	}
 	/* If adm state is not unlock. */
 	if ((PLMS_HE_ENTITY == chld_ent->entity_type) &&
 	    (SA_PLM_HE_ADMIN_UNLOCKED !=
 	     chld_ent->entity.he_entity.saPlmHEAdminState)) {
+		TRACE_LEAVE();
 		return;
 	} else if ((PLMS_EE_ENTITY == chld_ent->entity_type) &&
 		   (SA_PLM_EE_ADMIN_UNLOCKED !=
 		    chld_ent->entity.ee_entity.saPlmEEAdminState)) {
+		TRACE_LEAVE();
 		return;
 	}
 
@@ -3085,10 +3094,12 @@ void plms_move_chld_ent_to_insvc(PLMS_ENTITY *chld_ent,
 	if ((PLMS_HE_ENTITY == chld_ent->entity_type) &&
 	    (SA_PLM_OPERATIONAL_DISABLED ==
 	     chld_ent->entity.he_entity.saPlmHEOperationalState)) {
+		TRACE_LEAVE();
 		return;
 	} else if ((PLMS_EE_ENTITY == chld_ent->entity_type) &&
 		   (SA_PLM_OPERATIONAL_DISABLED ==
 		    chld_ent->entity.ee_entity.saPlmEEOperationalState)) {
+		TRACE_LEAVE();
 		return;
 	}
 	/* If the presence state of the HE is either active or deactivating
@@ -3098,26 +3109,37 @@ void plms_move_chld_ent_to_insvc(PLMS_ENTITY *chld_ent,
 	      chld_ent->entity.he_entity.saPlmHEPresenceState) &&
 	     (SA_PLM_HE_PRESENCE_DEACTIVATING !=
 	      chld_ent->entity.he_entity.saPlmHEPresenceState))) {
+		TRACE_LEAVE();
 		return;
 	}
 	/* If the presence state of the EE is either instantiated or
 	terminating.*/
-	if ((PLMS_EE_ENTITY == chld_ent->entity_type) &&
-	    (SA_PLM_EE_PRESENCE_INSTANTIATED !=
-	     chld_ent->entity.ee_entity.saPlmEEPresenceState) &&
-	    (SA_PLM_EE_PRESENCE_TERMINATING !=
-	     chld_ent->entity.ee_entity.saPlmEEPresenceState)) {
-		if (inst_chld_ee) {
-			ret_err =
-			    plms_ent_enable(chld_ent, false, 0 /*mngt_cbk*/);
-			if (NCSCC_RC_SUCCESS != ret_err) {
-				LOG_ER("EE Instantiation failed, EE: %s",
-				       chld_ent->dn_name_str);
+	if (PLMS_EE_ENTITY == chld_ent->entity_type) {
+		if ((SA_PLM_EE_PRESENCE_INSTANTIATED !=
+			chld_ent->entity.ee_entity.saPlmEEPresenceState) &&
+			(SA_PLM_EE_PRESENCE_TERMINATING !=
+			chld_ent->entity.ee_entity.saPlmEEPresenceState)) {
+			if (inst_chld_ee) {
+				ret_err = plms_ent_enable(chld_ent,
+						false,
+						0 /*mngt_cbk*/);
+				if (NCSCC_RC_SUCCESS != ret_err) {
+					LOG_ER("EE Instantiation failed, EE: "
+							"%s",
+							chld_ent->dn_name_str);
+				}
 			}
+			/* Even if the EE instantiattion is successful,
+			dont take it to insvc. Wait for the instantiated msg.*/
+			TRACE_LEAVE();
+			return;
+		} else {
+			/*
+			 * EE is either INSTANTIATED or TERMINATING; just return
+			 */
+			TRACE_LEAVE();
+			return;
 		}
-		/* Even if the EE instantiattion is successful,
-		dont take it to insvc. Wait for the instantiated msg.*/
-		return;
 	}
 
 	/* All conditioned are matched. Move the ent to InSvc. */
@@ -3136,6 +3158,7 @@ void plms_move_chld_ent_to_insvc(PLMS_ENTITY *chld_ent,
 	plms_move_chld_ent_to_insvc(chld_ent->leftmost_child, ent_list,
 				    inst_chld_ee, inst_dep_ee);
 
+	TRACE_LEAVE();
 	return;
 }
 /******************************************************************************

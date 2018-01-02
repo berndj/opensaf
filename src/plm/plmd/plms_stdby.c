@@ -56,6 +56,76 @@ plms_perform_pending_admin_clbk(PLMS_ENTITY_GROUP_INFO_LIST *grp_list,
 				PLMS_CKPT_TRACK_STEP_INFO *track_step);
 void plms_process_client_down_list();
 
+static void modify_presence_state(PLMS_ENTITY *ee)
+{
+	bool set = false;
+	PLMS_ENTITY *parent = ee->parent;
+
+	TRACE_ENTER();
+
+	while (parent) {
+		if ((parent->entity_type == PLMS_EE_ENTITY &&
+			parent->entity.ee_entity.saPlmEEReadinessState ==
+				SA_PLM_READINESS_OUT_OF_SERVICE) ||
+			(parent->entity_type == PLMS_HE_ENTITY &&
+			parent->entity.he_entity.saPlmHEReadinessState ==
+				SA_PLM_READINESS_OUT_OF_SERVICE)) {
+			plms_presence_state_set(ee,
+					SA_PLM_EE_PRESENCE_UNINSTANTIATED,
+					parent,
+					SA_NTF_OBJECT_OPERATION,
+					SA_PLM_NTFID_STATE_CHANGE_ROOT);
+			set = true;
+			break;
+		}
+
+		parent = parent->parent;
+	}
+
+	if (!set) {
+		plms_readiness_flag_mark_unmark(ee,
+					SA_PLM_RF_MANAGEMENT_LOST,
+					true,
+					ee,
+					SA_NTF_OBJECT_OPERATION,
+					SA_PLM_NTFID_STATE_CHANGE_ROOT);
+	}
+
+	TRACE_LEAVE();
+}
+
+static void check_presence_state(void)
+{
+	/*
+	 * If an EE was in the middle of terminating, and we switchover, we may
+	 * not get the notification from the EE that it has terminated. It's
+	 * probably not a good idea to restart the termination-failed timer
+	 * because we don't know if the EE already terminated. If there is a
+	 * parent, and it is OOS, then we can definitely set the state to
+	 * UNINSTANTIATED. Otherwise, let's just set the readiness flag to
+	 * management-lost.
+	 */
+	PLMS_CB *cb = plms_cb;
+	PLMS_ENTITY *plm_ent = (PLMS_ENTITY *)ncs_patricia_tree_getnext(
+			&cb->entity_info, 0);
+
+	TRACE_ENTER();
+
+	while (plm_ent) {
+		if (plm_ent->entity_type == PLMS_EE_ENTITY) {
+			if (plm_ent->entity.ee_entity.saPlmEEPresenceState ==
+					SA_PLM_EE_PRESENCE_TERMINATING) {
+				modify_presence_state(plm_ent);
+			}
+		}
+
+		plm_ent = (PLMS_ENTITY *)ncs_patricia_tree_getnext(
+		    &cb->entity_info, (SaUint8T *)&plm_ent->dn_name);
+	}
+
+	TRACE_LEAVE();
+}
+
 /***********************************************************************
  * Name          :plms_proc_standby_active_role_change
  *
@@ -88,6 +158,8 @@ SaUint32T plms_proc_standby_active_role_change()
 	plms_perform_pending_admin_operation();
 
 	plms_process_client_down_list();
+
+	check_presence_state();
 
 	cb->is_initialized = true;
 
