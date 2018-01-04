@@ -41,10 +41,10 @@ bin_osaffmd_CPPFLAGS = \
 	$(AM_CPPFLAGS)
 
 bin_osaffmd_SOURCES = \
-	src/fm/fmd/fm_amf.c \
-	src/fm/fmd/fm_main.c \
-	src/fm/fmd/fm_mds.c \
-	src/fm/fmd/fm_rda.c
+	src/fm/fmd/fm_amf.cc \
+	src/fm/fmd/fm_main.cc \
+	src/fm/fmd/fm_mds.cc \
+	src/fm/fmd/fm_rda.cc
 
 bin_osaffmd_LDADD = \
 	lib/libSaAmf.la \

@@ -34,14 +34,14 @@
 ******************************************************************************/
 
 #include "fm.h"
-uint32_t gl_fm_hdl;
+extern uint32_t gl_fm_hdl;
 
 uint32_t fm_amf_init(FM_AMF_CB *fm_amf_cb);
 static uint32_t fm_amf_register(FM_AMF_CB *fm_amf_cb);
 static uint32_t fm_amf_healthcheck_start(FM_AMF_CB *fm_amf_cb);
 static FM_AMF_CB *fm_amf_take_hdl(void);
 static void fm_amf_give_hdl(void);
-static char *ha_role_string[] = {"ACTIVE", "STANDBY", "QUIESCED", "QUIESCING"};
+static const char *ha_role_string[] = {"ACTIVE", "STANDBY", "QUIESCED", "QUIESCING"};
 
 void amfnd_down_callback(void)
 {
@@ -79,7 +79,7 @@ FM_AMF_CB *fm_amf_take_hdl(void)
 	FM_CB *fm_cb = NULL;
 
 	/* Take handle */
-	fm_cb = ncshm_take_hdl(NCS_SERVICE_ID_GFM, gl_fm_hdl);
+	fm_cb = static_cast<FM_CB*>(ncshm_take_hdl(NCS_SERVICE_ID_GFM, gl_fm_hdl));
 
 	return &fm_cb->fm_amf_cb;
 }

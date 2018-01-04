@@ -42,8 +42,8 @@ static const SaClmCallbacksT_4 clm_callbacks = {0, 0};
 enum { FD_TERM = 0, FD_AMF = 1, FD_MBX };
 
 FM_CB *fm_cb = NULL;
-char *role_string[] = {"UNDEFINED", "ACTIVE", "STANDBY", "QUIESCED",
-		       "QUIESCING"};
+const char *role_string[] = {"UNDEFINED", "ACTIVE", "STANDBY", "QUIESCED",
+                             "QUIESCING"};
 
 /*****************************************************************
  *                                                               *
@@ -97,7 +97,7 @@ void rda_cb(uint32_t cb_hdl, PCS_RDA_CB_INFO *cb_info,
 
 	TRACE_ENTER();
 
-	evt = calloc(1, sizeof(FM_EVT));
+	evt = static_cast<FM_EVT*>(calloc(1, sizeof(FM_EVT)));
 	if (NULL == evt) {
 		LOG_ER("calloc failed");
 		goto done;
@@ -107,7 +107,7 @@ void rda_cb(uint32_t cb_hdl, PCS_RDA_CB_INFO *cb_info,
 	evt->info.rda_info.role = cb_info->info.io_role;
 
 	rc = ncs_ipc_send(&fm_cb->mbx, (NCS_IPC_MSG *)evt,
-			  MDS_SEND_PRIORITY_HIGH);
+			  NCS_IPC_PRIORITY_HIGH);
 	if (rc != NCSCC_RC_SUCCESS) {
 		syslog(LOG_ERR, "IPC send failed %d", rc);
 		free(evt);
@@ -378,7 +378,6 @@ static uint32_t fm_agents_startup(void)
 	}
 
 	return rc;
-	TRACE_LEAVE();
 }
 
 /****************************************************************************
@@ -760,15 +759,15 @@ uint32_t fm_tmr_start(FM_TMR *tmr, SaTimeT period)
 	tmr_period = (uint32_t)period;
 
 	if (tmr->tmr_id == NULL) {
-		m_NCS_TMR_CREATE(tmr->tmr_id, tmr_period, fm_tmr_exp,
-				 (void *)tmr);
+		tmr->tmr_id = ncs_tmr_alloc(const_cast<char*>(__FILE__), __LINE__);
 	}
 
 	if (tmr->status == FM_TMR_RUNNING) {
 		return NCSCC_RC_FAILURE;
 	}
 
-	m_NCS_TMR_START(tmr->tmr_id, tmr_period, fm_tmr_exp, (void *)tmr);
+	tmr->tmr_id = ncs_tmr_start(tmr->tmr_id, tmr_period, fm_tmr_exp, tmr,
+		const_cast<char *>(__FILE__), __LINE__);
 	tmr->status = FM_TMR_RUNNING;
 
 	if (TMR_T_NULL == tmr->tmr_id) {
@@ -816,7 +815,7 @@ void fm_tmr_exp(void *fm_tmr)
 	}
 
 	/* Take handle */
-	fm_cb = ncshm_take_hdl(NCS_SERVICE_ID_GFM, gl_fm_hdl);
+	fm_cb = static_cast<FM_CB*>(ncshm_take_hdl(NCS_SERVICE_ID_GFM, gl_fm_hdl));
 
 	if (fm_cb == NULL) {
 		syslog(LOG_ERR, "Taking handle failed in timer expiry ");
@@ -878,7 +877,7 @@ static uint32_t fms_fms_exchange_node_info(FM_CB *fm_cb)
 		if (NCSCC_RC_SUCCESS !=
 		    fm_mds_async_send(
 			fm_cb, (NCSCONTEXT)&gfm_msg, NCSMDS_SVC_ID_GFM,
-			MDS_SEND_PRIORITY_MEDIUM, 0, fm_cb->peer_adest, 0)) {
+			MDS_SEND_PRIORITY_MEDIUM, MDS_SENDTYPE_SND, fm_cb->peer_adest, NCSMDS_SCOPE_NONE)) {
 			syslog(LOG_ERR,
 			       "Sending node-info message to peer fms failed");
 			return NCSCC_RC_FAILURE;
@@ -913,7 +912,7 @@ static uint32_t fms_fms_inform_terminating(FM_CB *fm_cb)
 		if (NCSCC_RC_SUCCESS !=
 		    fm_mds_async_send(
 			fm_cb, (NCSCONTEXT)&gfm_msg, NCSMDS_SVC_ID_GFM,
-			MDS_SEND_PRIORITY_VERY_HIGH, 0, fm_cb->peer_adest, 0)) {
+			MDS_SEND_PRIORITY_VERY_HIGH, MDS_SENDTYPE_SND, fm_cb->peer_adest, NCSMDS_SCOPE_NONE)) {
 			syslog(LOG_ERR,
 			       "Sending node-info message to peer fms failed");
 			return NCSCC_RC_FAILURE;

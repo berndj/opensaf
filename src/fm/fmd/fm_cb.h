@@ -32,7 +32,7 @@
 #include <stdint.h>
 #include <time.h>
 
-uint32_t gl_fm_hdl;
+extern uint32_t gl_fm_hdl;
 
 typedef enum {
   FM_TMR_TYPE_MIN,
@@ -108,7 +108,7 @@ typedef struct fm_cb {
   bool peer_node_terminated;
 } FM_CB;
 
-extern char *role_string[];
+extern const char *role_string[];
 extern FM_CB *fm_cb;
 
 /*****************************************************************

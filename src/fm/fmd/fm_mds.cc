@@ -463,14 +463,14 @@ static uint32_t fm_mds_svc_evt(FM_CB *cb, MDS_CALLBACK_SVC_EVENT_INFO *svc_evt)
 				cb->peer_adest = 0;
 
 				fm_proc_svc_down(cb, svc_evt->i_node_id,
-						 svc_evt->i_svc_id);
+						 static_cast<NCSMDS_SVC_ID>(svc_evt->i_svc_id));
 			}
 			break;
 		case NCSMDS_SVC_ID_IMMND:
 		case NCSMDS_SVC_ID_AVND:
 			if (svc_evt->i_node_id == cb->peer_node_id) {
 				fm_proc_svc_down(cb, svc_evt->i_node_id,
-						 svc_evt->i_svc_id);
+						 static_cast<NCSMDS_SVC_ID>(svc_evt->i_svc_id));
 			}
 			break;
 		default:
@@ -487,7 +487,7 @@ static uint32_t fm_mds_svc_evt(FM_CB *cb, MDS_CALLBACK_SVC_EVENT_INFO *svc_evt)
 		case NCSMDS_SVC_ID_AVD:
 			if (svc_evt->i_node_id == cb->peer_node_id) {
 				fm_proc_svc_down(cb, svc_evt->i_node_id,
-						 svc_evt->i_svc_id);
+						 static_cast<NCSMDS_SVC_ID>(svc_evt->i_svc_id));
 			}
 			break;
 		default:
