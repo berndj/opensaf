@@ -149,6 +149,7 @@ static uint32_t immnd_initialize(char *progname)
 	immnd_cb->mFile = getenv("IMMSV_LOAD_FILE");
 	immnd_cb->clm_hdl = 0;
 	immnd_cb->clmSelectionObject = -1;
+
 	/* isClmNodeJoined will be intially set to true, untill CLMS service is
 	   up. from there isClmNodeJoined will be controlled by CLM membership
 	   join/left.

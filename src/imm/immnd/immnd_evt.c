@@ -10056,6 +10056,9 @@ uint32_t immnd_evt_proc_abort_sync(IMMND_CB *cb, IMMND_EVT *evt,
 	osafassert(cb->mRulingEpoch <= evt->info.ctrl.rulingEpoch);
 	cb->mRulingEpoch = evt->info.ctrl.rulingEpoch;
 
+	cb->mSyncAbortSentAt.tv_sec  = 0;
+	cb->mSyncAbortSentAt.tv_nsec = 0;
+
 	LOG_WA("Global ABORT SYNC received for epoch %u", cb->mRulingEpoch);
 
 	if (cb->mIsCoord) { /* coord should already be up to date. */
@@ -10949,6 +10952,49 @@ static void immnd_evt_proc_discard_node(IMMND_CB *cb, IMMND_EVT *evt,
 }
 
 /****************************************************************************
+ * Name          : immnd_is_sync_aborting
+ *
+ * Description   : to check if sync abort is ongoing or not.
+ *
+ * When mSyncAbortingAt != {0,0}, it means the SYNC has been aborted
+ * by coord and that abort message not yet broadcasted to IMMNDs.
+ * Therefore, NODE STATE at IMMND coord (IMM_NODE_FULLY_AVAILABLE) is
+ * different with veteran node(s) (IMM_NODE_R_AVAILABLE) at the moment.
+ * So, IMMND_EVT_D2ND_ADMINIT or IMMND_EVT_D2ND_CCBINIT msg comes to
+ * IMMND coord has to be rejected to synchronize with the result
+ * at veterans.
+ *
+ * In addition, we check the time here to avoid the worst cases
+ * such as the abort message arrived at active IMMD, but later on
+ * it fails to send the response (e.g: hang IMMD, or reboot IMMD, etc.)
+ * For that reason, if we don't receive the response within 6 seconds,
+ * consider sending abort failed.
+ *
+ * Arguments     : IMMND_CB *cb - IMMND CB pointer
+ */
+static bool immnd_is_sync_aborting(IMMND_CB* cb)
+{
+	bool unset = (cb->mSyncAbortSentAt.tv_nsec == 0 &&
+		      cb->mSyncAbortSentAt.tv_sec == 0);
+
+	if (unset) return false;
+
+	/* Inherit from DEFAULT_TIMEOUT_SEC */
+	const unsigned kTimeout = 6;
+	time_t duration_in_second = 0xffffffff;
+	struct timespec now, duration;
+	osaf_clock_gettime(CLOCK_MONOTONIC, &now);
+	osaf_timespec_subtract(&now, &cb->mSyncAbortSentAt, &duration);
+	duration_in_second = duration.tv_sec;
+	if (duration_in_second > kTimeout) {
+		cb->mSyncAbortSentAt.tv_sec  = 0;
+		cb->mSyncAbortSentAt.tv_nsec = 0;
+	}
+
+	return (duration_in_second <= kTimeout);
+}
+
+/****************************************************************************
  * Name          : immnd_evt_proc_adminit_rsp
  *
  * Description   : Function to process adminit response from Director
@@ -10981,9 +11027,19 @@ static void immnd_evt_proc_adminit_rsp(IMMND_CB *cb, IMMND_EVT *evt,
 	conn = m_IMMSV_UNPACK_HANDLE_HIGH(clnt_hdl);
 	nodeId = m_IMMSV_UNPACK_HANDLE_LOW(clnt_hdl);
 	ownerId = evt->info.adminitGlobal.globalOwnerId;
-	err =
-	    immModel_adminOwnerCreate(cb, &(evt->info.adminitGlobal.i), ownerId,
-				      (originatedAtThisNd) ? conn : 0, nodeId);
+
+
+	if (cb->mIsCoord && immnd_is_sync_aborting(cb)) {
+		LOG_NO("The SYNC abort is not yet completed."
+		       " Return TRY_AGAIN to user.");
+		err = SA_AIS_ERR_TRY_AGAIN;
+	} else {
+		err = immModel_adminOwnerCreate(cb,
+						&(evt->info.adminitGlobal.i),
+						ownerId,
+						(originatedAtThisNd) ? conn : 0,
+						nodeId);
+	}
 
 	if (originatedAtThisNd) { /*Send reply to client from this ND. */
 		immnd_client_node_get(cb, clnt_hdl, &cl_node);
@@ -12010,9 +12066,18 @@ static void immnd_evt_proc_ccbinit_rsp(IMMND_CB *cb, IMMND_EVT *evt,
 	/* Remember latest ccb_id for IMMD recovery. */
 	cb->mLatestCcbId = evt->info.ccbinitGlobal.globalCcbId;
 
-	err = immModel_ccbCreate(cb, evt->info.ccbinitGlobal.i.adminOwnerId,
-				 evt->info.ccbinitGlobal.i.ccbFlags, ccbId,
-				 nodeId, (originatedAtThisNd) ? conn : 0);
+	if (cb->mIsCoord && immnd_is_sync_aborting(cb)) {
+		LOG_NO("The SYNC abort is not yet completed."
+		       " Return TRY_AGAIN to user.");
+		err = SA_AIS_ERR_TRY_AGAIN;
+	} else {
+		err = immModel_ccbCreate(cb,
+					 evt->info.ccbinitGlobal.i.adminOwnerId,
+					 evt->info.ccbinitGlobal.i.ccbFlags,
+					 ccbId,
+					 nodeId,
+					 (originatedAtThisNd) ? conn : 0);
+	}
 
 	if (originatedAtThisNd) { /*Send reply to client from this ND. */
 		immnd_client_node_get(cb, clnt_hdl, &cl_node);
