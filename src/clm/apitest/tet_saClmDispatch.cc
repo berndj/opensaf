@@ -25,8 +25,8 @@ static void nodeGetCallBack1(SaInvocationT invocation,
 }
 
 SaClmCallbacksT clmCallbacks = {nodeGetCallBack1, NULL};
-SaClmNodeIdT nodeId;
-SaInvocationT invocation;
+static SaClmNodeIdT nodeId;
+static SaInvocationT invocation;
 
 void saClmDispatch_01(void) {
   struct pollfd fds[1];
@@ -35,11 +35,11 @@ void saClmDispatch_01(void) {
   invocation = 600;
   SaAisErrorT rc;
 
-  safassert(saClmInitialize(&clmHandle, &clmCallbacks, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks, &clmVersion_1),
             SA_AIS_OK);
-  safassert(saClmSelectionObjectGet(clmHandle, &selectionObject),
+  safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  safassert(saClmClusterNodeGetAsync(clmHandle, invocation, nodeId),
+  safassert(ClmTest::saClmClusterNodeGetAsync(clmHandle, invocation, nodeId),
             SA_AIS_OK);
 
   fds[0].fd = (int)selectionObject;
@@ -47,21 +47,21 @@ void saClmDispatch_01(void) {
   ret = poll(fds, 1, 1000);
   assert(ret == 1);
 
-  rc = saClmDispatch(clmHandle, SA_DISPATCH_ALL);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  rc = ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
 void saClmDispatch_02(void) {
-  rc = saClmDispatch(0, SA_DISPATCH_ALL);
+  rc = ClmTest::saClmDispatch(0, SA_DISPATCH_ALL);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
 void saClmDispatch_03(void) {
-  safassert(saClmInitialize(&clmHandle, &clmCallbacks, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks, &clmVersion_1),
             SA_AIS_OK);
-  rc = saClmDispatch(clmHandle, 0);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  rc = ClmTest::saClmDispatch(clmHandle, static_cast<SaDispatchFlagsT>(0));
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
@@ -72,11 +72,11 @@ void saClmDispatch_04(void) {
   invocation = 600;
   SaAisErrorT rc;
 
-  safassert(saClmInitialize(&clmHandle, &clmCallbacks, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks, &clmVersion_1),
             SA_AIS_OK);
-  safassert(saClmSelectionObjectGet(clmHandle, &selectionObject),
+  safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  safassert(saClmClusterNodeGetAsync(clmHandle, invocation, nodeId),
+  safassert(ClmTest::saClmClusterNodeGetAsync(clmHandle, invocation, nodeId),
             SA_AIS_OK);
 
   fds[0].fd = (int)selectionObject;
@@ -84,8 +84,8 @@ void saClmDispatch_04(void) {
   ret = poll(fds, 1, 1000);
   assert(ret == 1);
 
-  rc = saClmDispatch(clmHandle, SA_DISPATCH_ONE);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  rc = ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ONE);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 

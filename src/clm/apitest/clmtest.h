@@ -18,16 +18,17 @@
 #ifndef CLM_APITEST_CLMTEST_H_
 #define CLM_APITEST_CLMTEST_H_
 
+#include <cassert>
+#include <cerrno>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include <saClm.h>
-#include <assert.h>
+#include <unistd.h>
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include <poll.h>
-#include <unistd.h>
+#include "clm/apitest/clm_api_with_try_again.h"
 
 extern SaVersionT clmVersion_4;
 extern SaVersionT clmVersion_1;

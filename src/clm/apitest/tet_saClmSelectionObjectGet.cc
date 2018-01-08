@@ -16,6 +16,7 @@
  *
  */
 #include "clmtest.h"
+#include "ais/try_again_decorator.h"
 
 static void nodeGetCallBack(SaInvocationT invocation,
 			    const SaClmClusterNodeT *clusterNode,
@@ -27,34 +28,34 @@ static void nodeGetCallBack(SaInvocationT invocation,
 SaClmCallbacksT clmCallback = {nodeGetCallBack, NULL};
 
 void saClmSelectionObjectGet_01(void) {
-  safassert(saClmInitialize(&clmHandle, &clmCallback, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback, &clmVersion_1),
             SA_AIS_OK);
-  rc = saClmSelectionObjectGet(clmHandle, &selectionObject);
+  rc = ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject);
   test_validate(rc, SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
 }
 
 void saClmSelectionObjectGet_02(void) {
-  safassert(saClmInitialize(&clmHandle, &clmCallback, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback, &clmVersion_1),
             SA_AIS_OK);
-  rc = saClmSelectionObjectGet(0, &selectionObject);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  rc = ClmTest::saClmSelectionObjectGet(0, &selectionObject);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
 void saClmSelectionObjectGet_03(void) {
-  safassert(saClmInitialize(&clmHandle, &clmCallback, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback, &clmVersion_1),
             SA_AIS_OK);
-  rc = saClmSelectionObjectGet(-1, &selectionObject);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  rc = ClmTest::saClmSelectionObjectGet(-1, &selectionObject);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
 void saClmSelectionObjectGet_04(void) {
-  safassert(saClmInitialize(&clmHandle, &clmCallback, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback, &clmVersion_1),
             SA_AIS_OK);
-  rc = saClmSelectionObjectGet(clmHandle, NULL);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  rc = ClmTest::saClmSelectionObjectGet(clmHandle, NULL);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 

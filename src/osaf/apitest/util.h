@@ -20,10 +20,18 @@
 
 #include <saAis.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern SaTimeT getSaTimeT(void);
 extern const char* get_saf_error(SaAisErrorT rc);
 extern void safassert_impl(const char* file, unsigned int line,
                            SaAisErrorT actual, SaAisErrorT expected);
+
+#ifdef __cplusplus
+}
+#endif
 
 /**
  * Pre and post condition checking. Will print information and

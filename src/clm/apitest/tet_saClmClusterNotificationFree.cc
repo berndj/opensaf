@@ -17,7 +17,7 @@
  */
 #include "clmtest.h"
 
-SaClmClusterNotificationBufferT_4 notificationBuffer_4;
+static SaClmClusterNotificationBufferT_4 notificationBuffer_4;
 
 void saClmClusterNotificationFree_01(void) {
   notificationBuffer_4.numberOfItems = 1;
@@ -26,12 +26,12 @@ void saClmClusterNotificationFree_01(void) {
           sizeof(SaClmClusterNotificationT_4) *
           notificationBuffer_4.numberOfItems);
 
-  safassert(saClmInitialize_4(&clmHandle, NULL, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, NULL, &clmVersion_4),
             SA_AIS_OK);
 
-  rc = saClmClusterNotificationFree_4(clmHandle,
+  rc = ClmTest::saClmClusterNotificationFree_4(clmHandle,
                                       notificationBuffer_4.notification);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -42,11 +42,11 @@ void saClmClusterNotificationFree_02(void) {
           sizeof(SaClmClusterNotificationT_4) *
           notificationBuffer_4.numberOfItems);
 
-  safassert(saClmInitialize(&clmHandle, NULL, &clmVersion_1), SA_AIS_OK);
+  safassert(ClmTest::saClmInitialize(&clmHandle, NULL, &clmVersion_1), SA_AIS_OK);
 
-  rc = saClmClusterNotificationFree_4(clmHandle,
+  rc = ClmTest::saClmClusterNotificationFree_4(clmHandle,
                                       notificationBuffer_4.notification);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_VERSION);
 }
 
@@ -57,10 +57,10 @@ void saClmClusterNotificationFree_03(void) {
           sizeof(SaClmClusterNotificationT_4) *
           notificationBuffer_4.numberOfItems);
 
-  rc = saClmClusterNotificationFree_4(0,
+  rc = ClmTest::saClmClusterNotificationFree_4(0,
                                       notificationBuffer_4.notification);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
-  rc = saClmClusterNotificationFree_4(clmHandle, NULL);
+  rc = ClmTest::saClmClusterNotificationFree_4(clmHandle, NULL);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
@@ -71,7 +71,7 @@ void saClmClusterNotificationFree_04(void) {
           sizeof(SaClmClusterNotificationT_4) *
           notificationBuffer_4.numberOfItems);
 
-  rc = saClmClusterNotificationFree_4(-1,
+  rc = ClmTest::saClmClusterNotificationFree_4(-1,
                                       notificationBuffer_4.notification);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }

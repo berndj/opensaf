@@ -18,26 +18,26 @@
 #include "clmtest.h"
 
 void saClmFinalize_01(void) {
-  safassert(saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
-  rc = saClmFinalize(clmHandle);
+  rc = ClmTest::saClmFinalize(clmHandle);
   test_validate(rc, SA_AIS_OK);
-  safassert(saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
             SA_AIS_OK);
-  rc = saClmFinalize(clmHandle);
+  rc = ClmTest::saClmFinalize(clmHandle);
   test_validate(rc, SA_AIS_OK);
 }
 
 void saClmFinalize_02(void) {
-  rc = saClmFinalize(-1);
+  rc = ClmTest::saClmFinalize(-1);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
 void saClmFinalize_03(void) {
-  safassert(saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
-  rc = saClmFinalize(clmHandle);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
+  rc = ClmTest::saClmFinalize(clmHandle);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 

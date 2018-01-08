@@ -186,26 +186,27 @@ if ENABLE_TESTS
 bin_PROGRAMS += bin/clmtest
 
 noinst_HEADERS += \
-	src/clm/apitest/clmtest.h
+	src/clm/apitest/clmtest.h \
+	src/clm/apitest/clm_api_with_try_again.h
 
 bin_clmtest_CPPFLAGS = \
 	-DSA_CLM_B01=1 \
 	$(AM_CPPFLAGS)
 
 bin_clmtest_SOURCES = \
-	src/clm/apitest/clmtest.c \
-	src/clm/apitest/tet_saClmInitialize.c \
-	src/clm/apitest/tet_saClmClusterNodeGetAsync.c \
-	src/clm/apitest/tet_saClmClusterTrack.c \
-	src/clm/apitest/tet_saClmClusterTrackStop.c \
-	src/clm/apitest/tet_saClmClusterNotificationFree.c \
-	src/clm/apitest/tet_saClmClusterNodeGet.c \
-	src/clm/apitest/tet_saClmResponse.c \
-	src/clm/apitest/tet_ClmOiOps.c \
-	src/clm/apitest/tet_saClmDispatch.c \
-	src/clm/apitest/tet_saClmSelectionObjectGet.c \
-	src/clm/apitest/tet_saClmFinalize.c \
-	src/clm/apitest/tet_ClmLongRdn.c
+	src/clm/apitest/clmtest.cc \
+	src/clm/apitest/tet_saClmInitialize.cc \
+	src/clm/apitest/tet_saClmClusterNodeGetAsync.cc \
+	src/clm/apitest/tet_saClmClusterTrack.cc \
+	src/clm/apitest/tet_saClmClusterTrackStop.cc \
+	src/clm/apitest/tet_saClmClusterNotificationFree.cc \
+	src/clm/apitest/tet_saClmClusterNodeGet.cc \
+	src/clm/apitest/tet_saClmResponse.cc \
+	src/clm/apitest/tet_ClmOiOps.cc \
+	src/clm/apitest/tet_saClmDispatch.cc \
+	src/clm/apitest/tet_saClmSelectionObjectGet.cc \
+	src/clm/apitest/tet_saClmFinalize.cc \
+	src/clm/apitest/tet_ClmLongRdn.cc
 
 bin_clmtest_LDADD = \
 	lib/libSaClm.la \

@@ -29,7 +29,7 @@ SaInvocationT lock_inv;
 
 /*Print the Values in SaClmClusterNotificationBufferT_4*/
 static void clmTrackbuf_4(SaClmClusterNotificationBufferT_4 *notificationBuffer) {
-  int i;
+  unsigned i;
   printf("No of items = %d\n", notificationBuffer->numberOfItems);
 
   for (i = 0; i < notificationBuffer->numberOfItems; i++) {
@@ -109,11 +109,11 @@ void saClmResponse_01(void) {
   trackFlags = SA_TRACK_CHANGES | SA_TRACK_START_STEP;
   printf(" This test case needs (manual) admin op simulation\n");
   return; /* uncomment this and run*/
-  safassert(saClmInitialize_4(&clmHandle, &Callback4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &Callback4, &clmVersion_4),
             SA_AIS_OK);
-  safassert(saClmSelectionObjectGet(clmHandle, &selectionObject),
+  safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
@@ -123,7 +123,7 @@ void saClmResponse_01(void) {
       break;
     }
   }
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
   safassert(
       saClmResponse_4(clmHandle, lock_inv, SA_CLM_CALLBACK_RESPONSE_OK),
       SA_AIS_OK);
@@ -137,10 +137,10 @@ void saClmResponse_01(void) {
     }
   }
 
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
 
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -151,11 +151,11 @@ void saClmResponse_02(void) {
   printf("This test case needs (manual) admin op simulation\n");
   return; /* uncomment this and run*/
 
-  safassert(saClmInitialize_4(&clmHandle, &Callback4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &Callback4, &clmVersion_4),
             SA_AIS_OK);
-  safassert(saClmSelectionObjectGet(clmHandle, &selectionObject),
+  safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
@@ -165,8 +165,8 @@ void saClmResponse_02(void) {
       break;
     }
   }
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
-  safassert(saClmResponse_4(clmHandle, lock_inv,
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmResponse_4(clmHandle, lock_inv,
                             SA_CLM_CALLBACK_RESPONSE_ERROR),
             SA_AIS_OK);
 
@@ -179,10 +179,10 @@ void saClmResponse_02(void) {
     }
   }
 
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
 
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -194,11 +194,11 @@ void saClmResponse_03(void) {
   printf("This test case needs (manual) admin op simulation\n");
   return; /* uncomment this and run*/
 
-  safassert(saClmInitialize_4(&clmHandle, &Callback4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &Callback4, &clmVersion_4),
             SA_AIS_OK);
-  safassert(saClmSelectionObjectGet(clmHandle, &selectionObject),
+  safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
@@ -208,8 +208,8 @@ void saClmResponse_03(void) {
       break;
     }
   }
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
-  safassert(saClmResponse_4(clmHandle, lock_inv,
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmResponse_4(clmHandle, lock_inv,
                             SA_CLM_CALLBACK_RESPONSE_REJECTED),
             SA_AIS_OK);
 
@@ -222,30 +222,30 @@ void saClmResponse_03(void) {
     }
   }
 
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
 
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
 void saClmResponse_04(void) {
   printf("This test case needs (manual) admin op simulation\n");
   return; /* uncomment this and run*/
-  rc = saClmResponse_4(0, 200, SA_CLM_CALLBACK_RESPONSE_REJECTED);
+  rc = ClmTest::saClmResponse_4(0, 200, SA_CLM_CALLBACK_RESPONSE_REJECTED);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-  rc = saClmResponse_4(1234, 0, SA_CLM_CALLBACK_RESPONSE_REJECTED);
+  rc = ClmTest::saClmResponse_4(1234, 0, SA_CLM_CALLBACK_RESPONSE_REJECTED);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-  rc = saClmResponse_4(1234, 200, 10);
+  rc = ClmTest::saClmResponse_4(1234, 200, static_cast<SaClmResponseT>(10));
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-  rc = saClmResponse_4(-1, 200, SA_CLM_CALLBACK_RESPONSE_REJECTED);
+  rc = ClmTest::saClmResponse_4(-1, 200, SA_CLM_CALLBACK_RESPONSE_REJECTED);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
 void saClmResponse_05(void) {
-  safassert(saClmInitialize_4(&clmHandle, NULL, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, NULL, &clmVersion_4),
             SA_AIS_OK);
-  rc = saClmResponse_4(clmHandle, 100, SA_CLM_CALLBACK_RESPONSE_OK);
+  rc = ClmTest::saClmResponse_4(clmHandle, 100, SA_CLM_CALLBACK_RESPONSE_OK);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 

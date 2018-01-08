@@ -30,7 +30,7 @@ SaNameT node_name;
 void clm_init(void) {
   FILE *fp;
   // Command list to execute before tests start
-  char *command[] = {
+  const char *command[] = {
     // Unlock PL-3
     "immadm -o 1 safNode=PL-3,safCluster=myClmCluster 2> /dev/null"
   };

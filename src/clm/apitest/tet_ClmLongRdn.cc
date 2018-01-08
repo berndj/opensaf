@@ -28,13 +28,14 @@
 #include <saAis.h>
 #include "clmtest.h"
 
-static char *s_clmTrackCallback_node; // Node name that will be compared in
+// Node name that will be compared in
+static const char *s_clmTrackCallback_node;
 // clmTrackCallback callback
 static SaAisErrorT
 s_clmTrackCallback_err; // Error code from clmTrackCallback callback
 static int s_existTestNode; // 0 = not tested, -1 = doesn't exist, 1 = exists
 static int s_longDnAllowed; // 0 = not tested, -1 = not allowed, 1 = allowed
-static char *s_testNodeName =
+static const char *s_testNodeName =
     "safNode=PL-123456789012345678901234567890"
     "123456789012345678901234567890,safCluster=myClmCluster";
 
@@ -68,11 +69,11 @@ static int testNodeExist() {
   return s_existTestNode;
 }
 
-static SaClmNodeIdT getClmNodeId(char *nodeName) {
+static SaClmNodeIdT getClmNodeId(const char *nodeName) {
   SaImmHandleT immHandle;
   SaImmAccessorHandleT accessorHandle;
   SaVersionT version = {'A', 2, 15};
-  SaImmAttrNameT attrNodeId = "saClmNodeID";
+  SaImmAttrNameT attrNodeId = const_cast<SaImmAttrNameT>("saClmNodeID");
   SaImmAttrNameT attrNames[2] = {attrNodeId, NULL};
   SaImmAttrValuesT_2 **attributes = NULL;
   SaClmNodeIdT ret = 0;
@@ -105,7 +106,7 @@ static SaClmNodeIdT isLongDNAllowed() {
   SaImmHandleT immHandle;
   SaImmAccessorHandleT accessorHandle;
   SaVersionT version = {'A', 2, 15};
-  SaImmAttrNameT attrName = "longDnsAllowed";
+  SaImmAttrNameT attrName = const_cast<SaImmAttrNameT>("longDnsAllowed");
   SaImmAttrNameT attrNames[2] = {attrName, NULL};
   SaImmAttrValuesT_2 **attributes = NULL;
   SaConstStringT immObjectName =
@@ -202,7 +203,7 @@ static void clmTrackCallback4(
 static SaClmCallbacksT_4 clmCallback4 = {nodeGetCallBack4, clmTrackCallback4};
 static SaClmCallbacksT clmCallback = {nodeGetCallBack, clmTrackCallback};
 
-static void unlock_node(char *nodename) {
+static void unlock_node(const char *nodename) {
   int rc;
   char command[1024];
 
@@ -212,7 +213,7 @@ static void unlock_node(char *nodename) {
   assert(rc != -1);
 }
 
-static void lock_node(char *nodename) {
+static void lock_node(const char *nodename) {
   int rc;
   char command[1024];
   // Lock the node
@@ -221,7 +222,7 @@ static void lock_node(char *nodename) {
   assert(rc != -1);
 }
 
-static void remove_node(char *nodename) {
+static void remove_node(const char *nodename) {
   int rc;
   char command[1024];
 
@@ -265,7 +266,9 @@ static void saClmLongRdn_01(void) {
 
   // Create a node with long RDN
   safassert(
-      saImmOmCcbObjectCreate_o3(ccbHandle, "SaClmNode", nodeName, NULL),
+      saImmOmCcbObjectCreate_o3(ccbHandle,
+                                const_cast<SaImmClassNameT>("SaClmNode"),
+                                nodeName, NULL),
       SA_AIS_OK);
 
   rc = saImmOmCcbApply(ccbHandle);
@@ -282,7 +285,7 @@ static void saClmLongRdn_01(void) {
 void saClmLongRdn_02(void) {
   struct pollfd fds[1];
   int rc;
-  char *nodeName = s_testNodeName;
+  const char *nodeName = s_testNodeName;
   SaUint8T trackFlags = SA_TRACK_CHANGES;
 
   if (isLongDNAllowed() != 1) {
@@ -296,13 +299,13 @@ void saClmLongRdn_02(void) {
     return;
   }
 
-  safassert(saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
             SA_AIS_OK);
-  safassert(saClmSelectionObjectGet(clmHandle, &selectionObject),
+  safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
   if (rc != SA_AIS_OK) {
-    safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+    safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
     // Failed at saClmClusterTrack_4
     test_validate(rc, SA_AIS_OK);
     return;
@@ -312,7 +315,7 @@ void saClmLongRdn_02(void) {
   fds[0].events = POLLIN;
 
   // Set failed error code
-  s_clmTrackCallback_err = 0;
+  s_clmTrackCallback_err = SA_AIS_ERR_NOT_EXIST;
   // Set node name that will be compared in CLM callback
   s_clmTrackCallback_node = nodeName;
 
@@ -325,9 +328,9 @@ void saClmLongRdn_02(void) {
       break;
   }
 
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(s_clmTrackCallback_err, SA_AIS_OK);
 
   unlock_node(nodeName);
@@ -336,7 +339,7 @@ void saClmLongRdn_02(void) {
 void saClmLongRdn_03(void) {
   struct pollfd fds[1];
   int rc;
-  char *nodeName = s_testNodeName;
+  const char *nodeName = s_testNodeName;
   SaUint8T trackFlags = SA_TRACK_CHANGES;
 
   if (isLongDNAllowed() != 1) {
@@ -350,13 +353,13 @@ void saClmLongRdn_03(void) {
     return;
   }
 
-  safassert(saClmInitialize(&clmHandle, &clmCallback, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback, &clmVersion_1),
             SA_AIS_OK);
-  safassert(saClmSelectionObjectGet(clmHandle, &selectionObject),
+  safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = saClmClusterTrack(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
   if (rc != SA_AIS_OK) {
-    safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+    safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
     // Failed at saClmClusterTrack
     test_validate(rc, SA_AIS_OK);
     return;
@@ -366,7 +369,7 @@ void saClmLongRdn_03(void) {
   fds[0].events = POLLIN;
 
   // Set failed error code
-  s_clmTrackCallback_err = 0;
+  s_clmTrackCallback_err = SA_AIS_ERR_NOT_EXIST;
   // Set node name that will be compared in CLM callback
   s_clmTrackCallback_node = nodeName;
 
@@ -379,9 +382,9 @@ void saClmLongRdn_03(void) {
       break;
   }
 
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(s_clmTrackCallback_err, SA_AIS_OK);
 
   unlock_node(nodeName);
@@ -397,7 +400,7 @@ void saClmLongRdn_04(void) {
   SaConstStringT parentNames[] = {parent, NULL};
   SaVersionT version = {'A', 2, 15};
   // Length of nodeName == 256
-  char *nodeName =
+  const char *nodeName =
       "safNode=PL-123456789012345678901234567890123456789012345678901234567890"
       "123456789012345678901234567890123456789012345678901234567890"
       "123456789012345678901234567890123456789012345678901234567890"
@@ -421,7 +424,9 @@ void saClmLongRdn_04(void) {
   // If long DN is enabled on client side, ccbObjectCreate will return
   // SA_AIS_ERR_FAILED_OPERATION Otherwise ccbObjectCreate will return
   // SA_AIS_ERR_INVALID_PARAM
-  rc = saImmOmCcbObjectCreate_o3(ccbHandle, "SaClmNode", nodeName, NULL);
+  rc = saImmOmCcbObjectCreate_o3(ccbHandle,
+                                 const_cast<SaImmClassNameT>("SaClmNode"),
+                                 nodeName, NULL);
   if (rc == SA_AIS_ERR_INVALID_PARAM) {
     test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
   } else {
@@ -435,7 +440,7 @@ void saClmLongRdn_04(void) {
 
 void saClmLongRdn_05(void) {
   int rc;
-  char *nodeName = s_testNodeName;
+  const char *nodeName = s_testNodeName;
   SaClmNodeIdT nodeId;
   SaClmClusterNodeT_4 clusterNode;
 
@@ -453,10 +458,10 @@ void saClmLongRdn_05(void) {
   nodeId = getClmNodeId(nodeName);
   assert(nodeId != 0);
 
-  safassert(saClmInitialize_4(&clmHandle, NULL, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, NULL, &clmVersion_4),
             SA_AIS_OK);
 
-  rc = saClmClusterNodeGet_4(clmHandle, nodeId, 10000000000ll,
+  rc = ClmTest::saClmClusterNodeGet_4(clmHandle, nodeId, 10000000000ll,
                              &clusterNode);
 
   // SaNameT value cannot be longer than 255, so we don't need to use
@@ -473,7 +478,7 @@ void saClmLongRdn_05(void) {
 
 void saClmLongRdn_06(void) {
   int rc;
-  char *nodeName = s_testNodeName;
+  const char *nodeName = s_testNodeName;
   SaClmNodeIdT nodeId;
   SaClmClusterNodeT clusterNode;
 
@@ -491,7 +496,7 @@ void saClmLongRdn_06(void) {
   nodeId = getClmNodeId(nodeName);
   assert(nodeId != 0);
 
-  safassert(saClmInitialize(&clmHandle, NULL, &clmVersion_1), SA_AIS_OK);
+  safassert(ClmTest::saClmInitialize(&clmHandle, NULL, &clmVersion_1), SA_AIS_OK);
 
   rc =
       saClmClusterNodeGet(clmHandle, nodeId, 10000000000ll, &clusterNode);

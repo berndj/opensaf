@@ -20,12 +20,10 @@
 #include <sys/wait.h>
 #include <pthread.h>
 
-SaClmClusterNotificationBufferT notificationBuffer_1;
-SaClmClusterNotificationBufferT_4 notificationBuffer_4;
-SaUint8T trackFlags;
-SaClmNodeIdT nodeId;
-SaInvocationT invocation;
-SaInvocationT lock_inv;
+static SaClmClusterNotificationBufferT notificationBuffer_1;
+static SaClmClusterNotificationBufferT_4 notificationBuffer_4;
+static SaUint8T trackFlags;
+static SaInvocationT lock_inv;
 static const char *s_node_name = "safNode=PL-3,safCluster=myClmCluster";
 
 static int clm_node_lock(const char *nodeName, int ignoreOutput) {
@@ -148,7 +146,7 @@ static void saClmPlm_unlock(void) {
 /*Print the Values in SaClmClusterNotificationBufferT_4*/
 static void clmTrackbuf_4(
     SaClmClusterNotificationBufferT_4 *notificationBuffer) {
-  int i;
+  unsigned i;
   printf("No of items = %d\n", notificationBuffer->numberOfItems);
 
   for (i = 0; i < notificationBuffer->numberOfItems; i++) {
@@ -242,13 +240,13 @@ void saClmClusterTrack_01(void) {
       sizeof(SaClmClusterNotificationT) *
       notificationBuffer_1.numberOfItems);
 
-  safassert(saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
-  rc = saClmClusterTrack(clmHandle, trackFlags, &notificationBuffer_1);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, &notificationBuffer_1);
   printf("rc = %u", rc);
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
   free(notificationBuffer_1.notification);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -260,15 +258,15 @@ void saClmClusterTrack_02(void) {
           sizeof(SaClmClusterNotificationT_4) *
           notificationBuffer_4.numberOfItems);
 
-  safassert(saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, &notificationBuffer_4);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, &notificationBuffer_4);
   clmTrackbuf_4(&notificationBuffer_4);
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
-  safassert(saClmClusterNotificationFree_4(
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
+  safassert(ClmTest::saClmClusterNotificationFree_4(
       clmHandle, notificationBuffer_4.notification),
             SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -279,12 +277,12 @@ void saClmClusterTrack_03(void) {
       sizeof(SaClmClusterNotificationT) *
       notificationBuffer_1.numberOfItems);
 
-  safassert(saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
-  rc = saClmClusterTrack(clmHandle, trackFlags, &notificationBuffer_1);
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, &notificationBuffer_1);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
   free(notificationBuffer_1.notification);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -296,15 +294,15 @@ void saClmClusterTrack_04(void) {
           sizeof(SaClmClusterNotificationT_4) *
           notificationBuffer_4.numberOfItems);
 
-  safassert(saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, &notificationBuffer_4);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, &notificationBuffer_4);
   clmTrackbuf_4(&notificationBuffer_4);
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
-  safassert(saClmClusterNotificationFree_4(
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
+  safassert(ClmTest::saClmClusterNotificationFree_4(
       clmHandle, notificationBuffer_4.notification),
             SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -315,12 +313,12 @@ void saClmClusterTrack_05(void) {
       sizeof(SaClmClusterNotificationT) *
       notificationBuffer_1.numberOfItems);
 
-  safassert(saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
-  rc = saClmClusterTrack(0, trackFlags, &notificationBuffer_1);
-  /*safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
+  rc = ClmTest::saClmClusterTrack(0, trackFlags, &notificationBuffer_1);
+  /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
   free(notificationBuffer_1.notification);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 
   trackFlags = (SA_TRACK_CURRENT | SA_TRACK_LOCAL);
@@ -329,12 +327,12 @@ void saClmClusterTrack_05(void) {
       sizeof(SaClmClusterNotificationT) *
       notificationBuffer_1.numberOfItems);
 
-  safassert(saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
-  rc = saClmClusterTrack(-1, trackFlags, &notificationBuffer_1);
-  /*safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
+  rc = ClmTest::saClmClusterTrack(-1, trackFlags, &notificationBuffer_1);
+  /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
   free(notificationBuffer_1.notification);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
@@ -345,12 +343,12 @@ void saClmClusterTrack_06(void) {
       sizeof(SaClmClusterNotificationT) *
       notificationBuffer_1.numberOfItems);
 
-  safassert(saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
-  rc = saClmClusterTrack(clmHandle, 0, &notificationBuffer_1);
-  /*safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
+  rc = ClmTest::saClmClusterTrack(clmHandle, 0, &notificationBuffer_1);
+  /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
   free(notificationBuffer_1.notification);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_FLAGS);
 }
 
@@ -361,15 +359,15 @@ void saClmClusterTrack_07(void) {
       sizeof(SaClmClusterNotificationT) *
       notificationBuffer_1.numberOfItems);
 
-  /*safassert(saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
+  /*safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
    * SA_AIS_OK);*/
-  safassert(saClmInitialize(&clmHandle, NULL, &clmVersion_1), SA_AIS_OK);
-  /*rc = saClmClusterTrack(clmHandle, trackFlags, &notificationBuffer_1);
+  safassert(ClmTest::saClmInitialize(&clmHandle, NULL, &clmVersion_1), SA_AIS_OK);
+  /*rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, &notificationBuffer_1);
    */
-  rc = saClmClusterTrack(clmHandle, trackFlags, NULL);
-  /*safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
   free(notificationBuffer_1.notification);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INIT);
 }
 
@@ -381,14 +379,14 @@ void saClmClusterTrack_08(void) {
           sizeof(SaClmClusterNotificationT_4) *
           notificationBuffer_4.numberOfItems);
 
-  safassert(saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(0, trackFlags, &notificationBuffer_4);
-  /*safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
-  safassert(saClmClusterNotificationFree_4(
+  rc = ClmTest::saClmClusterTrack_4(0, trackFlags, &notificationBuffer_4);
+  /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
+  safassert(ClmTest::saClmClusterNotificationFree_4(
       clmHandle, notificationBuffer_4.notification),
             SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 
   trackFlags = (SA_TRACK_CURRENT | SA_TRACK_LOCAL);
@@ -398,14 +396,14 @@ void saClmClusterTrack_08(void) {
           sizeof(SaClmClusterNotificationT_4) *
           notificationBuffer_4.numberOfItems);
 
-  safassert(saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(-1, trackFlags, &notificationBuffer_4);
-  /*safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
-  safassert(saClmClusterNotificationFree_4(
+  rc = ClmTest::saClmClusterTrack_4(-1, trackFlags, &notificationBuffer_4);
+  /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
+  safassert(ClmTest::saClmClusterNotificationFree_4(
       clmHandle, notificationBuffer_4.notification),
             SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
@@ -417,14 +415,14 @@ void saClmClusterTrack_09(void) {
           sizeof(SaClmClusterNotificationT_4) *
           notificationBuffer_4.numberOfItems);
 
-  safassert(saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, 0, &notificationBuffer_4);
-  /*safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
-  safassert(saClmClusterNotificationFree_4(
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, 0, &notificationBuffer_4);
+  /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
+  safassert(ClmTest::saClmClusterNotificationFree_4(
       clmHandle, notificationBuffer_4.notification),
             SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_FLAGS);
 }
 
@@ -436,14 +434,14 @@ void saClmClusterTrack_10(void) {
           sizeof(SaClmClusterNotificationT_4) *
           notificationBuffer_4.numberOfItems);
 
-  safassert(saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, NULL);
-  /*safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
-  safassert(saClmClusterNotificationFree_4(
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
+  safassert(ClmTest::saClmClusterNotificationFree_4(
       clmHandle, notificationBuffer_4.notification),
             SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INIT);
 }
 
@@ -455,12 +453,12 @@ void saClmClusterTrack_11(void) {
           sizeof(SaClmClusterNotificationT_4) *
           notificationBuffer_1.numberOfItems);
 
-  safassert(saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, &notificationBuffer_4);
-  /*safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, &notificationBuffer_4);
+  /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
   free(notificationBuffer_4.notification);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_VERSION);
 }
 
@@ -471,23 +469,23 @@ void saClmClusterTrack_12(void) {
       sizeof(SaClmClusterNotificationT) *
       notificationBuffer_1.numberOfItems);
 
-  safassert(saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
             SA_AIS_OK);
-  rc = saClmClusterTrack(clmHandle, trackFlags, &notificationBuffer_1);
-  /*safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, &notificationBuffer_1);
+  /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
   free(notificationBuffer_1.notification);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_VERSION);
 }
 
 void saClmClusterTrack_13(void) {
   trackFlags = SA_TRACK_CURRENT;
-  safassert(saClmInitialize(&clmHandle, &clmCallback1, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback1, &clmVersion_1),
             SA_AIS_OK);
-  rc = saClmClusterTrack(clmHandle, trackFlags, NULL);
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -496,85 +494,85 @@ void saClmClusterTrack_14(void) {
   struct pollfd fds[1];
   int ret;
 
-  safassert(saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
             SA_AIS_OK);
-  safassert(saClmSelectionObjectGet(clmHandle, &selectionObject),
+  safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
   ret = poll(fds, 1, 60000);
   assert(ret == 1);
 
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
 /*Bad flags - only start step without changes/changes only*/
 void saClmClusterTrack_15(void) {
   trackFlags = SA_TRACK_START_STEP;
-  safassert(saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, NULL);
-  /*safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_FLAGS);
 }
 
 /*Bad flags - only validate step without changes/changes only*/
 void saClmClusterTrack_16(void) {
   trackFlags = SA_TRACK_VALIDATE_STEP;
-  safassert(saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, NULL);
-  /*safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_FLAGS);
 }
 
 /*Bad flags - both changes and changes only set */
 void saClmClusterTrack_17(void) {
   trackFlags = SA_TRACK_CHANGES | SA_TRACK_CHANGES_ONLY;
-  safassert(saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, NULL);
-  /*safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_FLAGS);
 }
 /*Bad Flags - only start step without changes/changes only for old API's*/
 void saClmClusterTrack_18(void) {
   trackFlags = SA_TRACK_START_STEP;
-  safassert(saClmInitialize(&clmHandle, &clmCallback1, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback1, &clmVersion_1),
             SA_AIS_OK);
-  rc = saClmClusterTrack(clmHandle, trackFlags, NULL);
-  /*safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_FLAGS);
 }
 
 /*Bad flags - only validate step without changes/changes only for old API's*/
 void saClmClusterTrack_19(void) {
   trackFlags = SA_TRACK_VALIDATE_STEP;
-  safassert(saClmInitialize(&clmHandle, &clmCallback1, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback1, &clmVersion_1),
             SA_AIS_OK);
-  rc = saClmClusterTrack(clmHandle, trackFlags, NULL);
-  /*safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_FLAGS);
 }
 
 /*Bad flags - both changes and changes only set for old API's*/
 void saClmClusterTrack_20(void) {
   trackFlags = SA_TRACK_CHANGES | SA_TRACK_CHANGES_ONLY;
-  safassert(saClmInitialize(&clmHandle, &clmCallback1, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback1, &clmVersion_1),
             SA_AIS_OK);
-  rc = saClmClusterTrack(clmHandle, trackFlags, NULL);
-  /*safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_FLAGS);
 }
 
@@ -585,11 +583,11 @@ void saClmClusterTrack_21(void) {
 
   trackFlags = SA_TRACK_CHANGES_ONLY;
 
-  safassert(saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
             SA_AIS_OK);
-  safassert(saClmSelectionObjectGet(clmHandle, &selectionObject),
+  safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
@@ -606,9 +604,9 @@ void saClmClusterTrack_21(void) {
       break;
   }
 
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 
   // Reset CLM state
@@ -625,11 +623,11 @@ void saClmClusterTrack_22(void) {
 
   trackFlags = SA_TRACK_CHANGES_ONLY;
 
-  safassert(saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
             SA_AIS_OK);
-  safassert(saClmSelectionObjectGet(clmHandle, &selectionObject),
+  safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
@@ -645,9 +643,9 @@ void saClmClusterTrack_22(void) {
       break;
   }
 
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -658,11 +656,11 @@ void saClmClusterTrack_23(void) {
 
   trackFlags = SA_TRACK_CHANGES;
 
-  safassert(saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
             SA_AIS_OK);
-  safassert(saClmSelectionObjectGet(clmHandle, &selectionObject),
+  safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
@@ -678,9 +676,9 @@ void saClmClusterTrack_23(void) {
       break;
   }
 
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 
   // Reset CLM state
@@ -694,11 +692,11 @@ void saClmClusterTrack_24(void) {
 
   trackFlags = SA_TRACK_CHANGES | SA_TRACK_START_STEP;
 
-  safassert(saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
             SA_AIS_OK);
-  safassert(saClmSelectionObjectGet(clmHandle, &selectionObject),
+  safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
@@ -713,7 +711,7 @@ void saClmClusterTrack_24(void) {
       break;
     }
   }
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
   safassert(
       saClmResponse_4(clmHandle, lock_inv, SA_CLM_CALLBACK_RESPONSE_OK),
       SA_AIS_OK);
@@ -728,10 +726,10 @@ void saClmClusterTrack_24(void) {
     }
   }
 
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
 
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 
   // Reset CLM state
@@ -745,11 +743,11 @@ void saClmClusterTrack_25(void) {
 
   trackFlags = SA_TRACK_CHANGES_ONLY | SA_TRACK_START_STEP;
 
-  safassert(saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
             SA_AIS_OK);
-  safassert(saClmSelectionObjectGet(clmHandle, &selectionObject),
+  safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
@@ -765,7 +763,7 @@ void saClmClusterTrack_25(void) {
       break;
     }
   }
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
   safassert(
       saClmResponse_4(clmHandle, lock_inv, SA_CLM_CALLBACK_RESPONSE_OK),
       SA_AIS_OK);
@@ -780,10 +778,10 @@ void saClmClusterTrack_25(void) {
     }
   }
 
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
 
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 
   // Reset CLM state
@@ -797,11 +795,11 @@ void saClmClusterTrack_27(void) {
 
   trackFlags = SA_TRACK_CHANGES_ONLY | SA_TRACK_START_STEP;
 
-  safassert(saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
             SA_AIS_OK);
-  safassert(saClmSelectionObjectGet(clmHandle, &selectionObject),
+  safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
@@ -817,7 +815,7 @@ void saClmClusterTrack_27(void) {
       break;
     }
   }
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
   safassert(
       saClmResponse_4(clmHandle, lock_inv, SA_CLM_CALLBACK_RESPONSE_OK),
       SA_AIS_OK);
@@ -832,10 +830,10 @@ void saClmClusterTrack_27(void) {
     }
   }
 
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
 
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 
   // Reset CLM state
@@ -848,11 +846,11 @@ void saClmClusterTrack_28(void) {
 
   trackFlags = SA_TRACK_CHANGES | SA_TRACK_START_STEP;
 
-  safassert(saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
             SA_AIS_OK);
-  safassert(saClmSelectionObjectGet(clmHandle, &selectionObject),
+  safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
@@ -868,7 +866,7 @@ void saClmClusterTrack_28(void) {
       break;
     }
   }
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
   safassert(
       saClmResponse_4(clmHandle, lock_inv, SA_CLM_CALLBACK_RESPONSE_OK),
       SA_AIS_OK);
@@ -883,10 +881,10 @@ void saClmClusterTrack_28(void) {
     }
   }
 
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
 
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 
   // Reset CLM state
@@ -905,11 +903,11 @@ void saClmClusterTrack_31(void) {
   printf("This test case can run only if PLM is enabled in the system\n");
   fflush(stdout);
   return;
-  safassert(saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
             SA_AIS_OK);
-  safassert(saClmSelectionObjectGet(clmHandle, &selectionObject),
+  safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
@@ -928,7 +926,7 @@ void saClmClusterTrack_31(void) {
       break;
     }
   }
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
   safassert(
       saClmResponse_4(clmHandle, lock_inv, SA_CLM_CALLBACK_RESPONSE_OK),
       SA_AIS_OK);
@@ -947,7 +945,7 @@ void saClmClusterTrack_31(void) {
     }
   }
 
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
   safassert(
       saClmResponse_4(clmHandle, lock_inv, SA_CLM_CALLBACK_RESPONSE_OK),
       SA_AIS_OK);
@@ -965,9 +963,9 @@ void saClmClusterTrack_31(void) {
       break;
     }
   }
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_OK);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 

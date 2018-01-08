@@ -17,11 +17,9 @@
  */
 #include "clmtest.h"
 
-SaClmClusterNotificationBufferT notificationBuffer_1;
-SaClmClusterNotificationBufferT_4 notificationBuffer_4;
-SaUint8T trackFlags;
-SaClmNodeIdT nodeId;
-SaInvocationT invocation;
+static SaUint8T trackFlags;
+static SaClmNodeIdT nodeId;
+static SaInvocationT invocation;
 
 static void clmTrackCallback44(
     const SaClmClusterNotificationBufferT_4 *notificationBuffer,
@@ -65,25 +63,25 @@ void saClmClusterTrackStop_01(void) {
   trackFlags = SA_TRACK_CURRENT;
   nodeId = 131343;
   invocation = 600;
-  safassert(saClmInitialize(&clmHandle, &clmCallback11, &clmVersion_1),
+  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback11, &clmVersion_1),
             SA_AIS_OK);
-  rc = saClmClusterTrack(clmHandle, trackFlags, NULL);
-  rc = saClmClusterTrack(clmHandle, trackFlags, NULL);
-  rc = saClmClusterNodeGetAsync(clmHandle, invocation, nodeId);
-  rc = saClmClusterTrack(clmHandle, trackFlags, NULL);
-  rc = saClmClusterNodeGetAsync(clmHandle, invocation, nodeId);
-  rc = saClmClusterNodeGetAsync(clmHandle, invocation, nodeId);
-  rc = saClmClusterTrack(clmHandle, trackFlags, NULL);
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
-  safassert(saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
-  rc = saClmClusterTrack(clmHandle, trackFlags, NULL);
-  safassert(saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
-  safassert(saClmFinalize(clmHandle), SA_AIS_OK);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterNodeGetAsync(clmHandle, invocation, nodeId);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterNodeGetAsync(clmHandle, invocation, nodeId);
+  rc = ClmTest::saClmClusterNodeGetAsync(clmHandle, invocation, nodeId);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
+  safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
+  safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
 void saClmClusterTrackStop_02(void) {
-  rc = saClmClusterTrackStop(clmHandle);
+  rc = ClmTest::saClmClusterTrackStop(clmHandle);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
