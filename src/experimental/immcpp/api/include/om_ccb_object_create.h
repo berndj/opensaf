@@ -85,7 +85,20 @@ class ImmOmCcbObjectCreate : public ImmBase {
  public:
   explicit ImmOmCcbObjectCreate(const SaImmCcbHandleT& ccb_handle,
                                 const std::string& class_name);
+
+  ImmOmCcbObjectCreate() : ImmBase(), class_name_{}, parent_object_{}, list_of_attribute_properties_{}, ccb_handle_{0} {}
+
   ~ImmOmCcbObjectCreate();
+
+  ImmOmCcbObjectCreate& SetClassName(const std::string& name) {
+    class_name_ = name;
+    return *this;
+  }
+
+  ImmOmCcbObjectCreate& SetCcbHandle(const SaImmCcbHandleT h) {
+    ccb_handle_ = h;
+    return *this;
+  }
 
   // If this method is not called the object will be created as a top level
   // object
@@ -136,6 +149,15 @@ ImmOmCcbObjectCreate::SetAttributeValue(
   // typename T must be one of AIS data types or std::string. Not support
   // SaInt8T, and SaInt16T types as no SaImmValueTypeT goes with them.
   SA_AIS_TYPE_CHECK(T);
+
+  auto i = list_of_attribute_properties_.begin();
+  for (; i != list_of_attribute_properties_.end(); ++i) {
+    if ((*i)->name() == name) {
+      list_of_attribute_properties_.erase(i);
+      break;
+    }
+  }
+
   AttributeProperty* attribute = new AttributeProperty(name);
   assert(attribute != nullptr);
   attribute->set_value<T>(ptr_to_value);
@@ -150,6 +172,13 @@ ImmOmCcbObjectCreate::SetAttributeValue(
   // typename T must be one of AIS data types or std::string. Not support
   // SaInt8T, and SaInt16T types as no SaImmValueTypeT goes with them.
   SA_AIS_TYPE_CHECK(T);
+  auto i = list_of_attribute_properties_.begin();
+  for (; i != list_of_attribute_properties_.end(); ++i) {
+    if ((*i)->name() == name) {
+      list_of_attribute_properties_.erase(i);
+      break;
+    }
+  }
   AttributeProperty* attribute = new AttributeProperty(name);
   assert(attribute != nullptr);
   attribute->set_value<T>(list_of_ptr_to_values);

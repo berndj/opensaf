@@ -79,6 +79,7 @@ lib_libopensaf_immom_la_LIBADD = $(LOCAL_IMM_OM_LIBADD)
 
 noinst_HEADERS += \
 	src/experimental/immcpp/api/common/common.h \
+	src/experimental/immcpp/api/common/imm_cpp_type.h \
 	src/experimental/immcpp/api/common/imm_attribute.h \
 	src/experimental/immcpp/api/include/om_handle.h \
 	src/experimental/immcpp/api/include/om_search_handle.h \
@@ -184,6 +185,7 @@ bin_immcpptest_SOURCES = \
 	src/experimental/immcpp/api/demo/omclasscreate.cc \
 	src/experimental/immcpp/api/demo/omconfigurationchanges.cc \
 	src/experimental/immcpp/api/demo/oiruntimeobject.cc \
+	src/experimental/immcpp/api/demo/hold_changes_info.cc \
 	src/experimental/immcpp/api/demo/immcpptest.cc
 
 bin_immcpptest_LDADD = \

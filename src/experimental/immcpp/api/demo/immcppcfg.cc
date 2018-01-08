@@ -1,3 +1,4 @@
+
 /*      -*- OpenSAF  -*-
  *
  * Copyright Ericsson AB 2017 - All Rights Reserved.

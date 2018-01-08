@@ -23,6 +23,7 @@
 #include <vector>
 #include "ais/include/saImm.h"
 #include "experimental/immcpp/api/common/common.h"
+#include "imm_cpp_type.h"
 
 //>
 // These below 03 classes represent C IMM data structures
@@ -63,65 +64,70 @@
 // SaImmAttrValuesT_2 immattr;
 // attribute->FormAttrValuesT_2(&immattr);
 //<
+
+
 class AttributeProperty {
  public:
   explicit AttributeProperty(const std::string& name)
       : attribute_name_{name},
         attribute_values_{nullptr},
-        num_of_values_{0},
-        list_ptr_to_cpp_strings_{nullptr} {}
+        num_of_values_{0}  {}
 
   virtual ~AttributeProperty() {
-    for (auto& item : list_ptr_to_cpp_strings_) {
-      if (item != nullptr)  delete[] item;
+    for (auto& item : values_) {
+      delete item;
     }
     FreeMemory();
   }
 
   template <typename T>
-  AttributeProperty& set_value(T* ptr_to_value) {
+  AttributeProperty& set_value(T* value) {
     attribute_type_ = ImmBase::GetAttributeValueType<T>();
-    if (ptr_to_value != nullptr) {
+    if (value != nullptr) {
       attribute_values_ = reinterpret_cast<void**>(new T*[1]());
       assert(attribute_values_ != nullptr);
-      attribute_values_[0] = ptr_to_value;
+      values_.push_back(GenerateCppType<T>(value));
+      attribute_values_[0] = values_[0]->data();
       num_of_values_ = 1;
     }
     return *this;
   }
 
   template <typename T>
-  AttributeProperty& set_value(const std::vector<T*>& list_of_ptr_to_values) {
+  AttributeProperty& set_value(const std::vector<T*>& values) {
     attribute_type_ = ImmBase::GetAttributeValueType<T>();
-    if (list_of_ptr_to_values.empty() == false) {
-      size_t size = list_of_ptr_to_values.size();
+    if (values.empty() == false) {
+      size_t size = values.size();
       attribute_values_ = reinterpret_cast<void**>(new T*[size]());
       assert(attribute_values_ != nullptr);
       unsigned i = 0;
-      for (auto& ptr_to_value : list_of_ptr_to_values) {
-        attribute_values_[i++] = ptr_to_value;
+      for (auto& value : values) {
+        values_.push_back(GenerateCppType<T>(value));
+        attribute_values_[i] = values_[i]->data();
+        i++;
       }
       num_of_values_ = size;
     }
     return *this;
   }
 
-  // Convert this class object to given `output` C IMM data structure
+  const std::string& name() { return attribute_name_; }
+
+  // // Convert this class object to given `output` C IMM data structure
   void FormAttrValuesT_2(SaImmAttrValuesT_2* output) const;
   void FormSearchOneAttrT_2(SaImmSearchOneAttrT_2* output) const;
   void FormAdminOperationParamsT_2(SaImmAdminOperationParamsT_2* output) const;
 
  private:
   void FreeMemory();
+  template <typename T> base_t* GenerateCppType(T* value);
 
  protected:
   std::string attribute_name_;
   void** attribute_values_;
   SaUint32T num_of_values_;
   SaImmValueTypeT attribute_type_;
-  // Introduce this attribute to deal with typename T = std::string.
-  // Each element holds C string which is returned by std::string.c_str();
-  std::vector<char*> list_ptr_to_cpp_strings_;
+  std::vector<base_t*> values_;
 };
 
 class AttributeDefinition : public AttributeProperty {
@@ -154,47 +160,64 @@ class AttributeModification : public AttributeProperty {
   SaImmAttrModificationTypeT modification_type_;
 };
 
-template<> inline AttributeProperty&
-AttributeProperty::set_value<std::string>(std::string* ptr_to_value) {
-  attribute_type_ = ImmBase::GetAttributeValueType<std::string>();
-  if (ptr_to_value != nullptr) {
-    size_t size = ptr_to_value->length();
-    attribute_values_ = reinterpret_cast<void**>(new char**[1]());
-    assert(attribute_values_ != nullptr);
-    num_of_values_ = 1;
-
-    // Trick to deal with typename std::string
-    list_ptr_to_cpp_strings_.resize(1);
-    list_ptr_to_cpp_strings_[0] = new char[size + 1]();
-    assert(list_ptr_to_cpp_strings_[0] != nullptr);
-    memcpy(list_ptr_to_cpp_strings_[0], ptr_to_value->c_str(), size);
-    attribute_values_[0] = &list_ptr_to_cpp_strings_[0];
-  }
-  return *this;
+template <>
+inline base_t* AttributeProperty::GenerateCppType<SaInt32T>(SaInt32T* value) {
+  return new i32_t(*value);
 }
 
-template<> inline AttributeProperty&
-AttributeProperty::set_value<std::string>(
-    const std::vector<std::string*>& list_of_ptr_to_values) {
-  attribute_type_ = ImmBase::GetAttributeValueType<std::string>();
-  if (list_of_ptr_to_values.empty() == false) {
-    size_t size = list_of_ptr_to_values.size();
-    attribute_values_ = reinterpret_cast<void**>(new char**[size]());
-    assert(attribute_values_ != nullptr);
-    num_of_values_ = size;
+template <>
+inline base_t* AttributeProperty::GenerateCppType<SaUint32T>(SaUint32T* value) {
+  return new u32_t(*value);
+}
 
-    list_ptr_to_cpp_strings_.resize(size);
-    unsigned i = 0;
-    for (auto& ptr_to_value : list_of_ptr_to_values) {
-      size_t ssize = ptr_to_value->length();
-      list_ptr_to_cpp_strings_[i] = new char[ssize + 1]();
-      assert(list_ptr_to_cpp_strings_[i] != nullptr);
-      memcpy(list_ptr_to_cpp_strings_[i], ptr_to_value->c_str(), ssize);
-      attribute_values_[i] = &list_ptr_to_cpp_strings_[i];
-      i++;
-    }
-  }
-  return *this;
+template <>
+inline base_t* AttributeProperty::GenerateCppType<SaInt64T>(SaInt64T* value) {
+  return new i64_t(*value);
+}
+
+template <>
+inline base_t* AttributeProperty::GenerateCppType<SaUint64T>(SaUint64T* value) {
+  return new u64_t(*value);
+}
+
+template <>
+inline base_t* AttributeProperty::GenerateCppType<CppSaTimeT>(CppSaTimeT* value) {
+  return new t64_t(cpptime_t(value->time));
+}
+
+template <>
+inline base_t* AttributeProperty::GenerateCppType<SaFloatT>(SaFloatT* value) {
+  return new f64_t(*value);
+}
+
+template <>
+inline base_t* AttributeProperty::GenerateCppType<SaDoubleT>(SaDoubleT* value) {
+  return new d64_t(*value);
+}
+
+template <>
+inline base_t* AttributeProperty::GenerateCppType<SaNameT>(SaNameT* value) {
+  return new name_t(*value);
+}
+
+template <>
+inline base_t* AttributeProperty::GenerateCppType<SaStringT>(SaStringT* value) {
+  return new string_t(*value);
+}
+
+template <>
+inline base_t* AttributeProperty::GenerateCppType<SaConstStringT>(SaConstStringT* value) {
+  return new string_t(*value);
+}
+
+template <>
+inline base_t* AttributeProperty::GenerateCppType<std::string>(std::string* value) {
+  return new string_t(*value);
+}
+
+template <>
+inline base_t* AttributeProperty::GenerateCppType<SaAnyT>(SaAnyT* value) {
+  return new any_t(*value);
 }
 
 // For internal use only

@@ -23,6 +23,7 @@
 #include "ais/include/saAis.h"
 #include "base/time.h"
 #include "base/saf_error.h"
+#include "experimental/immcpp/api/common/imm_cpp_type.h"
 
 // When getting SA_AIS_ERR_TRY_AGAIN, the retry loop will be run.
 // and in default, the interval between retries is kDefaultIntervalMs(40ms)
@@ -54,6 +55,27 @@ const SaUint8T kDefaultImmMinorVersion = 11;
 //
 // TRACE("AIS error code: ", h.ais_error());  // Get AIS error code
 //<
+struct CppSaTimeT {
+  CppSaTimeT() { time = 0; }
+  CppSaTimeT(SaTimeT t) : time{t} {};
+  CppSaTimeT(int t) : time{t} {};
+
+  CppSaTimeT& operator=(SaTimeT t) {
+    time = t;
+    return *this;
+  }
+
+  SaTimeT& operator()() {
+    return time;
+  }
+
+  bool operator==(SaTimeT t) {
+    return (time == t);
+  }
+
+  SaTimeT time;
+};
+
 class ImmBase {
  public:
   // Hold information for retry loop when C IMM API gets SA_AIS_ERR_TRY_AGAIN.
@@ -113,6 +135,8 @@ SaImmValueTypeT ImmBase::GetAttributeValueType() {
     return SA_IMM_ATTR_SAINT32T;
   } else if (std::is_same<T, SaUint32T>::value) {
     return SA_IMM_ATTR_SAUINT32T;
+  } else if (std::is_same<T, CppSaTimeT>::value) {
+    return SA_IMM_ATTR_SATIMET;
   } else if (std::is_same<T, SaInt64T>::value) {
     return SA_IMM_ATTR_SAINT64T;
   } else if (std::is_same<T, SaUint64T>::value) {
@@ -139,6 +163,7 @@ SaImmValueTypeT ImmBase::GetAttributeValueType() {
   static_assert(                                \
       std::is_same<T, SaInt32T>::value       || \
       std::is_same<T, SaInt64T>::value       || \
+      std::is_same<T, CppSaTimeT>::value       || \
       std::is_same<T, SaUint32T>::value      || \
       std::is_same<T, SaUint32T>::value      || \
       std::is_same<T, SaUint64T>::value      || \

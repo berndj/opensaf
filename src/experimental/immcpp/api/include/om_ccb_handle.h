@@ -58,9 +58,21 @@ class ImmOmCcbHandle : public ImmBase {
   explicit ImmOmCcbHandle(const SaImmAdminOwnerHandleT& admin_owner_handle);
   ~ImmOmCcbHandle();
 
+  ImmOmCcbHandle() : ImmBase(), admin_owner_handle_{0}, ccb_flags_{0}, ccb_handle_{0} {}
+
   // Returns false on error.
   // Use ais_error() to get AIS return code.
   bool InitializeHandle();
+  ImmOmCcbHandle& SetAdminOwnerHandle(SaImmAdminOwnerHandleT h) {
+    admin_owner_handle_ = h;
+    return *this;
+  }
+
+  ImmOmCcbHandle& SetCcbFlags(SaImmAdminOwnerHandleT f) {
+    ccb_flags_ = f;
+    return *this;
+  }
+
   bool FinalizeHandle();
   bool ApplyCcb();
 

@@ -25,6 +25,8 @@
 #include "experimental/immcpp/api/demo/omconfigurationchanges.h"
 #include "experimental/immcpp/api/demo/oiruntimeobject.h"
 
+extern void HoldValueCcbCreate();
+
 void usage(void) {
   std::cout << "\nDESCRIPTION\n";
   std::cout << "\tTest C++ IMM Abstractions\n";
@@ -95,6 +97,10 @@ int main(int argc, char *argv[]) {
         TestOmCcbCreate();
         std::cout << std::endl;
 
+        std::cout << "@@ Hold CCB CREATE OBJECT @@" << std::endl;
+        std::cout << "===============" << std::endl;
+        HoldValueCcbCreate();
+        std::cout << std::endl;
         break;
 
       case 'i':

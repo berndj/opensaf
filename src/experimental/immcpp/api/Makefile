@@ -17,7 +17,6 @@
 all:
 	$(MAKE) -C ../../../.. lib/libopensaf_immom.la lib/libopensaf_immoi.la \
 		bin/immcpptest bin/immcppcfg
-
 check:
 	$(MAKE) -C ../../../.. bin/testimmcpp
 	../../../../bin/testimmcpp
