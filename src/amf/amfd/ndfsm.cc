@@ -587,9 +587,10 @@ void avd_node_down_evh(AVD_CL_CB *cb, AVD_EVT *evt)
         n2d_msg->msg_info.n2d_node_down_info.msg_id) != NCSCC_RC_SUCCESS) {
       /* log error that the director is not able to send the message */
       LOG_ER("%s:%u: %u", __FILE__, __LINE__, node->node_info.nodeId);
+      goto done;
     }
+    cb->avd_imm_status = AVD_IMM_TERMINATING;
   }
-  avd_node_state_set(node, AVD_AVND_STATE_SHUTTING_DOWN);
 done:
   avsv_dnd_msg_free(n2d_msg);
   evt->info.avnd_msg = nullptr;

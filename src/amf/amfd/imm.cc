@@ -2185,25 +2185,18 @@ void avd_imm_reinit_bg(void) {
   pthread_t thread;
   pthread_attr_t attr;
   int rc = 0;
-  AVD_AVND *node = nullptr;
 
   TRACE_ENTER();
   if (avd_cb->avd_imm_status == AVD_IMM_INIT_ONGOING) {
     TRACE("Already IMM init is going in another thread");
     return;
   }
-  node = avd_node_find_nodeid(avd_cb->node_id_avd);
-  if (node == nullptr) {
-    LOG_ER("%s: invalid node ID (%x)", __FUNCTION__,
-        avd_cb->node_id_avd);
+
+  if (avd_cb->avd_imm_status == AVD_IMM_TERMINATING) {
+    TRACE("IMMND/IMMD are being terminated by AMFND");
     return;
   }
 
-  if (node->node_state == AVD_AVND_STATE_SHUTTING_DOWN) {
-    // the node is shutting down phase, no need to reinitialize
-    // IMM service
-    return;
-  }
   avd_cb->avd_imm_status = AVD_IMM_INIT_ONGOING;
 
   LOG_NO("Re-initializing with IMM");
