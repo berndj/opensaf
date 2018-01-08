@@ -50,6 +50,8 @@ static SaUint32T plms_os_info_resp_mngt_flag_clear(PLMS_ENTITY *);
 static void plms_insted_dep_immi_failure_cbk_call(PLMS_ENTITY *,
 						  PLMS_GROUP_ENTITY *);
 static void plms_is_dep_set_cbk_call(PLMS_ENTITY *);
+
+static void plms_ee_stop_host_timer(PLMS_ENTITY *);
 /******************************************************************************
 @brief		: Process instantiating event from PLMC.
 		  1. Do the OS verification irrespective of previous state.
@@ -346,6 +348,7 @@ SaUint32T plms_plmc_tcp_connect_process(PLMS_ENTITY *ent)
 	if ((SA_PLM_EE_ADMIN_LOCKED_INSTANTIATION ==
 	     ent->entity.ee_entity.saPlmEEAdminState) ||
 	    ((NULL != ent->parent) &&
+		ent->parent->entity_type != PLMS_EE_ENTITY &&
 	     (plms_is_rdness_state_set(ent->parent,
 				       SA_PLM_READINESS_OUT_OF_SERVICE))) ||
 	    (!plms_min_dep_is_ok(ent))) {
@@ -378,6 +381,24 @@ SaUint32T plms_plmc_tcp_connect_process(PLMS_ENTITY *ent)
 		TRACE_LEAVE2("Return Val: %d", NCSCC_RC_FAILURE);
 		return NCSCC_RC_FAILURE;
 	}
+
+       if (ent->parent && ent->parent->entity_type == PLMS_EE_ENTITY &&
+               plms_is_rdness_state_set(ent->parent, SA_PLM_READINESS_OUT_OF_SERVICE)) {
+	       char *timerValue = getenv("OPENSAF_PLMS_WAIT_FOR_HOST_INST");
+	       SaUint64T timer = SA_TIME_ONE_SECOND *
+		       (timerValue ? atoi(timerValue) : 20);
+
+               LOG_IN("host EE not instantiated yet: starting timer for %u "
+			       "seconds", (SaUint32T) (timer / SA_TIME_ONE_SECOND));
+               ent->tmr.tmr_type = PLMS_TMR_EE_HOST_INSTANTIATED;
+               ret_err = plms_timer_start(&ent->tmr.timer_id,
+                                               ent,
+                                               timer);
+               if (ret_err != NCSCC_RC_SUCCESS) {
+                       LOG_ER("failed to start host EE instantiated timer");
+                       return ret_err;
+               }
+       }
 
 	if (plms_is_rdness_state_set(ent, SA_PLM_READINESS_IN_SERVICE)) {
 		TRACE("Ent %s is already in insvc.", ent->dn_name_str);
@@ -532,6 +553,13 @@ SaUint32T plms_plmc_tcp_connect_process(PLMS_ENTITY *ent)
 		ret_err = plms_plmc_unlck_insvc(ent, trk_info,
 						aff_ent_list_flag, is_set);
 	}
+
+	/* If this is a host EE, stop timer for all child EEs */
+        if (ret_err == NCSCC_RC_SUCCESS && ent->entity_type == PLMS_EE_ENTITY &&
+               ent->leftmost_child) {
+               plms_ee_stop_host_timer(ent->leftmost_child);
+        }
+
 	TRACE_LEAVE2("Return Val: %d", ret_err);
 	return ret_err;
 }
@@ -1052,6 +1080,12 @@ SaUint32T plms_plmc_get_os_info_response(PLMS_ENTITY *ent,
 				to insvc.*/
 				ret_err = plms_plmc_unlck_insvc(
 				    ent, trk_info, aff_ent_list_flag, is_set);
+
+				/* If this is a host EE, stop timer for all child EEs */
+				if (ret_err == NCSCC_RC_SUCCESS && ent->entity_type == PLMS_EE_ENTITY &&
+					ent->leftmost_child) {
+					plms_ee_stop_host_timer(ent->leftmost_child);
+				}
 			}
 		}
 	} else {
@@ -2658,6 +2692,28 @@ SaUint32T plms_ee_term_failed_tmr_exp(PLMS_ENTITY *ent)
 	TRACE_LEAVE2("Return Val: %d", ret_err);
 	return ret_err;
 }
+
+SaUint32T plms_ee_host_instantiate_tmr_exp(PLMS_ENTITY *ent)
+{
+	SaUint32T ret_err = NCSCC_RC_SUCCESS;
+
+	TRACE_ENTER2("Entity: %s",ent->dn_name_str);
+
+	if (ent->tmr.timer_id) {
+		/* Clean up the timer context.*/
+		ent->tmr.timer_id = 0;
+		ent->tmr.tmr_type = PLMS_TMR_NONE;
+		ent->tmr.context_info = NULL;
+
+		ret_err = plms_ee_term(ent, 0, 0);
+	} else {
+		TRACE("timer was already disabled");
+	}
+
+	TRACE_LEAVE2("Return Val: %d",ret_err);
+	return ret_err;
+}
+
 /******************************************************************************
 @brief		: Isolate the entity which fails to instantiate or terminate
 @param[in]	: ent - EE.
@@ -2817,6 +2873,11 @@ SaUint32T plms_mbx_tmr_handler(PLMS_EVT *evt)
 	case PLMS_TMR_EE_TERMINATING:
 		ret_err = plms_ee_term_failed_tmr_exp(
 		    (PLMS_ENTITY *)evt->req_evt.plm_tmr.context_info);
+		break;
+
+	case PLMS_TMR_EE_HOST_INSTANTIATED:
+		ret_err = plms_ee_host_instantiate_tmr_exp(
+		(PLMS_ENTITY *)evt->req_evt.plm_tmr.context_info);
 		break;
 	default:
 		break;
@@ -3227,4 +3288,27 @@ void plms_is_dep_set_cbk_call(PLMS_ENTITY *ent)
 		}
 	}
 	return;
+}
+void plms_ee_stop_host_timer(PLMS_ENTITY *child)
+{
+  TRACE_ENTER();
+
+  do {
+    if (!child)
+      break;
+
+    TRACE("Entity: %s", child->dn_name.value);
+
+    plms_ee_stop_host_timer(child->right_sibling);
+
+    if (child->tmr.timer_id &&
+        child->tmr.tmr_type == PLMS_TMR_EE_HOST_INSTANTIATED) {
+      plms_timer_stop(child);
+    } else if (child->tmr.timer_id) {
+      TRACE("another timer is running other than HOST_INSTANTIATED: %i",
+             child->tmr.tmr_type);
+    }
+  } while (false);
+
+  TRACE_LEAVE();
 }

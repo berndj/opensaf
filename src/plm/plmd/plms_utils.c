@@ -2931,6 +2931,8 @@ SaUint32T plms_move_ent_to_insvc(PLMS_ENTITY *chld_ent, SaUint8T *is_flag_aff)
 
 	/* If my parent is OOS, then forget. Return from here.*/
 	if ((NULL != chld_ent->parent) &&
+	/* If my parent is EE allow me to continue for now (timer going) */
+            chld_ent->parent->entity_type != PLMS_EE_ENTITY &&
 	    !plms_is_rdness_state_set(chld_ent->parent,
 				      SA_PLM_READINESS_IN_SERVICE)) {
 
@@ -3022,7 +3024,14 @@ void plms_move_chld_ent_to_insvc(PLMS_ENTITY *chld_ent,
 	if (plms_is_rdness_state_set(chld_ent, SA_PLM_READINESS_IN_SERVICE)) {
 
 		LOG_ER("Entity %s is already  insvc", chld_ent->dn_name_str);
-		return;
+                if (chld_ent->parent->entity_type == PLMS_EE_ENTITY) {
+                        if (chld_ent->tmr.timer_id &&
+                                chld_ent->tmr.tmr_type == PLMS_TMR_EE_HOST_INSTANTIATED) {
+                                TRACE("stopping instantiation timer for child");
+                                plms_timer_stop(chld_ent);
+                        }
+                }
+
 	}
 
 	/* Traverse the right-node */

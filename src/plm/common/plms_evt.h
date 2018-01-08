@@ -98,7 +98,8 @@ typedef enum {
 typedef enum {
   PLMS_TMR_NONE,
   PLMS_TMR_EE_INSTANTIATING,
-  PLMS_TMR_EE_TERMINATING
+  PLMS_TMR_EE_TERMINATING,
+  PLMS_TMR_EE_HOST_INSTANTIATED
 } PLMS_TMR_EVT_TYPE;
 
 typedef struct plms_imm_admin_op {
