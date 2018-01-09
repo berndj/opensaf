@@ -131,8 +131,12 @@ static SaAisErrorT avnd_compglobalattrs_config_get(SaImmHandleT immOmHandle) {
   TRACE_ENTER();
 
   amf_saImmOmAccessorInitialize(immOmHandle, accessorHandle);
+  const SaImmAttrNameT attributeNames[] = {
+    const_cast<SaImmAttrNameT>("SA_IMM_SEARCH_GET_CONFIG_ATTR"),
+    nullptr};
   SaAisErrorT rc =
-      amf_saImmOmAccessorGet_o2(immOmHandle, accessorHandle, dn, nullptr,
+      amf_saImmOmAccessorGet_o2(immOmHandle, accessorHandle, dn,
+                                attributeNames,
                                 (SaImmAttrValuesT_2 ***)&attributes);
   if (rc != SA_AIS_OK) {
     LOG_ER("saImmOmAccessorGet_2 FAILED %u", rc);
@@ -198,7 +202,7 @@ done:
 uint32_t avnd_compdb_init(AVND_CB *cb) {
   uint32_t rc = NCSCC_RC_SUCCESS;
   SaImmHandleT immOmHandle;
-  SaVersionT immVersion = {'A', 2, 1};
+  SaVersionT immVersion = {'A', 2, 15};
   SaAisErrorT error;
 
   TRACE_ENTER();
@@ -846,8 +850,11 @@ static amf_comp_type_t *avnd_comptype_create(SaImmHandleT immOmHandle,
   TRACE_ENTER2("'%s'", dn.c_str());
 
   (void)amf_saImmOmAccessorInitialize(immOmHandle, accessorHandle);
-
-  if (amf_saImmOmAccessorGet_o2(immOmHandle, accessorHandle, dn, nullptr,
+  const SaImmAttrNameT attributeNames[] = {
+    const_cast<SaImmAttrNameT>("SA_IMM_SEARCH_GET_CONFIG_ATTR"),
+    nullptr};
+  if (amf_saImmOmAccessorGet_o2(immOmHandle, accessorHandle, dn,
+                                attributeNames,
                                 (SaImmAttrValuesT_2 ***)&attributes) !=
       SA_AIS_OK) {
     LOG_ER("amf_saImmOmAccessorGet_o2 FAILED for '%s'", dn.c_str());
@@ -1678,6 +1685,9 @@ int avnd_comp_config_reinit(AVND_COMP *comp) {
   SaImmHandleT immOmHandle;
   SaVersionT immVersion = {'A', 2, 15};
   SaAisErrorT error;
+  const SaImmAttrNameT attributeNames[] = {
+    const_cast<SaImmAttrNameT>("SA_IMM_SEARCH_GET_CONFIG_ATTR"),
+    nullptr};
 
   TRACE_ENTER2("'%s'", comp->name.c_str());
 
@@ -1716,10 +1726,11 @@ int avnd_comp_config_reinit(AVND_COMP *comp) {
     LOG_CR("amf_saImmOmAccessorInitialize FAILED for '%s'", comp->name.c_str());
     goto done2;
   }
-  if (amf_saImmOmAccessorGet_o2(immOmHandle, accessorHandle, comp->name,
-                                nullptr, (SaImmAttrValuesT_2 ***)&attributes) !=
-      SA_AIS_OK) {
-    LOG_ER("amf_saImmOmAccessorGet_o2 FAILED for '%s'", comp->name.c_str());
+  error = amf_saImmOmAccessorGet_o2(immOmHandle, accessorHandle, comp->name,
+                                    attributeNames,
+                                    (SaImmAttrValuesT_2 ***)&attributes);
+  if (error != SA_AIS_OK) {
+    LOG_ER("amf_saImmOmAccessorGet_o2 FAILED %u for '%s'", error, comp->name.c_str());
     goto done3;
   }
 

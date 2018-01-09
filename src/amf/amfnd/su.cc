@@ -86,7 +86,7 @@ static bool get_su_failover(const std::string &name) {
       attributeNames[0] = const_cast<SaImmAttrNameT>("saAmfSutDefSUFailover");
       attributeNames[1] = nullptr;
       if (amf_saImmOmAccessorGet_o2(
-              immOmHandle, accessorHandle, sutype, nullptr,
+              immOmHandle, accessorHandle, sutype, attributeNames,
               (SaImmAttrValuesT_2 ***)&attributes) == SA_AIS_OK) {
         immutil_getAttr(const_cast<SaImmAttrNameT>("saAmfSutDefSUFailover"),
                         attributes, 0, &sufailover);
