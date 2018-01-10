@@ -30,18 +30,6 @@ static SaUint32T plms_mds_rcv(MDS_CALLBACK_RECEIVE_INFO *rcv_info);
 static SaUint32T plms_mds_svc_evt(MDS_CALLBACK_SVC_EVENT_INFO *svc_evt);
 void plms_mds_unregister();
 
-/*****************************************************************************
- Name    :  plms_get_slot_and_subslot_id_from_node_id
-
- Description :  To get the physical slot & sbuslot unique  id from the node id
-
- Arguments   :
-*****************************************************************************/
-SaUint32T plms_get_slot_and_subslot_id_from_node_id(NCS_NODE_ID node_id)
-{
-	return GetSlotSubslotIdFromNodeId(node_id);
-}
-
 /****************************************************************************\
  PROCEDURE NAME : plms_mds_vdest_create
 
@@ -217,9 +205,7 @@ SaUint32T plms_mds_register()
 	/* Get the node id of local PLMS */
 	cb->node_id = m_NCS_GET_NODE_ID;
 
-	cb->plms_self_id =
-	    plms_get_slot_and_subslot_id_from_node_id(cb->node_id);
-	TRACE_5("NodeId:%x SelfId:%x", cb->node_id, cb->plms_self_id);
+	TRACE_5("NodeId:%x", cb->node_id);
 	TRACE_LEAVE();
 	return NCSCC_RC_SUCCESS;
 }

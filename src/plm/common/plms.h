@@ -257,8 +257,6 @@ typedef struct plms_cb {
   MDS_DEST mdest_id;
   MDS_DEST hrb_dest;
   V_DEST_RL mds_role;
-  SaUint32T plms_self_id;
-  SaUint32T plms_remote_id;
   NCS_NODE_ID node_id;
 
   SaAmfHandleT amf_hdl; /*AMF handle, obtained thru AMF init */
