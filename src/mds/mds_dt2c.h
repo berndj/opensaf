@@ -143,7 +143,7 @@ typedef struct mdtm_send_req {
                        */
   MDS_DEST adest;      /* MDTM to do local/remote routing, destination adest */
   char sub_adest_details
-      [MDS_MAX_PROCESS_NAME_LEN]; /* <node[slotno]:processname[pid]> */
+      [MDS_MAX_PROCESS_NAME_LEN]; /* <node[nodeid]:processname[pid]> */
   MDS_SEND_PRIORITY_TYPE pri;
   MDS_CLIENT_MSG_FORMAT_VER
       msg_fmt_ver; /* message format version specification */

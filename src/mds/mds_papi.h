@@ -205,7 +205,7 @@ typedef enum ncsmds_svc_id {
   30 /*NID_MAX_SVC_NAME_LEN is 15 so keeping some buffer*/
 
 #define MDS_MAX_PROCESS_NAME_LEN \
-  (255 + 32) /* Process Name + PID No/Slot info/Tipc reference */
+  (255 + 64) /* Process Name + PID No/Node ID/Tipc reference */
 
 /*MDS takes  timeout in 10 ms value for sync send() timeout */
 #define MDS_MAX_TIMEOUT_MILLISECOND 9223372036854 /*((2^63 -1) / 10) */
@@ -839,7 +839,7 @@ typedef struct {
   MDS_SVC_PVT_SUB_PART_VER
       i_rem_svc_pvt_ver; /* Remote service id subpart version */
   char i_dest_details
-      [MDS_MAX_PROCESS_NAME_LEN]; /* <node[slotno]:processname[pid]> */
+      [MDS_MAX_PROCESS_NAME_LEN]; /* <node[nodeid]:processname[pid]> */
 
 } MDS_CALLBACK_SVC_EVENT_INFO;
 

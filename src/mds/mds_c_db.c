@@ -23,6 +23,7 @@
 ******************************************************************************
 */
 
+#include <inttypes.h>
 #include "mds_core.h"
 #include "mds_log.h"
 #include "base/ncs_main_papi.h"
@@ -30,14 +31,13 @@ extern bool tipc_mode_enabled;
 extern uint32_t mds_mcm_check_intranode(MDS_DEST adest);
 /*****************************************************
 Function NAME: get_adest_details()
-Returns : <node[slotno]:processname[pid]>
+Returns : <node[nodeid]:processname[pid]>
 *****************************************************/
 void get_adest_details(MDS_DEST adest, char *adest_details)
 {
 	char *token, *saveptr;
 	struct stat s;
 	uint32_t process_id = 0;
-	SlotSubslotId slot_subslot_id = 0;
 	char pid_path[1024];
 	char *pid_name = NULL;
 	char process_name[MDS_MAX_PROCESS_NAME_LEN];
@@ -47,8 +47,7 @@ void get_adest_details(MDS_DEST adest, char *adest_details)
 	memset(process_name, 0, MDS_MAX_PROCESS_NAME_LEN);
 	memset(pid_path, 0, 1024);
 
-	slot_subslot_id =
-	    GetSlotSubslotIdFromNodeId(m_NCS_NODE_ID_FROM_MDS_DEST(adest));
+	NCS_NODE_ID ncs_node_id = m_NCS_NODE_ID_FROM_MDS_DEST(adest);
 
 	if (!tipc_mode_enabled) {
 		process_id = m_MDS_GET_PROCESS_ID_FROM_ADEST(adest);
@@ -126,10 +125,10 @@ void get_adest_details(MDS_DEST adest, char *adest_details)
 
 	if (remote == true)
 		snprintf(adest_details, MDS_MAX_PROCESS_NAME_LEN,
-			 "<rem_nodeid[%u]:%s>", slot_subslot_id, process_name);
+			 "<rem_nodeid[0x%" PRIx32 "]:%s>", ncs_node_id, process_name);
 	else
 		snprintf(adest_details, MDS_MAX_PROCESS_NAME_LEN,
-			 "<nodeid[%u]:%s>", slot_subslot_id, process_name);
+			 "<nodeid[0x%" PRIx32 "]:%s>", ncs_node_id, process_name);
 
 	m_MDS_LOG_DBG("MDS:DB: adest_details: %s ", adest_details);
 	m_MDS_LEAVE();
@@ -137,13 +136,12 @@ void get_adest_details(MDS_DEST adest, char *adest_details)
 
 /*****************************************************
   Function NAME: get_subtn_adest_details
-  Returns : <node[slotno]:processname[pid]>
+  Returns : <node[nodeid]:processname[pid]>
  *****************************************************/
 void get_subtn_adest_details(MDS_PWE_HDL pwe_hdl, MDS_SVC_ID svc_id,
 			     MDS_DEST adest, char *adest_details)
 {
 	uint32_t process_id = 0;
-	SlotSubslotId slot_subslot_id = 0;
 	char process_name[MDS_MAX_PROCESS_NAME_LEN];
 	bool remote = false;
 	MDS_SVC_INFO *svc_info = NULL;
@@ -155,8 +153,7 @@ void get_subtn_adest_details(MDS_PWE_HDL pwe_hdl, MDS_SVC_ID svc_id,
 	memset(process_name, 0, MDS_MAX_PROCESS_NAME_LEN);
 	memset(pid_path, 0, 1024);
 
-	slot_subslot_id =
-	    GetSlotSubslotIdFromNodeId(m_NCS_NODE_ID_FROM_MDS_DEST(adest));
+	NCS_NODE_ID ncs_node_id = m_NCS_NODE_ID_FROM_MDS_DEST(adest);
 	process_id = m_MDS_GET_PROCESS_ID_FROM_ADEST(adest);
 
 	if (NCSCC_RC_SUCCESS == mds_mcm_check_intranode(adest)) {
@@ -211,10 +208,10 @@ void get_subtn_adest_details(MDS_PWE_HDL pwe_hdl, MDS_SVC_ID svc_id,
 
 	if (remote == true)
 		snprintf(adest_details, MDS_MAX_PROCESS_NAME_LEN,
-			 "<rem_node[%u]:%s>", slot_subslot_id, process_name);
+			 "<rem_node[0x%" PRIx32 "]:%s>", ncs_node_id, process_name);
 	else
 		snprintf(adest_details, MDS_MAX_PROCESS_NAME_LEN,
-			 "<node[%u]:%s>", slot_subslot_id, process_name);
+			 "<node[0x%" PRIx32 "]:%s>", ncs_node_id, process_name);
 done:
 	m_MDS_LOG_DBG("MDS:DB: adest_details: %s ", adest_details);
 	m_MDS_LEAVE();
