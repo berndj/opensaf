@@ -30,12 +30,12 @@
 #ifndef MSG_AGENT_MQA_DB_H_
 #define MSG_AGENT_MQA_DB_H_
 
+#include <map>
 #include "base/ncsgl_defs.h"
 
 extern uint32_t gl_mqa_hdl;
 
 /*Maximum Nodes in the cluster */
-#define MQA_MAX_NODES kMaxSlotsSubslots
 typedef unsigned short SVC_SUBPART_VER;
 
 /********************Service Sub part Versions*********************************/
@@ -171,7 +171,7 @@ typedef struct mqa_cb {
   NCS_SEL_OBJ mqd_sync_sel;
 
   /*To store versions of MQND across cluster */
-  SVC_SUBPART_VER ver_mqnd[MQA_MAX_NODES];
+  std::map<NCS_NODE_ID, SVC_SUBPART_VER> ver_mqnd;
   uint32_t clm_node_joined;
 } MQA_CB;
 

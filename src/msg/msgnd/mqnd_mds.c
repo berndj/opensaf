@@ -700,7 +700,7 @@ mqnd_mds_direct_rcv(MQND_CB *pMqnd,
 static uint32_t mqnd_mds_svc_evt(MQND_CB *cb,
 				 MDS_CALLBACK_SVC_EVENT_INFO *svc_evt)
 {
-	uint32_t rc = NCSCC_RC_SUCCESS, to_dest_slotid, o_msg_fmt_ver;
+	uint32_t rc = NCSCC_RC_SUCCESS, to_dest_node_id, o_msg_fmt_ver;
 	switch (svc_evt->i_change) {
 	case NCSMDS_DOWN:
 		if (svc_evt->i_svc_id == NCSMDS_SVC_ID_MQD) {
@@ -751,7 +751,7 @@ static uint32_t mqnd_mds_svc_evt(MQND_CB *cb,
 			cb->mqd_dest = svc_evt->i_dest;
 			TRACE_1("MQD service is up");
 
-			to_dest_slotid = mqsv_get_phy_slot_id(svc_evt->i_dest);
+			to_dest_node_id = mqsv_get_node_id(svc_evt->i_dest);
 
 			o_msg_fmt_ver = m_NCS_ENC_MSG_FMT_GET(
 			    svc_evt->i_rem_svc_pvt_ver,
@@ -761,15 +761,15 @@ static uint32_t mqnd_mds_svc_evt(MQND_CB *cb,
 
 			if (!o_msg_fmt_ver)
 				/*Log informing the existence of Non compatible
-				 * MQD version, Slot id being logged */
+				 * MQD version, Node ID being logged */
 				LOG_ER("Message Format Version Invalid %u",
-				       to_dest_slotid);
+				       to_dest_node_id);
 
 		} break;
 		case NCSMDS_SVC_ID_MQA: {
 			MQSV_EVT *evt = NULL;
 
-			to_dest_slotid = mqsv_get_phy_slot_id(svc_evt->i_dest);
+			to_dest_node_id = mqsv_get_node_id(svc_evt->i_dest);
 
 			o_msg_fmt_ver = m_NCS_ENC_MSG_FMT_GET(
 			    svc_evt->i_rem_svc_pvt_ver,
@@ -779,9 +779,9 @@ static uint32_t mqnd_mds_svc_evt(MQND_CB *cb,
 
 			if (!o_msg_fmt_ver)
 				/*Log informing the existence of Non compatible
-				 * MQA version, Slot id being logged */
+				 * MQA version, Node ID being logged */
 				LOG_ER("Message Format Version Invalid %u",
-				       to_dest_slotid);
+				       to_dest_node_id);
 
 			/* Post the event to Update the MQA list */
 

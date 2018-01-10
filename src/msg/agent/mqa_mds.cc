@@ -551,7 +551,7 @@ static uint32_t mqa_mds_rcv(MQA_CB *cb, MDS_CALLBACK_RECEIVE_INFO *rcv_info)
 static uint32_t mqa_mds_svc_evt(MQA_CB *cb,
 				MDS_CALLBACK_SVC_EVENT_INFO *svc_evt)
 {
-	uint32_t to_dest_slotid, o_msg_fmt_ver;
+	uint32_t to_dest_node_id, o_msg_fmt_ver;
 
 	TRACE_ENTER();
 
@@ -562,7 +562,7 @@ static uint32_t mqa_mds_svc_evt(MQA_CB *cb,
 		switch (svc_evt->i_svc_id) {
 		case NCSMDS_SVC_ID_MQND:
 
-			cb->ver_mqnd[mqsv_get_phy_slot_id(svc_evt->i_dest)] = 0;
+			cb->ver_mqnd[mqsv_get_node_id(svc_evt->i_dest)] = 0;
 
 			TRACE_2("MQND is down with nodeid %" PRIx64,
 				svc_evt->i_dest);
@@ -584,8 +584,8 @@ static uint32_t mqa_mds_svc_evt(MQA_CB *cb,
 	case NCSMDS_UP:
 		switch (svc_evt->i_svc_id) {
 		case NCSMDS_SVC_ID_MQND:
-			to_dest_slotid = mqsv_get_phy_slot_id(svc_evt->i_dest);
-			cb->ver_mqnd[to_dest_slotid] =
+			to_dest_node_id = mqsv_get_node_id(svc_evt->i_dest);
+			cb->ver_mqnd[to_dest_node_id] =
 			    svc_evt->i_rem_svc_pvt_ver;
 
 			o_msg_fmt_ver = m_NCS_ENC_MSG_FMT_GET(
@@ -596,7 +596,7 @@ static uint32_t mqa_mds_svc_evt(MQA_CB *cb,
 
 			if (!o_msg_fmt_ver)
 				/*Log informing the existence of Non compatible
-				 * MQND version, Slot id being logged */
+				 * MQND version, Node ID being logged */
 				TRACE_2("Message Format version Invalid %u",
 					o_msg_fmt_ver);
 
@@ -621,7 +621,7 @@ static uint32_t mqa_mds_svc_evt(MQA_CB *cb,
 		case NCSMDS_SVC_ID_MQD:
 			m_NCS_LOCK(&cb->mqd_sync_lock, NCS_LOCK_WRITE);
 
-			to_dest_slotid = mqsv_get_phy_slot_id(svc_evt->i_dest);
+			to_dest_node_id = mqsv_get_node_id(svc_evt->i_dest);
 
 			o_msg_fmt_ver = m_NCS_ENC_MSG_FMT_GET(
 			    svc_evt->i_rem_svc_pvt_ver,
@@ -631,7 +631,7 @@ static uint32_t mqa_mds_svc_evt(MQA_CB *cb,
 
 			if (!o_msg_fmt_ver)
 				/*Log informing the existence of Non compatible
-				 * MQD version, Slot id being logged */
+				 * MQD version, Node ID being logged */
 				TRACE_2("Message Format version Invalid %u",
 					o_msg_fmt_ver);
 

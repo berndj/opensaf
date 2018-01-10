@@ -587,9 +587,8 @@ static void mqd_mds_svc_evt(MQD_CB *pMqd, MDS_CALLBACK_SVC_EVENT_INFO *svc)
 
 	case NCSMDS_UP: {
 		if (svc->i_svc_id == NCSMDS_SVC_ID_MQND) {
-			SlotSubslotId to_dest_slotid;
 			uint16_t o_msg_fmt_ver;
-			to_dest_slotid = mqsv_get_phy_slot_id(svc->i_dest);
+			NCS_NODE_ID to_dest_node_id = mqsv_get_node_id(svc->i_dest);
 
 			o_msg_fmt_ver = m_NCS_ENC_MSG_FMT_GET(
 			    svc->i_rem_svc_pvt_ver,
@@ -599,9 +598,9 @@ static void mqd_mds_svc_evt(MQD_CB *pMqd, MDS_CALLBACK_SVC_EVENT_INFO *svc)
 
 			if (!o_msg_fmt_ver)
 				/*Log informing the existence of Non compatible
-				 * MQD version, Slot id being logged */
+				 * MQD version, Node ID being logged */
 				LOG_ER("Message Format version invalid %u",
-				       to_dest_slotid);
+				       to_dest_node_id);
 
 			pNdEvent = m_MMGR_ALLOC_MQSV_EVT(pMqd->my_svc_id);
 			if (pNdEvent) {

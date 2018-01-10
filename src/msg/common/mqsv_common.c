@@ -111,15 +111,15 @@ uint32_t mqsv_listenerq_msg_send(SaMsgQueueHandleT listenerHandle)
 }
 
 /********************************************************************************
- Name    :  mqsv_get_phy_slot_id
+ Name    :  mqsv_get_node_id
 
- Description :  To get the physical slot id from the node id
+ Description :  To get the Node ID from the MDS DEST
 
  Arguments   :
 
 *************************************************************************************/
 
-SlotSubslotId mqsv_get_phy_slot_id(MDS_DEST dest)
+NCS_NODE_ID mqsv_get_node_id(MDS_DEST dest)
 {
-	return GetSlotSubslotIdFromNodeId(m_NCS_NODE_ID_FROM_MDS_DEST(dest));
+	return m_NCS_NODE_ID_FROM_MDS_DEST(dest);
 }

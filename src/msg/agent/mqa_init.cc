@@ -35,7 +35,7 @@
 
 /* global cb handle */
 uint32_t gl_mqa_hdl = 0;
-MQA_CB mqa_cb;
+static MQA_CB* mqa_control_block = nullptr;
 static uint32_t mqa_use_count = 0;
 
 /* mutex for synchronising agent startup and shutdown */
@@ -185,8 +185,6 @@ static void mqa_sync_with_mqnd(MQA_CB *cb)
 ******************************************************************************/
 static uint32_t mqa_create(NCS_LIB_CREATE *create_info)
 {
-	MQA_CB *cb = &mqa_cb;
-
 	uint32_t rc = NCSCC_RC_SUCCESS;
 
 	TRACE_ENTER();
@@ -195,7 +193,8 @@ static uint32_t mqa_create(NCS_LIB_CREATE *create_info)
 	if (create_info == NULL)
 		return NCSCC_RC_FAILURE;
 
-	memset(cb, 0, sizeof(MQA_CB));
+	MQA_CB *cb = new MQA_CB{};
+	mqa_control_block = cb;
 
 	/* assign the MQA pool-id (used by hdl-mngr) */
 	cb->pool_id = NCS_HM_POOL_ID_COMMON;
@@ -314,12 +313,10 @@ error1:
 ******************************************************************************/
 static uint32_t mqa_destroy(NCS_LIB_DESTROY *destroy_info)
 {
-	MQA_CB *cb = 0;
-
 	TRACE_ENTER();
 
 	/* validate the CB */
-	cb = (MQA_CB *)ncshm_take_hdl(NCS_SERVICE_ID_MQA, gl_mqa_hdl);
+	MQA_CB *cb = (MQA_CB *)ncshm_take_hdl(NCS_SERVICE_ID_MQA, gl_mqa_hdl);
 	if (!cb)
 		return NCSCC_RC_FAILURE;
 
@@ -356,6 +353,9 @@ static uint32_t mqa_destroy(NCS_LIB_DESTROY *destroy_info)
 
 	/* reset the global cb handle */
 	gl_mqa_hdl = 0;
+
+	delete mqa_control_block;
+	mqa_control_block = nullptr;
 
 	TRACE_LEAVE();
 	return NCSCC_RC_SUCCESS;

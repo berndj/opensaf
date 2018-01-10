@@ -1949,7 +1949,7 @@ SaAisErrorT mqa_send_to_group(MQA_CB *mqa_cb, ASAPi_OPR_INFO *asapi_or,
 		    asapi_or->info.dest.o_cache->info.ginfo.pQueue->param.addr;
 
 		to_dest_ver =
-		    mqa_cb->ver_mqnd[mqsv_get_phy_slot_id(destination_mqnd)];
+		    mqa_cb->ver_mqnd[mqsv_get_node_id(destination_mqnd)];
 
 		/* MQND HAS GONE DOWN OR NOT YET UP */
 		if (to_dest_ver == 0) {
@@ -2048,7 +2048,7 @@ SaAisErrorT mqa_send_to_group(MQA_CB *mqa_cb, ASAPi_OPR_INFO *asapi_or,
 				rc = SA_AIS_ERR_QUEUE_NOT_AVAILABLE;
 				return rc;
 			}
-			to_dest_ver = mqa_cb->ver_mqnd[mqsv_get_phy_slot_id(
+			to_dest_ver = mqa_cb->ver_mqnd[mqsv_get_node_id(
 			    destination_mqnd)];
 
 			/* MQND HAS GONE DOWN OR NOT YET UP */
@@ -2285,7 +2285,7 @@ SaAisErrorT mqa_send_message(SaMsgHandleT msgHandle, const SaNameT *destination,
 		    asapi_or.info.dest.o_cache->info.qinfo.param.addr;
 
 		to_dest_ver =
-		    mqa_cb->ver_mqnd[mqsv_get_phy_slot_id(destination_mqnd)];
+		    mqa_cb->ver_mqnd[mqsv_get_node_id(destination_mqnd)];
 
 		/* MQND HAS GONE DOWN OR NOT YET UP */
 		if (to_dest_ver == 0) {
@@ -3031,7 +3031,7 @@ again:
 		    mqsv_message->info.msg.message.senderName;
 
 	to_dest_ver =
-	    mqa_cb->ver_mqnd[mqsv_get_phy_slot_id(mqa_cb->mqnd_mds_dest)];
+	    mqa_cb->ver_mqnd[mqsv_get_node_id(mqa_cb->mqnd_mds_dest)];
 
 	/* MQND HAS GONE DOWN OR NOT YET UP */
 	if (to_dest_ver == 0) {
@@ -3724,7 +3724,7 @@ SaAisErrorT saMsgMessageSendReceive(SaMsgHandleT msgHandle,
 		goto done1;
 	}
 
-	to_dest_ver = mqa_cb->ver_mqnd[mqsv_get_phy_slot_id(destination_mqnd)];
+	to_dest_ver = mqa_cb->ver_mqnd[mqsv_get_node_id(destination_mqnd)];
 
 	/* MQND HAS GONE DOWN OR NOT YET UP */
 	if (to_dest_ver == 0) {
