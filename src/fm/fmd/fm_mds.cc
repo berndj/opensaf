@@ -681,7 +681,7 @@ static uint32_t fm_mds_rcv_evt(FM_CB *cb, MDS_CALLBACK_RECEIVE_INFO *rcv_info)
  *
  * Description   : Posts an event to mail box.
  *
- * Arguments     : Control Block, Pointer to event, slot, subslot and Event
+ * Arguments     : Control Block, Pointer to event, Node ID and Event
  *Code.
  *
  * Return Values :  NCSCC_RC_FAILURE/NCSCC_RC_SUCCESS
