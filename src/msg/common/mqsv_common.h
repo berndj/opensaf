@@ -29,6 +29,10 @@
 #ifndef MSG_COMMON_MQSV_COMMON_H_
 #define MSG_COMMON_MQSV_COMMON_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MQSV_LITTLE_ENDIAN 0
 #define MQSV_BIG_ENDIAN 1
 
@@ -80,5 +84,9 @@ typedef unsigned int MSG_FRMT_VER;
 #define NCSFL_LC_MQSV_Q_MGMT 0x00004000    /* MQSV Send Receive flow logging */
 #define NCSFL_LC_MQSV_QGRP_MGMT 0x00002000 /* MQSV Group Apis flows */
 #define NCSFL_LC_MQSV_SEND_RCV 0x00001000  /* MQSV New Logs */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // MSG_COMMON_MQSV_COMMON_H_

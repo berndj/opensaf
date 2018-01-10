@@ -48,9 +48,9 @@ typedef enum {
                         Memory Allocation and Release Macros
 
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
-#define m_MMGR_ALLOC_MQSV_EVT(svc_id)                                  \
-  m_NCS_MEM_ALLOC(sizeof(MQSV_EVT), NCS_MEM_REGION_PERSISTENT, svc_id, \
-                  NCS_SERVICE_MQSV_SUB_ID_MQSV_EVT)
+#define m_MMGR_ALLOC_MQSV_EVT(svc_id)                                     \
+  (MQSV_EVT*)m_NCS_MEM_ALLOC(sizeof(MQSV_EVT), NCS_MEM_REGION_PERSISTENT, \
+                             svc_id, NCS_SERVICE_MQSV_SUB_ID_MQSV_EVT)
 
 #define m_MMGR_FREE_MQSV_EVT(p, scv_id)                \
   m_NCS_MEM_FREE(p, NCS_MEM_REGION_PERSISTENT, scv_id, \

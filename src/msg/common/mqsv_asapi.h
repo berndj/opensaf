@@ -32,9 +32,13 @@
 #ifndef MSG_COMMON_MQSV_ASAPI_H_
 #define MSG_COMMON_MQSV_ASAPI_H_
 
-/* ASAPi Headers */
+#include <saAis.h>
 #include "msg/common/mqsv_asapi_mem.h"
 #include "base/ncsencdec_pub.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*****************************************************************************\
                                  C O N S T A N T S
@@ -406,7 +410,7 @@ extern ASAPi_CB asapi;
  This API is used by the USER of the ASAPi layer, who want's to use the ASAPi
  functionality. This is a SE API with diffrent request options.
 \*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
-uint32_t asapi_opr_hdlr(struct asapi_opr_info *);
+SaAisErrorT asapi_opr_hdlr(struct asapi_opr_info *);
 
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*\
                       MDS ENCODE/DECODE/COPY ROUTINES
@@ -450,6 +454,10 @@ uint32_t asapi_dbg_sink(uint32_t, char *, uint32_t);
 
 #define m_ASAPi_DBG_SINK(r) r
 #define m_ASAPi_DBG_VOID
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif  // MSG_COMMON_MQSV_ASAPI_H_

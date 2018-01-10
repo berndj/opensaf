@@ -66,7 +66,7 @@ uint32_t mqa_timer_table_init(MQA_CB *mqa_cb)
 	}
 
 	tmr_init_info.callback_arg = NULL;
-	tmr_init_info.svc_id = NCSMDS_SVC_ID_MQA;
+	tmr_init_info.svc_id = static_cast<NCS_SERVICE_ID>(NCSMDS_SVC_ID_MQA);
 	tmr_init_info.svc_sub_id = 0;
 	tmr_init_info.tmr_callback = mqa_main_timeout_handler;
 	tmr_init_info.tmr_ganularity = 1; /* in secs */
@@ -181,7 +181,6 @@ static void mqa_node_timeout_handler(void *arg)
 
 	MQA_CB *mqa_cb;
 	SaInvocationT key;
-	MQA_TMR_NODE *tmr_node;
 
 	MQP_ASYNC_RSP_MSG *mqa_callback = (MQP_ASYNC_RSP_MSG *)arg;
 
@@ -205,8 +204,9 @@ static void mqa_node_timeout_handler(void *arg)
 		return;
 	}
 
-	tmr_node = ncs_find_item(&(mqa_cb->mqa_timer_list),
-				 NCS_INT64_TO_PTR_CAST(key), match_invocation);
+	MQA_TMR_NODE *tmr_node = static_cast<MQA_TMR_NODE *>(
+	    ncs_find_item(&(mqa_cb->mqa_timer_list), NCS_INT64_TO_PTR_CAST(key),
+			  match_invocation));
 
 	if (tmr_node == NULL) {
 		m_MQSV_MQA_GIVEUP_MQA_CB;
@@ -375,7 +375,6 @@ uint32_t mqa_stop_and_delete_timer(MQP_ASYNC_RSP_MSG *mqa_callbk_info)
 {
 	MQA_CB *mqa_cb;
 	SaInvocationT key;
-	MQA_TMR_NODE *tmr_node;
 	uint32_t rc = NCSCC_RC_FAILURE;
 
 	/* retrieve MQA CB */
@@ -397,8 +396,9 @@ uint32_t mqa_stop_and_delete_timer(MQP_ASYNC_RSP_MSG *mqa_callbk_info)
 		return rc;
 	}
 
-	tmr_node = ncs_find_item(&(mqa_cb->mqa_timer_list),
-				 NCS_INT64_TO_PTR_CAST(key), match_invocation);
+	MQA_TMR_NODE *tmr_node = static_cast<MQA_TMR_NODE *>(
+	    ncs_find_item(&(mqa_cb->mqa_timer_list), NCS_INT64_TO_PTR_CAST(key),
+			  match_invocation));
 	if (tmr_node == NULL) {
 		m_MQSV_MQA_GIVEUP_MQA_CB;
 		return rc;
@@ -452,7 +452,6 @@ uint32_t mqa_stop_and_delete_timer(MQP_ASYNC_RSP_MSG *mqa_callbk_info)
 uint32_t mqa_stop_and_delete_timer_by_invocation(void *key)
 {
 	MQA_CB *mqa_cb;
-	MQA_TMR_NODE *tmr_node;
 	uint32_t rc = NCSCC_RC_FAILURE;
 
 	/* retrieve MQA CB */
@@ -462,8 +461,8 @@ uint32_t mqa_stop_and_delete_timer_by_invocation(void *key)
 		return rc;
 	}
 
-	tmr_node =
-	    ncs_find_item(&(mqa_cb->mqa_timer_list), key, match_invocation);
+	MQA_TMR_NODE *tmr_node = static_cast<MQA_TMR_NODE *>(
+	    ncs_find_item(&(mqa_cb->mqa_timer_list), key, match_invocation));
 	if (tmr_node == NULL) {
 		m_MQSV_MQA_GIVEUP_MQA_CB;
 		return rc;
@@ -537,8 +536,9 @@ static void mqa_cleanup_senderid(void *arg)
 		return;
 	}
 
-	while ((senderid_node = ncs_remove_item(&(mqa_cb->mqa_senderid_list),
-						NULL, match_expiry)) != NULL) {
+	while (
+	    (senderid_node = static_cast<MQA_SENDERID_INFO *>(ncs_remove_item(
+		 &(mqa_cb->mqa_senderid_list), NULL, match_expiry))) != NULL) {
 		m_MMGR_FREE_MQA_SENDERID(senderid_node);
 	}
 
@@ -623,8 +623,9 @@ uint32_t mqa_destroy_senderid_timers(MQA_CB *mqa_cb)
 	MQA_SENDERID_INFO *senderid_node = NULL;
 	uint32_t rc = NCSCC_RC_SUCCESS;
 
-	while ((senderid_node = ncs_remove_item(&(mqa_cb->mqa_senderid_list),
-						NULL, match_all)) != NULL) {
+	while (
+	    (senderid_node = static_cast<MQA_SENDERID_INFO *>(ncs_remove_item(
+		 &(mqa_cb->mqa_senderid_list), NULL, match_all))) != NULL) {
 		m_MMGR_FREE_MQA_SENDERID(senderid_node);
 	}
 

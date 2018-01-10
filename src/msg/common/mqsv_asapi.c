@@ -76,9 +76,9 @@ static uint32_t asapi_cpy_track_info(ASAPi_GROUP_INFO *,
    ARGUMENTS      :  msg - Pointer to structure containing info on the request
 
    RETURNS        :  SA_AIS_OK - All went well
-		     SA_AIS_ERROR - internal processing didn't like something.
+-                    SA_AIS_ERROR - internal processing didn't like something.
 \****************************************************************************/
-uint32_t asapi_opr_hdlr(ASAPi_OPR_INFO *opr)
+SaAisErrorT asapi_opr_hdlr(ASAPi_OPR_INFO *opr)
 {
 	uint32_t rc = NCSCC_RC_SUCCESS;
 
@@ -649,10 +649,10 @@ static uint32_t asapi_cache_update(ASAPi_OBJECT_INFO *pInfo,
 		m_NCS_UNLOCK(&pCache->clock,
 			     NCS_LOCK_WRITE); /* Unlock the cache */
 	} else {			      /* Node deosn't exist */
-    if (ASAPi_QUEUE_DEL == opr || ASAPi_GROUP_DEL == opr) {
-      /* no need to add node as this is a deletion */
-      return rc;
-    }
+		if (ASAPi_QUEUE_DEL == opr || ASAPi_GROUP_DEL == opr) {
+			/* no need to add node as this is a deletion */
+			return rc;
+		}
 
 		/* Allocate the Cache Informaton node */
 		pCache = m_MMGR_ALLOC_ASAPi_CACHE_INFO(asapi.my_svc_id);
@@ -778,6 +778,7 @@ static uint32_t asapi_grp_upd(ASAPi_GROUP_INFO *pGrp, ASAPi_OBJECT_INFO *pInfo,
 					ASAPi_QUEUE_INFO *pQprev = 0,
 							 *pQnext = 0;
 					NCS_Q_ITR itr;
+
 					itr.state = 0;
 					pQnext = (ASAPi_QUEUE_INFO *)
 					    ncs_queue_get_next(&pGrp->qlist,

@@ -30,6 +30,8 @@
 #ifndef MSG_AGENT_MQA_DEF_H_
 #define MSG_AGENT_MQA_DEF_H_
 
+#include <saAis.h>
+
 /* All the defines go here. */
 #define MQA_RELEASE_CODE 'B'
 #define MQA_MAJOR_VERSION 3
@@ -46,7 +48,7 @@
 #define MQSV_SENDERID_CLEANUP_INTERVAL 100       /* timeout in s */
 #define MQA_TRY_AGAIN_WAIT m_NCS_TASK_SLEEP(200) /*Time in milli seconds */
 #define m_MQSV_MQA_RETRIEVE_MQA_CB \
-  ncshm_take_hdl(NCS_SERVICE_ID_MQA, gl_mqa_hdl)
+  static_cast<MQA_CB *>(ncshm_take_hdl(NCS_SERVICE_ID_MQA, gl_mqa_hdl))
 #define m_MQSV_MQA_GIVEUP_MQA_CB ncshm_give_hdl(gl_mqa_hdl)
 
 /* function prototypes for client handling*/
@@ -88,9 +90,12 @@ uint32_t mqsv_mqa_callback_queue_write(struct mqa_cb *mqa_cb,
                                        MQP_ASYNC_RSP_MSG *clbk_info);
 
 /* callback prototypes */
-uint32_t mqa_hdl_callbk_dispatch_one(struct mqa_cb *cb, SaMsgHandleT msgHandle);
-uint32_t mqa_hdl_callbk_dispatch_all(struct mqa_cb *cb, SaMsgHandleT msgHandle);
-uint32_t mqa_hdl_callbk_dispatch_block(MQA_CB *mqa_cb, SaMsgHandleT msgHandle);
+SaAisErrorT mqa_hdl_callbk_dispatch_one(struct mqa_cb *cb,
+                                        SaMsgHandleT msgHandle);
+SaAisErrorT mqa_hdl_callbk_dispatch_all(struct mqa_cb *cb,
+                                        SaMsgHandleT msgHandle);
+SaAisErrorT mqa_hdl_callbk_dispatch_block(MQA_CB *mqa_cb,
+                                          SaMsgHandleT msgHandle);
 uint32_t mqa_asapi_msghandler(ASAPi_MSG_INFO *asapi_msg);
 
 uint32_t mqa_mds_msg_sync_send(uint32_t mqa_mds_hdl, MDS_DEST *destination,

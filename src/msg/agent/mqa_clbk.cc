@@ -184,7 +184,6 @@ static void mqa_process_callback(MQA_CB *cb, SaMsgHandleT msgHandle,
 		MQSV_MSGQ_OPEN_PARAM *param = &callback->params.qOpen;
 		MQA_QUEUE_INFO *queue_info;
 		NCSCONTEXT thread_handle;
-		SaAisErrorT rc;
 
 		/* We need to start the reader thread only if the Queue has been
 		 * successfully opened/created by the MQND */
@@ -229,20 +228,20 @@ static void mqa_process_callback(MQA_CB *cb, SaMsgHandleT msgHandle,
 				int policy = SCHED_OTHER; /*root defaults */
 				int prio_val = sched_get_priority_min(policy);
 
-				rc = m_NCS_TASK_CREATE(
-				    (NCS_OS_CB)mqa_queue_reader,
-				    (NCSCONTEXT)openRsp,
-				    (char *)"OSAF_MQA_CLBK", prio_val, policy,
-				    NCS_STACKSIZE_HUGE, &thread_handle);
-				if (rc != NCSCC_RC_SUCCESS) {
+				if (m_NCS_TASK_CREATE(
+					(NCS_OS_CB)mqa_queue_reader,
+					(NCSCONTEXT)openRsp,
+					const_cast<char *>("OSAF_MQA_CLBK"),
+					prio_val, policy, NCS_STACKSIZE_HUGE,
+					&thread_handle) != NCSCC_RC_SUCCESS) {
 					TRACE_4(
 					    "ERR_RESOURCES: Queue Reader Thread Task Create Failed");
 					param->error = SA_AIS_ERR_NO_RESOURCES;
 					mqa_queue_tree_delete_node(
 					    cb, param->queueHandle);
 				} else {
-					rc = m_NCS_TASK_START(thread_handle);
-					if (rc != NCSCC_RC_SUCCESS) {
+					if (m_NCS_TASK_START(thread_handle) !=
+					    NCSCC_RC_SUCCESS) {
 						TRACE_4(
 						    "ERR_RESOURCES: Queue Reader Thread Task Start Failed");
 						m_NCS_TASK_DETACH(
@@ -338,15 +337,16 @@ static void mqa_process_callback(MQA_CB *cb, SaMsgHandleT msgHandle,
   Arguments     : cb      - ptr to the MQA control block
 		  client_info - ptr to the client info
 
-  Return Values : NCSCC_RC_SUCCESS/NCSCC_RC_FAILURE
+  Return Values : SaAisErrorT
 
   Notes         : None
 ******************************************************************************/
-uint32_t mqa_hdl_callbk_dispatch_one(MQA_CB *cb, SaMsgHandleT msgHandle)
+SaAisErrorT mqa_hdl_callbk_dispatch_one(MQA_CB *cb, SaMsgHandleT msgHandle)
 {
 	MQP_ASYNC_RSP_MSG *callback;
 	MQA_CLIENT_INFO *client_info;
 	SaAisErrorT rc = SA_AIS_OK;
+
 	TRACE_ENTER();
 
 	/* get the client_info */
@@ -383,14 +383,15 @@ uint32_t mqa_hdl_callbk_dispatch_one(MQA_CB *cb, SaMsgHandleT msgHandle)
   Arguments     : cb      - ptr to the MQA control block
 		  client_info - ptr to the client info
 
-  Return Values : NCSCC_RC_SUCCESS/NCSCC_RC_FAILURE
+  Return Values : SaAisErrorT
 
   Notes         : None
 ******************************************************************************/
-uint32_t mqa_hdl_callbk_dispatch_all(MQA_CB *cb, SaMsgHandleT msgHandle)
+SaAisErrorT mqa_hdl_callbk_dispatch_all(MQA_CB *cb, SaMsgHandleT msgHandle)
 {
 	MQP_ASYNC_RSP_MSG *callback;
 	MQA_CLIENT_INFO *client_info;
+
 	TRACE_ENTER();
 
 	/* get the client_info */
@@ -440,15 +441,17 @@ uint32_t mqa_hdl_callbk_dispatch_all(MQA_CB *cb, SaMsgHandleT msgHandle)
   Arguments     : cb      - ptr to the MQA control  block
 		  client_info - ptr to the client info
 
-  Return Values : NCSCC_RC_SUCCESS/NCSCC_RC_FAILURE
+  Return Values : SaAisErrorT
 
   Notes         : None
 ******************************************************************************/
-uint32_t mqa_hdl_callbk_dispatch_block(MQA_CB *mqa_cb, SaMsgHandleT msgHandle)
+SaAisErrorT mqa_hdl_callbk_dispatch_block(MQA_CB *mqa_cb,
+					  SaMsgHandleT msgHandle)
 {
 	MQP_ASYNC_RSP_MSG *callback = 0;
 	SYSF_MBX *callbk_mbx;
 	MQA_CLIENT_INFO *client_info;
+
 	TRACE("mqa_hdl_callbk_dispatch_block is called");
 
 	/* get the client_info */
@@ -527,6 +530,7 @@ static uint32_t mqa_notify_clients(ASAPi_MSG_INFO *asapi_msg)
 	SaMsgHandleT temp_hdl;
 	MQA_CB *mqa_cb;
 	uint32_t len;
+
 	TRACE_ENTER();
 
 	/* If this track notification is not for a Queue Group then return */
@@ -619,6 +623,7 @@ uint32_t mqa_notify_changes(MQA_CLIENT_INFO *client_info,
 	uint32_t track_index;
 	uint32_t i;
 	uint32_t j = 0;
+
 	TRACE_ENTER();
 
 	if ((asapi_msg->info.tntfy.opr == ASAPi_QUEUE_MQND_DOWN) ||
@@ -861,6 +866,7 @@ uint32_t mqa_notify_changes_only(MQA_CLIENT_INFO *client_info,
 	SaMsgQueueGroupNotificationT *callback_buffer = NULL;
 	MQA_CB *mqa_cb;
 	uint32_t rc = NCSCC_RC_SUCCESS;
+
 	TRACE_ENTER();
 
 	if ((asapi_msg->info.tntfy.opr == ASAPi_QUEUE_MQND_DOWN) ||
@@ -1115,6 +1121,7 @@ uint32_t mqsv_mqa_callback_queue_write(MQA_CB *mqa_cb, SaMsgHandleT handle,
 {
 	MQA_CLIENT_INFO *client_info = NULL;
 	uint32_t rc = NCSCC_RC_FAILURE;
+
 	TRACE_ENTER();
 
 	/* Search for the node from the client tree */
@@ -1192,6 +1199,7 @@ void mqa_queue_reader(NCSCONTEXT arg)
 	MQA_CB *mqa_cb;
 	MQP_ASYNC_RSP_MSG *mqa_callbk_info = NULL;
 	uint32_t existing_msg_count;
+
 	TRACE_ENTER();
 
 	/* retrieve MQA CB */

@@ -47,11 +47,11 @@ static SaAisErrorT mqa_send_to_destination_async(MQA_CB *mqa_cb,
 						 MDS_DEST *mqnd_mds_dest,
 						 MQSV_DSEND_EVT *qsend_evt,
 						 uint32_t length);
-static uint32_t mqa_send_to_group(MQA_CB *mqa_cb, ASAPi_OPR_INFO *asapi_or,
-				  MQSV_DSEND_EVT *qsend_evt,
-				  SaMsgAckFlagsT ackFlags,
-				  MQA_SEND_MESSAGE_PARAM *param,
-				  uint32_t length);
+static SaAisErrorT mqa_send_to_group(MQA_CB *mqa_cb, ASAPi_OPR_INFO *asapi_or,
+				     MQSV_DSEND_EVT *qsend_evt,
+				     SaMsgAckFlagsT ackFlags,
+				     MQA_SEND_MESSAGE_PARAM *param,
+				     uint32_t length);
 static SaAisErrorT
 mqa_send_message(SaMsgHandleT msgHandle, const SaNameT *destination,
 		 const SaMsgMessageT *message, SaMsgAckFlagsT ackFlags,
@@ -109,6 +109,7 @@ SaAisErrorT mqa_queue_name_to_destination(const SaNameT *queueName,
 {
 	ASAPi_OPR_INFO asapi_or;
 	SaAisErrorT rc;
+
 	TRACE_ENTER();
 
 	memset(&asapi_or, 0, sizeof(asapi_or));
@@ -160,12 +161,12 @@ SaAisErrorT saMsgInitialize(SaMsgHandleT *msgHandle,
 	TRACE_ENTER();
 
 	/* Initialize the environment */
-	if ((rc = ncs_agents_startup()) != NCSCC_RC_SUCCESS) {
+	if (ncs_agents_startup() != NCSCC_RC_SUCCESS) {
 		TRACE_4("ERR_LIBRARY: NCS Agents Startup Failed:%d", rc);
 		return SA_AIS_ERR_LIBRARY;
 	}
 
-	if ((rc = ncs_mqa_startup()) != NCSCC_RC_SUCCESS) {
+	if (ncs_mqa_startup() != NCSCC_RC_SUCCESS) {
 		TRACE_4("ERR_LIBRARY: NCS Agents Startup Failed:%d", rc);
 		ncs_agents_shutdown();
 		return SA_AIS_ERR_LIBRARY;
@@ -202,8 +203,7 @@ SaAisErrorT saMsgInitialize(SaMsgHandleT *msgHandle,
 		goto final1;
 	}
 
-	if ((rc = m_NCS_LOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE)) !=
-	    NCSCC_RC_SUCCESS) {
+	if (m_NCS_LOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE) != NCSCC_RC_SUCCESS) {
 		TRACE_4("ERR_LIBRARY: Lock failed for control block write");
 		rc = SA_AIS_ERR_LIBRARY;
 		goto final2;
@@ -915,11 +915,11 @@ saMsgQueueOpen(SaMsgHandleT msgHandle, const SaNameT *queueName,
 			int policy = SCHED_OTHER; /*root defaults */
 			int prio_val = sched_get_priority_min(policy);
 
-			rc = m_NCS_TASK_CREATE(
-			    (NCS_OS_CB)mqa_queue_reader, (NCSCONTEXT)openRsp,
-			    (char *)"OSAF_MQA", prio_val, policy,
-			    NCS_STACKSIZE_HUGE, &thread_handle);
-			if (rc != NCSCC_RC_SUCCESS) {
+			if (m_NCS_TASK_CREATE(
+				(NCS_OS_CB)mqa_queue_reader,
+				(NCSCONTEXT)openRsp, (char *)"OSAF_MQA",
+				prio_val, policy, NCS_STACKSIZE_HUGE,
+				&thread_handle) != NCSCC_RC_SUCCESS) {
 				TRACE_4(
 				    "ERR_RESOURCES: Queue Reader Thread Task Create Failed");
 				rc = SA_AIS_ERR_NO_RESOURCES;
@@ -928,8 +928,8 @@ saMsgQueueOpen(SaMsgHandleT msgHandle, const SaNameT *queueName,
 				goto done;
 			}
 
-			rc = m_NCS_TASK_START(thread_handle);
-			if (rc != NCSCC_RC_SUCCESS) {
+			if (m_NCS_TASK_START(thread_handle) !=
+			    NCSCC_RC_SUCCESS) {
 				m_NCS_TASK_DETACH(thread_handle);
 				TRACE_4(
 				    "ERR_RESOURCES: Queue Reader Thread Task Start Failed");
@@ -1244,7 +1244,7 @@ SaAisErrorT saMsgQueueClose(SaMsgQueueHandleT queueHandle)
 	if (queue_node->client_info->version.majorVersion ==
 	    MQA_MAJOR_VERSION) {
 		if ((!mqa_cb->clm_node_joined ||
-			queue_node->client_info->isStale) &&
+		     queue_node->client_info->isStale) &&
 		    (!queue_node->client_info->finalize)) {
 			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
@@ -1556,7 +1556,7 @@ SaAisErrorT saMsgQueueRetentionTimeSet(SaMsgQueueHandleT queueHandle,
 	if (queue_node->client_info->version.majorVersion ==
 	    MQA_MAJOR_VERSION) {
 		if (!mqa_cb->clm_node_joined ||
-			queue_node->client_info->isStale) {
+		    queue_node->client_info->isStale) {
 			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			m_NCS_UNLOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE);
@@ -1911,12 +1911,13 @@ SaAisErrorT mqa_send_to_destination_async(MQA_CB *mqa_cb,
 
   Notes         : None
 ******************************************************************************/
-uint32_t mqa_send_to_group(MQA_CB *mqa_cb, ASAPi_OPR_INFO *asapi_or,
-			   MQSV_DSEND_EVT *qsend_evt, SaMsgAckFlagsT ackFlags,
-			   MQA_SEND_MESSAGE_PARAM *param, uint32_t length)
+SaAisErrorT mqa_send_to_group(MQA_CB *mqa_cb, ASAPi_OPR_INFO *asapi_or,
+			      MQSV_DSEND_EVT *qsend_evt,
+			      SaMsgAckFlagsT ackFlags,
+			      MQA_SEND_MESSAGE_PARAM *param, uint32_t length)
 {
 
-	uint32_t num_queues, status, to_dest_ver, o_msg_fmt_ver = 0;
+	uint32_t num_queues, to_dest_ver, o_msg_fmt_ver = 0;
 	MDS_DEST destination_mqnd;
 	uint8_t unicast = 0;
 	SaAisErrorT rc = SA_AIS_ERR_NO_RESOURCES;
@@ -2078,6 +2079,8 @@ uint32_t mqa_send_to_group(MQA_CB *mqa_cb, ASAPi_OPR_INFO *asapi_or,
 			 * message */
 			qsend_evt->msg_fmt_version = o_msg_fmt_ver;
 
+			SaAisErrorT status;
+
 			if (!param->async_flag)
 				status = mqa_send_to_destination(
 				    mqa_cb, &destination_mqnd, qsend_evt,
@@ -2086,7 +2089,7 @@ uint32_t mqa_send_to_group(MQA_CB *mqa_cb, ASAPi_OPR_INFO *asapi_or,
 				status = mqa_send_to_destination_async(
 				    mqa_cb, &destination_mqnd, qsend_evt,
 				    length);
-			if (status != NCSCC_RC_SUCCESS)
+			if (status != SA_AIS_OK)
 				TRACE_2("Message Send through MDS Failure %d",
 					status);
 
@@ -2691,7 +2694,7 @@ SaAisErrorT mqa_receive_message(SaMsgQueueHandleT queueHandle,
 	if (queue_node->client_info->version.majorVersion ==
 	    MQA_MAJOR_VERSION) {
 		if (!mqa_cb->clm_node_joined ||
-			queue_node->client_info->isStale) {
+		    queue_node->client_info->isStale) {
 			TRACE_2("ERR_UNAVAILABLE: MQD or MQND is down");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			goto done;
@@ -2743,10 +2746,7 @@ SaAisErrorT mqa_receive_message(SaMsgQueueHandleT queueHandle,
 
 	/* Start timer = TimeOut value */
 	if ((timeout != 0) && (timeout != SA_TIME_MAX)) {
-
-		m_NCS_TMR_CREATE(tmr_id, timeout, msgget_timer_expired,
-				 (void *)&timer_arg);
-
+		tmr_id = ncs_tmr_alloc(const_cast<char *>(__FILE__), __LINE__);
 		if (tmr_id == NULL) {
 			TRACE_4("ERR_RESOURCES: Tmr Create Failed");
 			rc = SA_AIS_ERR_NO_RESOURCES;
@@ -2765,10 +2765,9 @@ SaAisErrorT mqa_receive_message(SaMsgQueueHandleT queueHandle,
 		memset(timer_arg, 0, sizeof(MQP_CANCEL_REQ));
 		timer_arg->queueHandle = queueHandle;
 		timer_arg->timerId = tmr_id;
-
-		m_NCS_TMR_START(tmr_id, timeout, msgget_timer_expired,
-				(void *)&timer_arg);
-
+		tmr_id = ncs_tmr_start(tmr_id, timeout, msgget_timer_expired,
+				       &timer_arg, const_cast<char *>(__FILE__),
+				       __LINE__);
 		is_timer_present = true;
 	}
 
@@ -3261,6 +3260,7 @@ SaAisErrorT saMsgMessageGet(SaMsgQueueHandleT queueHandle,
 			    SaMsgSenderIdT *senderId, SaTimeT timeout)
 {
 	SaAisErrorT rc = SA_AIS_OK;
+
 	TRACE_ENTER2(" SaMsgQueueHandle %llu ", queueHandle);
 
 	if (m_NCS_SA_IS_VALID_TIME_DURATION(timeout) == false) {
@@ -3342,7 +3342,7 @@ SaAisErrorT saMsgMessageCancel(SaMsgQueueHandleT queueHandle)
 	if (queue_node->client_info->version.majorVersion ==
 	    MQA_MAJOR_VERSION) {
 		if (!mqa_cb->clm_node_joined ||
-			queue_node->client_info->isStale) {
+		    queue_node->client_info->isStale) {
 			TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
 			rc = SA_AIS_ERR_UNAVAILABLE;
 			m_NCS_UNLOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE);
@@ -3499,7 +3499,7 @@ SaAisErrorT saMsgMessageSendReceive(SaMsgHandleT msgHandle,
 {
 	MQA_CB *mqa_cb;
 	MQA_CLIENT_INFO *client_info;
-	SaAisErrorT rc = SA_AIS_OK, rc1 = SA_AIS_OK;
+	SaAisErrorT rc = SA_AIS_OK;
 	ASAPi_OPR_INFO asapi_or;
 	MQSV_DSEND_EVT *qreply_evt = NULL;
 	MQSV_DSEND_EVT *qsend_evt = NULL;
@@ -3867,12 +3867,10 @@ send_del_callback:
 			    .invocation =
 			    qreply_evt->info.replyAsyncMsg.invocation;
 
-			/* Send using async send */
-			rc1 = mqa_mds_msg_async_send(
-			    (mqa_cb->mqa_mds_hdl), &reply_mds_dest,
-			    &msg_dlvr_ack, NCSMDS_SVC_ID_MQA);
-
-			if (rc1 != NCSCC_RC_SUCCESS) {
+			if (mqa_mds_msg_async_send(
+				(mqa_cb->mqa_mds_hdl), &reply_mds_dest,
+				&msg_dlvr_ack,
+				NCSMDS_SVC_ID_MQA) != NCSCC_RC_SUCCESS) {
 				TRACE_4(
 				    "ERR_RESOURCES: Message Send through MDS Failure %" PRIx64,
 				    mqa_cb->mqa_mds_dest);
@@ -5613,9 +5611,11 @@ done:
 
   Notes         : None
 ******************************************************************************/
-SaAisErrorT saMsgQueueCapacityThresholdsSet(SaMsgQueueHandleT queueHandle,
-		const SaMsgQueueThresholdsT *thresholds)
+SaAisErrorT
+saMsgQueueCapacityThresholdsSet(SaMsgQueueHandleT queueHandle,
+				const SaMsgQueueThresholdsT *thresholds)
 {
+	TRACE_ENTER2("SaMsgQueueHandle %llu ", queueHandle);
 	SaAisErrorT rc = SA_AIS_OK;
 	MQA_CB *mqa_cb;
 	bool locked = false;
@@ -5627,21 +5627,19 @@ SaAisErrorT saMsgQueueCapacityThresholdsSet(SaMsgQueueHandleT queueHandle,
 		uint8_t mds_rc;
 		int i;
 
-		TRACE_ENTER2("SaMsgQueueHandle %llu ", queueHandle);
-
 		/* retrieve MQA CB */
 		mqa_cb = (MQA_CB *)m_MQSV_MQA_RETRIEVE_MQA_CB;
 		if (!mqa_cb) {
 			TRACE_2("ERR_BAD_HANDLE: Control block retrieval "
-					"failed");
+				"failed");
 			rc = SA_AIS_ERR_BAD_HANDLE;
 			break;
 		}
 
 		if (m_NCS_LOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE) !=
-				NCSCC_RC_SUCCESS) {
+		    NCSCC_RC_SUCCESS) {
 			TRACE_4("ERR_LIBRARY: Lock failed for control block "
-					"write");
+				"write");
 			rc = SA_AIS_ERR_LIBRARY;
 			break;
 		}
@@ -5650,23 +5648,23 @@ SaAisErrorT saMsgQueueCapacityThresholdsSet(SaMsgQueueHandleT queueHandle,
 
 		/* Check if queueHandle is present in the tree */
 		if ((queue_node = mqa_queue_tree_find_and_add(
-		 	mqa_cb, queueHandle, false, NULL, 0)) == NULL) {
+			 mqa_cb, queueHandle, false, NULL, 0)) == NULL) {
 			TRACE_2("ERR_BAD_HANDLE: Queue Database Find Failed");
 			rc = SA_AIS_ERR_BAD_HANDLE;
 			break;
 		}
 
 		if (queue_node->client_info->version.majorVersion <
-	    		MQA_MAJOR_VERSION) {
+		    MQA_MAJOR_VERSION) {
 			TRACE_2("ERR_VERSION: client not B.03.01");
 			rc = SA_AIS_ERR_VERSION;
 			break;
 		}
 
 		if (queue_node->client_info->version.majorVersion ==
-	    		MQA_MAJOR_VERSION) {
+		    MQA_MAJOR_VERSION) {
 			if (!mqa_cb->clm_node_joined ||
-				queue_node->client_info->isStale) {
+			    queue_node->client_info->isStale) {
 				TRACE_2("ERR_UNAVAILABLE: node is not cluster "
 					"member");
 				rc = SA_AIS_ERR_UNAVAILABLE;
@@ -5681,12 +5679,11 @@ SaAisErrorT saMsgQueueCapacityThresholdsSet(SaMsgQueueHandleT queueHandle,
 		}
 
 		for (i = SA_MSG_MESSAGE_HIGHEST_PRIORITY;
-				i <= SA_MSG_MESSAGE_LOWEST_PRIORITY;
-				i++) {
+		     i <= SA_MSG_MESSAGE_LOWEST_PRIORITY; i++) {
 			if (thresholds->capacityAvailable[i] >
-					thresholds->capacityReached[i]) {
+			    thresholds->capacityReached[i]) {
 				TRACE_2("ERR_INVALID_PARAM: Available greater "
-						"than Reached");
+					"than Reached");
 				rc = SA_AIS_ERR_INVALID_PARAM;
 				break;
 			}
@@ -5706,41 +5703,39 @@ SaAisErrorT saMsgQueueCapacityThresholdsSet(SaMsgQueueHandleT queueHandle,
 		memset(&cap_evt, 0, sizeof(MQSV_EVT));
 		cap_evt.type = MQSV_EVT_MQP_REQ;
 		cap_evt.msg.mqp_req.type = MQP_EVT_CAP_SET_REQ;
-		cap_evt.msg.mqp_req.info.capacity.queueHandle = queueHandle;;
+		cap_evt.msg.mqp_req.info.capacity.queueHandle = queueHandle;
 		cap_evt.msg.mqp_req.info.capacity.thresholds = *thresholds;
 		cap_evt.msg.mqp_req.agent_mds_dest = mqa_cb->mqa_mds_dest;
 
 		/* send the request to the MQND */
 		mds_rc = mqa_mds_msg_sync_send(mqa_cb->mqa_mds_hdl,
-					&mqa_cb->mqnd_mds_dest,
-					&cap_evt,
-					&out_evt,
-					MQSV_WAIT_TIME);
+					       &mqa_cb->mqnd_mds_dest, &cap_evt,
+					       &out_evt, MQSV_WAIT_TIME);
 
 		switch (mds_rc) {
-			case NCSCC_RC_SUCCESS:
-				break;
+		case NCSCC_RC_SUCCESS:
+			break;
 
-			case NCSCC_RC_REQ_TIMOUT:
-				TRACE_2("ERR_TIMEOUT: Message Send through MDS "
-						"Timeout %" PRIx64,
-		    			mqa_cb->mqa_mds_dest);
-				rc = SA_AIS_ERR_TIMEOUT;
-				break;
+		case NCSCC_RC_REQ_TIMOUT:
+			TRACE_2("ERR_TIMEOUT: Message Send through MDS "
+				"Timeout %" PRIx64,
+				mqa_cb->mqa_mds_dest);
+			rc = SA_AIS_ERR_TIMEOUT;
+			break;
 
-			case NCSCC_RC_FAILURE:
-				TRACE_2("ERR_TRY_AGAIN: Message Send through "
-						"MDS Failure %" PRIx64,
-		    			mqa_cb->mqa_mds_dest);
-				rc = SA_AIS_ERR_TRY_AGAIN;
-				break;
+		case NCSCC_RC_FAILURE:
+			TRACE_2("ERR_TRY_AGAIN: Message Send through "
+				"MDS Failure %" PRIx64,
+				mqa_cb->mqa_mds_dest);
+			rc = SA_AIS_ERR_TRY_AGAIN;
+			break;
 
-			default:
-				TRACE_4("ERR_RESOURCES: Message Send through "
-						"MDS Failure %" PRIx64,
-		    			mqa_cb->mqa_mds_dest);
-				rc = SA_AIS_ERR_NO_RESOURCES;
-				break;
+		default:
+			TRACE_4("ERR_RESOURCES: Message Send through "
+				"MDS Failure %" PRIx64,
+				mqa_cb->mqa_mds_dest);
+			rc = SA_AIS_ERR_NO_RESOURCES;
+			break;
 		}
 
 		if (mds_rc != NCSCC_RC_SUCCESS)
@@ -5751,7 +5746,7 @@ SaAisErrorT saMsgQueueCapacityThresholdsSet(SaMsgQueueHandleT queueHandle,
 			m_MMGR_FREE_MQA_EVT(out_evt);
 		} else {
 			TRACE_4("ERR_RESOURCES: Response not received from "
-					"MQND");
+				"MQND");
 			rc = SA_AIS_ERR_NO_RESOURCES;
 		}
 	} while (false);
@@ -5785,8 +5780,9 @@ SaAisErrorT saMsgQueueCapacityThresholdsSet(SaMsgQueueHandleT queueHandle,
   Notes         : None
 ******************************************************************************/
 SaAisErrorT saMsgQueueCapacityThresholdsGet(SaMsgQueueHandleT queueHandle,
-		SaMsgQueueThresholdsT *thresholds)
+					    SaMsgQueueThresholdsT *thresholds)
 {
+	TRACE_ENTER2("SaMsgQueueHandle %llu ", queueHandle);
 	SaAisErrorT rc = SA_AIS_OK;
 	MQA_CB *mqa_cb;
 	bool locked = false;
@@ -5797,21 +5793,19 @@ SaAisErrorT saMsgQueueCapacityThresholdsGet(SaMsgQueueHandleT queueHandle,
 		MQA_QUEUE_INFO *queue_node;
 		uint8_t mds_rc;
 
-		TRACE_ENTER2("SaMsgQueueHandle %llu ", queueHandle);
-
 		/* retrieve MQA CB */
 		mqa_cb = (MQA_CB *)m_MQSV_MQA_RETRIEVE_MQA_CB;
 		if (!mqa_cb) {
 			TRACE_2("ERR_BAD_HANDLE: Control block retrieval "
-					"failed");
+				"failed");
 			rc = SA_AIS_ERR_BAD_HANDLE;
 			break;
 		}
 
 		if (m_NCS_LOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE) !=
-				NCSCC_RC_SUCCESS) {
+		    NCSCC_RC_SUCCESS) {
 			TRACE_4("ERR_LIBRARY: Lock failed for control block "
-					"write");
+				"write");
 			rc = SA_AIS_ERR_LIBRARY;
 			break;
 		}
@@ -5820,23 +5814,23 @@ SaAisErrorT saMsgQueueCapacityThresholdsGet(SaMsgQueueHandleT queueHandle,
 
 		/* Check if queueHandle is present in the tree */
 		if ((queue_node = mqa_queue_tree_find_and_add(
-		 	mqa_cb, queueHandle, false, NULL, 0)) == NULL) {
+			 mqa_cb, queueHandle, false, NULL, 0)) == NULL) {
 			TRACE_2("ERR_BAD_HANDLE: Queue Database Find Failed");
 			rc = SA_AIS_ERR_BAD_HANDLE;
 			break;
 		}
 
 		if (queue_node->client_info->version.majorVersion <
-	    		MQA_MAJOR_VERSION) {
+		    MQA_MAJOR_VERSION) {
 			TRACE_2("ERR_VERSION: client not B.03.01");
 			rc = SA_AIS_ERR_VERSION;
 			break;
 		}
 
 		if (queue_node->client_info->version.majorVersion ==
-	    		MQA_MAJOR_VERSION) {
+		    MQA_MAJOR_VERSION) {
 			if (!mqa_cb->clm_node_joined ||
-				queue_node->client_info->isStale) {
+			    queue_node->client_info->isStale) {
 				TRACE_2("ERR_UNAVAILABLE: node is not cluster "
 					"member");
 				rc = SA_AIS_ERR_UNAVAILABLE;
@@ -5861,40 +5855,38 @@ SaAisErrorT saMsgQueueCapacityThresholdsGet(SaMsgQueueHandleT queueHandle,
 		memset(&cap_evt, 0, sizeof(MQSV_EVT));
 		cap_evt.type = MQSV_EVT_MQP_REQ;
 		cap_evt.msg.mqp_req.type = MQP_EVT_CAP_GET_REQ;
-		cap_evt.msg.mqp_req.info.capacity.queueHandle = queueHandle;;
+		cap_evt.msg.mqp_req.info.capacity.queueHandle = queueHandle;
 		cap_evt.msg.mqp_req.agent_mds_dest = mqa_cb->mqa_mds_dest;
 
 		/* send the request to the MQND */
 		mds_rc = mqa_mds_msg_sync_send(mqa_cb->mqa_mds_hdl,
-					&mqa_cb->mqnd_mds_dest,
-					&cap_evt,
-					&out_evt,
-					MQSV_WAIT_TIME);
+					       &mqa_cb->mqnd_mds_dest, &cap_evt,
+					       &out_evt, MQSV_WAIT_TIME);
 
 		switch (mds_rc) {
-			case NCSCC_RC_SUCCESS:
-				break;
+		case NCSCC_RC_SUCCESS:
+			break;
 
-			case NCSCC_RC_REQ_TIMOUT:
-				TRACE_2("ERR_TIMEOUT: Message Send through MDS "
-						"Timeout %" PRIx64,
-		    			mqa_cb->mqa_mds_dest);
-				rc = SA_AIS_ERR_TIMEOUT;
-				break;
+		case NCSCC_RC_REQ_TIMOUT:
+			TRACE_2("ERR_TIMEOUT: Message Send through MDS "
+				"Timeout %" PRIx64,
+				mqa_cb->mqa_mds_dest);
+			rc = SA_AIS_ERR_TIMEOUT;
+			break;
 
-			case NCSCC_RC_FAILURE:
-				TRACE_2("ERR_TRY_AGAIN: Message Send through "
-						"MDS Failure %" PRIx64,
-		    			mqa_cb->mqa_mds_dest);
-				rc = SA_AIS_ERR_TRY_AGAIN;
-				break;
+		case NCSCC_RC_FAILURE:
+			TRACE_2("ERR_TRY_AGAIN: Message Send through "
+				"MDS Failure %" PRIx64,
+				mqa_cb->mqa_mds_dest);
+			rc = SA_AIS_ERR_TRY_AGAIN;
+			break;
 
-			default:
-				TRACE_4("ERR_RESOURCES: Message Send through "
-						"MDS Failure %" PRIx64,
-		    			mqa_cb->mqa_mds_dest);
-				rc = SA_AIS_ERR_NO_RESOURCES;
-				break;
+		default:
+			TRACE_4("ERR_RESOURCES: Message Send through "
+				"MDS Failure %" PRIx64,
+				mqa_cb->mqa_mds_dest);
+			rc = SA_AIS_ERR_NO_RESOURCES;
+			break;
 		}
 
 		if (mds_rc != NCSCC_RC_SUCCESS)
@@ -5904,14 +5896,14 @@ SaAisErrorT saMsgQueueCapacityThresholdsGet(SaMsgQueueHandleT queueHandle,
 			rc = out_evt->msg.mqp_rsp.error;
 
 			if (rc == SA_AIS_OK) {
-				*thresholds = out_evt->msg.mqp_rsp.info.
-					capacity.thresholds;
+				*thresholds = out_evt->msg.mqp_rsp.info.capacity
+						  .thresholds;
 			}
 
 			m_MMGR_FREE_MQA_EVT(out_evt);
 		} else {
 			TRACE_4("ERR_RESOURCES: Response not received from "
-					"MQND");
+				"MQND");
 			rc = SA_AIS_ERR_NO_RESOURCES;
 		}
 	} while (false);
@@ -5950,6 +5942,7 @@ static void msgget_timer_expired(void *arg)
 	NCS_OS_MQ_MSG mq_msg;
 	uint32_t rc;
 	MQP_CANCEL_REQ **cancel_req = (MQP_CANCEL_REQ **)arg;
+
 	TRACE_ENTER();
 
 	mqsv_message = (MQSV_MESSAGE *)mq_msg.data;

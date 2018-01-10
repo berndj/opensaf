@@ -96,6 +96,7 @@ uint32_t mqa_mds_register(MQA_CB *cb)
 	NCSMDS_INFO svc_info;
 	MDS_SVC_ID subs_id[2] = {NCSMDS_SVC_ID_MQND, NCSMDS_SVC_ID_MQD};
 	uint32_t rc = NCSCC_RC_SUCCESS;
+
 	TRACE_ENTER();
 
 	/* STEP1: Get the MDS Handle */
@@ -276,6 +277,7 @@ static uint32_t mqa_mds_cpy(MQA_CB *cb, MDS_CALLBACK_COPY_INFO *cpy)
 {
 	MQSV_EVT *pEvt = 0;
 	uint32_t rc = NCSCC_RC_SUCCESS;
+
 	TRACE_ENTER();
 
 	pEvt = m_MMGR_ALLOC_MQSV_EVT(NCS_SERVICE_ID_MQA);
@@ -313,8 +315,10 @@ static uint32_t mqa_mds_cpy(MQA_CB *cb, MDS_CALLBACK_COPY_INFO *cpy)
 static uint32_t mqa_mds_enc(MQA_CB *cb, MDS_CALLBACK_ENC_INFO *enc_info)
 {
 	MQSV_EVT *msg_ptr;
-	EDU_ERR ederror = 0;
+
+	EDU_ERR ederror{};
 	uint32_t rc = NCSCC_RC_SUCCESS;
+
 	TRACE_ENTER();
 
 	msg_ptr = (MQSV_EVT *)enc_info->i_msg;
@@ -372,9 +376,11 @@ static uint32_t mqa_mds_enc(MQA_CB *cb, MDS_CALLBACK_ENC_INFO *enc_info)
 static uint32_t mqa_mds_dec(MQA_CB *cb, MDS_CALLBACK_DEC_INFO *dec_info)
 {
 	MQSV_EVT *msg_ptr;
-	EDU_ERR ederror = 0;
+
+	EDU_ERR ederror{};
 	uint32_t rc = NCSCC_RC_SUCCESS;
 	bool is_valid_msg_fmt = false;
+
 	TRACE_ENTER();
 
 	if (dec_info->i_fr_svc_id == NCSMDS_SVC_ID_MQND) {
@@ -505,16 +511,17 @@ static uint32_t mqa_mds_rcv(MQA_CB *cb, MDS_CALLBACK_RECEIVE_INFO *rcv_info)
 
 		if (!cb->clm_node_joined) {
 			/* tell all clients they are stale now */
-                        MQA_CLIENT_INFO *client_info;
-                        SaMsgHandleT msgHandle = 0;
-                        for (client_info =
-                                 mqa_client_tree_find_next(cb, msgHandle);
-                             client_info;
-                             client_info = mqa_client_tree_find_next(
-                                 cb, client_info->msgHandle)) {
-                                client_info->isStale = true;
-                        }
-                }
+			MQA_CLIENT_INFO *client_info;
+			SaMsgHandleT msgHandle = 0;
+
+			for (client_info =
+				 mqa_client_tree_find_next(cb, msgHandle);
+			     client_info;
+			     client_info = mqa_client_tree_find_next(
+				 cb, client_info->msgHandle)) {
+				client_info->isStale = true;
+			}
+		}
 
 		return rc;
 	}
@@ -545,6 +552,7 @@ static uint32_t mqa_mds_svc_evt(MQA_CB *cb,
 				MDS_CALLBACK_SVC_EVENT_INFO *svc_evt)
 {
 	uint32_t to_dest_slotid, o_msg_fmt_ver;
+
 	TRACE_ENTER();
 
 	/* TBD: The MQND and MQD restarts are to be implemented post April
@@ -674,6 +682,7 @@ uint32_t mqa_mds_msg_sync_send(uint32_t mqa_mds_hdl, MDS_DEST *destination,
 	NCSMDS_INFO mds_info;
 	uint32_t rc;
 	MQA_CB *mqa_cb;
+
 	TRACE_ENTER();
 
 	if (!i_evt) {
@@ -723,7 +732,8 @@ uint32_t mqa_mds_msg_sync_send(uint32_t mqa_mds_hdl, MDS_DEST *destination,
 	m_NCS_LOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE);
 
 	if (rc == NCSCC_RC_SUCCESS)
-		*o_evt = mds_info.info.svc_send.info.sndrsp.o_rsp;
+		*o_evt = static_cast<MQSV_EVT *>(
+		    mds_info.info.svc_send.info.sndrsp.o_rsp);
 	else
 		TRACE_2("FAILURE: Message Send through MDS Failure");
 
@@ -759,6 +769,7 @@ uint32_t mqa_mds_msg_sync_send_direct(uint32_t mqa_mds_hdl,
 	MQA_CB *mqa_cb;
 	MQSV_DSEND_EVT *pEvt = NULL;
 	bool endianness = machineEndianness(), is_valid_msg_fmt = false;
+
 	TRACE_ENTER();
 
 	if (!i_evt) {
@@ -792,7 +803,8 @@ uint32_t mqa_mds_msg_sync_send_direct(uint32_t mqa_mds_hdl,
 	mds_info.i_op = MDS_DIRECT_SEND;
 
 	/* fill the send structure */
-	mds_info.info.svc_direct_send.i_direct_buff = (NCSCONTEXT)i_evt;
+	mds_info.info.svc_direct_send.i_direct_buff =
+	    reinterpret_cast<MDS_DIRECT_BUFF>(i_evt);
 	mds_info.info.svc_direct_send.i_direct_buff_len = length;
 
 	mds_info.info.svc_direct_send.i_priority = MDS_SEND_PRIORITY_MEDIUM;
@@ -830,14 +842,15 @@ uint32_t mqa_mds_msg_sync_send_direct(uint32_t mqa_mds_hdl,
 
 		if (pEvt->endianness != endianness) {
 
-			pEvt->type.rsp_type =
-			    m_MQSV_REVERSE_ENDIAN_L(&pEvt->type, endianness);
+			pEvt->type.rsp_type = static_cast<MQP_RSP_TYPE>(
+			    m_MQSV_REVERSE_ENDIAN_L(&pEvt->type, endianness));
 			if (pEvt->type.rsp_type == MQP_EVT_SEND_MSG_RSP) {
 				/* saMsgMessageSend response from MQND */
 				pEvt->info.sendMsgRsp.error =
-				    m_MQSV_REVERSE_ENDIAN_L(
-					&pEvt->info.sendMsgRsp.error,
-					endianness);
+				    static_cast<SaAisErrorT>(
+					m_MQSV_REVERSE_ENDIAN_L(
+					    &pEvt->info.sendMsgRsp.error,
+					    endianness));
 				pEvt->info.sendMsgRsp.msgHandle =
 				    m_MQSV_REVERSE_ENDIAN_LL(
 					&pEvt->info.sendMsgRsp.msgHandle,
@@ -885,11 +898,11 @@ uint32_t mqa_mds_msg_sync_send_direct(uint32_t mqa_mds_hdl,
 						endianness);
 
 					pEvt->info.replyMsg.messageInfo
-					    .sendReceive =
+					    .sendReceive = static_cast<SaBoolT>(
 					    m_MQSV_REVERSE_ENDIAN_L(
 						&pEvt->info.replyMsg.messageInfo
 						     .sendReceive,
-						endianness);
+						endianness));
 
 					pEvt->info.replyMsg.messageInfo.sender
 					    .senderId =
@@ -952,11 +965,12 @@ uint32_t mqa_mds_msg_sync_send_direct(uint32_t mqa_mds_hdl,
 						endianness);
 
 					pEvt->info.replyAsyncMsg.reply
-					    .messageInfo.sendReceive =
+					    .messageInfo
+					    .sendReceive = static_cast<SaBoolT>(
 					    m_MQSV_REVERSE_ENDIAN_LL(
 						&pEvt->info.replyAsyncMsg.reply
 						     .messageInfo.sendReceive,
-						endianness);
+						endianness));
 
 					pEvt->info.replyAsyncMsg.reply
 					    .messageInfo.sender.senderId =
@@ -1014,6 +1028,7 @@ uint32_t mqa_mds_msg_sync_reply_direct(uint32_t mqa_mds_hdl,
 	NCSMDS_INFO mds_info;
 	uint32_t rc;
 	MQA_CB *mqa_cb;
+
 	TRACE_ENTER();
 
 	if (!i_evt) {
@@ -1047,7 +1062,8 @@ uint32_t mqa_mds_msg_sync_reply_direct(uint32_t mqa_mds_hdl,
 	mds_info.i_op = MDS_DIRECT_SEND;
 
 	/* fill the send structure */
-	mds_info.info.svc_direct_send.i_direct_buff = (NCSCONTEXT)i_evt;
+	mds_info.info.svc_direct_send.i_direct_buff =
+	    reinterpret_cast<MDS_DIRECT_BUFF>(i_evt);
 	mds_info.info.svc_direct_send.i_direct_buff_len = length;
 
 	mds_info.info.svc_direct_send.i_priority = MDS_SEND_PRIORITY_MEDIUM;
@@ -1095,6 +1111,7 @@ uint32_t mqa_mds_msg_async_send(uint32_t mqa_mds_hdl, MDS_DEST *destination,
 	NCSMDS_INFO mds_info;
 	uint32_t rc;
 	MQA_CB *mqa_cb;
+
 	TRACE_ENTER();
 
 	if (!i_evt) {
@@ -1172,6 +1189,7 @@ uint32_t mqa_mds_msg_async_send_direct(uint32_t mqa_mds_hdl,
 	NCSMDS_INFO mds_info;
 	uint32_t rc;
 	MQA_CB *mqa_cb;
+
 	TRACE_ENTER();
 
 	if (!i_evt) {
@@ -1205,7 +1223,8 @@ uint32_t mqa_mds_msg_async_send_direct(uint32_t mqa_mds_hdl,
 	mds_info.i_op = MDS_DIRECT_SEND;
 
 	/* fill the send structure */
-	mds_info.info.svc_direct_send.i_direct_buff = (NCSCONTEXT)i_evt;
+	mds_info.info.svc_direct_send.i_direct_buff =
+	    reinterpret_cast<MDS_DIRECT_BUFF>(i_evt);
 	mds_info.info.svc_direct_send.i_direct_buff_len = length;
 
 	mds_info.info.svc_direct_send.i_priority = priority;
@@ -1251,6 +1270,7 @@ uint32_t mqa_mds_msg_async_reply_direct(uint32_t mqa_mds_hdl,
 	NCSMDS_INFO mds_info;
 	uint32_t rc;
 	MQA_CB *mqa_cb;
+
 	TRACE_ENTER();
 
 	if (!i_evt) {
@@ -1284,7 +1304,8 @@ uint32_t mqa_mds_msg_async_reply_direct(uint32_t mqa_mds_hdl,
 	mds_info.i_op = MDS_DIRECT_SEND;
 
 	/* fill the send structure */
-	mds_info.info.svc_direct_send.i_direct_buff = (NCSCONTEXT)i_evt;
+	mds_info.info.svc_direct_send.i_direct_buff =
+	    reinterpret_cast<MDS_DIRECT_BUFF>(i_evt);
 	mds_info.info.svc_direct_send.i_direct_buff_len = length;
 
 	mds_info.info.svc_direct_send.i_priority = MDS_SEND_PRIORITY_MEDIUM;

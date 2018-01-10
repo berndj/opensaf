@@ -148,18 +148,20 @@ typedef enum {
   m_NCS_MEM_FREE(p, NCS_MEM_REGION_PERSISTENT, NCS_SERVICE_ID_MQA, \
                  NCS_SERVICE_MQA_SUB_ID_MQA_MQSV_MESSAGE)
 
-#define m_MMGR_ALLOC_MQA_CANCEL_REQ(size)                                      \
-  (void *)m_NCS_MEM_ALLOC(size, NCS_MEM_REGION_PERSISTENT, NCS_SERVICE_ID_MQA, \
-                          NCS_SERVICE_MQA_SUB_ID_MQA_MQP_CANCEL_REQ)
+#define m_MMGR_ALLOC_MQA_CANCEL_REQ(size)                                  \
+  static_cast<MQP_CANCEL_REQ *>(                                           \
+      m_NCS_MEM_ALLOC(size, NCS_MEM_REGION_PERSISTENT, NCS_SERVICE_ID_MQA, \
+                      NCS_SERVICE_MQA_SUB_ID_MQA_MQP_CANCEL_REQ))
 
 #define m_MMGR_FREE_MQA_CANCEL_REQ(p)                              \
   if (p)                                                           \
   m_NCS_MEM_FREE(p, NCS_MEM_REGION_PERSISTENT, NCS_SERVICE_ID_MQA, \
                  NCS_SERVICE_MQA_SUB_ID_MQA_MQP_CANCEL_REQ)
 
-#define m_MMGR_ALLOC_MQA_OPEN_RSP(size)                                        \
-  (void *)m_NCS_MEM_ALLOC(size, NCS_MEM_REGION_PERSISTENT, NCS_SERVICE_ID_MQA, \
-                          NCS_SERVICE_MQA_SUB_ID_MQA_MQP_OPEN_RSP)
+#define m_MMGR_ALLOC_MQA_OPEN_RSP(size)                                    \
+  static_cast<MQP_OPEN_RSP *>(                                             \
+      m_NCS_MEM_ALLOC(size, NCS_MEM_REGION_PERSISTENT, NCS_SERVICE_ID_MQA, \
+                      NCS_SERVICE_MQA_SUB_ID_MQA_MQP_OPEN_RSP))
 
 #define m_MMGR_FREE_MQA_OPEN_RSP(p)                                \
   if (p)                                                           \

@@ -42,11 +42,11 @@ nodist_EXTRA_lib_libmsg_common_la_SOURCES = dummy.cc
 lib_LTLIBRARIES += lib/libSaMsg.la
 
 lib_libSaMsg_la_SOURCES = \
-	src/msg/agent/mqa_api.c \
-	src/msg/agent/mqa_mds.c \
-	src/msg/agent/mqa_clbk.c \
-	src/msg/agent/mqa_queue.c \
-	src/msg/agent/mqa_init.c
+	src/msg/agent/mqa_api.cc \
+	src/msg/agent/mqa_clbk.cc \
+	src/msg/agent/mqa_init.cc \
+	src/msg/agent/mqa_mds.cc \
+	src/msg/agent/mqa_queue.cc
 
 nodist_EXTRA_lib_libSaMsg_la_SOURCES = dummy.cc
 
