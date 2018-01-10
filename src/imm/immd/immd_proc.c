@@ -408,7 +408,7 @@ bool immd_proc_elect_coord(IMMD_CB *cb, bool new_active)
 			if (cb->immd_remote_id &&
 			    m_IMMND_IS_ON_SCXB(
 				cb->immd_remote_id,
-				immd_get_slot_and_subslot_id_from_mds_dest(
+				immd_get_node_id_from_mds_dest(
 				    immnd_info_node->immnd_dest))) {
 				cb->is_rem_immnd_up =
 				    true; /*ABT BUGFIX 080905 */
@@ -753,14 +753,11 @@ uint32_t immd_process_immnd_down(IMMD_CB *cb, IMMD_IMMND_INFO_NODE *immnd_info,
 	} else {
 		/* Check if it was the IMMND on the active controller that went
 		 * down. */
-		if (immd_get_slot_and_subslot_id_from_node_id(
-			immnd_info->immnd_key) == cb->immd_remote_id) {
+		if (immnd_info->immnd_key == cb->immd_remote_id) {
 			LOG_WA("IMMND DOWN on active controller %x "
 			       "detected at standby immd!! %x. "
 			       "Possible failover",
-			       immd_get_slot_and_subslot_id_from_node_id(
-				   immnd_info->immnd_key),
-			       cb->immd_self_id);
+			       immnd_info->immnd_key, cb->immd_self_id);
 
 			if (immnd_info->isCoord && immnd_info->syncStarted) {
 				immd_proc_abort_sync(cb, immnd_info);

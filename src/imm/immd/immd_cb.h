@@ -85,8 +85,8 @@ typedef struct immd_cb_tag {
 
   uint32_t immd_sync_cnt;  // ABT 32 bit => wrapparround!!
 
-  uint32_t immd_self_id;
-  uint32_t immd_remote_id;
+  NCS_NODE_ID immd_self_id;
+  NCS_NODE_ID immd_remote_id;
   bool immd_remote_up;  // Ticket #1819
 
   NCS_NODE_ID node_id;

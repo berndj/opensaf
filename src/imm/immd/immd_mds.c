@@ -174,8 +174,7 @@ uint32_t immd_mds_register(IMMD_CB *cb, SaAmfHAStateT ha_state)
 	/* Get the node id of local IMMD */
 	cb->node_id = m_NCS_GET_NODE_ID;
 
-	cb->immd_self_id =
-	    immd_get_slot_and_subslot_id_from_node_id(cb->node_id);
+	cb->immd_self_id = cb->node_id;
 	TRACE_5("NodeId:%x SelfId:%x", cb->node_id, cb->immd_self_id);
 	return NCSCC_RC_SUCCESS;
 }

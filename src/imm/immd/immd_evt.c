@@ -711,9 +711,7 @@ static void immd_req_sync(IMMD_CB *cb, IMMD_IMMND_INFO_NODE *node_info)
 		goto done;
 	}
 
-	if (cb->is_rem_immnd_up &&
-	    (cb->immd_remote_id ==
-	     immd_get_slot_and_subslot_id_from_node_id(cb->immnd_coord))) {
+	if (cb->is_rem_immnd_up && (cb->immd_remote_id == cb->immnd_coord)) {
 		/*Coord immnd is at remote, i.e. at standby SC. */
 		TRACE_5(
 		    "Send-3 SYNC_REQ to remote coord IMMND at standby SC, dest:%" PRIu64,
@@ -1071,13 +1069,13 @@ static IMMD_IMMND_INFO_NODE *immd_add_immnd_node(IMMD_CB *cb, MDS_DEST dest)
 
 	if (m_IMMND_IS_ON_SCXB(
 		cb->immd_self_id,
-		immd_get_slot_and_subslot_id_from_mds_dest(dest))) {
+		immd_get_node_id_from_mds_dest(dest))) {
 		TRACE_5("Added local IMMND");
 		cb->is_loc_immnd_up = true;
 		cb->loc_immnd_dest = dest;
 	} else if (m_IMMND_IS_ON_SCXB(
 		       cb->immd_remote_id,
-		       immd_get_slot_and_subslot_id_from_mds_dest(dest))) {
+		       immd_get_node_id_from_mds_dest(dest))) {
 		TRACE_5("Added remote IMMND - node_id:%x",
 			m_NCS_NODE_ID_FROM_MDS_DEST(dest));
 		cb->is_rem_immnd_up = true;
@@ -1849,7 +1847,7 @@ static uint32_t immd_evt_proc_immnd_intro(IMMD_CB *cb, IMMD_EVT *evt,
 	} else if (cb->immd_remote_id &&
 		   m_IMMND_IS_ON_SCXB(
 		       cb->immd_remote_id,
-		       immd_get_slot_and_subslot_id_from_mds_dest(
+		       immd_get_node_id_from_mds_dest(
 			   sinfo->dest))) {
 		node_info->isOnController = true;
 
@@ -3074,9 +3072,7 @@ static uint32_t immd_evt_proc_mds_evt(IMMD_CB *cb, IMMD_EVT *evt)
 		TRACE_5("Process MDS EVT NCSMDS_RED_DOWN, my PID:%u", getpid());
 		osafassert(cb->node_id != mds_info->node_id);
 		//#1773 #1819
-		if (cb->immd_remote_id ==
-		    immd_get_slot_and_subslot_id_from_node_id(
-			mds_info->node_id)) {
+		if (cb->immd_remote_id == mds_info->node_id) {
 			LOG_WA(
 			    "IMMD lost contact with peer IMMD (NCSMDS_RED_DOWN)");
 			cb->immd_remote_up = false;
@@ -3092,16 +3088,14 @@ static uint32_t immd_evt_proc_mds_evt(IMMD_CB *cb, IMMD_EVT *evt)
 
 	case NCSMDS_RED_UP:
 		/* get the peer mds_red_up */
-		/* from the phy slot get the mds_dest of remote IMMND */
+		/* from the Node ID get the mds_dest of remote IMMND */
 		TRACE_5("Process MDS EVT NCSMDS_RED_UP, my PID:%u", getpid());
 		if (cb->node_id != mds_info->node_id) {
 			MDS_DEST tmpDest = 0LL;
-			uint32_t immnd_remote_id = 0;
+			NCS_NODE_ID immnd_remote_id = 0;
 			TRACE_5("Remote IMMD is UP.");
 
-			cb->immd_remote_id =
-			    immd_get_slot_and_subslot_id_from_node_id(
-				mds_info->node_id);
+			cb->immd_remote_id = mds_info->node_id;
 			cb->immd_remote_up = true;
 
 			/*Check if the SBY IMMND has already identified itself.
@@ -3124,9 +3118,7 @@ static uint32_t immd_evt_proc_mds_evt(IMMD_CB *cb, IMMD_EVT *evt)
 						node_info->isOnController =
 						    true;
 						TRACE_5(
-						    "Located STDBY IMMND =  %x node_id:%x",
-						    immd_get_slot_and_subslot_id_from_node_id(
-							mds_info->node_id),
+						    "Located STDBY IMMND = node_id:%x",
 						    mds_info->node_id);
 						if (!cb->is_rem_immnd_up) {
 							immd_accept_node(
@@ -3141,7 +3133,7 @@ static uint32_t immd_evt_proc_mds_evt(IMMD_CB *cb, IMMD_EVT *evt)
 						    cb->is_rem_immnd_up &&
 						    cb->mIs2Pbe) {
 							immnd_remote_id =
-							    immd_get_slot_and_subslot_id_from_mds_dest(
+							    immd_get_node_id_from_mds_dest(
 								node_info
 								    ->immnd_dest);
 						}
@@ -3207,13 +3199,13 @@ static uint32_t immd_evt_proc_mds_evt(IMMD_CB *cb, IMMD_EVT *evt)
 
 		if (m_IMMND_IS_ON_SCXB(
 			cb->immd_self_id,
-			immd_get_slot_and_subslot_id_from_mds_dest(
+			immd_get_node_id_from_mds_dest(
 			    mds_info->dest))) {
 			TRACE_5("NCSMDS_DOWN => local IMMND down");
 			cb->is_loc_immnd_up = false;
 		} else if (m_IMMND_IS_ON_SCXB(
 			       cb->immd_remote_id,
-			       immd_get_slot_and_subslot_id_from_mds_dest(
+			       immd_get_node_id_from_mds_dest(
 				   mds_info->dest))) {
 			TRACE_5("NCSMDS_DOWN, remote IMMND/IMMD ?? down");
 			cb->is_rem_immnd_up = false;

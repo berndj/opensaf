@@ -43,8 +43,7 @@ void immd_cb_dump(void);
 uint32_t immd_mbcsv_chgrole(IMMD_CB *cb, SaAmfHAStateT ha_state);
 
 uint32_t immd_mbcsv_encode_proc(NCS_MBCSV_CB_ARG *arg);
-uint32_t immd_get_slot_and_subslot_id_from_mds_dest(MDS_DEST dest);
-uint32_t immd_get_slot_and_subslot_id_from_node_id(NCS_NODE_ID node_id);
+NCS_NODE_ID immd_get_node_id_from_mds_dest(MDS_DEST dest);
 uint32_t immd_mbcsv_register(IMMD_CB *cb);
 uint32_t immd_mbcsv_finalize(IMMD_CB *cb);
 uint32_t immd_mbcsv_close(IMMD_CB *cb);

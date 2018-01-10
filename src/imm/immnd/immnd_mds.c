@@ -124,7 +124,7 @@ uint32_t immnd_mds_register(IMMND_CB *cb)
 {
 	NCSMDS_INFO svc_info;
 	MDS_SVC_ID svc_id[1] = {NCSMDS_SVC_ID_IMMD};
-	/*NCS_PHY_SLOT_ID phy_slot; */
+	/*NCS_NODE_ID ncs_node_id; */
 	TRACE_ENTER();
 
 	/* STEP1: Get the MDS Handle */

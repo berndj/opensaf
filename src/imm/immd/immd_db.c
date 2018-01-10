@@ -317,28 +317,15 @@ uint32_t immd_cb_db_destroy(IMMD_CB *cb)
 }
 
 /*****************************************************************************
- Name    :  immd_get_slot_and_subslot_id_from_mds_dest
+ Name    :  immd_get_node_id_from_mds_dest
 
- Description :  To get the physical slot & subslot unique  id from the mds_dest
-
- Arguments   :
-*****************************************************************************/
-uint32_t immd_get_slot_and_subslot_id_from_mds_dest(MDS_DEST dest)
-{
-	return GetSlotSubslotIdFromNodeId(m_NCS_NODE_ID_FROM_MDS_DEST(dest));
-}
-
-/*****************************************************************************
- Name    :  immd_get_slot_and_subslot_id_from_node_id
-
- Description :  To get the physical slot & sbuslot unique  id from the node id
+ Description :  To get the unique Node ID from the mds_dest
 
  Arguments   :
 *****************************************************************************/
-uint32_t immd_get_slot_and_subslot_id_from_node_id(NCS_NODE_ID node_id)
+NCS_NODE_ID immd_get_node_id_from_mds_dest(MDS_DEST dest)
 {
-
-	return GetSlotSubslotIdFromNodeId(node_id);
+	return m_NCS_NODE_ID_FROM_MDS_DEST(dest);
 }
 
 void immd_db_save_fevs(IMMD_CB *cb, IMMSV_FEVS *fevs_msg)
