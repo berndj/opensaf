@@ -572,10 +572,10 @@ uint32_t cpd_sb_proc_ckpt_dest_add(CPD_CB *cb, CPD_MBCSV_MSG *msg)
 		if (!m_IS_SA_CKPT_CHECKPOINT_COLLOCATED(
 			&ckpt_node->attributes)) {
 			reploc_info->rep_type = REP_NONCOLL;
-			if ((cpd_get_slot_sub_id_from_mds_dest(
+			if ((cpd_get_node_id_from_mds_dest(
 				 msg->info.dest_add.mds_dest) ==
 			     cb->cpd_remote_id) ||
-			    (cpd_get_slot_sub_id_from_mds_dest(
+			    (cpd_get_node_id_from_mds_dest(
 				 msg->info.dest_add.mds_dest) ==
 			     cb->cpd_self_id)) {
 				TRACE_4(

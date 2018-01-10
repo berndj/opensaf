@@ -59,13 +59,6 @@ typedef enum rep_type {
   REP_SYNCUPD
 } REP_TYPE;
 
-typedef enum cpd_slot_id {
-  ACTIVE_SLOT_PC = 1,
-  STANDBY_SLOT_PC,
-  ACTIVE_SLOT_CH = 7,
-  STANDBY_SLOT_CH
-} CPD_SLOT_ID;
-
 typedef struct cpsv_node_ref_info {
   MDS_DEST dest;
   bool exp_opened;
@@ -166,11 +159,8 @@ typedef struct cpd_cb_tag {
   uint32_t cpd_sync_cnt;
   uint32_t sync_upd_cnt;
 
-  uint32_t cpd_self_id;
-  uint32_t cpd_remote_id;
-
-  uint32_t cpd_active_id;
-  uint32_t cpd_standby_id;
+  NCS_NODE_ID cpd_self_id;
+  NCS_NODE_ID cpd_remote_id;
 
   bool is_db_upd;
 

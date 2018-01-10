@@ -112,7 +112,7 @@ uint32_t cpd_mds_register(CPD_CB *cb)
 	NCSMDS_INFO svc_info;
 	MDS_SVC_ID svc_id[1] = {NCSMDS_SVC_ID_CPND};
 	MDS_SVC_ID cpd_id[1] = {NCSMDS_SVC_ID_CPD};
-	uint32_t phy_slot_sub_slot;
+	NCS_NODE_ID ncs_node_id;
 
 	TRACE_ENTER();
 	/* Create the virtual Destination for  CPD */
@@ -194,8 +194,8 @@ uint32_t cpd_mds_register(CPD_CB *cb)
 
 	/* Get the node id of local CPD */
 	cb->node_id = m_NCS_GET_NODE_ID;
-	phy_slot_sub_slot = cpd_get_slot_sub_slot_id_from_node_id(cb->node_id);
-	cb->cpd_self_id = phy_slot_sub_slot;
+	ncs_node_id = cb->node_id;
+	cb->cpd_self_id = ncs_node_id;
 
 	TRACE_LEAVE();
 	return NCSCC_RC_SUCCESS;

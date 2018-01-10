@@ -2394,10 +2394,10 @@ bool cpnd_is_noncollocated_replica_present_on_payload(CPND_CB *cb,
 	/* Check if the CPND is on Active or Standby SCXB */
 	if (m_CPND_IS_ON_SCXB(
 		cb->cpnd_active_id,
-		cpnd_get_slot_sub_slot_id_from_mds_dest(cb->cpnd_mdest_id)) ||
+		cpnd_get_node_id_from_mds_dest(cb->cpnd_mdest_id)) ||
 	    m_CPND_IS_ON_SCXB(
 		cb->cpnd_standby_id,
-		cpnd_get_slot_sub_slot_id_from_mds_dest(cb->cpnd_mdest_id))) {
+		cpnd_get_node_id_from_mds_dest(cb->cpnd_mdest_id))) {
 
 		dest_list = cp_node->cpnd_dest_list;
 
@@ -2406,11 +2406,11 @@ bool cpnd_is_noncollocated_replica_present_on_payload(CPND_CB *cb,
 			 * blades */
 			if ((!m_CPND_IS_ON_SCXB(
 				cb->cpnd_active_id,
-				cpnd_get_slot_sub_slot_id_from_mds_dest(
+				cpnd_get_node_id_from_mds_dest(
 				    dest_list->dest))) &&
 			    (!m_CPND_IS_ON_SCXB(
 				cb->cpnd_standby_id,
-				cpnd_get_slot_sub_slot_id_from_mds_dest(
+				cpnd_get_node_id_from_mds_dest(
 				    dest_list->dest)))) {
 				TRACE_LEAVE();
 				return true;
@@ -2660,11 +2660,11 @@ void cpnd_ckpt_sc_cpnd_mdest_del(CPND_CB *cb)
 		while (dest_list) {
 			if ((m_CPND_IS_ON_SCXB(
 				cb->cpnd_active_id,
-				cpnd_get_slot_sub_slot_id_from_mds_dest(
+				cpnd_get_node_id_from_mds_dest(
 				    dest_list->dest))) ||
 			    (m_CPND_IS_ON_SCXB(
 				cb->cpnd_standby_id,
-				cpnd_get_slot_sub_slot_id_from_mds_dest(
+				cpnd_get_node_id_from_mds_dest(
 				    dest_list->dest))))
 				cpnd_ckpt_remote_cpnd_del(ckpt_node,
 							  dest_list->dest);
@@ -2713,11 +2713,11 @@ void cpnd_headless_ckpt_node_del(CPND_CB *cb)
 			ckpt_node->create_attrib.creationFlags)) {
 			if ((m_CPND_IS_ON_SCXB(
 				cb->cpnd_active_id,
-				cpnd_get_slot_sub_slot_id_from_mds_dest(
+				cpnd_get_node_id_from_mds_dest(
 				    active_mds_dest))) ||
 			    (m_CPND_IS_ON_SCXB(
 				cb->cpnd_standby_id,
-				cpnd_get_slot_sub_slot_id_from_mds_dest(
+				cpnd_get_node_id_from_mds_dest(
 				    active_mds_dest))))
 				destroy = true;
 		}

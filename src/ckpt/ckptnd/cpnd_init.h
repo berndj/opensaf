@@ -215,8 +215,7 @@ uint32_t cpnd_sec_hdr_update(CPND_CB *cb, CPND_CKPT_SECTION_INFO *pSecPtr,
                              CPND_CKPT_NODE *cp_node);
 uint32_t cpnd_ckpt_hdr_update(CPND_CB *cb, CPND_CKPT_NODE *cp_node);
 void cpnd_ckpt_node_destroy(CPND_CB *cb, CPND_CKPT_NODE *cp_node);
-uint32_t cpnd_get_slot_sub_slot_id_from_mds_dest(MDS_DEST dest);
-uint32_t cpnd_get_slot_sub_slot_id_from_node_id(NCS_NODE_ID i_node_id);
+NCS_NODE_ID cpnd_get_node_id_from_mds_dest(MDS_DEST dest);
 void cpnd_agent_dest_add(CPND_CKPT_NODE *cp_node, MDS_DEST adest);
 void cpnd_agent_dest_del(CPND_CKPT_NODE *cp_node, MDS_DEST adest);
 void cpnd_proc_pending_writes(CPND_CB *cb, CPND_CKPT_NODE *cp_node,

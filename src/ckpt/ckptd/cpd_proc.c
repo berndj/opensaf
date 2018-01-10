@@ -323,9 +323,9 @@ uint32_t cpd_ckpt_db_entry_update(CPD_CB *cb, MDS_DEST *cpnd_dest,
 					TRACE_4(
 					    "cpd db add failed in db entry update");
 				}
-			} else if ((cpd_get_slot_sub_id_from_mds_dest(
+			} else if ((cpd_get_node_id_from_mds_dest(
 					*cpnd_dest) == cb->cpd_remote_id) ||
-				   (cpd_get_slot_sub_id_from_mds_dest(
+				   (cpd_get_node_id_from_mds_dest(
 					*cpnd_dest) == cb->cpd_self_id)) {
 				TRACE_4(
 				    " reploc node add for non-collocated on controller ckpt_id:%llx",
@@ -386,28 +386,28 @@ uint32_t cpd_ckpt_db_entry_update(CPD_CB *cb, MDS_DEST *cpnd_dest,
 			&ckpt_create->attributes)) &&
 		    (m_CPND_IS_ON_SCXB(
 			cb->cpd_self_id,
-			cpd_get_slot_sub_id_from_mds_dest(*cpnd_dest)))) {
+			cpd_get_node_id_from_mds_dest(*cpnd_dest)))) {
 			if (!ckpt_node->ckpt_on_scxb1)
 				ckpt_node->ckpt_on_scxb1 =
-				    (uint32_t)cpd_get_slot_sub_id_from_mds_dest(
+				    (uint32_t)cpd_get_node_id_from_mds_dest(
 					*cpnd_dest);
 			else
 				ckpt_node->ckpt_on_scxb2 =
-				    (uint32_t)cpd_get_slot_sub_id_from_mds_dest(
+				    (uint32_t)cpd_get_node_id_from_mds_dest(
 					*cpnd_dest);
 		}
 		if ((!m_IS_SA_CKPT_CHECKPOINT_COLLOCATED(
 			&ckpt_create->attributes)) &&
 		    m_CPND_IS_ON_SCXB(
 			cb->cpd_remote_id,
-			cpd_get_slot_sub_id_from_mds_dest(*cpnd_dest))) {
+			cpd_get_node_id_from_mds_dest(*cpnd_dest))) {
 			if (!ckpt_node->ckpt_on_scxb1)
 				ckpt_node->ckpt_on_scxb1 =
-				    (uint32_t)cpd_get_slot_sub_id_from_mds_dest(
+				    (uint32_t)cpd_get_node_id_from_mds_dest(
 					*cpnd_dest);
 			else
 				ckpt_node->ckpt_on_scxb2 =
-				    (uint32_t)cpd_get_slot_sub_id_from_mds_dest(
+				    (uint32_t)cpd_get_node_id_from_mds_dest(
 					*cpnd_dest);
 		}
 		proc_rc = cpd_ckpt_node_add(&cb->ckpt_tree, ckpt_node,
@@ -654,11 +654,11 @@ uint32_t cpd_process_ckpt_delete(CPD_CB *cb, CPD_CKPT_INFO_NODE *ckpt_node,
 				while (nref_info) {
 					if ((m_CPND_IS_ON_SCXB(
 						cb->cpd_self_id,
-						cpd_get_slot_sub_id_from_mds_dest(
+						cpd_get_node_id_from_mds_dest(
 						    nref_info->dest))) ||
 					    (m_CPND_IS_ON_SCXB(
 						cb->cpd_remote_id,
-						cpd_get_slot_sub_id_from_mds_dest(
+						cpd_get_node_id_from_mds_dest(
 						    nref_info->dest)))) {
 						ckpt_node->is_active_exists =
 						    true;
@@ -835,13 +835,13 @@ uint32_t cpd_process_cpnd_down(CPD_CB *cb, MDS_DEST *cpnd_dest)
 
 				if (m_CPND_IS_ON_SCXB(
 					ckpt_node->ckpt_on_scxb1,
-					cpd_get_slot_sub_id_from_mds_dest(
+					cpd_get_node_id_from_mds_dest(
 					    *cpnd_dest))) {
 					ckpt_node->ckpt_on_scxb1 = 0;
 				}
 				if (m_CPND_IS_ON_SCXB(
 					ckpt_node->ckpt_on_scxb2,
-					cpd_get_slot_sub_id_from_mds_dest(
+					cpd_get_node_id_from_mds_dest(
 					    *cpnd_dest))) {
 					ckpt_node->ckpt_on_scxb2 = 0;
 				}
@@ -868,12 +868,12 @@ uint32_t cpd_process_cpnd_down(CPD_CB *cb, MDS_DEST *cpnd_dest)
 						while (nref_info2) {
 							if ((m_CPND_IS_ON_SCXB(
 								cb->cpd_self_id,
-								cpd_get_slot_sub_id_from_mds_dest(
+								cpd_get_node_id_from_mds_dest(
 								    nref_info2
 									->dest))) ||
 							    (m_CPND_IS_ON_SCXB(
 								cb->cpd_remote_id,
-								cpd_get_slot_sub_id_from_mds_dest(
+								cpd_get_node_id_from_mds_dest(
 								    nref_info2
 									->dest)))) {
 								ckpt_node
@@ -1286,10 +1286,10 @@ bool cpd_is_noncollocated_replica_present_on_payload(
 		/* Check if a replica is present on one of the payload blades */
 		if ((!m_CPND_IS_ON_SCXB(
 			cb->cpd_self_id,
-			cpd_get_slot_sub_id_from_mds_dest(nref_info->dest))) &&
+			cpd_get_node_id_from_mds_dest(nref_info->dest))) &&
 		    (!m_CPND_IS_ON_SCXB(
 			cb->cpd_remote_id,
-			cpd_get_slot_sub_id_from_mds_dest(nref_info->dest)))) {
+			cpd_get_node_id_from_mds_dest(nref_info->dest)))) {
 			/* Check whether this  is the lost application closed
 			   for this cktp, in the cluster ( num_users = 1 )if
 			   not, don't delete the  replicas in the cluster . */
@@ -1639,28 +1639,28 @@ uint32_t cpd_ckpt_db_update_after_headless(CPD_CB *cb, MDS_DEST *cpnd_dest,
 			&ckpt_info->attributes)) &&
 		    (m_CPND_IS_ON_SCXB(
 			cb->cpd_self_id,
-			cpd_get_slot_sub_id_from_mds_dest(*cpnd_dest)))) {
+			cpd_get_node_id_from_mds_dest(*cpnd_dest)))) {
 			if (!ckpt_node->ckpt_on_scxb1)
 				ckpt_node->ckpt_on_scxb1 =
-				    (uint32_t)cpd_get_slot_sub_id_from_mds_dest(
+				    (uint32_t)cpd_get_node_id_from_mds_dest(
 					*cpnd_dest);
 			else
 				ckpt_node->ckpt_on_scxb2 =
-				    (uint32_t)cpd_get_slot_sub_id_from_mds_dest(
+				    (uint32_t)cpd_get_node_id_from_mds_dest(
 					*cpnd_dest);
 		}
 		if ((!m_IS_SA_CKPT_CHECKPOINT_COLLOCATED(
 			&ckpt_info->attributes)) &&
 		    m_CPND_IS_ON_SCXB(
 			cb->cpd_remote_id,
-			cpd_get_slot_sub_id_from_mds_dest(*cpnd_dest))) {
+			cpd_get_node_id_from_mds_dest(*cpnd_dest))) {
 			if (!ckpt_node->ckpt_on_scxb1)
 				ckpt_node->ckpt_on_scxb1 =
-				    (uint32_t)cpd_get_slot_sub_id_from_mds_dest(
+				    (uint32_t)cpd_get_node_id_from_mds_dest(
 					*cpnd_dest);
 			else
 				ckpt_node->ckpt_on_scxb2 =
-				    (uint32_t)cpd_get_slot_sub_id_from_mds_dest(
+				    (uint32_t)cpd_get_node_id_from_mds_dest(
 					*cpnd_dest);
 		}
 

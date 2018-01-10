@@ -124,13 +124,6 @@ extern uint32_t gl_cpnd_cb_hdl;
 #define CPND_WRT_CPD_SUBPART_VER_RANGE \
   (CPND_WRT_CPD_SUBPART_VER_MAX - CPND_WRT_CPD_SUBPART_VER_MIN + 1)
 
-typedef enum cpnd_slot_id {
-  ACTIVE_SLOT_PC = 1,
-  STANDBY_SLOT_PC,
-  ACTIVE_SLOT_CH = 7,
-  STANDBY_SLOT_CH
-} CPND_SLOT_ID;
-
 typedef enum cpnd_state_info {
   CPND_LOCAL_NODE = 1,
   CPND_REMOTE_NODE = 2,
@@ -319,12 +312,10 @@ typedef struct cpnd_cb_tag {
   bool cpnd_first_time;
   bool read_lck_flag;
 
-  uint32_t cpnd_active_id;
-  uint32_t cpnd_standby_id;
+  NCS_NODE_ID cpnd_active_id;
+  NCS_NODE_ID cpnd_standby_id;
 
   NCS_NODE_ID node_id;
-  uint32_t cpnd_self_id;
-  uint32_t cpnd_remote_id;
 
   SaAmfHAStateT ha_state; /* present AMF HA state of the component     */
   EDU_HDL cpnd_edu_hdl;   /* edu handle used for encode/decode         */

@@ -1027,7 +1027,7 @@ static uint32_t cpnd_mds_svc_evt(CPND_CB *cb,
 {
 	CPSV_EVT *evt = NULL;
 	uint32_t rc = NCSCC_RC_SUCCESS, priority = NCS_IPC_PRIORITY_HIGH;
-	uint32_t phy_slot_sub_slot;
+	NCS_NODE_ID ncs_node_id;
 
 	TRACE_ENTER();
 	if (svc_evt->i_svc_id == NCSMDS_SVC_ID_CPD) {
@@ -1067,17 +1067,13 @@ static uint32_t cpnd_mds_svc_evt(CPND_CB *cb,
 		case NCSMDS_RED_UP:
 			if (svc_evt->i_role == V_DEST_RL_ACTIVE) {
 
-				phy_slot_sub_slot =
-				    cpnd_get_slot_sub_slot_id_from_node_id(
-					svc_evt->i_node_id);
-				cb->cpnd_active_id = phy_slot_sub_slot;
+				ncs_node_id = svc_evt->i_node_id;
+				cb->cpnd_active_id = ncs_node_id;
 				cb->is_cpd_up = true;
 			} else if (svc_evt->i_role == V_DEST_RL_STANDBY) {
 
-				phy_slot_sub_slot =
-				    cpnd_get_slot_sub_slot_id_from_node_id(
-					svc_evt->i_node_id);
-				cb->cpnd_standby_id = phy_slot_sub_slot;
+				ncs_node_id = svc_evt->i_node_id;
+				cb->cpnd_standby_id = ncs_node_id;
 				m_NCS_UNLOCK(&cb->cpnd_cpd_up_lock,
 					     NCS_LOCK_WRITE);
 				TRACE_LEAVE();
@@ -1085,26 +1081,20 @@ static uint32_t cpnd_mds_svc_evt(CPND_CB *cb,
 			}
 			break;
 		case NCSMDS_RED_DOWN:
-			phy_slot_sub_slot =
-			    cpnd_get_slot_sub_slot_id_from_node_id(
-				svc_evt->i_node_id);
-			if (cb->cpnd_active_id == phy_slot_sub_slot)
+			ncs_node_id = svc_evt->i_node_id;
+			if (cb->cpnd_active_id == ncs_node_id)
 				cb->is_cpd_up = false;
 			break;
 		case NCSMDS_CHG_ROLE:
 			if (svc_evt->i_role == V_DEST_RL_ACTIVE) {
 
-				phy_slot_sub_slot =
-				    cpnd_get_slot_sub_slot_id_from_node_id(
-					svc_evt->i_node_id);
-				cb->cpnd_active_id = phy_slot_sub_slot;
+				ncs_node_id = svc_evt->i_node_id;
+				cb->cpnd_active_id = ncs_node_id;
 				cb->is_cpd_up = true;
 			} else if (svc_evt->i_role == V_DEST_RL_STANDBY) {
 
-				phy_slot_sub_slot =
-				    cpnd_get_slot_sub_slot_id_from_node_id(
-					svc_evt->i_node_id);
-				cb->cpnd_standby_id = phy_slot_sub_slot;
+				ncs_node_id = svc_evt->i_node_id;
+				cb->cpnd_standby_id = ncs_node_id;
 			}
 			break;
 

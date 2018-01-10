@@ -805,25 +805,14 @@ void cpnd_allrepl_write_evt_node_tree_destroy(CPND_CB *cb)
 }
 
 /***********************************************************************************
- * Name            : cpnd_get_slot_sub_slot_id_from_mds_dest
+ * Name            : cpnd_get_node_id_from_mds_dest
  *
- * Description     : To get the physical slot & sub slot  id from MDS_DEST
- *
- *********************************************************************************/
-uint32_t cpnd_get_slot_sub_slot_id_from_mds_dest(MDS_DEST dest)
-{
-	return GetSlotSubslotIdFromNodeId(m_NCS_NODE_ID_FROM_MDS_DEST(dest));
-}
-
-/***********************************************************************************
- * Name            : cpnd_get_slot_sub_slot_id_from_node_id
- *
- * Description     : To get the physical slot & sub slot  id from node id
+ * Description     : To get the Node ID from MDS_DEST
  *
  *********************************************************************************/
-uint32_t cpnd_get_slot_sub_slot_id_from_node_id(NCS_NODE_ID i_node_id)
+NCS_NODE_ID cpnd_get_node_id_from_mds_dest(MDS_DEST dest)
 {
-	return GetSlotSubslotIdFromNodeId(i_node_id);
+	return m_NCS_NODE_ID_FROM_MDS_DEST(dest);
 }
 
 /******************************************************************************************

@@ -1304,31 +1304,17 @@ uint32_t cpd_process_cpnd_del(CPD_CB *cb, MDS_DEST *cpnd_dest)
 }
 
 /********************************************************************************
- Name    :  cpd_get_slot_sub_id_from_mds_dest
+ Name    :  cpd_get_node_id_from_mds_dest
 
- Description :  To get the physical slot id from the mds dest
-
- Arguments   :
-
-*************************************************************************************/
-
-uint32_t cpd_get_slot_sub_id_from_mds_dest(MDS_DEST dest)
-{
-	return GetSlotSubslotIdFromNodeId(m_NCS_NODE_ID_FROM_MDS_DEST(dest));
-}
-
-/********************************************************************************
- Name    :  cpd_get_slot_sub_id_from_mds_dest
-
- Description :  To get the physical slot id from the node id
+ Description :  To get the Node ID from the mds dest
 
  Arguments   :
 
 *************************************************************************************/
 
-uint32_t cpd_get_slot_sub_slot_id_from_node_id(NCS_NODE_ID i_node_id)
+NCS_NODE_ID cpd_get_node_id_from_mds_dest(MDS_DEST dest)
 {
-	return GetSlotSubslotIdFromNodeId(i_node_id);
+	return m_NCS_NODE_ID_FROM_MDS_DEST(dest);
 }
 
 /*******************************************************************************************
