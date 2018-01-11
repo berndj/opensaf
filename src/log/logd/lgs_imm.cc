@@ -82,6 +82,11 @@ static const SaImmClassNameT logConfig_str =
 static const SaImmClassNameT streamConfig_str =
     const_cast<SaImmClassNameT>("SaLogStreamConfig");
 
+// The list contains path-file names when validating its name in CCB completed
+// callback. This help for log service prevents that creating any streams
+// in same CCB with duplicated log path-file name
+static std::vector<std::string> file_path_list;
+
 /* FUNCTIONS
  * ---------
  */
@@ -1034,8 +1039,8 @@ static lgs_stream_defval_t *get_SaLogStreamConfig_default() {
 }
 
 /**
- * Check if a stream with the same file name and relative path already
- * exist
+ * Check if file name and relative path of new stream are duplicated with
+ * a stream that already exists or in same CCB
  *
  * @param immOiHandle
  * @param fileName
@@ -1044,9 +1049,10 @@ static lgs_stream_defval_t *get_SaLogStreamConfig_default() {
  * @param operationType
  * @return true if exists
  */
-bool chk_filepath_stream_exist(std::string &fileName, std::string &pathName,
-                               log_stream_t *stream,
-                               enum CcbUtilOperationType operationType) {
+static bool check_duplicated_file_path(
+    std::string &fileName, std::string &pathName,
+    log_stream_t *stream,
+    enum CcbUtilOperationType operationType) {
   log_stream_t *i_stream = NULL;
   std::string i_fileName;
   std::string i_pathName;
@@ -1097,9 +1103,18 @@ bool chk_filepath_stream_exist(std::string &fileName, std::string &pathName,
     osafassert(0);
   }
 
-  /* Check if any stream has given filename and path */
-  TRACE("Check if any stream has given filename and path");
-  // Iterate all existing log streams in cluster.
+  TRACE("Check if filename and pathname are duplicated");
+
+  // Check if any streams in the same CCB has given filename and pathname
+  std::string tmp_str = i_pathName + i_fileName;
+  for (auto &file_path : file_path_list) {
+    if (file_path == tmp_str) {
+      return true;
+    }
+  }
+  file_path_list.push_back(tmp_str);
+
+  // Check if any current streams has given filename and pathname
   SaBoolT endloop = SA_FALSE, jstart = SA_TRUE;
   while ((i_stream = iterate_all_streams(endloop, jstart)) && !endloop) {
     jstart = SA_FALSE;
@@ -1562,13 +1577,13 @@ static SaAisErrorT check_attr_validity(
         goto done;
       }
 
-      if (chk_filepath_stream_exist(i_fileName, i_pathName, stream,
-                                    opdata->operationType)) {
+      if (check_duplicated_file_path(i_fileName, i_pathName, stream,
+                                     opdata->operationType)) {
         report_oi_error(immOiHandle, opdata->ccbId,
-                        "Path/file %s/%s already exist", i_pathName.c_str(),
+                        "Path/file %s/%s is duplicated", i_pathName.c_str(),
                         i_fileName.c_str());
         rc = SA_AIS_ERR_BAD_OPERATION;
-        TRACE("Path/file %s/%s already exist", i_pathName.c_str(),
+        TRACE("Path/file %s/%s is duplicated", i_pathName.c_str(),
               i_fileName.c_str());
         goto done;
       }
@@ -1864,7 +1879,12 @@ static SaAisErrorT ccbCompletedCallback(SaImmOiHandleT immOiHandle,
         assert(0);
         break;
     }
+
+    if (rc != SA_AIS_OK) break;
   }
+
+  // Clear "file_path_list" list
+  file_path_list.clear();
 
 done:
   /*
@@ -1875,6 +1895,7 @@ done:
   TRACE_LEAVE2("rc = %u", cb_rc);
   return cb_rc;
 }
+
 /**
  * Set logRootDirectory to new value
  *   - Close all open logfiles
