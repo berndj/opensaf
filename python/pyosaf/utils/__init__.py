@@ -27,7 +27,7 @@ from pyosaf import saImmOm
 from pyosaf.saAis import eSaAisErrorT, SaStringT, unmarshalNullArray
 
 # Version for pyosaf utils
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 # The 'MAX_RETRY_TIME' and 'RETRY_INTERVAL' environment variables shall be set
 # with user-defined values BEFORE importing the pyosaf 'utils' module;
