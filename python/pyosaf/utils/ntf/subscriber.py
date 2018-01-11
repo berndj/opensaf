@@ -495,8 +495,9 @@ class NtfConsumer(ntf.NtfAgent):
         """
         ntf_info = ntf.NotificationInfo()
         ntf_info.event_type = ntf_header.eventType.contents.value
-        ntf_info.notification_object = ntf_header.notificationObject.contents
-        ntf_info.notifying_object = ntf_header.notifyingObject.contents
+        ntf_info.notification_object = \
+            str(ntf_header.notificationObject.contents)
+        ntf_info.notifying_object = str(ntf_header.notifyingObject.contents)
         ntf_info.ntf_class_id = \
             ntf_header.notificationClassId.contents
         ntf_info.event_time = ntf_header.eventTime.contents.value
