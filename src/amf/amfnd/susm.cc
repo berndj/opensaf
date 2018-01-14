@@ -3208,7 +3208,7 @@ uint32_t avnd_su_pres_terming_compuninst_hdler(AVND_CB *cb, AVND_SU *su,
       if (NCSCC_RC_SUCCESS != rc) goto done;
     }
 
-    if (all_csis_in_assigned_state(su) || all_csis_in_removed_state(su)) {
+    if (all_csis_in_assigned_state(su) || all_csis_removable_from_su(su)) {
       TRACE("SI Assignment done");
       avnd_su_pres_state_set(cb, su, SA_AMF_PRESENCE_UNINSTANTIATED);
       goto done;

@@ -1703,11 +1703,12 @@ done:
   return rc;
 }
 
-static bool all_csis_in_si_removed(const AVND_SU_SI_REC *si) {
+static bool all_csis_removable_from_si(const AVND_SU_SI_REC *si) {
   AVND_COMP_CSI_REC *csi;
   for (csi = (AVND_COMP_CSI_REC *)m_NCS_DBLIST_FIND_FIRST(&si->csi_list); csi;
        csi = (AVND_COMP_CSI_REC *)m_NCS_DBLIST_FIND_NEXT(&csi->si_dll_node)) {
-    if (csi->curr_assign_state != AVND_COMP_CSI_ASSIGN_STATE_REMOVED)
+    if (csi->curr_assign_state != AVND_COMP_CSI_ASSIGN_STATE_REMOVED &&
+        csi->curr_assign_state != AVND_COMP_CSI_ASSIGN_STATE_UNASSIGNED)
       return false;
   }
   return true;
@@ -1720,8 +1721,7 @@ static bool all_csis_in_si_removed(const AVND_SU_SI_REC *si) {
  *
  * @returns     true/false
  **/
-bool all_csis_in_removed_state(const AVND_SU *su) {
-  AVND_COMP_CSI_REC *curr_csi;
+bool all_csis_removable_from_su(const AVND_SU *su) {
   AVND_SU_SI_REC *curr_si;
   bool all_csi_removed = true;
   TRACE_ENTER2("'%s'", su->name.c_str());
@@ -1730,15 +1730,7 @@ bool all_csis_in_removed_state(const AVND_SU *su) {
        curr_si && all_csi_removed;
        curr_si =
            (AVND_SU_SI_REC *)m_NCS_DBLIST_FIND_NEXT(&curr_si->su_dll_node)) {
-    for (curr_csi =
-             (AVND_COMP_CSI_REC *)m_NCS_DBLIST_FIND_FIRST(&curr_si->csi_list);
-         curr_csi; curr_csi = (AVND_COMP_CSI_REC *)m_NCS_DBLIST_FIND_NEXT(
-                       &curr_csi->si_dll_node)) {
-      if (!m_AVND_COMP_CSI_CURR_ASSIGN_STATE_IS_REMOVED(curr_csi)) {
-        all_csi_removed = false;
-        break;
-      }
-    }
+    all_csi_removed = all_csis_removable_from_si(curr_si);
   }
   TRACE_LEAVE2("%u", all_csi_removed);
   return all_csi_removed;
@@ -1822,7 +1814,8 @@ uint32_t avnd_comp_csi_remove_done(AVND_CB *cb, AVND_COMP *comp,
                (AVND_COMP_CSI_REC *)m_NCS_DBLIST_FIND_LAST(&csi->si->csi_list);
            curr_csi; curr_csi = (AVND_COMP_CSI_REC *)m_NCS_DBLIST_FIND_PREV(
                          &curr_csi->si_dll_node)) {
-        if (m_AVND_COMP_CSI_CURR_ASSIGN_STATE_IS_REMOVED(curr_csi))
+        if (m_AVND_COMP_CSI_CURR_ASSIGN_STATE_IS_REMOVED(curr_csi) ||
+            m_AVND_COMP_CSI_CURR_ASSIGN_STATE_IS_UNASSIGNED(curr_csi))
           continue;
         else if (m_AVND_COMP_CSI_CURR_ASSIGN_STATE_IS_REMOVING(curr_csi))
           break;
@@ -1838,7 +1831,7 @@ uint32_t avnd_comp_csi_remove_done(AVND_CB *cb, AVND_COMP *comp,
       }
 
       /* all csis belonging to the si are removed */
-      if ((all_csis_in_si_removed(csi->si) == true) &&
+      if ((all_csis_removable_from_si(csi->si) == true) &&
           (m_AVND_SU_SI_CURR_ASSIGN_STATE_IS_REMOVING(csi->si)))
         rc = avnd_su_si_oper_done(
             cb, comp->su, m_AVND_SU_IS_ALL_SI(comp->su) ? nullptr : csi->si);
@@ -1873,7 +1866,7 @@ uint32_t avnd_comp_csi_remove_done(AVND_CB *cb, AVND_COMP *comp,
 
     /* This is removal with TARGET_ALL. So if all CSIs in all SIs of SU are
        moved to removed state, mark all SIs removed and inform AMF director.*/
-    if (all_csis_in_removed_state(comp->su) && m_AVND_SU_IS_ALL_SI(comp->su)) {
+    if (all_csis_removable_from_su(comp->su) && m_AVND_SU_IS_ALL_SI(comp->su)) {
       rc = avnd_su_si_oper_done(cb, comp->su, 0);
     }
   }
