@@ -21,22 +21,120 @@
 #include <poll.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <pthread.h>
 #include "sa_error.h"
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
 
 #define CALLBACK_USED 1
-
+#define TST_TAG_ND "\nTAG_ND\n" /* Tag for take SC nodes down */
+#define TST_TAG_NU "\nTAG_NU\n" /* Tag for start SC nodes */
+#define TST_TAG_STB_REBOOT "\nTAG_STB_REBOOT\n" /* Tag for reboot the STANDBY SC */
+#define TST_TAG_SWITCHOVER "\nTAG_SWITCHOVER\n" /* Tag for switch over */
 SaNtfIdentifierT last_not_id = SA_NTF_IDENTIFIER_UNUSED;
 extern int verbose;
 extern int gl_tag_mode;
 extern int gl_prompt_mode;
+extern bool gl_suspending;
 
 void assertvalue_impl(__const char *__assertion, __const char *__file,
-		      unsigned int __line, __const char *__function)
+			  unsigned int __line, __const char *__function)
 {
 	fprintf(stderr, "assert failed in %s at %u, %s(): %s\n", __file, __line,
 		__function, __assertion);
+}
+
+static void sigusr2_handler(int sig)
+{
+	if (gl_suspending)
+		gl_suspending = false;
+}
+
+void install_sigusr2() {
+	signal(SIGUSR2, sigusr2_handler);
+}
+
+/*
+ * Loop of reading key press, stop if 'n+Enter'. Sleep 1 between reading key
+ */
+static void *nonblk_io_getchar()
+{
+	while (gl_suspending) {
+		int c = getchar();
+		if (c == 'n')
+			gl_suspending = false;
+		else
+			sleep(1);
+	}
+	return NULL;
+}
+
+/*
+ * Wait for controllers (SCs):
+ * - Both SCs UP(wished_scs_state=1)
+ * - Both SCs DOWN(wished_scs_state=2)
+ * - Standby SC REBOOTs(wished_scs_state=3)
+ * - SC switch over(wished_scs_state=4)
+ * Press 'n' or send USR2 to ntftest to continue the test
+ */
+void wait_controllers(int wished_scs_state)
+{
+	int i = 0;
+	pthread_t thread_id;
+	gl_suspending = true;
+	/* print slogan */
+	if (wished_scs_state == 1) {
+		fprintf_p(
+			stdout,
+			"\nNext: manually START both SCs(in UML env. ./opensaf nodestart <1|2>)");
+		if (gl_tag_mode == 1) {
+			fprintf_t(stdout, TST_TAG_NU);
+		}
+	} else if (wished_scs_state == 2) {
+		fprintf_p(
+			stdout,
+			"\nNext: manually STOP both SCs(in UML env. ./opensaf nodestop <1|2>)");
+		if (gl_tag_mode == 1) {
+			fprintf_t(stdout, TST_TAG_ND);
+		}
+	} else if (wished_scs_state == 3) {
+		fprintf_p(
+			stdout,
+			"\nNext: manually REBOOT standby SC");
+		if (gl_tag_mode == 1) {
+			fprintf_t(stdout, TST_TAG_STB_REBOOT);
+		}
+	} else if (wished_scs_state == 4) {
+		fprintf_p(
+			stdout,
+			"\nNext: manually switch over(amf-adm si-swap safSi=SC-2N,safApp=OpenSAF)");
+		if (gl_tag_mode == 1) {
+			fprintf_t(stdout, TST_TAG_SWITCHOVER);
+		}
+	} else {
+		fprintf_p(stderr, "wrong value wished_scs_state:%d\n",
+			wished_scs_state);
+		exit(EXIT_FAILURE);
+	}
+
+	/* start non-blocking io thread */
+	if (pthread_create(&thread_id, NULL, nonblk_io_getchar, NULL) != 0) {
+		fprintf_p(stderr, "%d, %s; pthread_create FAILED: %s\n",
+			__LINE__, __FUNCTION__, strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+	fprintf_p(
+		stdout,
+		"\nThen press 'n' and 'Enter' (or 'pkill -USR2 ntftest') to continue. Waiting ...\n");
+	while (gl_suspending) {
+		i++;
+		i = i % 20;
+		i > 0 ? fprintf_p(stdout, ".") : fprintf_p(stdout, "\n");
+		fflush(stdout);
+		sleep(1);
+	}
 }
 
 extern SaNtfIdentifierT get_ntf_id(const SaNtfNotificationsT *notif)

@@ -271,7 +271,8 @@ bin_ntftest_SOURCES = \
 	src/ntf/apitest/test_ntfFilterVerification.c \
 	src/ntf/apitest/tet_longDnObject_notification.c \
 	src/ntf/apitest/tet_scOutage_reinitializeHandle.c \
-	src/ntf/apitest/tet_ntf_clm.c
+	src/ntf/apitest/tet_ntf_clm.c \
+	src/ntf/apitest/tet_coldsync.c
 
 bin_ntftest_LDADD = \
 	lib/libapitest.la

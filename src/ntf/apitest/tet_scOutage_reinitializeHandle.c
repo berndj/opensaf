@@ -21,15 +21,11 @@
 #include "osaf/apitest/util.h"
 #include <unistd.h>
 #include <sys/stat.h>
-#include <signal.h>
 #include <poll.h>
-#include <pthread.h>
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
 #define NTF_REST_MAX_IDS 30
 #define DEFAULT_UNEXT_NAME_STRING "This is unextended SaNameT string (<256)"
-#define TST_TAG_ND "\nTAG_ND\n" /* Tag for take SC nodes down */
-#define TST_TAG_NU "\nTAG_NU\n" /* Tag for start SC nodes */
 
 struct not_idsT {
 	int length;
@@ -103,14 +99,6 @@ static SaNtfSecurityAlarmNotificationT mySecAlarmNotification;
 static SaAisErrorT global_error_id = SA_AIS_OK;
 
 extern int gl_tag_mode;
-
-bool gl_suspending = true;
-
-static void sigusr2_handler(int sig)
-{
-	if (gl_suspending)
-		gl_suspending = false;
-}
 
 /**
  * Store all recieved notificationIds
@@ -302,69 +290,6 @@ static void saNtfNotificationCallbackT(SaNtfSubscriptionIdT subscriptionId,
 		saferror(saNtfNotificationFree(notificationHandle), SA_AIS_OK);
 }
 
-/*
- * Loop of reading key press, stop if 'n+Enter'. Sleep 1 between reading key
- */
-static void *nonblk_io_getchar()
-{
-	while (gl_suspending) {
-		int c = getchar();
-		if (c == 'n')
-			gl_suspending = false;
-		else
-			sleep(1);
-	}
-	return NULL;
-}
-
-/*
- * Wait for both controllers UP(wished_scs_state=1) or DOWN(wished_scs_state=2)
- * Once bring up/down controllers, tester press 'n' or send USR2 to ntftest to
- * continue the test
- */
-void wait_controllers(int wished_scs_state)
-{
-	int i = 0;
-	pthread_t thread_id;
-	gl_suspending = true;
-	/* print slogan */
-	if (wished_scs_state == 1) {
-		fprintf_p(
-		    stdout,
-		    "\nNext: manually START both SCs(in UML env. ./opensaf nodestart <1|2>)");
-		if (gl_tag_mode == 1) {
-			fprintf_t(stdout, TST_TAG_NU);
-		}
-	} else if (wished_scs_state == 2) {
-		fprintf_p(
-		    stdout,
-		    "\nNext: manually STOP both SCs(in UML env. ./opensaf nodestop <1|2>)");
-		if (gl_tag_mode == 1) {
-			fprintf_t(stdout, TST_TAG_ND);
-		}
-	} else {
-		fprintf_p(stderr, "wrong value wished_scs_state:%d\n",
-			  wished_scs_state);
-		exit(EXIT_FAILURE);
-	}
-
-	/* start non-blocking io thread */
-	if (pthread_create(&thread_id, NULL, nonblk_io_getchar, NULL) != 0) {
-		fprintf_p(stderr, "%d, %s; pthread_create FAILED: %s\n",
-			  __LINE__, __FUNCTION__, strerror(errno));
-		exit(EXIT_FAILURE);
-	}
-	fprintf_p(
-	    stdout,
-	    "\nThen press 'n' and 'Enter' (or 'pkill -USR2 ntftest') to continue. Waiting ...\n");
-	while (gl_suspending) {
-		i++;
-		i = i % 20;
-		i > 0 ? fprintf_p(stdout, ".") : fprintf_p(stdout, "\n");
-		fflush(stdout);
-		sleep(1);
-	}
-}
 
 static SaNtfCallbacksT ntfCbTest = {saNtfNotificationCallbackT, NULL};
 
@@ -1243,7 +1168,7 @@ void test_sc_outage_reader_3()
 
 void add_scOutage_reinitializeHandle_test(void)
 {
-	signal(SIGUSR2, sigusr2_handler);
+  install_sigusr2();
 
 	test_suite_add(37, "SC outage: Test for producer");
 	test_case_add(37, test_sc_outage_producer_1, "Test saNtfInitialize");

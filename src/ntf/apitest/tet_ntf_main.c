@@ -32,6 +32,7 @@ SaNtfHandleT ntfHandle = 0;
 SaNtfCallbacksT ntfCallbacks = {NULL, NULL};
 SaSelectionObjectT selectionObject;
 extern void add_scOutage_reinitializeHandle_test(void);
+extern void add_coldsync_test(void);
 extern int verbose;
 extern int gl_tag_mode;
 extern int gl_prompt_mode;
@@ -133,6 +134,7 @@ int main(int argc, char **argv)
 				exit(0);
 			case 'l':
 				add_scOutage_reinitializeHandle_test();
+				add_coldsync_test();
 				test_list();
 				exit(0);
 			case 'v':
@@ -157,6 +159,7 @@ int main(int argc, char **argv)
 					suite = atoi(argv[optind - 1]);
 					extendedTest = 1;
 					add_scOutage_reinitializeHandle_test();
+					add_coldsync_test();
 				} else
 					err_exit();
 				if (optind < argc && argv[optind] != NULL)

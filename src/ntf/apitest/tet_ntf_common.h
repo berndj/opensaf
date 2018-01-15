@@ -358,6 +358,8 @@ SaAisErrorT ntftest_saNtfAttributeChangeNotificationFilterAllocate(
 void fprintf_v(FILE *, const char *format, ...);
 void fprintf_t(FILE *, const char *format, ...);
 void fprintf_p(FILE *, const char *format, ...);
+void wait_controllers(int wished_scs_state);
+void install_sigusr2();
 
 extern void assertvalue_impl(__const char *__assertion, __const char *__file,
                              unsigned int __line, __const char *__function);
