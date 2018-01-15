@@ -294,6 +294,21 @@ void NtfNotification::syncRequest(NCS_UBAID* uba) {
   }
   syncLoggedConfirm((unsigned int)loggedOk(), uba);
 }
+/**
+ * This method is called to sync a cached notification
+ *
+ */
+void NtfNotification::syncRequestAsCached(NCS_UBAID* uba) {
+  TRACE_1(
+      "NtfNotification::syncRequestAsCached received"
+      " in notification %llu",
+      notificationId_);
+  int retval = sendCachedNotification(0, sendNotInfo_, uba);
+  if (retval != 1) {
+    LOG_ER("sendCachedNotification was not sent, error code is %d",
+        retval);
+  }
+}
 
 void NtfNotification::printInfo() {
   TRACE("Notification information");

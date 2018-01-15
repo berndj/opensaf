@@ -58,6 +58,7 @@ class NtfNotification {
                           SaNtfSubscriptionIdT subscriptionId);
   ntfsv_send_not_req_t* getNotInfo();
   void syncRequest(NCS_UBAID* uba);
+  void syncRequestAsCached(NCS_UBAID* uba);
   void resetSubscriptionIdList();
   SaAisErrorT getNextSubscription(UniqueSubscriptionId& subId);
   void printInfo();

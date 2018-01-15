@@ -1109,7 +1109,50 @@ static uint32_t ckpt_decode_cold_sync(ntfs_cb_t *cb, NCS_MBCSV_CB_ARG *cbk_arg)
 		}
 		num_rec--;
 	}
+  if (ntfs_cb->peer_mbcsv_version > NTFS_MBCSV_VERSION_2) {
 
+    /* Decode the current message header */
+    if ((rc = dec_ckpt_header(&cbk_arg->info.decode.i_uba,
+            &data->header)) != NCSCC_RC_SUCCESS) {
+      goto done;
+    }
+
+    TRACE_2("ckpt_rec_type: %u", data->header.ckpt_rec_type);
+
+    /* Check if the second in the order of records is notification record */
+    if (data->header.ckpt_rec_type != NTFS_CKPT_NOTIFICATION) {
+      TRACE(
+          "FAILED data->header.ckpt_rec_type != NTFS_CKPT_NOTIFICATION");
+      rc = NCSCC_RC_FAILURE;
+      goto done;
+    }
+
+    num_rec = data->header.num_ckpt_records;
+    TRACE_2("Cached Notifications num_rec: %u", num_rec);
+    while (num_rec) {
+      /* freed in NtfNotification destructor */
+      ntfsv_send_not_req_t *notification_rec =
+          calloc(1, sizeof(ntfsv_send_not_req_t));
+
+      if (notification_rec == NULL) {
+        TRACE("calloc FAILED");
+        rc = NCSCC_RC_FAILURE;
+        goto done;
+      }
+
+      rc = ntfsv_dec_not_msg(&cbk_arg->info.decode.i_uba,
+                 notification_rec);
+      if (rc != NCSCC_RC_SUCCESS) {
+        TRACE("decode_subscribe_msg FAILED");
+        goto done;
+      }
+      cachedNotificationReceivedColdSync(notification_rec->client_id,
+                 notification_rec->notificationType,
+                 notification_rec);
+
+      num_rec--;
+    }
+  }
 	/* Get the async update count */
 	ptr = ncs_dec_flatten_space(&cbk_arg->info.decode.i_uba, data_cnt,
 				    sizeof(uint32_t));

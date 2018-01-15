@@ -60,6 +60,7 @@ class NtfLogger {
   SaAisErrorT logNotification(NtfSmartPtr& notif);
   void queueNotifcation(NtfSmartPtr& notif);
   void printInfo();
+  void syncRequest(NCS_UBAID *uba);
 
  private:
   SaAisErrorT initLog();

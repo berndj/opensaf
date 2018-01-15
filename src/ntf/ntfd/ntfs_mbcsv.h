@@ -20,8 +20,9 @@
 
 #include <saAmf.h>
 
-#define NTFS_MBCSV_VERSION 2
+#define NTFS_MBCSV_VERSION 3
 #define NTFS_MBCSV_VERSION_1 1
+#define NTFS_MBCSV_VERSION_2 2
 #define NTFS_MBCSV_VERSION_MIN 1
 
 /* Checkpoint message types(Used as 'reotype' w.r.t mbcsv)  */

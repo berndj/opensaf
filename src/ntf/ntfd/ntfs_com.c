@@ -410,6 +410,21 @@ int sendNewNotification(unsigned int connId,
 	return ntfsv_enc_not_msg(uba, notificationInfo);
 };
 
+/*
+ * This method calls encoding function to encode the
+ * notification with mbcsv version above 3
+ */
+int sendCachedNotification(unsigned int connId,
+      ntfsv_send_not_req_t *notificationInfo, NCS_UBAID *uba)
+{
+  if (ntfs_cb->peer_mbcsv_version > NTFS_MBCSV_VERSION_2) {
+    return ntfsv_enc_not_msg(uba, notificationInfo);
+  }
+
+  return NCSCC_RC_SUCCESS;
+
+};
+
 int sendNoOfClients(uint32_t num_rec, NCS_UBAID *uba)
 {
 	TRACE_2("num_rec: %u", num_rec);

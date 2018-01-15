@@ -340,6 +340,33 @@ void NtfAdmin::notificationReceivedColdSync(
   }
   TRACE_LEAVE();
 }
+/**
+ * A cached notification is received in Cold Sync.
+ * This cached notification will be marked as logged, and stored
+ * only in NtfLogger class to serve the reader.
+ *
+ * @param clientId Node-wide unique id for the client who sent the
+ *                 notification.
+ * @param notificationType
+ *                 Type of the notification (alarm, object change etc.).
+ * @param sendNotInfo
+ *                 Pointer to the struct that holds information about the
+ *                 notification.
+ */
+void NtfAdmin::cachedNotificationReceivedColdSync(
+    unsigned int clientId, SaNtfNotificationTypeT notificationType,
+    ntfsv_send_not_req_t *sendNotInfo) {
+  TRACE_ENTER();
+  SaNtfNotificationHeaderT *header;
+  ntfsv_get_ntf_header(sendNotInfo, &header);
+  SaNtfIdentifierT notificationId = *header->notificationId;
+  TRACE_2("cached notification %u received", (unsigned int)notificationId);
+  NtfSmartPtr notification(new NtfNotification(notificationId,
+      notificationType, sendNotInfo));
+  notification->notificationLoggedConfirmed();
+  logger.log(notification, false);
+  TRACE_LEAVE();
+}
 
 /**
  * The notification object is notified that a notification has
@@ -632,6 +659,7 @@ void NtfAdmin::syncRequest(NCS_UBAID *uba) {
     NtfSmartPtr notification = posNot->second;
     notification->syncRequest(uba);
   }
+  logger.syncRequest(uba);
   TRACE_LEAVE();
 }
 
@@ -1020,7 +1048,13 @@ void notificationReceivedColdSync(unsigned int clientId,
   NtfAdmin::theNtfAdmin->notificationReceivedColdSync(
       clientId, notificationType, sendNotInfo);
 }
-
+void cachedNotificationReceivedColdSync(unsigned int clientId,
+                                  SaNtfNotificationTypeT notificationType,
+                                  ntfsv_send_not_req_t *sendNotInfo) {
+  osafassert(NtfAdmin::theNtfAdmin != NULL);
+  NtfAdmin::theNtfAdmin->cachedNotificationReceivedColdSync(
+      clientId, notificationType, sendNotInfo);
+}
 void notificationSentConfirmed(unsigned int clientId,
                                SaNtfSubscriptionIdT subscriptionId,
                                SaNtfIdentifierT notificationId, int discarded) {

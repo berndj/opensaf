@@ -55,6 +55,9 @@ class NtfAdmin {
   void notificationReceivedColdSync(unsigned int clientId,
                                     SaNtfNotificationTypeT notificationType,
                                     ntfsv_send_not_req_t *sendNotInfo);
+  void cachedNotificationReceivedColdSync(unsigned int clientId,
+                                    SaNtfNotificationTypeT notificationType,
+                                    ntfsv_send_not_req_t *sendNotInfo);
   void notificationSentConfirmed(unsigned int clientId,
                                  SaNtfSubscriptionIdT subscriptionId,
                                  SaNtfIdentifierT notificationId,

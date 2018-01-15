@@ -335,6 +335,27 @@ void logEvent() {
   return;
 }
 
+/*
+ * This method is to sync cached notification stored in this
+ * class to the standby NTFD
+ * param: uba, encoder pointer
+ */
+void NtfLogger::syncRequest(NCS_UBAID *uba) {
+
+  TRACE_ENTER();
+
+  TRACE_2("logger.coll_.size=%u",
+          (unsigned int)coll_.size());
+
+  sendNoOfNotifications(coll_.size(), uba);
+  readerNotificationListT::iterator rpos;
+  for (rpos = coll_.begin(); rpos != coll_.end(); rpos++) {
+    NtfSmartPtr n(*rpos);
+    n->syncRequestAsCached(uba);
+  }
+  TRACE_LEAVE();
+}
+
 void NtfLogger::printInfo() {
   TRACE("Logger Information:");
   TRACE(" logQueueList size:  %u", (unsigned int)queuedNotificationList.size());

@@ -68,6 +68,9 @@ void notificationReceivedUpdate(unsigned int clientId,
 void notificationReceivedColdSync(unsigned int clientId,
                                   SaNtfNotificationTypeT notificationType,
                                   ntfsv_send_not_req_t *sendNotInfo);
+void cachedNotificationReceivedColdSync(unsigned int clientId,
+                                  SaNtfNotificationTypeT notificationType,
+                                  ntfsv_send_not_req_t *sendNotInfo);
 void notificationSentConfirmed(unsigned int clientId,
                                SaNtfSubscriptionIdT subscriptionId,
                                SaNtfIdentifierT notificationId, int discarded);
@@ -149,6 +152,8 @@ uint32_t send_clm_node_status_lib(SaClmClusterChangesT cluster_change,
 /* messages sent over MBCSv to cold sync stby NTF server */
 int sendSyncGlobals(const struct NtfGlobals *ntfGlobals, NCS_UBAID *uba);
 int sendNewNotification(unsigned int connId,
+                        ntfsv_send_not_req_t *notificationInfo, NCS_UBAID *uba);
+int sendCachedNotification(unsigned int connId,
                         ntfsv_send_not_req_t *notificationInfo, NCS_UBAID *uba);
 int sendNewClient(unsigned int clientId, MDS_DEST mdsDest, SaVersionT *ver,
                   NCS_UBAID *uba);
