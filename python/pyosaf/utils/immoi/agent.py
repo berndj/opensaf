@@ -40,8 +40,8 @@ from pyosaf.utils import log_err, bad_handle_retry, decorate, \
 from pyosaf.utils.immom.object import ImmObject
 from pyosaf.utils.immom.ccb import marshal_c_array
 from pyosaf.utils.immom.iterator import SearchIterator
-from pyosaf.utils.immom.agent import OmAgent
-from pyosaf.utils.immom.accessor import Accessor
+from pyosaf.utils.immom.agent import ImmOmAgent
+from pyosaf.utils.immom.accessor import ImmOmAccessor
 
 
 OPENSAF_IMM_OBJECT = "opensafImm=opensafImm,safApp=safImmService"
@@ -113,12 +113,12 @@ class OiAgent(object):
         Returns:
             SaAisErrorT: Return code of OI initialize
         """
-        self.imm_om = OmAgent(self.init_version)
+        self.imm_om = ImmOmAgent(self.init_version)
         rc = self.imm_om.init()
 
         if rc == eSaAisErrorT.SA_AIS_OK:
             if not self.accessor:
-                self.accessor = Accessor(self.init_version)
+                self.accessor = ImmOmAccessor(self.init_version)
                 rc = self.accessor.init()
                 if rc != eSaAisErrorT.SA_AIS_OK:
                     log_err("saImmOmAccessorInitialize FAILED - %s" %

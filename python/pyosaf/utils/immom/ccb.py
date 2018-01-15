@@ -26,8 +26,8 @@ from pyosaf.saImm import eSaImmScopeT, eSaImmValueTypeT, SaImmAttrValuesT_2
 from pyosaf import saImm
 from pyosaf import saImmOm
 from pyosaf.utils.immom import agent
-from pyosaf.utils.immom.agent import OmAgent
-from pyosaf.utils.immom.accessor import Accessor
+from pyosaf.utils.immom.agent import ImmOmAgent
+from pyosaf.utils.immom.accessor import ImmOmAccessor
 from pyosaf.utils import log_err, bad_handle_retry
 
 
@@ -84,7 +84,7 @@ def marshal_c_array(value_type, value_list):
     return c_array
 
 
-class Ccb(OmAgent):
+class Ccb(ImmOmAgent):
     """ Class representing an ongoing CCB """
     def __init__(self, flags=saImm.saImm.SA_IMM_CCB_REGISTERED_OI,
                  version=None):
@@ -244,7 +244,7 @@ class Ccb(OmAgent):
             rc = eSaAisErrorT.SA_AIS_ERR_INVALID_PARAM
         else:
             if not self.accessor:
-                self.accessor = Accessor(self.init_version)
+                self.accessor = ImmOmAccessor(self.init_version)
                 self.accessor.init()
 
             # Get the attribute value type by reading the object's class

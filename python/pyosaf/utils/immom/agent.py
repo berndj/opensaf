@@ -158,7 +158,7 @@ class OmAgentManager(object):
         return rc
 
 
-class OmAgent(OmAgentManager):
+class ImmOmAgent(OmAgentManager):
     """ This class acts as a high-level IMM OM agent, providing IMM OM
     functions to the users at a higher level, and relieving the users of the
     need to manage the life cycle of the IMM OM agent """

@@ -28,23 +28,23 @@ from pyosaf.utils.immom import agent
 from pyosaf.utils.immom.object import ImmObject
 
 
-class Accessor(agent.OmAgentManager):
-    """ This class provides functions of the ImmOm Accessor interface """
+class ImmOmAccessor(agent.OmAgentManager):
+    """ This class provides functions of the ImmOmAccessor interface """
     def __init__(self, version=None):
-        """ Constructor for Accessor class
+        """ Constructor for ImmOmAccessor class
 
         Args:
             version (SaVersionT): IMM OM version
         """
-        super(Accessor, self).__init__(version)
+        super(ImmOmAccessor, self).__init__(version)
         self.accessor_handle = None
 
     def __enter__(self):
-        """ Enter method for Accessor class """
+        """ Enter method for ImmOmAccessor class """
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        """ Exit method for Accessor class
+        """ Exit method for ImmOmAccessor class
 
         Finalize the accessor handle and the IMM OM agent handle
         """
@@ -56,7 +56,7 @@ class Accessor(agent.OmAgentManager):
             self.handle = None
 
     def __del__(self):
-        """ Destructor for Accessor class
+        """ Destructor for ImmOmAccessor class
 
         Finalize the accessor handle and the IMM OM agent handle
         """
@@ -78,7 +78,7 @@ class Accessor(agent.OmAgentManager):
         rc = self.initialize()
         if rc == eSaAisErrorT.SA_AIS_OK:
             self.accessor_handle = saImmOm.SaImmAccessorHandleT()
-            # Initialize Accessor Handle
+            # Initialize ImmOmAccessor Handle
             rc = agent.saImmOmAccessorInitialize(self.handle,
                                                  self.accessor_handle)
             if rc != eSaAisErrorT.SA_AIS_OK:

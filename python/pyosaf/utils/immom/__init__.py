@@ -21,7 +21,7 @@ from pyosaf.saAis import eSaAisErrorT
 from pyosaf.utils import deprecate, SafException
 from pyosaf.utils.immom import agent
 from pyosaf.utils.immom.object import ImmObject
-from pyosaf.utils.immom.accessor import Accessor
+from pyosaf.utils.immom.accessor import ImmOmAccessor
 
 
 # Decorate pure saImmOm* API's with error-handling retry and exception raising
@@ -70,7 +70,7 @@ def initialize():
         SafException: If any IMM OM API call did not return SA_AIS_OK
     """
     global _om_agent
-    _om_agent = agent.OmAgent()
+    _om_agent = agent.ImmOmAgent()
 
     # Initialize IMM OM handle and return the API return code
     rc = _om_agent.init()
@@ -93,7 +93,7 @@ def get(object_name, attr_name_list=None, class_name=None):
     Raises:
         SafException: If any IMM OM API call did not return SA_AIS_OK
     """
-    _accessor = Accessor()
+    _accessor = ImmOmAccessor()
     _accessor.init()
     rc, imm_object = _accessor.get(object_name, attr_name_list, class_name)
 
