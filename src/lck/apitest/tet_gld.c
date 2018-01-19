@@ -113,7 +113,7 @@ void print_rsc_cb_info()
 		printf("GLD rsc_id %d\n", gld_rsc->rsc_id);
 		temp_node = gld_rsc->node_list;
 		while (temp_node != NULL) {
-			printf("Refrence nodes node id %d\n",
+			printf("Refrence nodes node id %u\n",
 			       temp_node->dest_id.node_id);
 			temp_node = temp_node->next;
 		}
@@ -149,7 +149,7 @@ void print_glnd_cb_info()
 
 		printf("\n********************************************\n");
 		printf("GLND Node information %x\n", node_details);
-		printf("GLND NODE-ID %d\n", node_details->node_id);
+		printf("GLND NODE-ID %u\n", node_details->node_id);
 		printf("\n********************************************\n");
 
 		key = (uint8_t *)&node_details->dest_id;

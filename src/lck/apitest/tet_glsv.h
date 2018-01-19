@@ -379,7 +379,7 @@ typedef struct tet_glsv_inst {
   int tetlist_index;
   int test_case_num;
   int num_of_iter;
-  int node_id;
+  unsigned node_id;
   SaNameT res_name1;
   SaNameT res_name2;
   SaNameT res_name3;

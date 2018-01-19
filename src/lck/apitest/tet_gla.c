@@ -5,7 +5,7 @@
 #include "ncs_main_papi.h"
 
 int gl_glsv_inst_num;
-int gl_nodeId;
+unsigned gl_nodeId;
 int gl_glsv_async;
 int gl_tetlist_index;
 int gl_wt_clbk_iter;
@@ -219,7 +219,7 @@ void init_glsv_test_env()
 	memset(&gl_gla_env, '\0', sizeof(GLA_TEST_ENV));
 
 	if (gl_tetlist_index == GLSV_ONE_NODE_LIST) {
-		sprintf(inst_num_char, "%d%d", gl_glsv_inst_num, gl_nodeId);
+		sprintf(inst_num_char, "%d%u", gl_glsv_inst_num, gl_nodeId);
 		inst_char = inst_num_char;
 	}
 

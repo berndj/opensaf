@@ -108,7 +108,7 @@ void print_resource_cb_info()
 		printf("GLND RSC INFORMATION %x\n", glnd_rsc);
 		printf("GLND RSC ID %x\n", glnd_rsc->resource_id);
 		printf("GLND RSC NAME %s\n", glnd_rsc->resource_name.value);
-		printf("GLND RSC MASTER NODE_ID %d\n",
+		printf("GLND RSC MASTER NODE_ID %u\n",
 		       glnd_rsc->master_mds_dest.node_id);
 		printf("Locks on this resource ...\n");
 		printf("\n********************************************\n");
