@@ -249,7 +249,6 @@ int dtm_read_config(DTM_INTERNODE_CB *config, const char *dtm_config_file) {
   config->sock_sndbuf_size = 0;
   config->sock_rcvbuf_size = 0;
   config->scope_link = false;
-  config->node_id = m_NCS_GET_NODE_ID;
   intranode_max_processes = 100;
   fp = fopen(PKGSYSCONFDIR "/node_name", "r");
   if (fp == nullptr) {
@@ -548,9 +547,6 @@ int dtm_read_config(DTM_INTERNODE_CB *config, const char *dtm_config_file) {
   if ((config->cluster_id) == 0) {
     LOG_ER("DTM: dtm_read_config: cluster_id is missing in conf file");
     fieldmissing = 1;
-  } else if ((config->node_id) == 0) {
-    LOG_ER("DTM: dtm_read_config: node_id is missing in configuration");
-    fieldmissing = 1;
   } else if ((config->dgram_port_sndr) == 0) {
     LOG_ER("DTM: dtm_read_config: dgram_port_sndr is missing in conf file");
     fieldmissing = 1;
@@ -570,8 +566,6 @@ int dtm_read_config(DTM_INTERNODE_CB *config, const char *dtm_config_file) {
 
   if (fieldmissing == 1) return -1;
   /* All done. */
-
-  dtm_print_config(config);
 
   TRACE_LEAVE();
   return (err);

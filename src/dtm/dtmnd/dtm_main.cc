@@ -21,10 +21,16 @@
  * ========================================================================
  */
 
+#include <arpa/inet.h>
 #include <sched.h>
+#include <sys/stat.h>
 #include <unistd.h>
+#include <cerrno>
+#include <cstdint>
 #include <cstdlib>
+#include <fstream>
 #include "base/daemon.h"
+#include "base/logtrace.h"
 #include "base/ncs_main_papi.h"
 #include "base/ncsencdec_pub.h"
 #include "base/osaf_poll.h"
@@ -34,6 +40,13 @@
 #include "dtm/dtmnd/dtm_node.h"
 #include "nid/agent/nid_api.h"
 #include "osaf/configmake.h"
+
+namespace {
+
+void UpdateNodeIdFile(DTM_INTERNODE_CB *cb);
+uint32_t GetNodeIdFromAddress(DTM_INTERNODE_CB *cb);
+
+}  // namespace
 
 /* ========================================================================
  *   DEFINITIONS
@@ -97,39 +110,6 @@ DTM_INTERNODE_CB::DTM_INTERNODE_CB()
       epoll_fd{} {}
 
 DTM_INTERNODE_CB::~DTM_INTERNODE_CB() { delete multicast_; }
-
-/**
- * Function to init the dtm process
- *
- * @param dtms_cb
- *
- * @return NCSCC_RC_SUCCESS
- * @return NCSCC_RC_FAILURE
- *
- */
-static uint32_t dtm_init(DTM_INTERNODE_CB *dtms_cb) {
-  uint32_t rc = NCSCC_RC_SUCCESS;
-
-  TRACE_ENTER();
-
-  if (ncs_leap_startup() != NCSCC_RC_SUCCESS) {
-    LOG_ER("DTM: LEAP svcs startup failed \n");
-    rc = NCSCC_RC_FAILURE;
-    goto done;
-  }
-
-  /* Initialize  control block */
-  if ((rc = dtm_cb_init(dtms_cb)) != NCSCC_RC_SUCCESS) {
-    rc = NCSCC_RC_FAILURE;
-    LOG_ER("DTM: dtm_cb_init FAILED");
-    goto done;
-  }
-
-done:
-
-  TRACE_LEAVE2("rc : %d", rc);
-  return rc;
-}
 
 /**
  * Function to destroy node discovery thread
@@ -256,8 +236,8 @@ int main(int argc, char *argv[]) {
   dtms_gl_cb = new DTM_INTERNODE_CB;
   DTM_INTERNODE_CB *dtms_cb = dtms_gl_cb;
 
-  if (dtms_cb == nullptr || dtm_init(dtms_cb) != NCSCC_RC_SUCCESS) {
-    LOG_ER("DTM: dtm_init failed");
+  if (dtms_cb == nullptr) {
+    LOG_ER("Failed to allocate memory");
     goto done3;
   }
 
@@ -267,6 +247,20 @@ int main(int argc, char *argv[]) {
     LOG_ER("DTM:Error reading %s.  errno : %d", DTM_CONFIG_FILE, rc);
     goto done3;
   }
+
+  UpdateNodeIdFile(dtms_cb);
+
+  if (ncs_leap_startup() != NCSCC_RC_SUCCESS) {
+    LOG_ER("DTM: LEAP svcs startup failed \n");
+    goto done3;
+  }
+
+  if (dtm_cb_init(dtms_cb) != NCSCC_RC_SUCCESS) {
+    LOG_ER("DTM: dtm_cb_init failed");
+    goto done3;
+  }
+
+  dtm_print_config(dtms_cb);
 
   /*************************************************************/
   /* Set up the initial bcast or mcast sender socket */
@@ -352,3 +346,37 @@ done3:
   (void)nid_notify("TRANSPORT", NCSCC_RC_FAILURE, nullptr);
   exit(1);
 }
+
+namespace {
+
+void UpdateNodeIdFile(DTM_INTERNODE_CB *cb) {
+  struct stat stat_buf;
+  int stat_result = stat(PKGLOCALSTATEDIR "/node_id", &stat_buf);
+  if (stat_result == -1 && errno == ENOENT) {
+    uint32_t node_id = GetNodeIdFromAddress(cb);
+    if (node_id != 0) {
+      std::ofstream str;
+      try {
+        str.open(PKGLOCALSTATEDIR "/node_id", std::ofstream::out);
+        str << std::hex << node_id << std::endl;
+      } catch (std::ofstream::failure) {
+      }
+      str.close();
+    }
+  }
+}
+
+uint32_t GetNodeIdFromAddress(DTM_INTERNODE_CB *cb) {
+  uint32_t node_id = 0;
+  if (cb->i_addr_family == AF_INET) {
+    struct in_addr addr_ipv4;
+    int rc = inet_pton(AF_INET, cb->ip_addr.c_str(), &addr_ipv4);
+    if (rc == 1) node_id = ntohl(addr_ipv4.s_addr);
+    TRACE("Using node address 0x%x as node ID", node_id);
+  } else {
+    LOG_ER(PKGLOCALSTATEDIR "/node_id must exist when using IPv6 addresses");
+  }
+  return node_id;
+}
+
+}  // namespace

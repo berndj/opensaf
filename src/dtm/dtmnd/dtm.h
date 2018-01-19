@@ -104,6 +104,7 @@ extern DTM_NODE_DB *dtm_node_getnext_by_id(uint32_t node_id);
 extern uint32_t dtm_node_add(DTM_NODE_DB *node, int i);
 extern uint32_t dtm_node_delete(DTM_NODE_DB *nnode, int i);
 extern DTM_NODE_DB *dtm_node_new(const DTM_NODE_DB *new_node);
+extern void dtm_print_config(DTM_INTERNODE_CB *config);
 extern int dtm_read_config(DTM_INTERNODE_CB *config,
                            const char *dtm_config_file);
 extern uint32_t dtm_service_discovery_init(DTM_INTERNODE_CB *dtms_cb);

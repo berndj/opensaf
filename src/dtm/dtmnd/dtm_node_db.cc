@@ -21,6 +21,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
+#include "base/ncs_main_papi.h"
 #include "base/usrbuf.h"
 #include "dtm/dtmnd/dtm.h"
 
@@ -59,6 +60,12 @@ uint32_t dtm_cb_init(DTM_INTERNODE_CB *dtms_cb) {
   NCS_PATRICIA_PARAMS ipaddr_param;
 
   TRACE_ENTER();
+
+  dtms_cb->node_id = ncs_get_node_id();
+  if (dtms_cb->node_id == 0) {
+    LOG_ER("node_id cannot be zero");
+    return NCSCC_RC_FAILURE;
+  }
 
   memset(&nodeid_param, 0, sizeof(NCS_PATRICIA_PARAMS));
   memset(&ipaddr_param, 0, sizeof(NCS_PATRICIA_PARAMS));
