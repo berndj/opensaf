@@ -25,7 +25,7 @@ if [ ! -r $osafdirfile ]; then
 else
 	. $osafdirfile
 	. $pkgsysconfdir/nid.conf
-fi	
+fi
 
 binary=$pkglibdir/$osafprog
 lockfile=$lockdir/$osafprog
@@ -152,35 +152,32 @@ generate_nodeid() {
 	CHASSIS_ID_FILE=$pkgsysconfdir/chassis_id
 	SLOT_ID_FILE=$pkgsysconfdir/slot_id
 	SUBSLOT_ID_FILE=$pkgsysconfdir/subslot_id
-	if ! test -f "$CHASSIS_ID_FILE"; then
-		echo "$CHASSIS_ID_FILE doesnt exists, exiting ...." 
-		exit 1
+	CHASSIS_ID=2
+	SUBSLOT_ID=15
+	if test -f "$CHASSIS_ID_FILE"; then
+		CHASSIS_ID=$(cat "$CHASSIS_ID_FILE")
+		if [ "$CHASSIS_ID" -gt "16" ] || [ "$CHASSIS_ID" -lt "1" ]
+		then
+			echo "CHASSIS ID Should be in the range of 1 to 16"
+			echo "Quitting......"
+			exit 1
+		fi
 	fi
-	CHASSIS_ID=`cat "$CHASSIS_ID_FILE"`
-	if [ "$CHASSIS_ID" -gt "16" ] || [ "$CHASSIS_ID" -lt "1" ]  
-	then 
-		echo "CHASSIS ID Should be in the range of 1 to 16"
-		echo "Quitting......"
-		exit 1
+	if test -f "$SUBSLOT_ID_FILE"; then
+		SUBSLOT_ID=$(cat "$SUBSLOT_ID_FILE")
+		if [ "$SUBSLOT_ID" -gt "15" ] || [ "$SUBSLOT_ID" -lt "0" ]; then
+			echo "SUBSLOT ID Should be in the range of 0 to 15"
+			echo "Quitting......"
+			exit 1
+		fi
 	fi
 	if ! test -f "$SLOT_ID_FILE"; then
-		echo "$SLOT_ID_FILE doesnt exists, exiting ...." 
-		exit 1
+		return 0
 	fi
-	SLOT_ID=`cat "$SLOT_ID_FILE"`
-	if [ "$SLOT_ID" -gt "4095" ] || [ "$SLOT_ID" -lt "1" ]  
-	then 
+	SLOT_ID=$(cat "$SLOT_ID_FILE")
+	if [ "$SLOT_ID" -gt "4095" ] || [ "$SLOT_ID" -lt "1" ]
+	then
 		echo "SLOT ID Should be in the range of 1 to 4095"
-		echo "Quitting......"
-		exit 1
-	fi
-	if ! test -f $SUBSLOT_ID_FILE; then
-		echo "$SLOT_ID_FILE doesnt exist, exiting ...." 
-		exit 1
-	fi
-	SUBSLOT_ID=`cat $SUBSLOT_ID_FILE`
-	if [ "$SUBSLOT_ID" -gt "15" ] || [ "$SUBSLOT_ID" -lt "0" ]; then
-		echo "SUBSLOT ID Should be in the range of 0 to 15"
 		echo "Quitting......"
 		exit 1
 	fi
@@ -199,7 +196,7 @@ check_transport() {
 		# Transport TIPC
 		check_tipc
 	else
-		# Transport TCP 
+		# Transport TCP
 		generate_nodeid
 	fi
 }

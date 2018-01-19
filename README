@@ -850,10 +850,12 @@ Commands to Start OpenSAF When PLM is disabled:
 ===============================================
 After a minimum configuration of
 
- - slot_id, nodeinit.conf.controller, node_name, imm.xml(Generated) and
-   configure_tipc(if needbe), for the controller
+ - slot_id (only required when using IPv6 addresses), nodeinit.conf.controller,
+   node_name, imm.xml(Generated) and configure_tipc(if needbe), for the
+   controller
   (OR)
- - slot_id, nodeinit.conf.payload and node_name, for the payload.
+ - slot_id (only required when using IPv6 addresses), nodeinit.conf.payload and
+   node_name, for the payload.
 
 the following command shall start the OpenSAF services:
 
@@ -868,10 +870,12 @@ Commands to Start OpenSAF When PLM is enabled:
 ==============================================
 After a minimum configuration of
 
- - slot_id, nodeinit.conf.controller, node_name, imm.xml(Generated) and
-   configure_tipc(if needbe) and the plmcd.conf, for the controller
+ - slot_id (only required when using IPv6 addresses), nodeinit.conf.controller,
+   node_name, imm.xml(Generated) and configure_tipc(if needbe) and the
+   plmcd.conf, for the controller
   (OR)
- - slot_id, nodeinit.conf.payload, node_name and the plmcd.conf, for the payload
+ - slot_id (only required when using IPv6 addresses), nodeinit.conf.payload,
+   node_name and the plmcd.conf, for the payload
 
 The following commands shall be executed:
 
