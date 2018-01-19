@@ -20,6 +20,8 @@
 #include <unistd.h>
 
 #include "clmtest.h"
+#include "base/ncs_main_papi.h"
+
 /* Highest supported version*/
 #define CLM_HIGHEST_SUPPORTED_VERSION  {'B', 0x04, 0x01}
 #define CLM_LOWEST_SUPPORTED_VERSION   {'B', 0x01, 0x01}
@@ -72,6 +74,10 @@ int main(int argc, char **argv) {
   int suite = ALL_SUITES, tcase = ALL_TESTS;
 
   srandom(getpid());
+  if (ncs_leap_startup() != NCSCC_RC_SUCCESS) {
+    printf("LEAP startup failed\n");
+    return 1;
+  }
   clm_init();
 
   if (argc > 1) {

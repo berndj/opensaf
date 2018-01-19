@@ -1,6 +1,6 @@
 /*      -*- OpenSAF  -*-
  *
- * (C) Copyright 13134308 The OpenSAF Foundation
+ * (C) Copyright 2008 The OpenSAF Foundation
  * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
@@ -17,6 +17,7 @@
  */
 
 #include "clmtest.h"
+#include "base/ncs_main_papi.h"
 
 static SaClmNodeIdT nodeId;
 static SaInvocationT invocation;
@@ -41,7 +42,7 @@ SaClmCallbacksT clmCallbacks1 = {nodeGetCallBack1, NULL};
 void saClmClusterNodeGetAsync_01(void) {
   /*struct pollfd fds[1];*/
   /*int ret;*/
-  nodeId = 131343;
+  nodeId = ncs_get_node_id();
   invocation = 600;
   SaAisErrorT rc;
 
@@ -64,7 +65,7 @@ void saClmClusterNodeGetAsync_01(void) {
 void saClmClusterNodeGetAsync_02(void) {
   struct pollfd fds[1];
   int ret;
-  nodeId = 131343;
+  nodeId = ncs_get_node_id();
   invocation = 700;
   SaAisErrorT rc;
 
@@ -85,7 +86,7 @@ void saClmClusterNodeGetAsync_02(void) {
 }
 
 void saClmClusterNodeGetAsync_03(void) {
-  nodeId = 131343;
+  nodeId = ncs_get_node_id();
   invocation = 300;
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks1, &clmVersion_1),
             SA_AIS_OK);
@@ -113,7 +114,7 @@ void saClmClusterNodeGetAsync_03(void) {
 }
 
 void saClmClusterNodeGetAsync_04(void) {
-  nodeId = 131343;
+  nodeId = ncs_get_node_id();
   invocation = 400;
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks1, &clmVersion_1),
             SA_AIS_OK);
@@ -124,7 +125,7 @@ void saClmClusterNodeGetAsync_04(void) {
 
 void saClmClusterNodeGetAsync_05(void)
 {
-  nodeId = 131343;
+  nodeId = ncs_get_node_id();
   invocation = 500;
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks1, &clmVersion_1),
             SA_AIS_OK);
@@ -201,7 +202,7 @@ void saClmClusterNodeGetAsync_08(void) {
 void saClmClusterNodeGetAsync_09(void) {
   /*struct pollfd fds[1];*/
   /*int ret;*/
-  nodeId = 131343;
+  nodeId = ncs_get_node_id();
   invocation = 600;
   SaAisErrorT rc;
 

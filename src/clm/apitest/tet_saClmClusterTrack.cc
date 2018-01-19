@@ -186,7 +186,7 @@ static void clmTrackbuf_4(
         notificationBuffer->notification[i]
         .clusterNode.nodeAddress.value);
 
-    printf("Node  nodeid  = %d\n",
+    printf("Node  nodeid  = %u\n",
            notificationBuffer->notification[i].clusterNode.nodeId);
   }
 }

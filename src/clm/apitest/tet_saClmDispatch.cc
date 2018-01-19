@@ -15,7 +15,9 @@
  * Author(s): Emerson Network Power
  *
  */
+
 #include "clmtest.h"
+#include "base/ncs_main_papi.h"
 
 static void nodeGetCallBack1(SaInvocationT invocation,
 			     const SaClmClusterNodeT *clusterNode,
@@ -31,7 +33,7 @@ static SaInvocationT invocation;
 void saClmDispatch_01(void) {
   struct pollfd fds[1];
   int ret;
-  nodeId = 131343; /*node does not exist*/
+  nodeId = ncs_get_node_id(); /*node does not exist*/
   invocation = 600;
   SaAisErrorT rc;
 
@@ -68,7 +70,7 @@ void saClmDispatch_03(void) {
 void saClmDispatch_04(void) {
   struct pollfd fds[1];
   int ret;
-  nodeId = 131343; /*node does not exist*/
+  nodeId = ncs_get_node_id(); /*node does not exist*/
   invocation = 600;
   SaAisErrorT rc;
 

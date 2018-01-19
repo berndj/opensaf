@@ -15,7 +15,9 @@
  * Author(s): Emerson Network Power
  *
  */
+
 #include "clmtest.h"
+#include "base/ncs_main_papi.h"
 
 static SaUint8T trackFlags;
 static SaClmNodeIdT nodeId;
@@ -61,7 +63,7 @@ SaClmCallbacksT clmCallback11 = {nodeGetCallBack11, clmTrackCallback11};
 
 void saClmClusterTrackStop_01(void) {
   trackFlags = SA_TRACK_CURRENT;
-  nodeId = 131343;
+  nodeId = ncs_get_node_id();
   invocation = 600;
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback11, &clmVersion_1),
             SA_AIS_OK);

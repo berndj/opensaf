@@ -1,6 +1,6 @@
 /*      -*- OpenSAF  -*-
  *
- * (C) Copyright 13134308 The OpenSAF Foundation
+ * (C) Copyright 2008 The OpenSAF Foundation
  * Copyright Ericsson AB 2017 - All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
@@ -17,6 +17,7 @@
  */
 
 #include "clmtest.h"
+#include "base/ncs_main_papi.h"
 
 static SaClmClusterNodeT clusterNode_1;
 static SaClmClusterNodeT_4 clusterNode_4;
@@ -24,7 +25,7 @@ static SaClmNodeIdT nodeId;
 static SaTimeT timeout = 10000000000ll;
 
 void saClmClusterNodeGet_01(void) {
-  nodeId = 131343;
+  nodeId = ncs_get_node_id();
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGet(clmHandle, nodeId, timeout, &clusterNode_1);
@@ -33,7 +34,7 @@ void saClmClusterNodeGet_01(void) {
 }
 
 void saClmClusterNodeGet_02(void) {
-  nodeId = 131343;
+  nodeId = ncs_get_node_id();
   safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGet_4(clmHandle, nodeId, timeout, &clusterNode_4);
@@ -42,28 +43,28 @@ void saClmClusterNodeGet_02(void) {
 }
 
 void saClmClusterNodeGet_03(void) {
-  nodeId = 131343;
+  nodeId = ncs_get_node_id();
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGet(0, nodeId, timeout, &clusterNode_1);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 
-  nodeId = 131343;
+  nodeId = ncs_get_node_id();
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGet(-1, nodeId, timeout, &clusterNode_1);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 
-  nodeId = 131343;
+  nodeId = ncs_get_node_id();
   safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGet_4(0, nodeId, timeout, &clusterNode_4);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 
-  nodeId = 131343;
+  nodeId = ncs_get_node_id();
   safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGet_4(-1, nodeId, timeout, &clusterNode_4);
@@ -73,14 +74,14 @@ void saClmClusterNodeGet_03(void) {
 
 void saClmClusterNodeGet_04(void)
 {
-  nodeId = 131343;
+  nodeId = ncs_get_node_id();
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGet(clmHandle, nodeId, 0, &clusterNode_1);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 
-  nodeId = 131343;
+  nodeId = ncs_get_node_id();
   safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGet_4(clmHandle, nodeId, 0, &clusterNode_4);
@@ -89,14 +90,14 @@ void saClmClusterNodeGet_04(void)
 }
 
 void saClmClusterNodeGet_05(void) {
-  nodeId = 131343;
+  nodeId = ncs_get_node_id();
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGet(clmHandle, nodeId, timeout, NULL);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 
-  nodeId = 131343;
+  nodeId = ncs_get_node_id();
   safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGet_4(clmHandle, nodeId, timeout, NULL);
