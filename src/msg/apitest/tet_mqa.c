@@ -4,7 +4,7 @@
 #include "base/ncs_main_papi.h"
 
 int gl_mqsv_inst_num;
-int gl_nodeId;
+unsigned gl_nodeId;
 int gl_get_result;
 int gl_reply_result;
 int gl_del_clbk_iter;
@@ -320,7 +320,7 @@ void init_mqsv_test_env()
 	memset(&gl_mqa_env, '\0', sizeof(MQA_TEST_ENV));
 
 	if (gl_tetlist_index == MQSV_ONE_NODE_LIST) {
-		sprintf(inst_num_char, "%d%d", gl_mqsv_inst_num, gl_nodeId);
+		sprintf(inst_num_char, "%d%u", gl_mqsv_inst_num, gl_nodeId);
 	}
 
 	/* Invalid Parameters */

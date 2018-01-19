@@ -707,7 +707,7 @@ typedef struct tet_mqsv_inst {
   int tetlist_index;
   int test_case_num;
   int num_of_iter;
-  int node_id;
+  unsigned node_id;
   SaNameT pers_q_name1;
   SaNameT non_pers_q_name1;
   SaNameT zero_q_name;
