@@ -2801,7 +2801,7 @@ void cpsv_evt_trace(char *svc_name, CPSV_EVT_REQUEST request, CPSV_EVT *evt,
 		    MDS_DEST mds_dest)
 {
 	char evt_str[MAX_EVT_STR_LEN] = {0};
-	int node_id = m_NCS_NODE_ID_FROM_MDS_DEST(mds_dest);
+	unsigned node_id = m_NCS_NODE_ID_FROM_MDS_DEST(mds_dest);
 
 	cpsv_evt_str(evt, evt_str, MAX_EVT_STR_LEN);
 

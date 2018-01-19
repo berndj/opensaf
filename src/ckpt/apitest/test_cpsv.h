@@ -684,7 +684,7 @@ typedef struct test_cpsv_inst {
   int test_list;
   int test_case_num;
   int num_of_iter;
-  int node_id;
+  unsigned node_id;
   int redFlag;
   SaNameT all_rep_ckpt_name;
   SaNameT active_rep_ckpt_name;

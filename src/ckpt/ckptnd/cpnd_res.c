@@ -23,6 +23,9 @@
 
 ******************************************************************************/
 
+#include <inttypes.h>
+#include <stdio.h>
+#include <string.h>
 #include "ckpt/ckptnd/cpnd.h"
 
 #define m_CPND_CKPT_HDR_UPDATE(ckpt_hdr, addr, offset)                         \
@@ -372,7 +375,7 @@ void *cpnd_restart_shm_create(NCS_OS_POSIX_SHM_REQ_INFO *cpnd_open_req,
 	CKPT_INFO cp_info, tmp_cp_info;
 	SaCkptHandleT client_hdl;
 	char *buf = NULL, *buffer = NULL;
-	uint8_t size = 0, total_length;
+	size_t total_length = strlen("CPND_CHECKPOINT_INFO") + 12;
 	GBL_SHM_PTR gbl_shm_addr = {0, 0, 0, 0, 0};
 	memset(&cp_info, '\0', sizeof(CKPT_INFO));
 	NCS_OS_POSIX_SHM_REQ_INFO ckpt_rep_open;
@@ -387,8 +390,6 @@ void *cpnd_restart_shm_create(NCS_OS_POSIX_SHM_REQ_INFO *cpnd_open_req,
 	memset(&cpnd_shm_version, '\0', sizeof(cpnd_shm_version));
 	cpnd_shm_version.shm_version = CPSV_CPND_SHM_VERSION;
 
-	size = strlen("CPND_CHECKPOINT_INFO");
-	total_length = size + sizeof(nodeid) + 5;
 	buffer = m_MMGR_ALLOC_CPND_DEFAULT(total_length);
 	if (buffer == NULL) {
 		LOG_ER(
@@ -397,8 +398,8 @@ void *cpnd_restart_shm_create(NCS_OS_POSIX_SHM_REQ_INFO *cpnd_open_req,
 	}
 	cb->cpnd_res_shm_name = (uint8_t *)buffer;
 	memset(buffer, '\0', total_length);
-	strncpy(buffer, "CPND_CHECKPOINT_INFO", total_length);
-	sprintf(buffer + size, "_%d", (uint32_t)nodeid);
+	snprintf(buffer, total_length, "CPND_CHECKPOINT_INFO_%" PRIu32,
+		 (uint32_t)nodeid);
 
 	/* 1. FIRST TRYING TO OPEN IN RDWR MODE */
 	cpnd_open_req->type = NCS_OS_POSIX_SHM_REQ_OPEN;
@@ -1851,8 +1852,7 @@ static uint32_t cpnd_shm_extended_open(CPND_CB *cb, uint32_t flag)
 	uint32_t rc = NCSCC_RC_FAILURE;
 	NCS_OS_POSIX_SHM_REQ_INFO cpnd_open_req;
 	memset(&cpnd_open_req, 0, sizeof(cpnd_open_req));
-	uint8_t total_length =
-	    strlen("CPND_EXTENDED_INFO") + sizeof(cb->nodeid) + 5;
+	uint8_t total_length = strlen("CPND_EXTENDED_INFO") + 12;
 	char *buffer = m_MMGR_ALLOC_CPND_DEFAULT(total_length);
 	if (buffer == NULL) {
 		LOG_ER(
@@ -1861,8 +1861,8 @@ static uint32_t cpnd_shm_extended_open(CPND_CB *cb, uint32_t flag)
 	}
 	cb->cpnd_res_shm_name = (uint8_t *)buffer;
 	memset(buffer, '\0', total_length);
-	strncpy(buffer, "CPND_EXTENDED_INFO", total_length);
-	sprintf(buffer + strlen("CPND_EXTENDED_INFO"), "_%d", cb->nodeid);
+	snprintf(buffer, total_length, "CPND_EXTENDED_INFO_%" PRIu32,
+		 cb->nodeid);
 
 	cpnd_open_req.type = NCS_OS_POSIX_SHM_REQ_OPEN;
 	cpnd_open_req.info.open.i_size = MAX_CKPTS * sizeof(CKPT_EXTENDED_INFO);
