@@ -391,6 +391,8 @@ class ImmModel {
   void getNonCriticalCcbs(IdVector& cv);
   void getOldCriticalCcbs(IdVector& cv, SaUint32T* pbeConn,
                           unsigned int* pbeNodeId, SaUint32T* pbeId);
+  void sendSyncAbortAt(timespec& time);
+  void getSyncAbortRsp();
   bool immNotWritable();
   bool immNotPbeWritable(bool isPrtoClient = true);
   void* getPbeOi(SaUint32T* pbeConn, unsigned int* pbeNode,

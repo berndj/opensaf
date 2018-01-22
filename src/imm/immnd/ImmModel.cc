@@ -2260,9 +2260,65 @@ void immModel_implementerDelete(IMMND_CB *cb, const char *implementerName) {
   ImmModel::instance(&cb->immModel)->implementerDelete(implementerName);
 }
 
+void immModel_sendSyncAbortAt(IMMND_CB *cb, struct timespec time) {
+  ImmModel::instance(&cb->immModel)->sendSyncAbortAt(time);
+}
+
+void immModel_getSyncAbortRsp(IMMND_CB *cb) {
+  ImmModel::instance(&cb->immModel)->getSyncAbortRsp();
+}
+
 /*====================================================================*/
 
 ImmModel::ImmModel() : loaderPid(-1) {}
+
+//>
+// When sSyncAbortingAt != {0,0}, it means the SYNC has been aborted
+// by coord and that abort message not yet broadcasted to IMMNDs.
+// Therefore, NODE STATE at IMMND coord (IMM_NODE_FULLY_AVAILABLE) is
+// different with veteran node(s) (IMM_NODE_R_AVAILABLE) at the moment.
+// So, any change to IMM data model at the coord will result data mismatchs
+// comparing with veterans, and lead to veterans restarted at sync finalize.
+//
+// In addition, we check the time here to avoid the worst cases
+// such as the abort message arrived at active IMMD, but later on
+// it fails to send the response (e.g: hang IMMD, or reboot IMMD, etc.)
+// For that reason, if we don't receive the response within 6 seconds,
+// consider sending abort failed.
+//
+// And we just do the check for rsp messages come from active IMMD.
+//<
+
+// Store the start time of sync abort sent
+static struct timespec sSyncAbortSentAt;
+
+void ImmModel::sendSyncAbortAt(timespec& time) {
+  sSyncAbortSentAt = time;
+}
+
+void ImmModel::getSyncAbortRsp() {
+  sSyncAbortSentAt.tv_sec  = 0;
+  sSyncAbortSentAt.tv_nsec = 0;
+}
+
+static bool is_sync_aborting() {
+  bool unset = (sSyncAbortSentAt.tv_nsec == 0 &&
+                sSyncAbortSentAt.tv_sec == 0);
+
+  if (unset) return false;
+
+  time_t duration_in_second = 0xffffffff;
+  struct timespec now, duration;
+  osaf_clock_gettime(CLOCK_MONOTONIC, &now);
+  osaf_timespec_subtract(&now, &sSyncAbortSentAt, &duration);
+  duration_in_second = duration.tv_sec;
+  if (duration_in_second > DEFAULT_TIMEOUT_SEC) {
+    sSyncAbortSentAt.tv_sec  = 0;
+    sSyncAbortSentAt.tv_nsec = 0;
+  }
+
+  return (duration_in_second <= DEFAULT_TIMEOUT_SEC);
+}
 
 bool ImmModel::immNotWritable() {
   switch (sImmNodeState) {
@@ -2296,7 +2352,7 @@ bool ImmModel::immNotPbeWritable(bool isPrtoClient) {
   SaUint32T dummyCon;
   unsigned int dummyNode;
   /* Not writable => Not persitent writable. */
-  if (immNotWritable()) {
+  if (immNotWritable() || is_sync_aborting()) {
     return true;
   }
 
@@ -4895,7 +4951,7 @@ SaAisErrorT ImmModel::adminOwnerCreate(const ImmsvOmAdminOwnerInitialize* req,
   bool isLoading = (sImmNodeState == IMM_NODE_LOADING);
 
   TRACE_ENTER();
-  if (immNotWritable()) {
+  if (immNotWritable() || is_sync_aborting()) {
     TRACE_LEAVE();
     return SA_AIS_ERR_TRY_AGAIN;
   }
@@ -5066,7 +5122,7 @@ SaAisErrorT ImmModel::adminOwnerDelete(SaUint32T ownerId, bool hard,
       }
     }
 
-    if (immNotWritable()) {
+    if (immNotWritable() || is_sync_aborting()) {
       if (hard) {
         unsigned int siz = (unsigned int)(*i)->mTouchedObjects.size();
         if (siz >= IMMSV_MAX_OBJECTS) {
@@ -5165,7 +5221,7 @@ SaAisErrorT ImmModel::adminOwnerChange(const struct immsv_a2nd_admown_set* req,
   SaAisErrorT err = SA_AIS_OK;
   TRACE_ENTER();
 
-  if (immNotWritable()) {
+  if (immNotWritable() || is_sync_aborting()) {
     TRACE_LEAVE();
     return SA_AIS_ERR_TRY_AGAIN;
   }
@@ -5323,7 +5379,7 @@ SaAisErrorT ImmModel::ccbCreate(SaUint32T adminOwnerId, SaUint32T ccbFlags,
 
   TRACE_ENTER();
 
-  if (immNotWritable()) {
+  if (immNotWritable() || is_sync_aborting()) {
     TRACE_LEAVE();
     return SA_AIS_ERR_TRY_AGAIN;
   }
@@ -15157,7 +15213,7 @@ SaAisErrorT ImmModel::classImplementerSet(const struct ImmsvOiImplSetReq* req,
       }
     }
 
-    if (immNotWritable()) {
+    if (immNotWritable() || is_sync_aborting()) {
       /* This was not the idempotency case for class-applier set
          and sync is on-going => reject this mutation for now.  */
       err = SA_AIS_ERR_TRY_AGAIN;
@@ -15262,7 +15318,7 @@ SaAisErrorT ImmModel::classImplementerSet(const struct ImmsvOiImplSetReq* req,
 
   osafassert(err == SA_AIS_OK);
 
-  if (immNotWritable()) {
+  if (immNotWritable() || is_sync_aborting()) {
     /* This was not the idempotency case for class-implementer set and sync
        is on-going => reject this mutation for now. */
     err = SA_AIS_ERR_TRY_AGAIN;
@@ -15303,7 +15359,7 @@ SaAisErrorT ImmModel::classImplementerRelease(
   CcbVector::iterator ccbi;
   TRACE_ENTER();
 
-  if (immNotWritable()) {
+  if (immNotWritable() || is_sync_aborting()) {
     TRACE_LEAVE();
     return SA_AIS_ERR_TRY_AGAIN;
   }
@@ -15620,7 +15676,7 @@ SaAisErrorT ImmModel::objectImplementerRelease(
   ObjectMap::iterator i1;
   TRACE_ENTER();
 
-  if (immNotWritable()) {
+  if (immNotWritable() || is_sync_aborting()) {
     TRACE_LEAVE();
     return SA_AIS_ERR_TRY_AGAIN;
   }
@@ -15801,7 +15857,7 @@ SaAisErrorT ImmModel::setOneObjectImplementer(std::string objectName,
             info->mImplementerName.c_str(), objectName.c_str());
         err = SA_AIS_ERR_EXIST;
         goto done;
-      } else if (immNotWritable()) {
+      } else if (immNotWritable() || is_sync_aborting()) {
         /* Sync ongoing => Only idempotent object-applier set allowed */
         if (implSet != NULL && implSet->find(info) != implSet->end()) {
           TRACE_5("Idempotent object-implset for applier '%s' during sync",
@@ -15841,7 +15897,7 @@ SaAisErrorT ImmModel::setOneObjectImplementer(std::string objectName,
               "conflicts with setting object implementer",
               objectName.c_str(),
               classInfo->mImplementer->mImplementerName.c_str());
-        } else if (immNotWritable()) {
+        } else if (immNotWritable() || is_sync_aborting()) {
           if (obj->mImplementer != info) {
             /* This was not the idempotency case for object-implementer set
                and sync is on-going => reject this mutation for now.  */
@@ -16225,7 +16281,7 @@ SaAisErrorT ImmModel::rtObjectCreate(
     (*spApplConnPtr) = 0;
   }
 
-  if (immNotWritable()) { /*Check for persistent RTO further down. */
+  if (immNotWritable() || is_sync_aborting()) { /*Check for persistent RTO further down. */
     TRACE_LEAVE();
     return SA_AIS_ERR_TRY_AGAIN;
   }
@@ -18247,7 +18303,7 @@ SaAisErrorT ImmModel::rtObjectDelete(
     (*pbe2BConnPtr) = 0;
   }
 
-  if (immNotWritable()) { /*Check for persistent RTOs further down. */
+  if (immNotWritable() || is_sync_aborting()) { /*Check for persistent RTOs further down. */
     TRACE_LEAVE();
     return SA_AIS_ERR_TRY_AGAIN;
   }

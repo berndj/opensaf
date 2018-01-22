@@ -1131,17 +1131,18 @@ void immnd_abortSync(IMMND_CB *cb)
 				&send_evt);
 	if (rc != NCSCC_RC_SUCCESS) {
 		LOG_ER("Coord failed to send ABORT_SYNC over MDS err:%u", rc);
+	} else {
+		/*
+		 * Save the time of sending SYNC ABORT. The time will be reset
+		 * when the abort sync rsp arrives at the coord. Any messages
+		 * that will make changes to IMM data model at coord while the
+		 * abort message not yet been broadcasted by active IMMD will be
+		 * rejected with TRY_AGAIN code.
+		 */
+		struct timespec time;
+		osaf_clock_gettime(CLOCK_MONOTONIC, &time);
+		immModel_sendSyncAbortAt(cb, time);
 	}
-
-	/*
-	 * This mark is to say sync abort has been sent to active IMMD
-	 * and not yet broadcasted to all IMMNDs. In other words, the NODE STATE
-	 * at IMMND coord (IMM_NODE_FULLY_AVAILABLE) is different with veterans
-	 * (IMM_NODE_R_AVAILABLE) at the moment. So, based on this information,
-	 * IMMND_EVT_D2ND_ADMINIT or IMMND_EVT_D2ND_CCBINIT msg comes to IMMND
-	 * coord has to be rejected to synchronize with the result at veterans.
-	 */
-	osaf_clock_gettime(CLOCK_MONOTONIC, &cb->mSyncAbortSentAt);
 
 	TRACE_LEAVE();
 }

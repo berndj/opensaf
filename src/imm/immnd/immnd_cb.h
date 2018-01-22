@@ -129,7 +129,6 @@ typedef struct immnd_cb_tag {
   uint8_t mIntroduced;      // Ack received on introduce message
   uint8_t mSyncRequested;   // true=> I am coord, other req sync
   uint8_t mPendSync;        // 1=>sync announced but not received.
-  struct timespec mSyncAbortSentAt;  // Store the start time of sync abort sent
   uint8_t mSyncFinalizing;  // 1=>finalizeSync sent but not received.
   uint8_t mSync;            // true => this node is being synced (client).
   uint8_t mCanBeCoord;      // If!=0 then SC, 2 => 2pbe arbitration, 4 =>

@@ -31,6 +31,7 @@
 #define IMM_IMMND_IMMND_INIT_H_
 
 #include <saClm.h>
+#include <time.h>
 #include "imm/common/immsv_evt_model.h"
 #include "imm/common/immsv_api.h"
 
@@ -479,6 +480,10 @@ void immmModel_getLocalImplementers(IMMND_CB *cb, SaUint32T *arrSize,
                                     SaUint32T **implConnArr);
 
 void immModel_implementerDelete(IMMND_CB *cb, const char *implementerName);
+
+void immModel_sendSyncAbortAt(IMMND_CB *cb, struct timespec time);
+
+void immModel_getSyncAbortRsp(IMMND_CB *cb);
 
 #ifdef __cplusplus
 }
