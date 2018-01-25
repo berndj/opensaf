@@ -28,7 +28,8 @@ This file contains the main() routine for FM.
 #include <stdbool.h>
 #include "base/daemon.h"
 #include "base/logtrace.h"
-
+#include "base/osaf_extended_name.h"
+#include "osaf/consensus/consensus.h"
 #include "nid/agent/nid_api.h"
 #include "fm.h"
 #include "base/osaf_time.h"
@@ -553,6 +554,8 @@ static void fm_mbx_msg_handler(FM_CB *fm_cb, FM_EVT *fm_mbx_evt)
 	TRACE_ENTER();
 	switch (fm_mbx_evt->evt_code) {
 	case FM_EVT_NODE_DOWN:
+	{
+		Consensus consensus_service;
 		LOG_NO("Current role: %s", role_string[fm_cb->role]);
 		if ((fm_mbx_evt->node_id == fm_cb->peer_node_id)) {
 			/* Check whether node(AMF) initialization is done */
@@ -593,15 +596,27 @@ static void fm_mbx_msg_handler(FM_CB *fm_cb, FM_EVT *fm_mbx_evt)
 				 * trigerred quicker than the node_down event
 				 * has been received.
 				 */
+				if (fm_cb->role == PCS_RDA_STANDBY) {
+					const std::string current_active = consensus_service.CurrentActive();
+					if (current_active.compare(
+						osaf_extended_name_borrow(&fm_cb->peer_clm_node_name)) == 0) {
+						// update consensus service, before fencing old active controller
+						consensus_service.DemoteCurrentActive();
+					}
+				}
+
 				if (fm_cb->use_remote_fencing) {
 					if (fm_cb->peer_node_terminated ==
 					    false) {
+						// if peer_sc_up is true then
+						// the node has come up already
+						if (fm_cb->peer_sc_up == false && fm_cb->immnd_down == true) {
 						opensaf_reboot(
-						    fm_cb->peer_node_id,
-						    (char *)fm_cb
-							->peer_clm_node_name
-							.value,
-						    "Received Node Down for peer controller");
+							fm_cb->peer_node_id,
+							(char *)fm_cb
+							->peer_clm_node_name.value,
+							"Received Node Down for peer controller");
+						}
 					} else {
 						LOG_NO(
 						    "Peer node %s is terminated, fencing will not be performed",
@@ -624,7 +639,8 @@ static void fm_mbx_msg_handler(FM_CB *fm_cb, FM_EVT *fm_mbx_evt)
 				}
 			}
 		}
-		break;
+	}
+	break;
 
 	case FM_EVT_PEER_UP:
 		/* Weird situation in a cluster, where the new-Active controller
@@ -659,6 +675,15 @@ static void fm_mbx_msg_handler(FM_CB *fm_cb, FM_EVT *fm_mbx_evt)
 				    0, NULL,
 				    "Failover occurred, but this node is not yet ready");
 			}
+
+			Consensus consensus_service;
+			const std::string current_active = consensus_service.CurrentActive();
+			if (current_active.compare(
+				osaf_extended_name_borrow(&fm_cb->peer_clm_node_name)) == 0) {
+				// update consensus service, before fencing old active controller
+				consensus_service.DemoteCurrentActive();
+			}
+
 			/* Now. Try resetting other blade */
 			fm_cb->role = PCS_RDA_ACTIVE;
 

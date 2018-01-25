@@ -19,7 +19,10 @@
 #include <string.h>
 #include <syslog.h>
 #include "rde/agent/rda_papi.h"
+#include "osaf/consensus/consensus.h"
 #include "base/logtrace.h"
+#include "base/ncssysf_def.h"
+
 extern void rda_cb(uint32_t cb_hdl, PCS_RDA_CB_INFO *cb_info,
        PCSRDA_RETURN_CODE error_code);
 /****************************************************************************
@@ -82,6 +85,16 @@ uint32_t fm_rda_set_role(FM_CB *fm_cb, PCS_RDA_ROLE role)
 	memset(&rda_req, 0, sizeof(PCS_RDA_REQ));
 	rda_req.req_type = PCS_RDA_SET_ROLE;
 	rda_req.info.io_role = role;
+
+	osafassert(role == PCS_RDA_ACTIVE);
+
+	Consensus consensus_service;
+	rc = consensus_service.PromoteThisNode();
+	if (rc != SA_AIS_OK) {
+		LOG_ER("Unable to set active controller in consensus service");
+		opensaf_reboot(0, nullptr,
+			"Unable to set active controller in consensus service");
+	}
 
 	rc = pcs_rda_request(&rda_req);
 	if (rc != PCSRDA_RC_SUCCESS) {

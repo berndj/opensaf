@@ -49,4 +49,5 @@ bin_osaffmd_SOURCES = \
 bin_osaffmd_LDADD = \
 	lib/libSaAmf.la \
 	lib/libSaClm.la \
+	lib/libosaf_common.la \
 	lib/libopensaf_core.la
