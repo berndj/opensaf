@@ -318,7 +318,7 @@ int main(int argc, char *argv[])
 			if (operationId != -1) {
 				fprintf(
 				    stderr,
-				    "Cannot set admin operation more then once");
+				    "Cannot set admin operation more than once\n");
 				exit(EXIT_FAILURE);
 			}
 			operationId = strtoll(optarg, (char **)NULL, 10);
@@ -332,7 +332,7 @@ int main(int argc, char *argv[])
 			if (operationId != -1) {
 				fprintf(
 				    stderr,
-				    "Cannot set admin operation more then once");
+				    "Cannot set admin operation more than once\n");
 				exit(EXIT_FAILURE);
 			}
 			operationId = SA_IMM_PARAM_ADMOP_ID_ESC;

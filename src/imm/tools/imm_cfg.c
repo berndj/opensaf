@@ -403,7 +403,7 @@ new_attr_mod(const SaNameT *objectName, char *nameval, SaImmAttrFlagsT *flags)
 	error = get_attrValueType(attrDefinitions, name,
 				  &attrMod->modAttr.attrValueType, flags);
 	if (error == SA_AIS_ERR_NOT_EXIST) {
-		fprintf(stderr, "Class '%s' does not exist\n", className);
+		fprintf(stderr, "Attribute '%s' does not exist\n", name);
 		res = -1;
 		goto done;
 	}
@@ -661,8 +661,8 @@ int object_create(const SaNameT **objectNames, const SaImmClassNameT className,
 						    stderr,
 						    "error - saImmOmAdminOwnerSet FAILED: %s\n",
 						    saf_error(error));
-						goto done;
 					}
+					goto done;
 				}
 			}
 		}
@@ -2069,7 +2069,8 @@ static int imm_operation(int argc, char *argv[])
 	}
 
 	if (!transaction_mode) {
-		if (ccbHandle != -1) {
+		/* Don't apply the CCB if there is any error during CCB preparation */
+		if (ccbHandle != -1 && rc == 0) {
 			if ((error = immutil_saImmOmCcbApply(ccbHandle)) !=
 			    SA_AIS_OK) {
 				if (error == SA_AIS_ERR_TIMEOUT)
