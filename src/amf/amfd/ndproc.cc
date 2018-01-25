@@ -32,8 +32,8 @@
  */
 
 #include "osaf/immutil/immutil.h"
+#include "osaf/consensus/consensus.h"
 #include "base/logtrace.h"
-
 #include "amf/amfd/amfd.h"
 #include "amf/amfd/imm.h"
 #include "amf/amfd/cluster.h"
@@ -1221,5 +1221,15 @@ void avd_node_failover(AVD_AVND *node) {
   avd_pg_node_csi_del_all(avd_cb, node);
   avd_node_down_mw_susi_failover(avd_cb, node);
   avd_node_down_appl_susi_failover(avd_cb, node);
+
+  Consensus consensus_service;
+  if (consensus_service.IsRemoteFencingEnabled() == false &&
+      consensus_service.IsWritable() == false) {
+    // remote fencing is disabled and we have lost write access
+    // reboot this node to prevent split brain
+    opensaf_reboot(0, nullptr,
+      "Quorum lost. Rebooting this node to prevent split-brain");
+  }
+
   TRACE_LEAVE();
 }

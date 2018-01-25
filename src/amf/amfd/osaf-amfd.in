@@ -24,6 +24,8 @@ if [ ! -r $osafdirfile ]; then
 	exit 6
 else
 	. $osafdirfile
+	. "$pkgsysconfdir/fmd.conf"
+	unset args
 	. $pkgsysconfdir/nid.conf
 	. $pkgsysconfdir/amfd.conf
 fi	

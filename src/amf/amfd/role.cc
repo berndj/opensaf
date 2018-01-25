@@ -38,6 +38,7 @@
 #include "osaf/immutil/immutil.h"
 #include "base/logtrace.h"
 #include "rde/agent/rda_papi.h"
+#include "osaf/consensus/consensus.h"
 
 #include "amf/amfd/amfd.h"
 #include "amf/amfd/imm.h"
@@ -1085,6 +1086,12 @@ uint32_t amfd_switch_actv_qsd(AVD_CL_CB *cb) {
     avd_d2n_msg_dequeue(cb);
   }
 
+  Consensus consensus_service;
+  rc = consensus_service.DemoteThisNode();
+  if (rc != SA_AIS_OK) {
+    LOG_ER("Failed to demote this node from consensus service");
+  }
+
   TRACE_LEAVE();
   return NCSCC_RC_SUCCESS;
 }
@@ -1209,13 +1216,21 @@ uint32_t amfd_switch_stdby_actv(AVD_CL_CB *cb) {
   cb->avail_state_avd = SA_AMF_HA_ACTIVE;
   osaf_mutex_unlock_ordie(&imm_reinit_mutex);
 
+  Consensus consensus_service;
+  rc = consensus_service.PromoteThisNode();
+  if (rc != SA_AIS_OK) {
+    LOG_ER("Unable to set active controller in consensus service");
+    osafassert(false);
+  }
+
   /* Declare this standby as Active. Set Vdest role role */
   if (NCSCC_RC_SUCCESS !=
       (status = avd_mds_set_vdest_role(cb, SA_AMF_HA_ACTIVE))) {
     LOG_ER("Switch Standby --> Active FAILED, MDS role set failed");
     cb->swap_switch = false;
     avd_d2d_chg_role_rsp(cb, NCSCC_RC_FAILURE, SA_AMF_HA_ACTIVE);
-    return NCSCC_RC_FAILURE;
+    status = NCSCC_RC_FAILURE;
+    goto done;
   }
 
   /* Time to send fail-over messages to all the AVND's */
@@ -1240,7 +1255,8 @@ uint32_t amfd_switch_stdby_actv(AVD_CL_CB *cb) {
     } else {
       cb->swap_switch = false;
       avd_d2d_chg_role_rsp(cb, NCSCC_RC_FAILURE, SA_AMF_HA_ACTIVE);
-      return NCSCC_RC_FAILURE;
+      status = NCSCC_RC_FAILURE;
+      goto done;
     }
   }
 
@@ -1259,7 +1275,8 @@ uint32_t amfd_switch_stdby_actv(AVD_CL_CB *cb) {
          in avd_imm_reinit_bg_thread.*/
     } else {
       avd_d2d_chg_role_rsp(cb, NCSCC_RC_FAILURE, SA_AMF_HA_ACTIVE);
-      return NCSCC_RC_FAILURE;
+      status = NCSCC_RC_FAILURE;
+      goto done;
     }
   } else
     osaf_mutex_unlock_ordie(&imm_reinit_mutex);
@@ -1274,7 +1291,8 @@ uint32_t amfd_switch_stdby_actv(AVD_CL_CB *cb) {
     LOG_ER("Switch Standby --> Active, clm track start failed");
     Fifo::queue(new ClmTrackStart());
     avd_d2d_chg_role_rsp(cb, NCSCC_RC_FAILURE, SA_AMF_HA_ACTIVE);
-    return NCSCC_RC_FAILURE;
+    status = NCSCC_RC_FAILURE;
+    goto done;
   }
 
   /* Send the message to other avd for role change rsp as success */
@@ -1291,8 +1309,10 @@ uint32_t amfd_switch_stdby_actv(AVD_CL_CB *cb) {
     }
   }
 
+  status = NCSCC_RC_SUCCESS;
+done:
   TRACE_LEAVE();
-  return NCSCC_RC_SUCCESS;
+  return status;
 }
 
 /****************************************************************************\
