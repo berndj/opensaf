@@ -16,7 +16,9 @@
 
 noinst_HEADERS += \
 	src/osaf/immutil/immutil.h \
-	src/osaf/saflog/saflog.h
+	src/osaf/saflog/saflog.h \
+	src/osaf/consensus/key_value.h \
+	src/osaf/consensus/consensus.h
 
 pkglib_LTLIBRARIES += lib/libosaf_common.la
 
@@ -33,7 +35,9 @@ lib_libosaf_common_la_LDFLAGS = \
 
 lib_libosaf_common_la_SOURCES = \
 	src/osaf/immutil/immutil.c \
-	src/osaf/saflog/saflog.c
+	src/osaf/saflog/saflog.c \
+	src/osaf/consensus/key_value.cc \
+	src/osaf/consensus/consensus.cc
 
 nodist_EXTRA_lib_libosaf_common_la_SOURCES = dummy.cc
 

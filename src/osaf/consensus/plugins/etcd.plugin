@@ -1,0 +1,269 @@
+#!/usr/bin/env sh
+#      -*- OpenSAF  -*-
+#
+# (C) Copyright 2018 Ericsson AB 2018 - All Rights Reserved.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. This file and program are licensed
+# under the GNU Lesser General Public License Version 2.1, February 1999.
+# The complete license can be accessed from the following location:
+# http://opensource.org/licenses/lgpl-license.php
+# See the Copying file included with the OpenSAF distribution for full
+# licensing terms.
+#
+# Please note: this API is subject to change and may be modified
+# in a future version of OpenSAF. Future API versions may not be
+# backward compatible. This plugin may need to be adapted.
+
+readonly keyname="opensaf_consensus_lock"
+readonly directory="/opensaf/"
+readonly etcd_timeout="5s"
+
+# get
+#   retrieve <value> of <key> from key-value store
+# params:
+#   $1 - <key>
+# returns:
+#   0 - success, <value> is echoed to stdout
+#   non-zero - failure
+get() {
+  readonly key=$1
+
+  if value=$(etcdctl --timeout $etcd_timeout get "$directory$key" 2>&1)
+  then
+    echo "$value"
+    return 0
+  else
+    return 1
+  fi
+}
+
+# set
+#   set <key> to <value> in key-value store
+# params:
+#   $1 - <key>
+#   $2 - <value>
+# returns:
+#   0 - success
+#   non-zero - failure
+setkey() {
+  readonly key=$1
+  readonly value=$2
+
+  if etcdctl --timeout $etcd_timeout set "$directory$key" "$value" >/dev/null
+  then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# erase
+#   erase <key> in key-value store
+# params:
+#   $1 - <key>
+# returns:
+#   0 - success
+#   non-zero - failure
+erase() {
+  readonly key=$1
+
+  if etcdctl --timeout $etcd_timeout rm "$directory$key" >/dev/null 2>&1
+  then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# lock
+# params:
+#   $1 - <owner>, owner of the lock is set to this
+#   $2 - <timeout>, will automatically unlock after <timeout> seconds
+# returns:
+#   0 - success
+#   1 - the lock is owned by someone else
+#   2 or above - other failure
+# NOTE: if lock is already acquired by <owner>, then timeout is extended
+lock() {
+  readonly owner=$1
+  readonly timeout=$2
+
+  if etcdctl --timeout $etcd_timeout mk "$directory$keyname" "$owner" \
+    --ttl "$timeout" >/dev/null 2>&1
+  then
+    return 0
+  fi
+
+  if current_owner=$(etcdctl get "$directory$keyname")
+  then
+    # see if we already hold the lock
+    if [ "$current_owner" = "$owner" ]; then
+      # refresh TTL
+      if etcdctl --timeout $etcd_timeout set "$directory$keyname" "$owner" \
+        --swap-with-value "$owner" --ttl "$timeout" >/dev/null 2>&1
+      then
+        return 0
+      fi
+    else
+      # the lock is locked by someone else
+      return 1
+    fi
+  fi
+
+  return 2
+}
+
+# get
+#   retrieve <owner> of lock
+# params:
+#   none
+# returns:
+#   0 - success, <owner> is echoed to stdout
+#   non-zero - failure or not locked
+lock_owner() {
+  get "$keyname"
+  return $?
+}
+
+# unlock
+# params:
+#   $1 - owner
+#   $2 - <forced>
+#      - (optional parameter)
+#      - if set 'true', will unlock even if lock is not held by node
+#      - defaults to 'false'
+# returns:
+#   0 - success
+#   1 - the lock is owned by someone else
+#   2 or above - other failure
+#
+unlock() {
+  readonly owner=$1
+  readonly forced=${2:-false}
+
+  if [ "$forced" = false ]; then
+    # unlock only succeeds if owner matches
+    if etcdctl --timeout $etcd_timeout rm "$directory$keyname" \
+      --with-value "$owner" >/dev/null 2>&1
+    then
+      return 0
+    fi
+
+    # failed! check we own the lock
+    if current_owner=$(etcdctl --timeout $etcd_timeout get \
+      "$directory$keyname" 2>&1)
+    then
+      if [ "$owner" != "$current_owner" ]; then
+        return 1
+      fi
+    fi
+
+    return 2
+  fi
+
+  if etcdctl --timeout $etcd_timeout rm "$directory$keyname" >/dev/null 2>&1
+  then
+    return 0
+  else
+    return 2
+  fi
+}
+
+# watch
+#   watch <key> in key-value store
+# params:
+#   $1 - <key>
+# returns:
+#   0 - success, <new_value> is echoed to stdout
+#   non-zero - failure
+watch() {
+  readonly key=$1
+
+  if value=$(etcdctl --timeout $etcd_timeout watch "$directory$key" 2>&1)
+  then
+    # if the key is removed, then "PrevNode.Value: <value>" is returned
+    echo "$value"
+    return 0
+  else
+    return 1
+  fi
+}
+
+# argument parsing
+case "$1" in
+  get)
+    if [ "$#" -ne 2 ]; then
+      echo "Usage: $0 get <key>"
+      exit 1
+    fi
+    get "$2"
+    exit $?
+    ;;
+  set)
+    if [ "$#" -ne 3 ]; then
+      echo "Usage: $0 set <key> <value>"
+      exit 1
+    fi
+    setkey "$2" "$3"
+    exit $?
+    ;;
+  erase)
+    if [ "$#" -ne 2 ]; then
+      echo "Usage: $0 erase <key>"
+      exit 1
+    fi
+    erase "$2"
+    exit $?
+    ;;
+  lock)
+    if [ "$#" -ne 3 ]; then
+      echo "Usage: $0 lock <owner> <timeout>"
+      exit 1
+    fi
+    lock "$2" "$3"
+    exit $?
+    ;;
+  lock_owner)
+    if [ "$#" -ne 1 ]; then
+      echo "Usage: $0 lock_owner"
+      exit 1
+    fi
+    lock_owner
+    exit $?
+    ;;
+  unlock)
+    if [ "$#" -eq 2 ]; then
+      unlock "$2"
+      exit $?
+    elif [ "$#" -eq 3 ] && [ "$3" = "--force" ]; then
+      unlock "$2" 1
+      exit $?
+    else
+      echo "Usage: $0 unlock <owner> [--force]"
+      exit 1
+    fi
+    ;;
+  watch)
+    if [ "$#" -ne 2 ]; then
+      echo "Usage: $0 watch <key>"
+      exit 1
+    fi
+    watch "$2"
+    exit $?
+    ;;
+  watch_lock)
+    if [ "$#" -ne 1 ]; then
+      echo "Usage: $0 watch_lock"
+      exit 1
+    fi
+    watch "$keyname"
+    exit $?
+    ;;
+  *)
+    echo "Usage: $0 {get|set|erase|lock|unlock|lock_owner|watch|watch_lock}"
+    ;;
+esac
+
+exit 1
