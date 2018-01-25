@@ -21,6 +21,7 @@
 #include <time.h>
 #include <cstdint>
 #include <set>
+#include <string>
 #include "base/macros.h"
 #include "mds/mds_papi.h"
 #include "rde/agent/rda_papi.h"
@@ -38,6 +39,8 @@ class Role {
   uint32_t SetRole(PCS_RDA_ROLE new_role);
   PCS_RDA_ROLE role() const;
   static const char* to_string(PCS_RDA_ROLE role);
+  static void MonitorCallback(const std::string& key,
+    const std::string& new_value, SYSF_MBX mbx);
 
  private:
   static const uint64_t kDefaultDiscoverPeerTimeout = 2000;

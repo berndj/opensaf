@@ -18,15 +18,17 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
-#include <cinttypes>
 
 #include "rde/rded/role.h"
+#include <cinttypes>
 #include <cstdint>
 #include "base/logtrace.h"
 #include "base/getenv.h"
 #include "base/process.h"
 #include "base/time.h"
 #include "base/ncs_main_papi.h"
+#include "base/ncssysf_def.h"
+#include "osaf/consensus/consensus.h"
 #include "rde/rded/rde_cb.h"
 
 const char* const Role::role_names_[] = {"Undefined", "ACTIVE",    "STANDBY",
@@ -40,6 +42,19 @@ const char* Role::to_string(PCS_RDA_ROLE role) {
   return role >= 0 && role < sizeof(role_names_) / sizeof(role_names_[0])
              ? role_names_[role]
              : role_names_[0];
+}
+
+void Role::MonitorCallback(const std::string& key,
+  const std::string& new_value, SYSF_MBX mbx) {
+  TRACE_ENTER();
+
+  rde_msg* msg = static_cast<rde_msg *>(malloc(sizeof(rde_msg)));
+  msg->type = RDE_MSG_NEW_ACTIVE_CALLBACK;
+
+  uint32_t status;
+  status = m_NCS_IPC_SEND(&mbx,
+    msg, NCS_IPC_PRIORITY_NORMAL);
+  osafassert(status == NCSCC_RC_SUCCESS);
 }
 
 Role::Role(NODE_ID own_node_id)
@@ -61,10 +76,27 @@ timespec* Role::Poll(timespec* ts) {
       *ts = election_end_time_ - now;
       timeout = ts;
     } else {
+      SaAisErrorT rc;
+      Consensus consensus_service;
+      rc = consensus_service.PromoteThisNode();
+      if (rc != SA_AIS_OK) {
+        LOG_ER("Unable to set active controller in consensus service");
+        opensaf_reboot(0, nullptr,
+          "Unable to set active controller in consensus service");
+      }
+
       ExecutePreActiveScript();
       LOG_NO("Switched to ACTIVE from %s", to_string(role()));
       role_ = PCS_RDA_ACTIVE;
       rde_rda_send_role(role_);
+
+      // register for callback if active controller is changed
+      // in consensus service
+      RDE_CONTROL_BLOCK* cb = rde_get_control_block();
+      if (cb->monitor_lock_thread_running == false) {
+        cb->monitor_lock_thread_running = true;
+        consensus_service.MonitorLock(MonitorCallback, cb->mbx);
+      }
     }
   }
   return timeout;
@@ -91,7 +123,18 @@ uint32_t Role::SetRole(PCS_RDA_ROLE new_role) {
   }
   if (new_role != old_role) {
     LOG_NO("RDE role set to %s", to_string(new_role));
-    if (new_role == PCS_RDA_ACTIVE) ExecutePreActiveScript();
+    if (new_role == PCS_RDA_ACTIVE) {
+      ExecutePreActiveScript();
+
+      // register for callback if active controller is changed
+      // in consensus service
+      Consensus consensus_service;
+      RDE_CONTROL_BLOCK* cb = rde_get_control_block();
+      if (cb->monitor_lock_thread_running == false) {
+        cb->monitor_lock_thread_running = true;
+        consensus_service.MonitorLock(MonitorCallback, cb->mbx);
+      }
+    }
     role_ = new_role;
     if (new_role == PCS_RDA_UNDEFINED) {
       known_nodes_.clear();

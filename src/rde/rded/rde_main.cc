@@ -28,6 +28,7 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
+#include "osaf/consensus/consensus.h"
 #include "base/daemon.h"
 #include "base/logtrace.h"
 #include "base/osaf_poll.h"
@@ -37,6 +38,7 @@
 #include <saAmf.h>
 #include "rde/rded/rde_cb.h"
 #include "rde/rded/role.h"
+#include "base/conf.h"
 
 #define RDA_MAX_CLIENTS 32
 
@@ -92,10 +94,6 @@ static void handle_mbx_event() {
   TRACE_ENTER();
 
   msg = reinterpret_cast<rde_msg *>(ncs_ipc_non_blk_recv(&rde_cb->mbx));
-  TRACE("Received %s from node 0x%x with state %s. My state is %s",
-        rde_msg_name[msg->type], msg->fr_node_id,
-        Role::to_string(msg->info.peer_info.ha_role),
-        Role::to_string(role->role()));
 
   switch (msg->type) {
     case RDE_MSG_PEER_INFO_REQ:
@@ -118,6 +116,34 @@ static void handle_mbx_event() {
     case RDE_MSG_PEER_DOWN:
       LOG_NO("Peer down on node 0x%x", msg->fr_node_id);
       break;
+    case RDE_MSG_NEW_ACTIVE_CALLBACK: {
+      const std::string my_node = base::Conf::NodeName();
+      rde_cb->monitor_lock_thread_running = false;
+
+      // get current active controller
+      Consensus consensus_service;
+      std::string active_controller = consensus_service.CurrentActive();
+
+      LOG_NO("New active controller notification from consensus service");
+
+      if (role->role() == PCS_RDA_ACTIVE) {
+        if (my_node.compare(active_controller) != 0) {
+          // we are meant to be active, but consensus service doesn't think so
+          LOG_WA("Role does not match consensus service. New controller: %s",
+            active_controller.c_str());
+          if (consensus_service.IsRemoteFencingEnabled() == false) {
+            LOG_ER("Probable split-brain. Rebooting this node");
+            opensaf_reboot(0, nullptr,
+              "Split-brain detected by consensus service");
+          }
+        }
+
+        // register for callback
+        rde_cb->monitor_lock_thread_running = true;
+        consensus_service.MonitorLock(Role::MonitorCallback, rde_cb->mbx);
+      }
+      break;
+    }
     default:
       LOG_ER("%s: discarding unknown message type %u", __FUNCTION__, msg->type);
       break;
@@ -192,6 +218,7 @@ static int initialize_rde() {
     goto init_failed;
   }
 
+  rde_cb->monitor_lock_thread_running = false;
   rc = NCSCC_RC_SUCCESS;
 
 init_failed:
@@ -205,10 +232,11 @@ int main(int argc, char *argv[]) {
   NCS_SEL_OBJ mbx_sel_obj;
   RDE_RDA_CB *rde_rda_cb = &rde_cb->rde_rda_cb;
   int term_fd;
-
   opensaf_reboot_prepare();
 
   daemonize(argc, argv);
+
+  base::Conf::InitNodeName();
 
   if (initialize_rde() != NCSCC_RC_SUCCESS) goto init_failed;
 

@@ -58,7 +58,8 @@ bin_osafrded_SOURCES = \
 
 bin_osafrded_LDADD = \
 	lib/libSaAmf.la \
-	lib/libopensaf_core.la
+	lib/libopensaf_core.la \
+	lib/libosaf_common.la
 
 bin_rdegetrole_CPPFLAGS = \
 	$(AM_CPPFLAGS)

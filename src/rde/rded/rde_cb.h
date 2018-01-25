@@ -39,13 +39,15 @@ struct RDE_CONTROL_BLOCK {
   bool task_terminate;
   RDE_RDA_CB rde_rda_cb;
   RDE_AMF_CB rde_amf_cb;
+  bool monitor_lock_thread_running;
 };
 
 enum RDE_MSG_TYPE {
   RDE_MSG_PEER_UP = 1,
   RDE_MSG_PEER_DOWN = 2,
   RDE_MSG_PEER_INFO_REQ = 3,
-  RDE_MSG_PEER_INFO_RESP = 4
+  RDE_MSG_PEER_INFO_RESP = 4,
+  RDE_MSG_NEW_ACTIVE_CALLBACK = 5
 };
 
 struct rde_peer_info {
