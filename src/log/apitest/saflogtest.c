@@ -21,7 +21,7 @@
  * This file contains a command line test utility to write to the SAF LOG.
  *
  * The main purpose of the utility is to send a burst of log messages, by
- * default not waiting for ack for each message.
+ * default waiting for ack for each message.
  */
 
 #include <stdio.h>
@@ -42,6 +42,7 @@
 #include <poll.h>
 #include <unistd.h>
 #include <limits.h>
+#include "base/osaf_time.h"
 #include "base/saf_error.h"
 
 #include <saAis.h>
@@ -55,10 +56,12 @@
 
 #define MAX_NUM_STREAM 4
 
+const uint64_t kWaitTime = 10*1000; // Wait for timeout is 10 seconds
+const SaVersionT kLogVersion = {'A', 0x02, 0x03};
+
 static void logWriteLogCallbackT(SaInvocationT invocation, SaAisErrorT error);
 
 static SaLogCallbacksT logCallbacks = {0, 0, logWriteLogCallbackT};
-static SaVersionT logVersion = {'A', 0x02, 0x03};
 
 static char *progname = "saflogtest";
 static SaInvocationT cb_invocation;
@@ -154,15 +157,21 @@ static SaAisErrorT write_log_record(SaLogHandleT logHandle,
 	static int i = 0;
 	int try_agains = 0;
 	SaLogAckFlagsT ackflags;
+	struct timespec timeout_time;
 
 	if (wait_for_ack)
 		ackflags = SA_LOG_RECORD_WRITE_ACK;
 	else
 		ackflags = 0;
-
 retry:
-	errorCode = saLogWriteLogAsync(logStreamHandle, invocation, ackflags,
-				       logRecord);
+	osaf_set_millis_timeout(kWaitTime, &timeout_time);
+	while (!osaf_is_timeout(&timeout_time)) {
+
+		errorCode = saLogWriteLogAsync(logStreamHandle, invocation,
+					       ackflags, logRecord);
+		if (errorCode != SA_AIS_ERR_TRY_AGAIN) break;
+		osaf_nanosleep(&kHundredMilliseconds);
+	}
 
 	if (errorCode != SA_AIS_OK) {
 		fprintf(stderr, "saLogWriteLogAsync FAILED: %s\n",
@@ -202,9 +211,8 @@ retry:
 		}
 
 		if (cb_invocation != invocation) {
-			fprintf(
-			    stderr,
-			    "logWriteLogCallbackT FAILED: wrong invocation\n");
+			fprintf(stderr, "logWriteLogCallbackT FAILED:"
+					" wrong invocation\n");
 			return SA_AIS_ERR_BAD_OPERATION;
 		}
 
@@ -215,17 +223,16 @@ retry:
 			return cb_error;
 		}
 
-		if (cb_error == SA_AIS_ERR_TRY_AGAIN) {
-			usleep(100000); /* 100 ms */
+		if (cb_error == SA_AIS_ERR_TRY_AGAIN &&
+				!osaf_is_timeout(&timeout_time)) {
+			osaf_nanosleep(&kHundredMilliseconds);
 			try_agains++;
 			goto retry;
 		}
 
 		if (try_agains > 0) {
-			fprintf(
-			    stderr,
-			    "\tgot %u SA_AIS_ERR_TRY_AGAIN, waited %u secs\n",
-			    try_agains, try_agains / 10);
+			fprintf(stderr, "\tgot %u SA_AIS_ERR_TRY_AGAIN\n",
+				try_agains);
 		}
 	}
 
@@ -545,7 +552,14 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	error = saLogInitialize(&logHandle, &logCallbacks, &logVersion);
+	struct timespec timeout_time;
+	osaf_set_millis_timeout(kWaitTime, &timeout_time);
+	while(!osaf_is_timeout(&timeout_time)) {
+		SaVersionT version = kLogVersion;
+		error = saLogInitialize(&logHandle, &logCallbacks, &version);
+		if (error != SA_AIS_ERR_TRY_AGAIN) break;
+		osaf_nanosleep(&kHundredMilliseconds);
+	}
 	if (error != SA_AIS_OK) {
 		fprintf(stderr, "saLogInitialize FAILED: %s\n",
 			saf_error(error));
@@ -573,10 +587,17 @@ int main(int argc, char *argv[])
 			logFileCreateAttributes_ptr = NULL;
 		}
 
-		error = saLogStreamOpen_2(
-		    logHandle, &stream_info[j].logStreamName,
-		    logFileCreateAttributes_ptr, logStreamOpenFlags,
-		    SA_TIME_ONE_SECOND, &logStreamHandle);
+		osaf_set_millis_timeout(kWaitTime, &timeout_time);
+		while(!osaf_is_timeout(&timeout_time)) {
+			error = saLogStreamOpen_2(
+				      logHandle, &stream_info[j].logStreamName,
+			              logFileCreateAttributes_ptr,
+				      logStreamOpenFlags,
+				      SA_TIME_ONE_SECOND, &logStreamHandle);
+			if (error != SA_AIS_ERR_TRY_AGAIN) break;
+			osaf_nanosleep(&kHundredMilliseconds);
+		}
+
 		if (error != SA_AIS_OK) {
 			fprintf(stderr, "saLogStreamOpen_2 FAILED: %s\n",
 				saf_error(error));
@@ -589,8 +610,13 @@ int main(int argc, char *argv[])
 				write_log_record(
 				    logHandle, logStreamHandle, selectionObject,
 				    &stream_info[j].logRecord, wait_for_ack);
-				if (interval > 0)
-					usleep(interval);
+				if (interval > 0) {
+					struct timespec sleep_time;
+					sleep_time.tv_sec = interval / 1000000;
+					sleep_time.tv_nsec =
+						(interval % 1000000) * 1000;
+					osaf_nanosleep(&sleep_time);
+				}
 			}
 		}
 
@@ -617,16 +643,26 @@ int main(int argc, char *argv[])
 	 * closed automatically)
 	 */
 	if (stream_cnt == 1) {
-		error = saLogStreamClose(logStreamHandle);
-		if (SA_AIS_OK != error) {
+		osaf_set_millis_timeout(kWaitTime, &timeout_time);
+		while(!osaf_is_timeout(&timeout_time)) {
+			error = saLogStreamClose(logStreamHandle);
+			if (error != SA_AIS_ERR_TRY_AGAIN) break;
+			osaf_nanosleep(&kHundredMilliseconds);
+		}
+		if (error != SA_AIS_OK) {
 			fprintf(stderr, "saLogStreamClose FAILED: %s\n",
 				saf_error(error));
 			exit(EXIT_FAILURE);
 		}
 	}
 
-	error = saLogFinalize(logHandle);
-	if (SA_AIS_OK != error) {
+	osaf_set_millis_timeout(kWaitTime, &timeout_time);
+	while(!osaf_is_timeout(&timeout_time)) {
+		error = saLogFinalize(logHandle);
+		if (error != SA_AIS_ERR_TRY_AGAIN) break;
+		osaf_nanosleep(&kHundredMilliseconds);
+	}
+	if (error != SA_AIS_OK) {
 		fprintf(stderr, "saLogFinalize FAILED: %s\n", saf_error(error));
 		exit(EXIT_FAILURE);
 	}

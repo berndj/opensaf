@@ -793,36 +793,32 @@ void saLogOi_28()
 		return;
 	}
 
-	sprintf(
-	    command,
-	    "immcfg -a saLogStreamMaxLogFileSize=2001 safLgStrCfg=strA,safApp=safLogService");
+	sprintf(command, "immcfg -a saLogStreamMaxLogFileSize=2001 "
+			 "safLgStrCfg=strA,safApp=safLogService");
 	rc = systemCall(command);
 	if (rc != 0)
 		goto done;
 
-	sprintf(
-	    command,
-	    "immcfg -a saLogStreamMaxFilesRotated=1 safLgStrCfg=strA,safApp=safLogService");
+	sprintf(command, "immcfg -a saLogStreamMaxFilesRotated=1 "
+			 "safLgStrCfg=strA,safApp=safLogService");
 	rc = systemCall(command);
 	if (rc != 0)
 		goto done;
 
-	sprintf(
-	    command,
-	    "saflogtest -b strA --count=1000 --interval=5000 \"saflogtest (1000,5000) strA\"");
+	sprintf(command, "saflogtest -b strA --count=100 --interval=5000 "
+			 "\"saflogtest (100,5000) strA\"");
 	rc = systemCall(command);
 	if (rc != 0)
 		goto done;
 
-	sprintf(
-	    command,
-	    "immcfg -a saLogStreamMaxFilesRotated=3 safLgStrCfg=strA,safApp=safLogService");
+	sprintf(command, "immcfg -a saLogStreamMaxFilesRotated=3 "
+			 "safLgStrCfg=strA,safApp=safLogService");
 	rc = systemCall(command);
 
 done:
 	/* Delete object strA */
-	sprintf(command,
-		"immcfg -d safLgStrCfg=strA,safApp=safLogService 2> /dev/null");
+	sprintf(command, "immcfg -d safLgStrCfg=strA,safApp=safLogService "
+			 "2> /dev/null");
 	delay_ms();
 	systemCall(command);
 	rc_validate(rc, 0);
@@ -1041,21 +1037,20 @@ void saLogOi_34()
 	if (rc != 0)
 		goto done;
 
-	sprintf(
-	    command,
-	    "saflogtest -b strA --count=10 --interval=10000 \"saflogtest (10,10000) strA\"");
+	sprintf(command, "saflogtest -b strA --count=10 --interval=10000 "
+			 "\"saflogtest (10,10000) strA\"");
 	rc = systemCall(command);
 	if (rc != 0)
 		goto done;
-	sprintf(
-	    command,
-	    "saflogtest -b strB --count=500 --interval=5 \"saflogtest (500,5) strB\"");
+	sprintf(command, "saflogtest -b strB --count=20 --interval=5 "
+			 "\"saflogtest (20,5) strB\"");
+	rc = systemCall(command);
 	if (rc != 0)
 		goto done;
 
-	sprintf(
-	    command,
-	    "saflogtest -b strC --count=700 --interval=5 \"saflogtest (700,5) strC\"");
+	sprintf(command,  "saflogtest -b strC --count=30 --interval=5"
+			  " \"saflogtest (30,5) strC\"");
+	rc = systemCall(command);
 	if (rc != 0)
 		goto done;
 
@@ -1299,9 +1294,8 @@ void saLogOi_44()
 	if (rc != 0)
 		goto delete_object;
 
-	sprintf(
-	    command,
-	    "saflogtest -b strD --count=500 --interval=5 \"saflogtest (500,5) strD\"");
+	sprintf(command, "saflogtest -b strD --count=50 --interval=5 "
+			 "\"saflogtest (50,5) strD\"");
 	rc = systemCall(command);
 
 delete_object:
@@ -1428,7 +1422,7 @@ void saLogOi_50()
 
 	while (noTimes--) {
 		sprintf(command,
-			"saflogtest -a appTest --count=100 --interval=1 "
+			"saflogtest -a appTest --count=10 --interval=1 "
 			"\"saflogtest (100,1,%d) appTest\"",
 			noTimes);
 		rc = system(command);
