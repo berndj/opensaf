@@ -323,7 +323,7 @@ endif
 set-default-node-config:
 	@echo "*** Setting default controller node configuration ***"
 	echo "2" > $(DESTDIR)$(pkgsysconfdir)/chassis_id
-	echo "1" > $(DESTDIR)$(pkgsysconfdir)/slot_id
+	echo "0" > $(DESTDIR)$(pkgsysconfdir)/slot_id
 	echo "15" > $(DESTDIR)$(pkgsysconfdir)/subslot_id
 	echo "controller" > $(DESTDIR)$(pkgsysconfdir)/node_type
 

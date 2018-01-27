@@ -175,6 +175,9 @@ generate_nodeid() {
 		return 0
 	fi
 	SLOT_ID=$(cat "$SLOT_ID_FILE")
+	if [ "$SLOT_ID" -eq "0" ]; then
+		return 0
+	fi
 	if [ "$SLOT_ID" -gt "4095" ] || [ "$SLOT_ID" -lt "1" ]
 	then
 		echo "SLOT ID Should be in the range of 1 to 4095"
