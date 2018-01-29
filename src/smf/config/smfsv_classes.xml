@@ -349,7 +349,7 @@
             <name>smfNodeRebootCmd</name>
             <type>SA_STRING_T</type>
             <category>SA_CONFIG</category>
-            <flag>SA_WRITABLE</flag>OpenSafSmfConfig
+            <flag>SA_WRITABLE</flag>
         </attr>
         <attr>
             <name>smfInactivatePbeDuringUpgrade</name>
