@@ -16,9 +16,9 @@
  *
  */
 
-#include "fm.h"
-#include "base/osaf_time.h"
 #include "base/ncssysf_def.h"
+#include "base/osaf_time.h"
+#include "fm.h"
 
 const MDS_CLIENT_MSG_FORMAT_VER fm_fm_msg_fmt_map_table[FM_SUBPART_VER_MAX] = {
     FM_FM_MSG_FMT_VER_1};
@@ -35,21 +35,21 @@ static uint32_t fm_fm_mds_dec(MDS_CALLBACK_DEC_INFO *dec_info);
 static void check_for_node_isolation(FM_CB *cb);
 static bool has_been_well_connected_recently(FM_CB *cb);
 static uint32_t fm_mds_node_evt(FM_CB *cb,
-				MDS_CALLBACK_NODE_EVENT_INFO *node_evt);
+                                MDS_CALLBACK_NODE_EVENT_INFO *node_evt);
 static uint32_t fm_fill_mds_evt_post_fm_mbx(FM_CB *cb, FM_EVT *fm_evt,
-					    NODE_ID node_id,
-					    FM_FSM_EVT_CODE evt_code);
+                                            NODE_ID node_id,
+                                            FM_FSM_EVT_CODE evt_code);
 static void fm_proc_svc_down(FM_CB *cb, uint32_t node_id, NCSMDS_SVC_ID svc_id);
 
 uint32_t fm_mds_sync_send(FM_CB *fm_cb, NCSCONTEXT msg, NCSMDS_SVC_ID svc_id,
-			  MDS_SEND_PRIORITY_TYPE priority,
-			  MDS_SENDTYPES send_type, MDS_DEST *i_to_dest,
-			  MDS_SYNC_SND_CTXT *mds_ctxt);
+                          MDS_SEND_PRIORITY_TYPE priority,
+                          MDS_SENDTYPES send_type, MDS_DEST *i_to_dest,
+                          MDS_SYNC_SND_CTXT *mds_ctxt);
 
 uint32_t fm_mds_async_send(FM_CB *fm_cb, NCSCONTEXT msg, NCSMDS_SVC_ID svc_id,
-			   MDS_SEND_PRIORITY_TYPE priority,
-			   MDS_SENDTYPES send_type, MDS_DEST i_to_dest,
-			   NCSMDS_SCOPE_TYPE bcast_scope);
+                           MDS_SEND_PRIORITY_TYPE priority,
+                           MDS_SENDTYPES send_type, MDS_DEST i_to_dest,
+                           NCSMDS_SCOPE_TYPE bcast_scope);
 
 /****************************************************************************
  * Name          : fm_mds_init
@@ -62,84 +62,83 @@ uint32_t fm_mds_async_send(FM_CB *fm_cb, NCSCONTEXT msg, NCSMDS_SVC_ID svc_id,
  *
  * Notes         : None.
  *****************************************************************************/
-uint32_t fm_mds_init(FM_CB *cb)
-{
-	NCSMDS_INFO arg;
-	MDS_SVC_ID svc_id[] = {NCSMDS_SVC_ID_GFM, NCSMDS_SVC_ID_AVND,
-			       NCSMDS_SVC_ID_IMMND};
-	MDS_SVC_ID svc_red_id[2] = {NCSMDS_SVC_ID_IMMD, NCSMDS_SVC_ID_AVD};
+uint32_t fm_mds_init(FM_CB *cb) {
+  NCSMDS_INFO arg;
+  MDS_SVC_ID svc_id[] = {NCSMDS_SVC_ID_GFM, NCSMDS_SVC_ID_AVND,
+                         NCSMDS_SVC_ID_IMMND};
+  MDS_SVC_ID svc_red_id[2] = {NCSMDS_SVC_ID_IMMD, NCSMDS_SVC_ID_AVD};
 
-	/* Get the MDS handles to be used. */
-	if (fm_mds_get_adest_hdls(cb) != NCSCC_RC_SUCCESS) {
-		return NCSCC_RC_FAILURE;
-	}
+  /* Get the MDS handles to be used. */
+  if (fm_mds_get_adest_hdls(cb) != NCSCC_RC_SUCCESS) {
+    return NCSCC_RC_FAILURE;
+  }
 
-	/* Install FM on ADEST. */
-	memset(&arg, 0, sizeof(NCSMDS_INFO));
-	arg.i_mds_hdl = cb->adest_pwe1_hdl;
-	arg.i_svc_id = NCSMDS_SVC_ID_GFM;
-	arg.i_op = MDS_INSTALL;
+  /* Install FM on ADEST. */
+  memset(&arg, 0, sizeof(NCSMDS_INFO));
+  arg.i_mds_hdl = cb->adest_pwe1_hdl;
+  arg.i_svc_id = NCSMDS_SVC_ID_GFM;
+  arg.i_op = MDS_INSTALL;
 
-	arg.info.svc_install.i_yr_svc_hdl = (MDS_CLIENT_HDL)gl_fm_hdl;
-	arg.info.svc_install.i_install_scope = NCSMDS_SCOPE_NONE;
-	arg.info.svc_install.i_svc_cb = fm_mds_callback;
-	arg.info.svc_install.i_mds_q_ownership = false;
-	arg.info.svc_install.i_mds_svc_pvt_ver = FM_MDS_SUB_PART_VERSION;
+  arg.info.svc_install.i_yr_svc_hdl = (MDS_CLIENT_HDL)gl_fm_hdl;
+  arg.info.svc_install.i_install_scope = NCSMDS_SCOPE_NONE;
+  arg.info.svc_install.i_svc_cb = fm_mds_callback;
+  arg.info.svc_install.i_mds_q_ownership = false;
+  arg.info.svc_install.i_mds_svc_pvt_ver = FM_MDS_SUB_PART_VERSION;
 
-	if (ncsmds_api(&arg) != NCSCC_RC_SUCCESS) {
-		syslog(LOG_ERR, "MDS_INSTALL failed");
-		return NCSCC_RC_FAILURE;
-	}
+  if (ncsmds_api(&arg) != NCSCC_RC_SUCCESS) {
+    syslog(LOG_ERR, "MDS_INSTALL failed");
+    return NCSCC_RC_FAILURE;
+  }
 
-	memset(&arg, 0, sizeof(NCSMDS_INFO));
-	arg.i_mds_hdl = cb->adest_pwe1_hdl;
-	arg.i_svc_id = NCSMDS_SVC_ID_GFM;
+  memset(&arg, 0, sizeof(NCSMDS_INFO));
+  arg.i_mds_hdl = cb->adest_pwe1_hdl;
+  arg.i_svc_id = NCSMDS_SVC_ID_GFM;
 
-	/* Subcribe to AVND and FMSV MDS UP/DOWN events. */
-	arg.i_op = MDS_SUBSCRIBE;
-	arg.info.svc_subscribe.i_scope = NCSMDS_SCOPE_NONE;
-	arg.info.svc_subscribe.i_num_svcs = 3;
-	arg.info.svc_subscribe.i_svc_ids = svc_id;
+  /* Subcribe to AVND and FMSV MDS UP/DOWN events. */
+  arg.i_op = MDS_SUBSCRIBE;
+  arg.info.svc_subscribe.i_scope = NCSMDS_SCOPE_NONE;
+  arg.info.svc_subscribe.i_num_svcs = 3;
+  arg.info.svc_subscribe.i_svc_ids = svc_id;
 
-	if (ncsmds_api(&arg) != NCSCC_RC_SUCCESS) {
-		/* Subcription failed amd hence uninstall. */
-		syslog(LOG_ERR, "MDS_SUBSCRIBE failed");
-		arg.i_op = MDS_UNINSTALL;
-		ncsmds_api(&arg);
-		return NCSCC_RC_FAILURE;
-	}
+  if (ncsmds_api(&arg) != NCSCC_RC_SUCCESS) {
+    /* Subcription failed amd hence uninstall. */
+    syslog(LOG_ERR, "MDS_SUBSCRIBE failed");
+    arg.i_op = MDS_UNINSTALL;
+    ncsmds_api(&arg);
+    return NCSCC_RC_FAILURE;
+  }
 
-	/* Subscribe to IMMD redundant down event */
-	memset(&arg, 0, sizeof(NCSMDS_INFO));
-	arg.i_mds_hdl = cb->adest_pwe1_hdl;
-	arg.i_svc_id = NCSMDS_SVC_ID_GFM;
-	arg.i_op = MDS_RED_SUBSCRIBE;
-	arg.info.svc_subscribe.i_num_svcs = 2;
-	arg.info.svc_subscribe.i_scope = NCSMDS_SCOPE_NONE;
-	arg.info.svc_subscribe.i_svc_ids = svc_red_id;
-	if (ncsmds_api(&arg) == NCSCC_RC_FAILURE) {
-		syslog(LOG_ERR, "MDS_RED_SUBSCRIBE failed");
-		arg.i_op = MDS_UNINSTALL;
-		ncsmds_api(&arg);
-		return NCSCC_RC_FAILURE;
-	}
+  /* Subscribe to IMMD redundant down event */
+  memset(&arg, 0, sizeof(NCSMDS_INFO));
+  arg.i_mds_hdl = cb->adest_pwe1_hdl;
+  arg.i_svc_id = NCSMDS_SVC_ID_GFM;
+  arg.i_op = MDS_RED_SUBSCRIBE;
+  arg.info.svc_subscribe.i_num_svcs = 2;
+  arg.info.svc_subscribe.i_scope = NCSMDS_SCOPE_NONE;
+  arg.info.svc_subscribe.i_svc_ids = svc_red_id;
+  if (ncsmds_api(&arg) == NCSCC_RC_FAILURE) {
+    syslog(LOG_ERR, "MDS_RED_SUBSCRIBE failed");
+    arg.i_op = MDS_UNINSTALL;
+    ncsmds_api(&arg);
+    return NCSCC_RC_FAILURE;
+  }
 
-	memset(&arg, 0, sizeof(NCSMDS_INFO));
-	arg.i_op = MDS_NODE_SUBSCRIBE;
-	arg.i_svc_id = NCSMDS_SVC_ID_GFM;
-	arg.i_mds_hdl = cb->adest_pwe1_hdl;
-	/* Finally, start using MDS API */
-	if (ncsmds_api(&arg) != NCSCC_RC_SUCCESS) {
-		syslog(LOG_ERR, "MDS_SUBSCRIBE failed");
-		memset(&arg, 0, sizeof(NCSMDS_INFO));
-		arg.i_mds_hdl = (MDS_HDL)cb->adest_pwe1_hdl;
-		arg.i_svc_id = NCSMDS_SVC_ID_GFM;
-		arg.i_op = MDS_UNINSTALL;
-		ncsmds_api(&arg);
-		return NCSCC_RC_FAILURE;
-	}
+  memset(&arg, 0, sizeof(NCSMDS_INFO));
+  arg.i_op = MDS_NODE_SUBSCRIBE;
+  arg.i_svc_id = NCSMDS_SVC_ID_GFM;
+  arg.i_mds_hdl = cb->adest_pwe1_hdl;
+  /* Finally, start using MDS API */
+  if (ncsmds_api(&arg) != NCSCC_RC_SUCCESS) {
+    syslog(LOG_ERR, "MDS_SUBSCRIBE failed");
+    memset(&arg, 0, sizeof(NCSMDS_INFO));
+    arg.i_mds_hdl = (MDS_HDL)cb->adest_pwe1_hdl;
+    arg.i_svc_id = NCSMDS_SVC_ID_GFM;
+    arg.i_op = MDS_UNINSTALL;
+    ncsmds_api(&arg);
+    return NCSCC_RC_FAILURE;
+  }
 
-	return NCSCC_RC_SUCCESS;
+  return NCSCC_RC_SUCCESS;
 }
 
 /****************************************************************************
@@ -153,19 +152,18 @@ uint32_t fm_mds_init(FM_CB *cb)
  *
  * Notes         : None.
  *****************************************************************************/
-uint32_t fm_mds_finalize(FM_CB *cb)
-{
-	NCSMDS_INFO arg;
-	uint32_t return_val;
+uint32_t fm_mds_finalize(FM_CB *cb) {
+  NCSMDS_INFO arg;
+  uint32_t return_val;
 
-	memset(&arg, 0, sizeof(NCSMDS_INFO));
-	arg.i_mds_hdl = (MDS_HDL)cb->adest_pwe1_hdl;
-	arg.i_svc_id = NCSMDS_SVC_ID_GFM;
-	arg.i_op = MDS_UNINSTALL;
+  memset(&arg, 0, sizeof(NCSMDS_INFO));
+  arg.i_mds_hdl = (MDS_HDL)cb->adest_pwe1_hdl;
+  arg.i_svc_id = NCSMDS_SVC_ID_GFM;
+  arg.i_op = MDS_UNINSTALL;
 
-	return_val = ncsmds_api(&arg);
+  return_val = ncsmds_api(&arg);
 
-	return return_val;
+  return return_val;
 }
 
 /****************************************************************************
@@ -179,23 +177,22 @@ uint32_t fm_mds_finalize(FM_CB *cb)
  *
  * Notes         : None.
  *****************************************************************************/
-static uint32_t fm_mds_get_adest_hdls(FM_CB *cb)
-{
-	NCSADA_INFO arg;
+static uint32_t fm_mds_get_adest_hdls(FM_CB *cb) {
+  NCSADA_INFO arg;
 
-	memset(&arg, 0, sizeof(NCSADA_INFO));
+  memset(&arg, 0, sizeof(NCSADA_INFO));
 
-	arg.req = NCSADA_GET_HDLS;
+  arg.req = NCSADA_GET_HDLS;
 
-	if (ncsada_api(&arg) != NCSCC_RC_SUCCESS) {
-		return NCSCC_RC_FAILURE;
-	}
+  if (ncsada_api(&arg) != NCSCC_RC_SUCCESS) {
+    return NCSCC_RC_FAILURE;
+  }
 
-	cb->adest = arg.info.adest_get_hdls.o_adest;
-	cb->adest_hdl = arg.info.adest_get_hdls.o_mds_adest_hdl;
-	cb->adest_pwe1_hdl = arg.info.adest_get_hdls.o_mds_pwe1_hdl;
+  cb->adest = arg.info.adest_get_hdls.o_adest;
+  cb->adest_hdl = arg.info.adest_get_hdls.o_mds_adest_hdl;
+  cb->adest_pwe1_hdl = arg.info.adest_get_hdls.o_mds_pwe1_hdl;
 
-	return NCSCC_RC_SUCCESS;
+  return NCSCC_RC_SUCCESS;
 }
 
 /****************************************************************************
@@ -209,156 +206,149 @@ static uint32_t fm_mds_get_adest_hdls(FM_CB *cb)
  *
  * Notes         : None.
  *****************************************************************************/
-static uint32_t fm_mds_callback(NCSMDS_CALLBACK_INFO *info)
-{
-	uint32_t cb_hdl;
-	FM_CB *cb;
-	uint32_t return_val = NCSCC_RC_SUCCESS;
+static uint32_t fm_mds_callback(NCSMDS_CALLBACK_INFO *info) {
+  uint32_t cb_hdl;
+  FM_CB *cb;
+  uint32_t return_val = NCSCC_RC_SUCCESS;
 
-	if (info == NULL) {
-		syslog(LOG_INFO, "fm_mds_callback: Invalid param info");
-		return NCSCC_RC_SUCCESS;
-	}
+  if (info == NULL) {
+    syslog(LOG_INFO, "fm_mds_callback: Invalid param info");
+    return NCSCC_RC_SUCCESS;
+  }
 
-	cb_hdl = (uint32_t)info->i_yr_svc_hdl;
-	cb = (FM_CB *)ncshm_take_hdl(NCS_SERVICE_ID_GFM, cb_hdl);
-	if (cb == NULL) {
-		syslog(LOG_INFO, "fm_mds_callback: CB retrieve failed");
-		return NCSCC_RC_SUCCESS;
-	}
+  cb_hdl = (uint32_t)info->i_yr_svc_hdl;
+  cb = (FM_CB *)ncshm_take_hdl(NCS_SERVICE_ID_GFM, cb_hdl);
+  if (cb == NULL) {
+    syslog(LOG_INFO, "fm_mds_callback: CB retrieve failed");
+    return NCSCC_RC_SUCCESS;
+  }
 
-	switch (info->i_op) {
-	/* For intra-process MDS. Not required for us. */
-	case MDS_CALLBACK_COPY:
-		break;
+  switch (info->i_op) {
+    /* For intra-process MDS. Not required for us. */
+    case MDS_CALLBACK_COPY:
+      break;
 
-	case MDS_CALLBACK_ENC:
-		return_val = fm_encode(&info->info.enc);
-		break;
+    case MDS_CALLBACK_ENC:
+      return_val = fm_encode(&info->info.enc);
+      break;
 
-	/* Calling enc for enc_flat too. */
-	case MDS_CALLBACK_ENC_FLAT:
-		return_val = fm_encode(&info->info.enc_flat);
-		break;
+    /* Calling enc for enc_flat too. */
+    case MDS_CALLBACK_ENC_FLAT:
+      return_val = fm_encode(&info->info.enc_flat);
+      break;
 
-	case MDS_CALLBACK_DEC:
-		return_val = fm_decode(&info->info.dec);
-		break;
+    case MDS_CALLBACK_DEC:
+      return_val = fm_decode(&info->info.dec);
+      break;
 
-	/* Calling dec for dec_flat too. */
-	case MDS_CALLBACK_DEC_FLAT:
-		return_val = fm_decode(&info->info.dec_flat);
-		break;
+    /* Calling dec for dec_flat too. */
+    case MDS_CALLBACK_DEC_FLAT:
+      return_val = fm_decode(&info->info.dec_flat);
+      break;
 
-	case MDS_CALLBACK_RECEIVE:
-		return_val = fm_mds_rcv_evt(cb, &(info->info.receive));
-		break;
+    case MDS_CALLBACK_RECEIVE:
+      return_val = fm_mds_rcv_evt(cb, &(info->info.receive));
+      break;
 
-	/* Received AVM/AVND/GFM UP/DOWN event. */
-	case MDS_CALLBACK_SVC_EVENT:
-		return_val = fm_mds_svc_evt(cb, &(info->info.svc_evt));
-		break;
-	case MDS_CALLBACK_NODE_EVENT:
-		return_val = fm_mds_node_evt(cb, &(info->info.node_evt));
-		break;
+    /* Received AVM/AVND/GFM UP/DOWN event. */
+    case MDS_CALLBACK_SVC_EVENT:
+      return_val = fm_mds_svc_evt(cb, &(info->info.svc_evt));
+      break;
+    case MDS_CALLBACK_NODE_EVENT:
+      return_val = fm_mds_node_evt(cb, &(info->info.node_evt));
+      break;
 
-	default:
-		return_val = NCSCC_RC_FAILURE;
-		break;
-	}
+    default:
+      return_val = NCSCC_RC_FAILURE;
+      break;
+  }
 
-	ncshm_give_hdl(cb_hdl);
+  ncshm_give_hdl(cb_hdl);
 
-	return return_val;
+  return return_val;
 }
 
-uint32_t fm_send_node_down_to_mbx(FM_CB *cb, uint32_t node_id)
-{
-	FM_EVT *fm_evt = NULL;
-	uint32_t rc = NCSCC_RC_SUCCESS;
-	fm_evt = m_MMGR_ALLOC_FM_EVT;
-	if (NULL == fm_evt) {
-		syslog(LOG_INFO, "fm_mds_rcv_evt: fm_evt allocation FAILED.");
-		return NCSCC_RC_FAILURE;
-	}
-	rc = fm_fill_mds_evt_post_fm_mbx(cb, fm_evt, node_id, FM_EVT_NODE_DOWN);
-	if (rc == NCSCC_RC_FAILURE) {
-		m_MMGR_FREE_FM_EVT(fm_evt);
-		fm_evt = NULL;
-		LOG_IN("node down event post to mailbox failed");
-	}
-	return rc;
+uint32_t fm_send_node_down_to_mbx(FM_CB *cb, uint32_t node_id) {
+  FM_EVT *fm_evt = NULL;
+  uint32_t rc = NCSCC_RC_SUCCESS;
+  fm_evt = m_MMGR_ALLOC_FM_EVT;
+  if (NULL == fm_evt) {
+    syslog(LOG_INFO, "fm_mds_rcv_evt: fm_evt allocation FAILED.");
+    return NCSCC_RC_FAILURE;
+  }
+  rc = fm_fill_mds_evt_post_fm_mbx(cb, fm_evt, node_id, FM_EVT_NODE_DOWN);
+  if (rc == NCSCC_RC_FAILURE) {
+    m_MMGR_FREE_FM_EVT(fm_evt);
+    fm_evt = NULL;
+    LOG_IN("node down event post to mailbox failed");
+  }
+  return rc;
 }
 
-void fm_proc_svc_down(FM_CB *cb, uint32_t node_id, NCSMDS_SVC_ID svc_id)
-{
-	TRACE_ENTER2("SVC ID: %d", (int)svc_id);
-	switch (svc_id) {
-	case NCSMDS_SVC_ID_IMMND:
-		cb->immnd_down = true;
-		LOG_NO("IMMND down on: %x", cb->peer_node_id);
-		break;
-	case NCSMDS_SVC_ID_AVND:
-		cb->amfnd_down = true;
-		LOG_NO("AMFND down on: %x", cb->peer_node_id);
-		break;
-	case NCSMDS_SVC_ID_IMMD:
-		cb->immd_down = true;
-		LOG_NO("IMMD down on: %x", cb->peer_node_id);
-		break;
-	case NCSMDS_SVC_ID_AVD:
-		cb->amfd_down = true;
-		LOG_NO("AVD down on: %x", cb->peer_node_id);
-		break;
-	case NCSMDS_SVC_ID_GFM:
-		cb->fm_down = true;
-		LOG_NO("FM down on: %x", cb->peer_node_id);
-		break;
-	default:
-		break;
-	}
+void fm_proc_svc_down(FM_CB *cb, uint32_t node_id, NCSMDS_SVC_ID svc_id) {
+  TRACE_ENTER2("SVC ID: %d", (int)svc_id);
+  switch (svc_id) {
+    case NCSMDS_SVC_ID_IMMND:
+      cb->immnd_down = true;
+      LOG_NO("IMMND down on: %x", cb->peer_node_id);
+      break;
+    case NCSMDS_SVC_ID_AVND:
+      cb->amfnd_down = true;
+      LOG_NO("AMFND down on: %x", cb->peer_node_id);
+      break;
+    case NCSMDS_SVC_ID_IMMD:
+      cb->immd_down = true;
+      LOG_NO("IMMD down on: %x", cb->peer_node_id);
+      break;
+    case NCSMDS_SVC_ID_AVD:
+      cb->amfd_down = true;
+      LOG_NO("AVD down on: %x", cb->peer_node_id);
+      break;
+    case NCSMDS_SVC_ID_GFM:
+      cb->fm_down = true;
+      LOG_NO("FM down on: %x", cb->peer_node_id);
+      break;
+    default:
+      break;
+  }
 
-	/* Processing only for alternate node.
-	 * Service downs of AMFND, IMMD, IMMND is the same as NODE_DOWN from 4.4
-	 * onwards. This is required to handle the usecase involving
-	 * '/etc/init.d/opensafd stop' without an OS reboot cycle
-	 * Process service downs only if OpenSAF is not controlling TIPC.
-	 * If OpenSAF is controlling TIPC, just wait for NODE_DOWN to trigger
-	 * failover.
-	 */
-	if (cb->immd_down && cb->immnd_down && cb->amfnd_down &&
-	    cb->amfd_down && cb->fm_down) {
-		LOG_NO("Core services went down on node_id: %x", node_id);
+  /* Processing only for alternate node.
+   * Service downs of AMFND, IMMD, IMMND is the same as NODE_DOWN from 4.4
+   * onwards. This is required to handle the usecase involving
+   * '/etc/init.d/opensafd stop' without an OS reboot cycle
+   * Process service downs only if OpenSAF is not controlling TIPC.
+   * If OpenSAF is controlling TIPC, just wait for NODE_DOWN to trigger
+   * failover.
+   */
+  if (cb->immd_down && cb->immnd_down && cb->amfnd_down && cb->amfd_down &&
+      cb->fm_down) {
+    LOG_NO("Core services went down on node_id: %x", node_id);
 
-		if (!cb->control_tipc)
-			fm_send_node_down_to_mbx(cb, node_id);
-	}
+    if (!cb->control_tipc) fm_send_node_down_to_mbx(cb, node_id);
+  }
 
-	TRACE_LEAVE();
+  TRACE_LEAVE();
 }
 
-static void check_for_node_isolation(FM_CB *cb)
-{
-	bool well_connected = cb->peer_sc_up && cb->cluster_size >= 3;
-	if (cb->well_connected && !well_connected) {
-		osaf_clock_gettime(CLOCK_MONOTONIC, &cb->last_well_connected);
-	}
-	cb->well_connected = well_connected;
+static void check_for_node_isolation(FM_CB *cb) {
+  bool well_connected = cb->peer_sc_up && cb->cluster_size >= 3;
+  if (cb->well_connected && !well_connected) {
+    osaf_clock_gettime(CLOCK_MONOTONIC, &cb->last_well_connected);
+  }
+  cb->well_connected = well_connected;
 }
 
-static bool has_been_well_connected_recently(FM_CB *cb)
-{
-	if (cb->well_connected)
-		return true;
-	struct timespec current;
-	struct timespec difference;
-	osaf_clock_gettime(CLOCK_MONOTONIC, &current);
-	if (osaf_timespec_compare(&current, &cb->last_well_connected) < 0)
-		return false;
-	osaf_timespec_subtract(&current, &cb->last_well_connected, &difference);
-	if (osaf_timespec_compare(&difference, &cb->node_isolation_timeout) < 0)
-		return true;
-	return false;
+static bool has_been_well_connected_recently(FM_CB *cb) {
+  if (cb->well_connected) return true;
+  struct timespec current;
+  struct timespec difference;
+  osaf_clock_gettime(CLOCK_MONOTONIC, &current);
+  if (osaf_timespec_compare(&current, &cb->last_well_connected) < 0)
+    return false;
+  osaf_timespec_subtract(&current, &cb->last_well_connected, &difference);
+  if (osaf_timespec_compare(&difference, &cb->node_isolation_timeout) < 0)
+    return true;
+  return false;
 }
 
 /****************************************************************************
@@ -373,58 +363,50 @@ static bool has_been_well_connected_recently(FM_CB *cb)
  * Notes         : None.
  *****************************************************************************/
 static uint32_t fm_mds_node_evt(FM_CB *cb,
-				MDS_CALLBACK_NODE_EVENT_INFO *node_evt)
-{
-	uint32_t return_val = NCSCC_RC_SUCCESS;
-	TRACE_ENTER();
+                                MDS_CALLBACK_NODE_EVENT_INFO *node_evt) {
+  uint32_t return_val = NCSCC_RC_SUCCESS;
+  TRACE_ENTER();
 
-	switch (node_evt->node_chg) {
-	case NCSMDS_NODE_DOWN:
-		if (cb->cluster_size != 0) {
-			--cb->cluster_size;
-			TRACE(
-			    "Node down event for node id %x, cluster size is now: %llu",
-			    node_evt->node_id,
-			    (unsigned long long)cb->cluster_size);
-			check_for_node_isolation(cb);
-			if (cb->cluster_size == 1 &&
-			    has_been_well_connected_recently(cb)) {
-				opensaf_reboot(
-				    0, NULL,
-				    "Self-fencing due to sudden loss of contact with the rest of the cluster");
-			}
-		} else {
-			TRACE("Node down event for node id %x ignored",
-			      node_evt->node_id);
-			LOG_ER(
-			    "Received unexpected node down event for node id %x",
-			    node_evt->node_id);
-		}
+  switch (node_evt->node_chg) {
+    case NCSMDS_NODE_DOWN:
+      if (cb->cluster_size != 0) {
+        --cb->cluster_size;
+        TRACE("Node down event for node id %x, cluster size is now: %llu",
+              node_evt->node_id, (unsigned long long)cb->cluster_size);
+        check_for_node_isolation(cb);
+        if (cb->cluster_size == 1 && has_been_well_connected_recently(cb)) {
+          opensaf_reboot(0, NULL,
+                         "Self-fencing due to sudden loss of contact with the "
+                         "rest of the cluster");
+        }
+      } else {
+        TRACE("Node down event for node id %x ignored", node_evt->node_id);
+        LOG_ER("Received unexpected node down event for node id %x",
+               node_evt->node_id);
+      }
 
-		if (node_evt->node_id == cb->peer_node_id && cb->control_tipc) {
-			/* Process NODE_DOWN only if OpenSAF is controling TIPC
-			 */
-			LOG_NO("Node Down event for node id %x:",
-			       node_evt->node_id);
-			return_val =
-			    fm_send_node_down_to_mbx(cb, node_evt->node_id);
-		}
-		break;
+      if (node_evt->node_id == cb->peer_node_id && cb->control_tipc) {
+        /* Process NODE_DOWN only if OpenSAF is controling TIPC
+         */
+        LOG_NO("Node Down event for node id %x:", node_evt->node_id);
+        return_val = fm_send_node_down_to_mbx(cb, node_evt->node_id);
+      }
+      break;
 
-	case NCSMDS_NODE_UP:
-		++cb->cluster_size;
-		TRACE("Node up event for node id %x, cluster size is now: %llu",
-		      node_evt->node_id, (unsigned long long)cb->cluster_size);
-		check_for_node_isolation(cb);
-		break;
+    case NCSMDS_NODE_UP:
+      ++cb->cluster_size;
+      TRACE("Node up event for node id %x, cluster size is now: %llu",
+            node_evt->node_id, (unsigned long long)cb->cluster_size);
+      check_for_node_isolation(cb);
+      break;
 
-	default:
+    default:
 
-		LOG_IN("Wrong MDS event from GFM.");
-		break;
-	}
-	TRACE_LEAVE();
-	return return_val;
+      LOG_IN("Wrong MDS event from GFM.");
+      break;
+  }
+  TRACE_LEAVE();
+  return return_val;
 }
 
 /****************************************************************************
@@ -438,192 +420,189 @@ static uint32_t fm_mds_node_evt(FM_CB *cb,
  *
  * Notes         : None.
  *****************************************************************************/
-static uint32_t fm_mds_svc_evt(FM_CB *cb, MDS_CALLBACK_SVC_EVENT_INFO *svc_evt)
-{
-	FM_EVT *fm_evt = NULL;
-	TRACE_ENTER();
+static uint32_t fm_mds_svc_evt(FM_CB *cb,
+                               MDS_CALLBACK_SVC_EVENT_INFO *svc_evt) {
+  FM_EVT *fm_evt = NULL;
+  TRACE_ENTER();
 
-	if (NULL == svc_evt) {
-		syslog(LOG_INFO, "fm_mds_svc_evt: svc_evt NULL.");
-		return NCSCC_RC_FAILURE;
-	}
+  if (NULL == svc_evt) {
+    syslog(LOG_INFO, "fm_mds_svc_evt: svc_evt NULL.");
+    return NCSCC_RC_FAILURE;
+  }
 
-	switch (svc_evt->i_change) {
-	case NCSMDS_DOWN:
-		switch (svc_evt->i_svc_id) {
-		/* Depend on service downs if OpenSAF is not controling TIPC */
-		case NCSMDS_SVC_ID_GFM:
-			if (svc_evt->i_node_id == cb->peer_node_id) {
-				TRACE(
-				    "Peer fm status change: %d -> %d, peer node id is: %x, cluster size is %llu",
-				    (int)cb->peer_sc_up, 0, svc_evt->i_node_id,
-				    (unsigned long long)cb->cluster_size);
-				cb->peer_sc_up = false;
-				check_for_node_isolation(cb);
-				cb->peer_adest = 0;
+  switch (svc_evt->i_change) {
+    case NCSMDS_DOWN:
+      switch (svc_evt->i_svc_id) {
+        /* Depend on service downs if OpenSAF is not controling TIPC */
+        case NCSMDS_SVC_ID_GFM:
+          if (svc_evt->i_node_id == cb->peer_node_id) {
+            TRACE(
+                "Peer fm status change: %d -> %d, peer node id is: %x, cluster "
+                "size is %llu",
+                (int)cb->peer_sc_up, 0, svc_evt->i_node_id,
+                (unsigned long long)cb->cluster_size);
+            cb->peer_sc_up = false;
+            check_for_node_isolation(cb);
+            cb->peer_adest = 0;
 
-				fm_proc_svc_down(cb, svc_evt->i_node_id,
-						 static_cast<NCSMDS_SVC_ID>(svc_evt->i_svc_id));
-			}
-			break;
-		case NCSMDS_SVC_ID_IMMND:
-		case NCSMDS_SVC_ID_AVND:
-			if (svc_evt->i_node_id == cb->peer_node_id) {
-				fm_proc_svc_down(cb, svc_evt->i_node_id,
-						 static_cast<NCSMDS_SVC_ID>(svc_evt->i_svc_id));
-			}
-			break;
-		default:
-			TRACE(
-			    "Not interested in service down of other services");
-			break;
-		}
-		break;
+            fm_proc_svc_down(cb, svc_evt->i_node_id,
+                             static_cast<NCSMDS_SVC_ID>(svc_evt->i_svc_id));
+          }
+          break;
+        case NCSMDS_SVC_ID_IMMND:
+        case NCSMDS_SVC_ID_AVND:
+          if (svc_evt->i_node_id == cb->peer_node_id) {
+            fm_proc_svc_down(cb, svc_evt->i_node_id,
+                             static_cast<NCSMDS_SVC_ID>(svc_evt->i_svc_id));
+          }
+          break;
+        default:
+          TRACE("Not interested in service down of other services");
+          break;
+      }
+      break;
 
-	case NCSMDS_RED_DOWN:
-		switch (svc_evt->i_svc_id) {
-		/* Depend on service downs if OpenSAF is not controling TIPC */
-		case NCSMDS_SVC_ID_IMMD:
-		case NCSMDS_SVC_ID_AVD:
-			if (svc_evt->i_node_id == cb->peer_node_id) {
-				fm_proc_svc_down(cb, svc_evt->i_node_id,
-						 static_cast<NCSMDS_SVC_ID>(svc_evt->i_svc_id));
-			}
-			break;
-		default:
-			TRACE(
-			    "Not interested in service down of other services");
-			break;
-		}
-		break;
+    case NCSMDS_RED_DOWN:
+      switch (svc_evt->i_svc_id) {
+        /* Depend on service downs if OpenSAF is not controling TIPC */
+        case NCSMDS_SVC_ID_IMMD:
+        case NCSMDS_SVC_ID_AVD:
+          if (svc_evt->i_node_id == cb->peer_node_id) {
+            fm_proc_svc_down(cb, svc_evt->i_node_id,
+                             static_cast<NCSMDS_SVC_ID>(svc_evt->i_svc_id));
+          }
+          break;
+        default:
+          TRACE("Not interested in service down of other services");
+          break;
+      }
+      break;
 
-	case NCSMDS_UP:
-		switch (svc_evt->i_svc_id) {
-		case NCSMDS_SVC_ID_GFM:
-			if ((svc_evt->i_node_id != cb->node_id) &&
-			    (m_MDS_DEST_IS_AN_ADEST(svc_evt->i_dest) == true)) {
-				TRACE(
-				    "Peer fm status change: %d -> %d, peer node id is: %x, cluster size is %llu",
-				    (int)cb->peer_sc_up, 1, svc_evt->i_node_id,
-				    (unsigned long long)cb->cluster_size);
-				cb->peer_sc_up = true;
-				cb->fm_down = false;
-				check_for_node_isolation(cb);
+    case NCSMDS_UP:
+      switch (svc_evt->i_svc_id) {
+        case NCSMDS_SVC_ID_GFM:
+          if ((svc_evt->i_node_id != cb->node_id) &&
+              (m_MDS_DEST_IS_AN_ADEST(svc_evt->i_dest) == true)) {
+            TRACE(
+                "Peer fm status change: %d -> %d, peer node id is: %x, cluster "
+                "size is %llu",
+                (int)cb->peer_sc_up, 1, svc_evt->i_node_id,
+                (unsigned long long)cb->cluster_size);
+            cb->peer_sc_up = true;
+            cb->fm_down = false;
+            check_for_node_isolation(cb);
 
-				fm_evt = m_MMGR_ALLOC_FM_EVT;
-				if (NULL == fm_evt) {
-					syslog(
-					    LOG_INFO,
-					    "fm_mds_svc_evt: fm_evt allocation FAILED.");
-					return NCSCC_RC_FAILURE;
-				}
+            fm_evt = m_MMGR_ALLOC_FM_EVT;
+            if (NULL == fm_evt) {
+              syslog(LOG_INFO, "fm_mds_svc_evt: fm_evt allocation FAILED.");
+              return NCSCC_RC_FAILURE;
+            }
 
-				cb->peer_adest = svc_evt->i_dest;
-				cb->peer_node_id = svc_evt->i_node_id;
-				cb->peer_node_terminated = false;
+            cb->peer_adest = svc_evt->i_dest;
+            cb->peer_node_id = svc_evt->i_node_id;
+            cb->peer_node_terminated = false;
 
-				if (fm_fill_mds_evt_post_fm_mbx(
-					cb, fm_evt, cb->peer_node_id,
-					FM_EVT_PEER_UP) == NCSCC_RC_FAILURE) {
-					m_MMGR_FREE_FM_EVT(fm_evt);
-					fm_evt = NULL;
-				}
-			}
-			break;
+            if (fm_fill_mds_evt_post_fm_mbx(cb, fm_evt, cb->peer_node_id,
+                                            FM_EVT_PEER_UP) ==
+                NCSCC_RC_FAILURE) {
+              m_MMGR_FREE_FM_EVT(fm_evt);
+              fm_evt = NULL;
+            }
+          }
+          break;
 
-		case NCSMDS_SVC_ID_IMMND:
-			if (svc_evt->i_node_id == cb->peer_node_id) {
-				TRACE(
-				    "Peer immnd status change: %d -> %d, peer node id is: %x, cluster size is %llu",
-				    (int)cb->peer_sc_up, 1, svc_evt->i_node_id,
-				    (unsigned long long)cb->cluster_size);
-				cb->immnd_down = false;
-			}
-			break;
+        case NCSMDS_SVC_ID_IMMND:
+          if (svc_evt->i_node_id == cb->peer_node_id) {
+            TRACE(
+                "Peer immnd status change: %d -> %d, peer node id is: %x, "
+                "cluster size is %llu",
+                (int)cb->peer_sc_up, 1, svc_evt->i_node_id,
+                (unsigned long long)cb->cluster_size);
+            cb->immnd_down = false;
+          }
+          break;
 
-		case NCSMDS_SVC_ID_AVND:
-			if (svc_evt->i_node_id == cb->peer_node_id) {
-				TRACE(
-				    "Peer amfnd status change: %d -> %d, peer node id is: %x, cluster size is %llu",
-				    (int)cb->peer_sc_up, 1, svc_evt->i_node_id,
-				    (unsigned long long)cb->cluster_size);
-				cb->amfnd_down = false;
-			}
-			break;
-		default:
-			break;
-		}
-		break;
+        case NCSMDS_SVC_ID_AVND:
+          if (svc_evt->i_node_id == cb->peer_node_id) {
+            TRACE(
+                "Peer amfnd status change: %d -> %d, peer node id is: %x, "
+                "cluster size is %llu",
+                (int)cb->peer_sc_up, 1, svc_evt->i_node_id,
+                (unsigned long long)cb->cluster_size);
+            cb->amfnd_down = false;
+          }
+          break;
+        default:
+          break;
+      }
+      break;
 
-	case NCSMDS_RED_UP:
-		switch (svc_evt->i_svc_id) {
-		/* Depend on service downs if OpenSAF is not controling TIPC */
-		case NCSMDS_SVC_ID_IMMD:
-			if (svc_evt->i_node_id != cb->node_id) {
-				TRACE(
-				    "Peer immd status change: %d -> %d, peer node id is: %x, cluster size is %llu",
-				    (int)cb->peer_sc_up, 1, svc_evt->i_node_id,
-				    (unsigned long long)cb->cluster_size);
-				cb->peer_node_id = svc_evt->i_node_id;
-				cb->immd_down = false;
+    case NCSMDS_RED_UP:
+      switch (svc_evt->i_svc_id) {
+        /* Depend on service downs if OpenSAF is not controling TIPC */
+        case NCSMDS_SVC_ID_IMMD:
+          if (svc_evt->i_node_id != cb->node_id) {
+            TRACE(
+                "Peer immd status change: %d -> %d, peer node id is: %x, "
+                "cluster size is %llu",
+                (int)cb->peer_sc_up, 1, svc_evt->i_node_id,
+                (unsigned long long)cb->cluster_size);
+            cb->peer_node_id = svc_evt->i_node_id;
+            cb->immd_down = false;
 
-				fm_evt = m_MMGR_ALLOC_FM_EVT;
-				if (NULL == fm_evt) {
-					syslog(
-					    LOG_INFO,
-					    "fm_mds_svc_evt: fm_evt allocation FAILED.");
-					return NCSCC_RC_FAILURE;
-				}
+            fm_evt = m_MMGR_ALLOC_FM_EVT;
+            if (NULL == fm_evt) {
+              syslog(LOG_INFO, "fm_mds_svc_evt: fm_evt allocation FAILED.");
+              return NCSCC_RC_FAILURE;
+            }
 
-				if (fm_fill_mds_evt_post_fm_mbx(
-					cb, fm_evt, cb->peer_node_id,
-					FM_EVT_PEER_UP) == NCSCC_RC_FAILURE) {
-					m_MMGR_FREE_FM_EVT(fm_evt);
-					fm_evt = NULL;
-				}
-			}
-			break;
+            if (fm_fill_mds_evt_post_fm_mbx(cb, fm_evt, cb->peer_node_id,
+                                            FM_EVT_PEER_UP) ==
+                NCSCC_RC_FAILURE) {
+              m_MMGR_FREE_FM_EVT(fm_evt);
+              fm_evt = NULL;
+            }
+          }
+          break;
 
-		case NCSMDS_SVC_ID_AVD:
-			if (svc_evt->i_node_id != cb->node_id) {
-				TRACE(
-				    "Peer amfd status change: %d -> %d, peer node id is: %x, cluster size is %llu",
-				    (int)cb->peer_sc_up, 1, svc_evt->i_node_id,
-				    (unsigned long long)cb->cluster_size);
-				cb->peer_node_id = svc_evt->i_node_id;
-				cb->amfd_down = false;
+        case NCSMDS_SVC_ID_AVD:
+          if (svc_evt->i_node_id != cb->node_id) {
+            TRACE(
+                "Peer amfd status change: %d -> %d, peer node id is: %x, "
+                "cluster size is %llu",
+                (int)cb->peer_sc_up, 1, svc_evt->i_node_id,
+                (unsigned long long)cb->cluster_size);
+            cb->peer_node_id = svc_evt->i_node_id;
+            cb->amfd_down = false;
 
-				fm_evt = m_MMGR_ALLOC_FM_EVT;
-				if (NULL == fm_evt) {
-					syslog(
-					    LOG_INFO,
-					    "fm_mds_svc_evt: fm_evt allocation FAILED.");
-					return NCSCC_RC_FAILURE;
-				}
+            fm_evt = m_MMGR_ALLOC_FM_EVT;
+            if (NULL == fm_evt) {
+              syslog(LOG_INFO, "fm_mds_svc_evt: fm_evt allocation FAILED.");
+              return NCSCC_RC_FAILURE;
+            }
 
-				if (fm_fill_mds_evt_post_fm_mbx(
-					cb, fm_evt, cb->peer_node_id,
-					FM_EVT_PEER_UP) == NCSCC_RC_FAILURE) {
-					m_MMGR_FREE_FM_EVT(fm_evt);
-					fm_evt = NULL;
-				}
-			}
-			break;
+            if (fm_fill_mds_evt_post_fm_mbx(cb, fm_evt, cb->peer_node_id,
+                                            FM_EVT_PEER_UP) ==
+                NCSCC_RC_FAILURE) {
+              m_MMGR_FREE_FM_EVT(fm_evt);
+              fm_evt = NULL;
+            }
+          }
+          break;
 
-		default:
-			TRACE(
-			    "Not interested in service down of other services");
-			break;
-		}
-		break;
+        default:
+          TRACE("Not interested in service down of other services");
+          break;
+      }
+      break;
 
-	default:
-		syslog(LOG_INFO, "Wrong MDS event");
-		break;
-	}
+    default:
+      syslog(LOG_INFO, "Wrong MDS event");
+      break;
+  }
 
-	TRACE_LEAVE();
-	return NCSCC_RC_SUCCESS;
+  TRACE_LEAVE();
+  return NCSCC_RC_SUCCESS;
 }
 
 /***************************************************************************
@@ -637,43 +616,42 @@ static uint32_t fm_mds_svc_evt(FM_CB *cb, MDS_CALLBACK_SVC_EVENT_INFO *svc_evt)
  *
  * Notes         : None.
  ***************************************************************************/
-static uint32_t fm_mds_rcv_evt(FM_CB *cb, MDS_CALLBACK_RECEIVE_INFO *rcv_info)
-{
-	uint32_t return_val = NCSCC_RC_SUCCESS;
-	GFM_GFM_MSG *gfm_rcv_msg = NULL;
+static uint32_t fm_mds_rcv_evt(FM_CB *cb, MDS_CALLBACK_RECEIVE_INFO *rcv_info) {
+  uint32_t return_val = NCSCC_RC_SUCCESS;
+  GFM_GFM_MSG *gfm_rcv_msg = NULL;
 
-	if (NULL == rcv_info) {
-		syslog(LOG_INFO, "fm_mds_rcv_evt: rcv_info NULL.");
-		return NCSCC_RC_FAILURE;
-	}
+  if (NULL == rcv_info) {
+    syslog(LOG_INFO, "fm_mds_rcv_evt: rcv_info NULL.");
+    return NCSCC_RC_FAILURE;
+  }
 
-	if (NCSMDS_SVC_ID_GFM == rcv_info->i_fr_svc_id) {
-		gfm_rcv_msg = (GFM_GFM_MSG *)rcv_info->i_msg;
-		switch (gfm_rcv_msg->msg_type) {
-		case GFM_GFM_EVT_NODE_INFO_EXCHANGE:
+  if (NCSMDS_SVC_ID_GFM == rcv_info->i_fr_svc_id) {
+    gfm_rcv_msg = (GFM_GFM_MSG *)rcv_info->i_msg;
+    switch (gfm_rcv_msg->msg_type) {
+      case GFM_GFM_EVT_NODE_INFO_EXCHANGE:
 
-			cb->peer_node_id = gfm_rcv_msg->info.node_info.node_id;
-			cb->peer_node_name.length =
-			    gfm_rcv_msg->info.node_info.node_name.length;
-			memcpy(cb->peer_node_name.value,
-			       gfm_rcv_msg->info.node_info.node_name.value,
-			       cb->peer_node_name.length);
-			LOG_IN("Peer Node_id  %u : EE_ID %s", cb->peer_node_id,
-			       cb->peer_node_name.value);
-			break;
-		case GFM_GFM_EVT_PEER_IS_TERMINATING:
-			fm_cb->peer_node_terminated = true;
-			break;
-		default:
-			syslog(LOG_INFO, "Wrong MDS event from GFM.");
-			return_val = NCSCC_RC_FAILURE;
-			break;
-		}
-		/* Free gfm_rcv_msg here. Mem allocated in decode. */
-		m_MMGR_FREE_FM_FM_MSG(gfm_rcv_msg);
-	}
+        cb->peer_node_id = gfm_rcv_msg->info.node_info.node_id;
+        cb->peer_node_name.length =
+            gfm_rcv_msg->info.node_info.node_name.length;
+        memcpy(cb->peer_node_name.value,
+               gfm_rcv_msg->info.node_info.node_name.value,
+               cb->peer_node_name.length);
+        LOG_IN("Peer Node_id  %u : EE_ID %s", cb->peer_node_id,
+               cb->peer_node_name.value);
+        break;
+      case GFM_GFM_EVT_PEER_IS_TERMINATING:
+        fm_cb->peer_node_terminated = true;
+        break;
+      default:
+        syslog(LOG_INFO, "Wrong MDS event from GFM.");
+        return_val = NCSCC_RC_FAILURE;
+        break;
+    }
+    /* Free gfm_rcv_msg here. Mem allocated in decode. */
+    m_MMGR_FREE_FM_FM_MSG(gfm_rcv_msg);
+  }
 
-	return return_val;
+  return return_val;
 }
 
 /***************************************************************************
@@ -689,17 +667,16 @@ static uint32_t fm_mds_rcv_evt(FM_CB *cb, MDS_CALLBACK_RECEIVE_INFO *rcv_info)
  * Notes         :   None.
  ***************************************************************************/
 static uint32_t fm_fill_mds_evt_post_fm_mbx(FM_CB *cb, FM_EVT *fm_evt,
-					    NODE_ID node_id,
-					    FM_FSM_EVT_CODE evt_code)
-{
-	fm_evt->evt_code = evt_code;
-	fm_evt->node_id = node_id;
-	if (m_NCS_IPC_SEND(&cb->mbx, fm_evt, NCS_IPC_PRIORITY_HIGH) !=
-	    NCSCC_RC_SUCCESS) {
-		return NCSCC_RC_FAILURE;
-	}
+                                            NODE_ID node_id,
+                                            FM_FSM_EVT_CODE evt_code) {
+  fm_evt->evt_code = evt_code;
+  fm_evt->node_id = node_id;
+  if (m_NCS_IPC_SEND(&cb->mbx, fm_evt, NCS_IPC_PRIORITY_HIGH) !=
+      NCSCC_RC_SUCCESS) {
+    return NCSCC_RC_FAILURE;
+  }
 
-	return NCSCC_RC_SUCCESS;
+  return NCSCC_RC_SUCCESS;
 }
 
 /***************************************************************************
@@ -715,35 +692,34 @@ static uint32_t fm_fill_mds_evt_post_fm_mbx(FM_CB *cb, FM_EVT *fm_evt,
  * Notes         :  None.
  ***************************************************************************/
 uint32_t fm_mds_sync_send(FM_CB *fm_cb, NCSCONTEXT msg, NCSMDS_SVC_ID svc_id,
-			  MDS_SEND_PRIORITY_TYPE priority,
-			  MDS_SENDTYPES send_type, MDS_DEST *i_to_dest,
-			  MDS_SYNC_SND_CTXT *mds_ctxt)
-{
-	NCSMDS_INFO info;
-	uint32_t return_val;
+                          MDS_SEND_PRIORITY_TYPE priority,
+                          MDS_SENDTYPES send_type, MDS_DEST *i_to_dest,
+                          MDS_SYNC_SND_CTXT *mds_ctxt) {
+  NCSMDS_INFO info;
+  uint32_t return_val;
 
-	memset(&info, '\0', sizeof(NCSMDS_INFO));
+  memset(&info, '\0', sizeof(NCSMDS_INFO));
 
-	info.i_mds_hdl = (MDS_HDL)fm_cb->adest_pwe1_hdl;
-	info.i_svc_id = NCSMDS_SVC_ID_GFM;
-	info.i_op = MDS_SEND;
+  info.i_mds_hdl = (MDS_HDL)fm_cb->adest_pwe1_hdl;
+  info.i_svc_id = NCSMDS_SVC_ID_GFM;
+  info.i_op = MDS_SEND;
 
-	info.info.svc_send.i_msg = msg;
-	info.info.svc_send.i_priority = priority;
-	info.info.svc_send.i_to_svc = svc_id;
+  info.info.svc_send.i_msg = msg;
+  info.info.svc_send.i_priority = priority;
+  info.info.svc_send.i_to_svc = svc_id;
 
-	if (mds_ctxt) {
-		info.info.svc_send.i_sendtype = send_type;
-		info.info.svc_send.info.rsp.i_sender_dest = *i_to_dest;
-		info.info.svc_send.info.rsp.i_msg_ctxt = *mds_ctxt;
-	} else {
-		syslog(LOG_INFO, "fm_mds_sync_send: mds_ctxt NULL");
-		return NCSCC_RC_FAILURE;
-	}
+  if (mds_ctxt) {
+    info.info.svc_send.i_sendtype = send_type;
+    info.info.svc_send.info.rsp.i_sender_dest = *i_to_dest;
+    info.info.svc_send.info.rsp.i_msg_ctxt = *mds_ctxt;
+  } else {
+    syslog(LOG_INFO, "fm_mds_sync_send: mds_ctxt NULL");
+    return NCSCC_RC_FAILURE;
+  }
 
-	return_val = ncsmds_api(&info);
+  return_val = ncsmds_api(&info);
 
-	return return_val;
+  return return_val;
 }
 
 /***************************************************************************
@@ -760,47 +736,43 @@ uint32_t fm_mds_sync_send(FM_CB *fm_cb, NCSCONTEXT msg, NCSMDS_SVC_ID svc_id,
  * Notes         : None
  ***************************************************************************/
 uint32_t fm_mds_async_send(FM_CB *fm_cb, NCSCONTEXT msg, NCSMDS_SVC_ID svc_id,
-			   MDS_SEND_PRIORITY_TYPE priority,
-			   MDS_SENDTYPES send_type, MDS_DEST i_to_dest,
-			   NCSMDS_SCOPE_TYPE bcast_scope)
-{
-	NCSMDS_INFO info;
-	uint32_t return_val;
+                           MDS_SEND_PRIORITY_TYPE priority,
+                           MDS_SENDTYPES send_type, MDS_DEST i_to_dest,
+                           NCSMDS_SCOPE_TYPE bcast_scope) {
+  NCSMDS_INFO info;
+  uint32_t return_val;
 
-	if (NCSMDS_SVC_ID_GFM == svc_id) {
-		memset(&info, 0, sizeof(info));
+  if (NCSMDS_SVC_ID_GFM == svc_id) {
+    memset(&info, 0, sizeof(info));
 
-		info.i_mds_hdl = (MDS_HDL)fm_cb->adest_pwe1_hdl;
-		info.i_op = MDS_SEND;
-		info.i_svc_id = NCSMDS_SVC_ID_GFM;
+    info.i_mds_hdl = (MDS_HDL)fm_cb->adest_pwe1_hdl;
+    info.i_op = MDS_SEND;
+    info.i_svc_id = NCSMDS_SVC_ID_GFM;
 
-		info.info.svc_send.i_msg = msg;
-		info.info.svc_send.i_priority = priority;
-		info.info.svc_send.i_sendtype = send_type;
-		info.info.svc_send.i_to_svc = svc_id;
+    info.info.svc_send.i_msg = msg;
+    info.info.svc_send.i_priority = priority;
+    info.info.svc_send.i_sendtype = send_type;
+    info.info.svc_send.i_to_svc = svc_id;
 
-		memset(&(info.info.svc_send.info.snd.i_to_dest), 0,
-		       sizeof(MDS_DEST));
+    memset(&(info.info.svc_send.info.snd.i_to_dest), 0, sizeof(MDS_DEST));
 
-		if (bcast_scope) {
-			info.info.svc_send.info.bcast.i_bcast_scope =
-			    bcast_scope;
-		} else {
-			info.info.svc_send.info.snd.i_to_dest = i_to_dest;
-		}
+    if (bcast_scope) {
+      info.info.svc_send.info.bcast.i_bcast_scope = bcast_scope;
+    } else {
+      info.info.svc_send.info.snd.i_to_dest = i_to_dest;
+    }
 
-		return_val = ncsmds_api(&info);
-		if (NCSCC_RC_FAILURE == return_val) {
-			syslog(LOG_INFO, "fms async send failed ");
-		}
-	} else {
-		return_val = NCSCC_RC_FAILURE;
-		syslog(
-		    LOG_INFO,
-		    "fm_mds_async_send: MDS Send fail: alt gfm NOT UP/Invalid svc id.");
-	}
+    return_val = ncsmds_api(&info);
+    if (NCSCC_RC_FAILURE == return_val) {
+      syslog(LOG_INFO, "fms async send failed ");
+    }
+  } else {
+    return_val = NCSCC_RC_FAILURE;
+    syslog(LOG_INFO,
+           "fm_mds_async_send: MDS Send fail: alt gfm NOT UP/Invalid svc id.");
+  }
 
-	return return_val;
+  return return_val;
 }
 
 /*******************************************************************************
@@ -814,25 +786,23 @@ uint32_t fm_mds_async_send(FM_CB *fm_cb, NCSCONTEXT msg, NCSMDS_SVC_ID svc_id,
  *
  * Notes         : None.
  ********************************************************************************/
-static uint32_t fm_encode(MDS_CALLBACK_ENC_INFO *enc_info)
-{
-	if (NCSMDS_SVC_ID_GFM == enc_info->i_to_svc_id) {
-		enc_info->o_msg_fmt_ver = m_MSG_FMT_VER_GET(
-		    enc_info->i_rem_svc_pvt_ver, FM_SUBPART_VER_MIN,
-		    FM_SUBPART_VER_MAX, fm_fm_msg_fmt_map_table);
+static uint32_t fm_encode(MDS_CALLBACK_ENC_INFO *enc_info) {
+  if (NCSMDS_SVC_ID_GFM == enc_info->i_to_svc_id) {
+    enc_info->o_msg_fmt_ver =
+        m_MSG_FMT_VER_GET(enc_info->i_rem_svc_pvt_ver, FM_SUBPART_VER_MIN,
+                          FM_SUBPART_VER_MAX, fm_fm_msg_fmt_map_table);
 
-		if (enc_info->o_msg_fmt_ver < FM_FM_MSG_FMT_VER_1) {
-			syslog(LOG_INFO,
-			       "fm_encode: MSG FMT VER from GFM mis-match");
-			return NCSCC_RC_FAILURE;
-		}
+    if (enc_info->o_msg_fmt_ver < FM_FM_MSG_FMT_VER_1) {
+      syslog(LOG_INFO, "fm_encode: MSG FMT VER from GFM mis-match");
+      return NCSCC_RC_FAILURE;
+    }
 
-		return fm_fm_mds_enc(enc_info);
-	}
+    return fm_fm_mds_enc(enc_info);
+  }
 
-	syslog(LOG_INFO, "fm_encode: MDS MSG is not for GFM.");
+  syslog(LOG_INFO, "fm_encode: MDS MSG is not for GFM.");
 
-	return NCSCC_RC_SUCCESS;
+  return NCSCC_RC_SUCCESS;
 }
 
 /********************************************************************************
@@ -846,23 +816,20 @@ static uint32_t fm_encode(MDS_CALLBACK_ENC_INFO *enc_info)
  *
  * Notes         : None.
  *********************************************************************************/
-static uint32_t fm_decode(MDS_CALLBACK_DEC_INFO *dec_info)
-{
-	if (NCSMDS_SVC_ID_GFM == dec_info->i_fr_svc_id) {
-		if (!m_MSG_FORMAT_IS_VALID(
-			dec_info->i_msg_fmt_ver, FM_SUBPART_VER_MIN,
-			FM_SUBPART_VER_MAX, fm_fm_msg_fmt_map_table)) {
-			syslog(LOG_INFO,
-			       "fm_decode: MSG FMT VER from GFM mis-match");
-			return NCSCC_RC_FAILURE;
-		}
+static uint32_t fm_decode(MDS_CALLBACK_DEC_INFO *dec_info) {
+  if (NCSMDS_SVC_ID_GFM == dec_info->i_fr_svc_id) {
+    if (!m_MSG_FORMAT_IS_VALID(dec_info->i_msg_fmt_ver, FM_SUBPART_VER_MIN,
+                               FM_SUBPART_VER_MAX, fm_fm_msg_fmt_map_table)) {
+      syslog(LOG_INFO, "fm_decode: MSG FMT VER from GFM mis-match");
+      return NCSCC_RC_FAILURE;
+    }
 
-		return fm_fm_mds_dec(dec_info);
-	}
+    return fm_fm_mds_dec(dec_info);
+  }
 
-	syslog(LOG_INFO, "fm_decode: MDS MSG is not for GFM.");
+  syslog(LOG_INFO, "fm_decode: MDS MSG is not for GFM.");
 
-	return NCSCC_RC_SUCCESS;
+  return NCSCC_RC_SUCCESS;
 }
 
 /***************************************************************************
@@ -876,51 +843,48 @@ static uint32_t fm_decode(MDS_CALLBACK_DEC_INFO *dec_info)
  *
  * Notes         :    None.
  ***************************************************************************/
-static uint32_t fm_fm_mds_enc(MDS_CALLBACK_ENC_INFO *enc_info)
-{
-	GFM_GFM_MSG *msg;
-	NCS_UBAID *uba;
-	uint8_t *data;
+static uint32_t fm_fm_mds_enc(MDS_CALLBACK_ENC_INFO *enc_info) {
+  GFM_GFM_MSG *msg;
+  NCS_UBAID *uba;
+  uint8_t *data;
 
-	if (NULL == enc_info)
-		return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
+  if (NULL == enc_info) return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
 
-	if ((NULL == enc_info->i_msg) || (NULL == enc_info->io_uba))
-		return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
+  if ((NULL == enc_info->i_msg) || (NULL == enc_info->io_uba))
+    return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
 
-	uba = enc_info->io_uba;
-	msg = (GFM_GFM_MSG *)enc_info->i_msg;
+  uba = enc_info->io_uba;
+  msg = (GFM_GFM_MSG *)enc_info->i_msg;
 
-	data = ncs_enc_reserve_space(uba, sizeof(uint8_t));
-	if (NULL == data)
-		return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
+  data = ncs_enc_reserve_space(uba, sizeof(uint8_t));
+  if (NULL == data) return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
 
-	ncs_encode_8bit(&data, msg->msg_type);
-	ncs_enc_claim_space(uba, sizeof(uint8_t));
+  ncs_encode_8bit(&data, msg->msg_type);
+  ncs_enc_claim_space(uba, sizeof(uint8_t));
 
-	switch (msg->msg_type) {
-	case GFM_GFM_EVT_NODE_INFO_EXCHANGE:
-		data = ncs_enc_reserve_space(uba, (2 * sizeof(uint32_t)));
-		if (data == NULL) {
-			m_LEAP_DBG_SINK_VOID;
-		}
+  switch (msg->msg_type) {
+    case GFM_GFM_EVT_NODE_INFO_EXCHANGE:
+      data = ncs_enc_reserve_space(uba, (2 * sizeof(uint32_t)));
+      if (data == NULL) {
+        m_LEAP_DBG_SINK_VOID;
+      }
 
-		ncs_encode_32bit(&data, msg->info.node_info.node_id);
-		ncs_encode_32bit(&data, msg->info.node_info.node_name.length);
-		ncs_enc_claim_space(uba, 2 * sizeof(uint32_t));
-		ncs_encode_n_octets_in_uba(
-		    uba, msg->info.node_info.node_name.value,
-		    (uint32_t)msg->info.node_info.node_name.length);
-		break;
-	case GFM_GFM_EVT_PEER_IS_TERMINATING:
-		break;
-	default:
-		syslog(LOG_INFO, "fm_fm_mds_enc: Invalid msg type for encode.");
-		return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
-		break;
-	}
+      ncs_encode_32bit(&data, msg->info.node_info.node_id);
+      ncs_encode_32bit(&data, msg->info.node_info.node_name.length);
+      ncs_enc_claim_space(uba, 2 * sizeof(uint32_t));
+      ncs_encode_n_octets_in_uba(
+          uba, msg->info.node_info.node_name.value,
+          (uint32_t)msg->info.node_info.node_name.length);
+      break;
+    case GFM_GFM_EVT_PEER_IS_TERMINATING:
+      break;
+    default:
+      syslog(LOG_INFO, "fm_fm_mds_enc: Invalid msg type for encode.");
+      return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
+      break;
+  }
 
-	return NCSCC_RC_SUCCESS;
+  return NCSCC_RC_SUCCESS;
 }
 
 /***************************************************************************
@@ -934,57 +898,51 @@ static uint32_t fm_fm_mds_enc(MDS_CALLBACK_ENC_INFO *enc_info)
  *
  * Notes         : None.
  ***************************************************************************/
-static uint32_t fm_fm_mds_dec(MDS_CALLBACK_DEC_INFO *dec_info)
-{
-	GFM_GFM_MSG *msg;
-	NCS_UBAID *uba;
-	uint8_t *data;
-	uint8_t data_buff[256];
+static uint32_t fm_fm_mds_dec(MDS_CALLBACK_DEC_INFO *dec_info) {
+  GFM_GFM_MSG *msg;
+  NCS_UBAID *uba;
+  uint8_t *data;
+  uint8_t data_buff[256];
 
-	if (NULL == dec_info->io_uba) {
-		return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
-	}
+  if (NULL == dec_info->io_uba) {
+    return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
+  }
 
-	msg = m_MMGR_ALLOC_FM_FM_MSG;
-	if (NULL == msg)
-		return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
+  msg = m_MMGR_ALLOC_FM_FM_MSG;
+  if (NULL == msg) return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
 
-	memset(msg, 0, sizeof(GFM_GFM_MSG));
+  memset(msg, 0, sizeof(GFM_GFM_MSG));
 
-	dec_info->o_msg = msg;
-	uba = dec_info->io_uba;
+  dec_info->o_msg = msg;
+  uba = dec_info->io_uba;
 
-	data = ncs_dec_flatten_space(uba, data_buff, sizeof(uint8_t));
-	if (NULL == data)
-		return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
+  data = ncs_dec_flatten_space(uba, data_buff, sizeof(uint8_t));
+  if (NULL == data) return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
 
-	msg->msg_type = (GFM_GFM_MSG_TYPE)ncs_decode_8bit(&data);
-	ncs_dec_skip_space(uba, sizeof(uint8_t));
+  msg->msg_type = (GFM_GFM_MSG_TYPE)ncs_decode_8bit(&data);
+  ncs_dec_skip_space(uba, sizeof(uint8_t));
 
-	switch (msg->msg_type) {
-	case GFM_GFM_EVT_NODE_INFO_EXCHANGE:
-		data =
-		    ncs_dec_flatten_space(uba, data_buff, 2 * sizeof(uint32_t));
-		if (data == NULL) {
-			return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
-		}
+  switch (msg->msg_type) {
+    case GFM_GFM_EVT_NODE_INFO_EXCHANGE:
+      data = ncs_dec_flatten_space(uba, data_buff, 2 * sizeof(uint32_t));
+      if (data == NULL) {
+        return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
+      }
 
-		msg->info.node_info.node_id = (uint32_t)ncs_decode_32bit(&data);
-		msg->info.node_info.node_name.length =
-		    (uint32_t)ncs_decode_32bit(&data);
-		ncs_dec_skip_space(uba, 2 * sizeof(uint32_t));
+      msg->info.node_info.node_id = (uint32_t)ncs_decode_32bit(&data);
+      msg->info.node_info.node_name.length = (uint32_t)ncs_decode_32bit(&data);
+      ncs_dec_skip_space(uba, 2 * sizeof(uint32_t));
 
-		ncs_decode_n_octets_from_uba(
-		    uba, msg->info.node_info.node_name.value,
-		    msg->info.node_info.node_name.length);
-		break;
-	case GFM_GFM_EVT_PEER_IS_TERMINATING:
-		break;
-	default:
-		syslog(LOG_INFO, "fm_fm_mds_dec: Invalid msg for decoding.");
-		return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
-		break;
-	}
+      ncs_decode_n_octets_from_uba(uba, msg->info.node_info.node_name.value,
+                                   msg->info.node_info.node_name.length);
+      break;
+    case GFM_GFM_EVT_PEER_IS_TERMINATING:
+      break;
+    default:
+      syslog(LOG_INFO, "fm_fm_mds_dec: Invalid msg for decoding.");
+      return m_LEAP_DBG_SINK(NCSCC_RC_FAILURE);
+      break;
+  }
 
-	return NCSCC_RC_SUCCESS;
+  return NCSCC_RC_SUCCESS;
 }

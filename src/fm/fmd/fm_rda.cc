@@ -15,16 +15,16 @@
  *
  */
 
-#include "fm_cb.h"
 #include <string.h>
 #include <syslog.h>
-#include "rde/agent/rda_papi.h"
-#include "osaf/consensus/consensus.h"
 #include "base/logtrace.h"
 #include "base/ncssysf_def.h"
+#include "fm_cb.h"
+#include "osaf/consensus/consensus.h"
+#include "rde/agent/rda_papi.h"
 
 extern void rda_cb(uint32_t cb_hdl, PCS_RDA_CB_INFO *cb_info,
-       PCSRDA_RETURN_CODE error_code);
+                   PCSRDA_RETURN_CODE error_code);
 /****************************************************************************
  * Name          : fm_rda_init
  *
@@ -36,33 +36,32 @@ extern void rda_cb(uint32_t cb_hdl, PCS_RDA_CB_INFO *cb_info,
  *
  * Notes         : None.
  *****************************************************************************/
-uint32_t fm_rda_init(FM_CB *fm_cb)
-{
-	uint32_t rc;
-	SaAmfHAStateT ha_state;
-	TRACE_ENTER();
-	if ((rc = rda_register_callback(0, rda_cb, &ha_state)) != NCSCC_RC_SUCCESS) {
-		syslog(LOG_ERR, "rda_register_callback FAILED %u", rc);
-		goto done;
-	}
+uint32_t fm_rda_init(FM_CB *fm_cb) {
+  uint32_t rc;
+  SaAmfHAStateT ha_state;
+  TRACE_ENTER();
+  if ((rc = rda_register_callback(0, rda_cb, &ha_state)) != NCSCC_RC_SUCCESS) {
+    syslog(LOG_ERR, "rda_register_callback FAILED %u", rc);
+    goto done;
+  }
 
-	switch (ha_state) {
-	case SA_AMF_HA_ACTIVE:
-		fm_cb->role = PCS_RDA_ACTIVE;
-		break;
-	case SA_AMF_HA_STANDBY:
-		fm_cb->role = PCS_RDA_STANDBY;
-		break;
-	case SA_AMF_HA_QUIESCED:
-		fm_cb->role = PCS_RDA_QUIESCED;
-		break;
-	case SA_AMF_HA_QUIESCING:
-		fm_cb->role = PCS_RDA_QUIESCING;
-		break;
-	}
+  switch (ha_state) {
+    case SA_AMF_HA_ACTIVE:
+      fm_cb->role = PCS_RDA_ACTIVE;
+      break;
+    case SA_AMF_HA_STANDBY:
+      fm_cb->role = PCS_RDA_STANDBY;
+      break;
+    case SA_AMF_HA_QUIESCED:
+      fm_cb->role = PCS_RDA_QUIESCED;
+      break;
+    case SA_AMF_HA_QUIESCING:
+      fm_cb->role = PCS_RDA_QUIESCING;
+      break;
+  }
 done:
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 /****************************************************************************
@@ -76,39 +75,37 @@ done:
  *
  * Notes         : None.
  *****************************************************************************/
-uint32_t fm_rda_set_role(FM_CB *fm_cb, PCS_RDA_ROLE role)
-{
-	PCS_RDA_REQ rda_req;
-	uint32_t rc;
-	TRACE_ENTER();
-	/* set the RDA role to active */
-	memset(&rda_req, 0, sizeof(PCS_RDA_REQ));
-	rda_req.req_type = PCS_RDA_SET_ROLE;
-	rda_req.info.io_role = role;
+uint32_t fm_rda_set_role(FM_CB *fm_cb, PCS_RDA_ROLE role) {
+  PCS_RDA_REQ rda_req;
+  uint32_t rc;
+  TRACE_ENTER();
+  /* set the RDA role to active */
+  memset(&rda_req, 0, sizeof(PCS_RDA_REQ));
+  rda_req.req_type = PCS_RDA_SET_ROLE;
+  rda_req.info.io_role = role;
 
-	osafassert(role == PCS_RDA_ACTIVE);
+  osafassert(role == PCS_RDA_ACTIVE);
 
-	Consensus consensus_service;
-	rc = consensus_service.PromoteThisNode();
-	if (rc != SA_AIS_OK) {
-		LOG_ER("Unable to set active controller in consensus service");
-		opensaf_reboot(0, nullptr,
-			"Unable to set active controller in consensus service");
-	}
+  Consensus consensus_service;
+  rc = consensus_service.PromoteThisNode();
+  if (rc != SA_AIS_OK) {
+    LOG_ER("Unable to set active controller in consensus service");
+    opensaf_reboot(0, nullptr,
+                   "Unable to set active controller in consensus service");
+  }
 
-	rc = pcs_rda_request(&rda_req);
-	if (rc != PCSRDA_RC_SUCCESS) {
-		syslog(
-		    LOG_INFO,
-		    "fm_rda_set_role() Failed: CurrentState: %s, AskedState: %s",
-		    role_string[fm_cb->role], role_string[role]);
-		return NCSCC_RC_FAILURE;
-	}
+  rc = pcs_rda_request(&rda_req);
+  if (rc != PCSRDA_RC_SUCCESS) {
+    syslog(LOG_INFO,
+           "fm_rda_set_role() Failed: CurrentState: %s, AskedState: %s",
+           role_string[fm_cb->role], role_string[role]);
+    return NCSCC_RC_FAILURE;
+  }
 
-	syslog(LOG_INFO,
-	       "fm_rda_set_role() Success: CurrentState: %s, AskedState: %s",
-	       role_string[fm_cb->role], role_string[role]);
+  syslog(LOG_INFO,
+         "fm_rda_set_role() Success: CurrentState: %s, AskedState: %s",
+         role_string[fm_cb->role], role_string[role]);
 
-	TRACE_LEAVE();
-	return NCSCC_RC_SUCCESS;
+  TRACE_LEAVE();
+  return NCSCC_RC_SUCCESS;
 }

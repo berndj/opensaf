@@ -18,46 +18,46 @@
 #ifndef FM_FMD_FM_H_
 #define FM_FMD_FM_H_
 
-#include <stdio.h>
-#include <stdint.h>
-#include <poll.h>
-#include <sys/types.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <signal.h>
 #include <errno.h>
-#include <termios.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/time.h>
+#include <fcntl.h>
+#include <poll.h>
 #include <saAmf.h>
+#include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/un.h>
+#include <termios.h>
+#include <unistd.h>
 
 #include "base/ncs_main_papi.h"
-#include "base/ncsgl_defs.h"
 #include "base/ncs_osprm.h"
+#include "base/ncsgl_defs.h"
 
-#include "base/ncs_svd.h"
 #include "base/ncs_hdl_pub.h"
-#include "base/ncssysf_lck.h"
-#include "base/ncsusrbuf.h"
-#include "base/ncssysf_def.h"
-#include "base/ncssysfpool.h"
-#include "base/ncssysf_tmr.h"
-#include "base/ncssysf_mem.h"
-#include "base/ncssysf_ipc.h"
-#include "base/ncssysf_tsk.h"
+#include "base/ncs_svd.h"
 #include "base/ncspatricia.h"
+#include "base/ncssysf_def.h"
+#include "base/ncssysf_ipc.h"
+#include "base/ncssysf_lck.h"
+#include "base/ncssysf_mem.h"
+#include "base/ncssysf_tmr.h"
+#include "base/ncssysf_tsk.h"
+#include "base/ncssysfpool.h"
+#include "base/ncsusrbuf.h"
 
 #include "base/ncs_queue.h"
 
-#include "base/ncs_lib.h"
-#include "base/ncs_edu_pub.h"
-#include "nid/agent/nid_api.h"
-#include "mds/mds_papi.h"
 #include "base/logtrace.h"
+#include "base/ncs_edu_pub.h"
+#include "base/ncs_lib.h"
+#include "mds/mds_papi.h"
+#include "nid/agent/nid_api.h"
 #include "nid/agent/nid_start_util.h"
 /* SAF Include file. */
 #include <saAis.h>
@@ -68,9 +68,9 @@
 /* The below files are very specific to fm. */
 #include "fm_amf.h"
 #include "fm_cb.h"
-#include "fm_mem.h"
-#include "fm_mds.h"
 #include "fm_evt.h"
+#include "fm_mds.h"
+#include "fm_mem.h"
 
 extern void amfnd_down_callback(void);
 extern "C" void ava_install_amf_down_cb(void (*cb)(void));

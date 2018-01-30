@@ -41,26 +41,27 @@ static uint32_t fm_amf_register(FM_AMF_CB *fm_amf_cb);
 static uint32_t fm_amf_healthcheck_start(FM_AMF_CB *fm_amf_cb);
 static FM_AMF_CB *fm_amf_take_hdl(void);
 static void fm_amf_give_hdl(void);
-static const char *ha_role_string[] = {"ACTIVE", "STANDBY", "QUIESCED", "QUIESCING"};
+static const char *ha_role_string[] = {"ACTIVE", "STANDBY", "QUIESCED",
+                                       "QUIESCING"};
 
-void amfnd_down_callback(void)
-{
-	if (!fm_cb->control_tipc) {
-		/* OpenSAF is not controlling TIPC, Wait till OS terminates the
-		 * process Peer(STANDBY) FM will trigger failover only after it
-		 * receives FM down on this node.
-		 */
-		LOG_AL(
-		    "AMF Node Director is down, waiting for the OS to terminate this process");
-		while (1) {
-			m_NCS_TASK_SLEEP(0xfffffff0);
-		}
-	} else {
-		/* OpenSAF is controlling TIPC, peer(STANDBY) FM will
-		 * receive/act on NODE_DOWN */
-		LOG_AL("AMF Node Director is down, terminate this process");
-		raise(SIGTERM);
-	}
+void amfnd_down_callback(void) {
+  if (!fm_cb->control_tipc) {
+    /* OpenSAF is not controlling TIPC, Wait till OS terminates the
+     * process Peer(STANDBY) FM will trigger failover only after it
+     * receives FM down on this node.
+     */
+    LOG_AL(
+        "AMF Node Director is down, waiting for the OS to terminate this "
+        "process");
+    while (1) {
+      m_NCS_TASK_SLEEP(0xfffffff0);
+    }
+  } else {
+    /* OpenSAF is controlling TIPC, peer(STANDBY) FM will
+     * receive/act on NODE_DOWN */
+    LOG_AL("AMF Node Director is down, terminate this process");
+    raise(SIGTERM);
+  }
 }
 
 /****************************************************************************
@@ -74,14 +75,13 @@ void amfnd_down_callback(void)
  *
  * Notes         : None.
  *****************************************************************************/
-FM_AMF_CB *fm_amf_take_hdl(void)
-{
-	FM_CB *fm_cb = NULL;
+FM_AMF_CB *fm_amf_take_hdl(void) {
+  FM_CB *fm_cb = NULL;
 
-	/* Take handle */
-	fm_cb = static_cast<FM_CB*>(ncshm_take_hdl(NCS_SERVICE_ID_GFM, gl_fm_hdl));
+  /* Take handle */
+  fm_cb = static_cast<FM_CB *>(ncshm_take_hdl(NCS_SERVICE_ID_GFM, gl_fm_hdl));
 
-	return &fm_cb->fm_amf_cb;
+  return &fm_cb->fm_amf_cb;
 }
 
 /****************************************************************************
@@ -95,12 +95,11 @@ FM_AMF_CB *fm_amf_take_hdl(void)
  *
  * Notes         : None.
  *****************************************************************************/
-void fm_amf_give_hdl(void)
-{
-	/* Give CB hdl */
-	ncshm_give_hdl(gl_fm_hdl);
+void fm_amf_give_hdl(void) {
+  /* Give CB hdl */
+  ncshm_give_hdl(gl_fm_hdl);
 
-	return;
+  return;
 }
 
 /****************************************************************************
@@ -127,39 +126,37 @@ void fm_amf_give_hdl(void)
  * Notes         : None.
  *****************************************************************************/
 void fm_saf_CSI_set_callback(SaInvocationT invocation, const SaNameT *compName,
-			     SaAmfHAStateT new_haState,
-			     SaAmfCSIDescriptorT csiDescriptor)
-{
-	FM_AMF_CB *fm_amf_cb;
-	SaAisErrorT error = SA_AIS_OK;
-	uint32_t rc;
-	TRACE_ENTER2("ha_state %d", (int)new_haState);
-	syslog(LOG_INFO, "fm_saf_CSI_set_callback: Comp %s, state %s",
-	       compName->value, ha_role_string[new_haState - 1]);
-	fm_amf_cb = fm_amf_take_hdl();
-	if (fm_amf_cb != NULL) {
-		if (new_haState == SA_AMF_HA_ACTIVE &&
-		    fm_cb->activation_supervision_tmr.status ==
-			FM_TMR_RUNNING) {
-			fm_tmr_stop(&fm_cb->activation_supervision_tmr);
-			LOG_NO("Stopped activation supervision due to new AMF "
-			       "state %u",
-			       (unsigned)new_haState);
-		}
-		if ((rc = initialize_for_assignment(fm_cb, new_haState)) !=
-		    NCSCC_RC_SUCCESS) {
-			LOG_ER("initialize_for_assignment FAILED %u",
-			       (unsigned)rc);
-			error = SA_AIS_ERR_FAILED_OPERATION;
-		} else {
-			fm_cb->amf_state = new_haState;
-			fm_cb->csi_assigned = true;
-		}
-		error = saAmfResponse(fm_amf_cb->amf_hdl, invocation, error);
-	}
-	fm_amf_give_hdl();
-	TRACE_LEAVE();
-	return;
+                             SaAmfHAStateT new_haState,
+                             SaAmfCSIDescriptorT csiDescriptor) {
+  FM_AMF_CB *fm_amf_cb;
+  SaAisErrorT error = SA_AIS_OK;
+  uint32_t rc;
+  TRACE_ENTER2("ha_state %d", (int)new_haState);
+  syslog(LOG_INFO, "fm_saf_CSI_set_callback: Comp %s, state %s",
+         compName->value, ha_role_string[new_haState - 1]);
+  fm_amf_cb = fm_amf_take_hdl();
+  if (fm_amf_cb != NULL) {
+    if (new_haState == SA_AMF_HA_ACTIVE &&
+        fm_cb->activation_supervision_tmr.status == FM_TMR_RUNNING) {
+      fm_tmr_stop(&fm_cb->activation_supervision_tmr);
+      LOG_NO(
+          "Stopped activation supervision due to new AMF "
+          "state %u",
+          (unsigned)new_haState);
+    }
+    if ((rc = initialize_for_assignment(fm_cb, new_haState)) !=
+        NCSCC_RC_SUCCESS) {
+      LOG_ER("initialize_for_assignment FAILED %u", (unsigned)rc);
+      error = SA_AIS_ERR_FAILED_OPERATION;
+    } else {
+      fm_cb->amf_state = new_haState;
+      fm_cb->csi_assigned = true;
+    }
+    error = saAmfResponse(fm_amf_cb->amf_hdl, invocation, error);
+  }
+  fm_amf_give_hdl();
+  TRACE_LEAVE();
+  return;
 }
 
 /****************************************************************************
@@ -184,19 +181,18 @@ void fm_saf_CSI_set_callback(SaInvocationT invocation, const SaNameT *compName,
  * Notes         : None
  *****************************************************************************/
 void fm_saf_health_chk_callback(SaInvocationT invocation,
-				const SaNameT *compName,
-				SaAmfHealthcheckKeyT *checkType)
-{
-	FM_AMF_CB *fm_amf_cb;
-	SaAisErrorT error = SA_AIS_OK;
-	TRACE_ENTER();
-	fm_amf_cb = fm_amf_take_hdl();
-	if (fm_amf_cb != NULL) {
-		error = saAmfResponse(fm_amf_cb->amf_hdl, invocation, error);
-	}
-	fm_amf_give_hdl();
-	TRACE_LEAVE();
-	return;
+                                const SaNameT *compName,
+                                SaAmfHealthcheckKeyT *checkType) {
+  FM_AMF_CB *fm_amf_cb;
+  SaAisErrorT error = SA_AIS_OK;
+  TRACE_ENTER();
+  fm_amf_cb = fm_amf_take_hdl();
+  if (fm_amf_cb != NULL) {
+    error = saAmfResponse(fm_amf_cb->amf_hdl, invocation, error);
+  }
+  fm_amf_give_hdl();
+  TRACE_LEAVE();
+  return;
 }
 
 /****************************************************************************
@@ -231,23 +227,22 @@ void fm_saf_health_chk_callback(SaInvocationT invocation,
  * Notes         : This is not completed - TBD.
  *****************************************************************************/
 void fm_saf_CSI_rem_callback(SaInvocationT invocation, const SaNameT *compName,
-			     const SaNameT *csiName,
-			     const SaAmfCSIFlagsT csiFlags)
-{
-	FM_AMF_CB *fm_amf_cb;
-	SaAisErrorT error = SA_AIS_OK;
-	TRACE_ENTER();
+                             const SaNameT *csiName,
+                             const SaAmfCSIFlagsT csiFlags) {
+  FM_AMF_CB *fm_amf_cb;
+  SaAisErrorT error = SA_AIS_OK;
+  TRACE_ENTER();
 
-	syslog(LOG_INFO, "fm_saf_CSI_rem_callback: Comp %s", compName->value);
+  syslog(LOG_INFO, "fm_saf_CSI_rem_callback: Comp %s", compName->value);
 
-	fm_amf_cb = fm_amf_take_hdl();
-	if (fm_amf_cb != NULL) {
-		error = saAmfResponse(fm_amf_cb->amf_hdl, invocation, error);
-	}
-	fm_amf_give_hdl();
+  fm_amf_cb = fm_amf_take_hdl();
+  if (fm_amf_cb != NULL) {
+    error = saAmfResponse(fm_amf_cb->amf_hdl, invocation, error);
+  }
+  fm_amf_give_hdl();
 
-	TRACE_LEAVE();
-	return;
+  TRACE_LEAVE();
+  return;
 }
 
 /****************************************************************************
@@ -271,21 +266,19 @@ void fm_saf_CSI_rem_callback(SaInvocationT invocation, const SaNameT *compName,
  * Notes         : This is not completed - TBD.
  *****************************************************************************/
 void fm_saf_comp_terminate_callback(SaInvocationT invocation,
-				    const SaNameT *compName)
-{
-	FM_AMF_CB *fm_amf_cb;
-	SaAisErrorT error = SA_AIS_OK;
-	TRACE_ENTER();
-	syslog(LOG_INFO, "fm_saf_comp_terminate_callback: Comp %s",
-	       compName->value);
-	fm_amf_cb = fm_amf_take_hdl();
-	if (fm_amf_cb != NULL) {
-		error = saAmfResponse(fm_amf_cb->amf_hdl, invocation, error);
-	}
-	fm_amf_give_hdl();
-	LOG_NO("Received AMF component terminate callback, exiting");
-	TRACE_LEAVE();
-	exit(0);
+                                    const SaNameT *compName) {
+  FM_AMF_CB *fm_amf_cb;
+  SaAisErrorT error = SA_AIS_OK;
+  TRACE_ENTER();
+  syslog(LOG_INFO, "fm_saf_comp_terminate_callback: Comp %s", compName->value);
+  fm_amf_cb = fm_amf_take_hdl();
+  if (fm_amf_cb != NULL) {
+    error = saAmfResponse(fm_amf_cb->amf_hdl, invocation, error);
+  }
+  fm_amf_give_hdl();
+  LOG_NO("Received AMF component terminate callback, exiting");
+  TRACE_LEAVE();
+  exit(0);
 }
 
 /****************************************************************************
@@ -300,72 +293,64 @@ void fm_saf_comp_terminate_callback(SaInvocationT invocation,
  *
  * Notes         : None.
  *****************************************************************************/
-uint32_t fm_amf_init(FM_AMF_CB *fm_amf_cb)
-{
-	SaAmfCallbacksT amfCallbacks;
-	SaVersionT amf_version;
-	SaAisErrorT amf_error;
-	SaNameT sname;
-	uint32_t rc = NCSCC_RC_SUCCESS;
-	TRACE_ENTER();
-	memset(&amfCallbacks, 0, sizeof(SaAmfCallbacksT));
-	if (fm_amf_cb->nid_started &&
-	    amf_comp_name_get_set_from_file("FM_COMP_NAME_FILE", &sname) !=
-		NCSCC_RC_SUCCESS)
-		return NCSCC_RC_FAILURE;
+uint32_t fm_amf_init(FM_AMF_CB *fm_amf_cb) {
+  SaAmfCallbacksT amfCallbacks;
+  SaVersionT amf_version;
+  SaAisErrorT amf_error;
+  SaNameT sname;
+  uint32_t rc = NCSCC_RC_SUCCESS;
+  TRACE_ENTER();
+  memset(&amfCallbacks, 0, sizeof(SaAmfCallbacksT));
+  if (fm_amf_cb->nid_started &&
+      amf_comp_name_get_set_from_file("FM_COMP_NAME_FILE", &sname) !=
+          NCSCC_RC_SUCCESS)
+    return NCSCC_RC_FAILURE;
 
-	amfCallbacks.saAmfHealthcheckCallback = fm_saf_health_chk_callback;
-	amfCallbacks.saAmfCSISetCallback = fm_saf_CSI_set_callback;
-	amfCallbacks.saAmfCSIRemoveCallback = fm_saf_CSI_rem_callback;
-	amfCallbacks.saAmfComponentTerminateCallback =
-	    fm_saf_comp_terminate_callback;
+  amfCallbacks.saAmfHealthcheckCallback = fm_saf_health_chk_callback;
+  amfCallbacks.saAmfCSISetCallback = fm_saf_CSI_set_callback;
+  amfCallbacks.saAmfCSIRemoveCallback = fm_saf_CSI_rem_callback;
+  amfCallbacks.saAmfComponentTerminateCallback = fm_saf_comp_terminate_callback;
 
-	m_FM_GET_AMF_VER(amf_version);
+  m_FM_GET_AMF_VER(amf_version);
 
-	amf_error =
-	    saAmfInitialize(&fm_amf_cb->amf_hdl, &amfCallbacks, &amf_version);
-	if (amf_error != SA_AIS_OK) {
-		syslog(LOG_ERR, "FM_COND_AMF_INIT_FAILED: amf_rc %d",
-		       amf_error);
-		return NCSCC_RC_FAILURE;
-	}
-	memset(&sname, 0, sizeof(sname));
-	amf_error = saAmfComponentNameGet(fm_amf_cb->amf_hdl, &sname);
-	if (amf_error != SA_AIS_OK) {
-		syslog(LOG_ERR, "FM_COND_AMF_GET_NAME_FAILED: amf_rc %d",
-		       amf_error);
-		return NCSCC_RC_FAILURE;
-	}
-	strcpy(fm_amf_cb->comp_name, (char *)sname.value);
+  amf_error = saAmfInitialize(&fm_amf_cb->amf_hdl, &amfCallbacks, &amf_version);
+  if (amf_error != SA_AIS_OK) {
+    syslog(LOG_ERR, "FM_COND_AMF_INIT_FAILED: amf_rc %d", amf_error);
+    return NCSCC_RC_FAILURE;
+  }
+  memset(&sname, 0, sizeof(sname));
+  amf_error = saAmfComponentNameGet(fm_amf_cb->amf_hdl, &sname);
+  if (amf_error != SA_AIS_OK) {
+    syslog(LOG_ERR, "FM_COND_AMF_GET_NAME_FAILED: amf_rc %d", amf_error);
+    return NCSCC_RC_FAILURE;
+  }
+  strcpy(fm_amf_cb->comp_name, (char *)sname.value);
 
-	/*
-	 ** Get the AMF selection object
-	 */
-	amf_error =
-	    saAmfSelectionObjectGet(fm_amf_cb->amf_hdl, &fm_amf_cb->amf_fd);
-	if (amf_error != SA_AIS_OK) {
-		syslog(LOG_ERR, "FM_COND_AMF_GET_OBJ_FAILED: amf_rc %d",
-		       amf_error);
-		return NCSCC_RC_FAILURE;
-	}
+  /*
+   ** Get the AMF selection object
+   */
+  amf_error = saAmfSelectionObjectGet(fm_amf_cb->amf_hdl, &fm_amf_cb->amf_fd);
+  if (amf_error != SA_AIS_OK) {
+    syslog(LOG_ERR, "FM_COND_AMF_GET_OBJ_FAILED: amf_rc %d", amf_error);
+    return NCSCC_RC_FAILURE;
+  }
 
-	/*
-	 ** Register FM with AMF
-	 */
-	rc = fm_amf_register(fm_amf_cb);
-	if (rc != NCSCC_RC_SUCCESS)
-		rc = NCSCC_RC_FAILURE;
+  /*
+   ** Register FM with AMF
+   */
+  rc = fm_amf_register(fm_amf_cb);
+  if (rc != NCSCC_RC_SUCCESS) rc = NCSCC_RC_FAILURE;
 
-	/*
-	 ** Start component healthcheck
-	 */
-	rc = fm_amf_healthcheck_start(fm_amf_cb);
-	if (rc != NCSCC_RC_SUCCESS) {
-		return NCSCC_RC_FAILURE;
-	}
-	ava_install_amf_down_cb(&amfnd_down_callback);
-	TRACE_LEAVE();
-	return NCSCC_RC_SUCCESS;
+  /*
+   ** Start component healthcheck
+   */
+  rc = fm_amf_healthcheck_start(fm_amf_cb);
+  if (rc != NCSCC_RC_SUCCESS) {
+    return NCSCC_RC_FAILURE;
+  }
+  ava_install_amf_down_cb(&amfnd_down_callback);
+  TRACE_LEAVE();
+  return NCSCC_RC_SUCCESS;
 }
 
 /****************************************************************************
@@ -379,28 +364,27 @@ uint32_t fm_amf_init(FM_AMF_CB *fm_amf_cb)
  *
  * Notes         : None.
  *****************************************************************************/
-static uint32_t fm_amf_register(FM_AMF_CB *fm_amf_cb)
-{
-	SaAisErrorT amf_error;
-	uint32_t res = NCSCC_RC_SUCCESS;
-	SaNameT sname;
+static uint32_t fm_amf_register(FM_AMF_CB *fm_amf_cb) {
+  SaAisErrorT amf_error;
+  uint32_t res = NCSCC_RC_SUCCESS;
+  SaNameT sname;
 
-	TRACE_ENTER();
-	sname.length = strlen(fm_amf_cb->comp_name);
-	strcpy((char *)sname.value, fm_amf_cb->comp_name);
+  TRACE_ENTER();
+  sname.length = strlen(fm_amf_cb->comp_name);
+  strcpy((char *)sname.value, fm_amf_cb->comp_name);
 
-	/*
-	 * register FM component with AvSv
-	 */
-	amf_error =
-	    saAmfComponentRegister(fm_amf_cb->amf_hdl, &sname, (SaNameT *)NULL);
-	if (amf_error != SA_AIS_OK) {
-		syslog(LOG_ERR, "FM_COND_AMF_REG_FAILED: amf_rc %d", amf_error);
-		return NCSCC_RC_FAILURE;
-	}
+  /*
+   * register FM component with AvSv
+   */
+  amf_error =
+      saAmfComponentRegister(fm_amf_cb->amf_hdl, &sname, (SaNameT *)NULL);
+  if (amf_error != SA_AIS_OK) {
+    syslog(LOG_ERR, "FM_COND_AMF_REG_FAILED: amf_rc %d", amf_error);
+    return NCSCC_RC_FAILURE;
+  }
 
-	TRACE_LEAVE();
-	return (res);
+  TRACE_LEAVE();
+  return (res);
 }
 /****************************************************************************
  * Name          : fm_amf_healthcheck_start
@@ -413,44 +397,43 @@ static uint32_t fm_amf_register(FM_AMF_CB *fm_amf_cb)
  *
  * Notes         : None.
  *****************************************************************************/
-static uint32_t fm_amf_healthcheck_start(FM_AMF_CB *fm_amf_cb)
-{
-	SaAisErrorT amf_error;
-	SaAmfHealthcheckKeyT Healthy;
-	SaNameT SaCompName;
-	char *phlth_ptr;
-	char hlth_str[256];
+static uint32_t fm_amf_healthcheck_start(FM_AMF_CB *fm_amf_cb) {
+  SaAisErrorT amf_error;
+  SaAmfHealthcheckKeyT Healthy;
+  SaNameT SaCompName;
+  char *phlth_ptr;
+  char hlth_str[256];
 
-	/*
-	 ** Start the AMF health check
-	 */
-	memset(&SaCompName, 0, sizeof(SaCompName));
-	strcpy((char *)SaCompName.value, fm_amf_cb->comp_name);
-	SaCompName.length = strlen(fm_amf_cb->comp_name);
+  /*
+   ** Start the AMF health check
+   */
+  memset(&SaCompName, 0, sizeof(SaCompName));
+  strcpy((char *)SaCompName.value, fm_amf_cb->comp_name);
+  SaCompName.length = strlen(fm_amf_cb->comp_name);
 
-	memset(&Healthy, 0, sizeof(Healthy));
-	phlth_ptr = getenv("FMS_HA_ENV_HEALTHCHECK_KEY");
-	if (phlth_ptr == NULL) {
-		/*
-		 ** default health check key
-		 */
-		strcpy(hlth_str, "BAD10");
-	} else {
-		strcpy(hlth_str, phlth_ptr);
-	}
-	strcpy((char *)Healthy.key, hlth_str);
-	Healthy.keyLen = strlen((char *)Healthy.key);
+  memset(&Healthy, 0, sizeof(Healthy));
+  phlth_ptr = getenv("FMS_HA_ENV_HEALTHCHECK_KEY");
+  if (phlth_ptr == NULL) {
+    /*
+     ** default health check key
+     */
+    strcpy(hlth_str, "BAD10");
+  } else {
+    strcpy(hlth_str, phlth_ptr);
+  }
+  strcpy((char *)Healthy.key, hlth_str);
+  Healthy.keyLen = strlen((char *)Healthy.key);
 
-	amf_error = saAmfHealthcheckStart(
-	    fm_amf_cb->amf_hdl, &SaCompName, &Healthy,
-	    SA_AMF_HEALTHCHECK_AMF_INVOKED, SA_AMF_COMPONENT_RESTART);
-	if (amf_error != SA_AIS_OK) {
-		syslog(LOG_ERR,
-		       "FM_COND_AMF_HEALTH_CHK_START_FAIL:"
-		       " Healthcheck key: %s amf_rc %d",
-		       Healthy.key, amf_error);
-		return NCSCC_RC_FAILURE;
-	}
+  amf_error = saAmfHealthcheckStart(fm_amf_cb->amf_hdl, &SaCompName, &Healthy,
+                                    SA_AMF_HEALTHCHECK_AMF_INVOKED,
+                                    SA_AMF_COMPONENT_RESTART);
+  if (amf_error != SA_AIS_OK) {
+    syslog(LOG_ERR,
+           "FM_COND_AMF_HEALTH_CHK_START_FAIL:"
+           " Healthcheck key: %s amf_rc %d",
+           Healthy.key, amf_error);
+    return NCSCC_RC_FAILURE;
+  }
 
-	return (NCSCC_RC_SUCCESS);
+  return (NCSCC_RC_SUCCESS);
 }

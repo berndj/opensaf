@@ -18,8 +18,8 @@
 #ifndef FM_FMD_FM_AMF_H_
 #define FM_FMD_FM_AMF_H_
 
-#include "osaf/configmake.h"
 #include <stdbool.h>
+#include "osaf/configmake.h"
 
 /*
  * Macro used to get the AMF version used
