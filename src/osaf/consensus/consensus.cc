@@ -162,7 +162,15 @@ bool Consensus::IsWritable() const {
   }
 
   SaAisErrorT rc;
+  uint32_t retries = 0;
+  constexpr uint32_t kMaxTestRetry = 3;
   rc = KeyValue::Set(kTestKeyname, base::Conf::NodeName());
+  while (rc != SA_AIS_OK && retries < kMaxTestRetry) {
+    ++retries;
+    std::this_thread::sleep_for(kSleepInterval);
+    rc = KeyValue::Set(kTestKeyname, base::Conf::NodeName());
+  }
+
   if (rc == SA_AIS_OK) {
     return true;
   } else {
