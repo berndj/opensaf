@@ -19963,6 +19963,13 @@ SaAisErrorT ImmModel::finalizeSync(ImmsvOmFinalizeSync* req, bool isCoord,
                 "according to finalizeSync. Assunimg implSet bypased finSync",
                 info->mId, implName.c_str());
             explained = true;
+          } else if (info->mId == 0) {
+            LOG_NO(
+                "Sync-verify: Veteran node has different "
+                "Implementer-id %u for implementer: %s, it is 0 "
+                "according to finalizeSync. Assuming implClear bypased finSync",
+                ii->id, implName.c_str());
+            explained = true;
           } else {
             /* Here veteran claims either dead implementer, i.e. (info->mId ==
                0), or different implementer, i.e. new and different info->mId,
