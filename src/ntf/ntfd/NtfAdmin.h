@@ -72,14 +72,12 @@ class NtfAdmin {
                            MDS_SYNC_SND_CTXT *mdsCtxt);
   void syncRequest(NCS_UBAID *uba);
   void syncGlobals(const struct NtfGlobals &ntfGlobals);
-  void newReader(unsigned int clientId, SaNtfSearchCriteriaT searchCriteria,
-                 ntfsv_filter_ptrs_t *f_rec, MDS_SYNC_SND_CTXT *mdsCtxt);
-
-  void readNext(unsigned int connectionId, unsigned int readerId,
-                SaNtfSearchDirectionT searchDirection,
-                MDS_SYNC_SND_CTXT *mdsCtxt);
-  void deleteReader(unsigned int connectionId, unsigned int readerId,
+  NtfReader* createReaderWithoutFilter(ntfsv_reader_init_req_t rp, MDS_SYNC_SND_CTXT *mdsCtxt);
+  NtfReader* createReaderWithFilter(ntfsv_reader_init_req_2_t rp, MDS_SYNC_SND_CTXT *mdsCtxt);
+  void deleteReader(ntfsv_reader_finalize_req_t readFinalizeReq,
                     MDS_SYNC_SND_CTXT *mdsCtxt);
+  void readNext(ntfsv_read_next_req_t readNextReq,
+                MDS_SYNC_SND_CTXT *mdsCtxt);
 
   void printInfo();
   void storeMatchingSubscription(SaNtfIdentifierT notificationId,

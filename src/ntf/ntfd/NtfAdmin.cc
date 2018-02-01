@@ -743,29 +743,58 @@ NtfClient *NtfAdmin::getClient(unsigned int clientId) {
 }
 
 /**
- * Find the client and call method newReader
+ * The method create a new instance of NtfReader that
+ * has NO filter
  *
- * @param clientId
- * @param searchCriteria
- * @param f_rec - filter record
+ * @param rp: the original reader initialize request
  * @param mdsCtxt
+ * @return pointer of new instance NtfReader
  */
-void NtfAdmin::newReader(unsigned int clientId,
-                         SaNtfSearchCriteriaT searchCriteria,
-                         ntfsv_filter_ptrs_t *f_rec,
-                         MDS_SYNC_SND_CTXT *mdsCtxt) {
+NtfReader* NtfAdmin::createReaderWithoutFilter(ntfsv_reader_init_req_t rp,
+    MDS_SYNC_SND_CTXT *mdsCtxt) {
+
   TRACE_ENTER();
+  NtfReader* newReader = nullptr;
+  unsigned int clientId = rp.client_id;
   ClientMap::iterator pos;
   pos = clientMap.find(clientId);
   if (pos != clientMap.end()) {
     // we have got the client
     NtfClient *client = pos->second;
-    client->newReader(searchCriteria, f_rec, mdsCtxt);
+    newReader = client->createReaderWithoutFilter(rp, mdsCtxt);
   } else {
     // client object does not exist
     LOG_WA("NtfAdmin::newReader  client not found %u", clientId);
   }
   TRACE_LEAVE();
+  return newReader;
+}
+/**
+ * The method create a new instance of NtfReader that
+ * has filter
+ *
+ * @param rp: the original reader initialize request version 2
+ * @param mdsCtxt
+ * @return pointer of new instance NtfReader
+ */
+NtfReader* NtfAdmin::createReaderWithFilter(ntfsv_reader_init_req_2_t rp,
+    MDS_SYNC_SND_CTXT *mdsCtxt) {
+
+  TRACE_ENTER();
+  NtfReader* newReader = nullptr;
+  unsigned int clientId = rp.head.client_id;
+  ClientMap::iterator pos;
+  pos = clientMap.find(clientId);
+  if (pos != clientMap.end()) {
+    // we have got the client
+    NtfClient *client = pos->second;
+    newReader = client->createReaderWithFilter(rp, mdsCtxt);
+  } else {
+    // client object does not exist
+    LOG_WA("NtfAdmin::newReader  client not found %u", clientId);
+  }
+  TRACE_LEAVE();
+  return newReader;
 }
 
 /**
@@ -775,17 +804,17 @@ void NtfAdmin::newReader(unsigned int clientId,
  * @param readerId unique readerId for this client
  * @param mdsCtxt
  */
-void NtfAdmin::readNext(unsigned int clientId, unsigned int readerId,
-                        SaNtfSearchDirectionT searchDirection,
+void NtfAdmin::readNext(ntfsv_read_next_req_t readNextReq,
                         MDS_SYNC_SND_CTXT *mdsCtxt) {
   TRACE_ENTER();
-  TRACE_6("clientId %u, readerId %u", clientId, readerId);
+  unsigned int clientId = readNextReq.client_id;
+  TRACE_6("clientId %u", clientId);
   ClientMap::iterator pos;
   pos = clientMap.find(clientId);
   if (pos != clientMap.end()) {
     // we have got the client
     NtfClient *client = pos->second;
-    client->readNext(readerId, searchDirection, mdsCtxt);
+    client->readNext(readNextReq, mdsCtxt);
   } else {
     // client object does not exist
     LOG_WA("NtfAdmin::readNext  client not found %u", clientId);
@@ -800,18 +829,18 @@ void NtfAdmin::readNext(unsigned int clientId, unsigned int readerId,
  * @param readerId unique readerId for this client
  * @param mdsCtxt
  */
-void NtfAdmin::deleteReader(unsigned int clientId, unsigned int readerId,
+void NtfAdmin::deleteReader(ntfsv_reader_finalize_req_t readFinalizeReq,
                             MDS_SYNC_SND_CTXT *mdsCtxt) {
   TRACE_ENTER();
   ClientMap::iterator pos;
-  pos = clientMap.find(clientId);
+  pos = clientMap.find(readFinalizeReq.client_id);
   if (pos != clientMap.end()) {
     // we have got the client
     NtfClient *client = pos->second;
-    client->deleteReader(readerId, mdsCtxt);
+    client->deleteReader(readFinalizeReq, mdsCtxt);
   } else {
     // client object does not exist
-    LOG_WA("NtfAdmin::deleteReader  client not found %u", clientId);
+    LOG_WA("NtfAdmin::deleteReader  client not found %u", readFinalizeReq.client_id);
   }
   TRACE_LEAVE();
 }
@@ -1105,24 +1134,27 @@ void syncGlobals(const struct NtfGlobals *ntfGlobals) {
   NtfAdmin::theNtfAdmin->syncGlobals(*ntfGlobals);
 }
 
-void newReader(unsigned int clientId, SaNtfSearchCriteriaT searchCriteria,
-               ntfsv_filter_ptrs_t *f_rec, MDS_SYNC_SND_CTXT *mdsCtxt) {
+void createReaderWithoutFilter(ntfsv_reader_init_req_t rp, MDS_SYNC_SND_CTXT *mdsCtxt) {
   osafassert(NtfAdmin::theNtfAdmin != NULL);
-  NtfAdmin::theNtfAdmin->newReader(clientId, searchCriteria, f_rec, mdsCtxt);
+  NtfAdmin::theNtfAdmin->createReaderWithoutFilter(rp, mdsCtxt);
 }
 
-void readNext(unsigned int clientId, unsigned int readerId,
-              SaNtfSearchDirectionT searchDirection,
+void createReaderWithFilter(ntfsv_reader_init_req_2_t rp, MDS_SYNC_SND_CTXT *mdsCtxt) {
+  osafassert(NtfAdmin::theNtfAdmin != NULL);
+  NtfAdmin::theNtfAdmin->createReaderWithFilter(rp, mdsCtxt);
+}
+
+void readNext(ntfsv_read_next_req_t reqNextReq,
               MDS_SYNC_SND_CTXT *mdsCtxt) {
   osafassert(NtfAdmin::theNtfAdmin != NULL);
-  return NtfAdmin::theNtfAdmin->readNext(clientId, readerId, searchDirection,
+  return NtfAdmin::theNtfAdmin->readNext(reqNextReq,
                                          mdsCtxt);
 }
 
-void deleteReader(unsigned int clientId, unsigned int readerId,
+void deleteReader(ntfsv_reader_finalize_req_t readFinalizeReq,
                   MDS_SYNC_SND_CTXT *mdsCtxt) {
   osafassert(NtfAdmin::theNtfAdmin != NULL);
-  return NtfAdmin::theNtfAdmin->deleteReader(clientId, readerId, mdsCtxt);
+  return NtfAdmin::theNtfAdmin->deleteReader(readFinalizeReq, mdsCtxt);
 }
 
 void printAdminInfo() {

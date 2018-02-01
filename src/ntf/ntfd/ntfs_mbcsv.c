@@ -55,6 +55,10 @@ static uint32_t ckpt_proc_not_log_confirm(ntfs_cb_t *cb,
 					  ntfsv_ckpt_msg_t *data);
 static uint32_t ckpt_proc_not_send_confirm(ntfs_cb_t *cb,
 					   ntfsv_ckpt_msg_t *data);
+static uint32_t ckpt_proc_reader_init(ntfs_cb_t *cb, ntfsv_ckpt_msg_t *data);
+static uint32_t ckpt_proc_reader_init_2(ntfs_cb_t *cb, ntfsv_ckpt_msg_t *data);
+static uint32_t ckpt_proc_read_next(ntfs_cb_t *cb, ntfsv_ckpt_msg_t *data);
+static uint32_t ckpt_proc_read_finalize(ntfs_cb_t *cb, ntfsv_ckpt_msg_t *data);
 
 static void enc_ckpt_header(uint8_t *pdata, ntfsv_ckpt_header_t header);
 static uint32_t dec_ckpt_header(NCS_UBAID *uba, ntfsv_ckpt_header_t *header);
@@ -95,7 +99,11 @@ static NTFS_CKPT_HDLR ckpt_data_handler[NTFS_CKPT_MSG_MAX] = {
     ckpt_proc_subscribe,
     ckpt_proc_unsubscribe,
     ckpt_proc_not_log_confirm,
-    ckpt_proc_not_send_confirm};
+    ckpt_proc_not_send_confirm,
+    ckpt_proc_reader_init,
+    ckpt_proc_reader_init_2,
+    ckpt_proc_read_next,
+    ckpt_proc_read_finalize};
 
 /****************************************************************************
  * Name          : ntfsv_mbcsv_init
@@ -556,6 +564,10 @@ static uint32_t ckpt_encode_async_update(ntfs_cb_t *ntfs_cb, EDU_HDL edu_hdl,
 		ntfs_ckpt_reg_msg_t ckpt_reg_rec;
 		ntfs_ckpt_subscribe_t subscribe_rec;
 		ntfs_ckpt_unsubscribe_t unsubscribe_rec;
+		ntfs_ckpt_reader_initialize_t reader_init_rec;
+		ntfs_ckpt_reader_initialize_2_t reader_init_rec2;
+		ntfs_ckpt_read_next_t read_next_rec;
+		ntfs_ckpt_read_finalize_t read_finalize_rec;
 		EDU_ERR ederror;
 
 	case NTFS_CKPT_INITIALIZE_REC:
@@ -639,6 +651,46 @@ static uint32_t ckpt_encode_async_update(ntfs_cb_t *ntfs_cb, EDU_HDL edu_hdl,
 		enc_ckpt_header(pheader, ckpt_hdr);
 		rc = enc_mbcsv_send_confirm_msg(uba,
 						&data->ckpt_rec.send_confirm);
+		break;
+	case NTFS_CKPT_READER_INITIALIZE:
+		TRACE("Async update NTFS_CKPT_READER_INITIALIZE");
+		ckpt_hdr.ckpt_rec_type = NTFS_CKPT_READER_INITIALIZE;
+		ckpt_hdr.num_ckpt_records = 1;
+		ckpt_hdr.data_len = 0; /*Not in Use for Cold Sync */
+		enc_ckpt_header(pheader, ckpt_hdr);
+
+		reader_init_rec.arg = data->ckpt_rec.reader_init.arg;
+		rc = ntfsv_enc_reader_initialize_msg(uba, &reader_init_rec.arg);
+		break;
+	case NTFS_CKPT_READER_INITIALIZE_2:
+		TRACE("Async update NTFS_CKPT_READER_INITIALIZE_2");
+		ckpt_hdr.ckpt_rec_type = NTFS_CKPT_READER_INITIALIZE_2;
+		ckpt_hdr.num_ckpt_records = 1;
+		ckpt_hdr.data_len = 0; /*Not in Use for Cold Sync */
+		enc_ckpt_header(pheader, ckpt_hdr);
+
+		reader_init_rec2.arg = data->ckpt_rec.reader_init_2.arg;
+		rc = ntfsv_enc_reader_initialize_2_msg(uba, &reader_init_rec2.arg);
+		break;
+	case NTFS_CKPT_READ_NEXT:
+		TRACE("Async update NTFS_CKPT_READ_NEXT");
+		ckpt_hdr.ckpt_rec_type = NTFS_CKPT_READ_NEXT;
+		ckpt_hdr.num_ckpt_records = 1;
+		ckpt_hdr.data_len = 0; /*Not in Use for Cold Sync */
+		enc_ckpt_header(pheader, ckpt_hdr);
+
+		read_next_rec.arg = data->ckpt_rec.read_next.arg;
+		rc = ntfsv_enc_read_next_msg(uba, &read_next_rec.arg);
+		break;
+	case NTFS_CKPT_READ_FINALIZE:
+		TRACE("Async update NTFS_CKPT_READ_FINALIZE");
+		ckpt_hdr.ckpt_rec_type = NTFS_CKPT_READ_FINALIZE;
+		ckpt_hdr.num_ckpt_records = 1;
+		ckpt_hdr.data_len = 0; /*Not in Use for Cold Sync */
+		enc_ckpt_header(pheader, ckpt_hdr);
+
+		read_finalize_rec.arg = data->ckpt_rec.read_finalize.arg;
+		rc = ntfsv_enc_read_finalize_msg(uba, &read_finalize_rec.arg);
 		break;
 	default:
 		TRACE_3("FAILED no type: %d", data->header.ckpt_rec_type);
@@ -764,6 +816,10 @@ static uint32_t ckpt_decode_async_update(ntfs_cb_t *cb,
 	ntfs_ckpt_subscribe_t *subscribe_rec = NULL;
 	ntfs_ckpt_unsubscribe_t *unsubscribe_rec = NULL;
 	ntfsv_ckpt_finalize_msg_t *finalize = NULL;
+	ntfs_ckpt_reader_initialize_t *reader_init_rec = NULL;
+	ntfs_ckpt_reader_initialize_2_t *reader_init_rec2 = NULL;
+	ntfs_ckpt_read_next_t *read_next = NULL;
+	ntfs_ckpt_read_finalize_t *read_finalize = NULL;
 	MDS_DEST *agent_dest = NULL;
 
 	TRACE_ENTER();
@@ -858,7 +914,34 @@ static uint32_t ckpt_decode_async_update(ntfs_cb_t *cb,
 			goto done;
 		}
 		break;
+	case NTFS_CKPT_READER_INITIALIZE:
+		TRACE_2("READER INIT: AUPDATE");
+		reader_init_rec = &ckpt_msg->ckpt_rec.reader_init;
 
+		rc = ntfsv_dec_reader_initialize_msg(&cbk_arg->info.decode.i_uba,
+						&reader_init_rec->arg);
+		break;
+	case NTFS_CKPT_READER_INITIALIZE_2:
+		TRACE_2("READER INIT2: AUPDATE");
+		reader_init_rec2 = &ckpt_msg->ckpt_rec.reader_init_2;
+
+		rc = ntfsv_dec_reader_initialize_2_msg(&cbk_arg->info.decode.i_uba,
+						&reader_init_rec2->arg);
+		break;
+	case NTFS_CKPT_READ_NEXT:
+		TRACE_2("READ NEXT: AUPDATE");
+		read_next = &ckpt_msg->ckpt_rec.read_next;
+
+		rc = ntfsv_dec_read_next_msg(&cbk_arg->info.decode.i_uba,
+						&read_next->arg);
+		break;
+	case NTFS_CKPT_READ_FINALIZE:
+		TRACE_2("READ FINALIZE: AUPDATE");
+		read_finalize = &ckpt_msg->ckpt_rec.read_finalize;
+
+		rc = ntfsv_dec_read_finalize_msg(&cbk_arg->info.decode.i_uba,
+						&read_finalize->arg);
+		break;
 	default:
 		rc = NCSCC_RC_FAILURE;
 		TRACE("   FAILED");
@@ -1387,6 +1470,61 @@ uint32_t ckpt_proc_subscribe(ntfs_cb_t *cb, ntfsv_ckpt_msg_t *data)
 	TRACE_LEAVE();
 	return NCSCC_RC_SUCCESS;
 }
+
+uint32_t ckpt_proc_reader_init(ntfs_cb_t *cb, ntfsv_ckpt_msg_t *data)
+{
+
+	TRACE_ENTER();
+
+	ntfsv_reader_init_req_t *rp = &data->ckpt_rec.reader_init.arg;
+	TRACE_4("client_id: %u", rp->client_id);
+
+	createReaderWithoutFilter(*rp, NULL);
+	TRACE_LEAVE();
+	return NCSCC_RC_SUCCESS;
+}
+
+uint32_t ckpt_proc_reader_init_2(ntfs_cb_t *cb, ntfsv_ckpt_msg_t *data)
+{
+
+	TRACE_ENTER();
+
+	ntfsv_reader_init_req_2_t *rp = &data->ckpt_rec.reader_init_2.arg;
+	TRACE_4("client_id: %u", rp->head.client_id);
+
+	createReaderWithFilter(*rp, NULL);
+	TRACE_LEAVE();
+	return NCSCC_RC_SUCCESS;
+}
+
+uint32_t ckpt_proc_read_next(ntfs_cb_t *cb, ntfsv_ckpt_msg_t *data)
+{
+
+	TRACE_ENTER();
+
+	ntfsv_read_next_req_t *rp = &data->ckpt_rec.read_next.arg;
+	TRACE_4("client_id: %u", rp->client_id);
+
+	readNext(*rp, NULL);
+	TRACE_LEAVE();
+	return NCSCC_RC_SUCCESS;
+}
+
+uint32_t ckpt_proc_read_finalize(ntfs_cb_t *cb, ntfsv_ckpt_msg_t *data)
+{
+	uint32_t rc = NCSCC_RC_SUCCESS;
+
+	TRACE_ENTER();
+	ntfsv_reader_finalize_req_t *reader_finalize_param =
+			&data->ckpt_rec.read_finalize.arg;
+
+
+	TRACE_4("client_id: %u", reader_finalize_param->client_id);
+	deleteReader(*reader_finalize_param, NULL);
+	TRACE_LEAVE();
+	return rc;
+}
+
 
 /****************************************************************************
  * Name          : ckpt_proc_finalize_rec

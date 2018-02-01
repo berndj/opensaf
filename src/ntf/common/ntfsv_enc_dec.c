@@ -2165,10 +2165,9 @@ uint32_t ntfsv_dec_unsubscribe_msg(NCS_UBAID *uba,
 	return rv;
 }
 
-uint32_t ntfsv_enc_reader_initialize_msg(NCS_UBAID *uba, ntfsv_msg_t *msg)
+uint32_t ntfsv_enc_reader_initialize_msg(NCS_UBAID *uba, ntfsv_reader_init_req_t *param)
 {
 	uint8_t *p8;
-	ntfsv_reader_init_req_t *param = &msg->info.api_info.param.reader_init;
 
 	TRACE_ENTER();
 	osafassert(uba != NULL);
@@ -2189,10 +2188,9 @@ uint32_t ntfsv_enc_reader_initialize_msg(NCS_UBAID *uba, ntfsv_msg_t *msg)
 	return NCSCC_RC_SUCCESS;
 }
 
-uint32_t ntfsv_dec_reader_initialize_msg(NCS_UBAID *uba, ntfsv_msg_t *msg)
+uint32_t ntfsv_dec_reader_initialize_msg(NCS_UBAID *uba, ntfsv_reader_init_req_t *param)
 {
 	uint8_t *p8;
-	ntfsv_reader_init_req_t *param = &msg->info.api_info.param.reader_init;
 	uint8_t local_data[22];
 
 	/* releaseCode, majorVersion, minorVersion */
@@ -2207,22 +2205,91 @@ uint32_t ntfsv_dec_reader_initialize_msg(NCS_UBAID *uba, ntfsv_msg_t *msg)
 	return NCSCC_RC_SUCCESS;
 }
 
-uint32_t ntfsv_enc_reader_initialize_msg_2(NCS_UBAID *uba, ntfsv_msg_t *msg)
+uint32_t ntfsv_enc_reader_initialize_2_msg(NCS_UBAID *uba, ntfsv_reader_init_req_2_t *param)
 {
 	uint32_t rv;
-	rv = ntfsv_enc_reader_initialize_msg(uba, msg);
+	rv = ntfsv_enc_reader_initialize_msg(uba, &param->head);
 	if (rv != NCSCC_RC_SUCCESS)
 		return rv;
 	return ntfsv_enc_filter_msg(
-	    uba, &msg->info.api_info.param.reader_init_2.f_rec);
+	    uba, &param->f_rec);
 }
 
-uint32_t ntfsv_dec_reader_initialize_msg_2(NCS_UBAID *uba, ntfsv_msg_t *msg)
+uint32_t ntfsv_dec_reader_initialize_2_msg(NCS_UBAID *uba, ntfsv_reader_init_req_2_t *param)
 {
 	uint32_t rv;
-	rv = ntfsv_dec_reader_initialize_msg(uba, msg);
+	rv = ntfsv_dec_reader_initialize_msg(uba, &param->head);
 	if (rv != NCSCC_RC_SUCCESS)
 		return rv;
-	return ntfsv_dec_filter_msg(
-	    uba, &msg->info.api_info.param.reader_init_2.f_rec);
+	return ntfsv_dec_filter_msg(uba, &param->f_rec);
 }
+
+uint32_t ntfsv_enc_read_next_msg(NCS_UBAID *uba, ntfsv_read_next_req_t *param)
+{
+	uint8_t *p8;
+	TRACE_ENTER();
+	osafassert(uba != NULL);
+
+	/** encode the contents **/
+	p8 = ncs_enc_reserve_space(uba, 10);
+	if (!p8) {
+		TRACE("NULL pointer");
+		return NCSCC_RC_OUT_OF_MEM;
+	}
+	ncs_encode_32bit(&p8, param->client_id);
+	ncs_encode_8bit(&p8, param->searchDirection);
+	ncs_encode_32bit(&p8, param->readerId);
+	ncs_enc_claim_space(uba, 10);
+
+	TRACE_LEAVE();
+	return NCSCC_RC_SUCCESS;
+}
+
+uint32_t ntfsv_dec_read_next_msg(NCS_UBAID *uba, ntfsv_read_next_req_t *param)
+{
+	uint8_t *p8;
+	uint8_t local_data[10];
+
+	p8 = ncs_dec_flatten_space(uba, local_data, 10);
+	param->client_id = ncs_decode_32bit(&p8);
+	param->searchDirection = ncs_decode_8bit(&p8);
+	param->readerId = ncs_decode_32bit(&p8);
+	ncs_dec_skip_space(uba, 10);
+
+	return NCSCC_RC_SUCCESS;
+}
+
+uint32_t ntfsv_enc_read_finalize_msg(NCS_UBAID *uba, ntfsv_reader_finalize_req_t *param)
+{
+	uint8_t *p8;
+
+	TRACE_ENTER();
+	osafassert(uba != NULL);
+
+	/** encode the contents **/
+	p8 = ncs_enc_reserve_space(uba, 8);
+	if (!p8) {
+		TRACE("NULL pointer");
+		return NCSCC_RC_OUT_OF_MEM;
+	}
+	ncs_encode_32bit(&p8, param->client_id);
+	ncs_encode_32bit(&p8, param->readerId);
+	ncs_enc_claim_space(uba, 8);
+	
+	TRACE_LEAVE();
+	return NCSCC_RC_SUCCESS;
+}
+
+uint32_t ntfsv_dec_read_finalize_msg(NCS_UBAID *uba, ntfsv_reader_finalize_req_t *param)
+{
+	uint8_t *p8;
+	uint8_t local_data[8];
+
+	p8 = ncs_dec_flatten_space(uba, local_data, 8);
+	param->client_id = ncs_decode_32bit(&p8);
+	param->readerId = ncs_decode_32bit(&p8);
+	ncs_dec_skip_space(uba, 8);
+
+	return NCSCC_RC_SUCCESS;
+}
+

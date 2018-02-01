@@ -41,6 +41,10 @@ typedef enum ntfsv_ckpt_rec_type {
   NTFS_CKPT_UNSUBSCRIBE = 6,
   NTFS_CKPT_NOT_LOG_CONFIRM = 7,
   NTFS_CKPT_NOT_SEND_CONFIRM = 8,
+  NTFS_CKPT_READER_INITIALIZE = 9,
+  NTFS_CKPT_READER_INITIALIZE_2 = 10,
+  NTFS_CKPT_READ_NEXT = 11,
+  NTFS_CKPT_READ_FINALIZE = 12,
   NTFS_CKPT_MSG_MAX
 } ntfsv_ckpt_msg_type_t;
 
@@ -70,6 +74,14 @@ typedef struct { ntfsv_send_not_req_t *arg; } ntfs_ckpt_notification_t;
 typedef struct { ntfsv_subscribe_req_t arg; } ntfs_ckpt_subscribe_t;
 
 typedef struct { ntfsv_unsubscribe_req_t arg; } ntfs_ckpt_unsubscribe_t;
+
+typedef struct { ntfsv_reader_init_req_t arg; } ntfs_ckpt_reader_initialize_t;
+
+typedef struct { ntfsv_reader_init_req_2_t arg; } ntfs_ckpt_reader_initialize_2_t;
+
+typedef struct { ntfsv_read_next_req_t arg; } ntfs_ckpt_read_next_t;
+
+typedef struct { ntfsv_reader_finalize_req_t arg; } ntfs_ckpt_read_finalize_t;
 
 typedef struct { SaNtfIdentifierT notificationId; } ntfs_ckpt_not_log_confirm_t;
 
@@ -101,6 +113,10 @@ typedef struct {
     ntfs_ckpt_unsubscribe_t unsubscribe;
     ntfs_ckpt_not_log_confirm_t log_confirm;
     ntfs_ckpt_not_send_confirm_t send_confirm;
+    ntfs_ckpt_reader_initialize_t reader_init;
+    ntfs_ckpt_reader_initialize_2_t reader_init_2;
+    ntfs_ckpt_read_next_t read_next;
+    ntfs_ckpt_read_finalize_t read_finalize;
   } ckpt_rec;
 } ntfsv_ckpt_msg_t;
 

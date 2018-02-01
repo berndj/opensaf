@@ -162,7 +162,8 @@ static uint32_t ntfa_enc_send_not_msg(NCS_UBAID *uba, ntfsv_msg_t *msg)
 ******************************************************************************/
 static uint32_t ntfa_enc_reader_initialize_msg(NCS_UBAID *uba, ntfsv_msg_t *msg)
 {
-	return ntfsv_enc_reader_initialize_msg(uba, msg);
+	return ntfsv_enc_reader_initialize_msg(uba,
+	    &msg->info.api_info.param.reader_init);
 }
 
 /****************************************************************************
@@ -178,10 +179,11 @@ static uint32_t ntfa_enc_reader_initialize_msg(NCS_UBAID *uba, ntfsv_msg_t *msg)
 
   Notes         : None.
 ******************************************************************************/
-static uint32_t ntfa_enc_reader_initialize_msg_2(NCS_UBAID *uba,
+static uint32_t ntfa_enc_reader_initialize_2_msg(NCS_UBAID *uba,
 						 ntfsv_msg_t *msg)
 {
-	return ntfsv_enc_reader_initialize_msg_2(uba, msg);
+	return ntfsv_enc_reader_initialize_2_msg(uba,
+	    &msg->info.api_info.param.reader_init_2);
 }
 
 /****************************************************************************
@@ -198,25 +200,8 @@ static uint32_t ntfa_enc_reader_initialize_msg_2(NCS_UBAID *uba,
 ******************************************************************************/
 static uint32_t ntfa_enc_reader_finalize_msg(NCS_UBAID *uba, ntfsv_msg_t *msg)
 {
-	uint8_t *p8;
-	ntfsv_reader_finalize_req_t *param =
-	    &msg->info.api_info.param.reader_finalize;
-
-	TRACE_ENTER();
-	osafassert(uba != NULL);
-
-	/** encode the contents **/
-	p8 = ncs_enc_reserve_space(uba, 8);
-	if (!p8) {
-		TRACE("NULL pointer");
-		return NCSCC_RC_OUT_OF_MEM;
-	}
-	ncs_encode_32bit(&p8, param->client_id);
-	ncs_encode_32bit(&p8, param->readerId);
-	ncs_enc_claim_space(uba, 8);
-
-	TRACE_LEAVE();
-	return NCSCC_RC_SUCCESS;
+	return ntfsv_enc_read_finalize_msg(uba,
+		&msg->info.api_info.param.reader_finalize);
 }
 
 /****************************************************************************
@@ -233,25 +218,7 @@ static uint32_t ntfa_enc_reader_finalize_msg(NCS_UBAID *uba, ntfsv_msg_t *msg)
 ******************************************************************************/
 static uint32_t ntfa_enc_read_next_msg(NCS_UBAID *uba, ntfsv_msg_t *msg)
 {
-	uint8_t *p8;
-	ntfsv_read_next_req_t *param = &msg->info.api_info.param.read_next;
-
-	TRACE_ENTER();
-	osafassert(uba != NULL);
-
-	/** encode the contents **/
-	p8 = ncs_enc_reserve_space(uba, 10);
-	if (!p8) {
-		TRACE("NULL pointer");
-		return NCSCC_RC_OUT_OF_MEM;
-	}
-	ncs_encode_32bit(&p8, param->client_id);
-	ncs_encode_8bit(&p8, param->searchDirection);
-	ncs_encode_32bit(&p8, param->readerId);
-	ncs_enc_claim_space(uba, 10);
-
-	TRACE_LEAVE();
-	return NCSCC_RC_SUCCESS;
+	return ntfsv_enc_read_next_msg(uba, &msg->info.api_info.param.read_next);
 }
 
 /****************************************************************************
@@ -576,7 +543,7 @@ static uint32_t ntfa_mds_enc(struct ncsmds_callback_info *info)
 			break;
 
 		case NTFSV_READER_INITIALIZE_REQ_2:
-			rc = ntfa_enc_reader_initialize_msg_2(uba, msg);
+			rc = ntfa_enc_reader_initialize_2_msg(uba, msg);
 			break;
 
 		case NTFSV_READER_FINALIZE_REQ:
