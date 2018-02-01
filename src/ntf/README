@@ -70,14 +70,23 @@ when long DNs objects are created, deleted, or their attributes are changed.
 
 Using SA_NTF_VALUE_LDAP_NAME as long DNs, please see "IMPLEMENTATION NOTES"
 
-Support for cached alarms cold sync
+Support for synchronization of cached alarms and readers information
 ===================================
-In the scenario of rebooting the standby controller and the standby becomes active
-after following switchover, the NTF reader can not continue to read the cached
-alarms because they are not synced at the time of rebooting the standby controller.
-NTF has supported to cold sync the cached alarms from the active to the standby,
-therefore, the old cached alarms will be available for NTF readers. This enhancement
-requires both the active and standby NTFD have mbcsv of version 3 or above.
+In the scenario of rebooting the standby controller, the cached alarms are not synchronized to the
+standby NTFD once the standby comes up from reboot. If a switch-over for instance that makes the
+standby becoming active, the cached alarms are not present in the new active NTFD; therefore, the
+cached alarms are inaccessible from NTF reader.
+
+Also, NTF currently has not supported a synchronization of the reader information (reader id, filter,
+and search criteria) from the active to the standby NTFD. In any events that the standby NTFD becomes
+active, NTF readers will not continue to use existing handles to read the alarms.
+ 
+In order to support the continuation of reading service, NTF has now implemented synchronizations so
+that both active and standby NTFD have consistent cached alarms and readers information, which include:
+ - Cold sync cached alarms
+ - Checkpoint and cold sync readers information
+
+This enhancement requires both the active and standby NTFD have mbcsv of version 3 or above.
 
 DEPENDENCIES
 ntfsv depends of the following other OpenSAF services:
