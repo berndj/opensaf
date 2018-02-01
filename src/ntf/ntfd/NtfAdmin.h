@@ -79,6 +79,11 @@ class NtfAdmin {
   void readNext(ntfsv_read_next_req_t readNextReq,
                 MDS_SYNC_SND_CTXT *mdsCtxt);
 
+  void restoreReaderWithFilter(ntfsv_reader_init_req_2_t rp, uint32_t readerId,
+      uint32_t fIter, bool firstRead);
+  void restoreReaderWithoutFilter(ntfsv_reader_init_req_t rp, uint32_t readerId,
+      uint32_t fIter, bool firstRead);
+
   void printInfo();
   void storeMatchingSubscription(SaNtfIdentifierT notificationId,
                                  unsigned int clientId,

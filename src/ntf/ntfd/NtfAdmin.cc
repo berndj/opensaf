@@ -627,6 +627,12 @@ void NtfAdmin::syncRequest(NCS_UBAID *uba) {
       LOG_ER("sendNewClient: %u failed", client->getClientId());
     }
   }
+  // Need to sync cached notification before syncing readers.
+  // In decoding side, all notifications will be restored before
+  // decoding readers, so that the internal cache list of every
+  // readers will be up-to-dated
+  logger.syncRequest(uba);
+
   for (pos = clientMap.begin(); pos != clientMap.end(); pos++) {
     pos->second->syncRequest(uba); /* subscriptions are synched here */
   }
@@ -659,7 +665,6 @@ void NtfAdmin::syncRequest(NCS_UBAID *uba) {
     NtfSmartPtr notification = posNot->second;
     notification->syncRequest(uba);
   }
-  logger.syncRequest(uba);
   TRACE_LEAVE();
 }
 
@@ -768,6 +773,50 @@ NtfReader* NtfAdmin::createReaderWithoutFilter(ntfsv_reader_init_req_t rp,
   }
   TRACE_LEAVE();
   return newReader;
+}
+/**
+ * The method is called in cold sync to restore reader instance
+ * with filter at standby NTFD
+ *
+ * @param rp: the original reader initialize request version 2
+ * @param readerId: the current reader Id of reader instance exists
+ *                  at active side
+ * @param fIter: current iteration to read the notification
+ * @param firstRead: flag is used in NtfReader::next
+ * @return none
+ */
+void NtfAdmin::restoreReaderWithFilter(ntfsv_reader_init_req_2_t rp,
+    uint32_t readerId, uint32_t fIter, bool firstRead) {
+  TRACE_ENTER();
+  NtfReader *reader = createReaderWithFilter(rp, NULL);
+  if (reader != nullptr) {
+    reader->setReaderId(readerId);
+    reader->setReaderIteration(fIter);
+    reader->setFirstRead(firstRead);
+  }
+  TRACE_LEAVE();
+}
+/**
+ * The method is called in cold sync to restore reader instance
+ * without at standby NTFD
+ *
+ * @param rp: the original reader initialize request version 2
+ * @param readerId: the current reader Id of reader instance exists
+ *                  at active side
+ * @param fIter: current iteration to read the notification
+ * @param firstRead: flag is used in NtfReader::next
+ * @return none
+ */
+void NtfAdmin::restoreReaderWithoutFilter(ntfsv_reader_init_req_t rp,
+    uint32_t readerId, uint32_t fIter, bool firstRead) {
+  TRACE_ENTER();
+  NtfReader *reader = createReaderWithoutFilter(rp, NULL);
+  if (reader != nullptr) {
+    reader->setReaderId(readerId);
+    reader->setReaderIteration(fIter);
+    reader->setFirstRead(firstRead);
+  }
+  TRACE_LEAVE();
 }
 /**
  * The method create a new instance of NtfReader that
@@ -1142,6 +1191,18 @@ void createReaderWithoutFilter(ntfsv_reader_init_req_t rp, MDS_SYNC_SND_CTXT *md
 void createReaderWithFilter(ntfsv_reader_init_req_2_t rp, MDS_SYNC_SND_CTXT *mdsCtxt) {
   osafassert(NtfAdmin::theNtfAdmin != NULL);
   NtfAdmin::theNtfAdmin->createReaderWithFilter(rp, mdsCtxt);
+}
+
+void restoreReaderWithFilter(ntfsv_reader_init_req_2_t rp, uint32_t readerId,
+    uint32_t fIter, bool firstRead) {
+  osafassert(NtfAdmin::theNtfAdmin != NULL);
+  NtfAdmin::theNtfAdmin->restoreReaderWithFilter(rp, readerId, fIter, firstRead);
+}
+
+void restoreReaderWithoutFilter(ntfsv_reader_init_req_t rp, uint32_t readerId,
+    uint32_t fIter, bool firstRead) {
+  osafassert(NtfAdmin::theNtfAdmin != NULL);
+  NtfAdmin::theNtfAdmin->restoreReaderWithoutFilter(rp, readerId, fIter, firstRead);
 }
 
 void readNext(ntfsv_read_next_req_t reqNextReq,
