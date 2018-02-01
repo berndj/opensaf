@@ -23,6 +23,7 @@
  */
 #include <saAis.h>
 #include <saNtf.h>
+#include "base/ncsencdec_pub.h"
 #include "ntf/common/ntfsv_msg.h"
 #include "ntfs_com.h"
 #include "ntf/common/ntfsv_enc_dec.h"
@@ -451,10 +452,28 @@ int sendNoOfNotifications(uint32_t num_rec, NCS_UBAID *uba)
 	return enc_ckpt_reserv_header(uba, NTFS_CKPT_NOTIFICATION, num_rec, 0);
 }
 
+int sendNoOfCachedNotifications(uint32_t num_rec, NCS_UBAID *uba)
+{
+	if (ntfs_cb->peer_mbcsv_version > NTFS_MBCSV_VERSION_2) {
+		TRACE_2("num_rec: %u", num_rec);
+		return enc_ckpt_reserv_header(uba, NTFS_CKPT_NOTIFICATION, num_rec, 0);
+	}
+	return NCSCC_RC_SUCCESS;
+}
+
 int sendNoOfSubscriptions(uint32_t num_rec, NCS_UBAID *uba)
 {
 	TRACE_2("num_rec: %u", num_rec);
 	return enc_ckpt_reserv_header(uba, NTFS_CKPT_SUBSCRIBE, num_rec, 0);
+}
+
+int sendNoOfReaders(uint32_t num_rec, NCS_UBAID *uba)
+{
+	if (ntfs_cb->peer_mbcsv_version > NTFS_MBCSV_VERSION_2) {
+		TRACE_2("num_rec: %u", num_rec);
+		return enc_ckpt_reserv_header(uba, NTFS_CKPT_READER_INITIALIZE_2, num_rec, 0);
+	}
+	return NCSCC_RC_SUCCESS;
 }
 
 int sendNewSubscription(ntfsv_subscribe_req_t *s, NCS_UBAID *uba)
@@ -568,6 +587,66 @@ void sendNotConfirmUpdate(unsigned int clientId,
 	ckpt.ckpt_rec.send_confirm.discarded = discarded;
 	update_standby(&ckpt, NCS_MBCSV_ACT_ADD);
 	TRACE_LEAVE();
+}
+
+void sendReaderInitialize2Update(ntfsv_reader_init_req_2_t* readerInitializeReq)
+{
+	if (ntfs_cb->peer_mbcsv_version > NTFS_MBCSV_VERSION_2) {
+
+		ntfsv_ckpt_msg_t ckpt;
+	
+		memset(&ckpt, 0, sizeof(ckpt));
+		ckpt.header.ckpt_rec_type = NTFS_CKPT_READER_INITIALIZE_2;
+		ckpt.header.num_ckpt_records = 1;
+		ckpt.header.data_len = 1;
+		ckpt.ckpt_rec.reader_init_2.arg = *readerInitializeReq;
+		update_standby(&ckpt, NCS_MBCSV_ACT_ADD);
+	}
+}
+
+void sendReadNextUpdate(ntfsv_read_next_req_t* readNextReq)
+{
+	if (ntfs_cb->peer_mbcsv_version > NTFS_MBCSV_VERSION_2) {
+
+		ntfsv_ckpt_msg_t ckpt;
+		
+		memset(&ckpt, 0, sizeof(ckpt));
+		ckpt.header.ckpt_rec_type = NTFS_CKPT_READ_NEXT;
+		ckpt.header.num_ckpt_records = 1;
+		ckpt.header.data_len = 1;
+		ckpt.ckpt_rec.read_next.arg = *readNextReq;
+		update_standby(&ckpt, NCS_MBCSV_ACT_ADD);
+	}
+}
+
+void sendReadFinalizeUpdate(ntfsv_reader_finalize_req_t* readFinalizeReq)
+{
+	if (ntfs_cb->peer_mbcsv_version > NTFS_MBCSV_VERSION_2) {
+
+		ntfsv_ckpt_msg_t ckpt;
+		
+		memset(&ckpt, 0, sizeof(ckpt));
+		ckpt.header.ckpt_rec_type = NTFS_CKPT_READ_FINALIZE;
+		ckpt.header.num_ckpt_records = 1;
+		ckpt.header.data_len = 1;
+		ckpt.ckpt_rec.read_finalize.arg = *readFinalizeReq;
+		update_standby(&ckpt, NCS_MBCSV_ACT_ADD);
+	}
+}
+
+void sendReaderInitializeUpdate(ntfsv_reader_init_req_t* readerInitializeReq)
+{
+	if (ntfs_cb->peer_mbcsv_version > NTFS_MBCSV_VERSION_2) {
+	
+		ntfsv_ckpt_msg_t ckpt;
+		
+		memset(&ckpt, 0, sizeof(ckpt));
+		ckpt.header.ckpt_rec_type = NTFS_CKPT_READER_INITIALIZE;
+		ckpt.header.num_ckpt_records = 1;
+		ckpt.header.data_len = 1;
+		ckpt.ckpt_rec.reader_init.arg = *readerInitializeReq;
+		update_standby(&ckpt, NCS_MBCSV_ACT_ADD);
+	}
 }
 
 /**

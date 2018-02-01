@@ -181,14 +181,15 @@ static uint32_t dec_send_not_msg(NCS_UBAID *uba, ntfsv_msg_t *msg)
 ******************************************************************************/
 static uint32_t dec_reader_initialize_msg(NCS_UBAID *uba, ntfsv_msg_t *msg)
 {
-	return ntfsv_dec_reader_initialize_msg(uba, msg);
+	return ntfsv_dec_reader_initialize_msg(uba,
+	    &msg->info.api_info.param.reader_init);
 }
 
 /****************************************************************************
-  Name          : dec_reader_initialize_msg_2
+  Name          : dec_reader_initialize_2_msg
 
   Description   : This routine decodes an reader_initialize API msg
-		  filter is added in reader_initialize_msg_2
+		  filter is added in reader_initialize_2_msg
 
   Arguments     : NCS_UBAID *msg,
 		  NTFSV_MSG *msg
@@ -197,9 +198,10 @@ static uint32_t dec_reader_initialize_msg(NCS_UBAID *uba, ntfsv_msg_t *msg)
 
   Notes         : None.
 ******************************************************************************/
-static uint32_t dec_reader_initialize_msg_2(NCS_UBAID *uba, ntfsv_msg_t *msg)
+static uint32_t dec_reader_initialize_2_msg(NCS_UBAID *uba, ntfsv_msg_t *msg)
 {
-	return ntfsv_dec_reader_initialize_msg_2(uba, msg);
+	return ntfsv_dec_reader_initialize_2_msg(uba,
+	    &msg->info.api_info.param.reader_init_2);
 }
 
 /****************************************************************************
@@ -216,19 +218,7 @@ static uint32_t dec_reader_initialize_msg_2(NCS_UBAID *uba, ntfsv_msg_t *msg)
 ******************************************************************************/
 static uint32_t dec_reader_finalize_msg(NCS_UBAID *uba, ntfsv_msg_t *msg)
 {
-	uint8_t *p8;
-	ntfsv_reader_finalize_req_t *param =
-	    &msg->info.api_info.param.reader_finalize;
-	uint8_t local_data[8];
-
-	/* releaseCode, majorVersion, minorVersion */
-	p8 = ncs_dec_flatten_space(uba, local_data, 8);
-	param->client_id = ncs_decode_32bit(&p8);
-	param->readerId = ncs_decode_32bit(&p8);
-	ncs_dec_skip_space(uba, 8);
-
-	TRACE_8("NTFSV_reader_finalize_REQ");
-	return NCSCC_RC_SUCCESS;
+	return ntfsv_dec_read_finalize_msg(uba, &msg->info.api_info.param.reader_finalize);
 }
 
 /****************************************************************************
@@ -245,19 +235,7 @@ static uint32_t dec_reader_finalize_msg(NCS_UBAID *uba, ntfsv_msg_t *msg)
 ******************************************************************************/
 static uint32_t dec_read_next_msg(NCS_UBAID *uba, ntfsv_msg_t *msg)
 {
-	uint8_t *p8;
-	ntfsv_read_next_req_t *param = &msg->info.api_info.param.read_next;
-	uint8_t local_data[10];
-
-	/* releaseCode, majorVersion, minorVersion */
-	p8 = ncs_dec_flatten_space(uba, local_data, 10);
-	param->client_id = ncs_decode_32bit(&p8);
-	param->searchDirection = ncs_decode_8bit(&p8);
-	param->readerId = ncs_decode_32bit(&p8);
-	ncs_dec_skip_space(uba, 10);
-
-	TRACE_8("NTFSV_read_next_REQ");
-	return NCSCC_RC_SUCCESS;
+	return ntfsv_dec_read_next_msg(uba, &msg->info.api_info.param.read_next);
 }
 
 /****************************************************************************
@@ -749,7 +727,7 @@ static uint32_t mds_dec(struct ncsmds_callback_info *info)
 			rc = dec_reader_initialize_msg(uba, &evt->info.msg);
 			break;
 		case NTFSV_READER_INITIALIZE_REQ_2:
-			rc = dec_reader_initialize_msg_2(uba, &evt->info.msg);
+			rc = dec_reader_initialize_2_msg(uba, &evt->info.msg);
 			break;
 		case NTFSV_READER_FINALIZE_REQ:
 			rc = dec_reader_finalize_msg(uba, &evt->info.msg);

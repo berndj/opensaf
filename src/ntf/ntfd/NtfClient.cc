@@ -352,26 +352,43 @@ void NtfClient::deleteReaderResponse(SaAisErrorT* error,
   delete_reader_res_lib(*error, mdsDest_, mdsCtxt);
 }
 
-void NtfClient::newReader(SaNtfSearchCriteriaT searchCriteria,
-                          ntfsv_filter_ptrs_t* f_rec,
-                          MDS_SYNC_SND_CTXT* mdsCtxt) {
+NtfReader* NtfClient::createReaderWithoutFilter(ntfsv_reader_init_req_t rp,
+    MDS_SYNC_SND_CTXT *mdsCtxt) {
+
   SaAisErrorT error = SA_AIS_OK;
   readerId_++;
   NtfReader* reader;
-  if (f_rec) {
-    reader = new NtfReader(NtfAdmin::theNtfAdmin->logger, readerId_,
-                           searchCriteria, f_rec);
-  } else { /*old API no filtering */
-    reader = new NtfReader(NtfAdmin::theNtfAdmin->logger, readerId_);
-  }
+
+  reader = new NtfReader(NtfAdmin::theNtfAdmin->logger, readerId_, &rp);
+
   readerMap[readerId_] = reader;
-  newReaderResponse(&error, readerId_, mdsCtxt);
+  if (activeController()) {
+    sendReaderInitializeUpdate(&rp);
+    newReaderResponse(&error, readerId_, mdsCtxt);
+  }
+  return reader;
 }
 
-void NtfClient::readNext(unsigned int readerId,
-                         SaNtfSearchDirectionT searchDirection,
+NtfReader* NtfClient::createReaderWithFilter(ntfsv_reader_init_req_2_t rp,
+    MDS_SYNC_SND_CTXT *mdsCtxt) {
+  SaAisErrorT error = SA_AIS_OK;
+  readerId_++;
+  NtfReader* reader;
+
+  reader = new NtfReader(NtfAdmin::theNtfAdmin->logger, readerId_, &rp);
+
+  readerMap[readerId_] = reader;
+  if (activeController()) {
+    sendReaderInitialize2Update(&rp);
+    newReaderResponse(&error, readerId_, mdsCtxt);
+  }
+  return reader;
+}
+
+void NtfClient::readNext(ntfsv_read_next_req_t readNextReq,
                          MDS_SYNC_SND_CTXT* mdsCtxt) {
   TRACE_ENTER();
+  unsigned int readerId = readNextReq.readerId;
   TRACE_6("readerId %u", readerId);
   // check if reader already exists
   SaAisErrorT error = SA_AIS_ERR_NOT_EXIST;
@@ -381,8 +398,12 @@ void NtfClient::readNext(unsigned int readerId,
     // reader found
     TRACE_3("NtfClient::readNext readerId %u FOUND!", readerId);
     NtfReader* reader = pos->second;
-    NtfSmartPtr notif(reader->next(searchDirection, &error));
-    readNextResponse(&error, notif, mdsCtxt);
+    NtfSmartPtr notif(reader->next(readNextReq.searchDirection, &error));
+    if (activeController()) {
+      // update standby
+      sendReadNextUpdate(&readNextReq);
+      readNextResponse(&error, notif, mdsCtxt);
+    }
     TRACE_LEAVE();
     return;
   } else {
@@ -390,14 +411,17 @@ void NtfClient::readNext(unsigned int readerId,
     // reader not found
     TRACE_3("NtfClient::readNext readerId %u not found", readerId);
     error = SA_AIS_ERR_BAD_HANDLE;
-    readNextResponse(&error, notif, mdsCtxt);
+    if (activeController()) {
+      readNextResponse(&error, notif, mdsCtxt);
+    }
     TRACE_LEAVE();
   }
 }
-void NtfClient::deleteReader(unsigned int readerId,
+void NtfClient::deleteReader(ntfsv_reader_finalize_req_t readFinalizeReq,
                              MDS_SYNC_SND_CTXT* mdsCtxt) {
   SaAisErrorT error = SA_AIS_ERR_NOT_EXIST;
   ReaderMapT::iterator pos;
+  unsigned int readerId = readFinalizeReq.readerId;
   pos = readerMap.find(readerId);
   if (pos != readerMap.end()) {
     // reader found
@@ -406,11 +430,16 @@ void NtfClient::deleteReader(unsigned int readerId,
     error = SA_AIS_OK;
     delete reader;
     readerMap.erase(pos);
+    if (activeController()) {
+      sendReadFinalizeUpdate(&readFinalizeReq);
+    }
   } else {
     // reader not found
     TRACE_3("NtfClient::readNext readerId %u not found", readerId);
   }
-  deleteReaderResponse(&error, mdsCtxt);
+  if (activeController()) {
+    deleteReaderResponse(&error, mdsCtxt);
+  }
 }
 
 void NtfClient::printInfo() {

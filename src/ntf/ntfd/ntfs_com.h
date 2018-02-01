@@ -84,13 +84,17 @@ void subscriptionRemoved(unsigned int clientId,
                          MDS_SYNC_SND_CTXT *mdsCtxt);
 void syncRequest(NCS_UBAID *uba);
 int syncFinished();
-void newReader(unsigned int clientId, SaNtfSearchCriteriaT searchCriteria,
-               ntfsv_filter_ptrs_t *f_rec, MDS_SYNC_SND_CTXT *mdsCtxt);
-void readNext(unsigned int clientId, unsigned int readerId,
-              SaNtfSearchDirectionT searchDirection,
-              MDS_SYNC_SND_CTXT *mdsCtxt);
-void deleteReader(unsigned int clientId, unsigned int readerId,
+void createReaderWithoutFilter(ntfsv_reader_init_req_t rp, MDS_SYNC_SND_CTXT *mdsCtxt);
+void createReaderWithFilter(ntfsv_reader_init_req_2_t rp, MDS_SYNC_SND_CTXT *mdsCtxt);
+void deleteReader(ntfsv_reader_finalize_req_t readFinalizeReq,
                   MDS_SYNC_SND_CTXT *mdsCtxt);
+void readNext(ntfsv_read_next_req_t readNextReq,
+              MDS_SYNC_SND_CTXT *mdsCtxt);
+void sendReaderInitialize2Update(ntfsv_reader_init_req_2_t* readerInitializeReq);
+void sendReaderInitializeUpdate(ntfsv_reader_init_req_t* readerInitializeReq);
+void sendReadNextUpdate(ntfsv_read_next_req_t* readNextReq);
+void sendReadFinalizeUpdate(ntfsv_reader_finalize_req_t* readFinalizeReq);
+int sendNoOfReaders(uint32_t num_rec, NCS_UBAID *uba);
 
 void printAdminInfo(void);
 void syncGlobals(const struct NtfGlobals *ntfGlobals);
@@ -175,6 +179,7 @@ void sendNotConfirmUpdate(unsigned int clientId,
                           SaNtfSubscriptionIdT subscriptionId,
                           SaNtfIdentifierT notificationId, int discarded);
 int sendNoOfNotifications(uint32_t num_rec, NCS_UBAID *uba);
+int sendNoOfCachedNotifications(uint32_t num_rec, NCS_UBAID *uba);
 int sendNoOfSubscriptions(uint32_t num_rec, NCS_UBAID *uba);
 int sendNoOfClients(uint32_t num_rec, NCS_UBAID *uba);
 

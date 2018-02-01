@@ -512,9 +512,8 @@ static uint32_t proc_reader_initialize_msg(ntfs_cb_t *cb, ntfsv_ntfs_evt_t *evt)
 	}
 
 	TRACE_4("client_id: %u", reader_initialize_param->client_id);
-	newReader(reader_initialize_param->client_id,
-		  reader_initialize_param->searchCriteria, NULL,
-		  &evt->mds_ctxt);
+	createReaderWithoutFilter(*reader_initialize_param, &evt->mds_ctxt);
+
 	TRACE_LEAVE();
 	return rc;
 }
@@ -553,8 +552,7 @@ static uint32_t proc_reader_initialize_msg_2(ntfs_cb_t *cb,
 		return rc;
 	}
 
-	newReader(rp->head.client_id, rp->head.searchCriteria, &rp->f_rec,
-		  &evt->mds_ctxt);
+	createReaderWithFilter(*rp, &evt->mds_ctxt);
 	TRACE_LEAVE();
 	return rc;
 }
@@ -591,8 +589,7 @@ static uint32_t proc_reader_finalize_msg(ntfs_cb_t *cb, ntfsv_ntfs_evt_t *evt)
 	}
 
 	TRACE_4("client_id: %u", reader_finalize_param->client_id);
-	deleteReader(reader_finalize_param->client_id,
-		     reader_finalize_param->readerId, &evt->mds_ctxt);
+	deleteReader(*reader_finalize_param, &evt->mds_ctxt);
 
 	/*  if (ais_rv == SA_AIS_OK) */
 	/*  { */
@@ -638,8 +635,7 @@ static uint32_t proc_read_next_msg(ntfs_cb_t *cb, ntfsv_ntfs_evt_t *evt)
 		return rc;
 	}
 
-	readNext(read_next_param->client_id, read_next_param->readerId,
-		 read_next_param->searchDirection, &evt->mds_ctxt);
+	readNext(*read_next_param, &evt->mds_ctxt);
 	/*  if (ais_rv == SA_AIS_OK) */
 	/*  { */
 	/*     async_rc = ntfs_subscription_initialize_async_update(cb, */

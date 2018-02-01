@@ -53,12 +53,14 @@
  *   @param readerId
  *
  */
-NtfReader::NtfReader(NtfLogger& ntfLogger, unsigned int readerId)
+NtfReader::NtfReader(NtfLogger& ntfLogger, unsigned int readerId,
+    ntfsv_reader_init_req_t *req)
     : coll_(ntfLogger.coll_),
       ffIter(coll_.begin()),
       readerId_(readerId),
       c_filter_(0),
-      firstRead(true) {
+      firstRead_(true),
+      read_init_req_(*req){
   searchCriteria_.eventTime = 0;
   searchCriteria_.notificationId = 0;
   searchCriteria_.searchMode = SA_NTF_SEARCH_NOTIFICATION_ID;
@@ -79,20 +81,20 @@ NtfReader::NtfReader(NtfLogger& ntfLogger, unsigned int readerId)
  *   @param firstRead
  */
 NtfReader::NtfReader(NtfLogger& ntfLogger, unsigned int readerId,
-                     SaNtfSearchCriteriaT searchCriteria,
-                     ntfsv_filter_ptrs_t* f_rec)
+    ntfsv_reader_init_req_2_t *req)
     : readerId_(readerId),
-      searchCriteria_(searchCriteria),
-      c_filter_(NtfCriteriaFilter::getCriteriaFilter(searchCriteria, this)),
-      firstRead(true) {
+      firstRead_(true),
+      read_init_2_req_(*req){
   TRACE_3("New NtfReader with filter, ntfLogger.coll_.size: %u",
           (unsigned int)ntfLogger.coll_.size());
-  if (f_rec->alarm_filter) {
-    NtfFilter* filter = new NtfAlarmFilter(f_rec->alarm_filter);
+  searchCriteria_ = req->head.searchCriteria;
+  c_filter_ = NtfCriteriaFilter::getCriteriaFilter(searchCriteria_, this);
+  if (req->f_rec.alarm_filter) {
+    NtfFilter* filter = new NtfAlarmFilter(req->f_rec.alarm_filter);
     filterMap[filter->type()] = filter;
   }
-  if (f_rec->sec_al_filter) {
-    NtfFilter* filter = new NtfSecurityAlarmFilter(f_rec->sec_al_filter);
+  if (req->f_rec.sec_al_filter) {
+    NtfFilter* filter = new NtfSecurityAlarmFilter(req->f_rec.sec_al_filter);
     filterMap[filter->type()] = filter;
   }
   filterCacheList(ntfLogger);
@@ -123,21 +125,27 @@ NtfReader::~NtfReader() {
  *   @param ntfLogger
  */
 void NtfReader::filterCacheList(NtfLogger& ntfLogger) {
-  readerNotificationListT::iterator rpos;
-  for (rpos = ntfLogger.coll_.begin(); rpos != ntfLogger.coll_.end(); rpos++) {
-    NtfSmartPtr n(*rpos);
-    bool rv = false;
-    FilterMap::iterator pos = filterMap.find(n->getNotificationType());
-    if (pos != filterMap.end()) {
-      NtfFilter* filter = pos->second;
-      osafassert(filter);
-      rv = filter->checkFilter(n);
+  TRACE_ENTER();
+  if (c_filter_ != nullptr) {
+    readerNotificationListT::iterator rpos;
+    for (rpos = ntfLogger.coll_.begin(); rpos != ntfLogger.coll_.end(); rpos++) {
+      NtfSmartPtr n(*rpos);
+      bool rv = false;
+      FilterMap::iterator pos = filterMap.find(n->getNotificationType());
+      if (pos != filterMap.end()) {
+        NtfFilter* filter = pos->second;
+        osafassert(filter);
+        rv = filter->checkFilter(n);
+      }
+      if (rv) {
+        if (!c_filter_->filter(n)) break;
+      }
     }
-    if (rv) {
-      if (!c_filter_->filter(n)) break;
-    }
+    c_filter_->finalize();
+  } else {
+    coll_ = ntfLogger.coll_;
   }
-  c_filter_->finalize();
+  TRACE_LEAVE();
 }
 
 /**
@@ -164,19 +172,19 @@ NtfSmartPtr NtfReader::next(SaNtfSearchDirectionT direction,
       *error = SA_AIS_ERR_NOT_EXIST;
       TRACE_LEAVE();
       NtfSmartPtr notif;
-      firstRead = false;
+      firstRead_ = false;
       return notif;
     }
     NtfSmartPtr notif(*ffIter);
     ffIter++;
     *error = SA_AIS_OK;
     TRACE_LEAVE();
-    firstRead = false;
+    firstRead_ = false;
     return notif;
   } else  // SA_NTF_SEARCH_OLDER
   {
     readerNotReverseIterT rIter(ffIter);
-    if (firstRead)
+    if (firstRead_)
       rIter--;
     else
       rIter++;
@@ -186,14 +194,14 @@ NtfSmartPtr NtfReader::next(SaNtfSearchDirectionT direction,
       ffIter = rIter.base();
       TRACE_LEAVE();
       NtfSmartPtr notif;
-      firstRead = false;
+      firstRead_ = false;
       return notif;
     }
     NtfSmartPtr notif(*rIter);
     ffIter = rIter.base();
     *error = SA_AIS_OK;
     TRACE_LEAVE();
-    firstRead = false;
+    firstRead_ = false;
     return notif;
   }
 }

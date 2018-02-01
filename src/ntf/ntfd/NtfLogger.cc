@@ -347,7 +347,7 @@ void NtfLogger::syncRequest(NCS_UBAID *uba) {
   TRACE_2("logger.coll_.size=%u",
           (unsigned int)coll_.size());
 
-  sendNoOfNotifications(coll_.size(), uba);
+  sendNoOfCachedNotifications(coll_.size(), uba);
   readerNotificationListT::iterator rpos;
   for (rpos = coll_.begin(); rpos != coll_.end(); rpos++) {
     NtfSmartPtr n(*rpos);

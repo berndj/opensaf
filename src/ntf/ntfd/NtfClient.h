@@ -51,12 +51,15 @@ class NtfClient {
   void confirmNtfUnsubscribe(SaNtfSubscriptionIdT subscriptionId,
                              MDS_SYNC_SND_CTXT *mdsCtxt);
 
-  void newReader(SaNtfSearchCriteriaT searchCriteria,
-                 ntfsv_filter_ptrs_t *f_rec, MDS_SYNC_SND_CTXT *mdsCtxt);
+  NtfReader* createReaderWithoutFilter(ntfsv_reader_init_req_t rp,
+      MDS_SYNC_SND_CTXT *mdsCtxt);
+  NtfReader* createReaderWithFilter(ntfsv_reader_init_req_2_t rp,
+      MDS_SYNC_SND_CTXT *mdsCtxt);
 
-  void readNext(unsigned int readerId, SaNtfSearchDirectionT searchDirection,
+  void readNext(ntfsv_read_next_req_t readNextReq,
                 MDS_SYNC_SND_CTXT *mdsCtxt);
-  void deleteReader(unsigned int readerId, MDS_SYNC_SND_CTXT *mdsCtxt);
+  void deleteReader(ntfsv_reader_finalize_req_t readFinalizeReq,
+      MDS_SYNC_SND_CTXT *mdsCtxt);
 
   void discardedAdd(SaNtfSubscriptionIdT subscriptionId,
                     SaNtfIdentifierT notificationId);

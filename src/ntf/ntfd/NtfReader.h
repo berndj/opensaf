@@ -48,13 +48,17 @@ class NtfReader {
   friend class NtfCriteriaFilter;
 
  public:
-  NtfReader(NtfLogger& ntfLogger, unsigned int readerId);
   NtfReader(NtfLogger& ntfLogger, unsigned int readerId,
-            SaNtfSearchCriteriaT searchCriteria, ntfsv_filter_ptrs_t* f_rec);
+      ntfsv_reader_init_req_t *req);
+  NtfReader(NtfLogger& ntfLogger, unsigned int readerId,
+      ntfsv_reader_init_req_2_t *req);
   ~NtfReader();
   void filterCacheList(NtfLogger& ntfLogger);
   NtfSmartPtr next(SaNtfSearchDirectionT direction, SaAisErrorT* error);
   unsigned int getId();
+  void setReaderId(unsigned int readerId) { readerId_ = readerId; }
+  void setReaderIteration(unsigned int iterPos) {ffIter = coll_.begin() + iterPos;}
+  void setFirstRead(bool firstRead) {firstRead_ = firstRead; }
 
  private:
   readerNotificationListT coll_;
@@ -63,7 +67,9 @@ class NtfReader {
   unsigned int readerId_;
   SaNtfSearchCriteriaT searchCriteria_;
   NtfCriteriaFilter* c_filter_;
-  bool firstRead;
+  bool firstRead_;
+  ntfsv_reader_init_req_t read_init_req_;
+  ntfsv_reader_init_req_2_t read_init_2_req_;
 };
 
 class NtfCriteriaFilter {

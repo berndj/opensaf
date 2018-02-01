@@ -42,10 +42,14 @@ uint32_t ntfsv_enc_unsubscribe_msg(NCS_UBAID *uba,
                                    ntfsv_unsubscribe_req_t *param);
 uint32_t ntfsv_dec_unsubscribe_msg(NCS_UBAID *uba,
                                    ntfsv_unsubscribe_req_t *param);
-uint32_t ntfsv_enc_reader_initialize_msg(NCS_UBAID *uba, ntfsv_msg_t *msg);
-uint32_t ntfsv_dec_reader_initialize_msg(NCS_UBAID *uba, ntfsv_msg_t *msg);
-uint32_t ntfsv_enc_reader_initialize_msg_2(NCS_UBAID *uba, ntfsv_msg_t *msg);
-uint32_t ntfsv_dec_reader_initialize_msg_2(NCS_UBAID *uba, ntfsv_msg_t *msg);
+uint32_t ntfsv_enc_reader_initialize_msg(NCS_UBAID *uba, ntfsv_reader_init_req_t *param);
+uint32_t ntfsv_dec_reader_initialize_msg(NCS_UBAID *uba, ntfsv_reader_init_req_t *param);
+uint32_t ntfsv_enc_reader_initialize_2_msg(NCS_UBAID *uba, ntfsv_reader_init_req_2_t *param);
+uint32_t ntfsv_dec_reader_initialize_2_msg(NCS_UBAID *uba, ntfsv_reader_init_req_2_t *param);
+uint32_t ntfsv_enc_read_next_msg(NCS_UBAID *uba, ntfsv_read_next_req_t *param);
+uint32_t ntfsv_dec_read_next_msg(NCS_UBAID *uba, ntfsv_read_next_req_t *param);
+uint32_t ntfsv_enc_read_finalize_msg(NCS_UBAID *uba, ntfsv_reader_finalize_req_t *param);
+uint32_t ntfsv_dec_read_finalize_msg(NCS_UBAID *uba, ntfsv_reader_finalize_req_t *param);
 uint32_t ntfsv_enc_64bit_msg(NCS_UBAID *uba, uint64_t param);
 uint32_t ntfsv_dec_64bit_msg(NCS_UBAID *uba, uint64_t *param);
 uint32_t ntfsv_enc_32bit_msg(NCS_UBAID *uba, uint32_t param);
