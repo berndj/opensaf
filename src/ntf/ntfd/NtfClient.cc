@@ -266,6 +266,13 @@ void NtfClient::syncRequest(NCS_UBAID* uba) {
         subscription->getSubscriptionId(), clientId_);
     subscription->syncRequest(uba);
   }
+  // scan through all readers
+  sendNoOfReaders(readerMap.size(), uba);
+  ReaderMapT::iterator rpos;
+  for (rpos = readerMap.begin(); rpos != readerMap.end(); rpos++) {
+    NtfReader* reader = rpos->second;
+    reader->syncRequest(uba);
+  }
 }
 
 void NtfClient::sendNotConfirmedNotification(

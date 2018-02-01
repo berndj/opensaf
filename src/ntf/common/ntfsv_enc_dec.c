@@ -2275,7 +2275,6 @@ uint32_t ntfsv_enc_read_finalize_msg(NCS_UBAID *uba, ntfsv_reader_finalize_req_t
 	ncs_encode_32bit(&p8, param->client_id);
 	ncs_encode_32bit(&p8, param->readerId);
 	ncs_enc_claim_space(uba, 8);
-	
 	TRACE_LEAVE();
 	return NCSCC_RC_SUCCESS;
 }

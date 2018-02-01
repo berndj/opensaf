@@ -56,6 +56,7 @@ class NtfReader {
   void filterCacheList(NtfLogger& ntfLogger);
   NtfSmartPtr next(SaNtfSearchDirectionT direction, SaAisErrorT* error);
   unsigned int getId();
+  void syncRequest(NCS_UBAID* uba);
   void setReaderId(unsigned int readerId) { readerId_ = readerId; }
   void setReaderIteration(unsigned int iterPos) {ffIter = coll_.begin() + iterPos;}
   void setFirstRead(bool firstRead) {firstRead_ = firstRead; }

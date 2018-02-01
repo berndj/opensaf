@@ -484,6 +484,40 @@ int sendNewSubscription(ntfsv_subscribe_req_t *s, NCS_UBAID *uba)
 	return 1;
 };
 
+int syncReaderWithoutFilter(ntfsv_reader_init_req_t *s, NCS_UBAID *uba)
+{
+	if (ntfs_cb->peer_mbcsv_version > NTFS_MBCSV_VERSION_2) {
+		return ntfsv_enc_reader_initialize_msg(uba, s);
+	}
+	return NCSCC_RC_SUCCESS;
+}
+
+int syncReaderWithFilter(ntfsv_reader_init_req_2_t *s, NCS_UBAID *uba)
+{
+	if (ntfs_cb->peer_mbcsv_version > NTFS_MBCSV_VERSION_2) {
+		return ntfsv_enc_reader_initialize_2_msg(uba, s);
+	}
+	return NCSCC_RC_SUCCESS;
+}
+
+int syncReaderInfo(uint32_t readerId, uint8_t hasFilter,
+    uint32_t fIter, uint8_t firstRead, NCS_UBAID *uba)
+{
+	if (ntfs_cb->peer_mbcsv_version > NTFS_MBCSV_VERSION_2) {
+		uint8_t *p8;
+		p8 = ncs_enc_reserve_space(uba, 10);
+		if (!p8) {
+			TRACE("NULL pointer");
+			return NCSCC_RC_OUT_OF_MEM;
+		}
+		ncs_encode_32bit(&p8, readerId);
+		ncs_encode_8bit(&p8, hasFilter);
+		ncs_encode_32bit(&p8, fIter);
+		ncs_encode_8bit(&p8, firstRead);
+		ncs_enc_claim_space(uba, 10);
+	}
+	return NCSCC_RC_SUCCESS;
+}
 int syncLoggedConfirm(unsigned int logged, NCS_UBAID *uba)
 {
 	TRACE_ENTER2("NOT IMPLEMENTED");
@@ -592,9 +626,7 @@ void sendNotConfirmUpdate(unsigned int clientId,
 void sendReaderInitialize2Update(ntfsv_reader_init_req_2_t* readerInitializeReq)
 {
 	if (ntfs_cb->peer_mbcsv_version > NTFS_MBCSV_VERSION_2) {
-
 		ntfsv_ckpt_msg_t ckpt;
-	
 		memset(&ckpt, 0, sizeof(ckpt));
 		ckpt.header.ckpt_rec_type = NTFS_CKPT_READER_INITIALIZE_2;
 		ckpt.header.num_ckpt_records = 1;
@@ -607,9 +639,7 @@ void sendReaderInitialize2Update(ntfsv_reader_init_req_2_t* readerInitializeReq)
 void sendReadNextUpdate(ntfsv_read_next_req_t* readNextReq)
 {
 	if (ntfs_cb->peer_mbcsv_version > NTFS_MBCSV_VERSION_2) {
-
 		ntfsv_ckpt_msg_t ckpt;
-		
 		memset(&ckpt, 0, sizeof(ckpt));
 		ckpt.header.ckpt_rec_type = NTFS_CKPT_READ_NEXT;
 		ckpt.header.num_ckpt_records = 1;
@@ -622,9 +652,7 @@ void sendReadNextUpdate(ntfsv_read_next_req_t* readNextReq)
 void sendReadFinalizeUpdate(ntfsv_reader_finalize_req_t* readFinalizeReq)
 {
 	if (ntfs_cb->peer_mbcsv_version > NTFS_MBCSV_VERSION_2) {
-
 		ntfsv_ckpt_msg_t ckpt;
-		
 		memset(&ckpt, 0, sizeof(ckpt));
 		ckpt.header.ckpt_rec_type = NTFS_CKPT_READ_FINALIZE;
 		ckpt.header.num_ckpt_records = 1;
@@ -637,9 +665,7 @@ void sendReadFinalizeUpdate(ntfsv_reader_finalize_req_t* readFinalizeReq)
 void sendReaderInitializeUpdate(ntfsv_reader_init_req_t* readerInitializeReq)
 {
 	if (ntfs_cb->peer_mbcsv_version > NTFS_MBCSV_VERSION_2) {
-	
 		ntfsv_ckpt_msg_t ckpt;
-		
 		memset(&ckpt, 0, sizeof(ckpt));
 		ckpt.header.ckpt_rec_type = NTFS_CKPT_READER_INITIALIZE;
 		ckpt.header.num_ckpt_records = 1;

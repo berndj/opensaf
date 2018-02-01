@@ -90,6 +90,14 @@ void deleteReader(ntfsv_reader_finalize_req_t readFinalizeReq,
                   MDS_SYNC_SND_CTXT *mdsCtxt);
 void readNext(ntfsv_read_next_req_t readNextReq,
               MDS_SYNC_SND_CTXT *mdsCtxt);
+void restoreReaderWithFilter(ntfsv_reader_init_req_2_t rp, uint32_t readerId,
+    uint32_t fIter, bool firstRead);
+void restoreReaderWithoutFilter(ntfsv_reader_init_req_t rp, uint32_t readerId,
+    uint32_t fIter, bool firstRead);
+int syncReaderWithoutFilter(ntfsv_reader_init_req_t *s, NCS_UBAID *uba);
+int syncReaderWithFilter(ntfsv_reader_init_req_2_t *s, NCS_UBAID *uba);
+int syncReaderInfo(uint32_t readerId, uint8_t hasFilter,
+    uint32_t fIter, uint8_t firstRead, NCS_UBAID *uba);
 void sendReaderInitialize2Update(ntfsv_reader_init_req_2_t* readerInitializeReq);
 void sendReaderInitializeUpdate(ntfsv_reader_init_req_t* readerInitializeReq);
 void sendReadNextUpdate(ntfsv_read_next_req_t* readNextReq);

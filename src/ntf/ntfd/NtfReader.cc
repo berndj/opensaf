@@ -164,7 +164,6 @@ NtfSmartPtr NtfReader::next(SaNtfSearchDirectionT direction,
   TRACE_ENTER();
 
   *error = SA_AIS_ERR_NOT_EXIST;
-
   if (direction == SA_NTF_SEARCH_YOUNGER ||
       searchCriteria_.searchMode == SA_NTF_SEARCH_AT_TIME ||
       searchCriteria_.searchMode == SA_NTF_SEARCH_ONLY_FILTER) {
@@ -204,6 +203,23 @@ NtfSmartPtr NtfReader::next(SaNtfSearchDirectionT direction,
     firstRead_ = false;
     return notif;
   }
+}
+/*
+ * This method is to sync the reader information stored in this
+ * class to the standby NTFD
+ * param: uba, encoder pointer
+ */
+void NtfReader::syncRequest(NCS_UBAID* uba) {
+  TRACE_ENTER();
+  syncReaderInfo(readerId_, c_filter_ != nullptr ? 1 : 0,
+      (uint32_t)std::distance(coll_.begin(), ffIter),
+      uint8_t(firstRead_), uba);
+  if (c_filter_) {
+    syncReaderWithFilter(&read_init_2_req_, uba);
+  } else {
+    syncReaderWithoutFilter(&read_init_req_, uba);
+  }
+  TRACE_LEAVE();
 }
 
 unsigned int NtfReader::getId() { return readerId_; }
