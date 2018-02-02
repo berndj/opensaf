@@ -64,7 +64,9 @@ typedef enum mqp_req_type {
   MQP_EVT_Q_RET_TIME_SET_REQ,
   MQP_EVT_CLM_NOTIFY,
   MQP_EVT_CAP_SET_REQ,
-  MQP_EVT_CAP_GET_REQ
+  MQP_EVT_CAP_GET_REQ,
+  MQP_EVT_MDATA_GET_REQ,
+  MQP_EVT_LIMIT_GET_REQ
 } MQP_REQ_TYPE;
 
 /* Enums for MQP Message Types */
@@ -85,7 +87,9 @@ typedef enum mqp_rsp_type {
   MQP_EVT_STAT_UPD_RSP,
   MQP_EVT_Q_RET_TIME_SET_RSP,
   MQP_EVT_CAP_SET_RSP,
-  MQP_EVT_CAP_GET_RSP
+  MQP_EVT_CAP_GET_RSP,
+  MQP_EVT_MDATA_GET_RSP,
+  MQP_EVT_LIMIT_GET_RSP
 } MQP_RSP_TYPE;
 
 /* Enums for MQD messages */
@@ -196,6 +200,18 @@ typedef struct mqp_capacity {
   SaMsgQueueHandleT queueHandle;
   SaMsgQueueThresholdsT thresholds;
 } MQP_CAPACITY;
+
+typedef struct mqp_mdata {
+  SaUint32T mdataSize;
+} MQP_MDATA;
+
+typedef struct mqp_limit_req {
+  SaMsgLimitIdT limitId;
+} MQP_LIMIT_REQ;
+
+typedef struct mqp_limit_rsp {
+  SaLimitValueT value;
+} MQP_LIMIT_RSP;
 
 /* saMsgQueueOpen(): */
 
@@ -406,6 +422,8 @@ typedef struct mqp_req_msg {
     MQP_Q_RET_TIME_SET_REQ retTimeSetReq;
     MQP_CLM_NOTIFY clmNotify;
     MQP_CAPACITY capacity;
+    MQP_MDATA mdata;
+    MQP_LIMIT_REQ limitReq;
   } info;
 } MQP_REQ_MSG;
 
@@ -426,6 +444,8 @@ typedef struct mqp_rsp_msg {
     MQP_SEND_MSG_RSP sendMsgRsp;
     MQP_Q_RET_TIME_SET_RSP retTimeSetRsp;
     MQP_CAPACITY capacity;
+    MQP_MDATA mdata;
+    MQP_LIMIT_RSP limitRsp;
   } info;
 } MQP_RSP_MSG;
 
@@ -625,6 +645,5 @@ typedef struct mqsv_direct_send_event {
   m_NCS_IPC_SEND(mbx, (NCSCONTEXT)msg, prio)
 #define MQSV_WAIT_TIME 1000 /* MDS wait time in case of syncronous call */
 #define MQSV_WAIT_TIME_MQND 800
-#define MQSV_MAX_SND_SIZE 4096
 
 #endif  // MSG_COMMON_MQSV_EVT_H_

@@ -2057,13 +2057,6 @@ SaAisErrorT mqa_send_message(SaMsgHandleT msgHandle, const SaNameT *destination,
     return rc;
   }
 
-  if (message->size > MQSV_MAX_SND_SIZE) {
-    TRACE_4(
-        "ERR_RESOURCES: Message size is greater than the system defined size");
-    rc = SA_AIS_ERR_NO_RESOURCES;
-    return rc;
-  }
-
   /* get the client_info */
   if (m_NCS_LOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE) != NCSCC_RC_SUCCESS) {
     TRACE_4("ERR_LIBRARY: Lock failed for control block write");
@@ -3310,13 +3303,6 @@ SaAisErrorT saMsgMessageSendReceive(SaMsgHandleT msgHandle,
     return rc;
   }
 
-  if (sendMessage->size > MQSV_MAX_SND_SIZE) {
-    TRACE_4(
-        "ERR_RESOURCES: Message size is greater than the system defined size");
-    rc = SA_AIS_ERR_NO_RESOURCES;
-    return rc;
-  }
-
   /* If the timeout is less than the minimum specified return */
   if (m_MQSV_CONVERT_SATIME_TEN_MILLI_SEC(timeout) < NCS_SAF_MIN_ACCEPT_TIME) {
     TRACE_2("ERR_INVALID_PARAM: Invalid Parameter as input");
@@ -3808,6 +3794,11 @@ SaAisErrorT mqa_reply_message(SaMsgHandleT msgHandle,
   if (!message || !senderId || !(*senderId)) {
     TRACE_2("ERR_INVALID_PARAM: message is NULL or senderId is NULL");
     return SA_AIS_ERR_INVALID_PARAM;
+  }
+
+  if (message->size > (MDS_DIRECT_BUF_MAXSIZE - 1)) {
+    TRACE_2("ERR_TOO_BIG: message size is too big");
+    return SA_AIS_ERR_TOO_BIG;
   }
 
   /* get the client_info */
@@ -5559,6 +5550,306 @@ SaAisErrorT saMsgQueueCapacityThresholdsGet(SaMsgQueueHandleT queueHandle,
 
   return rc;
 }
+
+/****************************************************************************
+  Name          : saMsgMetadataSizeGet
+
+  Description   : This routine gets the metadata size for the queue.
+
+  Arguments     : SaMsgQueueHandleT queueHandle
+                : SaUint32T *metadataSize
+
+  Return Values : SaAisErrorT
+
+  Notes         : None
+******************************************************************************/
+SaAisErrorT saMsgMetadataSizeGet(SaMsgHandleT msgHandle,
+                                 SaUint32T *metadataSize)
+{
+  SaAisErrorT rc(SA_AIS_OK);
+  MQA_CB *mqa_cb(0);
+  bool locked(false);
+
+  TRACE_ENTER2("SaMsgHandle %llu", msgHandle);
+
+  do {
+    /* retrieve MQA CB */
+    mqa_cb = (MQA_CB *)m_MQSV_MQA_RETRIEVE_MQA_CB;
+    if (!mqa_cb) {
+      TRACE_2("ERR_BAD_HANDLE: Control block retrieval failed");
+      rc = SA_AIS_ERR_BAD_HANDLE;
+      break;
+    }
+
+    if (m_NCS_LOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE) != NCSCC_RC_SUCCESS) {
+      TRACE_4("ERR_LIBRARY: Lock failed for control block write");
+      rc = SA_AIS_ERR_LIBRARY;
+      break;
+    }
+
+    locked = true;
+
+    /* get the client_info */
+    MQA_CLIENT_INFO *client_info = mqa_client_tree_find_and_add(mqa_cb,
+                                                                msgHandle,
+                                                                false);
+    if (!client_info) {
+      TRACE_2("ERR_BAD_HANDLE: Client Database Find Failed");
+      rc = SA_AIS_ERR_BAD_HANDLE;
+      break;
+    }
+
+    if (client_info->version.majorVersion < MQA_MAJOR_VERSION) {
+      TRACE_2("ERR_VERSION: client not B.03.01");
+      rc = SA_AIS_ERR_VERSION;
+      break;
+    }
+
+    if (!metadataSize) {
+      TRACE_2("ERR_INVALID_PARAM: metadataSize is 0");
+      rc = SA_AIS_ERR_INVALID_PARAM;
+      break;
+    }
+
+    if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
+      if (!mqa_cb->clm_node_joined || client_info->isStale) {
+        TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
+        rc = SA_AIS_ERR_UNAVAILABLE;
+        break;
+      }
+    }
+
+    /* Check if mqnd is up */
+    if (!mqa_cb->is_mqnd_up) {
+      TRACE_2("ERR_TRY_AGAIN: MQD or MQND is down");
+      rc = SA_AIS_ERR_TRY_AGAIN;
+      break;
+    }
+
+    /* populate the structure */
+    MQSV_EVT mdata_evt;
+    memset(&mdata_evt, 0, sizeof(MQSV_EVT));
+    mdata_evt.type = MQSV_EVT_MQP_REQ;
+    mdata_evt.msg.mqp_req.type = MQP_EVT_MDATA_GET_REQ;
+    mdata_evt.msg.mqp_req.agent_mds_dest = mqa_cb->mqa_mds_dest;
+
+    /* send the request to the MQND */
+    MQSV_EVT *out_evt(0);
+    uint8_t mds_rc(mqa_mds_msg_sync_send(mqa_cb->mqa_mds_hdl,
+                                         &mqa_cb->mqnd_mds_dest,
+                                         &mdata_evt,
+                                         &out_evt,
+                                         MQSV_WAIT_TIME));
+
+    switch (mds_rc) {
+      case NCSCC_RC_SUCCESS:
+        break;
+
+      case NCSCC_RC_REQ_TIMOUT:
+        TRACE_2("ERR_TIMEOUT: Message Send through MDS Timeout %" PRIx64,
+                mqa_cb->mqa_mds_dest);
+        rc = SA_AIS_ERR_TIMEOUT;
+        break;
+
+      case NCSCC_RC_FAILURE:
+        TRACE_2("ERR_TRY_AGAIN: Message Send through MDS Failure %" PRIx64,
+                mqa_cb->mqa_mds_dest);
+        rc = SA_AIS_ERR_TRY_AGAIN;
+        break;
+
+      default:
+        TRACE_4("ERR_RESOURCES: Message Send through MDS Failure %" PRIx64,
+                 mqa_cb->mqa_mds_dest);
+        rc = SA_AIS_ERR_NO_RESOURCES;
+        break;
+    }
+
+    if (mds_rc != NCSCC_RC_SUCCESS)
+      break;
+
+    if (out_evt) {
+      rc = out_evt->msg.mqp_rsp.error;
+
+      if (rc == SA_AIS_OK)
+        *metadataSize = out_evt->msg.mqp_rsp.info.mdata.mdataSize;
+
+      m_MMGR_FREE_MQA_EVT(out_evt);
+    } else {
+      TRACE_4("ERR_RESOURCES: Response not received from MQND");
+      rc = SA_AIS_ERR_NO_RESOURCES;
+    }
+  } while (false);
+
+  if (locked)
+    m_NCS_UNLOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE);
+
+  if (mqa_cb)
+    m_MQSV_MQA_GIVEUP_MQA_CB;
+
+  if (rc == SA_AIS_OK) {
+    TRACE_LEAVE2(" Success ");
+  } else {
+    TRACE_LEAVE2(" Failed with return code - %d ", rc);
+  }
+
+  return rc;
+}
+
+/****************************************************************************
+  Name          : saMsgLimitGet
+
+  Description   : This routine gets the the current implementation-specific
+                  value of a Message Service limit
+
+  Arguments     : SaMsgHandleT msgHandle
+                : SaMsgLimitIdT limitId
+                : SaLimitValueT *limitValue
+
+  Return Values : SaAisErrorT
+
+  Notes         : None
+******************************************************************************/
+SaAisErrorT saMsgLimitGet(SaMsgHandleT msgHandle,
+                          SaMsgLimitIdT limitId,
+                          SaLimitValueT *limitValue)
+{
+  SaAisErrorT rc(SA_AIS_OK);
+  MQA_CB *mqa_cb(0);
+  bool locked(false);
+
+  TRACE_ENTER2("SaMsgHandle %llu", msgHandle);
+
+  do {
+    /* retrieve MQA CB */
+    mqa_cb = (MQA_CB *)m_MQSV_MQA_RETRIEVE_MQA_CB;
+    if (!mqa_cb) {
+      TRACE_2("ERR_BAD_HANDLE: Control block retrieval failed");
+      rc = SA_AIS_ERR_BAD_HANDLE;
+      break;
+    }
+
+    if (m_NCS_LOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE) != NCSCC_RC_SUCCESS) {
+      TRACE_4("ERR_LIBRARY: Lock failed for control block write");
+      rc = SA_AIS_ERR_LIBRARY;
+      break;
+    }
+
+    locked = true;
+
+    /* get the client_info */
+    MQA_CLIENT_INFO *client_info = mqa_client_tree_find_and_add(mqa_cb,
+                                                                msgHandle,
+                                                                false);
+    if (!client_info) {
+      TRACE_2("ERR_BAD_HANDLE: Client Database Find Failed");
+      rc = SA_AIS_ERR_BAD_HANDLE;
+      break;
+    }
+
+    if (client_info->version.majorVersion < MQA_MAJOR_VERSION) {
+      TRACE_2("ERR_VERSION: client not B.03.01");
+      rc = SA_AIS_ERR_VERSION;
+      break;
+    }
+
+    if (limitId < SA_MSG_MAX_PRIORITY_AREA_SIZE_ID ||
+        limitId > SA_MSG_MAX_REPLY_SIZE_ID) {
+      TRACE_2("ERR_INVALID_PARAM: limitId is illegal");
+      rc = SA_AIS_ERR_INVALID_PARAM;
+      break;
+    }
+
+    if (!limitValue) {
+      TRACE_2("ERR_INVALID_PARAM: limitValue is 0");
+      rc = SA_AIS_ERR_INVALID_PARAM;
+      break;
+    }
+
+    if (client_info->version.majorVersion == MQA_MAJOR_VERSION) {
+      if (!mqa_cb->clm_node_joined || client_info->isStale) {
+        TRACE_2("ERR_UNAVAILABLE: node is not cluster member");
+        rc = SA_AIS_ERR_UNAVAILABLE;
+        break;
+      }
+    }
+
+    /* Check if mqnd is up */
+    if (!mqa_cb->is_mqnd_up) {
+      TRACE_2("ERR_TRY_AGAIN: MQD or MQND is down");
+      rc = SA_AIS_ERR_TRY_AGAIN;
+      break;
+    }
+
+    /* populate the structure */
+    MQSV_EVT mdata_evt;
+    memset(&mdata_evt, 0, sizeof(MQSV_EVT));
+    mdata_evt.type = MQSV_EVT_MQP_REQ;
+    mdata_evt.msg.mqp_req.type = MQP_EVT_LIMIT_GET_REQ;
+    mdata_evt.msg.mqp_req.info.limitReq.limitId = limitId;
+    mdata_evt.msg.mqp_req.agent_mds_dest = mqa_cb->mqa_mds_dest;
+
+    /* send the request to the MQND */
+    MQSV_EVT *out_evt(0);
+    uint8_t mds_rc(mqa_mds_msg_sync_send(mqa_cb->mqa_mds_hdl,
+                                         &mqa_cb->mqnd_mds_dest,
+                                         &mdata_evt,
+                                         &out_evt,
+                                         MQSV_WAIT_TIME));
+
+    switch (mds_rc) {
+      case NCSCC_RC_SUCCESS:
+        break;
+
+      case NCSCC_RC_REQ_TIMOUT:
+        TRACE_2("ERR_TIMEOUT: Message Send through MDS Timeout %" PRIx64,
+                mqa_cb->mqa_mds_dest);
+        rc = SA_AIS_ERR_TIMEOUT;
+        break;
+
+      case NCSCC_RC_FAILURE:
+        TRACE_2("ERR_TRY_AGAIN: Message Send through MDS Failure %" PRIx64,
+                mqa_cb->mqa_mds_dest);
+        rc = SA_AIS_ERR_TRY_AGAIN;
+        break;
+
+      default:
+        TRACE_4("ERR_RESOURCES: Message Send through MDS Failure %" PRIx64,
+                 mqa_cb->mqa_mds_dest);
+        rc = SA_AIS_ERR_NO_RESOURCES;
+        break;
+    }
+
+    if (mds_rc != NCSCC_RC_SUCCESS)
+      break;
+
+    if (out_evt) {
+      rc = out_evt->msg.mqp_rsp.error;
+
+      if (rc == SA_AIS_OK)
+        *limitValue = out_evt->msg.mqp_rsp.info.limitRsp.value;
+
+      m_MMGR_FREE_MQA_EVT(out_evt);
+    } else {
+      TRACE_4("ERR_RESOURCES: Response not received from MQND");
+      rc = SA_AIS_ERR_NO_RESOURCES;
+    }
+  } while (false);
+
+  if (locked)
+    m_NCS_UNLOCK(&mqa_cb->cb_lock, NCS_LOCK_WRITE);
+
+  if (mqa_cb)
+    m_MQSV_MQA_GIVEUP_MQA_CB;
+
+  if (rc == SA_AIS_OK) {
+    TRACE_LEAVE2(" Success ");
+  } else {
+    TRACE_LEAVE2(" Failed with return code - %d ", rc);
+  }
+
+  return rc;
+}
+
 /*****************************************************************************
   Name          : msgget_timer_expired
 

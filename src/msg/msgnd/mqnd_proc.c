@@ -984,6 +984,8 @@ uint32_t mqnd_proc_queue_open(MQND_CB *cb, MQP_REQ_MSG *mqp_req,
 			qhdl = qinfo->oinfo.qparam->hdl;
 		}
 	} else { /* Queue does NOT exist */
+		int i;
+		SaSizeT queueSize = 0;
 
 		/* check if SA_MSG_QUEUE_CREATE flag is set, if not send
 		 * SA_AIS_ERR_NOT_EXIST to MQA */
@@ -992,6 +994,32 @@ uint32_t mqnd_proc_queue_open(MQND_CB *cb, MQP_REQ_MSG *mqp_req,
 			    "ERR_NOT_EXIST: Queue Creation is not set for a non existing queue");
 			err = SA_AIS_ERR_NOT_EXIST;
 			goto error;
+		}
+
+		for (i = SA_MSG_MESSAGE_HIGHEST_PRIORITY;
+			i < SA_MSG_MESSAGE_LOWEST_PRIORITY;
+			i++) {
+			if (open->creationAttributes.size[i] >
+					cb->gl_msg_max_prio_q_size) {
+				err = SA_AIS_ERR_TOO_BIG;
+				goto error;
+			}
+
+			queueSize += open->creationAttributes.size[i];
+		}
+
+		if (queueSize > cb->gl_msg_max_q_size) {
+			err = SA_AIS_ERR_TOO_BIG;
+			goto error;
+		}
+
+		if (cb->is_qhdl_db_up) {
+			int num_of_q = ncs_patricia_tree_size(&cb->qhndl_db);
+
+			if (num_of_q == cb->gl_msg_max_no_of_q) {
+				err = SA_AIS_ERR_NO_RESOURCES;
+				goto error;
+			}
 		}
 
 		/* Create the new Queue and return the handle */

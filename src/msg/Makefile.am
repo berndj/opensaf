@@ -211,6 +211,8 @@ bin_msgtest_SOURCES = \
   src/msg/apitest/test_saMsgVersionT.cc \
   src/msg/apitest/test_CapacityThresholds.cc \
   src/msg/apitest/test_ErrUnavailable.cc \
+  src/msg/apitest/test_LimitGet.cc \
+  src/msg/apitest/test_MetaDataSize.cc \
   src/msg/apitest/tet_mqa_conf.c \
   src/msg/apitest/tet_mqsv_util.c \
   src/msg/apitest/tet_mqa.c

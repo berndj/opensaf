@@ -478,7 +478,10 @@ static int mqsv_mqp_req_test_type_fnc(NCSCONTEXT arg)
 	       LCL_TEST_JUMP_OFFSET_MQP_EVT_UPDATE_STATS = 62,
 	       LCL_TEST_JUMP_OFFSET_MQP_EVT_RET_TIME_SET_REQ = 65,
 	       LCL_TEST_JUMP_OFFSET_MQP_EVT_CLM_NOTIFY = 67,
-	       LCL_TEST_JUMP_OFFSET_MQP_EVT_CAPACITY = 68 };
+	       LCL_TEST_JUMP_OFFSET_MQP_EVT_CAPACITY = 68,
+	       LCL_TEST_JUMP_OFFSET_MQP_EVT_MDATA = 70,
+	       LCL_TEST_JUMP_OFFSET_MQP_EVT_LIMIT_REQ
+       	};
 	MQP_REQ_TYPE type;
 
 	if (arg == NULL)
@@ -520,6 +523,10 @@ static int mqsv_mqp_req_test_type_fnc(NCSCONTEXT arg)
 	case MQP_EVT_CAP_SET_REQ:
 	case MQP_EVT_CAP_GET_REQ:
 		return LCL_TEST_JUMP_OFFSET_MQP_EVT_CAPACITY;
+	case MQP_EVT_MDATA_GET_REQ:
+		return LCL_TEST_JUMP_OFFSET_MQP_EVT_MDATA;
+	case MQP_EVT_LIMIT_GET_REQ:
+		return LCL_TEST_JUMP_OFFSET_MQP_EVT_LIMIT_REQ;
 
 	default:
 		break;
@@ -862,6 +869,14 @@ static uint32_t mqsv_edp_mqp_req(EDU_HDL *hdl, EDU_TKN *edu_tkn, NCSCONTEXT ptr,
 	     (long)&((MQP_REQ_MSG *)0)->info.capacity.thresholds,
 	     0, NULL},
 
+	    /* MQP_EVT_MDATA_REQ */
+	    {EDU_EXEC, m_NCS_EDP_SAUINT32T, 0, 0, 0,
+	     (long)&((MQP_REQ_MSG *)0)->info.mdata.mdataSize, 0, NULL},
+
+	    /* MQP_EVT_LIMIT_REQ */
+	    {EDU_EXEC, ncs_edp_uns32, 0, 0, 0,
+	     (long)&((MQP_REQ_MSG *)0)->info.limitReq.limitId, 0, NULL},
+
 	    {EDU_END, 0, 0, 0, 0, 0, 0, NULL},
 
 	};
@@ -1016,7 +1031,9 @@ static int mqsv_mqp_rsp_test_type_fnc(NCSCONTEXT arg)
 	       LCL_TEST_JUMP_OFFSET_MQP_EVT_TRANSFER_QUEUE_RSP,
 	       LCL_TEST_JUMP_OFFSET_MQP_EVT_ND_RESTART_RSP = 29,
 	       LCL_TEST_JUMP_OFFSET_MQP_EVT_RET_TIME_SET_RSP,
-	       LCL_TEST_JUMP_OFFSET_MQP_EVT_CAP_RSP = 32
+	       LCL_TEST_JUMP_OFFSET_MQP_EVT_CAP_RSP,
+	       LCL_TEST_JUMP_OFFSET_MQP_EVT_MDATA_RSP = 33,
+	       LCL_TEST_JUMP_OFFSET_MQP_EVT_LIMIT_RSP
 	};
 	MQP_RSP_TYPE type;
 
@@ -1051,6 +1068,10 @@ static int mqsv_mqp_rsp_test_type_fnc(NCSCONTEXT arg)
 	case MQP_EVT_CAP_SET_RSP:
 	case MQP_EVT_CAP_GET_RSP:
 		return LCL_TEST_JUMP_OFFSET_MQP_EVT_CAP_RSP;
+	case MQP_EVT_MDATA_GET_RSP:
+		return LCL_TEST_JUMP_OFFSET_MQP_EVT_MDATA_RSP;
+	case MQP_EVT_LIMIT_GET_RSP:
+		return LCL_TEST_JUMP_OFFSET_MQP_EVT_LIMIT_RSP;
 	default:
 		break;
 	}
@@ -1178,6 +1199,14 @@ static uint32_t mqsv_edp_mqp_rsp(EDU_HDL *hdl, EDU_TKN *edu_tkn, NCSCONTEXT ptr,
 	    {EDU_EXEC, mqsv_edp_samsgqueuethresholdst, 0, 0, 0,
 	     (long)&((MQP_RSP_MSG *)0)->info.capacity.thresholds,
 	     0, NULL},
+
+	    /* MQP_EVT_MDATA_RSP */
+	    {EDU_EXEC, m_NCS_EDP_SAUINT32T, 0, 0, 0,
+	     (long)&((MQP_RSP_MSG *)0)->info.mdata.mdataSize, 0, NULL},
+
+	    /* MQP_EVT_LIMIT_RSP */
+	    {EDU_EXEC, m_NCS_EDP_SAUINT64T, 0, 0, 0,
+	     (long)&((MQP_RSP_MSG *)0)->info.limitRsp.value, 0, NULL},
 
 	    {EDU_END, 0, 0, 0, 0, 0, 0, NULL},
 	};

@@ -44,6 +44,8 @@ static uint32_t mqnd_evt_proc_cb_dump(void);
 static uint32_t mqnd_evt_proc_ret_time_set(MQND_CB *cb, MQSV_EVT *evt);
 static uint32_t mqnd_evt_proc_cap_set(MQND_CB *, MQSV_EVT *);
 static uint32_t mqnd_evt_proc_cap_get(MQND_CB *, MQSV_EVT *);
+static uint32_t mqnd_evt_proc_mdata_get(MQND_CB *, MQSV_EVT *);
+static uint32_t mqnd_evt_proc_limit_get(MQND_CB *, MQSV_EVT *);
 static void mqnd_dump_queue_status(MQND_CB *cb, SaMsgQueueStatusT *queueStatus,
 				   uint32_t offset);
 static void mqnd_dump_timer_info(MQND_TMR tmr);
@@ -193,6 +195,12 @@ static uint32_t mqnd_proc_mqp_req_msg(MQND_CB *cb, MQSV_EVT *evt)
 		break;
 	case MQP_EVT_CAP_GET_REQ:
 		rc = mqnd_evt_proc_cap_get(cb, evt);
+		break;
+	case MQP_EVT_MDATA_GET_REQ:
+		rc = mqnd_evt_proc_mdata_get(cb, evt);
+		break;
+	case MQP_EVT_LIMIT_GET_REQ:
+		rc = mqnd_evt_proc_limit_get(cb, evt);
 		break;
 	default:
 		LOG_ER("%s:%u: unrecognized message type: %d", __FILE__,
@@ -2092,6 +2100,151 @@ static uint32_t mqnd_evt_proc_cap_get(MQND_CB *cb, MQSV_EVT *evt)
 		    evt->sinfo.dest);
 	else
 		TRACE_1("Queue Capacity get: Mds Send Response Success");
+
+	TRACE_LEAVE2("Returned with return code %u", rc);
+	return rc;
+}
+
+/****************************************************************************
+ * Name          : mqnd_evt_proc_mdata_get
+ *
+ * Description   : Function to get metadata size
+ *
+ * Arguments     :
+ *
+ * Return Values : NCSCC_RC_SUCCESS/Error.
+ *
+ * Notes         : None.
+ *****************************************************************************/
+static uint32_t mqnd_evt_proc_mdata_get(MQND_CB *cb, MQSV_EVT *evt)
+{
+	SaAisErrorT err = SA_AIS_OK;
+	MQSV_EVT rsp_evt;
+	uint32_t rc = NCSCC_RC_SUCCESS;
+
+	TRACE_ENTER();
+
+	if (!cb->clm_node_joined) {
+		err = SA_AIS_ERR_UNAVAILABLE;
+	} else if (cb->is_restart_done) {
+		err = SA_AIS_OK;
+	} else {
+		LOG_ER("%s:%u: ERR_TRY_AGAIN: MQND is not completely "
+				"Initialized",
+	    			__FILE__, __LINE__);
+		err = SA_AIS_ERR_TRY_AGAIN;
+	}
+
+	/*Send the resp to MQA */
+	memset(&rsp_evt, 0, sizeof(MQSV_EVT));
+
+	rsp_evt.type = MQSV_EVT_MQP_RSP;
+	rsp_evt.msg.mqp_rsp.type = MQP_EVT_MDATA_GET_RSP;
+	rsp_evt.msg.mqp_rsp.error = err;
+	rsp_evt.msg.mqp_rsp.info.mdata.mdataSize = sizeof(MQSV_MESSAGE) +
+		sizeof(NCS_OS_MQ_MSG_LL_HDR);
+
+	TRACE("mdataSize: %i", rsp_evt.msg.mqp_rsp.info.mdata.mdataSize);
+
+	rc = mqnd_mds_send_rsp(cb, &evt->sinfo, &rsp_evt);
+
+	if (rc != NCSCC_RC_SUCCESS)
+		LOG_ER(
+		    "Metadata size get :Mds Send Response Failed %" PRIx64,
+		    evt->sinfo.dest);
+	else
+		TRACE_1("Metadata size get: Mds Send Response Success");
+
+	TRACE_LEAVE2("Returned with return code %u", rc);
+	return rc;
+}
+
+/****************************************************************************
+ * Name          : mqnd_evt_proc_limit_get
+ *
+ * Description   : Function to get limits
+ *
+ * Arguments     :
+ *
+ * Return Values : NCSCC_RC_SUCCESS/Error.
+ *
+ * Notes         : None.
+ *****************************************************************************/
+static uint32_t mqnd_evt_proc_limit_get(MQND_CB *cb, MQSV_EVT *evt)
+{
+	SaAisErrorT err = SA_AIS_OK;
+	MQSV_EVT rsp_evt;
+	uint32_t rc = NCSCC_RC_SUCCESS;
+	SaLimitValueT value = { 0 };
+
+	TRACE_ENTER();
+
+	do {
+		if (!cb->clm_node_joined) {
+			err = SA_AIS_ERR_UNAVAILABLE;
+			break;
+		} else if (cb->is_restart_done) {
+			err = SA_AIS_OK;
+		} else {
+			LOG_ER("%s:%u: ERR_TRY_AGAIN: MQND is not completely "
+					"Initialized",
+	    				__FILE__, __LINE__);
+			err = SA_AIS_ERR_TRY_AGAIN;
+			break;
+		}
+
+		TRACE("limitReq: %i", evt->msg.mqp_req.info.limitReq.limitId);
+
+		/* valid enum has already been checked in the agent */
+		switch (evt->msg.mqp_req.info.limitReq.limitId) {
+			case SA_MSG_MAX_PRIORITY_AREA_SIZE_ID:
+				value.uint64Value = cb->gl_msg_max_prio_q_size;
+				break;
+
+			case SA_MSG_MAX_QUEUE_SIZE_ID:
+				value.uint64Value = cb->gl_msg_max_q_size;
+				break;
+
+			case SA_MSG_MAX_NUM_QUEUES_ID:
+				value.uint64Value = cb->gl_msg_max_no_of_q;
+				break;
+
+			case SA_MSG_MAX_NUM_QUEUE_GROUPS_ID:
+				value.uint64Value = MQSV_MAX_NUM_QUEUE_GROUPS;
+				break;
+
+			case SA_MSG_MAX_NUM_QUEUES_PER_GROUP_ID:
+				value.uint64Value = MQSV_MAX_NUM_QUEUES_PER_GROUP;
+				break;
+
+			case SA_MSG_MAX_REPLY_SIZE_ID:
+				value.uint64Value = MDS_DIRECT_BUF_MAXSIZE - 1;
+				break;
+
+			case SA_MSG_MAX_MESSAGE_SIZE_ID:
+				value.uint64Value = cb->gl_msg_max_msg_size;
+				break;
+		}
+
+		TRACE("limit value: %llu", value.uint64Value);
+	} while (false);
+
+	/*Send the resp to MQA */
+	memset(&rsp_evt, 0, sizeof(MQSV_EVT));
+
+	rsp_evt.type = MQSV_EVT_MQP_RSP;
+	rsp_evt.msg.mqp_rsp.type = MQP_EVT_LIMIT_GET_RSP;
+	rsp_evt.msg.mqp_rsp.error = err;
+	rsp_evt.msg.mqp_rsp.info.limitRsp.value = value;
+
+	rc = mqnd_mds_send_rsp(cb, &evt->sinfo, &rsp_evt);
+
+	if (rc != NCSCC_RC_SUCCESS)
+		LOG_ER(
+		    "Limit get :Mds Send Response Failed %" PRIx64,
+		    evt->sinfo.dest);
+	else
+		TRACE_1("Limit get: Mds Send Response Success");
 
 	TRACE_LEAVE2("Returned with return code %u", rc);
 	return rc;

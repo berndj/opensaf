@@ -18,7 +18,6 @@
 #include "mqd_imm.h"
 
 extern struct ImmutilWrapperProfile immutilWrapperProfile;
-#define QUEUE_MEMS 100
 
 SaImmOiCallbacksT_2 oi_cbks = {.saImmOiAdminOperationCallback = NULL,
 			       .saImmOiCcbAbortCallback = NULL,
@@ -141,15 +140,13 @@ SaAisErrorT mqd_create_runtime_MqGrpObj(MQD_OBJ_NODE *pNode,
 void mqd_runtime_update_grpmembers_attr(MQD_CB *pMqd, MQD_OBJ_NODE *pObjNode)
 {
 	SaAisErrorT error = SA_AIS_OK;
-	SaNameT name[QUEUE_MEMS];
-	SaImmAttrValueT attr1[QUEUE_MEMS];
 	SaImmAttrModificationT_2 attr_output[1];
 	const SaImmAttrModificationT_2 *attrMods[2];
 	uint32_t count = pObjNode->oinfo.ilist.count;
+	SaNameT *name = calloc(count, sizeof(SaNameT));
+	SaImmAttrValueT *attr1 = calloc(count, sizeof(SaImmAttrValueT));
 	int i = 0, attrCnt = 0;
 	NCS_QELEM *Queue = pObjNode->oinfo.ilist.head;
-
-	memset(&name, 0, sizeof(name));
 
 	while (Queue != NCS_QELEM_NULL) {
 		MQD_OBJECT_ELEM *ptr = (MQD_OBJECT_ELEM *)Queue;
@@ -174,6 +171,9 @@ void mqd_runtime_update_grpmembers_attr(MQD_CB *pMqd, MQD_OBJ_NODE *pObjNode)
 
 	if (error != SA_AIS_OK)
 		LOG_ER("saImmOiRtObjectUpdate_2 Failed: %u", error);
+
+	free(name);
+	free(attr1);
 }
 
 /****************************************************************************

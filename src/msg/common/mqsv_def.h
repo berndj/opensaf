@@ -37,6 +37,9 @@
 #define MQSV_MSG_OVERHEAD \
   8192 /* added as a Quick fix for SA_AIS_ERR_QUEUE_FULL Problem */
 
+#define MQSV_MAX_NUM_QUEUE_GROUPS 1000
+#define MQSV_MAX_NUM_QUEUES_PER_GROUP 500
+
 typedef enum {
   MQSV_OBJ_QUEUE = 1, /* Queue */
   MQSV_OBJ_QGROUP,    /* Queue Group */

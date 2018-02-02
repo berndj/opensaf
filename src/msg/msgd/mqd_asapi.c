@@ -513,6 +513,8 @@ uint32_t mqd_asapi_dereg_db_upd(MQD_CB *pMqd, ASAPi_DEREG_INFO *dereg,
 		/* Destroy the Node */
 		mqd_db_node_del(pMqd, pObjNode);
 		TRACE_1("Deleting the Queue Group Success");
+
+		pMqd->currentNumOfQueueGroups--;
 	} break;
 
 	/* Queue close/unlink */
@@ -1375,6 +1377,12 @@ uint32_t mqd_asapi_db_upd(MQD_CB *pMqd, ASAPi_REG_INFO *reg,
 				      mqd_obj_cmp);
 
 		if (!pOelm) {
+			/* Do we have max number of queues in the group? */
+			if (pObjNode->oinfo.ilist.count ==
+					MQSV_MAX_NUM_QUEUES_PER_GROUP) {
+				return SA_AIS_ERR_NO_RESOURCES;
+			}
+
 			/* Add the new queue to be the member of the Q-Group */
 			pOelm = m_MMGR_ALLOC_MQD_OBJECT_ELEM;
 			if (!pOelm) {
@@ -1443,6 +1451,12 @@ uint32_t mqd_asapi_db_upd(MQD_CB *pMqd, ASAPi_REG_INFO *reg,
 			return rc;
 		}
 
+		if (pMqd->currentNumOfQueueGroups == MQSV_MAX_NUM_QUEUE_GROUPS) {
+			rc = SA_AIS_ERR_NO_RESOURCES;
+			TRACE("maximum number of queue groups has already been created");
+			return rc;
+		}
+
 		/* Create Object Node */
 		rc = mqd_db_node_create(pMqd, &pObjNode);
 		if (NCSCC_RC_SUCCESS != rc) {
@@ -1473,6 +1487,10 @@ uint32_t mqd_asapi_db_upd(MQD_CB *pMqd, ASAPi_REG_INFO *reg,
 			TRACE_1(
 			    "Queue Group Creation at the MQD is Successfull");
 		}
+
+		if (NCSCC_RC_SUCCESS == rc)
+			pMqd->currentNumOfQueueGroups++;
+
 	} break;
 
 	/* Queue create/update */

@@ -161,6 +161,7 @@ typedef struct mqd_cb {
   EDU_HDL edu_hdl; /* Edu Handle */
   uint8_t hmpool;  /* Handle Manager Pool ID for this Service Part */
 
+  uint32_t currentNumOfQueueGroups;
   SaNameT safSpecVer;
   SaNameT safAgtVen;
   uint32_t safAgtVenPro;

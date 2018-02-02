@@ -557,6 +557,38 @@ static void saErrUnavailable_27(void)
   assert(rc == SA_AIS_OK);
 }
 
+static void saErrUnavailable_28(void)
+{
+  SaMsgHandleT msgHandle;
+  SaAisErrorT rc = saMsgInitialize(&msgHandle, 0, &msg3_1);
+  assert(rc == SA_AIS_OK);
+
+  lockUnlockNode(true);
+  SaUint32T metaDataSize(0);
+  rc = saMsgMetadataSizeGet(msgHandle, &metaDataSize);
+  test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
+  lockUnlockNode(false);
+
+  rc = saMsgFinalize(msgHandle);
+  assert(rc == SA_AIS_OK);
+}
+
+static void saErrUnavailable_29(void)
+{
+  SaMsgHandleT msgHandle;
+  SaAisErrorT rc = saMsgInitialize(&msgHandle, 0, &msg3_1);
+  assert(rc == SA_AIS_OK);
+
+  lockUnlockNode(true);
+  SaLimitValueT value;
+  rc = saMsgLimitGet(msgHandle, SA_MSG_MAX_PRIORITY_AREA_SIZE_ID, &value);
+  test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
+  lockUnlockNode(false);
+
+  rc = saMsgFinalize(msgHandle);
+  assert(rc == SA_AIS_OK);
+}
+
 static void saErrUnavailable_30(void)
 {
   lockUnlockNode(true);
@@ -1046,6 +1078,38 @@ static void saErrUnavailable_56(void)
   assert(rc == SA_AIS_OK);
 }
 
+static void saErrUnavailable_57(void)
+{
+  SaMsgHandleT msgHandle;
+  SaAisErrorT rc = saMsgInitialize(&msgHandle, 0, &msg3_1);
+  assert(rc == SA_AIS_OK);
+
+  lockUnlockNode(true);
+  lockUnlockNode(false);
+  SaUint32T metaDataSize(0);
+  rc = saMsgMetadataSizeGet(msgHandle, &metaDataSize);
+  test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
+
+  rc = saMsgFinalize(msgHandle);
+  assert(rc == SA_AIS_OK);
+}
+
+static void saErrUnavailable_58(void)
+{
+  SaMsgHandleT msgHandle;
+  SaAisErrorT rc = saMsgInitialize(&msgHandle, 0, &msg3_1);
+  assert(rc == SA_AIS_OK);
+
+  lockUnlockNode(true);
+  lockUnlockNode(false);
+  SaLimitValueT value;
+  rc = saMsgLimitGet(msgHandle, SA_MSG_MAX_PRIORITY_AREA_SIZE_ID, &value);
+  test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
+
+  rc = saMsgFinalize(msgHandle);
+  assert(rc == SA_AIS_OK);
+}
+
 
 __attribute__((constructor)) static void saErrUnavailable_constructor(void)
 {
@@ -1077,10 +1141,8 @@ __attribute__((constructor)) static void saErrUnavailable_constructor(void)
   test_case_add(26, saErrUnavailable_25, "saMsgMessageReplyAsync");
   test_case_add(26, saErrUnavailable_26, "saMsgQueueCapacityThresholdsSet");
   test_case_add(26, saErrUnavailable_27, "saMsgQueueCapacityThresholdsGet");
-#if 0
   test_case_add(26, saErrUnavailable_28, "saMsgMetadataSizeGet");
   test_case_add(26, saErrUnavailable_29, "saMsgLimitGet");
-#endif
   test_case_add(26, saErrUnavailable_30, "saMsgInitialize (stale)");
   test_case_add(26, saErrUnavailable_31, "saMsgSelectionObjectGet (stale)");
   test_case_add(26, saErrUnavailable_32, "saMsgDispatch (stale)");
@@ -1108,8 +1170,6 @@ __attribute__((constructor)) static void saErrUnavailable_constructor(void)
   test_case_add(26, saErrUnavailable_54, "saMsgMessageReplyAsync (stale)");
   test_case_add(26, saErrUnavailable_55, "saMsgQueueCapacityThresholdsSet (stale)");
   test_case_add(26, saErrUnavailable_56, "saMsgQueueCapacityThresholdsGet (stale)");
-#if 0
   test_case_add(26, saErrUnavailable_57, "saMsgMetadataSizeGet (stale)");
   test_case_add(26, saErrUnavailable_58, "saMsgLimitGet (stale)");
-#endif
 }
