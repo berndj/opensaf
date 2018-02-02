@@ -1,4 +1,4 @@
-This directory contains the 5.18.03 release of `OpenSAF'.
+This directory contains the 5.18.04 release of `OpenSAF'.
 
 `OpenSAF' is an open source project designed to implement a complete highly
 available operating environment based on Service Availability Forum (SA Forum)
@@ -937,7 +937,7 @@ See file `00-README.uml' for more information about User Mode Linux and
 Upgrading OpenSAF
 =================
 
-Before installing or upgrading to OpenSAF 5.18.03, make sure your system meets
+Before installing or upgrading to OpenSAF 5.18.04, make sure your system meets
 the minimum version requirements of the following system components:
 
 - Linux kernel, version 2.6.39 or later. Recommended version is Linux 3.18 or
@@ -951,6 +951,7 @@ the minimum version requirements of the following system components:
 - Python, version 2.7 or later (only needed when configuring with
   --enable-python)
 - Libopenssl, version 0.9.8 or later (optional)
+- Systemd, version 219 or later (optional)
 - Libsqlite3, version 3.6 or later (only needed when configuring with
   --enable-imm-pbe)
 - OpenHPI, version 2.17.0 or later (only needed when configuring with

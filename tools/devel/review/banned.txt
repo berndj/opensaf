@@ -248,8 +248,6 @@
 |setnetgrent|
 |setprotoent|
 |setpwent|
-|setregid|
-|setreuid|
 |setservent|
 |setspent|
 |setttyent|

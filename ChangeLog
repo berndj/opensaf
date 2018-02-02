@@ -1,6 +1,12 @@
-OpenSAF 5.18.01 (released 2018-01-31)
+OpenSAF 5.18.02 (released 2018-02-02)
 -------------------------------------
 
+    * ntf: Update README for synchronization of readers [#2757]
+    * ntftest: Add new test cases of suite 41 for cold sync and checkpoint of reader APIs [#2757]
+    * ntfd: Cold sync reader to the standby ntfd after rebooting the standby controller [#2757]
+    * ntfd: Checkpoint reader to the standby when processes reader API requests [#2757]
+    * imm: immnd coredump during SYNC finalize [#2775]
+    * osaf: add retry loop to IsWritable [#2774]
     * nid: Use node address as node ID when slot_id is configured to zero [#2759]
     * imm: fix wrong printouts and incorrect behavior of immadm/immcfg [#2751]
     * doc: update README [#64]
