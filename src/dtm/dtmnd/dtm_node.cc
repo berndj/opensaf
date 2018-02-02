@@ -354,14 +354,6 @@ void node_discovery_process(void *arg) {
   int node_info_buffer_len = 0;
   uint8_t node_info_hrd[NODE_INFO_PKT_SIZE];
 
-  /*************************************************************/
-  /* Set up the initial listening socket */
-  /*************************************************************/
-  if (NCSCC_RC_SUCCESS != dtm_stream_nonblocking_listener(dtms_cb)) {
-    LOG_ER("DTM: Set up the initial stream nonblocking serv  failed");
-    exit(EXIT_FAILURE);
-  }
-
   dgram_sock_rcvr.comm_socket = dtms_cb->multicast_->fd();
   stream_sock.comm_socket = dtms_cb->stream_sock;
   mbx_fd.comm_socket = dtms_cb->mbx_fd;

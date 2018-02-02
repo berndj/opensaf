@@ -276,6 +276,14 @@ int main(int argc, char *argv[]) {
   }
 
   /*************************************************************/
+  /* Set up the initial listening socket */
+  /*************************************************************/
+  if (NCSCC_RC_SUCCESS != dtm_stream_nonblocking_listener(dtms_cb)) {
+    LOG_ER("DTM: Set up the initial stream nonblocking serv  failed");
+    exit(EXIT_FAILURE);
+  }
+
+  /*************************************************************/
   /* Set up the initialservice_discovery_task */
   /*************************************************************/
   rc = dtm_service_discovery_init(dtms_cb);

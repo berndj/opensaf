@@ -56,6 +56,7 @@ lib_libopensaf_core_la_SOURCES += \
 	src/base/osaf_extended_name.c \
 	src/base/osaf_poll.c \
 	src/base/osaf_secutil.c \
+	src/base/osaf_socket.c \
 	src/base/osaf_time.c \
 	src/base/osaf_timerfd.c \
 	src/base/osaf_unicode.c \
@@ -129,6 +130,7 @@ noinst_HEADERS += \
 	src/base/osaf_gcov.h \
 	src/base/osaf_poll.h \
 	src/base/osaf_secutil.h \
+	src/base/osaf_socket.h \
 	src/base/osaf_time.h \
 	src/base/osaf_timerfd.h \
 	src/base/osaf_unicode.h \

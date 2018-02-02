@@ -25,6 +25,7 @@
 #include <cerrno>
 #include <cstring>
 #include "base/ncsencdec_pub.h"
+#include "base/osaf_socket.h"
 #include "base/usrbuf.h"
 #include "dtm/dtmnd/dtm.h"
 #include "dtm/dtmnd/dtm_node.h"
@@ -357,7 +358,7 @@ static uint32_t stream_sock_bind(DTM_INTERNODE_CB *dtms_cb,
                                  struct addrinfo *stream_addr) {
   /* Bind to the local address and set socket to list */
   TRACE_ENTER();
-  if (bind(dtms_cb->stream_sock, stream_addr->ai_addr,
+  if (osaf_bind(dtms_cb->stream_sock, stream_addr->ai_addr,
            stream_addr->ai_addrlen) == 0) {
     if (listen(dtms_cb->stream_sock, MAXPENDING) == 0) {
       /* get local address of socket */
@@ -377,7 +378,7 @@ static uint32_t stream_sock_bind(DTM_INTERNODE_CB *dtms_cb,
       return NCSCC_RC_FAILURE;
     }
   } else {
-    LOG_ER("bind(%d) failed with errno %d", dtms_cb->stream_sock, errno);
+    LOG_ER("osaf_bind(%d) failed with errno %d", dtms_cb->stream_sock, errno);
     TRACE_LEAVE2("rc: %d", NCSCC_RC_FAILURE);
     return NCSCC_RC_FAILURE;
   }

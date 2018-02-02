@@ -27,6 +27,7 @@
 #include <cstdio>
 #include <fstream>
 #include "base/logtrace.h"
+#include "base/osaf_socket.h"
 #include "base/osaf_utility.h"
 
 Multicast::Multicast(uint16_t cluster_id, uint32_t node_id,
@@ -434,7 +435,7 @@ bool Multicast::InitializeUnicastReceiver() {
                      sizeof(v6only)) < 0)
         LOG_ER("setsockopt(IPV6_V6ONLY) failed: %s", strerror(errno));
     }
-    if (bind(dgram_sock_rcvr, p->ai_addr, p->ai_addrlen) == -1) {
+    if (osaf_bind(dgram_sock_rcvr, p->ai_addr, p->ai_addrlen) == -1) {
       LOG_ER("DTM:Socket bind failed  err :%s", strerror(errno));
       close(dgram_sock_rcvr);
       TRACE_LEAVE2("rc :%d", NCSCC_RC_FAILURE);
@@ -977,8 +978,9 @@ uint32_t Multicast::dtm_dgram_mcast_listener() {
       LOG_ER("setsockopt(IPV6_V6ONLY) failed: %s", strerror(errno));
   }
 
-  if (bind(dgram_sock_rcvr, addr_list->ai_addr, addr_list->ai_addrlen) < 0) {
-    LOG_ER("DTM : bind() failed err :%s ", strerror(errno));
+  if (osaf_bind(dgram_sock_rcvr, addr_list->ai_addr, addr_list->ai_addrlen) <
+      0) {
+    LOG_ER("DTM : osaf_bind() failed err :%s ", strerror(errno));
     if (close(dgram_sock_rcvr) != 0 && errno != EINTR)
       LOG_ER("close() failed, errno=%d", errno);
     freeaddrinfo(addr_list);
@@ -1149,7 +1151,7 @@ uint32_t Multicast::dtm_dgram_bcast_listener() {
         return NCSCC_RC_FAILURE;
       }
     }
-    if (bind(dgram_sock_rcvr, p->ai_addr, p->ai_addrlen) == -1) {
+    if (osaf_bind(dgram_sock_rcvr, p->ai_addr, p->ai_addrlen) == -1) {
       LOG_ER("DTM:Socket bind failed  err :%s", strerror(errno));
       close(dgram_sock_rcvr);
       TRACE_LEAVE2("rc :%d", NCSCC_RC_FAILURE);
