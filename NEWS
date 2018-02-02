@@ -1,8 +1,8 @@
-OpenSAF 5.18.01 (released 2018-01-31)
+OpenSAF 5.18.02 (released 2018-02-02)
 -------------------------------------
 
 This is a major release containing new enhancements. Before installing or
-upgrading to OpenSAF 5.18.01, make sure your system meets the minimum version
+upgrading to OpenSAF 5.18.02, make sure your system meets the minimum version
 requirements of the following system components:
 
 - Linux kernel, version 2.6.39 or later. Recommended version is Linux 3.18 or
@@ -16,6 +16,7 @@ requirements of the following system components:
 - Python, version 2.7 or later (only needed when configuring with
   --enable-python)
 - Libopenssl, version 0.9.8 or later (optional)
+- Systemd, version 219 or later (optional)
 - Libsqlite3, version 3.6 or later (only needed when configuring with
   --enable-imm-pbe)
 - OpenHPI, version 2.17.0 or later (only needed when configuring with
@@ -60,7 +61,7 @@ Important enhancements in this release
 
 **NTF enhancements**
 
-- Improved support for the NTF reader API [#2735]
+- Improved support for the NTF reader API [#2735], [#2757]
 
 **OpenSAF start/stop enhancements**
 
@@ -85,13 +86,13 @@ Important enhancements in this release
 Links
 -----
 
-* The complete list of enhancements in the 5.18.01 release can be found in this
+* The complete list of enhancements in the 5.18.02 release can be found in this
   report:
 
-https://sourceforge.net/p/opensaf/tickets/search/?q=status%3Afixed+AND+_milestone%3A5.18.01+AND+_type%3Aenhancement
+https://sourceforge.net/p/opensaf/tickets/search/?q=status%3Afixed+AND+_milestone%3A5.18.02+AND+_type%3Aenhancement
 
-* The documentation for the OpenSAF 5.18.01 release can be downloaded here:
+* The documentation for the OpenSAF 5.18.02 release can be downloaded here:
 
-http://sourceforge.net/projects/opensaf/files/docs/opensaf-documentation-5.18.01.tar.gz/download
+http://sourceforge.net/projects/opensaf/files/docs/opensaf-documentation-5.18.02.tar.gz/download
 
 You can also check the README of the respective OpenSAF service.
