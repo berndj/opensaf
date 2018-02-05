@@ -16,6 +16,7 @@
  */
 
 #include "ais/try_again_decorator.h"
+#include <cstdlib>
 #include "gtest/gtest.h"
 
 namespace {
@@ -31,15 +32,16 @@ extern "C" SaAisErrorT TestOtherMethod() {
   return (++test_counter % 2 ) ? SA_AIS_ERR_TRY_AGAIN : SA_AIS_ERR_UNAVAILABLE;
 }
 
-// This test case will take more than one minute!
 TEST(make_decorator, DefaultControl) {
-  // Default interval = 100ms, timeout = 60 * 1000ms
-  auto DecorTestMethod = ais::make_decorator(::TestMethod);
-
-  EXPECT_EQ(DecorTestMethod(), SA_AIS_ERR_TRY_AGAIN);
-  EXPECT_GE(test_counter, 400);
-  EXPECT_LE(test_counter, 601);
-  test_counter = 0;
+  // This test case takes more than one minute!
+  // Only run if `OSAF_SLOW_UNITTESTS` is defined.
+  if (getenv("OSAF_SLOW_UNITTESTS") != nullptr) {
+    auto DecorTestMethod = ais::make_decorator(::TestMethod);
+    EXPECT_EQ(DecorTestMethod(), SA_AIS_ERR_TRY_AGAIN);
+    EXPECT_GE(test_counter, 400);
+    EXPECT_LE(test_counter, 601);
+    test_counter = 0;
+  }
 }
 
 class MyTryAgain {
