@@ -401,6 +401,12 @@ uint32_t avnd_evt_avd_info_su_si_assign_evh(AVND_CB *cb, AVND_EVT *evt) {
   cb->rcv_msg_id = info->msg_id;
 
   if (info->msg_act == AVSV_SUSI_ACT_ASGN) {
+    if (sufailover_in_progress(su) || sufailover_during_nodeswitchover(su) ||
+         cb->term_state == AVND_TERM_STATE_NODE_FAILOVER_TERMINATING){
+      TRACE_2("Discarding new assignment for '%s', flag:%x",
+          su->name.c_str(), su->flag);
+      goto done;
+    }
     /* SI rank and CSI capability (originally from SaAmfCtCsType)
      * was introduced in version 5 of the node director supported protocol.
      * If the protocol is older, take action */
