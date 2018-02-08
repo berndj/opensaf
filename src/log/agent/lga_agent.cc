@@ -58,7 +58,7 @@ class ScopeData {
     // of `int` type is to force the caller pass either value (1) or value (-1).
     RefCounter::Degree value;
     // Who is the caller of `RestoreRefCounter`
-    const char* caller;
+    std::string caller;
   };
 
   struct LogStreamInfoData {
@@ -70,7 +70,7 @@ class ScopeData {
     // of `int` type is to force the caller pass either value (1) or value (-1).
     RefCounter::Degree value;
     // Who is the caller of `RestoreRefCounter`
-    const char* caller;
+    std::string caller;
   };
 
   explicit ScopeData(LogClientData*, bool* lock = nullptr);
@@ -112,7 +112,7 @@ ScopeData::~ScopeData() {
   LogClient* client = client_data_->client;
   bool* is_updated = client_data_->is_updated;
   RefCounter::Degree client_degree = client_data_->value;
-  const char* caller = client_data_->caller;
+  const char* caller = client_data_->caller.c_str();
   if (client != nullptr) {
     // Do restore the reference counter if the client exists.
     client->RestoreRefCounter(caller, client_degree, *is_updated);
@@ -122,7 +122,7 @@ ScopeData::~ScopeData() {
     LogStreamInfo* stream = stream_data_->stream;
     bool* stream_is_updated = stream_data_->is_updated;
     RefCounter::Degree stream_degree = stream_data_->value;
-    const char* caller = stream_data_->caller;
+    const char* caller = stream_data_->caller.c_str();
     if (stream != nullptr) {
       // Do restore the reference counter if the stream exists.
       stream->RestoreRefCounter(caller, stream_degree, *stream_is_updated);
