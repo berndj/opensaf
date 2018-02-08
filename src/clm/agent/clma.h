@@ -80,8 +80,8 @@ typedef struct {
   clma_client_hdl_rec_t *client_list; /* CLMA client handle database */
   MDS_HDL mds_hdl;                    /* MDS handle */
   MDS_DEST clms_mds_dest;             /* CLMS absolute/virtual address */
-  int clms_up; /* Indicate that MDS subscription
-                * is complete */
+  int clms_up;                        /* Indicate that MDS subscription
+                                       * is complete */
   bool clms_reinit_required;  // indicates we've been left without any CLMS
                               // before
   /* CLMS CLMA sync params */

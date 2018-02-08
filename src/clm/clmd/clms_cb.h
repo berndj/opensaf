@@ -96,13 +96,13 @@ typedef struct cluster_node_t {
   SaBoolT nodeup; /*Check for the connectivity */
   SaInvocationT curr_admin_inv;
   NCS_PATRICIA_TREE trackresp;
-  SaBoolT stat_change;       /*Required to check for the number of nodes on which
-                                change has occured */
-  ADMIN_OP admin_op;         /*plm or clm operation */
-  timer_t lock_timerid;      /*Timer id for admin lock operation */
-  SaInvocationT plm_invid;   /*plmtrack callback invocation id */
-  SaBoolT rtu_pending;       /* Flag to mark whether an IMM RunTime attribute Update
-                                is pending and to be retried */
+  SaBoolT stat_change;     /*Required to check for the number of nodes on which
+                              change has occured */
+  ADMIN_OP admin_op;       /*plm or clm operation */
+  timer_t lock_timerid;    /*Timer id for admin lock operation */
+  SaInvocationT plm_invid; /*plmtrack callback invocation id */
+  SaBoolT rtu_pending; /* Flag to mark whether an IMM RunTime attribute Update
+                          is pending and to be retried */
   SaBoolT admin_rtu_pending; /* Flag to mark whether an IMM RunTime attribute
                                 Update is pending and to be retried */
   struct cluster_node_t
@@ -206,18 +206,18 @@ typedef struct clms_cb_t {
 
   SaUint32T async_upd_cnt; /* Async Update Count for Warmsync */
   NCS_PATRICIA_TREE
-      nodes_db; /* CLMS_NODE_DB storing information of Cluster Nodes & Clients
-                 * and the client's cluster track subscription information.
-                 * Indexed by Node Name.
-                 */
+  nodes_db; /* CLMS_NODE_DB storing information of Cluster Nodes & Clients
+             * and the client's cluster track subscription information.
+             * Indexed by Node Name.
+             */
   NCS_PATRICIA_TREE
-      ee_lookup; /* To lookup the CLMS_NODE_DB with ee_name as key,
-                  * for PLM track callback.
-                  */
+  ee_lookup; /* To lookup the CLMS_NODE_DB with ee_name as key,
+              * for PLM track callback.
+              */
   NCS_PATRICIA_TREE
-      id_lookup;               /* To lookup the CLMS_NODE_DB with node_id as key,
-                                * for saClmNodeGet() API.
-                                */
+  id_lookup; /* To lookup the CLMS_NODE_DB with node_id as key,
+              * for saClmNodeGet() API.
+              */
   NCS_PATRICIA_TREE client_db; /* Client DataBase */
   uint32_t curr_invid;
   uint32_t last_client_id; /* Value of last client_id assigned */
@@ -228,15 +228,15 @@ typedef struct clms_cb_t {
   SaSelectionObjectT plm_sel_obj; /* PLMSv selection object */
   SaNtfHandleT ntf_hdl;           /* Handled obtained from NTFSv */
   SaBoolT reg_with_plm;           /*plm present in system */
-  SaBoolT rtu_pending;            /* Global flag to determine a pending RTU update and the
-                                     poll timeout */
+  SaBoolT rtu_pending; /* Global flag to determine a pending RTU update and the
+                          poll timeout */
   CLMA_DOWN_LIST
-      *clma_down_list_head; /* CLMA down reccords - Fix for Failover missed
-                               down events Processing */
+  *clma_down_list_head; /* CLMA down reccords - Fix for Failover missed
+                           down events Processing */
   CLMA_DOWN_LIST *clma_down_list_tail;
-  NODE_DOWN_LIST *
-      node_down_list_head; /*NODE_DOWN record - Fix when active node goes down
-                            */
+  NODE_DOWN_LIST
+      *node_down_list_head; /*NODE_DOWN record - Fix when active node goes down
+                             */
   NODE_DOWN_LIST *node_down_list_tail;
   bool is_impl_set;
   bool nid_started;         /**< true if started by NID */
@@ -267,7 +267,9 @@ typedef struct clms_cb_t {
   char ifs;
 } CLMS_CB;
 
-typedef struct clms_lock_tmr_t { SaNameT node_name; } CLMS_LOCK_TMR;
+typedef struct clms_lock_tmr_t {
+  SaNameT node_name;
+} CLMS_LOCK_TMR;
 
 uint32_t clm_snd_track_changes(CLMS_CB *cb, CLMS_CLUSTER_NODE *node,
                                CLMS_CLIENT_INFO *client,

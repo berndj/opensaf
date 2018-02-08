@@ -37,47 +37,43 @@
 #define CLM_API_MIN_TIMEOUT 10 /* ten milli seconds */
 
 static SaAisErrorT clmainitialize(SaClmHandleT *clmHandle,
-				  const SaClmCallbacksT *reg_cbks_1,
-				  const SaClmCallbacksT_4 *reg_cbks_4,
-				  SaVersionT *version);
+                                  const SaClmCallbacksT *reg_cbks_1,
+                                  const SaClmCallbacksT_4 *reg_cbks_4,
+                                  SaVersionT *version);
 static SaAisErrorT clmaclustertrack(SaClmHandleT clmHandle, SaUint8T flags,
-				    SaClmClusterNotificationBufferT *buf,
-				    SaClmClusterNotificationBufferT_4 *buf_4);
+                                    SaClmClusterNotificationBufferT *buf,
+                                    SaClmClusterNotificationBufferT_4 *buf_4);
 static SaAisErrorT clmaclusternodeget(SaClmHandleT clmHandle,
-				      SaClmNodeIdT node_id, SaTimeT timeout,
-				      SaClmClusterNodeT *cluster_node,
-				      SaClmClusterNodeT_4 *cluster_node_4);
+                                      SaClmNodeIdT node_id, SaTimeT timeout,
+                                      SaClmClusterNodeT *cluster_node,
+                                      SaClmClusterNodeT_4 *cluster_node_4);
 
 /* Macro to validate the dispatch flags */
-#define m_DISPATCH_FLAG_IS_VALID(flag)                                         \
-	((SA_DISPATCH_ONE == flag) || (SA_DISPATCH_ALL == flag) ||             \
-	 (SA_DISPATCH_BLOCKING == flag))
+#define m_DISPATCH_FLAG_IS_VALID(flag)                       \
+  ((SA_DISPATCH_ONE == flag) || (SA_DISPATCH_ALL == flag) || \
+   (SA_DISPATCH_BLOCKING == flag))
 
 /* The main controle block */
-clma_cb_t clma_cb = {
-	.cb_lock = PTHREAD_MUTEX_INITIALIZER
-};
+clma_cb_t clma_cb = {.cb_lock = PTHREAD_MUTEX_INITIALIZER};
 
 /* Macro for Verifying the input Handle & global handle */
-#define m_CLA_API_HDL_VERIFY(cbhdl, hdl, o_rc)                                 \
-	{                                                                      \
-		/* is library Initialized && handle a 32 bit value*/           \
-		if (!(cbhdl) || (hdl) > AVSV_UNS32_HDL_MAX)                    \
-			(o_rc) = SA_AIS_ERR_BAD_HANDLE;                        \
-	};
+#define m_CLA_API_HDL_VERIFY(cbhdl, hdl, o_rc)           \
+  {                                                      \
+    /* is library Initialized && handle a 32 bit value*/ \
+    if (!(cbhdl) || (hdl) > AVSV_UNS32_HDL_MAX)          \
+      (o_rc) = SA_AIS_ERR_BAD_HANDLE;                    \
+  };
 
-static SaAisErrorT
-clma_validate_flags_buf(clma_client_hdl_rec_t *hdl_rec, SaUint8T flags,
-			SaClmClusterNotificationBufferT *buf);
-static SaAisErrorT
-clma_validate_flags_buf_4(clma_client_hdl_rec_t *hdl_rec, SaUint8T flags,
-			  SaClmClusterNotificationBufferT_4 *buf);
-static SaAisErrorT
-clma_fill_cluster_ntf_buf_from_omsg(SaClmClusterNotificationBufferT *buf,
-				    CLMSV_MSG *msg_rsp);
-static SaAisErrorT
-clma_fill_cluster_ntf_buf4_from_omsg(SaClmClusterNotificationBufferT_4 *buf_4,
-				     CLMSV_MSG *msg_rsp);
+static SaAisErrorT clma_validate_flags_buf(
+    clma_client_hdl_rec_t *hdl_rec, SaUint8T flags,
+    SaClmClusterNotificationBufferT *buf);
+static SaAisErrorT clma_validate_flags_buf_4(
+    clma_client_hdl_rec_t *hdl_rec, SaUint8T flags,
+    SaClmClusterNotificationBufferT_4 *buf);
+static SaAisErrorT clma_fill_cluster_ntf_buf_from_omsg(
+    SaClmClusterNotificationBufferT *buf, CLMSV_MSG *msg_rsp);
+static SaAisErrorT clma_fill_cluster_ntf_buf4_from_omsg(
+    SaClmClusterNotificationBufferT_4 *buf_4, CLMSV_MSG *msg_rsp);
 static SaAisErrorT clma_send_mds_msg_get_clusternotificationbuf(
     clma_client_hdl_rec_t *hdl_rec, SaUint8T flags, CLMSV_MSG i_msg,
     SaClmClusterNotificationBufferT *buf);
@@ -86,113 +82,106 @@ static SaAisErrorT clma_send_mds_msg_get_clusternotificationbuf_4(
     SaClmClusterNotificationBufferT_4 *buf_4);
 
 void clma_fill_node_from_node4(SaClmClusterNodeT *clusterNode,
-			       SaClmClusterNodeT_4 clusterNode_4)
-{
-	clusterNode->nodeId = clusterNode_4.nodeId;
-	clusterNode->nodeAddress.family = clusterNode_4.nodeAddress.family;
-	clusterNode->nodeAddress.length = clusterNode_4.nodeAddress.length;
-	memcpy(clusterNode->nodeAddress.value,
-		     clusterNode_4.nodeAddress.value,
-		     clusterNode->nodeAddress.length);
-	clusterNode->nodeName.length = clusterNode_4.nodeName.length;
-	osaf_extended_name_alloc(
-	    osaf_extended_name_borrow(&clusterNode_4.nodeName),
-	    &clusterNode->nodeName);
-	clusterNode->member = clusterNode_4.member;
-	clusterNode->bootTimestamp = clusterNode_4.bootTimestamp;
-	clusterNode->initialViewNumber = clusterNode_4.initialViewNumber;
+                               SaClmClusterNodeT_4 clusterNode_4) {
+  clusterNode->nodeId = clusterNode_4.nodeId;
+  clusterNode->nodeAddress.family = clusterNode_4.nodeAddress.family;
+  clusterNode->nodeAddress.length = clusterNode_4.nodeAddress.length;
+  memcpy(clusterNode->nodeAddress.value, clusterNode_4.nodeAddress.value,
+         clusterNode->nodeAddress.length);
+  clusterNode->nodeName.length = clusterNode_4.nodeName.length;
+  osaf_extended_name_alloc(osaf_extended_name_borrow(&clusterNode_4.nodeName),
+                           &clusterNode->nodeName);
+  clusterNode->member = clusterNode_4.member;
+  clusterNode->bootTimestamp = clusterNode_4.bootTimestamp;
+  clusterNode->initialViewNumber = clusterNode_4.initialViewNumber;
 }
 
-static SaAisErrorT clma_validate_flags_buf(clma_client_hdl_rec_t *hdl_rec,
-					   SaUint8T flags,
-					   SaClmClusterNotificationBufferT *buf)
-{
-	SaAisErrorT rc = SA_AIS_OK;
-	TRACE_ENTER();
+static SaAisErrorT clma_validate_flags_buf(
+    clma_client_hdl_rec_t *hdl_rec, SaUint8T flags,
+    SaClmClusterNotificationBufferT *buf) {
+  SaAisErrorT rc = SA_AIS_OK;
+  TRACE_ENTER();
 
-	/* validate the flags */
-	if (!((flags & SA_TRACK_CURRENT) || (flags & SA_TRACK_CHANGES) ||
-	      (flags & SA_TRACK_CHANGES_ONLY) || (flags & SA_TRACK_LOCAL))) {
-		TRACE("oneeeeeeeeeeee");
-		return SA_AIS_ERR_BAD_FLAGS;
-	}
+  /* validate the flags */
+  if (!((flags & SA_TRACK_CURRENT) || (flags & SA_TRACK_CHANGES) ||
+        (flags & SA_TRACK_CHANGES_ONLY) || (flags & SA_TRACK_LOCAL))) {
+    TRACE("oneeeeeeeeeeee");
+    return SA_AIS_ERR_BAD_FLAGS;
+  }
 
-	if ((flags & SA_TRACK_CHANGES) && (flags & SA_TRACK_CHANGES_ONLY)) {
+  if ((flags & SA_TRACK_CHANGES) && (flags & SA_TRACK_CHANGES_ONLY)) {
+    TRACE("twoeeeeeeeeeeee");
+    return SA_AIS_ERR_BAD_FLAGS;
+  }
 
-		TRACE("twoeeeeeeeeeeee");
-		return SA_AIS_ERR_BAD_FLAGS;
-	}
+  if ((flags & SA_TRACK_LOCAL) &&
+      !((flags & SA_TRACK_CURRENT) || (flags & SA_TRACK_CHANGES) ||
+        (flags & SA_TRACK_CHANGES_ONLY))) {
+    return SA_AIS_ERR_BAD_FLAGS;
+  }
 
-	if ((flags & SA_TRACK_LOCAL) &&
-	    !((flags & SA_TRACK_CURRENT) || (flags & SA_TRACK_CHANGES) ||
-	      (flags & SA_TRACK_CHANGES_ONLY))) {
-		return SA_AIS_ERR_BAD_FLAGS;
-	}
+  /* validate the notify buffer */
+  if ((flags & SA_TRACK_CURRENT) && buf && buf->notification) {
+    if (!buf->numberOfItems) return SA_AIS_ERR_INVALID_PARAM;
+  }
 
-	/* validate the notify buffer */
-	if ((flags & SA_TRACK_CURRENT) && buf && buf->notification) {
-		if (!buf->numberOfItems)
-			return SA_AIS_ERR_INVALID_PARAM;
-	}
+  /* Validate if flag is TRACK_CURRENT and no callback and no buffer
+   * provided */
+  if (((flags & SA_TRACK_CURRENT) &&
+       ((!buf) || ((buf) && !(buf->notification)))) &&
+      (!(hdl_rec->cbk_param.reg_cbk.saClmClusterTrackCallback))) {
+    return SA_AIS_ERR_INIT;
+  }
 
-	/* Validate if flag is TRACK_CURRENT and no callback and no buffer
-	 * provided */
-	if (((flags & SA_TRACK_CURRENT) &&
-	     ((!buf) || ((buf) && !(buf->notification)))) &&
-	    (!(hdl_rec->cbk_param.reg_cbk.saClmClusterTrackCallback))) {
-		return SA_AIS_ERR_INIT;
-	}
-
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
-static SaAisErrorT
-clma_validate_flags_buf_4(clma_client_hdl_rec_t *hdl_rec, SaUint8T flags,
-			  SaClmClusterNotificationBufferT_4 *buf)
-{
-	SaAisErrorT rc = SA_AIS_OK;
-	TRACE_ENTER2("flags=0x%x", flags);
+static SaAisErrorT clma_validate_flags_buf_4(
+    clma_client_hdl_rec_t *hdl_rec, SaUint8T flags,
+    SaClmClusterNotificationBufferT_4 *buf) {
+  SaAisErrorT rc = SA_AIS_OK;
+  TRACE_ENTER2("flags=0x%x", flags);
 
-	/* validate the flags */
-	if (!((flags & SA_TRACK_CURRENT) || (flags & SA_TRACK_CHANGES) ||
-	      (flags & SA_TRACK_CHANGES_ONLY) || (flags & SA_TRACK_LOCAL))) {
-		TRACE("1st case");
-		TRACE_LEAVE();
-		return SA_AIS_ERR_BAD_FLAGS;
-	}
+  /* validate the flags */
+  if (!((flags & SA_TRACK_CURRENT) || (flags & SA_TRACK_CHANGES) ||
+        (flags & SA_TRACK_CHANGES_ONLY) || (flags & SA_TRACK_LOCAL))) {
+    TRACE("1st case");
+    TRACE_LEAVE();
+    return SA_AIS_ERR_BAD_FLAGS;
+  }
 
-	if ((flags & SA_TRACK_CHANGES) && (flags & SA_TRACK_CHANGES_ONLY)) {
-		TRACE("2nd Case");
-		TRACE_LEAVE();
-		return SA_AIS_ERR_BAD_FLAGS;
-	}
+  if ((flags & SA_TRACK_CHANGES) && (flags & SA_TRACK_CHANGES_ONLY)) {
+    TRACE("2nd Case");
+    TRACE_LEAVE();
+    return SA_AIS_ERR_BAD_FLAGS;
+  }
 
-	if ((flags & SA_TRACK_LOCAL) &&
-	    !((flags & SA_TRACK_CURRENT) || (flags & SA_TRACK_CHANGES) ||
-	      (flags & SA_TRACK_CHANGES_ONLY))) {
-		return SA_AIS_ERR_BAD_FLAGS;
-	}
+  if ((flags & SA_TRACK_LOCAL) &&
+      !((flags & SA_TRACK_CURRENT) || (flags & SA_TRACK_CHANGES) ||
+        (flags & SA_TRACK_CHANGES_ONLY))) {
+    return SA_AIS_ERR_BAD_FLAGS;
+  }
 
-	/* validate the notify buffer */
-	if ((flags & SA_TRACK_CURRENT) && buf && buf->notification) {
-		if (!buf->numberOfItems) {
-			TRACE_LEAVE();
-			return SA_AIS_ERR_INVALID_PARAM;
-		}
-	}
+  /* validate the notify buffer */
+  if ((flags & SA_TRACK_CURRENT) && buf && buf->notification) {
+    if (!buf->numberOfItems) {
+      TRACE_LEAVE();
+      return SA_AIS_ERR_INVALID_PARAM;
+    }
+  }
 
-	/* Validate if flag is TRACK_CURRENT and no callback and no buffer
-	 * provided */
-	if ((flags & SA_TRACK_CURRENT) &&
-	    ((!buf) || ((buf) && !(buf->notification))) &&
-	    (!(hdl_rec->cbk_param.reg_cbk_4.saClmClusterTrackCallback))) {
-		TRACE_LEAVE();
-		return SA_AIS_ERR_INIT;
-	}
+  /* Validate if flag is TRACK_CURRENT and no callback and no buffer
+   * provided */
+  if ((flags & SA_TRACK_CURRENT) &&
+      ((!buf) || ((buf) && !(buf->notification))) &&
+      (!(hdl_rec->cbk_param.reg_cbk_4.saClmClusterTrackCallback))) {
+    TRACE_LEAVE();
+    return SA_AIS_ERR_INIT;
+  }
 
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 /* Copy the cluster node info into buf
@@ -203,45 +192,43 @@ clma_validate_flags_buf_4(clma_client_hdl_rec_t *hdl_rec, SaUint8T flags,
  * Check the number of items and num fields.
  */
 
-static SaAisErrorT
-clma_fill_cluster_ntf_buf_from_omsg(SaClmClusterNotificationBufferT *buf,
-				    CLMSV_MSG *msg_rsp)
-{
-	if (msg_rsp->info.api_resp_info.param.track.notify_info == nullptr)
-		return SA_AIS_ERR_NO_MEMORY;
+static SaAisErrorT clma_fill_cluster_ntf_buf_from_omsg(
+    SaClmClusterNotificationBufferT *buf, CLMSV_MSG *msg_rsp) {
+  if (msg_rsp->info.api_resp_info.param.track.notify_info == nullptr)
+    return SA_AIS_ERR_NO_MEMORY;
 
-	if (buf->notification != nullptr &&
-	    (buf->numberOfItems >= msg_rsp->info.api_resp_info.param.track
-				       .notify_info->numberOfItems)) {
-		/* Overwrite the numberOfItems and copy it to buffer */
-		buf->numberOfItems = msg_rsp->info.api_resp_info.param.track
-					 .notify_info->numberOfItems;
-		buf->viewNumber = msg_rsp->info.api_resp_info.param.track
-				      .notify_info->viewNumber;
+  if (buf->notification != nullptr &&
+      (buf->numberOfItems >=
+       msg_rsp->info.api_resp_info.param.track.notify_info->numberOfItems)) {
+    /* Overwrite the numberOfItems and copy it to buffer */
+    buf->numberOfItems =
+        msg_rsp->info.api_resp_info.param.track.notify_info->numberOfItems;
+    buf->viewNumber =
+        msg_rsp->info.api_resp_info.param.track.notify_info->viewNumber;
 
-		memset(buf->notification, 0,
-		       sizeof(SaClmClusterNotificationT) * buf->numberOfItems);
-		clma_fill_clusterbuf_from_buf_4(
-		    buf, msg_rsp->info.api_resp_info.param.track.notify_info);
-	} else if (buf->notification != nullptr &&
-		   (buf->numberOfItems < msg_rsp->info.api_resp_info.param.track
-					     .notify_info->numberOfItems)) {
-		return SA_AIS_ERR_NO_SPACE;
-	} else {
-		/* we need to ignore the numberOfItems and allocate the space
-		 ** This memory will be freed by the application */
-		buf->numberOfItems = msg_rsp->info.api_resp_info.param.track
-					 .notify_info->numberOfItems;
-		buf->viewNumber = msg_rsp->info.api_resp_info.param.track
-				      .notify_info->viewNumber;
-		buf->notification = static_cast<SaClmClusterNotificationT*>(malloc(
-		    sizeof(SaClmClusterNotificationT) * buf->numberOfItems));
-		memset(buf->notification, 0,
-		       sizeof(SaClmClusterNotificationT) * buf->numberOfItems);
-		clma_fill_clusterbuf_from_buf_4(
-		    buf, msg_rsp->info.api_resp_info.param.track.notify_info);
-	}
-	return SA_AIS_OK;
+    memset(buf->notification, 0,
+           sizeof(SaClmClusterNotificationT) * buf->numberOfItems);
+    clma_fill_clusterbuf_from_buf_4(
+        buf, msg_rsp->info.api_resp_info.param.track.notify_info);
+  } else if (buf->notification != nullptr &&
+             (buf->numberOfItems < msg_rsp->info.api_resp_info.param.track
+                                       .notify_info->numberOfItems)) {
+    return SA_AIS_ERR_NO_SPACE;
+  } else {
+    /* we need to ignore the numberOfItems and allocate the space
+     ** This memory will be freed by the application */
+    buf->numberOfItems =
+        msg_rsp->info.api_resp_info.param.track.notify_info->numberOfItems;
+    buf->viewNumber =
+        msg_rsp->info.api_resp_info.param.track.notify_info->viewNumber;
+    buf->notification = static_cast<SaClmClusterNotificationT *>(
+        malloc(sizeof(SaClmClusterNotificationT) * buf->numberOfItems));
+    memset(buf->notification, 0,
+           sizeof(SaClmClusterNotificationT) * buf->numberOfItems);
+    clma_fill_clusterbuf_from_buf_4(
+        buf, msg_rsp->info.api_resp_info.param.track.notify_info);
+  }
+  return SA_AIS_OK;
 }
 
 /* Copy the cluster node info into buf
@@ -252,639 +239,607 @@ clma_fill_cluster_ntf_buf_from_omsg(SaClmClusterNotificationBufferT *buf,
  * Check the number of items and num fields.
  */
 
-static SaAisErrorT
-clma_fill_cluster_ntf_buf4_from_omsg(SaClmClusterNotificationBufferT_4 *buf_4,
-				     CLMSV_MSG *msg_rsp)
-{
-	if (msg_rsp->info.api_resp_info.param.track.notify_info == nullptr)
-		return SA_AIS_ERR_NO_MEMORY;
+static SaAisErrorT clma_fill_cluster_ntf_buf4_from_omsg(
+    SaClmClusterNotificationBufferT_4 *buf_4, CLMSV_MSG *msg_rsp) {
+  if (msg_rsp->info.api_resp_info.param.track.notify_info == nullptr)
+    return SA_AIS_ERR_NO_MEMORY;
 
-	if (buf_4->notification != nullptr &&
-	    (buf_4->numberOfItems >= msg_rsp->info.api_resp_info.param.track
-					 .notify_info->numberOfItems)) {
-		/* Overwrite the numberOfItems and copy it to buffer */
-		buf_4->numberOfItems = msg_rsp->info.api_resp_info.param.track
-					   .notify_info->numberOfItems;
-		buf_4->viewNumber = msg_rsp->info.api_resp_info.param.track
-					.notify_info->viewNumber;
+  if (buf_4->notification != nullptr &&
+      (buf_4->numberOfItems >=
+       msg_rsp->info.api_resp_info.param.track.notify_info->numberOfItems)) {
+    /* Overwrite the numberOfItems and copy it to buffer */
+    buf_4->numberOfItems =
+        msg_rsp->info.api_resp_info.param.track.notify_info->numberOfItems;
+    buf_4->viewNumber =
+        msg_rsp->info.api_resp_info.param.track.notify_info->viewNumber;
 
-		memset(buf_4->notification, 0,
-		       sizeof(SaClmClusterNotificationT_4) *
-			   buf_4->numberOfItems);
-		memcpy(buf_4->notification,
-		       msg_rsp->info.api_resp_info.param.track.notify_info
-			   ->notification,
-		       sizeof(SaClmClusterNotificationT_4) *
-			   buf_4->numberOfItems);
+    memset(buf_4->notification, 0,
+           sizeof(SaClmClusterNotificationT_4) * buf_4->numberOfItems);
+    memcpy(buf_4->notification,
+           msg_rsp->info.api_resp_info.param.track.notify_info->notification,
+           sizeof(SaClmClusterNotificationT_4) * buf_4->numberOfItems);
 
-		/* TODO: Code for copying long DNs for nodeName and EE when full
-		 * long DN support is implemented. */
-	} else if (buf_4->notification != nullptr &&
-		   (buf_4->numberOfItems <
-		    msg_rsp->info.api_resp_info.param.track.notify_info
-			->numberOfItems)) {
-		return SA_AIS_ERR_NO_SPACE;
-	} else {
-		/* we need to ignore the numberOfItems and allocate the space
-		 ** This memory will be freed by the application */
-		buf_4->numberOfItems = msg_rsp->info.api_resp_info.param.track
-					   .notify_info->numberOfItems;
-		buf_4->viewNumber = msg_rsp->info.api_resp_info.param.track
-					.notify_info->viewNumber;
-		buf_4->notification = static_cast<SaClmClusterNotificationT_4*>(malloc(
-		    sizeof(SaClmClusterNotificationT_4) * buf_4->numberOfItems));
-		memset(buf_4->notification, 0,
-		       sizeof(SaClmClusterNotificationT_4) *
-			   buf_4->numberOfItems);
-		memcpy(buf_4->notification,
-		       msg_rsp->info.api_resp_info.param.track.notify_info
-			   ->notification,
-		       sizeof(SaClmClusterNotificationT_4) *
-			   buf_4->numberOfItems);
+    /* TODO: Code for copying long DNs for nodeName and EE when full
+     * long DN support is implemented. */
+  } else if (buf_4->notification != nullptr &&
+             (buf_4->numberOfItems < msg_rsp->info.api_resp_info.param.track
+                                         .notify_info->numberOfItems)) {
+    return SA_AIS_ERR_NO_SPACE;
+  } else {
+    /* we need to ignore the numberOfItems and allocate the space
+     ** This memory will be freed by the application */
+    buf_4->numberOfItems =
+        msg_rsp->info.api_resp_info.param.track.notify_info->numberOfItems;
+    buf_4->viewNumber =
+        msg_rsp->info.api_resp_info.param.track.notify_info->viewNumber;
+    buf_4->notification = static_cast<SaClmClusterNotificationT_4 *>(
+        malloc(sizeof(SaClmClusterNotificationT_4) * buf_4->numberOfItems));
+    memset(buf_4->notification, 0,
+           sizeof(SaClmClusterNotificationT_4) * buf_4->numberOfItems);
+    memcpy(buf_4->notification,
+           msg_rsp->info.api_resp_info.param.track.notify_info->notification,
+           sizeof(SaClmClusterNotificationT_4) * buf_4->numberOfItems);
 
-		/* TODO: Code for copying long DNs for nodeName and EE when full
-		 * long DN support is implemented. */
-	}
-	return SA_AIS_OK;
+    /* TODO: Code for copying long DNs for nodeName and EE when full
+     * long DN support is implemented. */
+  }
+  return SA_AIS_OK;
 }
 
 static SaAisErrorT clma_send_mds_msg_get_clusternotificationbuf(
     clma_client_hdl_rec_t *hdl_rec, SaUint8T flags, CLMSV_MSG i_msg,
-    SaClmClusterNotificationBufferT *buf)
-{
-	SaAisErrorT rc = SA_AIS_OK;
-	CLMSV_MSG *o_msg = nullptr;
-	uint32_t mds_rc = NCSCC_RC_SUCCESS;
+    SaClmClusterNotificationBufferT *buf) {
+  SaAisErrorT rc = SA_AIS_OK;
+  CLMSV_MSG *o_msg = nullptr;
+  uint32_t mds_rc = NCSCC_RC_SUCCESS;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	if (flags & SA_TRACK_CURRENT) {
-		TRACE("track flag SA_TRACK_CURRENT");
+  if (flags & SA_TRACK_CURRENT) {
+    TRACE("track flag SA_TRACK_CURRENT");
 
-		if (!buf) {
-			TRACE("Tracking requested for buffer nullptr");
-			i_msg.info.api_info.param.track_start.sync_resp = false;
+    if (!buf) {
+      TRACE("Tracking requested for buffer nullptr");
+      i_msg.info.api_info.param.track_start.sync_resp = false;
 
-			if (!hdl_rec->cbk_param.reg_cbk
-				 .saClmClusterTrackCallback) {
-				rc = SA_AIS_ERR_INIT;
-				goto done;
-			}
+      if (!hdl_rec->cbk_param.reg_cbk.saClmClusterTrackCallback) {
+        rc = SA_AIS_ERR_INIT;
+        goto done;
+      }
 
-			mds_rc = clma_mds_msg_async_send(
-			    &clma_cb, &i_msg,
-			    MDS_SEND_PRIORITY_HIGH); /* fix me ?? */
-			switch (mds_rc) {
-			case NCSCC_RC_SUCCESS:
-				rc = SA_AIS_OK; /*let it be */
-				goto done;
-			case NCSCC_RC_REQ_TIMOUT:
-				TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-				rc = SA_AIS_ERR_TIMEOUT;
-				goto done;
-			default:
-				TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-				rc = SA_AIS_ERR_NO_RESOURCES;
-				goto done;
-			}
-		}
+      mds_rc = clma_mds_msg_async_send(&clma_cb, &i_msg,
+                                       MDS_SEND_PRIORITY_HIGH); /* fix me ?? */
+      switch (mds_rc) {
+        case NCSCC_RC_SUCCESS:
+          rc = SA_AIS_OK; /*let it be */
+          goto done;
+        case NCSCC_RC_REQ_TIMOUT:
+          TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+          rc = SA_AIS_ERR_TIMEOUT;
+          goto done;
+        default:
+          TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+          rc = SA_AIS_ERR_NO_RESOURCES;
+          goto done;
+      }
+    }
 
-		/* Do a sync mds send and get information about all
-		 * nodes that are currently members in the cluster
-		 */
-		TRACE("Tracking requested for buffer != nullptr");
-		i_msg.info.api_info.param.track_start.sync_resp = true;
-		mds_rc = clma_mds_msg_sync_send(&clma_cb, &i_msg, &o_msg,
-						CLMS_WAIT_TIME);
-		switch (mds_rc) {
-		case NCSCC_RC_SUCCESS:
-			rc = SA_AIS_OK;
-			break;
-		case NCSCC_RC_REQ_TIMOUT:
-			TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-			rc = SA_AIS_ERR_TIMEOUT;
-			goto done;
-		default:
-			TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-			rc = SA_AIS_ERR_NO_RESOURCES;
-			goto done;
-		}
+    /* Do a sync mds send and get information about all
+     * nodes that are currently members in the cluster
+     */
+    TRACE("Tracking requested for buffer != nullptr");
+    i_msg.info.api_info.param.track_start.sync_resp = true;
+    mds_rc = clma_mds_msg_sync_send(&clma_cb, &i_msg, &o_msg, CLMS_WAIT_TIME);
+    switch (mds_rc) {
+      case NCSCC_RC_SUCCESS:
+        rc = SA_AIS_OK;
+        break;
+      case NCSCC_RC_REQ_TIMOUT:
+        TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+        rc = SA_AIS_ERR_TIMEOUT;
+        goto done;
+      default:
+        TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+        rc = SA_AIS_ERR_NO_RESOURCES;
+        goto done;
+    }
 
-		if (o_msg != nullptr)
-			rc = o_msg->info.api_resp_info.rc;
-		else {
-			rc = SA_AIS_ERR_NO_RESOURCES;
-			goto done;
-		}
+    if (o_msg != nullptr)
+      rc = o_msg->info.api_resp_info.rc;
+    else {
+      rc = SA_AIS_ERR_NO_RESOURCES;
+      goto done;
+    }
 
-		if (rc == SA_AIS_OK) {
-			rc = clma_fill_cluster_ntf_buf_from_omsg(buf, o_msg);
-			/* destroy o_msg */
-			clma_msg_destroy(o_msg);
-			goto done;
-		} else {
-			/* destroy o_msg */
-			clma_msg_destroy(o_msg);
-			goto done;
-		}
+    if (rc == SA_AIS_OK) {
+      rc = clma_fill_cluster_ntf_buf_from_omsg(buf, o_msg);
+      /* destroy o_msg */
+      clma_msg_destroy(o_msg);
+      goto done;
+    } else {
+      /* destroy o_msg */
+      clma_msg_destroy(o_msg);
+      goto done;
+    }
 
-	} else {
-		i_msg.info.api_info.param.track_start.sync_resp = false;
+  } else {
+    i_msg.info.api_info.param.track_start.sync_resp = false;
 
-		if (!hdl_rec->cbk_param.reg_cbk.saClmClusterTrackCallback) {
-			rc = SA_AIS_ERR_INIT;
-			goto done;
-		}
+    if (!hdl_rec->cbk_param.reg_cbk.saClmClusterTrackCallback) {
+      rc = SA_AIS_ERR_INIT;
+      goto done;
+    }
 
-		mds_rc = clma_mds_msg_async_send(&clma_cb, &i_msg,
-						 MDS_SEND_PRIORITY_HIGH);
-		switch (mds_rc) {
-		case NCSCC_RC_SUCCESS:
-			rc = SA_AIS_OK;
-			goto done;
-		case NCSCC_RC_REQ_TIMOUT:
-			TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-			rc = SA_AIS_ERR_TIMEOUT;
-			goto done;
-		default:
-			TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-			rc = SA_AIS_ERR_NO_RESOURCES;
-		}
-	}
+    mds_rc = clma_mds_msg_async_send(&clma_cb, &i_msg, MDS_SEND_PRIORITY_HIGH);
+    switch (mds_rc) {
+      case NCSCC_RC_SUCCESS:
+        rc = SA_AIS_OK;
+        goto done;
+      case NCSCC_RC_REQ_TIMOUT:
+        TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+        rc = SA_AIS_ERR_TIMEOUT;
+        goto done;
+      default:
+        TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+        rc = SA_AIS_ERR_NO_RESOURCES;
+    }
+  }
 
 done:
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 static SaAisErrorT clma_send_mds_msg_get_clusternotificationbuf_4(
     clma_client_hdl_rec_t *hdl_rec, SaUint8T flags, CLMSV_MSG i_msg,
-    SaClmClusterNotificationBufferT_4 *buf_4)
-{
-	TRACE_ENTER();
-	SaAisErrorT rc = SA_AIS_OK;
-	CLMSV_MSG *o_msg = nullptr;
-	uint32_t mds_rc = NCSCC_RC_SUCCESS;
+    SaClmClusterNotificationBufferT_4 *buf_4) {
+  TRACE_ENTER();
+  SaAisErrorT rc = SA_AIS_OK;
+  CLMSV_MSG *o_msg = nullptr;
+  uint32_t mds_rc = NCSCC_RC_SUCCESS;
 
-	if (flags & SA_TRACK_CURRENT) {
+  if (flags & SA_TRACK_CURRENT) {
+    if (!buf_4) {
+      i_msg.info.api_info.param.track_start.sync_resp = false;
 
-		if (!buf_4) {
-			i_msg.info.api_info.param.track_start.sync_resp = false;
+      if (!hdl_rec->cbk_param.reg_cbk_4.saClmClusterTrackCallback) {
+        rc = SA_AIS_ERR_INIT;
+        goto done;
+      }
 
-			if (!hdl_rec->cbk_param.reg_cbk_4
-				 .saClmClusterTrackCallback) {
-				rc = SA_AIS_ERR_INIT;
-				goto done;
-			}
+      mds_rc =
+          clma_mds_msg_async_send(&clma_cb, &i_msg, MDS_SEND_PRIORITY_HIGH);
+      switch (mds_rc) {
+        case NCSCC_RC_SUCCESS:
+          rc = SA_AIS_OK;
+          goto done;
+        case NCSCC_RC_REQ_TIMOUT:
+          TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+          rc = SA_AIS_ERR_TIMEOUT;
+          goto done;
+        default:
+          TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+          rc = SA_AIS_ERR_NO_RESOURCES;
+          goto done;
+      }
+    }
 
-			mds_rc = clma_mds_msg_async_send(
-			    &clma_cb, &i_msg, MDS_SEND_PRIORITY_HIGH);
-			switch (mds_rc) {
-			case NCSCC_RC_SUCCESS:
-				rc = SA_AIS_OK;
-				goto done;
-			case NCSCC_RC_REQ_TIMOUT:
-				TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-				rc = SA_AIS_ERR_TIMEOUT;
-				goto done;
-			default:
-				TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-				rc = SA_AIS_ERR_NO_RESOURCES;
-				goto done;
-			}
-		}
+    /* Do a sync mds send and get information about all
+     * nodes that are currently members in the cluster
+     */
+    i_msg.info.api_info.param.track_start.sync_resp = true;
+    mds_rc = clma_mds_msg_sync_send(&clma_cb, &i_msg, &o_msg, CLMS_WAIT_TIME);
+    switch (mds_rc) {
+      case NCSCC_RC_SUCCESS:
+        rc = SA_AIS_OK;
+        break;
+      case NCSCC_RC_REQ_TIMOUT:
+        TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+        rc = SA_AIS_ERR_TIMEOUT;
+        goto done;
+      default:
+        TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+        rc = SA_AIS_ERR_NO_RESOURCES;
+        goto done;
+    }
 
-		/* Do a sync mds send and get information about all
-		 * nodes that are currently members in the cluster
-		 */
-		i_msg.info.api_info.param.track_start.sync_resp = true;
-		mds_rc = clma_mds_msg_sync_send(&clma_cb, &i_msg, &o_msg,
-						CLMS_WAIT_TIME);
-		switch (mds_rc) {
-		case NCSCC_RC_SUCCESS:
-			rc = SA_AIS_OK;
-			break;
-		case NCSCC_RC_REQ_TIMOUT:
-			TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-			rc = SA_AIS_ERR_TIMEOUT;
-			goto done;
-		default:
-			TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-			rc = SA_AIS_ERR_NO_RESOURCES;
-			goto done;
-		}
+    if (o_msg != nullptr)
+      rc = o_msg->info.api_resp_info.rc;
+    else {
+      rc = SA_AIS_ERR_NO_RESOURCES;
+      goto done;
+    }
 
-		if (o_msg != nullptr)
-			rc = o_msg->info.api_resp_info.rc;
-		else {
-			rc = SA_AIS_ERR_NO_RESOURCES;
-			goto done;
-		}
+    if (rc == SA_AIS_OK) {
+      rc = clma_fill_cluster_ntf_buf4_from_omsg(buf_4, o_msg);
+      /* destroy o_msg */
+      clma_msg_destroy(o_msg);
+      goto done;
+    } else {
+      /* destroy o_msg */
+      clma_msg_destroy(o_msg);
+      goto done;
+    }
 
-		if (rc == SA_AIS_OK) {
-			rc = clma_fill_cluster_ntf_buf4_from_omsg(buf_4, o_msg);
-			/* destroy o_msg */
-			clma_msg_destroy(o_msg);
-			goto done;
-		} else {
-			/* destroy o_msg */
-			clma_msg_destroy(o_msg);
-			goto done;
-		}
+  } else {
+    i_msg.info.api_info.param.track_start.sync_resp = false;
 
-	} else {
-		i_msg.info.api_info.param.track_start.sync_resp = false;
+    if (!hdl_rec->cbk_param.reg_cbk_4.saClmClusterTrackCallback) {
+      rc = SA_AIS_ERR_INIT;
+      goto done;
+    }
 
-		if (!hdl_rec->cbk_param.reg_cbk_4.saClmClusterTrackCallback) {
-			rc = SA_AIS_ERR_INIT;
-			goto done;
-		}
-
-		mds_rc = clma_mds_msg_async_send(
-		    &clma_cb, &i_msg, MDS_SEND_PRIORITY_HIGH); /* fix me ?? */
-		switch (mds_rc) {
-		case NCSCC_RC_SUCCESS:
-			rc = SA_AIS_OK;
-			return rc;
-		case NCSCC_RC_REQ_TIMOUT:
-			TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-			return SA_AIS_ERR_TIMEOUT;
-		default:
-			TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-			return SA_AIS_ERR_NO_RESOURCES;
-		}
-	}
+    mds_rc = clma_mds_msg_async_send(&clma_cb, &i_msg,
+                                     MDS_SEND_PRIORITY_HIGH); /* fix me ?? */
+    switch (mds_rc) {
+      case NCSCC_RC_SUCCESS:
+        rc = SA_AIS_OK;
+        return rc;
+      case NCSCC_RC_REQ_TIMOUT:
+        TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+        return SA_AIS_ERR_TIMEOUT;
+      default:
+        TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+        return SA_AIS_ERR_NO_RESOURCES;
+    }
+  }
 done:
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 void clma_fill_clusterbuf_from_buf_4(SaClmClusterNotificationBufferT *buf,
-				     SaClmClusterNotificationBufferT_4 *buf_4)
-{
-	SaUint32T i = 0;
-	for (i = 0; i < buf->numberOfItems; i++) {
-		buf->notification[i].clusterChange =
-		    buf_4->notification[i].clusterChange;
+                                     SaClmClusterNotificationBufferT_4 *buf_4) {
+  SaUint32T i = 0;
+  for (i = 0; i < buf->numberOfItems; i++) {
+    buf->notification[i].clusterChange = buf_4->notification[i].clusterChange;
 
-		buf->notification[i].clusterNode.nodeId =
-		    buf_4->notification[i].clusterNode.nodeId;
-		buf->notification[i].clusterNode.nodeAddress.family =
-		    buf_4->notification[i].clusterNode.nodeAddress.family;
-		buf->notification[i].clusterNode.nodeAddress.length =
-		    buf_4->notification[i].clusterNode.nodeAddress.length;
-		memcpy(
-		    buf->notification[i].clusterNode.nodeAddress.value,
-		    buf_4->notification[i].clusterNode.nodeAddress.value,
-		    buf->notification[i].clusterNode.nodeAddress.length);
-		osaf_extended_name_alloc(
-		    osaf_extended_name_borrow(
-			&buf_4->notification[i].clusterNode.nodeName),
-		    &buf->notification[i].clusterNode.nodeName);
-		buf->notification[i].clusterNode.member =
-		    buf_4->notification[i].clusterNode.member;
-		buf->notification[i].clusterNode.bootTimestamp =
-		    buf_4->notification[i].clusterNode.bootTimestamp;
-		buf->notification[i].clusterNode.initialViewNumber =
-		    buf_4->notification[i].clusterNode.initialViewNumber;
-	}
+    buf->notification[i].clusterNode.nodeId =
+        buf_4->notification[i].clusterNode.nodeId;
+    buf->notification[i].clusterNode.nodeAddress.family =
+        buf_4->notification[i].clusterNode.nodeAddress.family;
+    buf->notification[i].clusterNode.nodeAddress.length =
+        buf_4->notification[i].clusterNode.nodeAddress.length;
+    memcpy(buf->notification[i].clusterNode.nodeAddress.value,
+           buf_4->notification[i].clusterNode.nodeAddress.value,
+           buf->notification[i].clusterNode.nodeAddress.length);
+    osaf_extended_name_alloc(
+        osaf_extended_name_borrow(&buf_4->notification[i].clusterNode.nodeName),
+        &buf->notification[i].clusterNode.nodeName);
+    buf->notification[i].clusterNode.member =
+        buf_4->notification[i].clusterNode.member;
+    buf->notification[i].clusterNode.bootTimestamp =
+        buf_4->notification[i].clusterNode.bootTimestamp;
+    buf->notification[i].clusterNode.initialViewNumber =
+        buf_4->notification[i].clusterNode.initialViewNumber;
+  }
 }
 
 /****************************************************************************
   Name          : saClmInitialize
 
   Description   : This function initializes the CLM for the invoking process
-		  and registers the various callback functions.
+                  and registers the various callback functions.
 
   Arguments     : clmHandle  - ptr to the CLM handle
-		  reg_cbks  - ptr to a SaClmCallbacksT structure
-		  version   - Version of the CLM implementation being used
-			     by the invoking process.
+                  reg_cbks  - ptr to a SaClmCallbacksT structure
+                  version   - Version of the CLM implementation being used
+                             by the invoking process.
 
   Return Values : Refer to SAI-AIS specification for various return values.
 
   Notes         : None.
 ******************************************************************************/
 SaAisErrorT saClmInitialize(SaClmHandleT *clmHandle,
-			    const SaClmCallbacksT *reg_cbks,
-			    SaVersionT *version)
-{
-	SaAisErrorT rc;
+                            const SaClmCallbacksT *reg_cbks,
+                            SaVersionT *version) {
+  SaAisErrorT rc;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	if ((clmHandle == nullptr) || (version == nullptr)) {
-		TRACE("version or handle FAILED");
-		rc = SA_AIS_ERR_INVALID_PARAM;
-		goto done;
-	}
+  if ((clmHandle == nullptr) || (version == nullptr)) {
+    TRACE("version or handle FAILED");
+    rc = SA_AIS_ERR_INVALID_PARAM;
+    goto done;
+  }
 
-	/* validate the version */
-	if ((version->releaseCode == CLM_RELEASE_CODE) &&
-	    (version->majorVersion <= CLM_MAJOR_VERSION_1) &&
-	    (0 < version->majorVersion)) {
-		version->majorVersion = CLM_MAJOR_VERSION_1;
-		version->minorVersion = CLM_MINOR_VERSION;
-	} else {
-		TRACE(
-		    "version FAILED, required: %c.%u.%u, supported: %c.%u.%u\n",
-		    version->releaseCode, version->majorVersion,
-		    version->minorVersion, CLM_RELEASE_CODE,
-		    CLM_MAJOR_VERSION_1, CLM_MINOR_VERSION);
-		version->releaseCode = CLM_RELEASE_CODE;
-		version->majorVersion = CLM_MAJOR_VERSION_1;
-		version->minorVersion = CLM_MINOR_VERSION;
-		rc = SA_AIS_ERR_VERSION;
-		goto done;
-	}
+  /* validate the version */
+  if ((version->releaseCode == CLM_RELEASE_CODE) &&
+      (version->majorVersion <= CLM_MAJOR_VERSION_1) &&
+      (0 < version->majorVersion)) {
+    version->majorVersion = CLM_MAJOR_VERSION_1;
+    version->minorVersion = CLM_MINOR_VERSION;
+  } else {
+    TRACE("version FAILED, required: %c.%u.%u, supported: %c.%u.%u\n",
+          version->releaseCode, version->majorVersion, version->minorVersion,
+          CLM_RELEASE_CODE, CLM_MAJOR_VERSION_1, CLM_MINOR_VERSION);
+    version->releaseCode = CLM_RELEASE_CODE;
+    version->majorVersion = CLM_MAJOR_VERSION_1;
+    version->minorVersion = CLM_MINOR_VERSION;
+    rc = SA_AIS_ERR_VERSION;
+    goto done;
+  }
 
-	rc = clmainitialize(clmHandle, reg_cbks, nullptr, version);
+  rc = clmainitialize(clmHandle, reg_cbks, nullptr, version);
 done:
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 /****************************************************************************
   Name          : saClmInitialize_4
 
   Description   : This function initializes the CLM for the invoking process
-		  and registers the various callback functions.
+                  and registers the various callback functions.
 
   Arguments     : clmHandle   - ptr to the CLM handle
-		  reg_cbks   - ptr to a SaClmCallbacksT structure
-		  version    - Version of the CLM implementation being used
-			     by the invoking process.
+                  reg_cbks   - ptr to a SaClmCallbacksT structure
+                  version    - Version of the CLM implementation being used
+                             by the invoking process.
 
   Return Values : Refer to SAI-AIS specification for various return values.
 
   Notes         : None.
 ******************************************************************************/
 SaAisErrorT saClmInitialize_4(SaClmHandleT *clmHandle,
-			      const SaClmCallbacksT_4 *reg_cbks,
-			      SaVersionT *version)
-{
-	SaAisErrorT rc;
+                              const SaClmCallbacksT_4 *reg_cbks,
+                              SaVersionT *version) {
+  SaAisErrorT rc;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	if ((clmHandle == nullptr) || (version == nullptr)) {
-		TRACE("version or handle FAILED");
-		rc = SA_AIS_ERR_INVALID_PARAM;
-		goto done;
-	}
+  if ((clmHandle == nullptr) || (version == nullptr)) {
+    TRACE("version or handle FAILED");
+    rc = SA_AIS_ERR_INVALID_PARAM;
+    goto done;
+  }
 
-	/* validate the version */
-	if ((version->releaseCode == CLM_RELEASE_CODE) &&
-	    (version->majorVersion > CLM_MAJOR_VERSION_1 &&
-	     version->majorVersion <= CLM_MAJOR_VERSION_4) &&
-	    (0 < version->majorVersion)) {
-		version->majorVersion = CLM_MAJOR_VERSION_4;
-		version->minorVersion = CLM_MINOR_VERSION;
-	} else {
-		TRACE(
-		    "version FAILED, required: %c.%u.%u, supported: %c.%u.%u\n",
-		    version->releaseCode, version->majorVersion,
-		    version->minorVersion, CLM_RELEASE_CODE,
-		    CLM_MAJOR_VERSION_4, CLM_MINOR_VERSION);
-		version->releaseCode = CLM_RELEASE_CODE;
-		version->majorVersion = CLM_MAJOR_VERSION_4;
-		version->minorVersion = CLM_MINOR_VERSION;
-		rc = SA_AIS_ERR_VERSION;
-		goto done;
-	}
+  /* validate the version */
+  if ((version->releaseCode == CLM_RELEASE_CODE) &&
+      (version->majorVersion > CLM_MAJOR_VERSION_1 &&
+       version->majorVersion <= CLM_MAJOR_VERSION_4) &&
+      (0 < version->majorVersion)) {
+    version->majorVersion = CLM_MAJOR_VERSION_4;
+    version->minorVersion = CLM_MINOR_VERSION;
+  } else {
+    TRACE("version FAILED, required: %c.%u.%u, supported: %c.%u.%u\n",
+          version->releaseCode, version->majorVersion, version->minorVersion,
+          CLM_RELEASE_CODE, CLM_MAJOR_VERSION_4, CLM_MINOR_VERSION);
+    version->releaseCode = CLM_RELEASE_CODE;
+    version->majorVersion = CLM_MAJOR_VERSION_4;
+    version->minorVersion = CLM_MINOR_VERSION;
+    rc = SA_AIS_ERR_VERSION;
+    goto done;
+  }
 
-	rc = clmainitialize(clmHandle, nullptr, reg_cbks, version);
+  rc = clmainitialize(clmHandle, nullptr, reg_cbks, version);
 done:
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 static SaAisErrorT clmainitialize(SaClmHandleT *clmHandle,
-				  const SaClmCallbacksT *reg_cbks_1,
-				  const SaClmCallbacksT_4 *reg_cbks_4,
-				  SaVersionT *version)
-{
-	clma_client_hdl_rec_t *clma_hdl_rec;
-	CLMSV_MSG i_msg, *o_msg = nullptr;
-	SaAisErrorT ais_rc = SA_AIS_OK;
-	uint32_t client_id, rc;
+                                  const SaClmCallbacksT *reg_cbks_1,
+                                  const SaClmCallbacksT_4 *reg_cbks_4,
+                                  SaVersionT *version) {
+  clma_client_hdl_rec_t *clma_hdl_rec;
+  CLMSV_MSG i_msg, *o_msg = nullptr;
+  SaAisErrorT ais_rc = SA_AIS_OK;
+  uint32_t client_id, rc;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	if ((rc = clma_startup()) != NCSCC_RC_SUCCESS) {
-		TRACE("clma_startup FAILED");
-		ais_rc = SA_AIS_ERR_LIBRARY;
-		goto done;
-	}
+  if ((rc = clma_startup()) != NCSCC_RC_SUCCESS) {
+    TRACE("clma_startup FAILED");
+    ais_rc = SA_AIS_ERR_LIBRARY;
+    goto done;
+  }
 
-	if (!clma_cb.clms_up) {
-		clma_shutdown();
-		TRACE("CLMS server is down");
-		ais_rc = SA_AIS_ERR_TRY_AGAIN;
-		goto done;
-	}
+  if (!clma_cb.clms_up) {
+    clma_shutdown();
+    TRACE("CLMS server is down");
+    ais_rc = SA_AIS_ERR_TRY_AGAIN;
+    goto done;
+  }
 
-	/* Populate the message to be sent to the CLMS */
-	memset(&i_msg, 0, sizeof(CLMSV_MSG));
-	i_msg.evt_type = CLMSV_CLMA_TO_CLMS_API_MSG;
-	i_msg.info.api_info.type = CLMSV_INITIALIZE_REQ;
-	i_msg.info.api_info.param.init.version = *version;
+  /* Populate the message to be sent to the CLMS */
+  memset(&i_msg, 0, sizeof(CLMSV_MSG));
+  i_msg.evt_type = CLMSV_CLMA_TO_CLMS_API_MSG;
+  i_msg.info.api_info.type = CLMSV_INITIALIZE_REQ;
+  i_msg.info.api_info.param.init.version = *version;
 
-	/* Send a message to CLMS to obtain a client_id/server ref id which is
-	 * cluster wide unique.
-	 */
-	rc = clma_mds_msg_sync_send(&clma_cb, &i_msg, &o_msg, CLMS_WAIT_TIME);
-	switch (rc) {
-	case NCSCC_RC_SUCCESS:
-		ais_rc = SA_AIS_OK;
-		break;
-	case NCSCC_RC_REQ_TIMOUT:
-		ais_rc = SA_AIS_ERR_TIMEOUT;
-		TRACE("clma_mds_msg_sync_send FAILED: %u", ais_rc);
-		goto err;
-	default:
-		ais_rc = SA_AIS_ERR_TRY_AGAIN;
-		TRACE("clma_mds_msg_sync_send FAILED: %u", ais_rc);
-		goto err;
-	}
+  /* Send a message to CLMS to obtain a client_id/server ref id which is
+   * cluster wide unique.
+   */
+  rc = clma_mds_msg_sync_send(&clma_cb, &i_msg, &o_msg, CLMS_WAIT_TIME);
+  switch (rc) {
+    case NCSCC_RC_SUCCESS:
+      ais_rc = SA_AIS_OK;
+      break;
+    case NCSCC_RC_REQ_TIMOUT:
+      ais_rc = SA_AIS_ERR_TIMEOUT;
+      TRACE("clma_mds_msg_sync_send FAILED: %u", ais_rc);
+      goto err;
+    default:
+      ais_rc = SA_AIS_ERR_TRY_AGAIN;
+      TRACE("clma_mds_msg_sync_send FAILED: %u", ais_rc);
+      goto err;
+  }
 
-	/** Make sure the CLMS return status was SA_AIS_OK
-	 **/
-	if (SA_AIS_OK != o_msg->info.api_resp_info.rc) {
-		ais_rc = o_msg->info.api_resp_info.rc;
-		TRACE("CLMS return FAILED");
-		goto err;
-	}
+  /** Make sure the CLMS return status was SA_AIS_OK
+   **/
+  if (SA_AIS_OK != o_msg->info.api_resp_info.rc) {
+    ais_rc = o_msg->info.api_resp_info.rc;
+    TRACE("CLMS return FAILED");
+    goto err;
+  }
 
-	/** Store the Client Id returned by the CLMS
-	** to pass into the next routine
-	**/
-	client_id = o_msg->info.api_resp_info.param.client_id;
+  /** Store the Client Id returned by the CLMS
+  ** to pass into the next routine
+  **/
+  client_id = o_msg->info.api_resp_info.param.client_id;
 
-	/* create the hdl record & store the callbacks */
-	clma_hdl_rec = clma_hdl_rec_add(&clma_cb, reg_cbks_1, reg_cbks_4,
-					version, client_id);
-	if (clma_hdl_rec == nullptr) {
-		ais_rc = SA_AIS_ERR_NO_MEMORY;
-		goto err;
-	}
+  /* create the hdl record & store the callbacks */
+  clma_hdl_rec =
+      clma_hdl_rec_add(&clma_cb, reg_cbks_1, reg_cbks_4, version, client_id);
+  if (clma_hdl_rec == nullptr) {
+    ais_rc = SA_AIS_ERR_NO_MEMORY;
+    goto err;
+  }
 
-	/* pass the handle value to the appl */
-	if (SA_AIS_OK == ais_rc)
-		*clmHandle = clma_hdl_rec->local_hdl;
-	TRACE_1("OK intitialize with client_id: %u", client_id);
+  /* pass the handle value to the appl */
+  if (SA_AIS_OK == ais_rc) *clmHandle = clma_hdl_rec->local_hdl;
+  TRACE_1("OK intitialize with client_id: %u", client_id);
 
 err:
-	/* free up the response message */
-	if (o_msg)
-		clma_msg_destroy(o_msg); /*need to do */
+  /* free up the response message */
+  if (o_msg) clma_msg_destroy(o_msg); /*need to do */
 
-	if (ais_rc != SA_AIS_OK) {
-		TRACE_2("CLMA INIT FAILED\n");
-		clma_shutdown();
-	}
+  if (ais_rc != SA_AIS_OK) {
+    TRACE_2("CLMA INIT FAILED\n");
+    clma_shutdown();
+  }
 
 done:
-	TRACE_LEAVE();
-	return ais_rc;
+  TRACE_LEAVE();
+  return ais_rc;
 }
 
 /****************************************************************************
   Name          : saClmSelectionObjectGet
 
   Description   : This function creates & returns the operating system handle
-		  associated with the CLM Handle.
+                  associated with the CLM Handle.
 
   Arguments     : clmHandle       - CLM handle
-		  selectionObject - ptr to the selection object
+                  selectionObject - ptr to the selection object
 
   Return Values : Refer to SAI-AIS specification for various return values.
 
   Notes         : None.
 ******************************************************************************/
 SaAisErrorT saClmSelectionObjectGet(SaClmHandleT clmHandle,
-				    SaSelectionObjectT *selectionObject)
-{
-	SaAisErrorT rc = SA_AIS_OK;
-	clma_client_hdl_rec_t *hdl_rec;
-	NCS_SEL_OBJ sel_obj;
+                                    SaSelectionObjectT *selectionObject) {
+  SaAisErrorT rc = SA_AIS_OK;
+  clma_client_hdl_rec_t *hdl_rec;
+  NCS_SEL_OBJ sel_obj;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	if (selectionObject == nullptr) {
-		TRACE("selectionObject is nullptr");
-		rc = SA_AIS_ERR_INVALID_PARAM;
-		goto done;
-	}
+  if (selectionObject == nullptr) {
+    TRACE("selectionObject is nullptr");
+    rc = SA_AIS_ERR_INVALID_PARAM;
+    goto done;
+  }
 
-	/* retrieve hdl rec */
-	hdl_rec = static_cast<clma_client_hdl_rec_t*>(
-		ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
-	if (hdl_rec == nullptr) {
-		TRACE("ncshm_take_hdl failed");
-		rc = SA_AIS_ERR_BAD_HANDLE;
-		goto done;
-	}
+  /* retrieve hdl rec */
+  hdl_rec = static_cast<clma_client_hdl_rec_t *>(
+      ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
+  if (hdl_rec == nullptr) {
+    TRACE("ncshm_take_hdl failed");
+    rc = SA_AIS_ERR_BAD_HANDLE;
+    goto done;
+  }
 
-	if ((hdl_rec->is_configured == false) &&
-	    (!clma_validate_version(hdl_rec->version))) {
-		TRACE("Node is unconfigured");
-		rc = SA_AIS_ERR_UNAVAILABLE;
-		goto done_give_hdl;
-	}
+  if ((hdl_rec->is_configured == false) &&
+      (!clma_validate_version(hdl_rec->version))) {
+    TRACE("Node is unconfigured");
+    rc = SA_AIS_ERR_UNAVAILABLE;
+    goto done_give_hdl;
+  }
 
-	/* Obtain the selection object from the IPC queue */
-	sel_obj = m_NCS_IPC_GET_SEL_OBJ(&hdl_rec->mbx);
+  /* Obtain the selection object from the IPC queue */
+  sel_obj = m_NCS_IPC_GET_SEL_OBJ(&hdl_rec->mbx);
 
-	/* everything's fine.. pass the sel fd to the appl */
-	*selectionObject = static_cast<SaSelectionObjectT>(m_GET_FD_FROM_SEL_OBJ(sel_obj));
+  /* everything's fine.. pass the sel fd to the appl */
+  *selectionObject =
+      static_cast<SaSelectionObjectT>(m_GET_FD_FROM_SEL_OBJ(sel_obj));
 
 done_give_hdl:
-	/* return hdl rec */
-	ncshm_give_hdl(clmHandle);
+  /* return hdl rec */
+  ncshm_give_hdl(clmHandle);
 
 done:
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 /****************************************************************************
   Name          : saClmDispatch
 
   Description   : This function invokes, in the context of the calling thread,
-		  the next pending callback for the CLM handle.
+                  the next pending callback for the CLM handle.
 
   Arguments     : hdl   - CLM handle
-		  flags - flags that specify the callback execution behavior
-		  of the saClmDispatch() function,
+                  flags - flags that specify the callback execution behavior
+                  of the saClmDispatch() function,
 
   Return Values : Refer to SAI-AIS specification for various return values.
 
   Notes         : None.
 ******************************************************************************/
 SaAisErrorT saClmDispatch(SaClmHandleT clmHandle,
-			  SaDispatchFlagsT dispatchFlags)
-{
-	clma_client_hdl_rec_t *hdl_rec;
-	SaAisErrorT rc = SA_AIS_OK;
+                          SaDispatchFlagsT dispatchFlags) {
+  clma_client_hdl_rec_t *hdl_rec;
+  SaAisErrorT rc = SA_AIS_OK;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	if (!m_DISPATCH_FLAG_IS_VALID(dispatchFlags)) {
-		TRACE("Invalid dispatchFlags");
-		rc = SA_AIS_ERR_INVALID_PARAM;
-		goto done;
-	}
+  if (!m_DISPATCH_FLAG_IS_VALID(dispatchFlags)) {
+    TRACE("Invalid dispatchFlags");
+    rc = SA_AIS_ERR_INVALID_PARAM;
+    goto done;
+  }
 
-	/* retrieve hdl rec */
-	hdl_rec = static_cast<clma_client_hdl_rec_t*>(
-                ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
-	if (hdl_rec == nullptr) {
-		TRACE("ncshm_take_hdl clmHandle ");
-		rc = SA_AIS_ERR_BAD_HANDLE;
-		goto done;
-	}
+  /* retrieve hdl rec */
+  hdl_rec = static_cast<clma_client_hdl_rec_t *>(
+      ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
+  if (hdl_rec == nullptr) {
+    TRACE("ncshm_take_hdl clmHandle ");
+    rc = SA_AIS_ERR_BAD_HANDLE;
+    goto done;
+  }
 
-	if (hdl_rec->stale == true) {
-		TRACE("Inform client of bad handle");
-		uint32_t ret = clma_hdl_rec_del(&clma_cb.client_list, hdl_rec);
-		if (ret != NCSCC_RC_SUCCESS) {
-			LOG_ER("clma_hdl_rec_del failed");
-		}
-		ncshm_give_hdl(clmHandle);
-		ret = clma_shutdown();
-		if (ret != NCSCC_RC_SUCCESS) {
-			LOG_ER("clma_shutdown failed");
-		}
+  if (hdl_rec->stale == true) {
+    TRACE("Inform client of bad handle");
+    uint32_t ret = clma_hdl_rec_del(&clma_cb.client_list, hdl_rec);
+    if (ret != NCSCC_RC_SUCCESS) {
+      LOG_ER("clma_hdl_rec_del failed");
+    }
+    ncshm_give_hdl(clmHandle);
+    ret = clma_shutdown();
+    if (ret != NCSCC_RC_SUCCESS) {
+      LOG_ER("clma_shutdown failed");
+    }
 
-		rc = SA_AIS_ERR_BAD_HANDLE;
-		goto done;
-	}
+    rc = SA_AIS_ERR_BAD_HANDLE;
+    goto done;
+  }
 
-	if ((hdl_rec->is_configured == false) &&
-	    (!clma_validate_version(hdl_rec->version))) {
-		TRACE("Node is unconfigured");
-		rc = SA_AIS_ERR_UNAVAILABLE;
-		goto done_give_hdl;
-	}
+  if ((hdl_rec->is_configured == false) &&
+      (!clma_validate_version(hdl_rec->version))) {
+    TRACE("Node is unconfigured");
+    rc = SA_AIS_ERR_UNAVAILABLE;
+    goto done_give_hdl;
+  }
 
-	if ((rc = clma_hdl_cbk_dispatch(&clma_cb, hdl_rec, dispatchFlags)) !=
-	    SA_AIS_OK) /*need to do */
-		TRACE("CLMA_DISPATCH_FAILURE");
+  if ((rc = clma_hdl_cbk_dispatch(&clma_cb, hdl_rec, dispatchFlags)) !=
+      SA_AIS_OK) /*need to do */
+    TRACE("CLMA_DISPATCH_FAILURE");
 
 done_give_hdl:
-	ncshm_give_hdl(clmHandle);
+  ncshm_give_hdl(clmHandle);
 
 done:
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 /****************************************************************************
   Name          : saClmFinalize
 
   Description   : This function closes the association, represented by the
-		  CLM handle, between the invoking process and the CLM.
+                  CLM handle, between the invoking process and the CLM.
 
   Arguments     : hdl - CLM handle
 
@@ -892,254 +847,247 @@ done:
 
   Notes         : None.
 ******************************************************************************/
-SaAisErrorT saClmFinalize(SaClmHandleT clmHandle)
-{
-	CLMSV_MSG msg, *o_msg = nullptr;
-	SaAisErrorT rc = SA_AIS_OK;
-	uint32_t mds_rc;
+SaAisErrorT saClmFinalize(SaClmHandleT clmHandle) {
+  CLMSV_MSG msg, *o_msg = nullptr;
+  SaAisErrorT rc = SA_AIS_OK;
+  uint32_t mds_rc;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	/* retrieve hdl rec */
-	clma_client_hdl_rec_t *hdl_rec = static_cast<clma_client_hdl_rec_t*>(
-		ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
-	if (hdl_rec == nullptr) {
-		TRACE("ncshm_take_hdl failed");
-		rc = SA_AIS_ERR_BAD_HANDLE;
-		goto done;
-	}
+  /* retrieve hdl rec */
+  clma_client_hdl_rec_t *hdl_rec = static_cast<clma_client_hdl_rec_t *>(
+      ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
+  if (hdl_rec == nullptr) {
+    TRACE("ncshm_take_hdl failed");
+    rc = SA_AIS_ERR_BAD_HANDLE;
+    goto done;
+  }
 
-	/* Check Whether CLMS is up or not */
-	if (!clma_cb.clms_up) {
-		TRACE("CLMS down");
-		rc = SA_AIS_ERR_TRY_AGAIN;
-		goto done_give_hdl;
-	}
+  /* Check Whether CLMS is up or not */
+  if (!clma_cb.clms_up) {
+    TRACE("CLMS down");
+    rc = SA_AIS_ERR_TRY_AGAIN;
+    goto done_give_hdl;
+  }
 
-	/** populate & send the finalize message
-	** and make sure the finalize from the server
-	** end returned before deleting the local records.
-	**/
-	memset(&msg, 0, sizeof(CLMSV_MSG));
-	msg.evt_type = CLMSV_CLMA_TO_CLMS_API_MSG;
-	msg.info.api_info.type = CLMSV_FINALIZE_REQ;
-	msg.info.api_info.param.finalize.client_id = hdl_rec->clms_client_id;
+  /** populate & send the finalize message
+  ** and make sure the finalize from the server
+  ** end returned before deleting the local records.
+  **/
+  memset(&msg, 0, sizeof(CLMSV_MSG));
+  msg.evt_type = CLMSV_CLMA_TO_CLMS_API_MSG;
+  msg.info.api_info.type = CLMSV_FINALIZE_REQ;
+  msg.info.api_info.param.finalize.client_id = hdl_rec->clms_client_id;
 
-	mds_rc = clma_mds_msg_sync_send(&clma_cb, &msg, &o_msg, CLMS_WAIT_TIME);
-	switch (mds_rc) {
-	case NCSCC_RC_SUCCESS:
-		break;
-	case NCSCC_RC_REQ_TIMOUT:
-		rc = SA_AIS_ERR_TIMEOUT;
-		TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-		goto done_give_hdl;
-	default:
-		TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-		rc = SA_AIS_ERR_NO_RESOURCES;
-		goto done_give_hdl;
-	}
+  mds_rc = clma_mds_msg_sync_send(&clma_cb, &msg, &o_msg, CLMS_WAIT_TIME);
+  switch (mds_rc) {
+    case NCSCC_RC_SUCCESS:
+      break;
+    case NCSCC_RC_REQ_TIMOUT:
+      rc = SA_AIS_ERR_TIMEOUT;
+      TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+      goto done_give_hdl;
+    default:
+      TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+      rc = SA_AIS_ERR_NO_RESOURCES;
+      goto done_give_hdl;
+  }
 
-	if (o_msg != nullptr) {
-		rc = o_msg->info.api_resp_info.rc;
-		clma_msg_destroy(o_msg); /*need to do */
-	} else
-		rc = SA_AIS_ERR_NO_RESOURCES;
+  if (o_msg != nullptr) {
+    rc = o_msg->info.api_resp_info.rc;
+    clma_msg_destroy(o_msg); /*need to do */
+  } else
+    rc = SA_AIS_ERR_NO_RESOURCES;
 
-	if (rc == SA_AIS_OK) {
-		/** delete the hdl rec
-		 ** including all resources allocated by client if MDS send is
-		 ** succesful.
-		 **/
-		uint32_t ret = clma_hdl_rec_del(&clma_cb.client_list,
-				      hdl_rec); /*need to do */
-		if (ret != NCSCC_RC_SUCCESS) {
-			TRACE_1("clma_hdl_rec_del failed");
-			rc = SA_AIS_ERR_BAD_HANDLE;
-		}
-	}
+  if (rc == SA_AIS_OK) {
+    /** delete the hdl rec
+     ** including all resources allocated by client if MDS send is
+     ** succesful.
+     **/
+    uint32_t ret =
+        clma_hdl_rec_del(&clma_cb.client_list, hdl_rec); /*need to do */
+    if (ret != NCSCC_RC_SUCCESS) {
+      TRACE_1("clma_hdl_rec_del failed");
+      rc = SA_AIS_ERR_BAD_HANDLE;
+    }
+  }
 
 done_give_hdl:
-	ncshm_give_hdl(clmHandle);
+  ncshm_give_hdl(clmHandle);
 
-	if (rc == SA_AIS_OK) {
-		uint32_t ret = clma_shutdown();
-		if (ret != NCSCC_RC_SUCCESS) {
-			TRACE_1("clma_shutdown failed");
-			rc = SA_AIS_ERR_LIBRARY;
-		}
-	}
+  if (rc == SA_AIS_OK) {
+    uint32_t ret = clma_shutdown();
+    if (ret != NCSCC_RC_SUCCESS) {
+      TRACE_1("clma_shutdown failed");
+      rc = SA_AIS_ERR_LIBRARY;
+    }
+  }
 
 done:
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 /****************************************************************************
   Name          : saClmClusterTrack
 
   Description   : This fuction requests CLM to start tracking the changes
-		  in the cluster membership.
+                  in the cluster membership.
 
   Arguments     : clmHandle   - CLM handle
-		  flags - flags that determines when the CLM track callback is
-			  invoked
-		  buf   - ptr to the linear buffer provided by the appl
+                  flags - flags that determines when the CLM track callback is
+                          invoked
+                  buf   - ptr to the linear buffer provided by the appl
 
   Return Values : Refer to SAI-AIS specification for various return values.
 
   Notes         : None.
 ******************************************************************************/
 SaAisErrorT saClmClusterTrack(SaClmHandleT clmHandle, SaUint8T flags,
-			      SaClmClusterNotificationBufferT *buf)
-{
-	SaAisErrorT rc;
-	TRACE_ENTER();
+                              SaClmClusterNotificationBufferT *buf) {
+  SaAisErrorT rc;
+  TRACE_ENTER();
 
-	rc = clmaclustertrack(clmHandle, flags, buf, nullptr);
+  rc = clmaclustertrack(clmHandle, flags, buf, nullptr);
 
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 /****************************************************************************
   Name          : saClmClusterTrack_4
 
   Description   : This fuction requests CLM to start tracking the changes
-		  in the cluster membership.
+                  in the cluster membership.
 
   Arguments     : clmHandle   - CLM handle
-		  flags - flags that determines when the CLM track callback is
-			  invoked
-		  buf   - ptr to the linear buffer provided by the appl
+                  flags - flags that determines when the CLM track callback is
+                          invoked
+                  buf   - ptr to the linear buffer provided by the appl
 
   Return Values : Refer to SAI-AIS specification for various return values.
 
   Notes         : None.
 ******************************************************************************/
 SaAisErrorT saClmClusterTrack_4(SaClmHandleT clmHandle, SaUint8T flags,
-				SaClmClusterNotificationBufferT_4 *buf)
-{
-	SaAisErrorT rc;
-	TRACE_ENTER();
+                                SaClmClusterNotificationBufferT_4 *buf) {
+  SaAisErrorT rc;
+  TRACE_ENTER();
 
-	rc = clmaclustertrack(clmHandle, flags, nullptr, buf);
+  rc = clmaclustertrack(clmHandle, flags, nullptr, buf);
 
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 /****************************************************************************
   Name          : clmaclustertrack
 
   Description   : This fuction requests CLM to start tracking the changes
-		  in the cluster membership.
+                  in the cluster membership.
 
   Arguments     : clmHandle   - CLM handle
-		  flags - flags that determines when the CLM track callback is
-			  invoked
-		  buf   - SaClmClusterNotificationBufferT ptr to the linear
-			  buffer provided by the appl
-		  buf_4   - SaClmClusterNotificationBufferT_4 ptr to the linear
-			   buffer provided by the appl
+                  flags - flags that determines when the CLM track callback is
+                          invoked
+                  buf   - SaClmClusterNotificationBufferT ptr to the linear
+                          buffer provided by the appl
+                  buf_4   - SaClmClusterNotificationBufferT_4 ptr to the linear
+                           buffer provided by the appl
 
   Return Values : Refer to SAI-AIS specification for various return values.
 
   Notes         : None.
 ******************************************************************************/
 static SaAisErrorT clmaclustertrack(SaClmHandleT clmHandle, SaUint8T flags,
-				    SaClmClusterNotificationBufferT *buf,
-				    SaClmClusterNotificationBufferT_4 *buf_4)
-{
-	clma_client_hdl_rec_t *hdl_rec;
-	CLMSV_MSG i_msg;
-	SaAisErrorT rc;
+                                    SaClmClusterNotificationBufferT *buf,
+                                    SaClmClusterNotificationBufferT_4 *buf_4) {
+  clma_client_hdl_rec_t *hdl_rec;
+  CLMSV_MSG i_msg;
+  SaAisErrorT rc;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	if (flags == 0) {
-		TRACE("clmHandle or flags nullptr");
-		rc = SA_AIS_ERR_BAD_FLAGS;
-		goto done;
-	}
+  if (flags == 0) {
+    TRACE("clmHandle or flags nullptr");
+    rc = SA_AIS_ERR_BAD_FLAGS;
+    goto done;
+  }
 
-	/* retrieve hdl rec */
-	hdl_rec = static_cast<clma_client_hdl_rec_t*>(
-		ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
-	if (hdl_rec == nullptr) {
-		TRACE("ncshm_take_hdl failed");
-		rc = SA_AIS_ERR_BAD_HANDLE;
-		goto done;
-	}
+  /* retrieve hdl rec */
+  hdl_rec = static_cast<clma_client_hdl_rec_t *>(
+      ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
+  if (hdl_rec == nullptr) {
+    TRACE("ncshm_take_hdl failed");
+    rc = SA_AIS_ERR_BAD_HANDLE;
+    goto done;
+  }
 
-	/* Check Whether CLMS is up or not */
-	if (!clma_cb.clms_up) {
-		TRACE("CLMS down");
-		rc = SA_AIS_ERR_TRY_AGAIN;
-		goto done_give_hdl;
-	}
+  /* Check Whether CLMS is up or not */
+  if (!clma_cb.clms_up) {
+    TRACE("CLMS down");
+    rc = SA_AIS_ERR_TRY_AGAIN;
+    goto done_give_hdl;
+  }
 
-	if (buf_4 == nullptr && buf != nullptr) {
-		if (!clma_validate_version(hdl_rec->version)) {
-			TRACE("Version error from saClmClusterTrack");
-			rc = SA_AIS_ERR_VERSION;
-			goto done_give_hdl;
-		}
-	} else if (buf == nullptr && buf_4 != nullptr) {
-		if (clma_validate_version(hdl_rec->version)) {
-			TRACE("Version error from saClmClusterTrack_4");
-			rc = SA_AIS_ERR_VERSION;
-			goto done_give_hdl;
-		}
-	}
+  if (buf_4 == nullptr && buf != nullptr) {
+    if (!clma_validate_version(hdl_rec->version)) {
+      TRACE("Version error from saClmClusterTrack");
+      rc = SA_AIS_ERR_VERSION;
+      goto done_give_hdl;
+    }
+  } else if (buf == nullptr && buf_4 != nullptr) {
+    if (clma_validate_version(hdl_rec->version)) {
+      TRACE("Version error from saClmClusterTrack_4");
+      rc = SA_AIS_ERR_VERSION;
+      goto done_give_hdl;
+    }
+  }
 
-	if (clma_validate_version(hdl_rec->version)) {
-		if ((rc = clma_validate_flags_buf(hdl_rec, flags, buf)) !=
-		    SA_AIS_OK)
-			goto done_give_hdl;
-	} else {
-		TRACE("B.4.1 version");
-		if ((rc = clma_validate_flags_buf_4(hdl_rec, flags, buf_4)) !=
-		    SA_AIS_OK)
-			goto done_give_hdl;
-	}
+  if (clma_validate_version(hdl_rec->version)) {
+    if ((rc = clma_validate_flags_buf(hdl_rec, flags, buf)) != SA_AIS_OK)
+      goto done_give_hdl;
+  } else {
+    TRACE("B.4.1 version");
+    if ((rc = clma_validate_flags_buf_4(hdl_rec, flags, buf_4)) != SA_AIS_OK)
+      goto done_give_hdl;
+  }
 
-	if ((hdl_rec->is_configured == false) &&
-	    (!clma_validate_version(hdl_rec->version))) {
-		TRACE("Node is unconfigured");
-		rc = SA_AIS_ERR_UNAVAILABLE;
-		goto done_give_hdl;
-	}
+  if ((hdl_rec->is_configured == false) &&
+      (!clma_validate_version(hdl_rec->version))) {
+    TRACE("Node is unconfigured");
+    rc = SA_AIS_ERR_UNAVAILABLE;
+    goto done_give_hdl;
+  }
 
-	TRACE("RC after validate flagsTrack %d", rc);
-	/* Populate the message to be sent to the CLMS */
-	memset(&i_msg, 0, sizeof(CLMSV_MSG));
-	i_msg.evt_type = CLMSV_CLMA_TO_CLMS_API_MSG;
-	i_msg.info.api_info.type = CLMSV_TRACK_START_REQ;
-	i_msg.info.api_info.param.track_start.flags = flags;
-	i_msg.info.api_info.param.track_start.client_id =
-	    hdl_rec->clms_client_id;
+  TRACE("RC after validate flagsTrack %d", rc);
+  /* Populate the message to be sent to the CLMS */
+  memset(&i_msg, 0, sizeof(CLMSV_MSG));
+  i_msg.evt_type = CLMSV_CLMA_TO_CLMS_API_MSG;
+  i_msg.info.api_info.type = CLMSV_TRACK_START_REQ;
+  i_msg.info.api_info.param.track_start.flags = flags;
+  i_msg.info.api_info.param.track_start.client_id = hdl_rec->clms_client_id;
 
-	if (clma_validate_version(hdl_rec->version)) {
-		rc = clma_send_mds_msg_get_clusternotificationbuf(
-		    hdl_rec, flags, i_msg, buf);
-	} else {
-		rc = clma_send_mds_msg_get_clusternotificationbuf_4(
-		    hdl_rec, flags, i_msg, buf_4);
-	}
+  if (clma_validate_version(hdl_rec->version)) {
+    rc = clma_send_mds_msg_get_clusternotificationbuf(hdl_rec, flags, i_msg,
+                                                      buf);
+  } else {
+    rc = clma_send_mds_msg_get_clusternotificationbuf_4(hdl_rec, flags, i_msg,
+                                                        buf_4);
+  }
 
 done_give_hdl:
-	TRACE("RC before give handle flagsTrack %d", rc);
-	ncshm_give_hdl(clmHandle);
+  TRACE("RC before give handle flagsTrack %d", rc);
+  ncshm_give_hdl(clmHandle);
 done:
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 /****************************************************************************
   Name          : saClmClusterTrackStop
 
   Description   : This fuction requests CLM to stop tracking the changes
-		  in the cluster membership.
+                  in the cluster membership.
 
   Arguments     : hdl   - CLM handle
 
@@ -1147,204 +1095,193 @@ done:
 
   Notes         : None.
 ******************************************************************************/
-SaAisErrorT saClmClusterTrackStop(SaClmHandleT clmHandle)
-{
-	CLMSV_MSG msg, *o_msg = nullptr;
-	SaAisErrorT rc = SA_AIS_OK;
-	CLMSV_MSG *cbk_msg;
-	CLMSV_MSG *async_cbk_msg = nullptr, *process = nullptr;
-	uint32_t mds_rc;
+SaAisErrorT saClmClusterTrackStop(SaClmHandleT clmHandle) {
+  CLMSV_MSG msg, *o_msg = nullptr;
+  SaAisErrorT rc = SA_AIS_OK;
+  CLMSV_MSG *cbk_msg;
+  CLMSV_MSG *async_cbk_msg = nullptr, *process = nullptr;
+  uint32_t mds_rc;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	/* retrieve hdl rec */
-	clma_client_hdl_rec_t *hdl_rec = static_cast<clma_client_hdl_rec_t*>(
-		ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
-	if (hdl_rec == nullptr) {
-		TRACE("ncshm_take_hdl failed");
-		rc = SA_AIS_ERR_BAD_HANDLE;
-		goto done;
-	}
+  /* retrieve hdl rec */
+  clma_client_hdl_rec_t *hdl_rec = static_cast<clma_client_hdl_rec_t *>(
+      ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
+  if (hdl_rec == nullptr) {
+    TRACE("ncshm_take_hdl failed");
+    rc = SA_AIS_ERR_BAD_HANDLE;
+    goto done;
+  }
 
-	/* Check Whether CLMS is up or not */
-	if (!clma_cb.clms_up) {
-		TRACE("CLMS down");
-		rc = SA_AIS_ERR_TRY_AGAIN;
-		goto done_give_hdl;
-	}
+  /* Check Whether CLMS is up or not */
+  if (!clma_cb.clms_up) {
+    TRACE("CLMS down");
+    rc = SA_AIS_ERR_TRY_AGAIN;
+    goto done_give_hdl;
+  }
 
-	if ((hdl_rec->is_configured == false) &&
-	    (!clma_validate_version(hdl_rec->version))) {
-		TRACE("Node is unconfigured");
-		rc = SA_AIS_ERR_UNAVAILABLE;
-		goto done_give_hdl;
-	}
+  if ((hdl_rec->is_configured == false) &&
+      (!clma_validate_version(hdl_rec->version))) {
+    TRACE("Node is unconfigured");
+    rc = SA_AIS_ERR_UNAVAILABLE;
+    goto done_give_hdl;
+  }
 
-	/** populate & send the finalize message
-	** and make sure the finalize from the server
-	** end returned before deleting the local records.
-	**/
-	memset(&msg, 0, sizeof(CLMSV_MSG));
-	msg.evt_type = CLMSV_CLMA_TO_CLMS_API_MSG;
-	msg.info.api_info.type = CLMSV_TRACK_STOP_REQ;
-	msg.info.api_info.param.track_stop.client_id = hdl_rec->clms_client_id;
+  /** populate & send the finalize message
+  ** and make sure the finalize from the server
+  ** end returned before deleting the local records.
+  **/
+  memset(&msg, 0, sizeof(CLMSV_MSG));
+  msg.evt_type = CLMSV_CLMA_TO_CLMS_API_MSG;
+  msg.info.api_info.type = CLMSV_TRACK_STOP_REQ;
+  msg.info.api_info.param.track_stop.client_id = hdl_rec->clms_client_id;
 
-	mds_rc = clma_mds_msg_sync_send(&clma_cb, &msg, &o_msg, CLMS_WAIT_TIME);
-	switch (mds_rc) {
-	case NCSCC_RC_SUCCESS:
-		break;
-	case NCSCC_RC_REQ_TIMOUT:
-		rc = SA_AIS_ERR_TIMEOUT;
-		TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-		goto done_give_hdl;
-	default:
-		TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-		rc = SA_AIS_ERR_NO_RESOURCES;
-		goto done_give_hdl;
-	}
+  mds_rc = clma_mds_msg_sync_send(&clma_cb, &msg, &o_msg, CLMS_WAIT_TIME);
+  switch (mds_rc) {
+    case NCSCC_RC_SUCCESS:
+      break;
+    case NCSCC_RC_REQ_TIMOUT:
+      rc = SA_AIS_ERR_TIMEOUT;
+      TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+      goto done_give_hdl;
+    default:
+      TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+      rc = SA_AIS_ERR_NO_RESOURCES;
+      goto done_give_hdl;
+  }
 
-	if (o_msg != nullptr) {
-		rc = o_msg->info.api_resp_info.rc;
-		clma_msg_destroy(o_msg); /*need to do */
-	} else
-		rc = SA_AIS_ERR_NO_RESOURCES;
+  if (o_msg != nullptr) {
+    rc = o_msg->info.api_resp_info.rc;
+    clma_msg_destroy(o_msg); /*need to do */
+  } else
+    rc = SA_AIS_ERR_NO_RESOURCES;
 
-	if (rc == SA_AIS_OK) {
-		do {
-			if (nullptr ==
-			    (cbk_msg = reinterpret_cast<CLMSV_MSG*>(m_NCS_IPC_NON_BLK_RECEIVE(
-                                &hdl_rec->mbx, cbk_msg))))
-				break;
-			if (cbk_msg->info.cbk_info.type == CLMSV_TRACK_CBK) {
-				TRACE_2("Dropping Track Callback %d",
-					cbk_msg->info.cbk_info.type);
-				clma_msg_destroy(cbk_msg);
-			} else if (cbk_msg->info.cbk_info.type ==
-				   CLMSV_NODE_ASYNC_GET_CBK) {
-				clma_add_to_async_cbk_msg_list(&async_cbk_msg,
-							       cbk_msg);
-			} else {
-				TRACE("Dropping unsupported callback type %d",
-				      cbk_msg->info.cbk_info.type);
-				clma_msg_destroy(cbk_msg);
-			}
-		} while (1);
+  if (rc == SA_AIS_OK) {
+    do {
+      if (nullptr == (cbk_msg = reinterpret_cast<CLMSV_MSG *>(
+                          m_NCS_IPC_NON_BLK_RECEIVE(&hdl_rec->mbx, cbk_msg))))
+        break;
+      if (cbk_msg->info.cbk_info.type == CLMSV_TRACK_CBK) {
+        TRACE_2("Dropping Track Callback %d", cbk_msg->info.cbk_info.type);
+        clma_msg_destroy(cbk_msg);
+      } else if (cbk_msg->info.cbk_info.type == CLMSV_NODE_ASYNC_GET_CBK) {
+        clma_add_to_async_cbk_msg_list(&async_cbk_msg, cbk_msg);
+      } else {
+        TRACE("Dropping unsupported callback type %d",
+              cbk_msg->info.cbk_info.type);
+        clma_msg_destroy(cbk_msg);
+      }
+    } while (1);
 
-		process = async_cbk_msg;
-		while (process) {
-			/* IPC send is making next as nullptr in process pointer */
-			/* process the message */
-			async_cbk_msg = async_cbk_msg->next;
-			uint32_t ret = clma_clms_msg_proc(&clma_cb, process,
-						MDS_SEND_PRIORITY_MEDIUM);
-			if (ret != NCSCC_RC_SUCCESS) {
-				TRACE_2(
-				    "From TrackStop clma_clms_msg_proc returned: %d",
-				    rc);
-			}
-			process = async_cbk_msg;
-			/*async_cbk_msg->next = nullptr;
-			   async_cbk_msg = process; */
-		}
-	}
+    process = async_cbk_msg;
+    while (process) {
+      /* IPC send is making next as nullptr in process pointer */
+      /* process the message */
+      async_cbk_msg = async_cbk_msg->next;
+      uint32_t ret =
+          clma_clms_msg_proc(&clma_cb, process, MDS_SEND_PRIORITY_MEDIUM);
+      if (ret != NCSCC_RC_SUCCESS) {
+        TRACE_2("From TrackStop clma_clms_msg_proc returned: %d", rc);
+      }
+      process = async_cbk_msg;
+      /*async_cbk_msg->next = nullptr;
+         async_cbk_msg = process; */
+    }
+  }
 
 done_give_hdl:
-	ncshm_give_hdl(clmHandle);
+  ncshm_give_hdl(clmHandle);
 
 done:
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 /****************************************************************************
   Name          : saClmClusterNodeGet
 
   Description   : This fuction synchronously gets the information about a
-		  cluster member (identified by node-id).
+                  cluster member (identified by node-id).
 
   Arguments     : hdl          - CLM handle
-		  node_id      - node-id for which information is to be
-				 retrieved
-		  timeout      - time-interval within which the information
-				 should be returned
-		  cluster_node - ptr to the node info
+                  node_id      - node-id for which information is to be
+                                 retrieved
+                  timeout      - time-interval within which the information
+                                 should be returned
+                  cluster_node - ptr to the node info
 
   Return Values : Refer to SAI-AIS specification for various return values.
 
   Notes         : None.
 ******************************************************************************/
 SaAisErrorT saClmClusterNodeGet(SaClmHandleT clmHandle, SaClmNodeIdT node_id,
-				SaTimeT timeout,
-				SaClmClusterNodeT *cluster_node)
-{
-	SaAisErrorT rc = SA_AIS_OK;
+                                SaTimeT timeout,
+                                SaClmClusterNodeT *cluster_node) {
+  SaAisErrorT rc = SA_AIS_OK;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	if (cluster_node == nullptr) {
-		TRACE("cluster_node is nullptr");
-		rc = SA_AIS_ERR_INVALID_PARAM;
-		goto done;
-	}
+  if (cluster_node == nullptr) {
+    TRACE("cluster_node is nullptr");
+    rc = SA_AIS_ERR_INVALID_PARAM;
+    goto done;
+  }
 
-	rc =
-	    clmaclusternodeget(clmHandle, node_id, timeout, cluster_node, nullptr);
+  rc = clmaclusternodeget(clmHandle, node_id, timeout, cluster_node, nullptr);
 done:
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 /****************************************************************************
   Name          : saClmClusterNodeGet_4
 
   Description   : This fuction synchronously gets the information about a
-		  cluster member (identified by node-id).
+                  cluster member (identified by node-id).
 
   Arguments     : hdl          - CLM handle
-		  node_id      - node-id for which information is to be
-				 retrieved
-		  timeout      - time-interval within which the information
-				 should be returned
-		  cluster_node_4 - ptr to the node info
+                  node_id      - node-id for which information is to be
+                                 retrieved
+                  timeout      - time-interval within which the information
+                                 should be returned
+                  cluster_node_4 - ptr to the node info
 
   Return Values : Refer to SAI-AIS specification for various return values.
 
   Notes         : None.
 ******************************************************************************/
 SaAisErrorT saClmClusterNodeGet_4(SaClmHandleT clmHandle, SaClmNodeIdT node_id,
-				  SaTimeT timeout,
-				  SaClmClusterNodeT_4 *cluster_node_4)
-{
-	SaAisErrorT rc = SA_AIS_OK;
+                                  SaTimeT timeout,
+                                  SaClmClusterNodeT_4 *cluster_node_4) {
+  SaAisErrorT rc = SA_AIS_OK;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	if (cluster_node_4 == nullptr) {
-		TRACE("cluster_node is nullptr");
-		rc = SA_AIS_ERR_INVALID_PARAM;
-		goto done;
-	}
+  if (cluster_node_4 == nullptr) {
+    TRACE("cluster_node is nullptr");
+    rc = SA_AIS_ERR_INVALID_PARAM;
+    goto done;
+  }
 
-	rc = clmaclusternodeget(clmHandle, node_id, timeout, nullptr,
-				cluster_node_4);
+  rc = clmaclusternodeget(clmHandle, node_id, timeout, nullptr, cluster_node_4);
 done:
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 /****************************************************************************
   Name          : clmaclusternodeget
 
   Description   : This fuction synchronously gets the information about a
-		  cluster member (identified by node-id).
+                  cluster member (identified by node-id).
 
   Arguments     : hdl          - CLM handle
-		  node_id      - node-id for which information is to be
-				 retrieved
-		  timeout      - time-interval within which the information
-				 should be returned
-		  cluster_node - ptr to the node info SaClmClusterNodeT
-		  cluster_node_4 - ptr to the node info SaClmClusterNodeT_4
+                  node_id      - node-id for which information is to be
+                                 retrieved
+                  timeout      - time-interval within which the information
+                                 should be returned
+                  cluster_node - ptr to the node info SaClmClusterNodeT
+                  cluster_node_4 - ptr to the node info SaClmClusterNodeT_4
 
   Return Values : Refer to SAI-AIS specification for various return values.
 
@@ -1352,327 +1289,316 @@ done:
 ******************************************************************************/
 
 static SaAisErrorT clmaclusternodeget(SaClmHandleT clmHandle,
-				      SaClmNodeIdT node_id, SaTimeT timeout,
-				      SaClmClusterNodeT *cluster_node,
-				      SaClmClusterNodeT_4 *cluster_node_4)
-{
-	clma_client_hdl_rec_t *hdl_rec;
-	CLMSV_MSG msg, *o_msg = nullptr;
-	SaAisErrorT rc = SA_AIS_OK;
-	uint32_t ncs_rc = NCSCC_RC_SUCCESS;
+                                      SaClmNodeIdT node_id, SaTimeT timeout,
+                                      SaClmClusterNodeT *cluster_node,
+                                      SaClmClusterNodeT_4 *cluster_node_4) {
+  clma_client_hdl_rec_t *hdl_rec;
+  CLMSV_MSG msg, *o_msg = nullptr;
+  SaAisErrorT rc = SA_AIS_OK;
+  uint32_t ncs_rc = NCSCC_RC_SUCCESS;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	if (node_id == 0) {
-		TRACE("node_id is nullptr");
-		rc = SA_AIS_ERR_INVALID_PARAM;
-		goto done;
-	}
+  if (node_id == 0) {
+    TRACE("node_id is nullptr");
+    rc = SA_AIS_ERR_INVALID_PARAM;
+    goto done;
+  }
 
-	if (timeout < 0) {
-		TRACE("saClmClusterNodeGet:Timeout value is negative");
-		rc = SA_AIS_ERR_INVALID_PARAM;
-		goto done;
-	} else if (timeout >
-		   (SA_TIME_ONE_MILLISECOND * MDS_MAX_TIMEOUT_MILLISECOND)) {
-		TRACE_4(
-		    "saClmClusterNodeGet: timeout>MDS_MAX_TIMEOUT setting to MDS max timeout value:%lld, clmHandle:%llx",
-		    (SA_TIME_ONE_MILLISECOND * MDS_MAX_TIMEOUT_MILLISECOND),
-		    clmHandle);
-		timeout =
-		    (SA_TIME_ONE_MILLISECOND * MDS_MAX_TIMEOUT_MILLISECOND);
-	}
+  if (timeout < 0) {
+    TRACE("saClmClusterNodeGet:Timeout value is negative");
+    rc = SA_AIS_ERR_INVALID_PARAM;
+    goto done;
+  } else if (timeout >
+             (SA_TIME_ONE_MILLISECOND * MDS_MAX_TIMEOUT_MILLISECOND)) {
+    TRACE_4(
+        "saClmClusterNodeGet: timeout>MDS_MAX_TIMEOUT setting to MDS max timeout value:%lld, clmHandle:%llx",
+        (SA_TIME_ONE_MILLISECOND * MDS_MAX_TIMEOUT_MILLISECOND), clmHandle);
+    timeout = (SA_TIME_ONE_MILLISECOND * MDS_MAX_TIMEOUT_MILLISECOND);
+  }
 
-	/* convert SaTimeT into tens of milli seconds */
-	timeout = m_CLMA_CONVERT_SATIME_TEN_MILLI_SEC(timeout);
+  /* convert SaTimeT into tens of milli seconds */
+  timeout = m_CLMA_CONVERT_SATIME_TEN_MILLI_SEC(timeout);
 
-	/* Check Whether CLMS is up or not */
-	if (!clma_cb.clms_up) {
-		TRACE("CLMS down");
-		rc = SA_AIS_ERR_TRY_AGAIN;
-		goto done;
-	}
+  /* Check Whether CLMS is up or not */
+  if (!clma_cb.clms_up) {
+    TRACE("CLMS down");
+    rc = SA_AIS_ERR_TRY_AGAIN;
+    goto done;
+  }
 
-	/* retrieve hdl rec */
-	hdl_rec = static_cast<clma_client_hdl_rec_t*>(
-		ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
-	if (hdl_rec == nullptr) {
-		TRACE("ncshm_take_hdl failed");
-		rc = SA_AIS_ERR_BAD_HANDLE;
-		goto done;
-	}
+  /* retrieve hdl rec */
+  hdl_rec = static_cast<clma_client_hdl_rec_t *>(
+      ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
+  if (hdl_rec == nullptr) {
+    TRACE("ncshm_take_hdl failed");
+    rc = SA_AIS_ERR_BAD_HANDLE;
+    goto done;
+  }
 
-	if (cluster_node_4 == nullptr) {
-		if (!clma_validate_version(hdl_rec->version)) {
-			TRACE("Version error from saClmClusterNodeGet");
-			rc = SA_AIS_ERR_VERSION;
-			goto done_give_hdl;
-		}
-	} else {
-		if (clma_validate_version(hdl_rec->version)) {
-			TRACE("Version error from saClmClusterNodeGet_4");
-			rc = SA_AIS_ERR_VERSION;
-			goto done_give_hdl;
-		}
-	}
+  if (cluster_node_4 == nullptr) {
+    if (!clma_validate_version(hdl_rec->version)) {
+      TRACE("Version error from saClmClusterNodeGet");
+      rc = SA_AIS_ERR_VERSION;
+      goto done_give_hdl;
+    }
+  } else {
+    if (clma_validate_version(hdl_rec->version)) {
+      TRACE("Version error from saClmClusterNodeGet_4");
+      rc = SA_AIS_ERR_VERSION;
+      goto done_give_hdl;
+    }
+  }
 
-	if ((hdl_rec->is_configured == false) &&
-	    (!clma_validate_version(hdl_rec->version))) {
-		TRACE("Node is unconfigured");
-		rc = SA_AIS_ERR_UNAVAILABLE;
-		goto done_give_hdl;
-	}
+  if ((hdl_rec->is_configured == false) &&
+      (!clma_validate_version(hdl_rec->version))) {
+    TRACE("Node is unconfigured");
+    rc = SA_AIS_ERR_UNAVAILABLE;
+    goto done_give_hdl;
+  }
 
-	if ((hdl_rec->is_member == false) &&
-	    (!clma_validate_version(hdl_rec->version))) {
-		TRACE("Node is not a member");
-		rc = SA_AIS_ERR_UNAVAILABLE;
-		goto done_give_hdl;
-	}
-	/** populate & send the finalize message
-	** and make sure the finalize from the server
-	** end returned before deleting the local records.
-	**/
-	memset(&msg, 0, sizeof(CLMSV_MSG));
-	msg.evt_type = CLMSV_CLMA_TO_CLMS_API_MSG;
-	msg.info.api_info.type = CLMSV_NODE_GET_REQ;
-	msg.info.api_info.param.node_get.client_id = hdl_rec->clms_client_id;
-	msg.info.api_info.param.node_get.node_id = node_id;
+  if ((hdl_rec->is_member == false) &&
+      (!clma_validate_version(hdl_rec->version))) {
+    TRACE("Node is not a member");
+    rc = SA_AIS_ERR_UNAVAILABLE;
+    goto done_give_hdl;
+  }
+  /** populate & send the finalize message
+  ** and make sure the finalize from the server
+  ** end returned before deleting the local records.
+  **/
+  memset(&msg, 0, sizeof(CLMSV_MSG));
+  msg.evt_type = CLMSV_CLMA_TO_CLMS_API_MSG;
+  msg.info.api_info.type = CLMSV_NODE_GET_REQ;
+  msg.info.api_info.param.node_get.client_id = hdl_rec->clms_client_id;
+  msg.info.api_info.param.node_get.node_id = node_id;
 
-	ncs_rc = clma_mds_msg_sync_send(&clma_cb, &msg, &o_msg, timeout);
-	switch (ncs_rc) {
-	case NCSCC_RC_SUCCESS:
-		break;
-	case NCSCC_RC_REQ_TIMOUT:
-		rc = SA_AIS_ERR_TIMEOUT;
-		TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-		goto done_give_hdl;
-	default:
-		TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-		rc = SA_AIS_ERR_NO_RESOURCES;
-		goto done_give_hdl;
-	}
+  ncs_rc = clma_mds_msg_sync_send(&clma_cb, &msg, &o_msg, timeout);
+  switch (ncs_rc) {
+    case NCSCC_RC_SUCCESS:
+      break;
+    case NCSCC_RC_REQ_TIMOUT:
+      rc = SA_AIS_ERR_TIMEOUT;
+      TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+      goto done_give_hdl;
+    default:
+      TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+      rc = SA_AIS_ERR_NO_RESOURCES;
+      goto done_give_hdl;
+  }
 
-	if (o_msg != nullptr) {
-		rc = o_msg->info.api_resp_info.rc;
-	} else
-		rc = SA_AIS_ERR_NO_RESOURCES;
+  if (o_msg != nullptr) {
+    rc = o_msg->info.api_resp_info.rc;
+  } else
+    rc = SA_AIS_ERR_NO_RESOURCES;
 
-	if (rc == SA_AIS_OK &&
-	    osaf_extended_name_length(
-		&o_msg->info.api_resp_info.param.node_get.nodeName) >=
-		SA_MAX_NAME_LENGTH) {
-		TRACE("nodeName is longer than 255");
-		rc = SA_AIS_ERR_NO_RESOURCES;
-	}
+  if (rc == SA_AIS_OK &&
+      osaf_extended_name_length(
+          &o_msg->info.api_resp_info.param.node_get.nodeName) >=
+          SA_MAX_NAME_LENGTH) {
+    TRACE("nodeName is longer than 255");
+    rc = SA_AIS_ERR_NO_RESOURCES;
+  }
 
-	if (rc == SA_AIS_OK) {
-		if (clma_validate_version(hdl_rec->version)) {
-			clma_fill_node_from_node4(
-			    cluster_node,
-			    o_msg->info.api_resp_info.param.node_get);
-		} else if (osaf_extended_name_length(
-			       &o_msg->info.api_resp_info.param.node_get
-				    .executionEnvironment) <
-			   SA_MAX_NAME_LENGTH) {
-			memset(cluster_node_4, 0, sizeof(SaClmClusterNodeT_4));
-			memcpy(cluster_node_4,
-			       &o_msg->info.api_resp_info.param.node_get,
-			       sizeof(SaClmClusterNodeT_4));
-			/* TODO: When full long DN support is implemented,
-			 * remove comment to ensure that long DN is safely
-			 * copied. Now it's overhead for copying the same data.
-			 */
-			// osaf_extended_name_alloc(osaf_extended_name_borrow(&o_msg->info.api_resp_info.param.node_get.nodeName),
-			// &cluster_node_4->nodeName);
-			// osaf_extended_name_alloc(osaf_extended_name_borrow(&o_msg->info.api_resp_info.param.node_get.executionEnvironment),
-			// &cluster_node_4->executionEnvironment);
-		} else {
-			TRACE("executionEnvironment is longer than 255");
-			rc = SA_AIS_ERR_NO_RESOURCES;
-		}
-	}
+  if (rc == SA_AIS_OK) {
+    if (clma_validate_version(hdl_rec->version)) {
+      clma_fill_node_from_node4(cluster_node,
+                                o_msg->info.api_resp_info.param.node_get);
+    } else if (osaf_extended_name_length(&o_msg->info.api_resp_info.param
+                                              .node_get.executionEnvironment) <
+               SA_MAX_NAME_LENGTH) {
+      memset(cluster_node_4, 0, sizeof(SaClmClusterNodeT_4));
+      memcpy(cluster_node_4, &o_msg->info.api_resp_info.param.node_get,
+             sizeof(SaClmClusterNodeT_4));
+      /* TODO: When full long DN support is implemented,
+       * remove comment to ensure that long DN is safely
+       * copied. Now it's overhead for copying the same data.
+       */
+      // osaf_extended_name_alloc(osaf_extended_name_borrow(&o_msg->info.api_resp_info.param.node_get.nodeName),
+      // &cluster_node_4->nodeName);
+      // osaf_extended_name_alloc(osaf_extended_name_borrow(&o_msg->info.api_resp_info.param.node_get.executionEnvironment),
+      // &cluster_node_4->executionEnvironment);
+    } else {
+      TRACE("executionEnvironment is longer than 255");
+      rc = SA_AIS_ERR_NO_RESOURCES;
+    }
+  }
 
 done_give_hdl:
-	clma_msg_destroy(o_msg);
-	ncshm_give_hdl(clmHandle);
+  clma_msg_destroy(o_msg);
+  ncshm_give_hdl(clmHandle);
 
 done:
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 /****************************************************************************
   Name          : saClmClusterNodeGetAsync
 
   Description   : This fuction asynchronously gets the information about a
-		  cluster member (identified by node-id).
+                  cluster member (identified by node-id).
 
   Arguments     : hdl          - CLM handle
-		  inv          - invocation value
-		  node_id      - node-id for which information is to be
-				 retrieved
-		  cluster_node - ptr to the node info
+                  inv          - invocation value
+                  node_id      - node-id for which information is to be
+                                 retrieved
+                  cluster_node - ptr to the node info
 
   Return Values : Refer to SAI-AIS specification for various return values.
 
   Notes         : None.
 ******************************************************************************/
 SaAisErrorT saClmClusterNodeGetAsync(SaClmHandleT clmHandle, SaInvocationT inv,
-				     SaClmNodeIdT node_id)
-{
-	clma_client_hdl_rec_t *hdl_rec;
-	CLMSV_MSG msg;
-	SaAisErrorT rc = SA_AIS_OK;
-	uint32_t mds_rc;
+                                     SaClmNodeIdT node_id) {
+  clma_client_hdl_rec_t *hdl_rec;
+  CLMSV_MSG msg;
+  SaAisErrorT rc = SA_AIS_OK;
+  uint32_t mds_rc;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	if ((node_id == 0) || (inv == 0)) {
-		TRACE("node_id or invocation is nullptr");
-		rc = SA_AIS_ERR_INVALID_PARAM;
-		goto done;
-	}
+  if ((node_id == 0) || (inv == 0)) {
+    TRACE("node_id or invocation is nullptr");
+    rc = SA_AIS_ERR_INVALID_PARAM;
+    goto done;
+  }
 
-	/* Check Whether CLMS is up or not */
-	if (!clma_cb.clms_up) {
-		TRACE("CLMS down");
-		rc = SA_AIS_ERR_TRY_AGAIN;
-		goto done;
-	}
+  /* Check Whether CLMS is up or not */
+  if (!clma_cb.clms_up) {
+    TRACE("CLMS down");
+    rc = SA_AIS_ERR_TRY_AGAIN;
+    goto done;
+  }
 
-	/* retrieve hdl rec */
-	hdl_rec = static_cast<clma_client_hdl_rec_t*>(
-		ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
-	if (hdl_rec == nullptr) {
-		TRACE("ncshm_take_hdl failed");
-		rc = SA_AIS_ERR_BAD_HANDLE;
-		goto done;
-	}
+  /* retrieve hdl rec */
+  hdl_rec = static_cast<clma_client_hdl_rec_t *>(
+      ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
+  if (hdl_rec == nullptr) {
+    TRACE("ncshm_take_hdl failed");
+    rc = SA_AIS_ERR_BAD_HANDLE;
+    goto done;
+  }
 
-	if (clma_validate_version(hdl_rec->version)) {
-		if (!hdl_rec->cbk_param.reg_cbk.saClmClusterNodeGetCallback) {
-			rc = SA_AIS_ERR_INIT;
-			goto done_give_hdl;
-		}
-	} else {
-		if (!hdl_rec->cbk_param.reg_cbk_4.saClmClusterNodeGetCallback) {
-			rc = SA_AIS_ERR_INIT;
-			goto done_give_hdl;
-		}
-	}
+  if (clma_validate_version(hdl_rec->version)) {
+    if (!hdl_rec->cbk_param.reg_cbk.saClmClusterNodeGetCallback) {
+      rc = SA_AIS_ERR_INIT;
+      goto done_give_hdl;
+    }
+  } else {
+    if (!hdl_rec->cbk_param.reg_cbk_4.saClmClusterNodeGetCallback) {
+      rc = SA_AIS_ERR_INIT;
+      goto done_give_hdl;
+    }
+  }
 
-	if ((hdl_rec->is_configured == false) &&
-	    (!clma_validate_version(hdl_rec->version))) {
-		TRACE("Node is unconfigured");
-		rc = SA_AIS_ERR_UNAVAILABLE;
-		goto done_give_hdl;
-	}
+  if ((hdl_rec->is_configured == false) &&
+      (!clma_validate_version(hdl_rec->version))) {
+    TRACE("Node is unconfigured");
+    rc = SA_AIS_ERR_UNAVAILABLE;
+    goto done_give_hdl;
+  }
 
-	if ((hdl_rec->is_member == false) &&
-	    (!clma_validate_version(hdl_rec->version))) {
-		TRACE("Node is not a member");
-		rc = SA_AIS_ERR_UNAVAILABLE;
-		goto done_give_hdl;
-	}
-	/** populate & send the finalize message
-	** and make sure the finalize from the server
-	** end returned before deleting the local records.
-	**/
-	memset(&msg, 0, sizeof(CLMSV_MSG));
-	msg.evt_type = CLMSV_CLMA_TO_CLMS_API_MSG;
-	msg.info.api_info.type = CLMSV_NODE_GET_ASYNC_REQ;
-	msg.info.api_info.param.node_get_async.client_id =
-	    hdl_rec->clms_client_id;
-	msg.info.api_info.param.node_get_async.inv = inv;
-	msg.info.api_info.param.node_get_async.node_id = node_id;
+  if ((hdl_rec->is_member == false) &&
+      (!clma_validate_version(hdl_rec->version))) {
+    TRACE("Node is not a member");
+    rc = SA_AIS_ERR_UNAVAILABLE;
+    goto done_give_hdl;
+  }
+  /** populate & send the finalize message
+  ** and make sure the finalize from the server
+  ** end returned before deleting the local records.
+  **/
+  memset(&msg, 0, sizeof(CLMSV_MSG));
+  msg.evt_type = CLMSV_CLMA_TO_CLMS_API_MSG;
+  msg.info.api_info.type = CLMSV_NODE_GET_ASYNC_REQ;
+  msg.info.api_info.param.node_get_async.client_id = hdl_rec->clms_client_id;
+  msg.info.api_info.param.node_get_async.inv = inv;
+  msg.info.api_info.param.node_get_async.node_id = node_id;
 
-	mds_rc = clma_mds_msg_async_send(
-	    &clma_cb, &msg, MDS_SEND_PRIORITY_HIGH); /* fix me ?? */
-	switch (mds_rc) {
-	case NCSCC_RC_SUCCESS:
-		break;
-	case NCSCC_RC_REQ_TIMOUT:
-		rc = SA_AIS_ERR_TIMEOUT;
-		TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-		goto done_give_hdl;
-	default:
-		TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-		rc = SA_AIS_ERR_NO_RESOURCES;
-		goto done_give_hdl;
-	}
+  mds_rc = clma_mds_msg_async_send(&clma_cb, &msg,
+                                   MDS_SEND_PRIORITY_HIGH); /* fix me ?? */
+  switch (mds_rc) {
+    case NCSCC_RC_SUCCESS:
+      break;
+    case NCSCC_RC_REQ_TIMOUT:
+      rc = SA_AIS_ERR_TIMEOUT;
+      TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+      goto done_give_hdl;
+    default:
+      TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+      rc = SA_AIS_ERR_NO_RESOURCES;
+      goto done_give_hdl;
+  }
 
 done_give_hdl:
-	ncshm_give_hdl(clmHandle);
+  ncshm_give_hdl(clmHandle);
 
 done:
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 /****************************************************************************
   Name          : saClmClusterNotificationFree_4
 
   Description   : This fuction free SaClmClusterNotificationT_4 *notification
-		  which was used in saClmClusterTrack_4.
+                  which was used in saClmClusterTrack_4.
 
   Arguments     : clmHandle          - CLM handle
-		  notification - SaClmClusterNotificationT_4 *notification
+                  notification - SaClmClusterNotificationT_4 *notification
 
   Return Values : Refer to SAI-AIS specification for various return values.
 
   Notes         : None.
 ******************************************************************************/
-SaAisErrorT
-saClmClusterNotificationFree_4(SaClmHandleT clmHandle,
-			       SaClmClusterNotificationT_4 *notification)
-{
-	clma_client_hdl_rec_t *hdl_rec;
-	SaAisErrorT rc = SA_AIS_OK;
+SaAisErrorT saClmClusterNotificationFree_4(
+    SaClmHandleT clmHandle, SaClmClusterNotificationT_4 *notification) {
+  clma_client_hdl_rec_t *hdl_rec;
+  SaAisErrorT rc = SA_AIS_OK;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	if (notification == nullptr) {
-		TRACE("notification is nullptr");
-		rc = SA_AIS_ERR_INVALID_PARAM;
-		goto done;
-	}
+  if (notification == nullptr) {
+    TRACE("notification is nullptr");
+    rc = SA_AIS_ERR_INVALID_PARAM;
+    goto done;
+  }
 
-	/* retrieve hdl rec */
-	hdl_rec = static_cast<clma_client_hdl_rec_t*>(
-		ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
-	if (hdl_rec == nullptr) {
-		TRACE("ncshm_take_hdl failed");
-		rc = SA_AIS_ERR_BAD_HANDLE;
-		goto done;
-	}
+  /* retrieve hdl rec */
+  hdl_rec = static_cast<clma_client_hdl_rec_t *>(
+      ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
+  if (hdl_rec == nullptr) {
+    TRACE("ncshm_take_hdl failed");
+    rc = SA_AIS_ERR_BAD_HANDLE;
+    goto done;
+  }
 
-	if (clma_validate_version(hdl_rec->version)) {
-		TRACE("not supported in the version specified");
-		rc = SA_AIS_ERR_VERSION;
-		goto done_give_hdl;
-	}
+  if (clma_validate_version(hdl_rec->version)) {
+    TRACE("not supported in the version specified");
+    rc = SA_AIS_ERR_VERSION;
+    goto done_give_hdl;
+  }
 
-	if ((hdl_rec->is_configured == false) &&
-	    (!clma_validate_version(hdl_rec->version))) {
-		TRACE("Node is unconfigured");
-		rc = SA_AIS_ERR_UNAVAILABLE;
-		goto done_give_hdl;
-	}
+  if ((hdl_rec->is_configured == false) &&
+      (!clma_validate_version(hdl_rec->version))) {
+    TRACE("Node is unconfigured");
+    rc = SA_AIS_ERR_UNAVAILABLE;
+    goto done_give_hdl;
+  }
 
-	// Free allocated memory for long DN
-	osaf_extended_name_free(&notification->clusterNode.nodeName);
-	osaf_extended_name_free(
-	    &notification->clusterNode.executionEnvironment);
+  // Free allocated memory for long DN
+  osaf_extended_name_free(&notification->clusterNode.nodeName);
+  osaf_extended_name_free(&notification->clusterNode.executionEnvironment);
 
-	free(notification);
+  free(notification);
 
 done_give_hdl:
-	ncshm_give_hdl(clmHandle);
+  ncshm_give_hdl(clmHandle);
 
 done:
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 /****************************************************************************
@@ -1682,7 +1608,7 @@ done:
 the saClmTrackCallback() callback which was used in saClmClusterTrack_4.
 
   Arguments     : clmHandle          - CLM handle
-		  notification - SaClmClusterNotificationT_4 *notification
+                  notification - SaClmClusterNotificationT_4 *notification
 
   Return Values : Refer to SAI-AIS specification for various return values.
 
@@ -1690,86 +1616,84 @@ the saClmTrackCallback() callback which was used in saClmClusterTrack_4.
 ******************************************************************************/
 
 SaAisErrorT saClmResponse_4(SaClmHandleT clmHandle, SaInvocationT invocation,
-			    SaClmResponseT response)
-{
-	clma_client_hdl_rec_t *hdl_rec;
-	CLMSV_MSG i_msg, *o_msg = nullptr;
-	SaAisErrorT rc = SA_AIS_OK;
-	uint32_t mds_rc;
+                            SaClmResponseT response) {
+  clma_client_hdl_rec_t *hdl_rec;
+  CLMSV_MSG i_msg, *o_msg = nullptr;
+  SaAisErrorT rc = SA_AIS_OK;
+  uint32_t mds_rc;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	if (invocation == 0) {
-		TRACE("invocation is nullptr");
-		rc = SA_AIS_ERR_INVALID_PARAM;
-		goto done;
-	}
+  if (invocation == 0) {
+    TRACE("invocation is nullptr");
+    rc = SA_AIS_ERR_INVALID_PARAM;
+    goto done;
+  }
 
-	if ((response < SA_CLM_CALLBACK_RESPONSE_OK) ||
-	    (response > SA_CLM_CALLBACK_RESPONSE_ERROR)) {
-		TRACE("response is invalid");
-		rc = SA_AIS_ERR_INVALID_PARAM;
-		goto done;
-	}
+  if ((response < SA_CLM_CALLBACK_RESPONSE_OK) ||
+      (response > SA_CLM_CALLBACK_RESPONSE_ERROR)) {
+    TRACE("response is invalid");
+    rc = SA_AIS_ERR_INVALID_PARAM;
+    goto done;
+  }
 
-	/* Check Whether CLMS is up or not */
-	if (!clma_cb.clms_up) {
-		TRACE("CLMS down");
-		rc = SA_AIS_ERR_TRY_AGAIN;
-		goto done;
-	}
+  /* Check Whether CLMS is up or not */
+  if (!clma_cb.clms_up) {
+    TRACE("CLMS down");
+    rc = SA_AIS_ERR_TRY_AGAIN;
+    goto done;
+  }
 
-	/* retrieve hdl rec */
-	hdl_rec = static_cast<clma_client_hdl_rec_t*>(
-		ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
-	if (hdl_rec == nullptr) {
-		TRACE("ncshm_take_hdl failed");
-		rc = SA_AIS_ERR_BAD_HANDLE;
-		goto done;
-	}
+  /* retrieve hdl rec */
+  hdl_rec = static_cast<clma_client_hdl_rec_t *>(
+      ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
+  if (hdl_rec == nullptr) {
+    TRACE("ncshm_take_hdl failed");
+    rc = SA_AIS_ERR_BAD_HANDLE;
+    goto done;
+  }
 
-	if ((hdl_rec->is_configured == false) &&
-	    (!clma_validate_version(hdl_rec->version))) {
-		TRACE("Node is unconfigured");
-		rc = SA_AIS_ERR_UNAVAILABLE;
-		goto done_give_hdl;
-	}
-	/** populate & send the finalize message
-	** and make sure the finalize from the server
-	** end returned before deleting the local records.
-	**/
-	memset(&i_msg, 0, sizeof(CLMSV_MSG));
-	i_msg.evt_type = CLMSV_CLMA_TO_CLMS_API_MSG;
-	i_msg.info.api_info.type = CLMSV_RESPONSE_REQ;
-	i_msg.info.api_info.param.clm_resp.client_id = hdl_rec->clms_client_id;
-	i_msg.info.api_info.param.clm_resp.inv = invocation;
-	i_msg.info.api_info.param.clm_resp.resp = response;
+  if ((hdl_rec->is_configured == false) &&
+      (!clma_validate_version(hdl_rec->version))) {
+    TRACE("Node is unconfigured");
+    rc = SA_AIS_ERR_UNAVAILABLE;
+    goto done_give_hdl;
+  }
+  /** populate & send the finalize message
+  ** and make sure the finalize from the server
+  ** end returned before deleting the local records.
+  **/
+  memset(&i_msg, 0, sizeof(CLMSV_MSG));
+  i_msg.evt_type = CLMSV_CLMA_TO_CLMS_API_MSG;
+  i_msg.info.api_info.type = CLMSV_RESPONSE_REQ;
+  i_msg.info.api_info.param.clm_resp.client_id = hdl_rec->clms_client_id;
+  i_msg.info.api_info.param.clm_resp.inv = invocation;
+  i_msg.info.api_info.param.clm_resp.resp = response;
 
-	mds_rc =
-	    clma_mds_msg_sync_send(&clma_cb, &i_msg, &o_msg, CLMS_WAIT_TIME);
-	switch (mds_rc) {
-	case NCSCC_RC_SUCCESS:
-		break;
-	case NCSCC_RC_REQ_TIMOUT:
-		rc = SA_AIS_ERR_TIMEOUT;
-		TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-		goto done_give_hdl;
-	default:
-		TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
-		rc = SA_AIS_ERR_NO_RESOURCES;
-		goto done_give_hdl;
-	}
+  mds_rc = clma_mds_msg_sync_send(&clma_cb, &i_msg, &o_msg, CLMS_WAIT_TIME);
+  switch (mds_rc) {
+    case NCSCC_RC_SUCCESS:
+      break;
+    case NCSCC_RC_REQ_TIMOUT:
+      rc = SA_AIS_ERR_TIMEOUT;
+      TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+      goto done_give_hdl;
+    default:
+      TRACE("clma_mds_msg_sync_send FAILED: %u", rc);
+      rc = SA_AIS_ERR_NO_RESOURCES;
+      goto done_give_hdl;
+  }
 
-	if (o_msg != nullptr) {
-		rc = o_msg->info.api_resp_info.rc;
-		clma_msg_destroy(o_msg);
-	} else
-		rc = SA_AIS_ERR_NO_RESOURCES;
+  if (o_msg != nullptr) {
+    rc = o_msg->info.api_resp_info.rc;
+    clma_msg_destroy(o_msg);
+  } else
+    rc = SA_AIS_ERR_NO_RESOURCES;
 
 done_give_hdl:
-	ncshm_give_hdl(clmHandle);
+  ncshm_give_hdl(clmHandle);
 
 done:
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }

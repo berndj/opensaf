@@ -23,16 +23,15 @@ static SaClmNodeIdT nodeId;
 static SaInvocationT invocation;
 
 static void nodeGetCallBack1(SaInvocationT invocation,
-			     const SaClmClusterNodeT *clusterNode,
+                             const SaClmClusterNodeT *clusterNode,
                              SaAisErrorT error) {
   printf("Inside nodeGetCallBack1");
   printf("error= %d", error);
 }
 
 static void nodeGetCallBack4(SaInvocationT invocation,
-			     const SaClmClusterNodeT_4 *clusterNode,
+                             const SaClmClusterNodeT_4 *clusterNode,
                              SaAisErrorT error) {
-
   printf("Inside nodeGetCallBack4");
   printf("error= %d", error);
 }
@@ -69,8 +68,9 @@ void saClmClusterNodeGetAsync_02() {
   invocation = 700;
   SaAisErrorT rc;
 
-  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks4, &clmVersion_4),
-            SA_AIS_OK);
+  safassert(
+      ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks4, &clmVersion_4),
+      SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGetAsync(clmHandle, invocation, nodeId);
@@ -100,14 +100,16 @@ void saClmClusterNodeGetAsync_03() {
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 
-  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks4, &clmVersion_4),
-            SA_AIS_OK);
+  safassert(
+      ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks4, &clmVersion_4),
+      SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGetAsync(0, invocation, nodeId);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 
-  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks4, &clmVersion_4),
-            SA_AIS_OK);
+  safassert(
+      ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks4, &clmVersion_4),
+      SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGetAsync(-1, invocation, nodeId);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
@@ -123,8 +125,7 @@ void saClmClusterNodeGetAsync_04() {
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
-void saClmClusterNodeGetAsync_05()
-{
+void saClmClusterNodeGetAsync_05() {
   nodeId = ncs_get_node_id();
   invocation = 500;
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks1, &clmVersion_1),
@@ -140,8 +141,9 @@ void saClmClusterNodeGetAsync_06() {
   invocation = 600;
   SaAisErrorT rc;
 
-  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks4, &clmVersion_4),
-            SA_AIS_OK);
+  safassert(
+      ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks4, &clmVersion_4),
+      SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGetAsync(clmHandle, invocation, nodeId);
@@ -187,7 +189,7 @@ void saClmClusterNodeGetAsync_08() {
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGetAsync(clmHandle, invocation,
-                                SA_CLM_LOCAL_NODE_ID);
+                                         SA_CLM_LOCAL_NODE_ID);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
@@ -206,7 +208,8 @@ void saClmClusterNodeGetAsync_09() {
   invocation = 600;
   SaAisErrorT rc;
 
-  safassert(ClmTest::saClmInitialize(&clmHandle, nullptr, &clmVersion_1), SA_AIS_OK);
+  safassert(ClmTest::saClmInitialize(&clmHandle, nullptr, &clmVersion_1),
+            SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGetAsync(clmHandle, invocation, nodeId);
@@ -239,27 +242,22 @@ void saClmClusterNodeGetAsync_09() {
 __attribute__((constructor)) static void
 saClmClusterNodeGetAsyncAsync_constructor() {
   test_suite_add(6, "Test case for saClmClusterNodeGetAsync");
-  test_case_add(
-      6, saClmClusterNodeGetAsync_01,
-      "saClmClusterNodeGetAsync with valid arguments, SA_AIS_OK");
-  test_case_add(
-      6, saClmClusterNodeGetAsync_02,
-      "saClmClusterNodeGetAsync_4 with valid arguments, SA_AIS_OK");
+  test_case_add(6, saClmClusterNodeGetAsync_01,
+                "saClmClusterNodeGetAsync with valid arguments, SA_AIS_OK");
+  test_case_add(6, saClmClusterNodeGetAsync_02,
+                "saClmClusterNodeGetAsync_4 with valid arguments, SA_AIS_OK");
   test_case_add(6, saClmClusterNodeGetAsync_03,
                 "saClmClusterNodeGetAsync with invlaid handle");
   test_case_add(6, saClmClusterNodeGetAsync_04,
                 "saClmClusterNodeGetAsync with null invocation");
   test_case_add(6, saClmClusterNodeGetAsync_05,
                 "saClmClusterNodeGetAsync with null nodeId");
-  test_case_add(
-      6, saClmClusterNodeGetAsync_06,
-      "saClmClusterNodeGetAsync with nodeId which does not exist");
-  test_case_add(
-      6, saClmClusterNodeGetAsync_07,
-      "saClmClusterNodeGetAsync with nodeId of non member node");
-  test_case_add(
-      6, saClmClusterNodeGetAsync_08,
-      "saClmClusterNodeGetAsync with nodeId as SA_CLM_LOCAL_NODE_ID");
+  test_case_add(6, saClmClusterNodeGetAsync_06,
+                "saClmClusterNodeGetAsync with nodeId which does not exist");
+  test_case_add(6, saClmClusterNodeGetAsync_07,
+                "saClmClusterNodeGetAsync with nodeId of non member node");
+  test_case_add(6, saClmClusterNodeGetAsync_08,
+                "saClmClusterNodeGetAsync with nodeId as SA_CLM_LOCAL_NODE_ID");
   test_case_add(6, saClmClusterNodeGetAsync_09,
                 "saClmClusterNodeGetAsync with null callback");
 }

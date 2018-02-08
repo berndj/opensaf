@@ -19,7 +19,7 @@
 #include "ais/try_again_decorator.h"
 
 static void nodeGetCallBack(SaInvocationT invocation,
-			    const SaClmClusterNodeT *clusterNode,
+                            const SaClmClusterNodeT *clusterNode,
                             SaAisErrorT error) {
   printf("Inside nodeGetCallBack1");
   printf("error= %d", error);
@@ -59,17 +59,14 @@ void saClmSelectionObjectGet_04() {
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
-__attribute__((constructor)) static void
-saClmSelectionObjectGet_constructor() {
+__attribute__((constructor)) static void saClmSelectionObjectGet_constructor() {
   test_suite_add(2, "Life Cykel API 3");
   test_case_add(2, saClmSelectionObjectGet_01,
                 "saClmSelectionObjectGet SA_AIS_OK");
-  test_case_add(
-      2, saClmSelectionObjectGet_02,
-      "saClmSelectionObjectGet NULL handle SA_AIS_ERR_BAD_HANDLE");
-  test_case_add(
-      2, saClmSelectionObjectGet_03,
-      "saClmSelectionObjectGet invalid handle SA_AIS_ERR_BAD_HANDLE");
+  test_case_add(2, saClmSelectionObjectGet_02,
+                "saClmSelectionObjectGet NULL handle SA_AIS_ERR_BAD_HANDLE");
+  test_case_add(2, saClmSelectionObjectGet_03,
+                "saClmSelectionObjectGet invalid handle SA_AIS_ERR_BAD_HANDLE");
   test_case_add(
       2, saClmSelectionObjectGet_03,
       "saClmSelectionObjectGet NULL selectionObject SA_AIS_ERR_INVALID_PARAM");

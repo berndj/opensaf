@@ -46,8 +46,7 @@ void saClmInitialize_05() {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmInitialize_06()
-{
+void saClmInitialize_06() {
   rc = ClmTest::saClmInitialize_4(&clmHandle, nullptr, &clmVersion_4);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
@@ -97,7 +96,7 @@ void saClmInitialize_11() {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmInitialize_12()  {
+void saClmInitialize_12() {
   SaVersionT version1 = {'B', 0, 0};
   SaVersionT version4 = {'B', 0, 0};
   rc = ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &version1);
@@ -147,16 +146,14 @@ __attribute__((constructor)) static void saNtfInitialize_constructor() {
                 "saClmInitialize with NULL pointer to callback");
   test_case_add(1, saClmInitialize_06,
                 "saClmInitialize_4 with NULL pointer to callback");
-  test_case_add(
-      1, saClmInitialize_07,
-      "saClmInitialize & saClmInitialize_4 with NULL pointer"
-      " to callback & Version");
+  test_case_add(1, saClmInitialize_07,
+                "saClmInitialize & saClmInitialize_4 with NULL pointer"
+                " to callback & Version");
   test_case_add(
       1, saClmInitialize_08,
       "saClmInitialize & saClmInitialize_4 with uninitialized version");
-  test_case_add(
-      1, saClmInitialize_09,
-      "saClmInitialize & saClmInitialize_4 with too high release");
+  test_case_add(1, saClmInitialize_09,
+                "saClmInitialize & saClmInitialize_4 with too high release");
   test_case_add(
       1, saClmInitialize_10,
       "saClmInitialize & saClmInitialize_4 with too high major version");

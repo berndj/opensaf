@@ -19,12 +19,14 @@
 #include "clm/apitest/clmtest.h"
 
 void saClmFinalize_01() {
-  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
-            SA_AIS_OK);
+  safassert(
+      ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
+      SA_AIS_OK);
   rc = ClmTest::saClmFinalize(clmHandle);
   test_validate(rc, SA_AIS_OK);
-  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
-            SA_AIS_OK);
+  safassert(
+      ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
+      SA_AIS_OK);
   rc = ClmTest::saClmFinalize(clmHandle);
   test_validate(rc, SA_AIS_OK);
 }
@@ -35,8 +37,9 @@ void saClmFinalize_02() {
 }
 
 void saClmFinalize_03() {
-  safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
-            SA_AIS_OK);
+  safassert(
+      ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
+      SA_AIS_OK);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   rc = ClmTest::saClmFinalize(clmHandle);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);

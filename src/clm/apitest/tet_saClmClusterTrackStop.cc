@@ -35,9 +35,9 @@ static void clmTrackCallback44(
   printf("\n");
 }
 
-static void
-clmTrackCallback11(const SaClmClusterNotificationBufferT *notificationBuffer,
-                   SaUint32T numberOfMembers, SaAisErrorT error) {
+static void clmTrackCallback11(
+    const SaClmClusterNotificationBufferT *notificationBuffer,
+    SaUint32T numberOfMembers, SaAisErrorT error) {
   printf("\n");
   printf("\n Inside TrackCallback");
   printf("\n No of items = %d", notificationBuffer->numberOfItems);
@@ -46,15 +46,14 @@ clmTrackCallback11(const SaClmClusterNotificationBufferT *notificationBuffer,
 }
 
 static void nodeGetCallBack11(SaInvocationT invocation,
-			      const SaClmClusterNodeT *clusterNode,
+                              const SaClmClusterNodeT *clusterNode,
                               SaAisErrorT error) {
   printf("\n inside of node get callback1");
 }
 
 static void nodeGetCallBack44(SaInvocationT invocation,
-			      const SaClmClusterNodeT_4 *clusterNode,
+                              const SaClmClusterNodeT_4 *clusterNode,
                               SaAisErrorT error) {
-
   printf("\n inside of node get callback4");
 }
 

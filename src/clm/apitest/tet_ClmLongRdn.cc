@@ -32,9 +32,9 @@
 static const char *s_clmTrackCallback_node;
 // clmTrackCallback callback
 static SaAisErrorT
-s_clmTrackCallback_err; // Error code from clmTrackCallback callback
-static int s_existTestNode; // 0 = not tested, -1 = doesn't exist, 1 = exists
-static int s_longDnAllowed; // 0 = not tested, -1 = not allowed, 1 = allowed
+    s_clmTrackCallback_err;  // Error code from clmTrackCallback callback
+static int s_existTestNode;  // 0 = not tested, -1 = doesn't exist, 1 = exists
+static int s_longDnAllowed;  // 0 = not tested, -1 = not allowed, 1 = allowed
 static const char *s_testNodeName =
     "safNode=PL-123456789012345678901234567890"
     "123456789012345678901234567890,safCluster=myClmCluster";
@@ -51,11 +51,10 @@ static int testNodeExist() {
   }
 
   safassert(saImmOmInitialize(&immHandle, nullptr, &version), SA_AIS_OK);
-  safassert(saImmOmAccessorInitialize(immHandle, &accessorHandle),
-            SA_AIS_OK);
+  safassert(saImmOmAccessorInitialize(immHandle, &accessorHandle), SA_AIS_OK);
 
-  rc = saImmOmAccessorGet_o3(accessorHandle, s_testNodeName,
-                             attributeNames, nullptr);
+  rc = saImmOmAccessorGet_o3(accessorHandle, s_testNodeName, attributeNames,
+                             nullptr);
   assert(rc == SA_AIS_OK || rc == SA_AIS_ERR_NOT_EXIST);
   if (rc == SA_AIS_ERR_NOT_EXIST) {
     s_existTestNode = -1;
@@ -80,11 +79,9 @@ static SaClmNodeIdT getClmNodeId(const char *nodeName) {
   int i;
 
   safassert(saImmOmInitialize(&immHandle, nullptr, &version), SA_AIS_OK);
-  safassert(saImmOmAccessorInitialize(immHandle, &accessorHandle),
-            SA_AIS_OK);
-  safassert(saImmOmAccessorGet_o3(accessorHandle,
-                                  (SaConstStringT)nodeName, attrNames,
-                                  &attributes),
+  safassert(saImmOmAccessorInitialize(immHandle, &accessorHandle), SA_AIS_OK);
+  safassert(saImmOmAccessorGet_o3(accessorHandle, (SaConstStringT)nodeName,
+                                  attrNames, &attributes),
             SA_AIS_OK);
 
   for (i = 0; attributes[i]; ++i) {
@@ -109,8 +106,7 @@ static SaClmNodeIdT isLongDNAllowed() {
   SaImmAttrNameT attrName = const_cast<SaImmAttrNameT>("longDnsAllowed");
   SaImmAttrNameT attrNames[2] = {attrName, nullptr};
   SaImmAttrValuesT_2 **attributes = nullptr;
-  SaConstStringT immObjectName =
-      "opensafImm=opensafImm,safApp=safImmService";
+  SaConstStringT immObjectName = "opensafImm=opensafImm,safApp=safImmService";
   int i;
 
   if (s_longDnAllowed) {
@@ -118,18 +114,16 @@ static SaClmNodeIdT isLongDNAllowed() {
   }
 
   safassert(saImmOmInitialize(&immHandle, nullptr, &version), SA_AIS_OK);
-  safassert(saImmOmAccessorInitialize(immHandle, &accessorHandle),
-            SA_AIS_OK);
-  safassert(saImmOmAccessorGet_o3(accessorHandle, immObjectName,
-                                  attrNames, &attributes),
+  safassert(saImmOmAccessorInitialize(immHandle, &accessorHandle), SA_AIS_OK);
+  safassert(saImmOmAccessorGet_o3(accessorHandle, immObjectName, attrNames,
+                                  &attributes),
             SA_AIS_OK);
 
   for (i = 0; attributes[i]; ++i) {
     if (!strcmp(attrName, attributes[i]->attrName) &&
         attributes[i]->attrValuesNumber == 1 &&
         attributes[i]->attrValueType == SA_IMM_ATTR_SAUINT32T) {
-      s_longDnAllowed =
-          *(SaClmNodeIdT *)attributes[i]->attrValues[0];
+      s_longDnAllowed = *(SaClmNodeIdT *)attributes[i]->attrValues[0];
       break;
     }
   }
@@ -143,29 +137,25 @@ static SaClmNodeIdT isLongDNAllowed() {
 static void skipTest() { printf("       SKIPPED"); }
 
 static void nodeGetCallBack(SaInvocationT invocation,
-			    const SaClmClusterNodeT *clusterNode,
-                            SaAisErrorT error) {
-}
+                            const SaClmClusterNodeT *clusterNode,
+                            SaAisErrorT error) {}
 
 static void nodeGetCallBack4(SaInvocationT invocation,
-			     const SaClmClusterNodeT_4 *clusterNode,
-                             SaAisErrorT error) {
-}
+                             const SaClmClusterNodeT_4 *clusterNode,
+                             SaAisErrorT error) {}
 
-static void
-clmTrackCallback(const SaClmClusterNotificationBufferT *notificationBuffer,
-                 SaUint32T numberOfMembers, SaAisErrorT error) {
+static void clmTrackCallback(
+    const SaClmClusterNotificationBufferT *notificationBuffer,
+    SaUint32T numberOfMembers, SaAisErrorT error) {
   SaUint32T i;
   char nodename[1024];
 
   for (i = 0; i < notificationBuffer->numberOfItems; i++) {
     memcpy(nodename,
-           notificationBuffer->notification[i]
-           .clusterNode.nodeName.value,
-           notificationBuffer->notification[i]
-           .clusterNode.nodeName.length);
-    nodename[notificationBuffer->notification[i]
-             .clusterNode.nodeName.length] = 0;
+           notificationBuffer->notification[i].clusterNode.nodeName.value,
+           notificationBuffer->notification[i].clusterNode.nodeName.length);
+    nodename[notificationBuffer->notification[i].clusterNode.nodeName.length] =
+        0;
 
     // Found node name
     if (!strcmp(nodename, s_clmTrackCallback_node)) {
@@ -185,12 +175,10 @@ static void clmTrackCallback4(
 
   for (i = 0; i < notificationBuffer->numberOfItems; i++) {
     memcpy(nodename,
-           notificationBuffer->notification[i]
-           .clusterNode.nodeName.value,
-           notificationBuffer->notification[i]
-           .clusterNode.nodeName.length);
-    nodename[notificationBuffer->notification[i]
-             .clusterNode.nodeName.length] = 0;
+           notificationBuffer->notification[i].clusterNode.nodeName.value,
+           notificationBuffer->notification[i].clusterNode.nodeName.length);
+    nodename[notificationBuffer->notification[i].clusterNode.nodeName.length] =
+        0;
 
     // Found node name
     if (!strcmp(nodename, s_clmTrackCallback_node)) {
@@ -257,19 +245,18 @@ static void saClmLongRdn_01() {
   }
 
   safassert(saImmOmInitialize(&immHandle, nullptr, &version), SA_AIS_OK);
-  safassert(saImmOmAdminOwnerInitialize(immHandle, ownerName, SA_TRUE,
-                                        &ownerHandle),
-            SA_AIS_OK);
+  safassert(
+      saImmOmAdminOwnerInitialize(immHandle, ownerName, SA_TRUE, &ownerHandle),
+      SA_AIS_OK);
   safassert(saImmOmAdminOwnerSet_o3(ownerHandle, parentNames, SA_IMM_ONE),
             SA_AIS_OK);
   safassert(saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
 
   // Create a node with long RDN
-  safassert(
-      saImmOmCcbObjectCreate_o3(ccbHandle,
-                                const_cast<SaImmClassNameT>("SaClmNode"),
-                                nodeName, nullptr),
-      SA_AIS_OK);
+  safassert(saImmOmCcbObjectCreate_o3(ccbHandle,
+                                      const_cast<SaImmClassNameT>("SaClmNode"),
+                                      nodeName, nullptr),
+            SA_AIS_OK);
 
   rc = saImmOmCcbApply(ccbHandle);
   test_validate(rc, SA_AIS_OK);
@@ -299,8 +286,9 @@ void saClmLongRdn_02() {
     return;
   }
 
-  safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
-            SA_AIS_OK);
+  safassert(
+      ClmTest::saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
+      SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, nullptr);
@@ -324,8 +312,7 @@ void saClmLongRdn_02() {
   while (1) {
     rc = poll(fds, 1, 2000);
     assert(rc == 1);
-    if (fds[0].revents & POLLIN)
-      break;
+    if (fds[0].revents & POLLIN) break;
   }
 
   safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
@@ -378,8 +365,7 @@ void saClmLongRdn_03() {
   while (1) {
     rc = poll(fds, 1, 2000);
     assert(rc == 1);
-    if (fds[0].revents & POLLIN)
-      break;
+    if (fds[0].revents & POLLIN) break;
   }
 
   safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
@@ -413,9 +399,9 @@ void saClmLongRdn_04() {
 
   // Create a test node
   safassert(saImmOmInitialize(&immHandle, nullptr, &version), SA_AIS_OK);
-  safassert(saImmOmAdminOwnerInitialize(immHandle, ownerName, SA_TRUE,
-                                        &ownerHandle),
-            SA_AIS_OK);
+  safassert(
+      saImmOmAdminOwnerInitialize(immHandle, ownerName, SA_TRUE, &ownerHandle),
+      SA_AIS_OK);
   safassert(saImmOmAdminOwnerSet_o3(ownerHandle, parentNames, SA_IMM_ONE),
             SA_AIS_OK);
   safassert(saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
@@ -424,9 +410,8 @@ void saClmLongRdn_04() {
   // If long DN is enabled on client side, ccbObjectCreate will return
   // SA_AIS_ERR_FAILED_OPERATION Otherwise ccbObjectCreate will return
   // SA_AIS_ERR_INVALID_PARAM
-  rc = saImmOmCcbObjectCreate_o3(ccbHandle,
-                                 const_cast<SaImmClassNameT>("SaClmNode"),
-                                 nodeName, nullptr);
+  rc = saImmOmCcbObjectCreate_o3(
+      ccbHandle, const_cast<SaImmClassNameT>("SaClmNode"), nodeName, nullptr);
   if (rc == SA_AIS_ERR_INVALID_PARAM) {
     test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
   } else {
@@ -462,7 +447,7 @@ void saClmLongRdn_05() {
             SA_AIS_OK);
 
   rc = ClmTest::saClmClusterNodeGet_4(clmHandle, nodeId, 10000000000ll,
-                             &clusterNode);
+                                      &clusterNode);
 
   // SaNameT value cannot be longer than 255, so we don't need to use
   // saAisNameBorrow
@@ -496,10 +481,10 @@ void saClmLongRdn_06() {
   nodeId = getClmNodeId(nodeName);
   assert(nodeId != 0);
 
-  safassert(ClmTest::saClmInitialize(&clmHandle, nullptr, &clmVersion_1), SA_AIS_OK);
+  safassert(ClmTest::saClmInitialize(&clmHandle, nullptr, &clmVersion_1),
+            SA_AIS_OK);
 
-  rc =
-      saClmClusterNodeGet(clmHandle, nodeId, 10000000000ll, &clusterNode);
+  rc = saClmClusterNodeGet(clmHandle, nodeId, 10000000000ll, &clusterNode);
 
   // SaNameT value cannot be longer than 255, so we don't need to use
   // saAisNameBorrow
@@ -517,16 +502,13 @@ __attribute__((constructor)) static void saClmLongRdn_constructor() {
   test_suite_add(11, "CLM Long RDN (long DN support must be allowed)");
   test_case_add(11, saClmLongRdn_01,
                 "SA_AIS_OK - Create CLM node with long RDN");
-  test_case_add(
-      11, saClmLongRdn_02,
-      "SA_AIS_OK - saClmClusterTrack_4 and callback with long RDN");
-  test_case_add(
-      11, saClmLongRdn_03,
-      "SA_AIS_OK - saClmClusterTrack and callback with long RDN");
-  test_case_add(
-      11, saClmLongRdn_04,
-      "SA_AIS_ERR_INVALID_PARAM or SA_AIS_ERR_FAILED_OPERATION"
-      " - Long DN is not supported");
+  test_case_add(11, saClmLongRdn_02,
+                "SA_AIS_OK - saClmClusterTrack_4 and callback with long RDN");
+  test_case_add(11, saClmLongRdn_03,
+                "SA_AIS_OK - saClmClusterTrack and callback with long RDN");
+  test_case_add(11, saClmLongRdn_04,
+                "SA_AIS_ERR_INVALID_PARAM or SA_AIS_ERR_FAILED_OPERATION"
+                " - Long DN is not supported");
   test_case_add(11, saClmLongRdn_05,
                 "SA_AIS_OK - saClmClusterNodeGet_4 with long DN");
   test_case_add(11, saClmLongRdn_06,

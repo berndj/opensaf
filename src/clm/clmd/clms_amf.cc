@@ -37,16 +37,15 @@
  * Notes         : None
  *****************************************************************************/
 static SaAisErrorT amf_active_state_handler(CLMS_CB *cb,
-					    SaInvocationT invocation)
-{
-	SaAisErrorT rc = SA_AIS_OK;
+                                            SaInvocationT invocation) {
+  SaAisErrorT rc = SA_AIS_OK;
 
-	TRACE_ENTER2("AMF HA ACTIVE request");
+  TRACE_ENTER2("AMF HA ACTIVE request");
 
-	clms_cb->mds_role = V_DEST_RL_ACTIVE;
+  clms_cb->mds_role = V_DEST_RL_ACTIVE;
 
-	TRACE_LEAVE();
-	return rc;
+  TRACE_LEAVE();
+  return rc;
 }
 
 /****************************************************************************
@@ -63,14 +62,13 @@ static SaAisErrorT amf_active_state_handler(CLMS_CB *cb,
  * Notes         : None
  *****************************************************************************/
 static SaAisErrorT amf_standby_state_handler(CLMS_CB *cb,
-					     SaInvocationT invocation)
-{
-	TRACE_ENTER2("HA STANDBY request");
+                                             SaInvocationT invocation) {
+  TRACE_ENTER2("HA STANDBY request");
 
-	cb->mds_role = V_DEST_RL_STANDBY;
+  cb->mds_role = V_DEST_RL_STANDBY;
 
-	TRACE_LEAVE();
-	return SA_AIS_OK;
+  TRACE_LEAVE();
+  return SA_AIS_OK;
 }
 
 /****************************************************************************
@@ -87,16 +85,15 @@ static SaAisErrorT amf_standby_state_handler(CLMS_CB *cb,
  * Notes         : None
  *****************************************************************************/
 static SaAisErrorT amf_quiescing_state_handler(CLMS_CB *cb,
-					       SaInvocationT invocation)
-{
-	TRACE_ENTER2("HA QUIESCING request");
+                                               SaInvocationT invocation) {
+  TRACE_ENTER2("HA QUIESCING request");
 
-	/* Give up our IMM OI implementer role */
-	immutil_saImmOiImplementerClear(cb->immOiHandle);
-	cb->is_impl_set = false;
+  /* Give up our IMM OI implementer role */
+  immutil_saImmOiImplementerClear(cb->immOiHandle);
+  cb->is_impl_set = false;
 
-	TRACE_LEAVE();
-	return saAmfCSIQuiescingComplete(cb->amf_hdl, invocation, SA_AIS_OK);
+  TRACE_LEAVE();
+  return saAmfCSIQuiescingComplete(cb->amf_hdl, invocation, SA_AIS_OK);
 }
 
 /****************************************************************************
@@ -113,34 +110,32 @@ static SaAisErrorT amf_quiescing_state_handler(CLMS_CB *cb,
  * Notes         : None
  *****************************************************************************/
 static SaAisErrorT amf_quiesced_state_handler(CLMS_CB *cb,
-					      SaInvocationT invocation)
-{
-	TRACE_ENTER2("HA AMF QUIESCED STATE request");
-	SaUint32T nodeid = 0;
-	CLMS_CLUSTER_NODE *node = nullptr;
+                                              SaInvocationT invocation) {
+  TRACE_ENTER2("HA AMF QUIESCED STATE request");
+  SaUint32T nodeid = 0;
+  CLMS_CLUSTER_NODE *node = nullptr;
 
-	/*Stop timer if the switchover happens in middle of admin op */
-	while (nullptr != (node = clms_node_getnext_by_id(nodeid))) {
-		nodeid = node->node_id;
-		if (node->lock_timerid)
-			timer_delete(node->lock_timerid);
-		/*Crosscheck if the admin op and stat_change also needs to be
-		 * cleared */
-	}
+  /*Stop timer if the switchover happens in middle of admin op */
+  while (nullptr != (node = clms_node_getnext_by_id(nodeid))) {
+    nodeid = node->node_id;
+    if (node->lock_timerid) timer_delete(node->lock_timerid);
+    /*Crosscheck if the admin op and stat_change also needs to be
+     * cleared */
+  }
 
-	/*
-	 ** Change the MDS VDSET role to Quiesced. Wait for MDS callback with
-	 *type * MDS_CALLBACK_QUIESCED_ACK. Then change MBCSv role. Don't change
-	 ** cb->ha_state now.
-	 */
+  /*
+   ** Change the MDS VDSET role to Quiesced. Wait for MDS callback with
+   *type * MDS_CALLBACK_QUIESCED_ACK. Then change MBCSv role. Don't change
+   ** cb->ha_state now.
+   */
 
-	cb->mds_role = V_DEST_RL_QUIESCED;
-	clms_mds_change_role(cb);
-	cb->amf_inv = invocation;
-	cb->is_quiesced_set = true;
+  cb->mds_role = V_DEST_RL_QUIESCED;
+  clms_mds_change_role(cb);
+  cb->amf_inv = invocation;
+  cb->is_quiesced_set = true;
 
-	TRACE_LEAVE();
-	return SA_AIS_OK;
+  TRACE_LEAVE();
+  return SA_AIS_OK;
 }
 
 /****************************************************************************
@@ -160,10 +155,9 @@ static SaAisErrorT amf_quiesced_state_handler(CLMS_CB *cb,
  * Notes         : None
  *****************************************************************************/
 static void clms_amf_health_chk_callback(SaInvocationT invocation,
-					 const SaNameT *compName,
-					 SaAmfHealthcheckKeyT *checkType)
-{
-	saAmfResponse(clms_cb->amf_hdl, invocation, SA_AIS_OK);
+                                         const SaNameT *compName,
+                                         SaAmfHealthcheckKeyT *checkType) {
+  saAmfResponse(clms_cb->amf_hdl, invocation, SA_AIS_OK);
 }
 
 /****************************************************************************
@@ -193,110 +187,104 @@ static void clms_amf_health_chk_callback(SaInvocationT invocation,
  * Notes         : None.
  *****************************************************************************/
 static void clms_amf_csi_set_callback(SaInvocationT invocation,
-				      const SaNameT *compName,
-				      SaAmfHAStateT new_haState,
-				      SaAmfCSIDescriptorT csiDescriptor)
-{
-	SaAisErrorT error = SA_AIS_OK;
-	SaAmfHAStateT prev_haState;
-	bool role_change = true;
-	uint32_t rc = NCSCC_RC_SUCCESS;
+                                      const SaNameT *compName,
+                                      SaAmfHAStateT new_haState,
+                                      SaAmfCSIDescriptorT csiDescriptor) {
+  SaAisErrorT error = SA_AIS_OK;
+  SaAmfHAStateT prev_haState;
+  bool role_change = true;
+  uint32_t rc = NCSCC_RC_SUCCESS;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	/*
-	 *  Handle Active to Active role change.
-	 */
-	prev_haState = clms_cb->ha_state;
+  /*
+   *  Handle Active to Active role change.
+   */
+  prev_haState = clms_cb->ha_state;
 
-	if ((rc = initialize_for_assignment(clms_cb, new_haState)) !=
-	    NCSCC_RC_SUCCESS) {
-		LOG_ER("initialize_for_assignment FAILED %u", (unsigned)rc);
-		error = SA_AIS_ERR_FAILED_OPERATION;
-		goto response;
-	}
+  if ((rc = initialize_for_assignment(clms_cb, new_haState)) !=
+      NCSCC_RC_SUCCESS) {
+    LOG_ER("initialize_for_assignment FAILED %u", (unsigned)rc);
+    error = SA_AIS_ERR_FAILED_OPERATION;
+    goto response;
+  }
 
-	/* Invoke the appropriate state handler routine */
-	switch (new_haState) {
-	case SA_AMF_HA_ACTIVE:
-		error = amf_active_state_handler(clms_cb, invocation);
-		break;
-	case SA_AMF_HA_STANDBY:
-		error = amf_standby_state_handler(clms_cb, invocation);
-		break;
-	case SA_AMF_HA_QUIESCED:
-		/* switch-over */
-		error = amf_quiesced_state_handler(clms_cb, invocation);
-		break;
-	case SA_AMF_HA_QUIESCING:
-		/* shutdown admin op */
-		error = amf_quiescing_state_handler(clms_cb, invocation);
-		break;
-	default:
-		LOG_WA("invalid state: %d ", new_haState);
-		error = SA_AIS_ERR_FAILED_OPERATION;
-		break;
-	}
+  /* Invoke the appropriate state handler routine */
+  switch (new_haState) {
+    case SA_AMF_HA_ACTIVE:
+      error = amf_active_state_handler(clms_cb, invocation);
+      break;
+    case SA_AMF_HA_STANDBY:
+      error = amf_standby_state_handler(clms_cb, invocation);
+      break;
+    case SA_AMF_HA_QUIESCED:
+      /* switch-over */
+      error = amf_quiesced_state_handler(clms_cb, invocation);
+      break;
+    case SA_AMF_HA_QUIESCING:
+      /* shutdown admin op */
+      error = amf_quiescing_state_handler(clms_cb, invocation);
+      break;
+    default:
+      LOG_WA("invalid state: %d ", new_haState);
+      error = SA_AIS_ERR_FAILED_OPERATION;
+      break;
+  }
 
-	if (error != SA_AIS_OK)
-		goto response;
+  if (error != SA_AIS_OK) goto response;
 
-	if (new_haState == SA_AMF_HA_QUIESCED) {
-		/* AMF response will be done later when MDS quiesced ack has
-		 * been received */
-		goto done;
-	}
+  if (new_haState == SA_AMF_HA_QUIESCED) {
+    /* AMF response will be done later when MDS quiesced ack has
+     * been received */
+    goto done;
+  }
 
-	/* Update control block */
-	clms_cb->ha_state = new_haState;
+  /* Update control block */
+  clms_cb->ha_state = new_haState;
 
-	if (new_haState == SA_AMF_HA_ACTIVE ||
-	    new_haState == SA_AMF_HA_STANDBY) {
-		clms_cb->ckpt_state = COLD_SYNC_IDLE;
-	}
+  if (new_haState == SA_AMF_HA_ACTIVE || new_haState == SA_AMF_HA_STANDBY) {
+    clms_cb->ckpt_state = COLD_SYNC_IDLE;
+  }
 
-	/* Handle active to active role change. */
-	if ((prev_haState == SA_AMF_HA_ACTIVE) &&
-	    (new_haState == SA_AMF_HA_ACTIVE))
-		role_change = false;
+  /* Handle active to active role change. */
+  if ((prev_haState == SA_AMF_HA_ACTIVE) && (new_haState == SA_AMF_HA_ACTIVE))
+    role_change = false;
 
-	/* Handle Stby to Stby role change. */
-	if ((prev_haState == SA_AMF_HA_STANDBY) &&
-	    (new_haState == SA_AMF_HA_STANDBY))
-		role_change = false;
+  /* Handle Stby to Stby role change. */
+  if ((prev_haState == SA_AMF_HA_STANDBY) && (new_haState == SA_AMF_HA_STANDBY))
+    role_change = false;
 
-	if (role_change == true) {
-		/* i.e Set up the infrastructure first.
-		 * i.e. Declare yourself as ACTIVE first.
-		 */
-		if ((rc = clms_mds_change_role(clms_cb)) != NCSCC_RC_SUCCESS) {
-			LOG_ER("clms_mds_change_role FAILED");
-			error = SA_AIS_ERR_FAILED_OPERATION;
-		}
+  if (role_change == true) {
+    /* i.e Set up the infrastructure first.
+     * i.e. Declare yourself as ACTIVE first.
+     */
+    if ((rc = clms_mds_change_role(clms_cb)) != NCSCC_RC_SUCCESS) {
+      LOG_ER("clms_mds_change_role FAILED");
+      error = SA_AIS_ERR_FAILED_OPERATION;
+    }
 
-		/* Inform MBCSV of HA state change */
-		if (NCSCC_RC_SUCCESS !=
-		    clms_mbcsv_change_HA_state(clms_cb, new_haState))
-			error = SA_AIS_ERR_FAILED_OPERATION;
+    /* Inform MBCSV of HA state change */
+    if (NCSCC_RC_SUCCESS != clms_mbcsv_change_HA_state(clms_cb, new_haState))
+      error = SA_AIS_ERR_FAILED_OPERATION;
 
-		if (clms_cb->ha_state == SA_AMF_HA_ACTIVE) {
-			clms_imm_impl_set(clms_cb);
-			proc_downs_during_rolechange();
+    if (clms_cb->ha_state == SA_AMF_HA_ACTIVE) {
+      clms_imm_impl_set(clms_cb);
+      proc_downs_during_rolechange();
 
-			/* Unconditionally refresh IMM for runtime attributes */
-			clms_switchon_all_pending_rtupdates();
-		}
+      /* Unconditionally refresh IMM for runtime attributes */
+      clms_switchon_all_pending_rtupdates();
+    }
 
-		/* Clear up any pending rtu updates, the active will take care
-		 * of it */
-		if (clms_cb->ha_state == SA_AMF_HA_STANDBY)
-			clms_switchoff_all_pending_rtupdates();
-	}
+    /* Clear up any pending rtu updates, the active will take care
+     * of it */
+    if (clms_cb->ha_state == SA_AMF_HA_STANDBY)
+      clms_switchoff_all_pending_rtupdates();
+  }
 
 response:
-	saAmfResponse(clms_cb->amf_hdl, invocation, error);
+  saAmfResponse(clms_cb->amf_hdl, invocation, error);
 done:
-	TRACE_LEAVE();
+  TRACE_LEAVE();
 }
 
 /****************************************************************************
@@ -321,22 +309,21 @@ done:
  * Notes         : None
  *****************************************************************************/
 static void clms_amf_comp_terminate_callback(SaInvocationT invocation,
-					     const SaNameT *compName)
-{
-	TRACE_ENTER();
+                                             const SaNameT *compName) {
+  TRACE_ENTER();
 
-	saAmfResponse(clms_cb->amf_hdl, invocation, SA_AIS_OK);
+  saAmfResponse(clms_cb->amf_hdl, invocation, SA_AIS_OK);
 
-	/* Detach from IPC */
-	m_NCS_IPC_DETACH(&clms_cb->mbx, nullptr, clms_cb);
+  /* Detach from IPC */
+  m_NCS_IPC_DETACH(&clms_cb->mbx, nullptr, clms_cb);
 
-	/* Disconnect from MDS */
-	clms_mds_finalize(clms_cb);
-	sleep(1);
+  /* Disconnect from MDS */
+  clms_mds_finalize(clms_cb);
+  sleep(1);
 
-	TRACE_LEAVE();
-	LOG_NO("Received AMF component terminate callback, exiting");
-	exit(0);
+  TRACE_LEAVE();
+  LOG_NO("Received AMF component terminate callback, exiting");
+  exit(0);
 }
 
 /****************************************************************************
@@ -359,15 +346,14 @@ static void clms_amf_comp_terminate_callback(SaInvocationT invocation,
  * Return Values : None
  *****************************************************************************/
 static void clms_amf_csi_rmv_callback(SaInvocationT invocation,
-				      const SaNameT *compName,
-				      const SaNameT *csiName,
-				      const SaAmfCSIFlagsT csiFlags)
-{
-	TRACE_ENTER();
+                                      const SaNameT *compName,
+                                      const SaNameT *csiName,
+                                      const SaAmfCSIFlagsT csiFlags) {
+  TRACE_ENTER();
 
-	saAmfResponse(clms_cb->amf_hdl, invocation, SA_AIS_OK);
+  saAmfResponse(clms_cb->amf_hdl, invocation, SA_AIS_OK);
 
-	TRACE_LEAVE();
+  TRACE_LEAVE();
 }
 
 /*****************************************************************************\
@@ -381,35 +367,33 @@ static void clms_amf_csi_rmv_callback(SaInvocationT invocation,
  *                 SA_AIS_ERR_* -  failure                                    *
  *  NOTE:                                                                     *
 \******************************************************************************/
-static SaAisErrorT clms_amf_healthcheck_start(CLMS_CB *clms_cb)
-{
-	SaAisErrorT error;
-	SaAmfHealthcheckKeyT healthy;
-	char *health_key;
+static SaAisErrorT clms_amf_healthcheck_start(CLMS_CB *clms_cb) {
+  SaAisErrorT error;
+  SaAmfHealthcheckKeyT healthy;
+  char *health_key;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	/** start the AMF health check **/
-	memset(&healthy, 0, sizeof(healthy));
-	health_key = getenv("CLMSV_ENV_HEALTHCHECK_KEY");
+  /** start the AMF health check **/
+  memset(&healthy, 0, sizeof(healthy));
+  health_key = getenv("CLMSV_ENV_HEALTHCHECK_KEY");
 
-	/*TBD : adapt to new health check mechanism */
-	if (health_key == nullptr)
-		strcpy((char *)healthy.key, "F1B2");
-	else
-		strcpy((char *)healthy.key, health_key);
+  /*TBD : adapt to new health check mechanism */
+  if (health_key == nullptr)
+    strcpy((char *)healthy.key, "F1B2");
+  else
+    strcpy((char *)healthy.key, health_key);
 
-	healthy.keyLen = strlen((char *)healthy.key);
+  healthy.keyLen = strlen((char *)healthy.key);
 
-	error = saAmfHealthcheckStart(clms_cb->amf_hdl, &clms_cb->comp_name,
-				      &healthy, SA_AMF_HEALTHCHECK_AMF_INVOKED,
-				      SA_AMF_COMPONENT_FAILOVER);
+  error = saAmfHealthcheckStart(clms_cb->amf_hdl, &clms_cb->comp_name, &healthy,
+                                SA_AMF_HEALTHCHECK_AMF_INVOKED,
+                                SA_AMF_COMPONENT_FAILOVER);
 
-	if (error != SA_AIS_OK)
-		LOG_ER("saAmfHealthcheckStart FAILED: %u", error);
+  if (error != SA_AIS_OK) LOG_ER("saAmfHealthcheckStart FAILED: %u", error);
 
-	TRACE_LEAVE();
-	return error;
+  TRACE_LEAVE();
+  return error;
 }
 
 /**************************************************************************
@@ -420,70 +404,68 @@ static SaAisErrorT clms_amf_healthcheck_start(CLMS_CB *clms_cb)
  Input:    None
 
  Returns:  SA_AIS_OK    - everything is OK
-	   SA_AIS_ERR_* -  failure
+           SA_AIS_ERR_* -  failure
 
 **************************************************************************/
-SaAisErrorT clms_amf_init(CLMS_CB *cb)
-{
-	SaAmfCallbacksT amfCallbacks;
-	SaVersionT amf_version;
-	SaAisErrorT error = SA_AIS_OK;
+SaAisErrorT clms_amf_init(CLMS_CB *cb) {
+  SaAmfCallbacksT amfCallbacks;
+  SaVersionT amf_version;
+  SaAisErrorT error = SA_AIS_OK;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	if (cb->nid_started &&
-	    amf_comp_name_get_set_from_file("CLMD_COMP_NAME_FILE",
-					    &cb->comp_name) != NCSCC_RC_SUCCESS)
-		goto done;
+  if (cb->nid_started &&
+      amf_comp_name_get_set_from_file("CLMD_COMP_NAME_FILE", &cb->comp_name) !=
+          NCSCC_RC_SUCCESS)
+    goto done;
 
-	/* Initialize AMF callbacks */
-	memset(&amfCallbacks, 0, sizeof(SaAmfCallbacksT));
-	amfCallbacks.saAmfHealthcheckCallback = clms_amf_health_chk_callback;
-	amfCallbacks.saAmfCSISetCallback = clms_amf_csi_set_callback;
-	amfCallbacks.saAmfComponentTerminateCallback =
-	    clms_amf_comp_terminate_callback;
-	amfCallbacks.saAmfCSIRemoveCallback = clms_amf_csi_rmv_callback;
+  /* Initialize AMF callbacks */
+  memset(&amfCallbacks, 0, sizeof(SaAmfCallbacksT));
+  amfCallbacks.saAmfHealthcheckCallback = clms_amf_health_chk_callback;
+  amfCallbacks.saAmfCSISetCallback = clms_amf_csi_set_callback;
+  amfCallbacks.saAmfComponentTerminateCallback =
+      clms_amf_comp_terminate_callback;
+  amfCallbacks.saAmfCSIRemoveCallback = clms_amf_csi_rmv_callback;
 
-	amf_version.releaseCode = 'B';
-	amf_version.majorVersion = 0x01;
-	amf_version.minorVersion = 0x01;
+  amf_version.releaseCode = 'B';
+  amf_version.majorVersion = 0x01;
+  amf_version.minorVersion = 0x01;
 
-	/* Initialize the AMF library */
-	error = saAmfInitialize(&cb->amf_hdl, &amfCallbacks, &amf_version);
-	if (error != SA_AIS_OK) {
-		LOG_ER("saAmfInitialize() FAILED: %u", error);
-		goto done;
-	}
+  /* Initialize the AMF library */
+  error = saAmfInitialize(&cb->amf_hdl, &amfCallbacks, &amf_version);
+  if (error != SA_AIS_OK) {
+    LOG_ER("saAmfInitialize() FAILED: %u", error);
+    goto done;
+  }
 
-	/* Obtain the AMF selection object to wait for AMF events */
-	error = saAmfSelectionObjectGet(cb->amf_hdl, &cb->amf_sel_obj);
-	if (error != SA_AIS_OK) {
-		LOG_ER("saAmfSelectionObjectGet() FAILED: %u", error);
-		goto done;
-	}
+  /* Obtain the AMF selection object to wait for AMF events */
+  error = saAmfSelectionObjectGet(cb->amf_hdl, &cb->amf_sel_obj);
+  if (error != SA_AIS_OK) {
+    LOG_ER("saAmfSelectionObjectGet() FAILED: %u", error);
+    goto done;
+  }
 
-	/* Get the component name */
-	error = saAmfComponentNameGet(cb->amf_hdl, &cb->comp_name);
-	if (error != SA_AIS_OK) {
-		LOG_ER("saAmfComponentNameGet() FAILED: %u", error);
-		goto done;
-	}
+  /* Get the component name */
+  error = saAmfComponentNameGet(cb->amf_hdl, &cb->comp_name);
+  if (error != SA_AIS_OK) {
+    LOG_ER("saAmfComponentNameGet() FAILED: %u", error);
+    goto done;
+  }
 
-	/* Register component with AMF */
-	error = saAmfComponentRegister(cb->amf_hdl, &cb->comp_name,
-				       nullptr);
-	if (error != SA_AIS_OK) {
-		LOG_ER("saAmfComponentRegister() FAILED: %u", error);
-		goto done;
-	}
+  /* Register component with AMF */
+  error = saAmfComponentRegister(cb->amf_hdl, &cb->comp_name, nullptr);
+  if (error != SA_AIS_OK) {
+    LOG_ER("saAmfComponentRegister() FAILED: %u", error);
+    goto done;
+  }
 
-	/* Start AMF healthchecks */
-	if ((error = clms_amf_healthcheck_start(cb)) != SA_AIS_OK) {
-		LOG_ER("clms_amf_healthcheck_start() FAILED: %u", error);
-		goto done;
-	}
+  /* Start AMF healthchecks */
+  if ((error = clms_amf_healthcheck_start(cb)) != SA_AIS_OK) {
+    LOG_ER("clms_amf_healthcheck_start() FAILED: %u", error);
+    goto done;
+  }
 
 done:
-	TRACE_LEAVE();
-	return error;
+  TRACE_LEAVE();
+  return error;
 }

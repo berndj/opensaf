@@ -70,7 +70,9 @@ typedef struct {
 } clmsv_init_param_t;
 
 /* CLMA Finalize Request */
-typedef struct { SaUint32T client_id; } clmsv_finalize_param_t;
+typedef struct {
+  SaUint32T client_id;
+} clmsv_finalize_param_t;
 
 /* CLMA Track Start Request */
 typedef struct {
@@ -80,7 +82,9 @@ typedef struct {
 } clmsv_track_start_param_t;
 
 /* CLMA Track Stop Request */
-typedef struct { SaUint32T client_id; } clmsv_track_stop_param_t;
+typedef struct {
+  SaUint32T client_id;
+} clmsv_track_stop_param_t;
 
 /* CLMA Node Get Request */
 typedef struct {
@@ -142,7 +146,7 @@ typedef struct {
   SaUint32T node_id;
   SaNameT node_name;
   SaNameT user_data;
-  SaInt8T ifs;         /* Internal Field Separator */
+  SaInt8T ifs; /* Internal Field Separator */
   SaTimeT boot_time;
   SaUint16T no_of_addresses;
   SaClmNodeAddressT address;
@@ -180,11 +184,13 @@ typedef struct clmsv_is_member_info_t {
   SaUint32T client_id;
 } CLMSV_IS_MEMBER_INFO;
 
-typedef struct clmsv_reboot_info_t { SaClmNodeIdT node_id; } CLMSV_REBOOT_INFO;
+typedef struct clmsv_reboot_info_t {
+  SaClmNodeIdT node_id;
+} CLMSV_REBOOT_INFO;
 
 typedef struct clmsv_action_info_t {
-	SaClmNodeIdT node_id;
-	SaNameT action;
+  SaClmNodeIdT node_id;
+  SaNameT action;
 } CLMSV_ACTION_INFO;
 
 /* Top Level CLMSv MDS message structure for use between CLMS-> CLMA && CLMA ->
@@ -197,7 +203,7 @@ typedef struct clmsv_msg_t {
     CLMSV_CBK_INFO cbk_info;           /* Callback Messages from CLMS to CLA */
     CLMSV_API_RESP_INFO api_resp_info; /* Response Messages from CLMS to CLA */
     CLMSV_IS_MEMBER_INFO
-        is_member_info; /*Is node member or not Message from CLMS to CLA*/
+    is_member_info; /*Is node member or not Message from CLMS to CLA*/
     CLMSV_REBOOT_INFO reboot_info; /* Reboot request from CLMS to CLMNA */
     CLMSV_ACTION_INFO action_info; /* Execute action script on CLMNA */
   } info;

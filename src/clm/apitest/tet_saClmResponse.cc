@@ -28,7 +28,8 @@ SaInvocationT invocation;
 SaInvocationT lock_inv;
 
 /*Print the Values in SaClmClusterNotificationBufferT_4*/
-static void clmTrackbuf_4(SaClmClusterNotificationBufferT_4 *notificationBuffer) {
+static void clmTrackbuf_4(
+    SaClmClusterNotificationBufferT_4 *notificationBuffer) {
   unsigned i;
   printf("No of items = %d\n", notificationBuffer->numberOfItems);
 
@@ -37,37 +38,30 @@ static void clmTrackbuf_4(SaClmClusterNotificationBufferT_4 *notificationBuffer)
     printf("Cluster Change = %d\n",
            notificationBuffer->notification[i].clusterChange);
     printf("Node Name length = %d, value = %s\n",
-           notificationBuffer->notification[i]
-           .clusterNode.nodeName.length,
-           notificationBuffer->notification[i]
-           .clusterNode.nodeName.value);
+           notificationBuffer->notification[i].clusterNode.nodeName.length,
+           notificationBuffer->notification[i].clusterNode.nodeName.value);
 
     printf("Node Member = %d\n",
            notificationBuffer->notification[i].clusterNode.member);
 
     printf("Node  view number  = %llu\n",
-           notificationBuffer->notification[i]
-           .clusterNode.initialViewNumber);
+           notificationBuffer->notification[i].clusterNode.initialViewNumber);
 
     printf("Node  eename length = %d,value  = %s\n",
            notificationBuffer->notification[i]
-           .clusterNode.executionEnvironment.length,
+               .clusterNode.executionEnvironment.length,
            notificationBuffer->notification[0]
-           .clusterNode.executionEnvironment.value);
+               .clusterNode.executionEnvironment.value);
 
     printf("Node  boottimestamp  = %llu\n",
-           notificationBuffer->notification[i]
-           .clusterNode.bootTimestamp);
+           notificationBuffer->notification[i].clusterNode.bootTimestamp);
 
     printf(
         "Node  nodeAddress family  = %d,node address length = %d,"
         " node address value = %s\n",
-        notificationBuffer->notification[i]
-        .clusterNode.nodeAddress.family,
-        notificationBuffer->notification[i]
-        .clusterNode.nodeAddress.length,
-        notificationBuffer->notification[i]
-        .clusterNode.nodeAddress.value);
+        notificationBuffer->notification[i].clusterNode.nodeAddress.family,
+        notificationBuffer->notification[i].clusterNode.nodeAddress.length,
+        notificationBuffer->notification[i].clusterNode.nodeAddress.value);
 
     printf("Node  nodeid  = %u\n",
            notificationBuffer->notification[i].clusterNode.nodeId);
@@ -90,9 +84,9 @@ static void TrackCallback4(
   printf("\n");
 }
 
-static void
-TrackCallback1(const SaClmClusterNotificationBufferT *notificationBuffer,
-               SaUint32T numberOfMembers, SaAisErrorT error) {
+static void TrackCallback1(
+    const SaClmClusterNotificationBufferT *notificationBuffer,
+    SaUint32T numberOfMembers, SaAisErrorT error) {
   printf("\n");
   printf("\n Inside TrackCallback");
   printf("\n No of items = %d", notificationBuffer->numberOfItems);
@@ -124,9 +118,8 @@ void saClmResponse_01() {
     }
   }
   safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
-  safassert(
-      saClmResponse_4(clmHandle, lock_inv, SA_CLM_CALLBACK_RESPONSE_OK),
-      SA_AIS_OK);
+  safassert(saClmResponse_4(clmHandle, lock_inv, SA_CLM_CALLBACK_RESPONSE_OK),
+            SA_AIS_OK);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
@@ -167,7 +160,7 @@ void saClmResponse_02() {
   }
   safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
   safassert(ClmTest::saClmResponse_4(clmHandle, lock_inv,
-                            SA_CLM_CALLBACK_RESPONSE_ERROR),
+                                     SA_CLM_CALLBACK_RESPONSE_ERROR),
             SA_AIS_OK);
 
   fds[0].fd = (int)selectionObject;
@@ -210,7 +203,7 @@ void saClmResponse_03() {
   }
   safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
   safassert(ClmTest::saClmResponse_4(clmHandle, lock_inv,
-                            SA_CLM_CALLBACK_RESPONSE_REJECTED),
+                                     SA_CLM_CALLBACK_RESPONSE_REJECTED),
             SA_AIS_OK);
 
   fds[0].fd = (int)selectionObject;
@@ -253,10 +246,8 @@ __attribute__((constructor)) static void saClmResponse_constructor() {
   test_suite_add(8, "Test case for saClmResponse");
 
   test_case_add(8, saClmResponse_01, "saClmResponse with response as OK");
-  test_case_add(8, saClmResponse_02,
-                "saClmResponse with response as error");
-  test_case_add(8, saClmResponse_03,
-                "saClmResponse with response as rejected");
+  test_case_add(8, saClmResponse_02, "saClmResponse with response as error");
+  test_case_add(8, saClmResponse_03, "saClmResponse with response as rejected");
 
   test_case_add(8, saClmResponse_04, "saClmResponse with invalid param");
   test_case_add(8, saClmResponse_05, "saClmResponse with invalid param");

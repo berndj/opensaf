@@ -23,456 +23,380 @@ static void clms_plm_readiness_track_callback(
     SaInvocationT invocation, SaPlmTrackCauseT cause,
     const SaNameT *rootCauseEntity, SaNtfIdentifierT rootCorrelationId,
     const SaPlmReadinessTrackedEntitiesT *trackedEntities,
-    SaPlmChangeStepT step, SaAisErrorT error)
-{
-	SaUint32T i, rc = SA_AIS_OK;
-	SaAisErrorT ais_er;
-	CLMS_CLUSTER_NODE *node = nullptr, *tmp_node = nullptr;
-	uint32_t node_id = 0;
+    SaPlmChangeStepT step, SaAisErrorT error) {
+  SaUint32T i, rc = SA_AIS_OK;
+  SaAisErrorT ais_er;
+  CLMS_CLUSTER_NODE *node = nullptr, *tmp_node = nullptr;
+  uint32_t node_id = 0;
 
-	TRACE_ENTER2("step=%d,error=%d,number of tracked entites %d", step,
-		     error, trackedEntities->numberOfEntities);
+  TRACE_ENTER2("step=%d,error=%d,number of tracked entites %d", step, error,
+               trackedEntities->numberOfEntities);
 
-	if (clms_cb->ha_state == SA_AMF_HA_STANDBY) {
-		if ((step == SA_PLM_CHANGE_VALIDATE) ||
-		    (step == SA_PLM_CHANGE_START)) {
-			ais_er = saPlmReadinessTrackResponse(
-			    clms_cb->ent_group_hdl, invocation,
-			    SA_PLM_CALLBACK_RESPONSE_OK);
-			if (ais_er != SA_AIS_OK) {
-				LOG_ER(
-				    "saPlmReadinessTrackResponse FAILED with error %u",
-				    ais_er);
-				goto done;
-			}
-		}
-		for (i = 0; i < trackedEntities->numberOfEntities; i++) {
-			node = clms_node_get_by_eename(
-			    &trackedEntities->entities[i].entityName);
-			if (cause == SA_PLM_CAUSE_GROUP_CHANGE) {
-				if (trackedEntities->entities[i].change ==
-				    SA_PLM_GROUP_MEMBER_REMOVED) {
-					if (node == nullptr)
-						TRACE(
-						    "Node removed from PLM Group,callback received for entity removal");
-					goto done;
-				}
-			} else {
-				if (node == nullptr) {
-					TRACE("node not in database");
-					osafassert(0);
-				}
-			}
-			node->ee_red_state =
-			    trackedEntities->entities[i]
-				.currentReadinessStatus.readinessState;
-		}
+  if (clms_cb->ha_state == SA_AMF_HA_STANDBY) {
+    if ((step == SA_PLM_CHANGE_VALIDATE) || (step == SA_PLM_CHANGE_START)) {
+      ais_er = saPlmReadinessTrackResponse(clms_cb->ent_group_hdl, invocation,
+                                           SA_PLM_CALLBACK_RESPONSE_OK);
+      if (ais_er != SA_AIS_OK) {
+        LOG_ER("saPlmReadinessTrackResponse FAILED with error %u", ais_er);
+        goto done;
+      }
+    }
+    for (i = 0; i < trackedEntities->numberOfEntities; i++) {
+      node = clms_node_get_by_eename(&trackedEntities->entities[i].entityName);
+      if (cause == SA_PLM_CAUSE_GROUP_CHANGE) {
+        if (trackedEntities->entities[i].change ==
+            SA_PLM_GROUP_MEMBER_REMOVED) {
+          if (node == nullptr)
+            TRACE(
+                "Node removed from PLM Group,callback received for entity removal");
+          goto done;
+        }
+      } else {
+        if (node == nullptr) {
+          TRACE("node not in database");
+          osafassert(0);
+        }
+      }
+      node->ee_red_state =
+          trackedEntities->entities[i].currentReadinessStatus.readinessState;
+    }
 
-		goto done;
-	}
+    goto done;
+  }
 
-	/*Check for the expectedReadinessStatus of the entityName */
-	if ((step == SA_PLM_CHANGE_VALIDATE) || (step == SA_PLM_CHANGE_START) ||
-	    (step == SA_PLM_CHANGE_ABORTED)) {
+  /*Check for the expectedReadinessStatus of the entityName */
+  if ((step == SA_PLM_CHANGE_VALIDATE) || (step == SA_PLM_CHANGE_START) ||
+      (step == SA_PLM_CHANGE_ABORTED)) {
+    for (i = 0; i < trackedEntities->numberOfEntities; i++) {
+      node = clms_node_get_by_eename(&trackedEntities->entities[i].entityName);
 
-		for (i = 0; i < trackedEntities->numberOfEntities; i++) {
+      if (node == nullptr) {
+        TRACE("node not in database");
+        osafassert(0);
+      }
+      /* clearing node dependency list for each entity coming
+         in the callback in case of failover,after validate
+         step completed will come and we need to clear node
+         list as we dont no the order of entity coming from
+         plm, better to remove dependency list on each node */
+      clms_clear_node_dep_list(node);
 
-			node = clms_node_get_by_eename(
-			    &trackedEntities->entities[i].entityName);
+      if (node->nodeup &&
+          trackedEntities->entities[i].expectedReadinessStatus.readinessState ==
+              SA_PLM_READINESS_OUT_OF_SERVICE) {
+        if (node->member == SA_TRUE) { /*Self node will be done during
+                                          init */
+          node->stat_change = SA_TRUE;
+          node->admin_op = PLM;
+          node->change = SA_CLM_NODE_LEFT;
 
-			if (node == nullptr) {
-				TRACE("node not in database");
-				osafassert(0);
-			}
-			/* clearing node dependency list for each entity coming
-			   in the callback in case of failover,after validate
-			   step completed will come and we need to clear node
-			   list as we dont no the order of entity coming from
-			   plm, better to remove dependency list on each node */
-			clms_clear_node_dep_list(node);
+          if (step == SA_PLM_CHANGE_START) {
+            rc = clms_chk_sub_exist(SA_TRACK_START_STEP);
+          } else if (step == SA_PLM_CHANGE_VALIDATE) {
+            rc = clms_chk_sub_exist(SA_TRACK_VALIDATE_STEP);
+          }
 
-			if (node->nodeup &&
-			    trackedEntities->entities[i]
-				    .expectedReadinessStatus.readinessState ==
-				SA_PLM_READINESS_OUT_OF_SERVICE) {
+          if (rc != NCSCC_RC_SUCCESS) {
+            TRACE("No clients exists for validate/start step");
+            ais_er =
+                saPlmReadinessTrackResponse(clms_cb->ent_group_hdl, invocation,
+                                            SA_PLM_CALLBACK_RESPONSE_OK);
+            if (ais_er != SA_AIS_OK) {
+              LOG_ER("saPlmReadinessTrackResponse FAILED with error %u",
+                     ais_er);
+              goto done;
+            }
+            TRACE("PLM Track Response Send Succedeed");
+          }
+        }
+      } else if (!node->nodeup &&
+                 trackedEntities->entities[i]
+                         .expectedReadinessStatus.readinessState ==
+                     SA_PLM_READINESS_OUT_OF_SERVICE) {
+        ais_er = saPlmReadinessTrackResponse(clms_cb->ent_group_hdl, invocation,
+                                             SA_PLM_CALLBACK_RESPONSE_OK);
+        if (ais_er != SA_AIS_OK) {
+          LOG_ER("saPlmReadinessTrackResponse FAILED with error %u", ais_er);
+          goto done;
+        }
+        TRACE("Step = %d, 1/2/3 = validate/start/aborted, nodeup is zero",
+              step);
+      }
+      /* Checkpoint node data */
+      ckpt_node_rec(node);
+    }
+    node = clms_node_get_by_eename(&trackedEntities->entities[0].entityName);
+    node->admin_op = PLM;
+    node->plm_invid = invocation;
 
-				if (node->member ==
-				    SA_TRUE) { /*Self node will be done during
-						  init */
-					node->stat_change = SA_TRUE;
-					node->admin_op = PLM;
-					node->change = SA_CLM_NODE_LEFT;
+  } else if (step == SA_PLM_CHANGE_COMPLETED) {
+    for (i = 0; i < trackedEntities->numberOfEntities; i++) {
+      TRACE("Entity Name %s", trackedEntities->entities[i].entityName.value);
+      TRACE("Entity Readiness State %d",
+            trackedEntities->entities[i].currentReadinessStatus.readinessState);
 
-					if (step == SA_PLM_CHANGE_START) {
-						rc = clms_chk_sub_exist(
-						    SA_TRACK_START_STEP);
-					} else if (step ==
-						   SA_PLM_CHANGE_VALIDATE) {
-						rc = clms_chk_sub_exist(
-						    SA_TRACK_VALIDATE_STEP);
-					}
+      node = clms_node_get_by_eename(&trackedEntities->entities[i].entityName);
 
-					if (rc != NCSCC_RC_SUCCESS) {
-						TRACE(
-						    "No clients exists for validate/start step");
-						ais_er = saPlmReadinessTrackResponse(
-						    clms_cb->ent_group_hdl,
-						    invocation,
-						    SA_PLM_CALLBACK_RESPONSE_OK);
-						if (ais_er != SA_AIS_OK) {
-							LOG_ER(
-							    "saPlmReadinessTrackResponse FAILED with error %u",
-							    ais_er);
-							goto done;
-						}
-						TRACE(
-						    "PLM Track Response Send Succedeed");
-					}
-				}
-			} else if (!node->nodeup &&
-				   trackedEntities->entities[i]
-					   .expectedReadinessStatus
-					   .readinessState ==
-				       SA_PLM_READINESS_OUT_OF_SERVICE) {
-				ais_er = saPlmReadinessTrackResponse(
-				    clms_cb->ent_group_hdl, invocation,
-				    SA_PLM_CALLBACK_RESPONSE_OK);
-				if (ais_er != SA_AIS_OK) {
-					LOG_ER(
-					    "saPlmReadinessTrackResponse FAILED with error %u",
-					    ais_er);
-					goto done;
-				}
-				TRACE(
-				    "Step = %d, 1/2/3 = validate/start/aborted, nodeup is zero",
-				    step);
-			}
-			/* Checkpoint node data */
-			ckpt_node_rec(node);
-		}
-		node = clms_node_get_by_eename(
-		    &trackedEntities->entities[0].entityName);
-		node->admin_op = PLM;
-		node->plm_invid = invocation;
+      if (cause == SA_PLM_CAUSE_GROUP_CHANGE) {
+        if (trackedEntities->entities[i].change ==
+            SA_PLM_GROUP_MEMBER_REMOVED) {
+          if (node == nullptr)
+            TRACE(
+                "Node removed from PLM Group,callback received for entity removal");
+          goto done;
+        }
+      } else {
+        if (node == nullptr) {
+          TRACE("node not in database");
+          osafassert(0);
+        }
+      }
 
-	} else if (step == SA_PLM_CHANGE_COMPLETED) {
+      TRACE("nodeup %d", node->nodeup);
 
-		for (i = 0; i < trackedEntities->numberOfEntities; i++) {
-			TRACE("Entity Name %s",
-			      trackedEntities->entities[i].entityName.value);
-			TRACE("Entity Readiness State %d",
-			      trackedEntities->entities[i]
-				  .currentReadinessStatus.readinessState);
+      node->plm_invid = 0; /* No resp */
+      node->ee_red_state =
+          trackedEntities->entities[i].currentReadinessStatus.readinessState;
 
-			node = clms_node_get_by_eename(
-			    &trackedEntities->entities[i].entityName);
+      if (node->nodeup) {
+        if (trackedEntities->entities[i]
+                .currentReadinessStatus.readinessState ==
+            SA_PLM_READINESS_OUT_OF_SERVICE) {
+          if (node->member == SA_TRUE) {
+            node->admin_op = PLM;
+            node->stat_change = SA_TRUE;
 
-			if (cause == SA_PLM_CAUSE_GROUP_CHANGE) {
-				if (trackedEntities->entities[i].change ==
-				    SA_PLM_GROUP_MEMBER_REMOVED) {
-					if (node == nullptr)
-						TRACE(
-						    "Node removed from PLM Group,callback received for entity removal");
-					goto done;
-				}
-			} else {
-				if (node == nullptr) {
-					TRACE("node not in database");
-					osafassert(0);
-				}
-			}
+            node->change = SA_CLM_NODE_LEFT;
+            ++(clms_cb->cluster_view_num);
+            --(osaf_cluster->num_nodes);
+            node->member = SA_FALSE;
+            clms_node_exit_ntf(clms_cb, node);
 
-			TRACE("nodeup %d", node->nodeup);
+            rc = clms_send_is_member_info(clms_cb, node->node_id, node->member,
+                                          SA_TRUE);
+            if (rc != NCSCC_RC_SUCCESS) {
+              TRACE("clms_send_is_member_info failed %u", rc);
+              goto done;
+            }
 
-			node->plm_invid = 0; /* No resp */
-			node->ee_red_state =
-			    trackedEntities->entities[i]
-				.currentReadinessStatus.readinessState;
+            /*Update the admin_state change
+             * to IMMSv */
+            clms_admin_state_update_rattr(node);
+          } else {
+            node->change = SA_CLM_NODE_NO_CHANGE;
+          }
 
-			if (node->nodeup) {
-				if (trackedEntities->entities[i]
-					.currentReadinessStatus
-					.readinessState ==
-				    SA_PLM_READINESS_OUT_OF_SERVICE) {
+          clms_node_update_rattr(node);
+          /* Checkpoint node and cluster data */
+          ckpt_node_rec(node);
+          ckpt_cluster_rec();
 
-					if (node->member == SA_TRUE) {
-						node->admin_op = PLM;
-						node->stat_change = SA_TRUE;
+        } else if (trackedEntities->entities[i]
+                       .currentReadinessStatus.readinessState ==
+                   SA_PLM_READINESS_IN_SERVICE) {
+          if (node->admin_state == SA_CLM_ADMIN_UNLOCKED) {
+            if (node->member == SA_FALSE) {
+              node->admin_op = PLM;
+              node->stat_change = SA_TRUE;
+              ++(osaf_cluster->num_nodes);
+              node->init_view = (++(clms_cb->cluster_view_num));
+              node->member = SA_TRUE;
+              node->change = SA_CLM_NODE_JOINED;
+              clms_node_join_ntf(clms_cb, node);
 
-						node->change = SA_CLM_NODE_LEFT;
-						++(clms_cb->cluster_view_num);
-						--(osaf_cluster->num_nodes);
-						node->member = SA_FALSE;
-						clms_node_exit_ntf(clms_cb,
-								   node);
+              rc = clms_send_is_member_info(clms_cb, node->node_id,
+                                            node->member, SA_TRUE);
+              if (rc != NCSCC_RC_SUCCESS) {
+                TRACE("clms_send_is_member_info failed %u", rc);
+                goto done;
+              }
 
-						rc = clms_send_is_member_info(
-						    clms_cb, node->node_id,
-						    node->member, SA_TRUE);
-						if (rc != NCSCC_RC_SUCCESS) {
-							TRACE(
-							    "clms_send_is_member_info failed %u",
-							    rc);
-							goto done;
-						}
+              /*Update the admin_state
+               * change to IMMSv */
+              clms_admin_state_update_rattr(node);
+            } else {
+              node->change = SA_CLM_NODE_NO_CHANGE;
+            }
+            clms_node_update_rattr(node);
+            /* Checkpoint node and cluster
+             * data */
+            ckpt_node_rec(node);
+            ckpt_cluster_rec();
+          }
+        }
+      } else {
+        /* node has been removed on the standby, don't
+         * checkpoint */
+        TRACE("Step = %d, completed, nodeup is zero", step);
+      }
+    }
+  }
 
-						/*Update the admin_state change
-						 * to IMMSv */
-						clms_admin_state_update_rattr(
-						    node);
-					} else {
-						node->change =
-						    SA_CLM_NODE_NO_CHANGE;
-					}
+  node = clms_node_get_by_eename(&trackedEntities->entities[0].entityName);
+  /*this dependency list will be cleared in clms_send_track() */
+  while ((tmp_node = clms_node_getnext_by_id(node_id)) != nullptr) {
+    node_id = tmp_node->node_id;
 
-					clms_node_update_rattr(node);
-					/* Checkpoint node and cluster data */
-					ckpt_node_rec(node);
-					ckpt_cluster_rec();
+    if ((tmp_node->stat_change == SA_TRUE) && (tmp_node != node)) {
+      if (node->dep_node_list == nullptr)
+        node->dep_node_list = tmp_node;
+      else {
+        tmp_node->next = node->dep_node_list;
+        node->dep_node_list = tmp_node;
+      }
+    }
+  }
 
-				} else if (trackedEntities->entities[i]
-					       .currentReadinessStatus
-					       .readinessState ==
-					   SA_PLM_READINESS_IN_SERVICE) {
+  if (node->nodeup) {
+    if ((node->member == SA_FALSE) &&
+        (node->admin_state == SA_CLM_ADMIN_LOCKED)) {
+      if (step == SA_PLM_CHANGE_START) {
+        ais_er = saPlmReadinessTrackResponse(clms_cb->ent_group_hdl, invocation,
+                                             SA_PLM_CALLBACK_RESPONSE_OK);
+        if (ais_er != SA_AIS_OK) {
+          TRACE("saPlmReadinessTrackResponse FAILED");
+          goto done;
+        }
+      } /*In completed step we don't need to send Response*/
+    } else {
+      if (node->admin_state == SA_CLM_ADMIN_UNLOCKED) {
+        if (step == SA_PLM_CHANGE_COMPLETED) {
+          clms_cluster_update_rattr(osaf_cluster);
+        }
+        clms_send_track(clms_cb, node, static_cast<SaClmChangeStepT>(step),
+                        SA_FALSE); /*dude you need to checkpoint
+                                   admin_op admin_state when track
+                                   is complete or not decide */
+      }
+    }
+  }
 
-					if (node->admin_state ==
-					    SA_CLM_ADMIN_UNLOCKED) {
-						if (node->member == SA_FALSE) {
-							node->admin_op = PLM;
-							node->stat_change =
-							    SA_TRUE;
-							++(osaf_cluster
-							       ->num_nodes);
-							node->init_view = (++(
-							    clms_cb
-								->cluster_view_num));
-							node->member = SA_TRUE;
-							node->change =
-							    SA_CLM_NODE_JOINED;
-							clms_node_join_ntf(
-							    clms_cb, node);
-
-							rc =
-							    clms_send_is_member_info(
-								clms_cb,
-								node->node_id,
-								node->member,
-								SA_TRUE);
-							if (rc !=
-							    NCSCC_RC_SUCCESS) {
-								TRACE(
-								    "clms_send_is_member_info failed %u",
-								    rc);
-								goto done;
-							}
-
-							/*Update the admin_state
-							 * change to IMMSv */
-							clms_admin_state_update_rattr(
-							    node);
-						} else {
-							node->change =
-							    SA_CLM_NODE_NO_CHANGE;
-						}
-						clms_node_update_rattr(node);
-						/* Checkpoint node and cluster
-						 * data */
-						ckpt_node_rec(node);
-						ckpt_cluster_rec();
-					}
-				}
-			} else {
-				/* node has been removed on the standby, don't
-				 * checkpoint */
-				TRACE("Step = %d, completed, nodeup is zero",
-				      step);
-			}
-		}
-	}
-
-	node =
-	    clms_node_get_by_eename(&trackedEntities->entities[0].entityName);
-	/*this dependency list will be cleared in clms_send_track() */
-	while ((tmp_node = clms_node_getnext_by_id(node_id)) != nullptr) {
-		node_id = tmp_node->node_id;
-
-		if ((tmp_node->stat_change == SA_TRUE) && (tmp_node != node)) {
-			if (node->dep_node_list == nullptr)
-				node->dep_node_list = tmp_node;
-			else {
-				tmp_node->next = node->dep_node_list;
-				node->dep_node_list = tmp_node;
-			}
-		}
-	}
-
-	if (node->nodeup) {
-		if ((node->member == SA_FALSE) &&
-		    (node->admin_state == SA_CLM_ADMIN_LOCKED)) {
-			if (step == SA_PLM_CHANGE_START) {
-				ais_er = saPlmReadinessTrackResponse(
-				    clms_cb->ent_group_hdl, invocation,
-				    SA_PLM_CALLBACK_RESPONSE_OK);
-				if (ais_er != SA_AIS_OK) {
-					TRACE(
-					    "saPlmReadinessTrackResponse FAILED");
-					goto done;
-				}
-			} /*In completed step we don't need to send Response*/
-		} else {
-			if (node->admin_state == SA_CLM_ADMIN_UNLOCKED) {
-				if (step == SA_PLM_CHANGE_COMPLETED) {
-					clms_cluster_update_rattr(osaf_cluster);
-				}
-				clms_send_track(
-				    clms_cb, node, static_cast<SaClmChangeStepT>(step),
-				    SA_FALSE); /*dude you need to checkpoint
-					       admin_op admin_state when track
-					       is complete or not decide */
-			}
-		}
-	}
-
-	/* Clear admin_op and stat_change for the completed step */
-	if ((step == SA_PLM_CHANGE_COMPLETED) ||
-	    (step == SA_PLM_CHANGE_ABORTED)) {
-		/*
-		 * Don't checkpoint if this is COMPLETED and nodeup is 0. Node
-		 * has already been removed from standby.
-		 */
-		if (step != SA_PLM_CHANGE_COMPLETED || node->nodeup) {
-			clms_clear_node_dep_list(node);
-		}
-		if (step == SA_PLM_CHANGE_COMPLETED) {
-			if (node->stat_change == SA_TRUE) {
-				if ((node->disable_reboot == SA_FALSE) &&
-				    (node->ee_red_state ==
-				     SA_PLM_READINESS_OUT_OF_SERVICE))
-					clms_reboot_remote_node(
-					    node,
-					    "plm lock:disable reboot set to false");
-			}
-		}
-	}
+  /* Clear admin_op and stat_change for the completed step */
+  if ((step == SA_PLM_CHANGE_COMPLETED) || (step == SA_PLM_CHANGE_ABORTED)) {
+    /*
+     * Don't checkpoint if this is COMPLETED and nodeup is 0. Node
+     * has already been removed from standby.
+     */
+    if (step != SA_PLM_CHANGE_COMPLETED || node->nodeup) {
+      clms_clear_node_dep_list(node);
+    }
+    if (step == SA_PLM_CHANGE_COMPLETED) {
+      if (node->stat_change == SA_TRUE) {
+        if ((node->disable_reboot == SA_FALSE) &&
+            (node->ee_red_state == SA_PLM_READINESS_OUT_OF_SERVICE))
+          clms_reboot_remote_node(node, "plm lock:disable reboot set to false");
+      }
+    }
+  }
 
 done:
-	TRACE_LEAVE();
+  TRACE_LEAVE();
 }
 
 static const SaPlmCallbacksT callbacks = {
     .saPlmReadinessTrackCallback = clms_plm_readiness_track_callback};
 
-SaAisErrorT clms_plm_init(CLMS_CB *cb)
-{
-	SaAisErrorT rc = SA_AIS_OK;
-	SaVersionT plmVersion = {'A', 0x01, 0x01};
-	SaNameT *entityNames = nullptr;
-	CLMS_CLUSTER_NODE *node = nullptr;
-	SaNameT nodename;
-	SaUint32T i = 0, entityNamesNumber =
-			     ncs_patricia_tree_size(&clms_cb->ee_lookup);
-	SaPlmReadinessTrackedEntitiesT *trackedEntities = nullptr;
+SaAisErrorT clms_plm_init(CLMS_CB *cb) {
+  SaAisErrorT rc = SA_AIS_OK;
+  SaVersionT plmVersion = {'A', 0x01, 0x01};
+  SaNameT *entityNames = nullptr;
+  CLMS_CLUSTER_NODE *node = nullptr;
+  SaNameT nodename;
+  SaUint32T i = 0,
+            entityNamesNumber = ncs_patricia_tree_size(&clms_cb->ee_lookup);
+  SaPlmReadinessTrackedEntitiesT *trackedEntities = nullptr;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	rc = saPlmInitialize(&cb->plm_hdl, &callbacks, &plmVersion);
-	if (rc != SA_AIS_OK) {
-		LOG_ER("saPlmInitialize FAILED rc = %d", rc);
-		return rc;
-	}
+  rc = saPlmInitialize(&cb->plm_hdl, &callbacks, &plmVersion);
+  if (rc != SA_AIS_OK) {
+    LOG_ER("saPlmInitialize FAILED rc = %d", rc);
+    return rc;
+  }
 
-	rc = saPlmSelectionObjectGet(cb->plm_hdl, &cb->plm_sel_obj);
-	if (rc != SA_AIS_OK) {
-		LOG_ER("saPlmSelectionObjectGet FAILED rc = %d", rc);
-		return rc;
-	}
+  rc = saPlmSelectionObjectGet(cb->plm_hdl, &cb->plm_sel_obj);
+  if (rc != SA_AIS_OK) {
+    LOG_ER("saPlmSelectionObjectGet FAILED rc = %d", rc);
+    return rc;
+  }
 
-	if (clms_cb->reg_with_plm == SA_TRUE) {
+  if (clms_cb->reg_with_plm == SA_TRUE) {
+    rc = saPlmEntityGroupCreate(cb->plm_hdl, &cb->ent_group_hdl);
+    if (rc != SA_AIS_OK) {
+      LOG_ER("saPlmEntityGroupCreate FAILED rc = %d", rc);
+      return rc;
+    }
 
-		rc = saPlmEntityGroupCreate(cb->plm_hdl, &cb->ent_group_hdl);
-		if (rc != SA_AIS_OK) {
-			LOG_ER("saPlmEntityGroupCreate FAILED rc = %d", rc);
-			return rc;
-		}
+    memset(&nodename, '\0', sizeof(SaNameT));
+    entityNames = (SaNameT *)malloc(sizeof(SaNameT) * entityNamesNumber);
 
-		memset(&nodename, '\0', sizeof(SaNameT));
-		entityNames =
-		    (SaNameT *)malloc(sizeof(SaNameT) * entityNamesNumber);
+    if (!entityNames) {
+      LOG_ER("Malloc failed for entityNames");
+      osafassert(0);
+    }
 
-		if (!entityNames) {
-			LOG_ER("Malloc failed for entityNames");
-			osafassert(0);
-		}
+    TRACE("entityNamesNumber %d", entityNamesNumber);
 
-		TRACE("entityNamesNumber %d", entityNamesNumber);
+    while ((node = clms_node_getnext_by_name(&nodename)) != nullptr) {
+      memcpy(&nodename, &node->node_name, sizeof(SaNameT));
+      if (node->ee_name.length != 0) {
+        entityNames[i].length = node->ee_name.length;
+        memcpy(entityNames[i].value, node->ee_name.value,
+               entityNames[i].length);
+        i++;
+      }
+    }
 
-		while ((node = clms_node_getnext_by_name(&nodename)) != nullptr) {
-			memcpy(&nodename, &node->node_name, sizeof(SaNameT));
-			if (node->ee_name.length != 0) {
-				entityNames[i].length = node->ee_name.length;
-				memcpy(entityNames[i].value,
-					     node->ee_name.value,
-					     entityNames[i].length);
-				i++;
-			}
-		}
+    rc = saPlmEntityGroupAdd(cb->ent_group_hdl, entityNames, entityNamesNumber,
+                             SA_PLM_GROUP_SINGLE_ENTITY);
 
-		rc = saPlmEntityGroupAdd(cb->ent_group_hdl, entityNames,
-					 entityNamesNumber,
-					 SA_PLM_GROUP_SINGLE_ENTITY);
+    if (rc != SA_AIS_OK) {
+      LOG_ER("saPlmEntityGroupAdd FAILED rc = %d", rc);
+      return rc;
+    }
 
-		if (rc != SA_AIS_OK) {
-			LOG_ER("saPlmEntityGroupAdd FAILED rc = %d", rc);
-			return rc;
-		}
+    trackedEntities = (SaPlmReadinessTrackedEntitiesT *)malloc(
+        entityNamesNumber * sizeof(SaPlmReadinessTrackedEntitiesT));
 
-		trackedEntities = (SaPlmReadinessTrackedEntitiesT *)malloc(
-		    entityNamesNumber * sizeof(SaPlmReadinessTrackedEntitiesT));
+    if (!trackedEntities) {
+      LOG_ER("Malloc failed for trackedEntities");
+      osafassert(0);
+    }
 
-		if (!trackedEntities) {
-			LOG_ER("Malloc failed for trackedEntities");
-			osafassert(0);
-		}
+    memset(trackedEntities, 0,
+           (entityNamesNumber * sizeof(SaPlmReadinessTrackedEntitiesT)));
 
-		memset(trackedEntities, 0,
-		       (entityNamesNumber *
-			sizeof(SaPlmReadinessTrackedEntitiesT)));
+    rc = saPlmReadinessTrack(cb->ent_group_hdl,
+                             (SA_TRACK_CURRENT | SA_TRACK_CHANGES_ONLY |
+                              SA_TRACK_START_STEP | SA_TRACK_VALIDATE_STEP),
+                             1, trackedEntities); /* trackCookie TBD */
 
-		rc = saPlmReadinessTrack(
-		    cb->ent_group_hdl,
-		    (SA_TRACK_CURRENT | SA_TRACK_CHANGES_ONLY |
-		     SA_TRACK_START_STEP | SA_TRACK_VALIDATE_STEP),
-		    1, trackedEntities); /* trackCookie TBD */
+    if (rc != SA_AIS_OK) {
+      LOG_ER("saPlmReadinessTrack FAILED rc = %d", rc);
+      return rc;
+    }
 
-		if (rc != SA_AIS_OK) {
-			LOG_ER("saPlmReadinessTrack FAILED rc = %d", rc);
-			return rc;
-		}
+    TRACE("trackedEntities->numberOfEntities %d",
+          trackedEntities->numberOfEntities);
 
-		TRACE("trackedEntities->numberOfEntities %d",
-		      trackedEntities->numberOfEntities);
+    for (i = 0; i < trackedEntities->numberOfEntities; i++) {
+      node = clms_node_get_by_eename(&trackedEntities->entities[i].entityName);
+      if (node != nullptr) {
+        node->ee_red_state =
+            trackedEntities->entities[i].currentReadinessStatus.readinessState;
+        // FIXME is the cast from SaPlmGroupChangesT to
+        // SaClmClusterChangesT really correct???
+        node->change = static_cast<SaClmClusterChangesT>(
+            trackedEntities->entities[i].change);
+        TRACE("node->ee_red_state %d", node->ee_red_state);
+      }
+    }
+  }
 
-		for (i = 0; i < trackedEntities->numberOfEntities; i++) {
-			node = clms_node_get_by_eename(
-			    &trackedEntities->entities[i].entityName);
-			if (node != nullptr) {
-				node->ee_red_state =
-				    trackedEntities->entities[i]
-					.currentReadinessStatus.readinessState;
-                                // FIXME is the cast from SaPlmGroupChangesT to
-                                // SaClmClusterChangesT really correct???
-				node->change = static_cast<SaClmClusterChangesT>(
-				    trackedEntities->entities[i].change);
-				TRACE("node->ee_red_state %d",
-				      node->ee_red_state);
-			}
-		}
-	}
+  free(entityNames);
+  free(trackedEntities);
 
-	free(entityNames);
-	free(trackedEntities);
+  TRACE_LEAVE();
 
-	TRACE_LEAVE();
-
-	return rc;
+  return rc;
 }

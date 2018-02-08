@@ -21,20 +21,17 @@
 
 class ClmTest {
  public:
-  static SaAisErrorT saClmInitialize(
-      SaClmHandleT* handle,
-      const SaClmCallbacksT* cbs,
-      SaVersionT* version) {
+  static SaAisErrorT saClmInitialize(SaClmHandleT* handle,
+                                     const SaClmCallbacksT* cbs,
+                                     SaVersionT* version) {
     return ais::make_decorator(::saClmInitialize)(handle, cbs, version);
   }
 
-  static SaAisErrorT saClmInitialize_4(
-      SaClmHandleT* handle,
-      const SaClmCallbacksT_4* cbs,
-      SaVersionT* version) {
+  static SaAisErrorT saClmInitialize_4(SaClmHandleT* handle,
+                                       const SaClmCallbacksT_4* cbs,
+                                       SaVersionT* version) {
     return ais::make_decorator(::saClmInitialize_4)(handle, cbs, version);
   }
-
 
   static SaAisErrorT saClmSelectionObjectGet(SaClmHandleT handle,
                                              SaSelectionObjectT* fd) {
@@ -51,27 +48,23 @@ class ClmTest {
   }
 
   static SaAisErrorT saClmClusterTrack(
-      SaClmHandleT handle,
-      SaUint8T trackFlags,
+      SaClmHandleT handle, SaUint8T trackFlags,
       SaClmClusterNotificationBufferT* buffer) {
     return ais::make_decorator(::saClmClusterTrack)(handle, trackFlags, buffer);
   }
 
-  static SaAisErrorT saClmClusterNodeGet(
-      SaClmHandleT handle,
-      SaClmNodeIdT nodeId,
-      SaTimeT timeout,
-      SaClmClusterNodeT* clusterNode) {
-    return ais::make_decorator(::saClmClusterNodeGet)(
-        handle, nodeId, timeout, clusterNode);
+  static SaAisErrorT saClmClusterNodeGet(SaClmHandleT handle,
+                                         SaClmNodeIdT nodeId, SaTimeT timeout,
+                                         SaClmClusterNodeT* clusterNode) {
+    return ais::make_decorator(::saClmClusterNodeGet)(handle, nodeId, timeout,
+                                                      clusterNode);
   }
 
   static SaAisErrorT saClmClusterTrack_4(
-      SaClmHandleT handle,
-      SaUint8T trackFlags,
+      SaClmHandleT handle, SaUint8T trackFlags,
       SaClmClusterNotificationBufferT_4* buffer) {
-    return ais::make_decorator(::saClmClusterTrack_4)(
-        handle, trackFlags, buffer);
+    return ais::make_decorator(::saClmClusterTrack_4)(handle, trackFlags,
+                                                      buffer);
   }
 
   static SaAisErrorT saClmClusterTrackStop(SaClmHandleT handle) {
@@ -79,35 +72,29 @@ class ClmTest {
   }
 
   static SaAisErrorT saClmClusterNotificationFree_4(
-      SaClmHandleT handle,
-      SaClmClusterNotificationT_4* notification) {
-    return ais::make_decorator(::saClmClusterNotificationFree_4)(
-        handle, notification);
+      SaClmHandleT handle, SaClmClusterNotificationT_4* notification) {
+    return ais::make_decorator(::saClmClusterNotificationFree_4)(handle,
+                                                                 notification);
   }
 
-  static SaAisErrorT saClmClusterNodeGet_4(
-      SaClmHandleT handle,
-      SaClmNodeIdT nodeId,
-      SaTimeT timeout,
-      SaClmClusterNodeT_4* clusterNode) {
-    return ais::make_decorator(::saClmClusterNodeGet_4)(
-        handle, nodeId, timeout, clusterNode);
+  static SaAisErrorT saClmClusterNodeGet_4(SaClmHandleT handle,
+                                           SaClmNodeIdT nodeId, SaTimeT timeout,
+                                           SaClmClusterNodeT_4* clusterNode) {
+    return ais::make_decorator(::saClmClusterNodeGet_4)(handle, nodeId, timeout,
+                                                        clusterNode);
   }
 
-  static SaAisErrorT saClmClusterNodeGetAsync(
-      SaClmHandleT handle,
-      SaInvocationT invocation,
-      SaClmNodeIdT nodeId) {
-    return ais::make_decorator(::saClmClusterNodeGetAsync)(
-        handle, invocation, nodeId);
+  static SaAisErrorT saClmClusterNodeGetAsync(SaClmHandleT handle,
+                                              SaInvocationT invocation,
+                                              SaClmNodeIdT nodeId) {
+    return ais::make_decorator(::saClmClusterNodeGetAsync)(handle, invocation,
+                                                           nodeId);
   }
 
-  static SaAisErrorT saClmResponse_4(
-      SaClmHandleT handle,
-      SaInvocationT invocation,
-      SaClmResponseT response) {
-    return ais::make_decorator(::saClmResponse_4)(
-        handle, invocation, response);
+  static SaAisErrorT saClmResponse_4(SaClmHandleT handle,
+                                     SaInvocationT invocation,
+                                     SaClmResponseT response) {
+    return ais::make_decorator(::saClmResponse_4)(handle, invocation, response);
   }
 };
 

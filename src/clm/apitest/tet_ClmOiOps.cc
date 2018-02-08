@@ -28,11 +28,10 @@ void saClmOi_01() {
   int rc;
   char command[384];
 
-  snprintf(
-      command, sizeof(command),
-      "immcfg -a saClmNodeLockCallbackTimeout=4000000000 safNode=%s,"
-      "safCluster=myClmCluster",
-      node_name.value);
+  snprintf(command, sizeof(command),
+           "immcfg -a saClmNodeLockCallbackTimeout=4000000000 safNode=%s,"
+           "safCluster=myClmCluster",
+           node_name.value);
 
   rc = system(command);
   assert(rc != -1);
@@ -100,8 +99,7 @@ void saClmOi_06() {
   int rc;
   char command[384];
   snprintf(command, sizeof(command),
-           "immcfg -d  safNode=%s,safCluster=myClmCluster",
-           node_name.value);
+           "immcfg -d  safNode=%s,safCluster=myClmCluster", node_name.value);
   rc = system(command);
   assert(rc != -1);
   test_validate(WEXITSTATUS(rc), 1);
@@ -116,8 +114,8 @@ void saClmOi_07() {
   char new_obj_name[] = "safNode=node,safCluster=myClmCluster";
   /*Lets first create the object- for this member will be false*/
 
-  snprintf(command, sizeof(command),
-           "immcfg -c SaClmNode safNode=%s", new_obj_name);
+  snprintf(command, sizeof(command), "immcfg -c SaClmNode safNode=%s",
+           new_obj_name);
   snprintf(command1, sizeof(command1), "immcfg -d %s", new_obj_name);
   rc = system(command);
   assert(rc != -1);
@@ -133,8 +131,8 @@ void saClmOi_08() {
   char command[256];
   char new_obj_name[] = "safNode=new_node,safCluster=myClmCluster";
 
-  snprintf(command, sizeof(command),
-           "immcfg -c SaClmNode safNode=%s", new_obj_name);
+  snprintf(command, sizeof(command), "immcfg -c SaClmNode safNode=%s",
+           new_obj_name);
   rc = system(command);
   assert(rc != -1);
   test_validate(WEXITSTATUS(rc), 0);
@@ -144,10 +142,8 @@ __attribute__((constructor)) static void saClmOiOperations_constructor() {
   test_suite_add(4, "CLM OI tests");
   test_case_add(4, saClmOi_01,
                 "CCB Object Modify saClmNodeLockCallbackTimeout");
-  test_case_add(4, saClmOi_02,
-                "CCB Object Modify saClmNodeDisableReboot");
-  test_case_add(4, saClmOi_03,
-                "CCB Object Modify saClmNodeAddressFamily");
+  test_case_add(4, saClmOi_02, "CCB Object Modify saClmNodeDisableReboot");
+  test_case_add(4, saClmOi_03, "CCB Object Modify saClmNodeAddressFamily");
   test_case_add(4, saClmOi_04, "CCB Object Modify saClmNodeAddress");
   test_case_add(4, saClmOi_05, "CCB Object Modify saClmNodeEE");
   test_case_add(4, saClmOi_06, "CCB Object Delete the member node");

@@ -2,7 +2,7 @@
  *
  * (C) Copyright 2008 The OpenSAF Foundation
  * Copyright Ericsson AB 2017 - All Rights Reserved.
-*
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE. This file and program are licensed
@@ -20,7 +20,7 @@
 #include "base/ncs_main_papi.h"
 
 static void nodeGetCallBack1(SaInvocationT invocation,
-			     const SaClmClusterNodeT *clusterNode,
+                             const SaClmClusterNodeT *clusterNode,
                              SaAisErrorT error) {
   printf("Inside nodeGetCallBack1");
   printf("error= %d", error);

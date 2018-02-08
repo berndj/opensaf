@@ -28,10 +28,9 @@
  * @param checkType      - The type of healthcheck to be executed.
  */
 static void clmna_amf_health_chk_callback(SaInvocationT invocation,
-					  const SaNameT *compName,
-					  SaAmfHealthcheckKeyT *checkType)
-{
-	saAmfResponse(clmna_cb->amf_hdl, invocation, SA_AIS_OK);
+                                          const SaNameT *compName,
+                                          SaAmfHealthcheckKeyT *checkType) {
+  saAmfResponse(clmna_cb->amf_hdl, invocation, SA_AIS_OK);
 }
 
 /*
@@ -48,18 +47,17 @@ static void clmna_amf_health_chk_callback(SaInvocationT invocation,
  * ativeCompName went through quiescing.
  */
 static void clmna_amf_csi_set_callback(SaInvocationT invocation,
-				       const SaNameT *compName,
-				       SaAmfHAStateT haState,
-				       SaAmfCSIDescriptorT csiDescriptor)
-{
-	SaAisErrorT error = SA_AIS_OK;
-	TRACE_ENTER();
+                                       const SaNameT *compName,
+                                       SaAmfHAStateT haState,
+                                       SaAmfCSIDescriptorT csiDescriptor) {
+  SaAisErrorT error = SA_AIS_OK;
+  TRACE_ENTER();
 
-	/* Update control block */
-	clmna_cb->ha_state = haState;
+  /* Update control block */
+  clmna_cb->ha_state = haState;
 
-	saAmfResponse(clmna_cb->amf_hdl, invocation, error);
-	TRACE_LEAVE();
+  saAmfResponse(clmna_cb->amf_hdl, invocation, error);
+  TRACE_LEAVE();
 }
 
 /*
@@ -75,18 +73,17 @@ static void clmna_amf_csi_set_callback(SaInvocationT invocation,
  * state the AMF is setting.
  */
 void clmna_amf_comp_terminate_callback(SaInvocationT invocation,
-				       const SaNameT *compName)
-{
-	TRACE_ENTER();
+                                       const SaNameT *compName) {
+  TRACE_ENTER();
 
-	saAmfResponse(clmna_cb->amf_hdl, invocation, SA_AIS_OK);
+  saAmfResponse(clmna_cb->amf_hdl, invocation, SA_AIS_OK);
 
-	/* Detach from IPC */
-	m_NCS_IPC_DETACH(&clmna_cb->mbx, nullptr, clmna_cb);
+  /* Detach from IPC */
+  m_NCS_IPC_DETACH(&clmna_cb->mbx, nullptr, clmna_cb);
 
-	TRACE_LEAVE();
-	LOG_NO("Received AMF component terminate callback, exiting");
-	_Exit(EXIT_SUCCESS);
+  TRACE_LEAVE();
+  LOG_NO("Received AMF component terminate callback, exiting");
+  _Exit(EXIT_SUCCESS);
 }
 
 /*
@@ -101,14 +98,13 @@ void clmna_amf_comp_terminate_callback(SaInvocationT invocation,
  * @csiFlags       - csi Flags
  */
 void clmna_amf_csi_rmv_callback(SaInvocationT invocation,
-				const SaNameT *compName, const SaNameT *csiName,
-				const SaAmfCSIFlagsT csiFlags)
-{
-	TRACE_ENTER();
+                                const SaNameT *compName, const SaNameT *csiName,
+                                const SaAmfCSIFlagsT csiFlags) {
+  TRACE_ENTER();
 
-	saAmfResponse(clmna_cb->amf_hdl, invocation, SA_AIS_OK);
+  saAmfResponse(clmna_cb->amf_hdl, invocation, SA_AIS_OK);
 
-	TRACE_LEAVE();
+  TRACE_LEAVE();
 }
 
 /*
@@ -116,40 +112,37 @@ void clmna_amf_csi_rmv_callback(SaInvocationT invocation,
  * @param:  CLMNA_CB - Control Block
  * @return: SaAisErrorT
  */
-SaAisErrorT clmna_amf_healthcheck_start(CLMNA_CB *clmna_cb)
-{
-	SaAisErrorT error;
-	SaAmfHealthcheckKeyT healthy;
-	char *health_key;
+SaAisErrorT clmna_amf_healthcheck_start(CLMNA_CB *clmna_cb) {
+  SaAisErrorT error;
+  SaAmfHealthcheckKeyT healthy;
+  char *health_key;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	/** start the AMF health check **/
-	memset(&healthy, 0, sizeof(healthy));
-	health_key = getenv("CLMNA_ENV_HEALTHCHECK_KEY");
+  /** start the AMF health check **/
+  memset(&healthy, 0, sizeof(healthy));
+  health_key = getenv("CLMNA_ENV_HEALTHCHECK_KEY");
 
-	if (health_key == nullptr)
-		strcpy((char *)healthy.key, "Default");
-	else {
-		if (strlen(health_key) > SA_AMF_HEALTHCHECK_KEY_MAX) {
-			LOG_ER(
-			    "amf_healthcheck_start(): Helthcheck key to long");
-			return SA_AIS_ERR_NAME_TOO_LONG;
-		}
-		strcpy((char *)healthy.key, health_key);
-	}
+  if (health_key == nullptr)
+    strcpy((char *)healthy.key, "Default");
+  else {
+    if (strlen(health_key) > SA_AMF_HEALTHCHECK_KEY_MAX) {
+      LOG_ER("amf_healthcheck_start(): Helthcheck key to long");
+      return SA_AIS_ERR_NAME_TOO_LONG;
+    }
+    strcpy((char *)healthy.key, health_key);
+  }
 
-	healthy.keyLen = strlen((char *)healthy.key);
+  healthy.keyLen = strlen((char *)healthy.key);
 
-	error = saAmfHealthcheckStart(clmna_cb->amf_hdl, &clmna_cb->comp_name,
-				      &healthy, SA_AMF_HEALTHCHECK_AMF_INVOKED,
-				      SA_AMF_COMPONENT_FAILOVER);
+  error = saAmfHealthcheckStart(clmna_cb->amf_hdl, &clmna_cb->comp_name,
+                                &healthy, SA_AMF_HEALTHCHECK_AMF_INVOKED,
+                                SA_AMF_COMPONENT_FAILOVER);
 
-	if (error != SA_AIS_OK)
-		LOG_ER("saAmfHealthcheckStart FAILED: %u", error);
+  if (error != SA_AIS_OK) LOG_ER("saAmfHealthcheckStart FAILED: %u", error);
 
-	TRACE_LEAVE();
-	return error;
+  TRACE_LEAVE();
+  return error;
 }
 
 /*
@@ -158,67 +151,66 @@ SaAisErrorT clmna_amf_healthcheck_start(CLMNA_CB *clmna_cb)
  * @return : SaAisErrorT
  */
 
-SaAisErrorT clmna_amf_init(CLMNA_CB *cb)
-{
-	SaAmfCallbacksT amfCallbacks;
-	SaVersionT amf_version;
-	SaAisErrorT error = SA_AIS_OK;
+SaAisErrorT clmna_amf_init(CLMNA_CB *cb) {
+  SaAmfCallbacksT amfCallbacks;
+  SaVersionT amf_version;
+  SaAisErrorT error = SA_AIS_OK;
 
-	TRACE_ENTER();
+  TRACE_ENTER();
 
-	if (cb->nid_started &&
-	    amf_comp_name_get_set_from_file("CLMNA_COMP_NAME_FILE",
-					    &cb->comp_name) != NCSCC_RC_SUCCESS)
-		goto done;
+  if (cb->nid_started &&
+      amf_comp_name_get_set_from_file("CLMNA_COMP_NAME_FILE", &cb->comp_name) !=
+          NCSCC_RC_SUCCESS)
+    goto done;
 
-	/* Initialize AMF callbacks */
-	memset(&amfCallbacks, 0, sizeof(SaAmfCallbacksT));
-	amfCallbacks.saAmfHealthcheckCallback = clmna_amf_health_chk_callback;
-	amfCallbacks.saAmfCSISetCallback = clmna_amf_csi_set_callback;
-	amfCallbacks.saAmfComponentTerminateCallback =
-	    clmna_amf_comp_terminate_callback;
-	amfCallbacks.saAmfCSIRemoveCallback = clmna_amf_csi_rmv_callback;
+  /* Initialize AMF callbacks */
+  memset(&amfCallbacks, 0, sizeof(SaAmfCallbacksT));
+  amfCallbacks.saAmfHealthcheckCallback = clmna_amf_health_chk_callback;
+  amfCallbacks.saAmfCSISetCallback = clmna_amf_csi_set_callback;
+  amfCallbacks.saAmfComponentTerminateCallback =
+      clmna_amf_comp_terminate_callback;
+  amfCallbacks.saAmfCSIRemoveCallback = clmna_amf_csi_rmv_callback;
 
-	amf_version.releaseCode = 'B';
-	amf_version.majorVersion = 0x01;
-	amf_version.minorVersion = 0x01;
+  amf_version.releaseCode = 'B';
+  amf_version.majorVersion = 0x01;
+  amf_version.minorVersion = 0x01;
 
-	/* Initialize the AMF library */
-	error = saAmfInitialize(&cb->amf_hdl, &amfCallbacks, &amf_version);
-	if (error != SA_AIS_OK) {
-		LOG_ER("saAmfInitialize() FAILED: %u", error);
-		goto done;
-	}
+  /* Initialize the AMF library */
+  error = saAmfInitialize(&cb->amf_hdl, &amfCallbacks, &amf_version);
+  if (error != SA_AIS_OK) {
+    LOG_ER("saAmfInitialize() FAILED: %u", error);
+    goto done;
+  }
 
-	/* Obtain the AMF selection object to wait for AMF events */
-	error = saAmfSelectionObjectGet(cb->amf_hdl, &cb->amf_sel_obj);
-	if (error != SA_AIS_OK) {
-		LOG_ER("saAmfSelectionObjectGet() FAILED: %u", error);
-		goto done;
-	}
+  /* Obtain the AMF selection object to wait for AMF events */
+  error = saAmfSelectionObjectGet(cb->amf_hdl, &cb->amf_sel_obj);
+  if (error != SA_AIS_OK) {
+    LOG_ER("saAmfSelectionObjectGet() FAILED: %u", error);
+    goto done;
+  }
 
-	/* Get the component name */
-	error = saAmfComponentNameGet(cb->amf_hdl, &cb->comp_name);
-	if (error != SA_AIS_OK) {
-		LOG_ER("saAmfComponentNameGet() FAILED: %u", error);
-		goto done;
-	}
+  /* Get the component name */
+  error = saAmfComponentNameGet(cb->amf_hdl, &cb->comp_name);
+  if (error != SA_AIS_OK) {
+    LOG_ER("saAmfComponentNameGet() FAILED: %u", error);
+    goto done;
+  }
 
-	/* Register component with AMF */
-	error = saAmfComponentRegister(cb->amf_hdl, &cb->comp_name,
-				       static_cast<SaNameT*>(nullptr));
-	if (error != SA_AIS_OK) {
-		LOG_ER("saAmfComponentRegister() FAILED: %u", error);
-		goto done;
-	}
+  /* Register component with AMF */
+  error = saAmfComponentRegister(cb->amf_hdl, &cb->comp_name,
+                                 static_cast<SaNameT *>(nullptr));
+  if (error != SA_AIS_OK) {
+    LOG_ER("saAmfComponentRegister() FAILED: %u", error);
+    goto done;
+  }
 
-	/* Start AMF healthchecks */
-	if ((error = clmna_amf_healthcheck_start(cb)) != SA_AIS_OK) {
-		LOG_ER("clmna_amf_healthcheck_start() FAILED: %u", error);
-		goto done;
-	}
+  /* Start AMF healthchecks */
+  if ((error = clmna_amf_healthcheck_start(cb)) != SA_AIS_OK) {
+    LOG_ER("clmna_amf_healthcheck_start() FAILED: %u", error);
+    goto done;
+  }
 
 done:
-	TRACE_LEAVE();
-	return error;
+  TRACE_LEAVE();
+  return error;
 }

@@ -23,9 +23,12 @@
 #include "base/ncs_main_papi.h"
 
 /* Highest supported version*/
-#define CLM_HIGHEST_SUPPORTED_VERSION  {'B', 0x04, 0x01}
-#define CLM_LOWEST_SUPPORTED_VERSION   {'B', 0x01, 0x01}
-#define CLM_INVALID_VERSION            {'B', 0x02, 0x03}
+#define CLM_HIGHEST_SUPPORTED_VERSION \
+  { 'B', 0x04, 0x01 }
+#define CLM_LOWEST_SUPPORTED_VERSION \
+  { 'B', 0x01, 0x01 }
+#define CLM_INVALID_VERSION \
+  { 'B', 0x02, 0x03 }
 
 SaNameT node_name;
 
@@ -33,9 +36,8 @@ void clm_init() {
   FILE *fp;
   // Command list to execute before tests start
   const char *command[] = {
-    // Unlock PL-3
-    "immadm -o 1 safNode=PL-3,safCluster=myClmCluster 2> /dev/null"
-  };
+      // Unlock PL-3
+      "immadm -o 1 safNode=PL-3,safCluster=myClmCluster 2> /dev/null"};
   int command_list_size = 1;
   int i;
 
@@ -52,11 +54,12 @@ void clm_init() {
   fclose(fp);
 
   // Execute commands
-  for(i = 0; i< command_list_size; ++i) {
+  for (i = 0; i < command_list_size; ++i) {
     /* Return code is not important, and will be ignored.
      * To avoid warn_unused_result warning on some compilers,
      * system is executed within empty 'if' statement */
-    if(system(command[i])) {}
+    if (system(command[i])) {
+    }
   }
 }
 
