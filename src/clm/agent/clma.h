@@ -32,21 +32,19 @@
 
 /* CLMA CB global handle declaration */
 
-#include <pthread.h>
-#include <assert.h>
 #include <limits.h>
+#include <pthread.h>
 #include <saClm.h>
-
-#include "base/ncs_main_papi.h"
-#include "base/ncssysf_ipc.h"
-#include "mds/mds_papi.h"
-#include "base/ncs_hdl_pub.h"
-#include "base/ncsencdec_pub.h"
-#include "base/ncs_util.h"
+#include <cassert>
 #include "base/logtrace.h"
-
-#include "clm/common/clmsv_msg.h"
+#include "base/ncs_hdl_pub.h"
+#include "base/ncs_main_papi.h"
+#include "base/ncs_util.h"
+#include "base/ncsencdec_pub.h"
+#include "base/ncssysf_ipc.h"
 #include "clm/common/clmsv_defs.h"
+#include "clm/common/clmsv_msg.h"
+#include "mds/mds_papi.h"
 
 #define CLMA_SVC_PVT_SUBPART_VERSION 1
 #define CLMA_WRT_CLMS_SUBPART_VER_AT_MIN_MSG_FMT 1
@@ -101,8 +99,8 @@ extern uint32_t clma_mds_msg_sync_send(clma_cb_t *cb, CLMSV_MSG *i_msg,
 extern uint32_t clma_mds_msg_async_send(clma_cb_t *cb, CLMSV_MSG *i_msg,
                                         uint32_t prio);
 
-extern unsigned int clma_startup(void);
-extern unsigned int clma_shutdown(void);
+extern unsigned int clma_startup();
+extern unsigned int clma_shutdown();
 extern void clma_msg_destroy(CLMSV_MSG *msg);
 extern void clma_mds_finalize(clma_cb_t *cb);
 

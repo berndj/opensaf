@@ -100,10 +100,10 @@ TrackCallback1(const SaClmClusterNotificationBufferT *notificationBuffer,
   printf("\n");
 }
 
-SaClmCallbacksT_4 Callback4 = {NULL, TrackCallback4};
-SaClmCallbacksT Callback1 = {NULL, TrackCallback1};
+SaClmCallbacksT_4 Callback4 = {nullptr, TrackCallback4};
+SaClmCallbacksT Callback1 = {nullptr, TrackCallback1};
 
-void saClmResponse_01(void) {
+void saClmResponse_01() {
   struct pollfd fds[1];
 
   trackFlags = SA_TRACK_CHANGES | SA_TRACK_START_STEP;
@@ -113,12 +113,12 @@ void saClmResponse_01(void) {
             SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, nullptr);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
   while (1) {
-    (void)poll(fds, 1, 1000);
+    poll(fds, 1, 1000);
     if (fds[0].revents & POLLIN) {
       break;
     }
@@ -131,7 +131,7 @@ void saClmResponse_01(void) {
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
   while (1) {
-    (void)poll(fds, 1, 1000);
+    poll(fds, 1, 1000);
     if (fds[0].revents & POLLIN) {
       break;
     }
@@ -144,7 +144,7 @@ void saClmResponse_01(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmResponse_02(void) {
+void saClmResponse_02() {
   struct pollfd fds[1];
 
   trackFlags = SA_TRACK_CHANGES | SA_TRACK_START_STEP;
@@ -155,12 +155,12 @@ void saClmResponse_02(void) {
             SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, nullptr);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
   while (1) {
-    (void)poll(fds, 1, 1000);
+    poll(fds, 1, 1000);
     if (fds[0].revents & POLLIN) {
       break;
     }
@@ -173,7 +173,7 @@ void saClmResponse_02(void) {
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
   while (1) {
-    (void)poll(fds, 1, 1000);
+    poll(fds, 1, 1000);
     if (fds[0].revents & POLLIN) {
       break;
     }
@@ -186,7 +186,7 @@ void saClmResponse_02(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmResponse_03(void) {
+void saClmResponse_03() {
   struct pollfd fds[1];
 
   trackFlags = SA_TRACK_CHANGES | SA_TRACK_START_STEP;
@@ -198,12 +198,12 @@ void saClmResponse_03(void) {
             SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, nullptr);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
   while (1) {
-    (void)poll(fds, 1, 1000);
+    poll(fds, 1, 1000);
     if (fds[0].revents & POLLIN) {
       break;
     }
@@ -216,7 +216,7 @@ void saClmResponse_03(void) {
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
   while (1) {
-    (void)poll(fds, 1, 1000);
+    poll(fds, 1, 1000);
     if (fds[0].revents & POLLIN) {
       break;
     }
@@ -229,7 +229,7 @@ void saClmResponse_03(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmResponse_04(void) {
+void saClmResponse_04() {
   printf("This test case needs (manual) admin op simulation\n");
   return; /* uncomment this and run*/
   rc = ClmTest::saClmResponse_4(0, 200, SA_CLM_CALLBACK_RESPONSE_REJECTED);
@@ -242,14 +242,14 @@ void saClmResponse_04(void) {
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
-void saClmResponse_05(void) {
-  safassert(ClmTest::saClmInitialize_4(&clmHandle, NULL, &clmVersion_4),
+void saClmResponse_05() {
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, nullptr, &clmVersion_4),
             SA_AIS_OK);
   rc = ClmTest::saClmResponse_4(clmHandle, 100, SA_CLM_CALLBACK_RESPONSE_OK);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
-__attribute__((constructor)) static void saClmResponse_constructor(void) {
+__attribute__((constructor)) static void saClmResponse_constructor() {
   test_suite_add(8, "Test case for saClmResponse");
 
   test_case_add(8, saClmResponse_01, "saClmResponse with response as OK");

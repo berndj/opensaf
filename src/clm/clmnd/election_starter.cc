@@ -15,22 +15,18 @@
  *
  */
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-#include <cinttypes>
-
-#include "election_starter.h"
+#include "clm/clmnd/election_starter.h"
 #include <cassert>
 #include <cerrno>
+#include <cinttypes>
 #include <cstdlib>
 #include <cstring>
 #include <set>
-#include "base/ncsgl_defs.h"
-#include "rde/agent/rda_papi.h"
-#include "nid/agent/nid_api.h"
-#include "base/logtrace.h"
 #include "base/getenv.h"
+#include "base/logtrace.h"
+#include "base/ncsgl_defs.h"
+#include "nid/agent/nid_api.h"
+#include "rde/agent/rda_papi.h"
 
 const char* const ElectionStarter::service_name_[2] = {"Node", "Controller"};
 

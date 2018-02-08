@@ -16,8 +16,8 @@
  *
  */
 
-#include <inttypes.h>
-#include <string.h>
+#include <cinttypes>
+#include <cstring>
 #include "base/logtrace.h"
 #include "base/ncsencdec_pub.h"
 #include "clm/clmd/clms.h"
@@ -277,7 +277,7 @@ static uint32_t clms_enc_initialize_rsp_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 	SaUint32T *client_id = &msg->info.api_resp_info.param.client_id;
 	/* client_id */
 	p8 = ncs_enc_reserve_space(uba, 4);
-	if (p8 == NULL) {
+	if (p8 == nullptr) {
 		TRACE("ncs_enc_reserve_space failed");
 		goto done;
 	}
@@ -299,7 +299,7 @@ static uint32_t clms_enc_node_get_msg(NCS_UBAID *uba, SaClmClusterNodeT_4 *msg)
 
 	p8 = ncs_enc_reserve_space(uba, 4);
 	if (!p8) {
-		TRACE("p8 NULL!!!");
+		TRACE("p8 nullptr!!!");
 		return 0;
 	}
 	ncs_encode_32bit(&p8, param->nodeId);
@@ -312,7 +312,7 @@ static uint32_t clms_enc_node_get_msg(NCS_UBAID *uba, SaClmClusterNodeT_4 *msg)
 
 	p8 = ncs_enc_reserve_space(uba, 4);
 	if (!p8) {
-		TRACE("p8 NULL!!!");
+		TRACE("p8 nullptr!!!");
 		return 0;
 	}
 	ncs_encode_32bit(&p8, param->member);
@@ -321,7 +321,7 @@ static uint32_t clms_enc_node_get_msg(NCS_UBAID *uba, SaClmClusterNodeT_4 *msg)
 
 	p8 = ncs_enc_reserve_space(uba, 8);
 	if (!p8) {
-		TRACE("p8 NULL!!!");
+		TRACE("p8 nullptr!!!");
 		return 0;
 	}
 	ncs_encode_64bit(&p8, param->bootTimestamp);
@@ -330,7 +330,7 @@ static uint32_t clms_enc_node_get_msg(NCS_UBAID *uba, SaClmClusterNodeT_4 *msg)
 
 	p8 = ncs_enc_reserve_space(uba, 8);
 	if (!p8) {
-		TRACE("p8 NULL!!!");
+		TRACE("p8 nullptr!!!");
 		return 0;
 	}
 	/*ncs_encode_32bit(&p8, param->initialViewNumber); */
@@ -370,7 +370,7 @@ clms_enc_cluster_ntf_buf_msg(NCS_UBAID *uba,
 
 	p8 = ncs_enc_reserve_space(uba, 8);
 	if (!p8) {
-		TRACE("p8 NULL!!!");
+		TRACE("p8 nullptr!!!");
 		return 0;
 	}
 	ncs_encode_64bit(&p8, param->viewNumber);
@@ -379,7 +379,7 @@ clms_enc_cluster_ntf_buf_msg(NCS_UBAID *uba,
 
 	p8 = ncs_enc_reserve_space(uba, 4);
 	if (!p8) {
-		TRACE("p8 NULL!!!");
+		TRACE("p8 nullptr!!!");
 		return 0;
 	}
 	ncs_encode_32bit(&p8, param->numberOfItems);
@@ -389,7 +389,7 @@ clms_enc_cluster_ntf_buf_msg(NCS_UBAID *uba,
 	for (i = 0; i < param->numberOfItems; i++) {
 		p8 = ncs_enc_reserve_space(uba, 4);
 		if (!p8) {
-			TRACE("p8 NULL!!!");
+			TRACE("p8 nullptr!!!");
 			return 0;
 		}
 		ncs_encode_32bit(&p8, param->notification[i].clusterChange);
@@ -424,7 +424,7 @@ static uint32_t clms_enc_track_current_rsp_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 
 	/*	p8 = ncs_enc_reserve_space(uba,4);
 		if (!p8) {
-			TRACE("p8 NULL!!!");
+			TRACE("p8 nullptr!!!");
 			return 0;
 		}
 		ncs_encode_32bit(&p8, track->view_num);
@@ -433,7 +433,7 @@ static uint32_t clms_enc_track_current_rsp_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 	*/
 	p8 = ncs_enc_reserve_space(uba, 2);
 	if (!p8) {
-		TRACE("p8 NULL!!!");
+		TRACE("p8 nullptr!!!");
 		return 0;
 	}
 	ncs_encode_16bit(&p8, track->num);
@@ -468,7 +468,7 @@ static uint32_t clms_enc_node_async_get_cbk_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 
 	p8 = ncs_enc_reserve_space(uba, 4);
 	if (!p8) {
-		TRACE("p8 NULL!!!");
+		TRACE("p8 nullptr!!!");
 		return 0;
 	}
 	ncs_encode_32bit(&p8, node_get->err);
@@ -479,7 +479,7 @@ static uint32_t clms_enc_node_async_get_cbk_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 
 		p8 = ncs_enc_reserve_space(uba, 8);
 		if (!p8) {
-			TRACE("p8 NULL!!!");
+			TRACE("p8 nullptr!!!");
 			return 0;
 		}
 		ncs_encode_64bit(&p8, node_get->inv);
@@ -516,7 +516,7 @@ static uint32_t clms_enc_track_cbk_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 
 	p8 = ncs_enc_reserve_space(uba, 4);
 	if (!p8) {
-		TRACE("p8 NULL!!!");
+		TRACE("p8 nullptr!!!");
 		return 0;
 	}
 	ncs_encode_32bit(&p8, track->mem_num);
@@ -525,7 +525,7 @@ static uint32_t clms_enc_track_cbk_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 
 	p8 = ncs_enc_reserve_space(uba, 8);
 	if (!p8) {
-		TRACE("p8 NULL!!!");
+		TRACE("p8 nullptr!!!");
 		return 0;
 	}
 	ncs_encode_64bit(&p8, track->inv);
@@ -536,7 +536,7 @@ static uint32_t clms_enc_track_cbk_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 
 	p8 = ncs_enc_reserve_space(uba, 24);
 	if (!p8) {
-		TRACE("p8 NULL!!!");
+		TRACE("p8 nullptr!!!");
 		return 0;
 	}
 	ncs_encode_64bit(&p8, track->cor_ids->rootCorrelationId);
@@ -547,7 +547,7 @@ static uint32_t clms_enc_track_cbk_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 
 	p8 = ncs_enc_reserve_space(uba, 4);
 	if (!p8) {
-		TRACE("p8 NULL!!!");
+		TRACE("p8 nullptr!!!");
 		return 0;
 	}
 	ncs_encode_32bit(&p8, track->step);
@@ -556,7 +556,7 @@ static uint32_t clms_enc_track_cbk_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 
 	p8 = ncs_enc_reserve_space(uba, 8);
 	if (!p8) {
-		TRACE("p8 NULL!!!");
+		TRACE("p8 nullptr!!!");
 		return 0;
 	}
 	ncs_encode_32bit(&p8, track->time_super);
@@ -565,7 +565,7 @@ static uint32_t clms_enc_track_cbk_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 
 	p8 = ncs_enc_reserve_space(uba, 4);
 	if (!p8) {
-		TRACE("p8 NULL!!!");
+		TRACE("p8 nullptr!!!");
 		return 0;
 	}
 	ncs_encode_32bit(&p8, track->err);
@@ -628,14 +628,14 @@ uint32_t clms_mds_enc(struct ncsmds_callback_info *info)
 	msg = (CLMSV_MSG *)info->info.enc.i_msg;
 	uba = info->info.enc.io_uba;
 
-	if (uba == NULL) {
+	if (uba == nullptr) {
 		LOG_ER("uba == NULL");
 		goto err;
 	}
 
 	/** encode the type of message **/
 	p8 = ncs_enc_reserve_space(uba, 4);
-	if (p8 == NULL) {
+	if (p8 == nullptr) {
 		TRACE("ncs_enc_reserve_space failed");
 		goto err;
 	}
@@ -706,7 +706,7 @@ uint32_t clms_mds_enc(struct ncsmds_callback_info *info)
 
 		p8 = ncs_enc_reserve_space(uba, 8);
 		if (!p8) {
-			TRACE("p8 NULL!!!");
+			TRACE("p8 nullptr!!!");
 			return 0;
 		}
 		ncs_encode_32bit(&p8, msg->info.cbk_info.type);
@@ -803,7 +803,7 @@ static uint32_t clms_dec_nodeup_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 
 	memset(&msg->info.api_info.param.nodeup_info.user_data, 0, sizeof(SaNameT));
 	p8 = ncs_dec_flatten_space(uba, local_data, 2);
-	if (p8 != NULL) {
+	if (p8 != nullptr) {
 		total_bytes += clmsv_decodeSaNameT(
 		    uba, &(msg->info.api_info.param.nodeup_info.user_data));
 		TRACE("userdata %s length %d",
@@ -813,7 +813,7 @@ static uint32_t clms_dec_nodeup_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 
 	p8 = ncs_dec_flatten_space(uba, local_data, 1);
 	uint8_t ifs = 0;
-	if (p8 != NULL) {
+	if (p8 != nullptr) {
 		ifs = ncs_decode_8bit(&p8);
 		ncs_dec_skip_space(uba, 1);
 		total_bytes += 1;
@@ -825,7 +825,7 @@ static uint32_t clms_dec_nodeup_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 	// Old protocol versions don't have the boot_time field. Use the current
 	// wall clock time if boot_time isn't present in the message.
 	uint64_t boot_time;
-	if (p8 != NULL) {
+	if (p8 != nullptr) {
 		boot_time = ncs_decode_64bit(&p8);
 		ncs_dec_skip_space(uba, 8);
 		total_bytes += 8;
@@ -839,7 +839,7 @@ static uint32_t clms_dec_nodeup_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 	// no addresses in the message. Just stop decoding if no_of_addresses
 	// isn't found.
 	uint16_t no_of_addresses = 0;
-	if (p8 != NULL) {
+	if (p8 != nullptr) {
 		no_of_addresses = ncs_decode_16bit(&p8);
 		ncs_dec_skip_space(uba, 2);
 		total_bytes += 2;
@@ -876,7 +876,7 @@ static uint32_t clms_dec_nodeup_msg(NCS_UBAID *uba, CLMSV_MSG *msg)
 uint32_t clms_mds_dec(struct ncsmds_callback_info *info)
 {
 	uint8_t *p8;
-	CLMSV_CLMS_EVT *evt = NULL;
+	CLMSV_CLMS_EVT *evt = nullptr;
 	NCS_UBAID *uba = info->info.dec.io_uba;
 	uint8_t local_data[20];
 	uint32_t total_bytes = 0;
@@ -893,16 +893,18 @@ uint32_t clms_mds_dec(struct ncsmds_callback_info *info)
 	}
 
 	/* allocate an CLMSV_CLMS_EVENT now */
-	if (NULL == (evt = calloc(1, sizeof(CLMSV_CLMS_EVT)))) {
+	if (nullptr == (evt = static_cast<CLMSV_CLMS_EVT*>(
+			     calloc(1, sizeof(CLMSV_CLMS_EVT))))) {
 		TRACE("calloc failed");
 		goto err;
 	}
 
 	/* Assign the allocated event */
-	info->info.dec.o_msg = (uint8_t *)evt;
+	info->info.dec.o_msg = reinterpret_cast<uint8_t*>(evt);
 
 	p8 = ncs_dec_flatten_space(uba, local_data, 4);
-	evt->info.msg.evt_type = ncs_decode_32bit(&p8);
+	evt->info.msg.evt_type = static_cast<CLMSV_MSG_TYPE>(
+		ncs_decode_32bit(&p8));
 	ncs_dec_skip_space(uba, 4);
 	total_bytes += 4;
 
@@ -910,7 +912,8 @@ uint32_t clms_mds_dec(struct ncsmds_callback_info *info)
 
 	if (CLMSV_CLMA_TO_CLMS_API_MSG == evt->info.msg.evt_type) {
 		p8 = ncs_dec_flatten_space(uba, local_data, 4);
-		evt->info.msg.info.api_info.type = ncs_decode_32bit(&p8);
+		evt->info.msg.info.api_info.type =
+			static_cast<CLMSV_API_MSG_TYPE>(ncs_decode_32bit(&p8));
 		ncs_dec_skip_space(uba, 4);
 		total_bytes += 4;
 
@@ -1043,9 +1046,9 @@ static uint32_t clms_mds_dec_flat(struct ncsmds_callback_info *info)
 static uint32_t clms_mds_node_event(struct ncsmds_callback_info *mds_info)
 {
 	uint32_t rc = NCSCC_RC_SUCCESS;
-	CLMSV_CLMS_EVT *clmsv_evt = NULL;
+	CLMSV_CLMS_EVT *clmsv_evt = nullptr;
 	uint32_t node_id = 0;
-	IPLIST *ip = NULL;
+	IPLIST *ip = nullptr;
 	TRACE_ENTER();
 
 	TRACE("node_id %d,nodeup %d", mds_info->info.node_evt.node_id,
@@ -1071,7 +1074,7 @@ static uint32_t clms_mds_node_event(struct ncsmds_callback_info *mds_info)
 		TRACE("ip_addr:%s", mds_info->info.node_evt.ip_addr);
 		node_id = mds_info->info.node_evt.node_id;
 		if ((ip = (IPLIST *)ncs_patricia_tree_get(
-			 &clms_cb->iplist, (uint8_t *)&node_id)) == NULL) {
+			 &clms_cb->iplist, (uint8_t *)&node_id)) == nullptr) {
 			IPLIST *ip = (IPLIST *)calloc(1, sizeof(IPLIST));
 			TRACE("node_id: %u not found, adding as a new node",
 			      ip->node_id);
@@ -1079,8 +1082,8 @@ static uint32_t clms_mds_node_event(struct ncsmds_callback_info *mds_info)
 			ip->pat_node_id.key_info = (uint8_t *)&(ip->node_id);
 			if (mds_info->info.node_evt.addr_family ==
 			    OSAF_AF_TIPC) {
-				ip->addr.family =
-				    1; /* For backward compatibility */
+				/* For backward compatibility */
+				ip->addr.family = SA_CLM_AF_INET;
 				ip->addr.length = 0;
 			} else {
 				memset(&ip->addr, 0, sizeof(SaClmNodeAddressT));
@@ -1114,8 +1117,8 @@ static uint32_t clms_mds_node_event(struct ncsmds_callback_info *mds_info)
 			ip->node_id = mds_info->info.node_evt.node_id;
 			if (mds_info->info.node_evt.addr_family ==
 			    OSAF_AF_TIPC) {
-				ip->addr.family =
-				    1; /* For backward compatibility */
+				/* For backward compatibility */
+				ip->addr.family = SA_CLM_AF_INET;
 				ip->addr.length = 0;
 			} else {
 				memset(&ip->addr, 0, sizeof(SaClmNodeAddressT));
@@ -1145,8 +1148,8 @@ static uint32_t clms_mds_node_event(struct ncsmds_callback_info *mds_info)
 	}
 
 	if (mds_info->info.node_evt.node_chg == NCSMDS_NODE_DOWN) {
-
-		if (NULL == (clmsv_evt = calloc(1, sizeof(CLMSV_CLMS_EVT)))) {
+		if (nullptr == (clmsv_evt = static_cast<CLMSV_CLMS_EVT*>(
+				     calloc(1, sizeof(CLMSV_CLMS_EVT))))) {
 			rc = NCSCC_RC_FAILURE;
 			TRACE("mem alloc FAILURE  ");
 			goto done;
@@ -1155,11 +1158,10 @@ static uint32_t clms_mds_node_event(struct ncsmds_callback_info *mds_info)
 		clmsv_evt->type = CLMSV_CLMS_MDS_NODE_EVT;
 		clmsv_evt->info.node_mds_info.node_id =
 		    mds_info->info.node_evt.node_id;
-		clmsv_evt->info.node_mds_info.nodeup =
-		    mds_info->info.node_evt.node_chg;
+		clmsv_evt->info.node_mds_info.nodeup = SA_TRUE;
 
 		rc = m_NCS_IPC_SEND(&clms_cb->mbx, clmsv_evt,
-				    MDS_SEND_PRIORITY_MEDIUM);
+				    NCS_IPC_PRIORITY_NORMAL);
 		if (rc != NCSCC_RC_SUCCESS) {
 			TRACE("IPC send failed %d", rc);
 			free(clmsv_evt);
@@ -1199,7 +1201,8 @@ static uint32_t clms_mds_rcv(struct ncsmds_callback_info *mds_info)
 
 	/* Send the message to clms */
 	rc = m_NCS_IPC_SEND(&clms_cb->mbx, clmsv_evt,
-			    mds_info->info.receive.i_priority);
+			    static_cast<NCS_IPC_PRIORITY>(
+				    mds_info->info.receive.i_priority));
 	if (rc != NCSCC_RC_SUCCESS)
 		TRACE("IPC send failed %d", rc);
 
@@ -1227,7 +1230,8 @@ static uint32_t clms_mds_quiesced_ack(struct ncsmds_callback_info *mds_info)
 		return NCSCC_RC_SUCCESS;
 
 	/** allocate an CLMSV_CLMS_EVENT now **/
-	if (NULL == (clmsv_evt = calloc(1, sizeof(CLMSV_CLMS_EVT)))) {
+	if (nullptr == (clmsv_evt = static_cast<CLMSV_CLMS_EVT*>(
+			     calloc(1, sizeof(CLMSV_CLMS_EVT))))) {
 		TRACE("memory alloc FAILED");
 		goto err;
 	}
@@ -1264,7 +1268,7 @@ err:
 
 static uint32_t clms_mds_svc_event(struct ncsmds_callback_info *info)
 {
-	CLMSV_CLMS_EVT *evt = NULL;
+	CLMSV_CLMS_EVT *evt = nullptr;
 	uint32_t rc = NCSCC_RC_SUCCESS;
 
 	TRACE_ENTER();
@@ -1284,7 +1288,8 @@ static uint32_t clms_mds_svc_event(struct ncsmds_callback_info *info)
 			info->info.svc_evt.i_svc_id);
 
 		/* As of now we are only interested in CLMA events */
-		if (NULL == (evt = calloc(1, sizeof(CLMSV_CLMS_EVT)))) {
+		if (nullptr == (evt = static_cast<CLMSV_CLMS_EVT*>(
+				     calloc(1, sizeof(CLMSV_CLMS_EVT))))) {
 			rc = NCSCC_RC_FAILURE;
 			TRACE("mem alloc FAILURE  ");
 			goto done;
@@ -1305,7 +1310,7 @@ static uint32_t clms_mds_svc_event(struct ncsmds_callback_info *info)
 			evt->type = CLMSV_AVND_DOWN_EVT;
 			evt->info.node_mds_info.node_id =
 			    info->info.svc_evt.i_node_id;
-			evt->info.node_mds_info.nodeup = false;
+			evt->info.node_mds_info.nodeup = SA_FALSE;
 		}
 		if (evt->type) {
 			/* Push the event and we are done */
@@ -1635,7 +1640,7 @@ uint32_t clms_mds_msg_send(CLMS_CB *cb, CLMSV_MSG *msg, MDS_DEST *dest,
 	    svc_id; /* NCSMDS_SVC_ID_CLMNA or NCSMDS_SVC_ID_CLMA */
 	send_info->i_priority = prio; /* Discuss the priority assignments TBD */
 
-	if (NULL == mds_ctxt || 0 == mds_ctxt->length) {
+	if (nullptr == mds_ctxt || 0 == mds_ctxt->length) {
 		/* regular send */
 		MDS_SENDTYPE_SND_INFO *send = &send_info->info.snd;
 

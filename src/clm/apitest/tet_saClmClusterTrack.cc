@@ -15,10 +15,11 @@
  * Author(s): Emerson Network Power
  *
  */
-#include "clmtest.h"
+
+#include <pthread.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <pthread.h>
+#include "clm/apitest/clmtest.h"
 
 static SaClmClusterNotificationBufferT notificationBuffer_1;
 static SaClmClusterNotificationBufferT_4 notificationBuffer_4;
@@ -62,22 +63,22 @@ static int clm_node_shutdown(const char *nodeName, int ignoreOutput) {
 static void *admin_lock(void *dummy) {
   assert(clm_node_lock(s_node_name, 0) != -1);
   /*test_validate(WEXITSTATUS(rc), 0);*/
-  return NULL;
+  return nullptr;
 }
 
 static void *admin_unlock(void *dummy) {
   assert(clm_node_unlock(s_node_name, 0) != -1);
   /*test_validate(WEXITSTATUS(rc), 0);*/
-  return NULL;
+  return nullptr;
 }
 
 static void *admin_shutdown(void *dummy) {
   assert(clm_node_shutdown(s_node_name, 0) != -1);
   /*test_validate(WEXITSTATUS(rc), 0);*/
-  return NULL;
+  return nullptr;
 }
 
-static void saClmadmin_lock1(void) {
+static void saClmadmin_lock1() {
   int rc;
   char command[256];
   char name[] = "safNode=PL-3,safCluster=myClmCluster";
@@ -93,7 +94,7 @@ static void saClmadmin_lock1(void) {
   clm_node_unlock(name, 1);
 }
 
-static void saClmadmin_unlock1(void) {
+static void saClmadmin_unlock1() {
   int rc;
   char command[256];
   char name[] = "safNode=PL-3,safCluster=myClmCluster";
@@ -103,7 +104,7 @@ static void saClmadmin_unlock1(void) {
   test_validate(WEXITSTATUS(rc), 1);
 }
 
-static void saClmadmin_shutdown1(void) {
+static void saClmadmin_shutdown1() {
   int rc;
   char command[256];
   char name[] = "safNode=PL-3,safCluster=myClmCluster";
@@ -130,10 +131,10 @@ static void *plm_admin_trylock(void *dummy) {
       "immadm -o 1 -p SA_PLM_ADMIN_LOCK_OPTION:SA_STRING_T:trylock  %s",
       name);
   assert((rc = system(command)) != -1);
-  return NULL;
+  return nullptr;
 }
 
-static void saClmPlm_unlock(void) {
+static void saClmPlm_unlock() {
 
   int rc;
   char command[256];
@@ -233,7 +234,7 @@ static void nodeGetCallBack4(SaInvocationT invocation,
 SaClmCallbacksT_4 clmCallback4 = {nodeGetCallBack4, clmTrackCallback4};
 SaClmCallbacksT clmCallback1 = {nodeGetCallBack1, clmTrackCallback1};
 
-void saClmClusterTrack_01(void) {
+void saClmClusterTrack_01() {
   trackFlags = SA_TRACK_CURRENT;
   notificationBuffer_1.numberOfItems = 10;
   notificationBuffer_1.notification = (SaClmClusterNotificationT *)malloc(
@@ -250,7 +251,7 @@ void saClmClusterTrack_01(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmClusterTrack_02(void) {
+void saClmClusterTrack_02() {
   trackFlags = SA_TRACK_CURRENT;
   notificationBuffer_4.numberOfItems = 10;
   notificationBuffer_4.notification =
@@ -270,7 +271,7 @@ void saClmClusterTrack_02(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmClusterTrack_03(void) {
+void saClmClusterTrack_03() {
   trackFlags = (SA_TRACK_CURRENT | SA_TRACK_LOCAL);
   notificationBuffer_1.numberOfItems = 1;
   notificationBuffer_1.notification = (SaClmClusterNotificationT *)malloc(
@@ -286,7 +287,7 @@ void saClmClusterTrack_03(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmClusterTrack_04(void) {
+void saClmClusterTrack_04() {
   trackFlags = (SA_TRACK_CURRENT | SA_TRACK_LOCAL);
   notificationBuffer_4.numberOfItems = 1;
   notificationBuffer_4.notification =
@@ -306,7 +307,7 @@ void saClmClusterTrack_04(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmClusterTrack_05(void) {
+void saClmClusterTrack_05() {
   trackFlags = (SA_TRACK_CURRENT | SA_TRACK_LOCAL);
   notificationBuffer_1.numberOfItems = 1;
   notificationBuffer_1.notification = (SaClmClusterNotificationT *)malloc(
@@ -336,7 +337,7 @@ void saClmClusterTrack_05(void) {
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
-void saClmClusterTrack_06(void) {
+void saClmClusterTrack_06() {
   trackFlags = (SA_TRACK_CURRENT | SA_TRACK_LOCAL);
   notificationBuffer_1.numberOfItems = 1;
   notificationBuffer_1.notification = (SaClmClusterNotificationT *)malloc(
@@ -352,7 +353,7 @@ void saClmClusterTrack_06(void) {
   test_validate(rc, SA_AIS_ERR_BAD_FLAGS);
 }
 
-void saClmClusterTrack_07(void) {
+void saClmClusterTrack_07() {
   trackFlags = SA_TRACK_CURRENT;
   notificationBuffer_1.numberOfItems = 1;
   notificationBuffer_1.notification = (SaClmClusterNotificationT *)malloc(
@@ -361,17 +362,17 @@ void saClmClusterTrack_07(void) {
 
   /*safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
    * SA_AIS_OK);*/
-  safassert(ClmTest::saClmInitialize(&clmHandle, NULL, &clmVersion_1), SA_AIS_OK);
+  safassert(ClmTest::saClmInitialize(&clmHandle, nullptr, &clmVersion_1), SA_AIS_OK);
   /*rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, &notificationBuffer_1);
    */
-  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, nullptr);
   /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
   free(notificationBuffer_1.notification);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INIT);
 }
 
-void saClmClusterTrack_08(void) {
+void saClmClusterTrack_08() {
   trackFlags = (SA_TRACK_CURRENT | SA_TRACK_LOCAL);
   notificationBuffer_4.numberOfItems = 1;
   notificationBuffer_4.notification =
@@ -407,7 +408,7 @@ void saClmClusterTrack_08(void) {
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
-void saClmClusterTrack_09(void) {
+void saClmClusterTrack_09() {
   trackFlags = (SA_TRACK_CURRENT | SA_TRACK_LOCAL);
   notificationBuffer_4.numberOfItems = 1;
   notificationBuffer_4.notification =
@@ -426,7 +427,7 @@ void saClmClusterTrack_09(void) {
   test_validate(rc, SA_AIS_ERR_BAD_FLAGS);
 }
 
-void saClmClusterTrack_10(void) {
+void saClmClusterTrack_10() {
   trackFlags = (SA_TRACK_CURRENT | SA_TRACK_LOCAL);
   notificationBuffer_4.numberOfItems = 1;
   notificationBuffer_4.notification =
@@ -436,7 +437,7 @@ void saClmClusterTrack_10(void) {
 
   safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, nullptr);
   /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
   safassert(ClmTest::saClmClusterNotificationFree_4(
       clmHandle, notificationBuffer_4.notification),
@@ -445,7 +446,7 @@ void saClmClusterTrack_10(void) {
   test_validate(rc, SA_AIS_ERR_INIT);
 }
 
-void saClmClusterTrack_11(void) {
+void saClmClusterTrack_11() {
   trackFlags = SA_TRACK_CURRENT;
   notificationBuffer_4.numberOfItems = 10;
   notificationBuffer_4.notification =
@@ -462,7 +463,7 @@ void saClmClusterTrack_11(void) {
   test_validate(rc, SA_AIS_ERR_VERSION);
 }
 
-void saClmClusterTrack_12(void) {
+void saClmClusterTrack_12() {
   trackFlags = SA_TRACK_CURRENT;
   notificationBuffer_1.numberOfItems = 10;
   notificationBuffer_1.notification = (SaClmClusterNotificationT *)malloc(
@@ -478,18 +479,18 @@ void saClmClusterTrack_12(void) {
   test_validate(rc, SA_AIS_ERR_VERSION);
 }
 
-void saClmClusterTrack_13(void) {
+void saClmClusterTrack_13() {
   trackFlags = SA_TRACK_CURRENT;
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback1, &clmVersion_1),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, nullptr);
   safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
   safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmClusterTrack_14(void) {
+void saClmClusterTrack_14() {
   trackFlags = SA_TRACK_CURRENT;
   struct pollfd fds[1];
   int ret;
@@ -498,7 +499,7 @@ void saClmClusterTrack_14(void) {
             SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, nullptr);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
@@ -512,71 +513,71 @@ void saClmClusterTrack_14(void) {
 }
 
 /*Bad flags - only start step without changes/changes only*/
-void saClmClusterTrack_15(void) {
+void saClmClusterTrack_15() {
   trackFlags = SA_TRACK_START_STEP;
   safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, nullptr);
   /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_FLAGS);
 }
 
 /*Bad flags - only validate step without changes/changes only*/
-void saClmClusterTrack_16(void) {
+void saClmClusterTrack_16() {
   trackFlags = SA_TRACK_VALIDATE_STEP;
   safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, nullptr);
   /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_FLAGS);
 }
 
 /*Bad flags - both changes and changes only set */
-void saClmClusterTrack_17(void) {
+void saClmClusterTrack_17() {
   trackFlags = SA_TRACK_CHANGES | SA_TRACK_CHANGES_ONLY;
   safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallback4, &clmVersion_4),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, nullptr);
   /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_FLAGS);
 }
 /*Bad Flags - only start step without changes/changes only for old API's*/
-void saClmClusterTrack_18(void) {
+void saClmClusterTrack_18() {
   trackFlags = SA_TRACK_START_STEP;
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback1, &clmVersion_1),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, nullptr);
   /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_FLAGS);
 }
 
 /*Bad flags - only validate step without changes/changes only for old API's*/
-void saClmClusterTrack_19(void) {
+void saClmClusterTrack_19() {
   trackFlags = SA_TRACK_VALIDATE_STEP;
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback1, &clmVersion_1),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, nullptr);
   /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_FLAGS);
 }
 
 /*Bad flags - both changes and changes only set for old API's*/
-void saClmClusterTrack_20(void) {
+void saClmClusterTrack_20() {
   trackFlags = SA_TRACK_CHANGES | SA_TRACK_CHANGES_ONLY;
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback1, &clmVersion_1),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, nullptr);
   /*safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_OK);*/
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_BAD_FLAGS);
 }
 
-void saClmClusterTrack_21(void) {
+void saClmClusterTrack_21() {
   struct pollfd fds[1];
   int ret;
   pthread_t thread;
@@ -587,12 +588,12 @@ void saClmClusterTrack_21(void) {
             SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, nullptr);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
 
-  if (pthread_create(&thread, NULL, admin_lock, NULL) != 0) {
+  if (pthread_create(&thread, nullptr, admin_lock, nullptr) != 0) {
     printf("thread creation failed");
   }
 
@@ -613,7 +614,7 @@ void saClmClusterTrack_21(void) {
   clm_node_unlock(s_node_name, 1);
 }
 
-void saClmClusterTrack_22(void) {
+void saClmClusterTrack_22() {
   struct pollfd fds[1];
   int ret;
   pthread_t thread1;
@@ -627,12 +628,12 @@ void saClmClusterTrack_22(void) {
             SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, nullptr);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
 
-  if (pthread_create(&thread1, NULL, admin_unlock, NULL) != 0) {
+  if (pthread_create(&thread1, nullptr, admin_unlock, nullptr) != 0) {
     printf("thread creation failed");
   }
 
@@ -649,7 +650,7 @@ void saClmClusterTrack_22(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmClusterTrack_23(void) {
+void saClmClusterTrack_23() {
   struct pollfd fds[1];
   int ret;
   pthread_t thread2;
@@ -660,12 +661,12 @@ void saClmClusterTrack_23(void) {
             SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, nullptr);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
 
-  if (pthread_create(&thread2, NULL, admin_lock, NULL) != 0) {
+  if (pthread_create(&thread2, nullptr, admin_lock, nullptr) != 0) {
     printf("thread creation failed");
   }
 
@@ -685,7 +686,7 @@ void saClmClusterTrack_23(void) {
   clm_node_unlock(s_node_name, 1);
 }
 
-void saClmClusterTrack_24(void) {
+void saClmClusterTrack_24() {
   struct pollfd fds[1];
   int ret;
   pthread_t thread4;
@@ -696,12 +697,12 @@ void saClmClusterTrack_24(void) {
             SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, nullptr);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
 
-  if (pthread_create(&thread4, NULL, admin_lock, NULL) != 0) {
+  if (pthread_create(&thread4, nullptr, admin_lock, nullptr) != 0) {
     printf("thread creation failed");
   }
   while (1) {
@@ -736,7 +737,7 @@ void saClmClusterTrack_24(void) {
   clm_node_unlock(s_node_name, 1);
 }
 
-void saClmClusterTrack_25(void) {
+void saClmClusterTrack_25() {
   struct pollfd fds[1];
   int ret;
   pthread_t thread6;
@@ -747,12 +748,12 @@ void saClmClusterTrack_25(void) {
             SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, nullptr);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
 
-  if (pthread_create(&thread6, NULL, admin_lock, NULL) != 0) {
+  if (pthread_create(&thread6, nullptr, admin_lock, nullptr) != 0) {
     printf("thread creation failed");
   }
 
@@ -788,7 +789,7 @@ void saClmClusterTrack_25(void) {
   clm_node_unlock(s_node_name, 1);
 }
 
-void saClmClusterTrack_27(void) {
+void saClmClusterTrack_27() {
   struct pollfd fds[1];
   int ret;
   pthread_t thread8;
@@ -799,12 +800,12 @@ void saClmClusterTrack_27(void) {
             SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, nullptr);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
 
-  if (pthread_create(&thread8, NULL, admin_shutdown, NULL) != 0) {
+  if (pthread_create(&thread8, nullptr, admin_shutdown, nullptr) != 0) {
     printf("thread creation failed");
   }
 
@@ -839,7 +840,7 @@ void saClmClusterTrack_27(void) {
   // Reset CLM state
   clm_node_unlock(s_node_name, 1);
 }
-void saClmClusterTrack_28(void) {
+void saClmClusterTrack_28() {
   struct pollfd fds[1];
   int ret;
   pthread_t thread8;
@@ -850,12 +851,12 @@ void saClmClusterTrack_28(void) {
             SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, nullptr);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
 
-  if (pthread_create(&thread8, NULL, admin_shutdown, NULL) != 0) {
+  if (pthread_create(&thread8, nullptr, admin_shutdown, nullptr) != 0) {
     printf("thread creation failed");
   }
 
@@ -892,7 +893,7 @@ void saClmClusterTrack_28(void) {
 }
 
 /*plm admin trylock*/
-void saClmClusterTrack_31(void) {
+void saClmClusterTrack_31() {
   struct pollfd fds[1];
   int ret;
   pthread_t thread4;
@@ -907,12 +908,12 @@ void saClmClusterTrack_31(void) {
             SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, nullptr);
 
   fds[0].fd = (int)selectionObject;
   fds[0].events = POLLIN;
 
-  if (pthread_create(&thread4, NULL, plm_admin_trylock, NULL) != 0) {
+  if (pthread_create(&thread4, nullptr, plm_admin_trylock, nullptr) != 0) {
     printf("thread creation failed");
   }
   while (1) {
@@ -969,7 +970,7 @@ void saClmClusterTrack_31(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-__attribute__((constructor)) static void saClmClusterTrack_constructor(void) {
+__attribute__((constructor)) static void saClmClusterTrack_constructor() {
   test_suite_add(
       7,
       "Test case for saClmClusterTrack. ** For all tests to pass,"

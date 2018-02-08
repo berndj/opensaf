@@ -16,15 +16,15 @@
  *
  */
 
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include "clmtest.h"
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include "clm/apitest/clmtest.h"
 
 /* Modify saClmNodeLockCallbackTimeout1 attribute*/
-void saClmOi_01(void) {
+void saClmOi_01() {
   int rc;
   char command[384];
 
@@ -40,7 +40,7 @@ void saClmOi_01(void) {
 }
 
 /*Modify saClmNodeDisableReboot1 attribute*/
-void saClmOi_02(void) {
+void saClmOi_02() {
   int rc;
   char command[384];
 
@@ -54,7 +54,7 @@ void saClmOi_02(void) {
 }
 
 /*Modify saClmNodeAddressFamily1 attribute */
-void saClmOi_03(void) {
+void saClmOi_03() {
   int rc;
   char command[384];
 
@@ -68,7 +68,7 @@ void saClmOi_03(void) {
 }
 
 /* Modify saClmNodeAddress1 attribute */
-void saClmOi_04(void) {
+void saClmOi_04() {
   int rc;
   char command[384];
 
@@ -82,7 +82,7 @@ void saClmOi_04(void) {
 }
 
 /*Modify saClmNodeEE1 attribute */
-void saClmOi_05(void) {
+void saClmOi_05() {
   int rc;
   char command[384];
   char new_eename[] = "NewEEName";
@@ -96,7 +96,7 @@ void saClmOi_05(void) {
 }
 
 /*Delete the member which is a member*/
-void saClmOi_06(void) {
+void saClmOi_06() {
   int rc;
   char command[384];
   snprintf(command, sizeof(command),
@@ -108,7 +108,7 @@ void saClmOi_06(void) {
 }
 
 /*Delete the Object which is not member and locked */
-void saClmOi_07(void) {
+void saClmOi_07() {
   int rc;
 
   char command[256];
@@ -127,7 +127,7 @@ void saClmOi_07(void) {
 }
 
 /*Create object*/
-void saClmOi_08(void) {
+void saClmOi_08() {
   int rc;
 
   char command[256];
@@ -140,7 +140,7 @@ void saClmOi_08(void) {
   test_validate(WEXITSTATUS(rc), 0);
 }
 
-__attribute__((constructor)) static void saClmOiOperations_constructor(void) {
+__attribute__((constructor)) static void saClmOiOperations_constructor() {
   test_suite_add(4, "CLM OI tests");
   test_case_add(4, saClmOi_01,
                 "CCB Object Modify saClmNodeLockCallbackTimeout");

@@ -29,9 +29,9 @@
 ******************************************************************************
 */
 
-#include "clma.h"
 #include "base/ncs_main_papi.h"
 #include "base/osaf_extended_name.h"
+#include "clm/agent/clma.h"
 
 #define CLMS_WAIT_TIME 1000
 #define CLM_API_MIN_TIMEOUT 10 /* ten milli seconds */
@@ -55,7 +55,7 @@ static SaAisErrorT clmaclusternodeget(SaClmHandleT clmHandle,
 
 /* The main controle block */
 clma_cb_t clma_cb = {
-    .cb_lock = PTHREAD_MUTEX_INITIALIZER,
+	.cb_lock = PTHREAD_MUTEX_INITIALIZER
 };
 
 /* Macro for Verifying the input Handle & global handle */
@@ -91,7 +91,7 @@ void clma_fill_node_from_node4(SaClmClusterNodeT *clusterNode,
 	clusterNode->nodeId = clusterNode_4.nodeId;
 	clusterNode->nodeAddress.family = clusterNode_4.nodeAddress.family;
 	clusterNode->nodeAddress.length = clusterNode_4.nodeAddress.length;
-	(void)memcpy(clusterNode->nodeAddress.value,
+	memcpy(clusterNode->nodeAddress.value,
 		     clusterNode_4.nodeAddress.value,
 		     clusterNode->nodeAddress.length);
 	clusterNode->nodeName.length = clusterNode_4.nodeName.length;
@@ -207,10 +207,10 @@ static SaAisErrorT
 clma_fill_cluster_ntf_buf_from_omsg(SaClmClusterNotificationBufferT *buf,
 				    CLMSV_MSG *msg_rsp)
 {
-	if (msg_rsp->info.api_resp_info.param.track.notify_info == NULL)
+	if (msg_rsp->info.api_resp_info.param.track.notify_info == nullptr)
 		return SA_AIS_ERR_NO_MEMORY;
 
-	if (buf->notification != NULL &&
+	if (buf->notification != nullptr &&
 	    (buf->numberOfItems >= msg_rsp->info.api_resp_info.param.track
 				       .notify_info->numberOfItems)) {
 		/* Overwrite the numberOfItems and copy it to buffer */
@@ -223,7 +223,7 @@ clma_fill_cluster_ntf_buf_from_omsg(SaClmClusterNotificationBufferT *buf,
 		       sizeof(SaClmClusterNotificationT) * buf->numberOfItems);
 		clma_fill_clusterbuf_from_buf_4(
 		    buf, msg_rsp->info.api_resp_info.param.track.notify_info);
-	} else if (buf->notification != NULL &&
+	} else if (buf->notification != nullptr &&
 		   (buf->numberOfItems < msg_rsp->info.api_resp_info.param.track
 					     .notify_info->numberOfItems)) {
 		return SA_AIS_ERR_NO_SPACE;
@@ -234,8 +234,8 @@ clma_fill_cluster_ntf_buf_from_omsg(SaClmClusterNotificationBufferT *buf,
 					 .notify_info->numberOfItems;
 		buf->viewNumber = msg_rsp->info.api_resp_info.param.track
 				      .notify_info->viewNumber;
-		buf->notification = (SaClmClusterNotificationT *)malloc(
-		    sizeof(SaClmClusterNotificationT) * buf->numberOfItems);
+		buf->notification = static_cast<SaClmClusterNotificationT*>(malloc(
+		    sizeof(SaClmClusterNotificationT) * buf->numberOfItems));
 		memset(buf->notification, 0,
 		       sizeof(SaClmClusterNotificationT) * buf->numberOfItems);
 		clma_fill_clusterbuf_from_buf_4(
@@ -256,10 +256,10 @@ static SaAisErrorT
 clma_fill_cluster_ntf_buf4_from_omsg(SaClmClusterNotificationBufferT_4 *buf_4,
 				     CLMSV_MSG *msg_rsp)
 {
-	if (msg_rsp->info.api_resp_info.param.track.notify_info == NULL)
+	if (msg_rsp->info.api_resp_info.param.track.notify_info == nullptr)
 		return SA_AIS_ERR_NO_MEMORY;
 
-	if (buf_4->notification != NULL &&
+	if (buf_4->notification != nullptr &&
 	    (buf_4->numberOfItems >= msg_rsp->info.api_resp_info.param.track
 					 .notify_info->numberOfItems)) {
 		/* Overwrite the numberOfItems and copy it to buffer */
@@ -279,7 +279,7 @@ clma_fill_cluster_ntf_buf4_from_omsg(SaClmClusterNotificationBufferT_4 *buf_4,
 
 		/* TODO: Code for copying long DNs for nodeName and EE when full
 		 * long DN support is implemented. */
-	} else if (buf_4->notification != NULL &&
+	} else if (buf_4->notification != nullptr &&
 		   (buf_4->numberOfItems <
 		    msg_rsp->info.api_resp_info.param.track.notify_info
 			->numberOfItems)) {
@@ -291,8 +291,8 @@ clma_fill_cluster_ntf_buf4_from_omsg(SaClmClusterNotificationBufferT_4 *buf_4,
 					   .notify_info->numberOfItems;
 		buf_4->viewNumber = msg_rsp->info.api_resp_info.param.track
 					.notify_info->viewNumber;
-		buf_4->notification = (SaClmClusterNotificationT_4 *)malloc(
-		    sizeof(SaClmClusterNotificationT_4) * buf_4->numberOfItems);
+		buf_4->notification = static_cast<SaClmClusterNotificationT_4*>(malloc(
+		    sizeof(SaClmClusterNotificationT_4) * buf_4->numberOfItems));
 		memset(buf_4->notification, 0,
 		       sizeof(SaClmClusterNotificationT_4) *
 			   buf_4->numberOfItems);
@@ -313,7 +313,7 @@ static SaAisErrorT clma_send_mds_msg_get_clusternotificationbuf(
     SaClmClusterNotificationBufferT *buf)
 {
 	SaAisErrorT rc = SA_AIS_OK;
-	CLMSV_MSG *o_msg = NULL;
+	CLMSV_MSG *o_msg = nullptr;
 	uint32_t mds_rc = NCSCC_RC_SUCCESS;
 
 	TRACE_ENTER();
@@ -322,7 +322,7 @@ static SaAisErrorT clma_send_mds_msg_get_clusternotificationbuf(
 		TRACE("track flag SA_TRACK_CURRENT");
 
 		if (!buf) {
-			TRACE("Tracking requested for buffer NULL");
+			TRACE("Tracking requested for buffer nullptr");
 			i_msg.info.api_info.param.track_start.sync_resp = false;
 
 			if (!hdl_rec->cbk_param.reg_cbk
@@ -352,7 +352,7 @@ static SaAisErrorT clma_send_mds_msg_get_clusternotificationbuf(
 		/* Do a sync mds send and get information about all
 		 * nodes that are currently members in the cluster
 		 */
-		TRACE("Tracking requested for buffer != NULL");
+		TRACE("Tracking requested for buffer != nullptr");
 		i_msg.info.api_info.param.track_start.sync_resp = true;
 		mds_rc = clma_mds_msg_sync_send(&clma_cb, &i_msg, &o_msg,
 						CLMS_WAIT_TIME);
@@ -370,7 +370,7 @@ static SaAisErrorT clma_send_mds_msg_get_clusternotificationbuf(
 			goto done;
 		}
 
-		if (o_msg != NULL)
+		if (o_msg != nullptr)
 			rc = o_msg->info.api_resp_info.rc;
 		else {
 			rc = SA_AIS_ERR_NO_RESOURCES;
@@ -421,8 +421,9 @@ static SaAisErrorT clma_send_mds_msg_get_clusternotificationbuf_4(
     clma_client_hdl_rec_t *hdl_rec, SaUint8T flags, CLMSV_MSG i_msg,
     SaClmClusterNotificationBufferT_4 *buf_4)
 {
+	TRACE_ENTER();
 	SaAisErrorT rc = SA_AIS_OK;
-	CLMSV_MSG *o_msg = NULL;
+	CLMSV_MSG *o_msg = nullptr;
 	uint32_t mds_rc = NCSCC_RC_SUCCESS;
 
 	if (flags & SA_TRACK_CURRENT) {
@@ -473,7 +474,7 @@ static SaAisErrorT clma_send_mds_msg_get_clusternotificationbuf_4(
 			goto done;
 		}
 
-		if (o_msg != NULL)
+		if (o_msg != nullptr)
 			rc = o_msg->info.api_resp_info.rc;
 		else {
 			rc = SA_AIS_ERR_NO_RESOURCES;
@@ -532,7 +533,7 @@ void clma_fill_clusterbuf_from_buf_4(SaClmClusterNotificationBufferT *buf,
 		    buf_4->notification[i].clusterNode.nodeAddress.family;
 		buf->notification[i].clusterNode.nodeAddress.length =
 		    buf_4->notification[i].clusterNode.nodeAddress.length;
-		(void)memcpy(
+		memcpy(
 		    buf->notification[i].clusterNode.nodeAddress.value,
 		    buf_4->notification[i].clusterNode.nodeAddress.value,
 		    buf->notification[i].clusterNode.nodeAddress.length);
@@ -572,7 +573,7 @@ SaAisErrorT saClmInitialize(SaClmHandleT *clmHandle,
 
 	TRACE_ENTER();
 
-	if ((clmHandle == NULL) || (version == NULL)) {
+	if ((clmHandle == nullptr) || (version == nullptr)) {
 		TRACE("version or handle FAILED");
 		rc = SA_AIS_ERR_INVALID_PARAM;
 		goto done;
@@ -597,7 +598,7 @@ SaAisErrorT saClmInitialize(SaClmHandleT *clmHandle,
 		goto done;
 	}
 
-	rc = clmainitialize(clmHandle, reg_cbks, NULL, version);
+	rc = clmainitialize(clmHandle, reg_cbks, nullptr, version);
 done:
 	TRACE_LEAVE();
 	return rc;
@@ -626,7 +627,7 @@ SaAisErrorT saClmInitialize_4(SaClmHandleT *clmHandle,
 
 	TRACE_ENTER();
 
-	if ((clmHandle == NULL) || (version == NULL)) {
+	if ((clmHandle == nullptr) || (version == nullptr)) {
 		TRACE("version or handle FAILED");
 		rc = SA_AIS_ERR_INVALID_PARAM;
 		goto done;
@@ -652,7 +653,7 @@ SaAisErrorT saClmInitialize_4(SaClmHandleT *clmHandle,
 		goto done;
 	}
 
-	rc = clmainitialize(clmHandle, NULL, reg_cbks, version);
+	rc = clmainitialize(clmHandle, nullptr, reg_cbks, version);
 done:
 	TRACE_LEAVE();
 	return rc;
@@ -664,7 +665,7 @@ static SaAisErrorT clmainitialize(SaClmHandleT *clmHandle,
 				  SaVersionT *version)
 {
 	clma_client_hdl_rec_t *clma_hdl_rec;
-	CLMSV_MSG i_msg, *o_msg = NULL;
+	CLMSV_MSG i_msg, *o_msg = nullptr;
 	SaAisErrorT ais_rc = SA_AIS_OK;
 	uint32_t client_id, rc;
 
@@ -723,7 +724,7 @@ static SaAisErrorT clmainitialize(SaClmHandleT *clmHandle,
 	/* create the hdl record & store the callbacks */
 	clma_hdl_rec = clma_hdl_rec_add(&clma_cb, reg_cbks_1, reg_cbks_4,
 					version, client_id);
-	if (clma_hdl_rec == NULL) {
+	if (clma_hdl_rec == nullptr) {
 		ais_rc = SA_AIS_ERR_NO_MEMORY;
 		goto err;
 	}
@@ -770,15 +771,16 @@ SaAisErrorT saClmSelectionObjectGet(SaClmHandleT clmHandle,
 
 	TRACE_ENTER();
 
-	if (selectionObject == NULL) {
-		TRACE("selectionObject is NULL");
+	if (selectionObject == nullptr) {
+		TRACE("selectionObject is nullptr");
 		rc = SA_AIS_ERR_INVALID_PARAM;
 		goto done;
 	}
 
 	/* retrieve hdl rec */
-	hdl_rec = ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle);
-	if (hdl_rec == NULL) {
+	hdl_rec = static_cast<clma_client_hdl_rec_t*>(
+		ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
+	if (hdl_rec == nullptr) {
 		TRACE("ncshm_take_hdl failed");
 		rc = SA_AIS_ERR_BAD_HANDLE;
 		goto done;
@@ -795,7 +797,7 @@ SaAisErrorT saClmSelectionObjectGet(SaClmHandleT clmHandle,
 	sel_obj = m_NCS_IPC_GET_SEL_OBJ(&hdl_rec->mbx);
 
 	/* everything's fine.. pass the sel fd to the appl */
-	*selectionObject = (SaSelectionObjectT)m_GET_FD_FROM_SEL_OBJ(sel_obj);
+	*selectionObject = static_cast<SaSelectionObjectT>(m_GET_FD_FROM_SEL_OBJ(sel_obj));
 
 done_give_hdl:
 	/* return hdl rec */
@@ -835,8 +837,9 @@ SaAisErrorT saClmDispatch(SaClmHandleT clmHandle,
 	}
 
 	/* retrieve hdl rec */
-	hdl_rec = ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle);
-	if (hdl_rec == NULL) {
+	hdl_rec = static_cast<clma_client_hdl_rec_t*>(
+                ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
+	if (hdl_rec == nullptr) {
 		TRACE("ncshm_take_hdl clmHandle ");
 		rc = SA_AIS_ERR_BAD_HANDLE;
 		goto done;
@@ -844,13 +847,13 @@ SaAisErrorT saClmDispatch(SaClmHandleT clmHandle,
 
 	if (hdl_rec->stale == true) {
 		TRACE("Inform client of bad handle");
-		rc = clma_hdl_rec_del(&clma_cb.client_list, hdl_rec);
-		if (rc != NCSCC_RC_SUCCESS) {
+		uint32_t ret = clma_hdl_rec_del(&clma_cb.client_list, hdl_rec);
+		if (ret != NCSCC_RC_SUCCESS) {
 			LOG_ER("clma_hdl_rec_del failed");
 		}
 		ncshm_give_hdl(clmHandle);
-		rc = clma_shutdown();
-		if (rc != NCSCC_RC_SUCCESS) {
+		ret = clma_shutdown();
+		if (ret != NCSCC_RC_SUCCESS) {
 			LOG_ER("clma_shutdown failed");
 		}
 
@@ -891,16 +894,16 @@ done:
 ******************************************************************************/
 SaAisErrorT saClmFinalize(SaClmHandleT clmHandle)
 {
-	clma_client_hdl_rec_t *hdl_rec;
-	CLMSV_MSG msg, *o_msg = NULL;
+	CLMSV_MSG msg, *o_msg = nullptr;
 	SaAisErrorT rc = SA_AIS_OK;
 	uint32_t mds_rc;
 
 	TRACE_ENTER();
 
 	/* retrieve hdl rec */
-	hdl_rec = ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle);
-	if (hdl_rec == NULL) {
+	clma_client_hdl_rec_t *hdl_rec = static_cast<clma_client_hdl_rec_t*>(
+		ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
+	if (hdl_rec == nullptr) {
 		TRACE("ncshm_take_hdl failed");
 		rc = SA_AIS_ERR_BAD_HANDLE;
 		goto done;
@@ -936,7 +939,7 @@ SaAisErrorT saClmFinalize(SaClmHandleT clmHandle)
 		goto done_give_hdl;
 	}
 
-	if (o_msg != NULL) {
+	if (o_msg != nullptr) {
 		rc = o_msg->info.api_resp_info.rc;
 		clma_msg_destroy(o_msg); /*need to do */
 	} else
@@ -947,9 +950,9 @@ SaAisErrorT saClmFinalize(SaClmHandleT clmHandle)
 		 ** including all resources allocated by client if MDS send is
 		 ** succesful.
 		 **/
-		rc = clma_hdl_rec_del(&clma_cb.client_list,
+		uint32_t ret = clma_hdl_rec_del(&clma_cb.client_list,
 				      hdl_rec); /*need to do */
-		if (rc != NCSCC_RC_SUCCESS) {
+		if (ret != NCSCC_RC_SUCCESS) {
 			TRACE_1("clma_hdl_rec_del failed");
 			rc = SA_AIS_ERR_BAD_HANDLE;
 		}
@@ -959,9 +962,11 @@ done_give_hdl:
 	ncshm_give_hdl(clmHandle);
 
 	if (rc == SA_AIS_OK) {
-		rc = clma_shutdown();
-		if (rc != NCSCC_RC_SUCCESS)
+		uint32_t ret = clma_shutdown();
+		if (ret != NCSCC_RC_SUCCESS) {
 			TRACE_1("clma_shutdown failed");
+			rc = SA_AIS_ERR_LIBRARY;
+		}
 	}
 
 done:
@@ -990,7 +995,7 @@ SaAisErrorT saClmClusterTrack(SaClmHandleT clmHandle, SaUint8T flags,
 	SaAisErrorT rc;
 	TRACE_ENTER();
 
-	rc = clmaclustertrack(clmHandle, flags, buf, NULL);
+	rc = clmaclustertrack(clmHandle, flags, buf, nullptr);
 
 	TRACE_LEAVE();
 	return rc;
@@ -1017,7 +1022,7 @@ SaAisErrorT saClmClusterTrack_4(SaClmHandleT clmHandle, SaUint8T flags,
 	SaAisErrorT rc;
 	TRACE_ENTER();
 
-	rc = clmaclustertrack(clmHandle, flags, NULL, buf);
+	rc = clmaclustertrack(clmHandle, flags, nullptr, buf);
 
 	TRACE_LEAVE();
 	return rc;
@@ -1052,14 +1057,15 @@ static SaAisErrorT clmaclustertrack(SaClmHandleT clmHandle, SaUint8T flags,
 	TRACE_ENTER();
 
 	if (flags == 0) {
-		TRACE("clmHandle or flags NULL");
+		TRACE("clmHandle or flags nullptr");
 		rc = SA_AIS_ERR_BAD_FLAGS;
 		goto done;
 	}
 
 	/* retrieve hdl rec */
-	hdl_rec = ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle);
-	if (hdl_rec == NULL) {
+	hdl_rec = static_cast<clma_client_hdl_rec_t*>(
+		ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
+	if (hdl_rec == nullptr) {
 		TRACE("ncshm_take_hdl failed");
 		rc = SA_AIS_ERR_BAD_HANDLE;
 		goto done;
@@ -1072,13 +1078,13 @@ static SaAisErrorT clmaclustertrack(SaClmHandleT clmHandle, SaUint8T flags,
 		goto done_give_hdl;
 	}
 
-	if (buf_4 == NULL && buf != NULL) {
+	if (buf_4 == nullptr && buf != nullptr) {
 		if (!clma_validate_version(hdl_rec->version)) {
 			TRACE("Version error from saClmClusterTrack");
 			rc = SA_AIS_ERR_VERSION;
 			goto done_give_hdl;
 		}
-	} else if (buf == NULL && buf_4 != NULL) {
+	} else if (buf == nullptr && buf_4 != nullptr) {
 		if (clma_validate_version(hdl_rec->version)) {
 			TRACE("Version error from saClmClusterTrack_4");
 			rc = SA_AIS_ERR_VERSION;
@@ -1143,18 +1149,18 @@ done:
 ******************************************************************************/
 SaAisErrorT saClmClusterTrackStop(SaClmHandleT clmHandle)
 {
-	clma_client_hdl_rec_t *hdl_rec;
-	CLMSV_MSG msg, *o_msg = NULL;
+	CLMSV_MSG msg, *o_msg = nullptr;
 	SaAisErrorT rc = SA_AIS_OK;
 	CLMSV_MSG *cbk_msg;
-	CLMSV_MSG *async_cbk_msg = NULL, *process = NULL;
+	CLMSV_MSG *async_cbk_msg = nullptr, *process = nullptr;
 	uint32_t mds_rc;
 
 	TRACE_ENTER();
 
 	/* retrieve hdl rec */
-	hdl_rec = ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle);
-	if (hdl_rec == NULL) {
+	clma_client_hdl_rec_t *hdl_rec = static_cast<clma_client_hdl_rec_t*>(
+		ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
+	if (hdl_rec == nullptr) {
 		TRACE("ncshm_take_hdl failed");
 		rc = SA_AIS_ERR_BAD_HANDLE;
 		goto done;
@@ -1197,7 +1203,7 @@ SaAisErrorT saClmClusterTrackStop(SaClmHandleT clmHandle)
 		goto done_give_hdl;
 	}
 
-	if (o_msg != NULL) {
+	if (o_msg != nullptr) {
 		rc = o_msg->info.api_resp_info.rc;
 		clma_msg_destroy(o_msg); /*need to do */
 	} else
@@ -1205,9 +1211,9 @@ SaAisErrorT saClmClusterTrackStop(SaClmHandleT clmHandle)
 
 	if (rc == SA_AIS_OK) {
 		do {
-			if (NULL ==
-			    (cbk_msg = (CLMSV_MSG *)m_NCS_IPC_NON_BLK_RECEIVE(
-				 &hdl_rec->mbx, cbk_msg)))
+			if (nullptr ==
+			    (cbk_msg = reinterpret_cast<CLMSV_MSG*>(m_NCS_IPC_NON_BLK_RECEIVE(
+                                &hdl_rec->mbx, cbk_msg))))
 				break;
 			if (cbk_msg->info.cbk_info.type == CLMSV_TRACK_CBK) {
 				TRACE_2("Dropping Track Callback %d",
@@ -1226,18 +1232,18 @@ SaAisErrorT saClmClusterTrackStop(SaClmHandleT clmHandle)
 
 		process = async_cbk_msg;
 		while (process) {
-			/* IPC send is making next as NULL in process pointer */
+			/* IPC send is making next as nullptr in process pointer */
 			/* process the message */
 			async_cbk_msg = async_cbk_msg->next;
-			rc = clma_clms_msg_proc(&clma_cb, process,
+			uint32_t ret = clma_clms_msg_proc(&clma_cb, process,
 						MDS_SEND_PRIORITY_MEDIUM);
-			if (rc != NCSCC_RC_SUCCESS) {
+			if (ret != NCSCC_RC_SUCCESS) {
 				TRACE_2(
 				    "From TrackStop clma_clms_msg_proc returned: %d",
 				    rc);
 			}
 			process = async_cbk_msg;
-			/*async_cbk_msg->next = NULL;
+			/*async_cbk_msg->next = nullptr;
 			   async_cbk_msg = process; */
 		}
 	}
@@ -1275,14 +1281,14 @@ SaAisErrorT saClmClusterNodeGet(SaClmHandleT clmHandle, SaClmNodeIdT node_id,
 
 	TRACE_ENTER();
 
-	if (cluster_node == NULL) {
-		TRACE("cluster_node is NULL");
+	if (cluster_node == nullptr) {
+		TRACE("cluster_node is nullptr");
 		rc = SA_AIS_ERR_INVALID_PARAM;
 		goto done;
 	}
 
 	rc =
-	    clmaclusternodeget(clmHandle, node_id, timeout, cluster_node, NULL);
+	    clmaclusternodeget(clmHandle, node_id, timeout, cluster_node, nullptr);
 done:
 	TRACE_LEAVE();
 	return rc;
@@ -1313,13 +1319,13 @@ SaAisErrorT saClmClusterNodeGet_4(SaClmHandleT clmHandle, SaClmNodeIdT node_id,
 
 	TRACE_ENTER();
 
-	if (cluster_node_4 == NULL) {
-		TRACE("cluster_node is NULL");
+	if (cluster_node_4 == nullptr) {
+		TRACE("cluster_node is nullptr");
 		rc = SA_AIS_ERR_INVALID_PARAM;
 		goto done;
 	}
 
-	rc = clmaclusternodeget(clmHandle, node_id, timeout, NULL,
+	rc = clmaclusternodeget(clmHandle, node_id, timeout, nullptr,
 				cluster_node_4);
 done:
 	TRACE_LEAVE();
@@ -1351,14 +1357,14 @@ static SaAisErrorT clmaclusternodeget(SaClmHandleT clmHandle,
 				      SaClmClusterNodeT_4 *cluster_node_4)
 {
 	clma_client_hdl_rec_t *hdl_rec;
-	CLMSV_MSG msg, *o_msg = NULL;
+	CLMSV_MSG msg, *o_msg = nullptr;
 	SaAisErrorT rc = SA_AIS_OK;
 	uint32_t ncs_rc = NCSCC_RC_SUCCESS;
 
 	TRACE_ENTER();
 
 	if (node_id == 0) {
-		TRACE("node_id is NULL");
+		TRACE("node_id is nullptr");
 		rc = SA_AIS_ERR_INVALID_PARAM;
 		goto done;
 	}
@@ -1388,14 +1394,15 @@ static SaAisErrorT clmaclusternodeget(SaClmHandleT clmHandle,
 	}
 
 	/* retrieve hdl rec */
-	hdl_rec = ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle);
-	if (hdl_rec == NULL) {
+	hdl_rec = static_cast<clma_client_hdl_rec_t*>(
+		ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
+	if (hdl_rec == nullptr) {
 		TRACE("ncshm_take_hdl failed");
 		rc = SA_AIS_ERR_BAD_HANDLE;
 		goto done;
 	}
 
-	if (cluster_node_4 == NULL) {
+	if (cluster_node_4 == nullptr) {
 		if (!clma_validate_version(hdl_rec->version)) {
 			TRACE("Version error from saClmClusterNodeGet");
 			rc = SA_AIS_ERR_VERSION;
@@ -1446,7 +1453,7 @@ static SaAisErrorT clmaclusternodeget(SaClmHandleT clmHandle,
 		goto done_give_hdl;
 	}
 
-	if (o_msg != NULL) {
+	if (o_msg != nullptr) {
 		rc = o_msg->info.api_resp_info.rc;
 	} else
 		rc = SA_AIS_ERR_NO_RESOURCES;
@@ -1522,7 +1529,7 @@ SaAisErrorT saClmClusterNodeGetAsync(SaClmHandleT clmHandle, SaInvocationT inv,
 	TRACE_ENTER();
 
 	if ((node_id == 0) || (inv == 0)) {
-		TRACE("node_id or invocation is NULL");
+		TRACE("node_id or invocation is nullptr");
 		rc = SA_AIS_ERR_INVALID_PARAM;
 		goto done;
 	}
@@ -1535,8 +1542,9 @@ SaAisErrorT saClmClusterNodeGetAsync(SaClmHandleT clmHandle, SaInvocationT inv,
 	}
 
 	/* retrieve hdl rec */
-	hdl_rec = ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle);
-	if (hdl_rec == NULL) {
+	hdl_rec = static_cast<clma_client_hdl_rec_t*>(
+		ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
+	if (hdl_rec == nullptr) {
 		TRACE("ncshm_take_hdl failed");
 		rc = SA_AIS_ERR_BAD_HANDLE;
 		goto done;
@@ -1624,15 +1632,16 @@ saClmClusterNotificationFree_4(SaClmHandleT clmHandle,
 
 	TRACE_ENTER();
 
-	if (notification == NULL) {
-		TRACE("notification is NULL");
+	if (notification == nullptr) {
+		TRACE("notification is nullptr");
 		rc = SA_AIS_ERR_INVALID_PARAM;
 		goto done;
 	}
 
 	/* retrieve hdl rec */
-	hdl_rec = ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle);
-	if (hdl_rec == NULL) {
+	hdl_rec = static_cast<clma_client_hdl_rec_t*>(
+		ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
+	if (hdl_rec == nullptr) {
 		TRACE("ncshm_take_hdl failed");
 		rc = SA_AIS_ERR_BAD_HANDLE;
 		goto done;
@@ -1684,14 +1693,14 @@ SaAisErrorT saClmResponse_4(SaClmHandleT clmHandle, SaInvocationT invocation,
 			    SaClmResponseT response)
 {
 	clma_client_hdl_rec_t *hdl_rec;
-	CLMSV_MSG i_msg, *o_msg = NULL;
+	CLMSV_MSG i_msg, *o_msg = nullptr;
 	SaAisErrorT rc = SA_AIS_OK;
 	uint32_t mds_rc;
 
 	TRACE_ENTER();
 
 	if (invocation == 0) {
-		TRACE("invocation is NULL");
+		TRACE("invocation is nullptr");
 		rc = SA_AIS_ERR_INVALID_PARAM;
 		goto done;
 	}
@@ -1711,8 +1720,9 @@ SaAisErrorT saClmResponse_4(SaClmHandleT clmHandle, SaInvocationT invocation,
 	}
 
 	/* retrieve hdl rec */
-	hdl_rec = ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle);
-	if (hdl_rec == NULL) {
+	hdl_rec = static_cast<clma_client_hdl_rec_t*>(
+		ncshm_take_hdl(NCS_SERVICE_ID_CLMA, clmHandle));
+	if (hdl_rec == nullptr) {
 		TRACE("ncshm_take_hdl failed");
 		rc = SA_AIS_ERR_BAD_HANDLE;
 		goto done;
@@ -1750,7 +1760,7 @@ SaAisErrorT saClmResponse_4(SaClmHandleT clmHandle, SaInvocationT invocation,
 		goto done_give_hdl;
 	}
 
-	if (o_msg != NULL) {
+	if (o_msg != nullptr) {
 		rc = o_msg->info.api_resp_info.rc;
 		clma_msg_destroy(o_msg);
 	} else

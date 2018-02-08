@@ -14,20 +14,18 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <errno.h>
-#include <time.h>
-#include <poll.h>
 #include <getopt.h>
-#include <stdbool.h>
-#include <stdint.h>
-
-#include <base/saf_error.h>
+#include <poll.h>
 #include <saAis.h>
 #include <saClm.h>
+#include <time.h>
+#include <unistd.h>
+#include <cerrno>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include "base/saf_error.h"
 
 #define SIZE_NOTIFICATIONS 100
 #define TIME_OUT          ((SaTimeT)15 * SA_TIME_ONE_SECOND)
@@ -42,20 +40,20 @@ static int timeout = -1;
 char mychar = '\0';
 
 
-static char *clm_change[] =  {
+static const char *clm_change[] =  {
 	"INVALID_CHANGE",
 	"SA_CLM_NODE_NO_CHANGE",
 	"SA_CLM_NODE_JOINED",
 	"SA_CLM_NODE_LEFT",
-	"SA_CLM_NODE_RECONFIGURED",
+	"SA_CLM_NODE_RECONFIGURED"
 };
 
-static char *clm_step[] = {
+static const char *clm_step[] = {
 	"INVALID_STEP",
 	"SA_CLM_CHANGE_VALIDATE",
 	"SA_CLM_CHANGE_START",
 	"SA_CLM_CHANGE_ABORTED",
-	"SA_CLM_CHANGE_COMPLETED",
+	"SA_CLM_CHANGE_COMPLETED"
 };
 
 static void print_node(const SaClmClusterNodeT_4 *clusterNode)
@@ -118,9 +116,6 @@ static void clm_track_callback(const SaClmClusterNotificationBufferT_4
 		SaTimeT timeSupervision,
 		SaAisErrorT error)
 {
-	int i;
-	SaAisErrorT rc = 0;
-
 	is_cbk_received = true;
 
 	printf("\n===============CLM TRACK CALLBACK STARTS==========\n");
@@ -131,14 +126,14 @@ static void clm_track_callback(const SaClmClusterNotificationBufferT_4
 	printf("numberOfItems: %d\n", notificationBuffer->numberOfItems);
 	printf("numberOfMembers:%d\n\n", numberOfMembers);
 
-	for (i = 0; i < notificationBuffer->numberOfItems; i++) {
+	for (SaUint32T i = 0; i < notificationBuffer->numberOfItems; i++) {
 		print_node(&notificationBuffer->notification[i].clusterNode);
 		printf("  Change                     : %s\n",
 		clm_change[notificationBuffer->notification[i].clusterChange]);
 	}
 
 	if ((step == SA_CLM_CHANGE_VALIDATE) || (step == SA_CLM_CHANGE_START)) {
-		rc = saClmResponse_4(clm_handle, invocation,
+		SaAisErrorT rc = saClmResponse_4(clm_handle, invocation,
 				SA_CLM_CALLBACK_RESPONSE_OK);
 		if (rc != SA_AIS_OK) {
 			fprintf(stderr,
@@ -185,12 +180,10 @@ static void usage(char *progname)
 	printf("\tclmprint -m current,changes -t 10\n");
 }
 
-static void clm_dispatch(void)
+static void clm_dispatch()
 {
-	SaAisErrorT rc;
-
 	for (;;) {
-		rc = poll(clm_fds, 1, timeout);
+		int rc = poll(clm_fds, 1, timeout);
 		if (rc == -1) {
 			if (errno == EINTR) {
 				continue;
@@ -206,10 +199,12 @@ static void clm_dispatch(void)
 			break;
 		}
 		if (clm_fds[0].revents & POLLIN) {
-			rc = saClmDispatch(clm_handle, SA_DISPATCH_ALL);
-			if (SA_AIS_OK != rc) {
+			SaAisErrorT ret =
+                            saClmDispatch(clm_handle, SA_DISPATCH_ALL);
+			if (SA_AIS_OK != ret) {
 				fprintf(stderr,
-				"error - saClmDispatch failed with '%d'\n", rc);
+				"error - saClmDispatch failed with '%d'\n",
+                                        ret);
 				break;
 			}
 		}
@@ -314,7 +309,7 @@ int main(int argc, char *argv[])
 	SaAisErrorT rc;
 	SaUint8T trackFlags;
 	int c;
-	char *ptr = NULL, *tmp_optarg = NULL;
+	char *ptr = nullptr, *tmp_optarg = nullptr;
 	SaClmNodeIdT node_id = SA_CLM_LOCAL_NODE_ID;
 	uint32_t bit_mask = 0;
 
@@ -326,17 +321,17 @@ int main(int argc, char *argv[])
 	trackFlags = (SA_TRACK_CURRENT | SA_TRACK_CHANGES_ONLY |
 			SA_TRACK_START_STEP);
 	struct option long_options[] = {
-		{"help",      no_argument,       0, 'h'},
-		{"nodeget",   optional_argument, 0, 'n'},
-		{"asyncget",  optional_argument, 0, 'a'},
-		{"track",     optional_argument, 0, 'm'},
-		{"btrack",    no_argument,       0, 'b'},
-		{"timeout",   required_argument, 0, 't'},
-		{0, 0, 0, 0}
+		{"help",      no_argument,       nullptr, 'h'},
+		{"nodeget",   optional_argument, nullptr, 'n'},
+		{"asyncget",  optional_argument, nullptr, 'a'},
+		{"track",     optional_argument, nullptr, 'm'},
+		{"btrack",    no_argument,       nullptr, 'b'},
+		{"timeout",   required_argument, nullptr, 't'},
+		{nullptr, 0, nullptr, 0}
 	};
 
 	while (1) {
-		c = getopt_long(argc, argv, "n::a::m::bht:", long_options, NULL);
+		c = getopt_long(argc, argv, "n::a::m::bht:", long_options, nullptr);
 		if (c == -1)
 			break;
 
@@ -347,8 +342,8 @@ int main(int argc, char *argv[])
 		case 'n':
 		case 'a':
 			mychar = c;
-			if (optarg == NULL) {
-				if ((argv[optind] != NULL) &&
+			if (optarg == nullptr) {
+				if ((argv[optind] != nullptr) &&
 						(argv[optind][0] != '-')) {
 					node_id = strtoul(argv[optind], &ptr, 0);
 					if (argv[optind][0] == '\0' || *ptr != '\0') {
@@ -372,8 +367,8 @@ int main(int argc, char *argv[])
 
 		case 'm':
 			mychar = c;
-			if (optarg == NULL) {
-				if ((argv[optind] != NULL) &&
+			if (optarg == nullptr) {
+				if ((argv[optind] != nullptr) &&
 						(argv[optind][0] != '-')) {
 					tmp_optarg = argv[optind];
 					++optind;
@@ -384,7 +379,7 @@ int main(int argc, char *argv[])
 				trackFlags = 0;
 			}
 			ptr = strtok(tmp_optarg, ",");
-			while  (ptr != NULL) {
+			while  (ptr != nullptr) {
 				if (strcmp(ptr, "current") == 0) {
 					trackFlags |= SA_TRACK_CURRENT;
 				} else if (strcmp(ptr, "changes") == 0) {
@@ -401,7 +396,7 @@ int main(int argc, char *argv[])
 					fprintf(stderr, "error - Incorrect Track flag passed.\n");
 					exit(EXIT_FAILURE);
 				}
-				ptr = strtok(NULL, ",");
+				ptr = strtok(nullptr, ",");
 			}
 			if (!((trackFlags & SA_TRACK_CURRENT) || (trackFlags & SA_TRACK_CHANGES) ||
 						(trackFlags & SA_TRACK_CHANGES_ONLY))) {
@@ -504,7 +499,7 @@ int main(int argc, char *argv[])
 		break;
 
 	case 'm':
-		rc = saClmClusterTrack_4(clm_handle, trackFlags, NULL);
+		rc = saClmClusterTrack_4(clm_handle, trackFlags, nullptr);
 		if (rc == SA_AIS_ERR_UNAVAILABLE) {
 			fprintf(stderr, "invoking clmprint from non-member node!\n");
 		}

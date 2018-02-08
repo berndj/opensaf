@@ -15,7 +15,7 @@
  *
  */
 
-#include "clmna.h"
+#include "clm/clmnd/clmna.h"
 #include "nid/agent/nid_start_util.h"
 
 /*
@@ -82,7 +82,7 @@ void clmna_amf_comp_terminate_callback(SaInvocationT invocation,
 	saAmfResponse(clmna_cb->amf_hdl, invocation, SA_AIS_OK);
 
 	/* Detach from IPC */
-	m_NCS_IPC_DETACH(&clmna_cb->mbx, NULL, clmna_cb);
+	m_NCS_IPC_DETACH(&clmna_cb->mbx, nullptr, clmna_cb);
 
 	TRACE_LEAVE();
 	LOG_NO("Received AMF component terminate callback, exiting");
@@ -128,7 +128,7 @@ SaAisErrorT clmna_amf_healthcheck_start(CLMNA_CB *clmna_cb)
 	memset(&healthy, 0, sizeof(healthy));
 	health_key = getenv("CLMNA_ENV_HEALTHCHECK_KEY");
 
-	if (health_key == NULL)
+	if (health_key == nullptr)
 		strcpy((char *)healthy.key, "Default");
 	else {
 		if (strlen(health_key) > SA_AMF_HEALTHCHECK_KEY_MAX) {
@@ -206,7 +206,7 @@ SaAisErrorT clmna_amf_init(CLMNA_CB *cb)
 
 	/* Register component with AMF */
 	error = saAmfComponentRegister(cb->amf_hdl, &cb->comp_name,
-				       (SaNameT *)NULL);
+				       static_cast<SaNameT*>(nullptr));
 	if (error != SA_AIS_OK) {
 		LOG_ER("saAmfComponentRegister() FAILED: %u", error);
 		goto done;

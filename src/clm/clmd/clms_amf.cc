@@ -19,8 +19,8 @@
  * other modules.
  */
 
+#include "clm/clmd/clms.h"
 #include "nid/agent/nid_start_util.h"
-#include "clms.h"
 #include "osaf/immutil/immutil.h"
 
 /****************************************************************************
@@ -92,7 +92,7 @@ static SaAisErrorT amf_quiescing_state_handler(CLMS_CB *cb,
 	TRACE_ENTER2("HA QUIESCING request");
 
 	/* Give up our IMM OI implementer role */
-	(void)immutil_saImmOiImplementerClear(cb->immOiHandle);
+	immutil_saImmOiImplementerClear(cb->immOiHandle);
 	cb->is_impl_set = false;
 
 	TRACE_LEAVE();
@@ -117,10 +117,10 @@ static SaAisErrorT amf_quiesced_state_handler(CLMS_CB *cb,
 {
 	TRACE_ENTER2("HA AMF QUIESCED STATE request");
 	SaUint32T nodeid = 0;
-	CLMS_CLUSTER_NODE *node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr;
 
 	/*Stop timer if the switchover happens in middle of admin op */
-	while (NULL != (node = clms_node_getnext_by_id(nodeid))) {
+	while (nullptr != (node = clms_node_getnext_by_id(nodeid))) {
 		nodeid = node->node_id;
 		if (node->lock_timerid)
 			timer_delete(node->lock_timerid);
@@ -276,7 +276,7 @@ static void clms_amf_csi_set_callback(SaInvocationT invocation,
 
 		/* Inform MBCSV of HA state change */
 		if (NCSCC_RC_SUCCESS !=
-		    (error = clms_mbcsv_change_HA_state(clms_cb, new_haState)))
+		    clms_mbcsv_change_HA_state(clms_cb, new_haState))
 			error = SA_AIS_ERR_FAILED_OPERATION;
 
 		if (clms_cb->ha_state == SA_AMF_HA_ACTIVE) {
@@ -328,7 +328,7 @@ static void clms_amf_comp_terminate_callback(SaInvocationT invocation,
 	saAmfResponse(clms_cb->amf_hdl, invocation, SA_AIS_OK);
 
 	/* Detach from IPC */
-	m_NCS_IPC_DETACH(&clms_cb->mbx, NULL, clms_cb);
+	m_NCS_IPC_DETACH(&clms_cb->mbx, nullptr, clms_cb);
 
 	/* Disconnect from MDS */
 	clms_mds_finalize(clms_cb);
@@ -394,7 +394,7 @@ static SaAisErrorT clms_amf_healthcheck_start(CLMS_CB *clms_cb)
 	health_key = getenv("CLMSV_ENV_HEALTHCHECK_KEY");
 
 	/*TBD : adapt to new health check mechanism */
-	if (health_key == NULL)
+	if (health_key == nullptr)
 		strcpy((char *)healthy.key, "F1B2");
 	else
 		strcpy((char *)healthy.key, health_key);
@@ -471,7 +471,7 @@ SaAisErrorT clms_amf_init(CLMS_CB *cb)
 
 	/* Register component with AMF */
 	error = saAmfComponentRegister(cb->amf_hdl, &cb->comp_name,
-				       (SaNameT *)NULL);
+				       nullptr);
 	if (error != SA_AIS_OK) {
 		LOG_ER("saAmfComponentRegister() FAILED: %u", error);
 		goto done;

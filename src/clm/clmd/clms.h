@@ -26,45 +26,41 @@
 #ifdef HAVE_CONFIG_H
 #include "osaf/config.h"
 #endif
-
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
-#include <signal.h>
-#include <time.h>
-#include <stdint.h>
 #include <saAmf.h>
-
-#include "base/ncsgl_defs.h"
-#include "base/ncs_lib.h"
-#include "mds/mds_papi.h"
-#include "base/ncs_main_papi.h"
-#include "base/ncs_mda_pvt.h"
-#include "mbc/mbcsv_papi.h"
-#include "base/ncs_edu_pub.h"
-#include "base/ncs_util.h"
-#include "base/logtrace.h"
-#include "osaf/immutil/immutil.h"
-#include <saImmOi.h>
 #include <saClm.h>
-#include "rde/agent/rda_papi.h"
+#include <saImmOi.h>
 #include <saNtf.h>
-#include "base/ncssysf_def.h"
 #ifdef ENABLE_AIS_PLM
 #include <saPlm.h>
 #endif
-#include "osaf/saflog/saflog.h"
-
-/* CLMS files */
-#include "clm/common/clmsv_defs.h"
-#include "clm/common/clmsv_msg.h"
-#include "clm/common/clmsv_enc_dec.h"
-#include "clms_cb.h"
-#include "clms_mbcsv.h"
-#include "clms_evt.h"
-#include "clms_imm.h"
-#include "clms_ntf.h"
+#include <signal.h>
+#include <time.h>
+#include <cassert>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include "base/logtrace.h"
+#include "base/ncs_edu_pub.h"
+#include "base/ncs_lib.h"
+#include "base/ncs_main_papi.h"
+#include "base/ncs_mda_pvt.h"
+#include "base/ncs_util.h"
+#include "base/ncsgl_defs.h"
+#include "base/ncssysf_def.h"
 #include "base/saf_error.h"
+#include "clm/clmd/clms_cb.h"
+#include "clm/clmd/clms_evt.h"
+#include "clm/clmd/clms_imm.h"
+#include "clm/clmd/clms_mbcsv.h"
+#include "clm/clmd/clms_ntf.h"
+#include "clm/common/clmsv_defs.h"
+#include "clm/common/clmsv_enc_dec.h"
+#include "clm/common/clmsv_msg.h"
+#include "mbc/mbcsv_papi.h"
+#include "mds/mds_papi.h"
+#include "osaf/immutil/immutil.h"
+#include "osaf/saflog/saflog.h"
+#include "rde/agent/rda_papi.h"
 
 /* ========================================================================
  *   DEFINITIONS
@@ -89,7 +85,7 @@ extern CLMS_CLUSTER_INFO *osaf_cluster;
 extern const SaNameT *clmSvcUsrName;
 
 extern uint32_t initialize_for_assignment(CLMS_CB *cb, SaAmfHAStateT ha_state);
-extern uint32_t clms_amf_init(CLMS_CB *);
+extern SaAisErrorT clms_amf_init(CLMS_CB *);
 extern uint32_t clms_mds_init(CLMS_CB *cb);
 extern uint32_t clms_cb_init(CLMS_CB *clms_cb);
 extern uint32_t clms_mds_finalize(CLMS_CB *cb);
@@ -110,24 +106,24 @@ extern CLMS_CLUSTER_NODE *clms_node_get_by_name(const SaNameT *name);
 extern CLMS_CLUSTER_NODE *clms_node_getnext_by_name(const SaNameT *name);
 extern CLMS_CLUSTER_NODE *clms_node_get_by_id(SaUint32T nodeid);
 /* extern void clms_imm_impl_set(CLMS_CB *cb); */
-extern SaAisErrorT clms_imm_init(CLMS_CB *cb);
+extern uint32_t clms_imm_init(CLMS_CB *cb);
 #ifdef ENABLE_AIS_PLM
 extern SaAisErrorT clms_plm_init(CLMS_CB *cb);
 #endif
 extern void clms_node_add_to_model(CLMS_CLUSTER_NODE *node);
-extern SaTimeT clms_get_SaTime(void);
+extern SaTimeT clms_get_SaTime();
 extern void clms_imm_impl_set(CLMS_CB *cb);
 extern uint32_t clms_rda_init(CLMS_CB *cb);
-extern void clms_adminop_pending(void);
+extern void clms_adminop_pending();
 extern void ckpt_node_rec(CLMS_CLUSTER_NODE *node);
 extern void ckpt_node_down_rec(CLMS_CLUSTER_NODE *node);
-extern void ckpt_cluster_rec(void);
-extern void clms_cb_dump(void);
+extern void ckpt_cluster_rec();
+extern void clms_cb_dump();
 extern uint32_t clms_send_is_member_info(CLMS_CB *cb, SaClmNodeIdT node_id,
                                          SaBoolT member, SaBoolT is_configured);
 extern void clm_imm_reinit_bg(CLMS_CB *cb);
-extern void proc_downs_during_rolechange(void);
-extern void clms_cluster_reboot(void);
+extern void proc_downs_during_rolechange();
+extern void clms_cluster_reboot();
 extern int clms_node_reboot(SaClmNodeIdT node_id);
 extern int clms_cluster_action(SaClmNodeIdT node_id, const char *action);
 #endif  // CLM_CLMD_CLMS_H_

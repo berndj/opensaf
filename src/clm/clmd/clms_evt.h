@@ -18,6 +18,8 @@
 #ifndef CLM_CLMD_CLMS_EVT_H_
 #define CLM_CLMD_CLMS_EVT_H_
 
+#include "clm/common/clmsv_msg.h"
+
 typedef enum clmsv_clms_evt_type {
   CLMSV_CLMS_CLMSV_MSG = 0,
   CLMSV_CLMS_CLMA_UP = 1,

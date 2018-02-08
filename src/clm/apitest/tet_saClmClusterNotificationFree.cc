@@ -15,18 +15,19 @@
  * Author(s): Emerson Network Power
  *
  */
-#include "clmtest.h"
+
+#include "clm/apitest/clmtest.h"
 
 static SaClmClusterNotificationBufferT_4 notificationBuffer_4;
 
-void saClmClusterNotificationFree_01(void) {
+void saClmClusterNotificationFree_01() {
   notificationBuffer_4.numberOfItems = 1;
   notificationBuffer_4.notification =
       (SaClmClusterNotificationT_4 *)malloc(
           sizeof(SaClmClusterNotificationT_4) *
           notificationBuffer_4.numberOfItems);
 
-  safassert(ClmTest::saClmInitialize_4(&clmHandle, NULL, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, nullptr, &clmVersion_4),
             SA_AIS_OK);
 
   rc = ClmTest::saClmClusterNotificationFree_4(clmHandle,
@@ -35,14 +36,14 @@ void saClmClusterNotificationFree_01(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmClusterNotificationFree_02(void) {
+void saClmClusterNotificationFree_02() {
   notificationBuffer_4.numberOfItems = 1;
   notificationBuffer_4.notification =
       (SaClmClusterNotificationT_4 *)malloc(
           sizeof(SaClmClusterNotificationT_4) *
           notificationBuffer_4.numberOfItems);
 
-  safassert(ClmTest::saClmInitialize(&clmHandle, NULL, &clmVersion_1), SA_AIS_OK);
+  safassert(ClmTest::saClmInitialize(&clmHandle, nullptr, &clmVersion_1), SA_AIS_OK);
 
   rc = ClmTest::saClmClusterNotificationFree_4(clmHandle,
                                       notificationBuffer_4.notification);
@@ -50,7 +51,7 @@ void saClmClusterNotificationFree_02(void) {
   test_validate(rc, SA_AIS_ERR_VERSION);
 }
 
-void saClmClusterNotificationFree_03(void) {
+void saClmClusterNotificationFree_03() {
   notificationBuffer_4.numberOfItems = 1;
   notificationBuffer_4.notification =
       (SaClmClusterNotificationT_4 *)malloc(
@@ -60,11 +61,11 @@ void saClmClusterNotificationFree_03(void) {
   rc = ClmTest::saClmClusterNotificationFree_4(0,
                                       notificationBuffer_4.notification);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
-  rc = ClmTest::saClmClusterNotificationFree_4(clmHandle, NULL);
+  rc = ClmTest::saClmClusterNotificationFree_4(clmHandle, nullptr);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
-void saClmClusterNotificationFree_04(void) {
+void saClmClusterNotificationFree_04() {
   notificationBuffer_4.numberOfItems = 1;
   notificationBuffer_4.notification =
       (SaClmClusterNotificationT_4 *)malloc(
@@ -77,7 +78,7 @@ void saClmClusterNotificationFree_04(void) {
 }
 
 __attribute__((constructor)) static void
-saClmClusterNotificationFree_constructor(void) {
+saClmClusterNotificationFree_constructor() {
   test_suite_add(10, "Test case for saClmClusterNotificationFree");
   test_case_add(10, saClmClusterNotificationFree_01,
                 "saClmClusterNotificationFree with valid param");

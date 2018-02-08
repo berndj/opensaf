@@ -19,8 +19,12 @@
 #ifndef CLM_CLMD_CLMS_MBCSV_H_
 #define CLM_CLMD_CLMS_MBCSV_H_
 
-#include <stdint.h>
 #include <saAmf.h>
+#include <saClm.h>
+#include <cstdint>
+#include "base/ncsgl_defs.h"
+#include "base/ncspatricia.h"
+#include "clm/clmd/clms_cb.h"
 
 #define CLMS_MBCSV_VERSION 1
 #define CLMS_MBCSV_VERSION_MIN 1

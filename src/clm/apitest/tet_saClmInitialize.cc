@@ -16,51 +16,51 @@
  *
  */
 
-#include "clmtest.h"
+#include "clm/apitest/clmtest.h"
 
-void saClmInitialize_01(void) {
+void saClmInitialize_01() {
   rc = ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmInitialize_02(void) {
+void saClmInitialize_02() {
   rc = ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmInitialize_03(void) {
-  rc = ClmTest::saClmInitialize(NULL, &clmCallbacks_1, &clmVersion_1);
+void saClmInitialize_03() {
+  rc = ClmTest::saClmInitialize(nullptr, &clmCallbacks_1, &clmVersion_1);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
-void saClmInitialize_04(void) {
-  rc = ClmTest::saClmInitialize_4(NULL, &clmCallbacks_4, &clmVersion_4);
+void saClmInitialize_04() {
+  rc = ClmTest::saClmInitialize_4(nullptr, &clmCallbacks_4, &clmVersion_4);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
-void saClmInitialize_05(void) {
-  rc = ClmTest::saClmInitialize(&clmHandle, NULL, &clmVersion_1);
+void saClmInitialize_05() {
+  rc = ClmTest::saClmInitialize(&clmHandle, nullptr, &clmVersion_1);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmInitialize_06(void)
+void saClmInitialize_06()
 {
-  rc = ClmTest::saClmInitialize_4(&clmHandle, NULL, &clmVersion_4);
+  rc = ClmTest::saClmInitialize_4(&clmHandle, nullptr, &clmVersion_4);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmInitialize_07(void) {
-  rc = ClmTest::saClmInitialize(&clmHandle, NULL, NULL);
+void saClmInitialize_07() {
+  rc = ClmTest::saClmInitialize(&clmHandle, nullptr, nullptr);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-  rc = ClmTest::saClmInitialize_4(&clmHandle, NULL, NULL);
+  rc = ClmTest::saClmInitialize_4(&clmHandle, nullptr, nullptr);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
-void saClmInitialize_08(void) {
+void saClmInitialize_08() {
   SaVersionT version1, version4;
   rc = ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &version1);
   test_validate(rc, SA_AIS_ERR_VERSION);
@@ -68,7 +68,7 @@ void saClmInitialize_08(void) {
   test_validate(rc, SA_AIS_ERR_VERSION);
 }
 
-void saClmInitialize_09(void) {
+void saClmInitialize_09() {
   SaVersionT version1 = {'C', 1, 1};
   SaVersionT version4 = {'C', 1, 1};
   rc = ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &version1);
@@ -77,7 +77,7 @@ void saClmInitialize_09(void) {
   test_validate(rc, SA_AIS_ERR_VERSION);
 }
 
-void saClmInitialize_10(void) {
+void saClmInitialize_10() {
   SaVersionT version1 = {'B', 5, 1};
   SaVersionT version4 = {'B', 5, 1};
   rc = ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &version1);
@@ -86,7 +86,7 @@ void saClmInitialize_10(void) {
   test_validate(rc, SA_AIS_ERR_VERSION);
 }
 
-void saClmInitialize_11(void) {
+void saClmInitialize_11() {
   clmVersion_1.minorVersion--;
   rc = ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
@@ -97,7 +97,7 @@ void saClmInitialize_11(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmInitialize_12(void)  {
+void saClmInitialize_12()  {
   SaVersionT version1 = {'B', 0, 0};
   SaVersionT version4 = {'B', 0, 0};
   rc = ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &version1);
@@ -107,7 +107,7 @@ void saClmInitialize_12(void)  {
 }
 
 /*for code coverage*/
-void saClmInitialize_13(void) {
+void saClmInitialize_13() {
   SaClmHandleT clmHandle1, clmHandle2, clmHandle3;
   rc = ClmTest::saClmInitialize(&clmHandle1, &clmCallbacks_1, &clmVersion_1);
   rc = ClmTest::saClmInitialize(&clmHandle2, &clmCallbacks_1, &clmVersion_1);
@@ -118,14 +118,14 @@ void saClmInitialize_13(void) {
   test_validate(rc, SA_AIS_OK);
 }
 #if 0
-void saClmInitialize_13(void)
+void saClmInitialize_13()
     rc = ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1);
 test_validate(rc, SA_AIS_ERR_LIBRARY);
 rc = ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4);
 test_validate(rc, SA_AIS_ERR_LIBRARY);
 }
 
-void saClmInitialize_14(void)
+void saClmInitialize_14()
     rc = ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1);
 test_validate(rc, SA_AIS_ERR_TRY_AGAIN);
 rc = ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4);
@@ -133,7 +133,7 @@ test_validate(rc, SA_AIS_ERR_TRY_AGAIN);
 }
 #endif
 
-__attribute__((constructor)) static void saNtfInitialize_constructor(void) {
+__attribute__((constructor)) static void saNtfInitialize_constructor() {
   test_suite_add(1, "Life Cykel API");
   test_case_add(1, saClmInitialize_01,
                 "saClmInitialize with A.01.01 SA_AIS_OK");

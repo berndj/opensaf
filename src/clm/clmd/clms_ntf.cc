@@ -32,18 +32,18 @@ const unsigned int max_wait_time_ms = 5 * 1000; /* 5 seconds */
 static void
 fill_ntf_header_part_clms(SaNtfNotificationHeaderT *notificationHeader,
 			  SaNtfEventTypeT eventType, SaNameT node_name,
-			  SaUint8T *add_text, SaUint16T majorId,
-			  SaUint16T minorId, SaInt8T *clm_node)
+			  const char *add_text, SaUint16T majorId,
+			  SaUint16T minorId, const char* clm_node)
 {
 	*notificationHeader->eventType = eventType;
-	*notificationHeader->eventTime = (SaTimeT)SA_TIME_UNKNOWN;
+	*notificationHeader->eventTime = SA_TIME_UNKNOWN;
 
 	notificationHeader->notificationObject->length = node_name.length;
-	(void)memcpy(notificationHeader->notificationObject->value,
+	memcpy(notificationHeader->notificationObject->value,
 		     node_name.value, node_name.length);
 
 	notificationHeader->notifyingObject->length = strlen(clm_node);
-	(void)memcpy(notificationHeader->notifyingObject->value, clm_node,
+	memcpy(notificationHeader->notifyingObject->value, clm_node,
 		     strlen(clm_node));
 
 	notificationHeader->notificationClassId->vendorId =
@@ -51,28 +51,26 @@ fill_ntf_header_part_clms(SaNtfNotificationHeaderT *notificationHeader,
 	notificationHeader->notificationClassId->majorId = majorId;
 	notificationHeader->notificationClassId->minorId = minorId;
 
-	(void)strncpy(notificationHeader->additionalText, (SaInt8T *)add_text,
-		      notificationHeader->lengthAdditionalText);
+	strncpy(notificationHeader->additionalText, add_text,
+                notificationHeader->lengthAdditionalText);
 }
 
 static uint32_t
 sendStateChangeNotificationClms(CLMS_CB *clms_cb, SaNameT node_name,
-				SaUint8T *add_text, SaUint16T majorId,
-				SaUint16T minorId, uint32_t sourceIndicator,
+				const char *add_text, SaUint16T majorId,
+				SaUint16T minorId,
+                                SaNtfSourceIndicatorT sourceIndicator,
 				SaUint32T stateId, SaUint32T newState)
 {
-	uint32_t status = NCSCC_RC_FAILURE;
-	int msecs_waited;
 	SaNtfStateChangeNotificationT myStateNotification;
 	SaUint32T text_len = 0;
 
 	// AIS: additionalText must be consistent with lengthAdditionalText
-	if (add_text != 0) {
-		text_len =
-		    strnlen((const char *)add_text, ADDITION_TEXT_LENGTH) + 1;
+	if (add_text != nullptr) {
+		text_len = strnlen(add_text, ADDITION_TEXT_LENGTH) + 1;
 	}
 
-	status = saNtfStateChangeNotificationAllocate(
+	SaAisErrorT status = saNtfStateChangeNotificationAllocate(
 	    clms_cb->ntf_hdl, /* handle to Notification Service instance */
 	    &myStateNotification,
 	    /* number of correlated notifications */
@@ -101,7 +99,7 @@ sendStateChangeNotificationClms(CLMS_CB *clms_cb, SaNameT node_name,
 	myStateNotification.changedStates->oldStatePresent = SA_FALSE;
 	myStateNotification.changedStates->newState = newState;
 
-	msecs_waited = 0;
+	unsigned msecs_waited = 0;
 	status = saNtfNotificationSend(myStateNotification.notificationHandle);
 	while ((status == SA_AIS_ERR_TRY_AGAIN) &&
 	       (msecs_waited < max_wait_time_ms)) {
@@ -148,11 +146,11 @@ sendStateChangeNotificationClms(CLMS_CB *clms_cb, SaNameT node_name,
 void clms_node_join_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node)
 {
 	SaNameT dn;
-	SaUint8T add_text[SA_MAX_NAME_LENGTH + 128];
+	char add_text[SA_MAX_NAME_LENGTH + 128];
 
 	memset(dn.value, '\0', SA_MAX_NAME_LENGTH);
 	dn.length = node->node_name.length;
-	(void)memcpy(dn.value, node->node_name.value, dn.length);
+	memcpy(dn.value, node->node_name.value, dn.length);
 
 	TRACE("Notification for CLM node %s Join", dn.value);
 	saflog(LOG_NOTICE, clmSvcUsrName,
@@ -161,8 +159,7 @@ void clms_node_join_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node)
 	       clms_cb->cluster_view_num);
 
 	memset(&add_text, '\0', sizeof(add_text));
-	snprintf((SaInt8T *)add_text, sizeof(add_text), "CLM node %s Joined",
-		 dn.value);
+	snprintf(add_text, sizeof(add_text), "CLM node %s Joined", dn.value);
 
 	sendStateChangeNotificationClms(
 	    clms_cb, dn, add_text, SA_SVC_CLM, SA_CLM_NTFID_NODE_JOIN,
@@ -185,11 +182,11 @@ void clms_node_join_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node)
 void clms_node_exit_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node)
 {
 	SaNameT dn;
-	SaUint8T add_text[SA_MAX_NAME_LENGTH + 128];
+	char add_text[SA_MAX_NAME_LENGTH + 128];
 
 	memset(dn.value, '\0', SA_MAX_NAME_LENGTH);
 	dn.length = node->node_name.length;
-	(void)memcpy(dn.value, node->node_name.value, dn.length);
+	memcpy(dn.value, node->node_name.value, dn.length);
 
 	TRACE("Notification for CLM node %s exit", dn.value);
 	saflog(LOG_NOTICE, clmSvcUsrName,
@@ -198,8 +195,7 @@ void clms_node_exit_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node)
 	       clms_cb->cluster_view_num);
 
 	memset(&add_text, '\0', sizeof(add_text));
-	snprintf((SaInt8T *)add_text, sizeof(add_text), "CLM node %s Exit",
-		 dn.value);
+	snprintf(add_text, sizeof(add_text), "CLM node %s Exit", dn.value);
 
 	sendStateChangeNotificationClms(
 	    clms_cb, dn, add_text, SA_SVC_CLM, SA_CLM_NTFID_NODE_LEAVE,
@@ -222,7 +218,7 @@ void clms_node_exit_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node)
 void clms_node_reconfigured_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node)
 {
 	SaNameT dn;
-	SaUint8T add_text[SA_MAX_NAME_LENGTH + 128];
+	char add_text[SA_MAX_NAME_LENGTH + 128];
 
 	memset(dn.value, '\0', SA_MAX_NAME_LENGTH);
 	saflog(LOG_NOTICE, clmSvcUsrName,
@@ -230,11 +226,10 @@ void clms_node_reconfigured_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node)
 	       node->node_name.value, node->init_view,
 	       clms_cb->cluster_view_num);
 	dn.length = node->node_name.length;
-	(void)memcpy(dn.value, node->node_name.value, dn.length);
+	memcpy(dn.value, node->node_name.value, dn.length);
 
 	memset(&add_text, '\0', sizeof(add_text));
-	snprintf((SaInt8T *)add_text, sizeof(add_text),
-		 "CLM node %s Reconfigured", dn.value);
+	snprintf(add_text, sizeof(add_text), "CLM node %s Reconfigured", dn.value);
 
 	sendStateChangeNotificationClms(
 	    clms_cb, dn, add_text, SA_SVC_CLM, SA_CLM_NTFID_NODE_RECONFIG,
@@ -258,7 +253,7 @@ void clms_node_admin_state_change_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node,
 				      SaUint32T newState)
 {
 	SaNameT dn;
-	SaUint8T add_text[SA_MAX_NAME_LENGTH + 128];
+	char add_text[SA_MAX_NAME_LENGTH + 128];
 
 	TRACE_ENTER2("admin state change for node name %s",
 		     node->node_name.value);
@@ -269,10 +264,10 @@ void clms_node_admin_state_change_ntf(CLMS_CB *clms_cb, CLMS_CLUSTER_NODE *node,
 
 	memset(dn.value, '\0', SA_MAX_NAME_LENGTH);
 	dn.length = node->node_name.length;
-	(void)memcpy(dn.value, node->node_name.value, dn.length);
+	memcpy(dn.value, node->node_name.value, dn.length);
 
 	memset(&add_text, '\0', sizeof(add_text));
-	snprintf((SaInt8T *)add_text, sizeof(add_text),
+	snprintf(add_text, sizeof(add_text),
 		 "CLM node %s Admin State Change", dn.value);
 
 	sendStateChangeNotificationClms(
@@ -290,7 +285,7 @@ SaAisErrorT clms_ntf_init(CLMS_CB *cb)
 
 	while (rc == SA_AIS_ERR_TRY_AGAIN || rc == SA_AIS_ERR_TIMEOUT) {
 		SaVersionT ntfVersion = {'A', 0x01, 0x01};
-		rc = saNtfInitialize(&cb->ntf_hdl, NULL, &ntfVersion);
+		rc = saNtfInitialize(&cb->ntf_hdl, nullptr, &ntfVersion);
 		TRACE("saNtfInitialize rc value %u", rc);
 		if (rc == SA_AIS_ERR_TIMEOUT) {
 			LOG_WA("saNtfInitialize returned SA_AIS_ERR_TIMEOUT");

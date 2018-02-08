@@ -19,8 +19,6 @@
 #ifndef CLM_CLMND_EVT_H_
 #define CLM_CLMND_EVT_H_
 
-#include <stdbool.h>
-
 typedef NCS_IPC_MSG CLMNA_MBX_MSG;
 typedef enum clmna_evt_type {
   CLMNA_EVT_INVALID = 0,

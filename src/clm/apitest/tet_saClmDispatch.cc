@@ -26,11 +26,11 @@ static void nodeGetCallBack1(SaInvocationT invocation,
   printf("error= %d", error);
 }
 
-SaClmCallbacksT clmCallbacks = {nodeGetCallBack1, NULL};
+SaClmCallbacksT clmCallbacks = {nodeGetCallBack1, nullptr};
 static SaClmNodeIdT nodeId;
 static SaInvocationT invocation;
 
-void saClmDispatch_01(void) {
+void saClmDispatch_01() {
   struct pollfd fds[1];
   int ret;
   nodeId = ncs_get_node_id(); /*node does not exist*/
@@ -54,12 +54,12 @@ void saClmDispatch_01(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmDispatch_02(void) {
+void saClmDispatch_02() {
   rc = ClmTest::saClmDispatch(0, SA_DISPATCH_ALL);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
-void saClmDispatch_03(void) {
+void saClmDispatch_03() {
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks, &clmVersion_1),
             SA_AIS_OK);
   rc = ClmTest::saClmDispatch(clmHandle, static_cast<SaDispatchFlagsT>(0));
@@ -67,7 +67,7 @@ void saClmDispatch_03(void) {
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
-void saClmDispatch_04(void) {
+void saClmDispatch_04() {
   struct pollfd fds[1];
   int ret;
   nodeId = ncs_get_node_id(); /*node does not exist*/
@@ -91,7 +91,7 @@ void saClmDispatch_04(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-__attribute__((constructor)) static void saClmDispatch_constructor(void) {
+__attribute__((constructor)) static void saClmDispatch_constructor() {
   test_suite_add(3, "Life Cykel API 4");
   test_case_add(3, saClmDispatch_01,
                 "saClmDispatch - SA_AIS_OK SA_DISPATCH_ALL");

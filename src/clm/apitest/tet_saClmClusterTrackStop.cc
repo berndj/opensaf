@@ -61,33 +61,33 @@ static void nodeGetCallBack44(SaInvocationT invocation,
 SaClmCallbacksT_4 clmCallback44 = {nodeGetCallBack44, clmTrackCallback44};
 SaClmCallbacksT clmCallback11 = {nodeGetCallBack11, clmTrackCallback11};
 
-void saClmClusterTrackStop_01(void) {
+void saClmClusterTrackStop_01() {
   trackFlags = SA_TRACK_CURRENT;
   nodeId = ncs_get_node_id();
   invocation = 600;
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback11, &clmVersion_1),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
-  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, nullptr);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, nullptr);
   rc = ClmTest::saClmClusterNodeGetAsync(clmHandle, invocation, nodeId);
-  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, nullptr);
   rc = ClmTest::saClmClusterNodeGetAsync(clmHandle, invocation, nodeId);
   rc = ClmTest::saClmClusterNodeGetAsync(clmHandle, invocation, nodeId);
-  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, nullptr);
   safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
   safassert(ClmTest::saClmDispatch(clmHandle, SA_DISPATCH_ALL), SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, nullptr);
   safassert(ClmTest::saClmClusterTrackStop(clmHandle), SA_AIS_ERR_NOT_EXIST);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmClusterTrackStop_02(void) {
+void saClmClusterTrackStop_02() {
   rc = ClmTest::saClmClusterTrackStop(clmHandle);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
-__attribute__((constructor)) static void saClmClusterTrackStop_constructor(void) {
+__attribute__((constructor)) static void saClmClusterTrackStop_constructor() {
   test_suite_add(9, "Test case for saClmClusterTrackStop");
   test_case_add(9, saClmClusterTrackStop_01,
                 "saClmClusterTrackStop with valid arguments, SA_AIS_OK");

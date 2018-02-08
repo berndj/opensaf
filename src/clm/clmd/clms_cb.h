@@ -18,8 +18,17 @@
 #ifndef CLM_CLMD_CLMS_CB_H_
 #define CLM_CLMD_CLMS_CB_H_
 
-#include <stdbool.h>
+#ifdef HAVE_CONFIG_H
+#include "osaf/config.h"
+#endif
 #include <pthread.h>
+#include <saImm.h>
+#include <saImmOi.h>
+#include <saPlm.h>
+#include "base/ncssysf_ipc.h"
+#include "mbc/mbcsv_papi.h"
+#include "mds/mds_papi.h"
+#include "rde/agent/rda_papi.h"
 
 #define IMPLEMENTER_NAME "safClmService"
 #define CLMS_HA_INIT_STATE 0
@@ -252,7 +261,7 @@ typedef struct clms_cb_t {
   SaClmNodeIdT inprogress_node_ids[MAX_PENDING_NODES + 1];
   /* True if the scale-out thread is currently running */
   bool is_scale_out_thread_running;
-  /* Full path to the scale-out script, or NULL if feature is disabled */
+  /* Full path to the scale-out script, or nullptr if feature is disabled */
   char *scale_out_script;
   /* internal field separator */
   char ifs;
@@ -265,7 +274,7 @@ uint32_t clm_snd_track_changes(CLMS_CB *cb, CLMS_CLUSTER_NODE *node,
                                SaImmAdminOperationIdT opId,
                                SaClmChangeStepT step);
 void clms_track_send_node_down(CLMS_CLUSTER_NODE *node);
-void clms_reboot_remote_node(CLMS_CLUSTER_NODE *op_node, char *str);
+void clms_reboot_remote_node(CLMS_CLUSTER_NODE *op_node, const char *str);
 void *clms_rem_reboot(void *_rem_reboot);
 #define m_CLMSV_PACK_INV(inv, nodeid) ((((SaUint64T)inv) << 32) | nodeid)
 #define m_CLMSV_INV_UNPACK_INVID(inv) ((inv) >> 32)

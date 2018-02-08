@@ -18,17 +18,17 @@
 
 #include <saImmOi.h>
 #include <saImmOm.h>
-#include <stdio.h>
+#include <cstdio>
 
-#include "clms.h"
+#include "clm/clmd/clms.h"
 #include "base/osaf_extended_name.h"
 #include "base/osaf_utility.h"
 #include "base/osaf_time.h"
 
 extern struct ImmutilWrapperProfile immutilWrapperProfile;
 
-void clms_all_node_rattr_update(void);
-static SaBoolT clms_is_any_rtu_pending(void);
+void clms_all_node_rattr_update();
+static SaBoolT clms_is_any_rtu_pending();
 SaAisErrorT clms_node_ccb_comp_cb(CcbUtilOperationData_t *opdata);
 uint32_t clms_imm_node_unlock(CLMS_CLUSTER_NODE *nodeop);
 uint32_t clms_imm_node_lock(CLMS_CLUSTER_NODE *nodeop);
@@ -74,19 +74,22 @@ static void *imm_impl_set_node_down_proc(void *_cb)
 {
 	SaAisErrorT rc;
 	CLMS_CB *cb = (CLMS_CB *)_cb;
-	int msecs_waited;
 
 	TRACE_ENTER();
 
 	/* Update IMM */
 
-	msecs_waited = 0;
-	rc = saImmOiImplementerSet(cb->immOiHandle, IMPLEMENTER_NAME);
+	unsigned msecs_waited = 0;
+	rc = saImmOiImplementerSet(cb->immOiHandle,
+				   const_cast<SaImmOiImplementerNameT>(
+					   IMPLEMENTER_NAME));
 	while (((rc == SA_AIS_ERR_TRY_AGAIN) || (rc == SA_AIS_ERR_EXIST)) &&
 	       (msecs_waited < max_waiting_time_ms)) {
 		usleep(sleep_delay_ms * 1000);
 		msecs_waited += sleep_delay_ms;
-		rc = saImmOiImplementerSet(cb->immOiHandle, IMPLEMENTER_NAME);
+		rc = saImmOiImplementerSet(cb->immOiHandle,
+					   const_cast<SaImmOiImplementerNameT>(
+						   IMPLEMENTER_NAME));
 	}
 	if (rc != SA_AIS_OK) {
 		/* We have tried enough, now just exit */
@@ -95,12 +98,16 @@ static void *imm_impl_set_node_down_proc(void *_cb)
 	}
 
 	msecs_waited = 0;
-	rc = saImmOiClassImplementerSet(cb->immOiHandle, "SaClmNode");
+	rc = saImmOiClassImplementerSet(cb->immOiHandle,
+					const_cast<SaImmClassNameT>(
+						"SaClmNode"));
 	while (((rc == SA_AIS_ERR_TRY_AGAIN) || (rc == SA_AIS_ERR_EXIST)) &&
 	       (msecs_waited < max_waiting_time_ms)) {
 		usleep(sleep_delay_ms * 1000);
 		msecs_waited += sleep_delay_ms;
-		rc = saImmOiClassImplementerSet(cb->immOiHandle, "SaClmNode");
+		rc = saImmOiClassImplementerSet(cb->immOiHandle,
+						const_cast<SaImmClassNameT>(
+							"SaClmNode"));
 	}
 	if (rc != SA_AIS_OK) {
 		LOG_ER(
@@ -110,13 +117,16 @@ static void *imm_impl_set_node_down_proc(void *_cb)
 	}
 
 	msecs_waited = 0;
-	rc = saImmOiClassImplementerSet(cb->immOiHandle, "SaClmCluster");
+	rc = saImmOiClassImplementerSet(cb->immOiHandle,
+					const_cast<SaImmClassNameT>(
+						"SaClmCluster"));
 	while (((rc == SA_AIS_ERR_TRY_AGAIN) || (rc == SA_AIS_ERR_EXIST)) &&
 	       (msecs_waited < max_waiting_time_ms)) {
 		usleep(sleep_delay_ms * 1000);
 		msecs_waited += sleep_delay_ms;
-		rc =
-		    saImmOiClassImplementerSet(cb->immOiHandle, "SaClmCluster");
+		rc = saImmOiClassImplementerSet(cb->immOiHandle,
+						const_cast<SaImmClassNameT>(
+							"SaClmCluster"));
 	}
 	if (rc != SA_AIS_OK) {
 		LOG_ER(
@@ -128,7 +138,7 @@ static void *imm_impl_set_node_down_proc(void *_cb)
 	cb->is_impl_set = true;
 
 	TRACE_LEAVE();
-	return NULL;
+	return nullptr;
 }
 
 /**
@@ -139,12 +149,12 @@ static void *imm_impl_set_node_down_proc(void *_cb)
 uint32_t clms_chk_sub_exist(SaUint8T track_flag)
 {
 
-	CLMS_CLIENT_INFO *rec = NULL;
+	CLMS_CLIENT_INFO *rec = nullptr;
 	uint32_t client_id = 0;
 
 	TRACE_ENTER();
 
-	while (NULL != (rec = clms_client_getnext_by_id(client_id))) {
+	while (nullptr != (rec = clms_client_getnext_by_id(client_id))) {
 		client_id = rec->client_id;
 
 		if (rec->track_flags & (track_flag))
@@ -187,14 +197,14 @@ void clms_imm_impl_set(CLMS_CB *cb)
 CLMS_CLUSTER_NODE *clms_node_new(SaNameT *name,
 				 const SaImmAttrValuesT_2 **attrs)
 {
-	CLMS_CLUSTER_NODE *node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr;
 	const SaImmAttrValuesT_2 *attr;
 	int i = 0;
 
 	TRACE_ENTER();
 
 	node = (CLMS_CLUSTER_NODE *)malloc(sizeof(CLMS_CLUSTER_NODE));
-	if (node == NULL) {
+	if (node == nullptr) {
 		LOG_ER("Calloc failed");
 		goto done;
 	}
@@ -203,15 +213,15 @@ CLMS_CLUSTER_NODE *clms_node_new(SaNameT *name,
 	/*Initialize some attributes of the node like */
 	memcpy(node->node_name.value, name->value, name->length);
 	node->node_name.length = name->length;
-	node->node_addr.family = 1;
+	node->node_addr.family = SA_CLM_AF_INET;
 	node->admin_state = SA_CLM_ADMIN_UNLOCKED;
-	node->rtu_pending = false;
-	node->admin_rtu_pending = false;
+	node->rtu_pending = SA_FALSE;
+	node->admin_rtu_pending = SA_FALSE;
 
 	TRACE("RTU pending flag is switched off");
 	TRACE("nodename %s", node->node_name.value);
 
-	while ((attr = attrs[i++]) != NULL) {
+	while ((attr = attrs[i++]) != nullptr) {
 		void *value;
 
 		if (attr->attrValuesNumber == 0)
@@ -221,24 +231,23 @@ CLMS_CLUSTER_NODE *clms_node_new(SaNameT *name,
 		TRACE("Inside the while loop attrname %s", attr->attrName);
 
 		if (!strcmp(attr->attrName, "saClmNodeAdminState")) {
-			node->admin_state = *((SaUint32T *)value);
-
+			node->admin_state = static_cast<SaClmAdminStateT>(
+				*(static_cast<SaUint32T*>(value)));
 		} else if (!strcmp(attr->attrName,
 				   "saClmNodeLockCallbackTimeout")) {
-			node->lck_cbk_timeout = *((SaTimeT *)value);
-
+			node->lck_cbk_timeout = *(static_cast<SaTimeT*>(value));
 		} else if (!strcmp(attr->attrName, "saClmNodeDisableReboot")) {
-			node->disable_reboot = *((SaUint32T *)value);
-
+			node->disable_reboot = static_cast<SaBoolT>(
+				*(static_cast<SaUint32T*>(value)));
 		} else if (!strcmp(attr->attrName, "saClmNodeAddressFamily")) {
-			node->node_addr.family = *((SaUint32T *)value);
-
+			node->node_addr.family =
+				static_cast<SaClmNodeAddressFamilyT>(
+					*(static_cast<SaUint32T*>(value)));
 		} else if (!strcmp(attr->attrName, "saClmNodeAddress")) {
 			node->node_addr.length =
 			    (SaUint16T)strlen(*((char **)value));
 			strncpy((char *)node->node_addr.value,
 				*((char **)value), node->node_addr.length);
-
 		} else if (!strcmp(attr->attrName, "saClmNodeEE")) {
 			SaNameT *name = (SaNameT *)value;
 			size_t nameLen = osaf_extended_name_length(name);
@@ -251,7 +260,7 @@ CLMS_CLUSTER_NODE *clms_node_new(SaNameT *name,
 					LOG_ER(
 					    "saClmNodeEE attribute name length is longer than 255");
 					free(node);
-					node = NULL;
+					node = nullptr;
 					goto done;
 				}
 				if (strncmp((const char *)name->value,
@@ -259,7 +268,7 @@ CLMS_CLUSTER_NODE *clms_node_new(SaNameT *name,
 					LOG_ER(
 					    "Please provide the saf compliant ee name");
 					free(node);
-					node = NULL;
+					node = nullptr;
 					goto done;
 				}
 
@@ -293,7 +302,7 @@ done:
 /**
  * This constructs the node db by reading the config attributes from immsv
  */
-SaAisErrorT clms_node_create_config(void)
+SaAisErrorT clms_node_create_config()
 {
 	SaAisErrorT rc = SA_AIS_ERR_INVALID_PARAM;
 	uint32_t rt, num_nodes = 0;
@@ -307,18 +316,19 @@ SaAisErrorT clms_node_create_config(void)
 
 	TRACE_ENTER();
 
-	CLMS_CLUSTER_NODE *node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr;
 
-	(void)immutil_saImmOmInitialize(&imm_om_hdl, NULL, &immVersion);
+	immutil_saImmOmInitialize(&imm_om_hdl, nullptr, &immVersion);
 
-	searchParam.searchOneAttr.attrName = "SaImmAttrClassName";
+	searchParam.searchOneAttr.attrName = const_cast<SaImmAttrNameT>(
+		"SaImmAttrClassName");
 	searchParam.searchOneAttr.attrValueType = SA_IMM_ATTR_SASTRINGT;
 	searchParam.searchOneAttr.attrValue = &className;
 
-	(void)immutil_saImmOmSearchInitialize_2(
-	    imm_om_hdl, NULL, SA_IMM_SUBTREE,
+	immutil_saImmOmSearchInitialize_2(
+	    imm_om_hdl, nullptr, SA_IMM_SUBTREE,
 	    SA_IMM_SEARCH_ONE_ATTR | SA_IMM_SEARCH_GET_ALL_ATTR, &searchParam,
-	    NULL, &search_hdl);
+	    nullptr, &search_hdl);
 	// TODO: Read saClmClusterNumNodes attribute of SaClmCluster and verify
 	// here.  Nodes read below >= saClmClusterNumNodes (dynamic addition may
 	// add more nodes).
@@ -336,7 +346,7 @@ SaAisErrorT clms_node_create_config(void)
 				rc = SA_AIS_ERR_BAD_OPERATION;
 				goto done2;
 			}
-			if (clms_node_get_by_name(&dn) != NULL) {
+			if (clms_node_get_by_name(&dn) != nullptr) {
 				TRACE("'%s' is already present in db.",
 				      dn.value);
 				continue;
@@ -344,25 +354,25 @@ SaAisErrorT clms_node_create_config(void)
 			if ((node = clms_node_new(
 				 &dn,
 				 (const SaImmAttrValuesT_2 **)attributes)) ==
-			    NULL)
+			    nullptr)
 				goto done2;
 			num_nodes++;
 			clms_node_add_to_model(node);
 		} else if ((rc == SA_AIS_ERR_BAD_HANDLE) ||
 			   (rc == SA_AIS_ERR_TIMEOUT)) {
-			(void)immutil_saImmOmSearchFinalize(search_hdl);
-			(void)immutil_saImmOmFinalize(imm_om_hdl);
+			immutil_saImmOmSearchFinalize(search_hdl);
+			immutil_saImmOmFinalize(imm_om_hdl);
 
 			// Try 10 times in a gap of 100 millisecs.
 			uint16_t count = 0;
-			rc = immutil_saImmOmInitialize(&imm_om_hdl, NULL,
+			rc = immutil_saImmOmInitialize(&imm_om_hdl, nullptr,
 						       &immVersion);
 			while ((rc == SA_AIS_ERR_TIMEOUT) && (count < 10)) {
-				(void)immutil_saImmOmFinalize(imm_om_hdl);
+				immutil_saImmOmFinalize(imm_om_hdl);
 				count++;
 				osaf_nanosleep(&kHundredMilliseconds);
 				rc = immutil_saImmOmInitialize(
-				    &imm_om_hdl, NULL, &immVersion);
+				    &imm_om_hdl, nullptr, &immVersion);
 			}
 			if (rc != SA_AIS_OK) {
 				LOG_ER("saImmOmInitialize failed with '%u'",
@@ -372,26 +382,26 @@ SaAisErrorT clms_node_create_config(void)
 
 			count = 0;
 			rc = immutil_saImmOmSearchInitialize_2(
-			    imm_om_hdl, NULL, SA_IMM_SUBTREE,
+			    imm_om_hdl, nullptr, SA_IMM_SUBTREE,
 			    SA_IMM_SEARCH_ONE_ATTR | SA_IMM_SEARCH_GET_ALL_ATTR,
-			    &searchParam, NULL, &search_hdl);
+			    &searchParam, nullptr, &search_hdl);
 			while (((rc == SA_AIS_ERR_TIMEOUT) ||
 				(rc == SA_AIS_ERR_BAD_HANDLE)) &&
 			       (count < 10)) {
-				(void)immutil_saImmOmSearchFinalize(search_hdl);
-				(void)immutil_saImmOmFinalize(imm_om_hdl);
+				immutil_saImmOmSearchFinalize(search_hdl);
+				immutil_saImmOmFinalize(imm_om_hdl);
 
 				count++;
 				osaf_nanosleep(&kHundredMilliseconds);
 
 				// Last try to both.
-				(void)immutil_saImmOmInitialize(
-				    &imm_om_hdl, NULL, &immVersion);
+				immutil_saImmOmInitialize(
+				    &imm_om_hdl, nullptr, &immVersion);
 				rc = immutil_saImmOmSearchInitialize_2(
-				    imm_om_hdl, NULL, SA_IMM_SUBTREE,
+				    imm_om_hdl, nullptr, SA_IMM_SUBTREE,
 				    SA_IMM_SEARCH_ONE_ATTR |
 					SA_IMM_SEARCH_GET_ALL_ATTR,
-				    &searchParam, NULL, &search_hdl);
+				    &searchParam, nullptr, &search_hdl);
 			}
 			if (rc != SA_AIS_OK) {
 				LOG_ER(
@@ -415,8 +425,8 @@ SaAisErrorT clms_node_create_config(void)
 		LOG_ER(
 		    "Incomplete Configuration: EE attribute is not specified for some CLM nodes");
 done2:
-	(void)immutil_saImmOmSearchFinalize(search_hdl);
-	(void)immutil_saImmOmFinalize(imm_om_hdl);
+	immutil_saImmOmSearchFinalize(search_hdl);
+	immutil_saImmOmFinalize(imm_om_hdl);
 	TRACE_LEAVE();
 	return rc;
 }
@@ -424,7 +434,7 @@ done2:
 /**
  * This creates the cluster database by reading the cluster dn from immsv
  */
-SaAisErrorT clms_cluster_config_get(void)
+SaAisErrorT clms_cluster_config_get()
 {
 	SaAisErrorT rc = SA_AIS_ERR_INVALID_PARAM;
 	uint32_t rt = NCSCC_RC_SUCCESS;
@@ -439,29 +449,30 @@ SaAisErrorT clms_cluster_config_get(void)
 	TRACE_ENTER();
 
 	version = immVersion;
-	(void)immutil_saImmOmInitialize(&imm_om_hdl, NULL, &version);
+	immutil_saImmOmInitialize(&imm_om_hdl, nullptr, &version);
 
-	searchParam.searchOneAttr.attrName = "SaImmAttrClassName";
+	searchParam.searchOneAttr.attrName = const_cast<SaImmAttrNameT>(
+		"SaImmAttrClassName");
 	searchParam.searchOneAttr.attrValueType = SA_IMM_ATTR_SASTRINGT;
 	searchParam.searchOneAttr.attrValue = &className;
 
 	rc = immutil_saImmOmSearchInitialize_2(
 	    imm_om_hdl, &osaf_cluster->name, SA_IMM_SUBTREE,
 	    SA_IMM_SEARCH_ONE_ATTR | SA_IMM_SEARCH_GET_ALL_ATTR, &searchParam,
-	    NULL, &search_hdl);
+	    nullptr, &search_hdl);
 
 	if (rc == SA_AIS_ERR_BAD_HANDLE) {
 		// Repeat one more search on ERR_BAD_HANDLE
 
 		// Close the open OM handle, and initialize a new one
-		(void)immutil_saImmOmFinalize(imm_om_hdl);
+		immutil_saImmOmFinalize(imm_om_hdl);
 		version = immVersion;
-		(void)immutil_saImmOmInitialize(&imm_om_hdl, NULL, &version);
+		immutil_saImmOmInitialize(&imm_om_hdl, nullptr, &version);
 
 		rc = immutil_saImmOmSearchInitialize_2(
 			    imm_om_hdl, &osaf_cluster->name, SA_IMM_SUBTREE,
 			    SA_IMM_SEARCH_ONE_ATTR | SA_IMM_SEARCH_GET_ALL_ATTR,
-			    &searchParam, NULL, &search_hdl);
+			    &searchParam, nullptr, &search_hdl);
 	}
 
 	if (rc != SA_AIS_OK) {
@@ -477,9 +488,10 @@ SaAisErrorT clms_cluster_config_get(void)
 			TRACE("clms_cluster_dn_chk failed");
 			goto done2;
 		}
-		if (osaf_cluster == NULL) {
-			osaf_cluster = calloc(1, sizeof(CLMS_CLUSTER_INFO));
-			if (osaf_cluster == NULL) {
+		if (osaf_cluster == nullptr) {
+			osaf_cluster = static_cast<CLMS_CLUSTER_INFO*>(
+				calloc(1, sizeof(CLMS_CLUSTER_INFO)));
+			if (osaf_cluster == nullptr) {
 				LOG_ER("osaf_cluster calloc failed");
 				goto done2;
 			}
@@ -492,16 +504,16 @@ SaAisErrorT clms_cluster_config_get(void)
 			osaf_cluster->init_time = clms_get_SaTime();
 		}
 
-		osaf_cluster->rtu_pending = false;
+		osaf_cluster->rtu_pending = SA_FALSE;
 		TRACE("RTU pending flag is switched off");
 	}
 	rc = SA_AIS_OK;
 done2:
 
-	(void)immutil_saImmOmSearchFinalize(search_hdl);
+	immutil_saImmOmSearchFinalize(search_hdl);
 
 done1:
-	(void)immutil_saImmOmFinalize(imm_om_hdl);
+	immutil_saImmOmFinalize(imm_om_hdl);
 	TRACE_LEAVE();
 	return rc;
 }
@@ -533,7 +545,7 @@ SaAisErrorT clms_imm_activate(CLMS_CB *cb)
 	}
 
 	if (clms_cb->ha_state == SA_AMF_HA_ACTIVE) {
-		int msecs_waited = 0;
+		unsigned msecs_waited = 0;
 		for (;;) {
 			if (msecs_waited >= max_waiting_time_ms) {
 				LOG_ER("Timeout in clms_imm_activate");
@@ -541,7 +553,8 @@ SaAisErrorT clms_imm_activate(CLMS_CB *cb)
 			}
 
 			rc = immutil_saImmOiImplementerSet(cb->immOiHandle,
-							   IMPLEMENTER_NAME);
+				const_cast<SaImmOiImplementerNameT>(
+					IMPLEMENTER_NAME));
 			if (rc == SA_AIS_ERR_TIMEOUT ||
 			    rc == SA_AIS_ERR_BAD_HANDLE) {
 				LOG_WA("saImmOiImplementerSet returned %u",
@@ -552,8 +565,9 @@ SaAisErrorT clms_imm_activate(CLMS_CB *cb)
 				cb->immOiHandle = 0;
 				cb->imm_sel_obj = -1;
 				cb->is_impl_set = false;
-				if ((rc = clms_imm_init(clms_cb)) !=
+				if (clms_imm_init(clms_cb) !=
 				    NCSCC_RC_SUCCESS) {
+					rc = SA_AIS_ERR_LIBRARY;
 					LOG_ER("clms_imm_init FAILED");
 					goto done;
 				}
@@ -577,8 +591,9 @@ SaAisErrorT clms_imm_activate(CLMS_CB *cb)
 				cb->immOiHandle = 0;
 				cb->imm_sel_obj = -1;
 				cb->is_impl_set = false;
-				if ((rc = clms_imm_init(clms_cb)) !=
+				if (clms_imm_init(clms_cb) !=
 				    NCSCC_RC_SUCCESS) {
+					rc = SA_AIS_ERR_LIBRARY;
 					LOG_ER("clms_imm_init FAILED");
 					goto done;
 				}
@@ -603,8 +618,9 @@ SaAisErrorT clms_imm_activate(CLMS_CB *cb)
 				cb->immOiHandle = 0;
 				cb->imm_sel_obj = -1;
 				cb->is_impl_set = false;
-				if ((rc = clms_imm_init(clms_cb)) !=
+				if (clms_imm_init(clms_cb) !=
 				    NCSCC_RC_SUCCESS) {
+					rc = SA_AIS_ERR_LIBRARY;
 					LOG_ER("clms_imm_init FAILED");
 					goto done;
 				}
@@ -643,7 +659,7 @@ void clms_admin_state_update_rattr(CLMS_CLUSTER_NODE *nd)
 	TRACE_ENTER2("Admin state %d update for node %s", nd->admin_state,
 		     nd->node_name.value);
 
-	CLMS_CLUSTER_NODE *node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr;
 	/* If this update being attempted was for a node down and as a part of
 	 * try-again-later, then we need to lookup using name, because the
 	 * node_id record would have been deleted as a part of node down
@@ -654,17 +670,18 @@ void clms_admin_state_update_rattr(CLMS_CLUSTER_NODE *nd)
 	if (clms_cb->is_impl_set == false) {
 		TRACE(
 		    "Implementer not yet set: Switching on the tryagain flag");
-		node->rtu_pending = true;
-		clms_cb->rtu_pending = true;
+		node->rtu_pending = SA_TRUE;
+		clms_cb->rtu_pending = SA_TRUE;
 		TRACE_LEAVE();
 		return;
 	}
 
 	SaImmAttrValueT attrUpdateValue[] = {&nd->admin_state};
-	const SaImmAttrModificationT_2 *attrMods[] = {&attr_Mod[0], NULL};
+	const SaImmAttrModificationT_2 *attrMods[] = {&attr_Mod[0], nullptr};
 
 	attr_Mod[0].modType = SA_IMM_ATTR_VALUES_REPLACE;
-	attr_Mod[0].modAttr.attrName = "saClmNodeAdminState";
+	attr_Mod[0].modAttr.attrName = const_cast<SaImmAttrNameT>(
+		"saClmNodeAdminState");
 	attr_Mod[0].modAttr.attrValuesNumber = 1;
 	attr_Mod[0].modAttr.attrValueType = SA_IMM_ATTR_SAUINT32T;
 	attr_Mod[0].modAttr.attrValues = attrUpdateValue;
@@ -672,13 +689,13 @@ void clms_admin_state_update_rattr(CLMS_CLUSTER_NODE *nd)
 	rc = saImmOiRtObjectUpdate_2(clms_cb->immOiHandle, &nd->node_name,
 				     attrMods);
 	if (rc == SA_AIS_OK) {
-		node->admin_rtu_pending = false;
+		node->admin_rtu_pending = SA_FALSE;
 		/* Walk through all nodes to find out if any other rtu is
 		 * pending and accordingly turn off the global flag in cb.
 		 */
-		if (clms_cb->rtu_pending == true) {
+		if (clms_cb->rtu_pending == SA_TRUE) {
 			if (clms_is_any_rtu_pending() == false) {
-				clms_cb->rtu_pending = false;
+				clms_cb->rtu_pending = SA_FALSE;
 				TRACE("RTUpdate success. Turning off flag");
 			}
 		}
@@ -686,16 +703,16 @@ void clms_admin_state_update_rattr(CLMS_CLUSTER_NODE *nd)
 		LOG_IN(
 		    "saImmOiRtObjectUpdate for %s failed with rc = %u. Trying again",
 		    node->node_name.value, rc);
-		node->admin_rtu_pending = true;
-		clms_cb->rtu_pending = true;
+		node->admin_rtu_pending = SA_TRUE;
+		clms_cb->rtu_pending = SA_TRUE;
 	} else {
 		/* Right now, there is no guarantee on IMM error codes. So
 		 * Reinit for everyother error code */
 		LOG_IN(
 		    "saImmOiRtObjectUpdate for %s failed with rc = %u. Reinit with IMM",
 		    node->node_name.value, rc);
-		node->admin_rtu_pending = true;
-		clms_cb->rtu_pending = true;
+		node->admin_rtu_pending = SA_TRUE;
+		clms_cb->rtu_pending = SA_TRUE;
 
 		saImmOiFinalize(clms_cb->immOiHandle);
 		clms_cb->immOiHandle = 0;
@@ -732,8 +749,8 @@ void clms_node_update_rattr(CLMS_CLUSTER_NODE *nd)
 	for (i = 0; i < size-1; i++) {
 		attrMods[i] = &attr_Mod[i];
 	}
-	attrMods[i] = NULL;
-	CLMS_CLUSTER_NODE *node = NULL;
+	attrMods[i] = nullptr;
+	CLMS_CLUSTER_NODE *node = nullptr;
 
 	TRACE_ENTER();
 	osafassert((node = clms_node_get_by_name(&nd->node_name)));
@@ -741,44 +758,50 @@ void clms_node_update_rattr(CLMS_CLUSTER_NODE *nd)
 	if (clms_cb->is_impl_set == false) {
 		TRACE(
 		    "Implementer not yet set: Switching on the tryagain flag");
-		node->rtu_pending = true;
-		clms_cb->rtu_pending = true;
+		node->rtu_pending = SA_TRUE;
+		clms_cb->rtu_pending = SA_TRUE;
 		TRACE_LEAVE();
 		return;
 	}
 
 	attr_Mod[0].modType = SA_IMM_ATTR_VALUES_REPLACE;
-	attr_Mod[0].modAttr.attrName = "saClmNodeIsMember";
+	attr_Mod[0].modAttr.attrName = const_cast<SaImmAttrNameT>(
+		"saClmNodeIsMember");
 	attr_Mod[0].modAttr.attrValuesNumber = 1;
 	attr_Mod[0].modAttr.attrValueType = SA_IMM_ATTR_SAUINT32T;
 	attr_Mod[0].modAttr.attrValues = attrUpdateValue;
 
 	attr_Mod[1].modType = SA_IMM_ATTR_VALUES_REPLACE;
-	attr_Mod[1].modAttr.attrName = "saClmNodeID";
+	attr_Mod[1].modAttr.attrName = const_cast<SaImmAttrNameT>(
+		"saClmNodeID");
 	attr_Mod[1].modAttr.attrValuesNumber = 1;
 	attr_Mod[1].modAttr.attrValueType = SA_IMM_ATTR_SAUINT32T;
 	attr_Mod[1].modAttr.attrValues = attrUpdateValue1;
 
 	attr_Mod[2].modType = SA_IMM_ATTR_VALUES_REPLACE;
-	attr_Mod[2].modAttr.attrName = "saClmNodeBootTimeStamp";
+	attr_Mod[2].modAttr.attrName = const_cast<SaImmAttrNameT>(
+		"saClmNodeBootTimeStamp");
 	attr_Mod[2].modAttr.attrValuesNumber = 1;
 	attr_Mod[2].modAttr.attrValueType = SA_IMM_ATTR_SATIMET;
 	attr_Mod[2].modAttr.attrValues = attrUpdateValue2;
 
 	attr_Mod[3].modType = SA_IMM_ATTR_VALUES_REPLACE;
-	attr_Mod[3].modAttr.attrName = "saClmNodeInitialViewNumber";
+	attr_Mod[3].modAttr.attrName = const_cast<SaImmAttrNameT>(
+		"saClmNodeInitialViewNumber");
 	attr_Mod[3].modAttr.attrValuesNumber = 1;
 	attr_Mod[3].modAttr.attrValueType = SA_IMM_ATTR_SAUINT64T;
 	attr_Mod[3].modAttr.attrValues = attrUpdateValue3;
 
 	attr_Mod[4].modType = SA_IMM_ATTR_VALUES_REPLACE;
-	attr_Mod[4].modAttr.attrName = "saClmNodeCurrAddressFamily";
+	attr_Mod[4].modAttr.attrName = const_cast<SaImmAttrNameT>(
+		"saClmNodeCurrAddressFamily");
 	attr_Mod[4].modAttr.attrValuesNumber = 1;
 	attr_Mod[4].modAttr.attrValueType = SA_IMM_ATTR_SAUINT32T;
 	attr_Mod[4].modAttr.attrValues = attrUpdateValue4;
 
 	attr_Mod[5].modType = SA_IMM_ATTR_VALUES_REPLACE;
-	attr_Mod[5].modAttr.attrName = "saClmNodeCurrAddress";
+	attr_Mod[5].modAttr.attrName = const_cast<SaImmAttrNameT>(
+		"saClmNodeCurrAddress");
 	attr_Mod[5].modAttr.attrValuesNumber = 1;
 	attr_Mod[5].modAttr.attrValueType = SA_IMM_ATTR_SASTRINGT;
 	attr_Mod[5].modAttr.attrValues = attrUpdateValue5;
@@ -787,13 +810,13 @@ void clms_node_update_rattr(CLMS_CLUSTER_NODE *nd)
 				     attrMods);
 
 	if (rc == SA_AIS_OK) {
-		node->rtu_pending = false;
+		node->rtu_pending = SA_FALSE;
 		/* Walk through all nodes to find out if any other rtu is
 		 * pending and accordingly turn off the global flag in cb.
 		 */
 		if (clms_cb->rtu_pending == true) {
 			if (clms_is_any_rtu_pending() == false) {
-				clms_cb->rtu_pending = false;
+				clms_cb->rtu_pending = SA_FALSE;
 				TRACE("RTUpdate success. Turning off flag");
 			}
 		}
@@ -801,14 +824,14 @@ void clms_node_update_rattr(CLMS_CLUSTER_NODE *nd)
 		LOG_IN(
 		    "saImmOiRtObjectUpdate for %s failed with rc = %u. Trying again",
 		    node->node_name.value, rc);
-		node->rtu_pending = true;
-		clms_cb->rtu_pending = true;
+		node->rtu_pending = SA_TRUE;
+		clms_cb->rtu_pending = SA_TRUE;
 	} else {
 		LOG_IN(
 		    "saImmOiRtObjectUpdate for %s failed with rc = %u. Reinit with IMM",
 		    node->node_name.value, rc);
-		node->rtu_pending = true;
-		clms_cb->rtu_pending = true;
+		node->rtu_pending = SA_TRUE;
+		clms_cb->rtu_pending = SA_TRUE;
 
 		saImmOiFinalize(clms_cb->immOiHandle);
 		clms_cb->immOiHandle = 0;
@@ -825,13 +848,13 @@ void clms_node_update_rattr(CLMS_CLUSTER_NODE *nd)
 /**
  * Update IMMSv the runtime info of all nodes
  */
-void clms_all_node_rattr_update(void)
+void clms_all_node_rattr_update()
 {
-	CLMS_CLUSTER_NODE *node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr;
 	SaUint32T nodeid = 0;
 
 	node = clms_node_getnext_by_id(nodeid);
-	while (node != NULL) {
+	while (node != nullptr) {
 		clms_node_update_rattr(node);
 		node = clms_node_getnext_by_id(node->node_id);
 	}
@@ -840,9 +863,9 @@ void clms_all_node_rattr_update(void)
 /**
  *  Process all pending runtime attribute updates toward IMM
  */
-void clms_retry_pending_rtupdates(void)
+void clms_retry_pending_rtupdates()
 {
-	CLMS_CLUSTER_NODE *node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr;
 	SaNameT nodename = {0};
 	TRACE_ENTER();
 
@@ -850,7 +873,7 @@ void clms_retry_pending_rtupdates(void)
 		TRACE_LEAVE2("Implementerset yet to happen, try later");
 		return;
 	}
-	for (node = clms_node_getnext_by_name(&nodename); node != NULL;
+	for (node = clms_node_getnext_by_name(&nodename); node != nullptr;
 	     node = clms_node_getnext_by_name(&nodename)) {
 		if (node->rtu_pending == true)
 			clms_node_update_rattr(node);
@@ -868,42 +891,42 @@ void clms_retry_pending_rtupdates(void)
  *  As a standby, clear all pending runtime attribute updates toward IMM
  *  The new active will take care of it.
  */
-void clms_switchoff_all_pending_rtupdates(void)
+void clms_switchoff_all_pending_rtupdates()
 {
-	CLMS_CLUSTER_NODE *node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr;
 	SaNameT nodename = {0};
 	TRACE_ENTER();
 
-	for (node = clms_node_getnext_by_name(&nodename); node != NULL;
+	for (node = clms_node_getnext_by_name(&nodename); node != nullptr;
 	     node = clms_node_getnext_by_name(&nodename)) {
 		TRACE("Switching on the tryagain flag");
-		node->rtu_pending = false;
-		node->admin_rtu_pending = false;
+		node->rtu_pending = SA_FALSE;
+		node->admin_rtu_pending = SA_FALSE;
 		memcpy(&nodename, &node->node_name, sizeof(SaNameT));
 	}
-	osaf_cluster->rtu_pending = false;
-	clms_cb->rtu_pending = false;
+	osaf_cluster->rtu_pending = SA_FALSE;
+	clms_cb->rtu_pending = SA_FALSE;
 	TRACE_LEAVE();
 }
 
 /**
  *  As a active, mark runtime attribute updates pending for all nodes.
  */
-void clms_switchon_all_pending_rtupdates(void)
+void clms_switchon_all_pending_rtupdates()
 {
-	CLMS_CLUSTER_NODE *node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr;
 	SaNameT nodename = {0};
 	TRACE_ENTER();
 
-	for (node = clms_node_getnext_by_name(&nodename); node != NULL;
+	for (node = clms_node_getnext_by_name(&nodename); node != nullptr;
 	     node = clms_node_getnext_by_name(&nodename)) {
 		TRACE("Switching on the pending RTUs");
-		node->rtu_pending = true;
-		node->admin_rtu_pending = true;
+		node->rtu_pending = SA_TRUE;
+		node->admin_rtu_pending = SA_TRUE;
 		memcpy(&nodename, &node->node_name, sizeof(SaNameT));
 	}
-	osaf_cluster->rtu_pending = true;
-	clms_cb->rtu_pending = true;
+	osaf_cluster->rtu_pending = SA_TRUE;
+	clms_cb->rtu_pending = SA_TRUE;
 	TRACE_LEAVE();
 }
 
@@ -911,26 +934,26 @@ void clms_switchon_all_pending_rtupdates(void)
  *  As a standby, clear all pending runtime attribute updates toward IMM
  *  The new active will take care of it.
  */
-static SaBoolT clms_is_any_rtu_pending(void)
+static SaBoolT clms_is_any_rtu_pending()
 {
-	CLMS_CLUSTER_NODE *node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr;
 	SaNameT nodename = {0};
 	TRACE_ENTER();
 
 	if (osaf_cluster->rtu_pending == true)
-		return true;
+		return SA_TRUE;
 
-	for (node = clms_node_getnext_by_name(&nodename); node != NULL;
+	for (node = clms_node_getnext_by_name(&nodename); node != nullptr;
 	     node = clms_node_getnext_by_name(&nodename)) {
 		if ((node->rtu_pending == true) ||
 		    (node->admin_rtu_pending == true)) {
 			TRACE_LEAVE2("There is a pending RTU");
-			return true;
+			return SA_TRUE;
 		}
 		memcpy(&nodename, &node->node_name, sizeof(SaNameT));
 	}
 	TRACE_LEAVE2("There are no pending RTUs");
-	return false;
+	return SA_FALSE;
 }
 
 /**
@@ -945,27 +968,29 @@ void clms_cluster_update_rattr(CLMS_CLUSTER_INFO *osaf_cluster)
 	SaImmAttrValueT attrUpdateValue1[] = {&osaf_cluster->init_time};
 
 	const SaImmAttrModificationT_2 *attrMods[] = {&attr_Mod[0],
-						      &attr_Mod[1], NULL};
+						      &attr_Mod[1], nullptr};
 
 	TRACE_ENTER();
 
 	if (clms_cb->is_impl_set == false) {
 		TRACE("Implementer is not set. Switching on flag in %s",
 		      __FUNCTION__);
-		osaf_cluster->rtu_pending = true;
-		clms_cb->rtu_pending = true;
+		osaf_cluster->rtu_pending = SA_TRUE;
+		clms_cb->rtu_pending = SA_TRUE;
 		TRACE_LEAVE();
 		return;
 	}
 
 	attr_Mod[0].modType = SA_IMM_ATTR_VALUES_REPLACE;
-	attr_Mod[0].modAttr.attrName = "saClmClusterNumNodes";
+	attr_Mod[0].modAttr.attrName = const_cast<SaImmAttrNameT>(
+		"saClmClusterNumNodes");
 	attr_Mod[0].modAttr.attrValuesNumber = 1;
 	attr_Mod[0].modAttr.attrValueType = SA_IMM_ATTR_SAUINT32T;
 	attr_Mod[0].modAttr.attrValues = attrUpdateValue;
 
 	attr_Mod[1].modType = SA_IMM_ATTR_VALUES_REPLACE;
-	attr_Mod[1].modAttr.attrName = "saClmClusterInitTimestamp";
+	attr_Mod[1].modAttr.attrName = const_cast<SaImmAttrNameT>(
+		"saClmClusterInitTimestamp");
 	attr_Mod[1].modAttr.attrValuesNumber = 1;
 	attr_Mod[1].modAttr.attrValueType = SA_IMM_ATTR_SATIMET;
 	attr_Mod[1].modAttr.attrValues = attrUpdateValue1;
@@ -974,10 +999,10 @@ void clms_cluster_update_rattr(CLMS_CLUSTER_INFO *osaf_cluster)
 				     attrMods);
 
 	if (rc == SA_AIS_OK) {
-		osaf_cluster->rtu_pending = false;
+		osaf_cluster->rtu_pending = SA_FALSE;
 		if (clms_cb->rtu_pending == true) {
 			if (clms_is_any_rtu_pending() == false) {
-				clms_cb->rtu_pending = false;
+				clms_cb->rtu_pending = SA_FALSE;
 				TRACE("RTU success, Switching off");
 			}
 		}
@@ -985,14 +1010,14 @@ void clms_cluster_update_rattr(CLMS_CLUSTER_INFO *osaf_cluster)
 		LOG_IN(
 		    "saImmOiRtObjectUpdate failed for cluster object with rc = %u. Trying again",
 		    rc);
-		osaf_cluster->rtu_pending = true;
-		clms_cb->rtu_pending = true;
+		osaf_cluster->rtu_pending = SA_TRUE;
+		clms_cb->rtu_pending = SA_TRUE;
 	} else {
 		LOG_IN(
 		    "saImmOiRtObjectUpdate failed for cluster object with rc = %u. Reinit with IMM",
 		    rc);
-		osaf_cluster->rtu_pending = true;
-		clms_cb->rtu_pending = true;
+		osaf_cluster->rtu_pending = SA_TRUE;
+		clms_cb->rtu_pending = SA_TRUE;
 
 		saImmOiFinalize(clms_cb->immOiHandle);
 		clms_cb->immOiHandle = 0;
@@ -1103,7 +1128,7 @@ clms_imm_admin_op_callback(SaImmOiHandleT immOiHandle, SaInvocationT invocation,
 
 	/*Lookup by the node_name and get the cluster node for CLM Admin oper */
 	nodeop = clms_node_get_by_name(objectName);
-	if (nodeop == NULL) {
+	if (nodeop == nullptr) {
 		LOG_ER("Admin Operation on invalid node_name");
 		immutil_saImmOiAdminOperationResult(immOiHandle, invocation,
 						    SA_AIS_ERR_INVALID_PARAM);
@@ -1120,8 +1145,8 @@ clms_imm_admin_op_callback(SaImmOiHandleT immOiHandle, SaInvocationT invocation,
 				clms_node_trackresplist_empty(nodeop);
 			immutil_saImmOiAdminOperationResult(
 			    immOiHandle, invocation, SA_AIS_ERR_INTERRUPT);
-			nodeop->admin_op = 0; /* suspending previous shutdown
-						 admin operation */
+			/* suspending previous shutdown admin operation */
+			nodeop->admin_op = ADMIN_OP{};
 			break;
 		}
 	}
@@ -1130,7 +1155,7 @@ clms_imm_admin_op_callback(SaImmOiHandleT immOiHandle, SaInvocationT invocation,
 	if (nodeop->admin_op != 0) {
 		TRACE("Another Admin operation already in progress: %d",
 		      nodeop->admin_op);
-		(void)immutil_saImmOiAdminOperationResult(
+		immutil_saImmOiAdminOperationResult(
 		    immOiHandle, invocation, SA_AIS_ERR_BAD_OPERATION);
 		goto done;
 	}
@@ -1216,7 +1241,7 @@ clms_imm_admin_op_callback(SaImmOiHandleT immOiHandle, SaInvocationT invocation,
 		break;
 	default:
 		TRACE("Admin operation not supported");
-		(void)immutil_saImmOiAdminOperationResult(
+		immutil_saImmOiAdminOperationResult(
 		    immOiHandle, invocation, SA_AIS_ERR_NOT_SUPPORTED);
 		goto done;
 	}
@@ -1241,11 +1266,11 @@ done:
 static void clms_create_track_resp_list(CLMS_CLUSTER_NODE *node,
 					CLMS_CLIENT_INFO *client)
 {
-	CLMS_TRACK_INFO *trk = NULL;
+	CLMS_TRACK_INFO *trk = nullptr;
 	TRACE_ENTER();
 
 	trk = (CLMS_TRACK_INFO *)calloc(1, sizeof(CLMS_TRACK_INFO));
-	if (trk == NULL) {
+	if (trk == nullptr) {
 		LOG_ER("trk calloc failed");
 		osafassert(0);
 	}
@@ -1280,8 +1305,8 @@ void clms_send_track(CLMS_CB *cb, CLMS_CLUSTER_NODE *node,
 {
 	CLMS_CLIENT_INFO *rec;
 	uint32_t client_id = 0;
-	SaClmClusterNotificationT_4 *notify_changes = NULL;
-	SaClmClusterNotificationT_4 *notify_changes_only = NULL;
+	SaClmClusterNotificationT_4 *notify_changes = nullptr;
+	SaClmClusterNotificationT_4 *notify_changes_only = nullptr;
 	uint32_t rc = NCSCC_RC_SUCCESS;
 	SaUint32T node_id;
 
@@ -1301,7 +1326,7 @@ void clms_send_track(CLMS_CB *cb, CLMS_CLUSTER_NODE *node,
 	notify_changes_only = clms_notbuffer_changes_only(step);
 	notify_changes = clms_notbuffer_changes(step);
 
-	while ((rec = clms_client_getnext_by_id(client_id)) != NULL) {
+	while ((rec = clms_client_getnext_by_id(client_id)) != nullptr) {
 		client_id = rec->client_id;
 		node_id = m_NCS_NODE_ID_FROM_MDS_DEST(rec->mds_dest);
 		if (step == SA_CLM_CHANGE_START) {
@@ -1651,7 +1676,7 @@ uint32_t clms_send_track_local(CLMS_CLUSTER_NODE *node,
 		    clms_notbuffer_changes(step);
 	}
 
-	rc = clms_mds_msg_send(clms_cb, &msg, &client->mds_dest, NULL,
+	rc = clms_mds_msg_send(clms_cb, &msg, &client->mds_dest, nullptr,
 			       MDS_SEND_PRIORITY_MEDIUM, NCSMDS_SVC_ID_CLMA);
 
 	if (rc != NCSCC_RC_SUCCESS) {
@@ -1745,14 +1770,14 @@ uint32_t clms_prep_and_send_track(CLMS_CB *cb, CLMS_CLUSTER_NODE *node,
 	       (msg.info.cbk_info.param.track.buf_info.numberOfItems *
 		sizeof(SaClmClusterNotificationT_4)));
 
-	if (notify != NULL) {
+	if (notify != nullptr) {
 		memcpy(msg.info.cbk_info.param.track.buf_info.notification,
 		       notify,
 		       (msg.info.cbk_info.param.track.buf_info.numberOfItems *
 			sizeof(SaClmClusterNotificationT_4)));
 	}
 
-	rc = clms_mds_msg_send(cb, &msg, &client->mds_dest, NULL,
+	rc = clms_mds_msg_send(cb, &msg, &client->mds_dest, nullptr,
 			       MDS_SEND_PRIORITY_MEDIUM, NCSMDS_SVC_ID_CLMA);
 
 	if (rc != NCSCC_RC_SUCCESS) {
@@ -1780,7 +1805,7 @@ static SaAisErrorT clms_imm_ccb_obj_create_callback(
 	SaAisErrorT rc = SA_AIS_OK;
 	uint32_t rt;
 	CcbUtilCcbData_t *ccb_util_ccb_data;
-	CcbUtilOperationData_t *operation = NULL;
+	CcbUtilOperationData_t *operation = nullptr;
 	size_t parentNameLen = 0;
 
 	TRACE_ENTER2("CCB ID %llu, class %s, parent %s", ccbId, className,
@@ -1796,14 +1821,14 @@ static SaAisErrorT clms_imm_ccb_obj_create_callback(
 		}
 	}
 
-	if ((ccb_util_ccb_data = ccbutil_getCcbData(ccbId)) != NULL) {
+	if ((ccb_util_ccb_data = ccbutil_getCcbData(ccbId)) != nullptr) {
 		int i = 0;
 		const SaImmAttrValuesT_2 *attrValue;
 
 		operation = ccbutil_ccbAddCreateOperation(
 		    ccb_util_ccb_data, className, parentName, attr);
 
-		if (operation == NULL) {
+		if (operation == nullptr) {
 			LOG_ER("Failed to get CCB operation object for %llu",
 			       ccbId);
 			rc = SA_AIS_ERR_NO_MEMORY;
@@ -1811,7 +1836,7 @@ static SaAisErrorT clms_imm_ccb_obj_create_callback(
 		}
 
 		/* Find the RDN attribute and store the object DN */
-		while ((attrValue = attr[i++]) != NULL) {
+		while ((attrValue = attr[i++]) != nullptr) {
 			if (!strncmp(attrValue->attrName, "safCluster", 10)) {
 				rc = SA_AIS_ERR_BAD_OPERATION;
 				goto done;
@@ -1822,7 +1847,7 @@ static SaAisErrorT clms_imm_ccb_obj_create_callback(
 					SaStringT rdnVal =
 					    *((SaStringT *)
 						  attrValue->attrValues[0]);
-					if ((parentName != NULL) &&
+					if ((parentName != nullptr) &&
 					    (parentNameLen > 0) &&
 					    (strlen(rdnVal) + parentNameLen +
 					     1) < SA_MAX_NAME_LENGTH) {
@@ -1889,7 +1914,7 @@ static SaAisErrorT clms_imm_ccb_obj_delete_callback(SaImmOiHandleT immOiHandle,
 
 	TRACE_ENTER2("CCB ID %llu, %s", ccbId, objectName->value);
 
-	if ((ccb_util_ccb_data = ccbutil_getCcbData(ccbId)) != NULL) {
+	if ((ccb_util_ccb_data = ccbutil_getCcbData(ccbId)) != nullptr) {
 		/* "memorize the request" */
 		ccbutil_ccbAddDeleteOperation(ccb_util_ccb_data, objectName);
 	} else {
@@ -1926,10 +1951,10 @@ clms_imm_ccb_obj_modify_callback(SaImmOiHandleT immOiHandle,
 	TRACE_ENTER2("CCB ID %llu for object-name:%s ", ccbId,
 		     objectName->value);
 
-	if ((ccbUtilCcbData = ccbutil_getCcbData(ccbId)) != NULL) {
+	if ((ccbUtilCcbData = ccbutil_getCcbData(ccbId)) != nullptr) {
 		/* saClmNodeEE cannot be longer than 255 */
 		while ((attrMod = (SaImmAttrModificationT_2 *)attrMods[i++]) !=
-		       NULL) {
+		       nullptr) {
 			if (strncmp(attrMod->modAttr.attrName, "saClmNodeEE",
 				    11) != 0)
 				continue;
@@ -1967,7 +1992,7 @@ static SaAisErrorT clms_imm_ccb_completed_callback(SaImmOiHandleT immOiHandle,
 						   SaImmOiCcbIdT ccbId)
 {
 	SaAisErrorT rc = SA_AIS_OK;
-	CcbUtilOperationData_t *OperData = NULL;
+	CcbUtilOperationData_t *OperData = nullptr;
 
 	TRACE_ENTER2("CCB ID %llu", ccbId);
 
@@ -1975,7 +2000,7 @@ static SaAisErrorT clms_imm_ccb_completed_callback(SaImmOiHandleT immOiHandle,
 	   valid and that no errors will be generated when these changes
 	   are applied." */
 
-	while ((OperData = ccbutil_getNextCcbOp(ccbId, OperData)) != NULL) {
+	while ((OperData = ccbutil_getNextCcbOp(ccbId, OperData)) != nullptr) {
 		rc = clms_node_ccb_comp_cb(OperData);
 
 		/* Get out at first error */
@@ -1994,7 +2019,7 @@ static void clms_imm_ccb_abort_callback(SaImmOiHandleT immOiHandle,
 
 	TRACE_ENTER2("CCB Id %llu", ccbId);
 
-	if ((ccbUtilCcbData = ccbutil_findCcbData(ccbId)) != NULL)
+	if ((ccbUtilCcbData = ccbutil_findCcbData(ccbId)) != nullptr)
 		ccbutil_deleteCcbData(ccbUtilCcbData);
 	else
 		LOG_ER("Failed to find CCB object for %llu", ccbId);
@@ -2010,7 +2035,7 @@ SaAisErrorT clms_node_ccb_comp_modify(CcbUtilOperationData_t *opdata)
 
 	TRACE_ENTER2("%s", opdata->objectName.value);
 
-	while ((attr_mod = opdata->param.modify.attrMods[i++]) != NULL) {
+	while ((attr_mod = opdata->param.modify.attrMods[i++]) != nullptr) {
 		const SaImmAttrValuesT_2 *attribute = &attr_mod->modAttr;
 		void *value = attribute->attrValues[0];
 
@@ -2091,7 +2116,7 @@ SaAisErrorT clms_node_ccb_comp_cb(CcbUtilOperationData_t *opdata)
 
 		if ((node = clms_node_new(&opdata->objectName,
 					  opdata->param.create.attrValues)) ==
-		    NULL) {
+		    nullptr) {
 			goto done;
 		}
 		opdata->userData = node; /* Save for later use in apply */
@@ -2103,7 +2128,7 @@ SaAisErrorT clms_node_ccb_comp_cb(CcbUtilOperationData_t *opdata)
 		break;
 	case CCBUTIL_DELETE:
 		/*lookup by objectName in the database */
-		if ((node = clms_node_get_by_name(&opdata->objectName)) == NULL)
+		if ((node = clms_node_get_by_name(&opdata->objectName)) == nullptr)
 			goto done;
 		if (node->member == SA_TRUE) {
 			LOG_ER("Node %s is still a cluster member",
@@ -2134,15 +2159,15 @@ SaAisErrorT clms_node_ccb_apply_modify(CcbUtilOperationData_t *opdata)
 {
 	SaAisErrorT rc = SA_AIS_OK;
 	const SaImmAttrModificationT_2 *attr_mod;
-	CLMS_CLUSTER_NODE *node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr;
 	int i = 0;
 
 	TRACE_ENTER2("%s", opdata->objectName.value);
 
 	node = clms_node_get_by_name(&opdata->objectName);
-	osafassert(node != NULL);
+	osafassert(node != nullptr);
 
-	while ((attr_mod = opdata->param.modify.attrMods[i++]) != NULL) {
+	while ((attr_mod = opdata->param.modify.attrMods[i++]) != nullptr) {
 		const SaImmAttrValuesT_2 *attribute = &attr_mod->modAttr;
 		void *value = attribute->attrValues[0];
 
@@ -2162,7 +2187,7 @@ SaAisErrorT clms_node_ccb_apply_modify(CcbUtilOperationData_t *opdata)
 	 * SA_CLM_NODE_RECONFIGURED */
 	clms_send_track(clms_cb, node, SA_CLM_CHANGE_COMPLETED, false);
 	/*Clear admin_op and stat_change */
-	node->admin_op = 0;
+	node->admin_op = ADMIN_OP{};
 	node->stat_change = SA_FALSE;
 
 	/*Send Notification with ntfid as SA_CLM_NTFID_NODE_RECONFIG */
@@ -2186,17 +2211,18 @@ SaAisErrorT clms_node_ccb_apply_modify(CcbUtilOperationData_t *opdata)
 SaAisErrorT clms_node_ccb_apply_cb(CcbUtilOperationData_t *opdata)
 {
 	SaAisErrorT rc = SA_AIS_ERR_BAD_OPERATION;
-	CLMS_CLUSTER_NODE *node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr;
 	CLMS_CKPT_REC ckpt;
 #ifdef ENABLE_AIS_PLM
-	SaNameT *entityNames = NULL;
+	SaNameT *entityNames = nullptr;
 #endif
 
 	TRACE_ENTER2("%s, %llu", opdata->objectName.value, opdata->ccbId);
 
 	switch (opdata->operationType) {
 	case CCBUTIL_CREATE:
-		clms_node_add_to_model(opdata->userData);
+		clms_node_add_to_model(static_cast<CLMS_CLUSTER_NODE*>(
+					       opdata->userData));
 		saflog(LOG_NOTICE, clmSvcUsrName, "%s ADDED",
 		       opdata->objectName.value);
 /*clms_cluster_update_rattr(osaf_cluster); */
@@ -2213,7 +2239,7 @@ SaAisErrorT clms_node_ccb_apply_cb(CcbUtilOperationData_t *opdata)
 				    (SaNameT *)malloc(sizeof(SaNameT));
 				memset(entityNames, 0, sizeof(SaNameT));
 				entityNames->length = node->ee_name.length;
-				(void)memcpy(entityNames->value,
+				memcpy(entityNames->value,
 					     node->ee_name.value,
 					     entityNames->length);
 
@@ -2234,7 +2260,9 @@ SaAisErrorT clms_node_ccb_apply_cb(CcbUtilOperationData_t *opdata)
 		/* Need to discuss - if need to send Clmtrack callback with node
 		   join from here as node create might not imply node member */
 		if (clms_cb->ha_state == SA_AMF_HA_ACTIVE)
-			send_async_update_for_node_rec(opdata->userData);
+			send_async_update_for_node_rec(
+				static_cast<CLMS_CLUSTER_NODE*>(
+					opdata->userData));
 		break;
 	case CCBUTIL_MODIFY:
 		saflog(LOG_NOTICE, clmSvcUsrName, "%s MODIFIED",
@@ -2254,8 +2282,9 @@ SaAisErrorT clms_node_ccb_apply_cb(CcbUtilOperationData_t *opdata)
 			prepare_ckpt_config_node(&ckpt.param.node_config_rec,
 						 node);
 
-			rc = clms_send_async_update(clms_cb, &ckpt,
-						    NCS_MBCSV_ACT_ADD);
+			rc = static_cast<SaAisErrorT>(
+				clms_send_async_update(clms_cb, &ckpt,
+						       NCS_MBCSV_ACT_ADD));
 			if (rc != NCSCC_RC_SUCCESS)
 				TRACE("send_async_update FAILED rc = %u",
 				      (unsigned int)rc);
@@ -2265,11 +2294,12 @@ SaAisErrorT clms_node_ccb_apply_cb(CcbUtilOperationData_t *opdata)
 	case CCBUTIL_DELETE:
 		saflog(LOG_NOTICE, clmSvcUsrName, "%s DELETED",
 		       opdata->objectName.value);
-		if ((node = clms_node_get_by_name(&opdata->objectName)) == NULL)
+		if ((node = clms_node_get_by_name(&opdata->objectName)) == nullptr)
 			goto done;
 
-		rc = clms_send_is_member_info(clms_cb, node->node_id, false,
-					      false);
+		rc = static_cast<SaAisErrorT>(
+			clms_send_is_member_info(clms_cb, node->node_id,
+						 SA_FALSE, SA_FALSE));
 		if (rc != NCSCC_RC_SUCCESS) {
 			TRACE("clms_send_is_member_info FAILED rc = %u",
 			      (unsigned int)rc);
@@ -2309,12 +2339,13 @@ SaAisErrorT clms_node_ccb_apply_cb(CcbUtilOperationData_t *opdata)
 
 			ckpt.param.node_del_rec.node_name.length =
 			    opdata->objectName.length;
-			(void)memcpy(ckpt.param.node_del_rec.node_name.value,
+			memcpy(ckpt.param.node_del_rec.node_name.value,
 				     opdata->objectName.value,
 				     opdata->objectName.length);
 
-			rc = clms_send_async_update(clms_cb, &ckpt,
-						    NCS_MBCSV_ACT_ADD);
+			rc = static_cast<SaAisErrorT>(
+				clms_send_async_update(clms_cb, &ckpt,
+						       NCS_MBCSV_ACT_ADD));
 			if (rc != NCSCC_RC_SUCCESS)
 				TRACE("send_async_update FAILED rc = %u",
 				      (unsigned int)rc);
@@ -2336,12 +2367,12 @@ done:
 static void clms_imm_ccb_apply_callback(SaImmOiHandleT immOiHandle,
 					SaImmOiCcbIdT ccbId)
 {
-	CcbUtilOperationData_t *opdata = NULL;
+	CcbUtilOperationData_t *opdata = nullptr;
 	SaAisErrorT rc;
 
 	TRACE_ENTER2("CCB ID %llu", ccbId);
 
-	while ((opdata = ccbutil_getNextCcbOp(ccbId, opdata)) != NULL) {
+	while ((opdata = ccbutil_getNextCcbOp(ccbId, opdata)) != nullptr) {
 		rc = clms_node_ccb_apply_cb(opdata);
 		if (rc != SA_AIS_OK) {
 			LOG_EM("clms_node_ccb_apply_cb failed");
@@ -2360,11 +2391,11 @@ void clms_node_add_to_model(CLMS_CLUSTER_NODE *node)
 
 	TRACE_ENTER();
 
-	osafassert(node != NULL);
+	osafassert(node != nullptr);
 	if (node->ee_name.length != 0) {
 		/*If the Node is already added to patricia tree;then ignore it
 		 */
-		if (clms_node_get_by_eename(&node->ee_name) == NULL) {
+		if (clms_node_get_by_eename(&node->ee_name) == nullptr) {
 			if (clms_cb->reg_with_plm == SA_TRUE) {
 				if (clms_node_add(node, 1) !=
 				    NCSCC_RC_SUCCESS) {
@@ -2376,7 +2407,7 @@ void clms_node_add_to_model(CLMS_CLUSTER_NODE *node)
 
 	/*If Cluster Node already is already added to patricia tree;then ignore
 	 * it  */
-	if (clms_node_get_by_name(&node->node_name) == NULL) {
+	if (clms_node_get_by_name(&node->node_name) == nullptr) {
 		TRACE("Not in patricia tree");
 
 		if (clms_node_add(node, 2) != NCSCC_RC_SUCCESS) {
@@ -2399,7 +2430,7 @@ static const SaImmOiCallbacksT_2 callbacks = {
     .saImmOiCcbObjectCreateCallback = clms_imm_ccb_obj_create_callback,
     .saImmOiCcbObjectDeleteCallback = clms_imm_ccb_obj_delete_callback,
     .saImmOiCcbObjectModifyCallback = clms_imm_ccb_obj_modify_callback,
-    .saImmOiRtAttrUpdateCallback = NULL};
+    .saImmOiRtAttrUpdateCallback = nullptr};
 
 /**
  * Initialize the OI interface and get a selection object.
@@ -2438,7 +2469,7 @@ done:
  */
 void clms_lock_timer_exp(int signo, siginfo_t *info, void *context)
 {
-	CLMS_CLUSTER_NODE *node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr;
 	TRACE_ENTER();
 
 	/* acquire cb write lock */
@@ -2466,7 +2497,8 @@ static void clms_timer_ipc_send(SaNameT node_name)
 	TRACE_ENTER();
 
 	/** allocate an CLMSV_CLMS_EVENT now **/
-	if (NULL == (clmsv_evt = calloc(1, sizeof(CLMSV_CLMS_EVT)))) {
+	if (nullptr == (clmsv_evt = static_cast<CLMSV_CLMS_EVT*>(
+			     calloc(1, sizeof(CLMSV_CLMS_EVT))))) {
 		LOG_ER("memory alloc FAILED");
 		osafassert(0);
 	}
@@ -2479,7 +2511,7 @@ static void clms_timer_ipc_send(SaNameT node_name)
 	      clmsv_evt->info.tmr_info.node_name.value);
 
 	rc = m_NCS_IPC_SEND(&clms_cb->mbx, clmsv_evt,
-			    MDS_SEND_PRIORITY_VERY_HIGH);
+			    NCS_IPC_PRIORITY_VERY_HIGH);
 	if (rc != NCSCC_RC_SUCCESS) {
 		LOG_ER("IPC send failed %d", rc);
 		free(clmsv_evt);
@@ -2514,10 +2546,10 @@ static uint32_t clms_lock_send_no_start_cbk(CLMS_CLUSTER_NODE *nodeop)
 	clms_send_track(clms_cb, nodeop, SA_CLM_CHANGE_COMPLETED, false);
 
 	/*Clear admin_op and stat_change */
-	nodeop->admin_op = 0;
+	nodeop->admin_op = ADMIN_OP{};
 	nodeop->stat_change = SA_FALSE;
 
-	(void)immutil_saImmOiAdminOperationResult(
+	immutil_saImmOiAdminOperationResult(
 	    clms_cb->immOiHandle, nodeop->curr_admin_inv, SA_AIS_OK);
 
 	nodeop->change = SA_CLM_NODE_NO_CHANGE;
@@ -2528,7 +2560,7 @@ static uint32_t clms_lock_send_no_start_cbk(CLMS_CLUSTER_NODE *nodeop)
 	clms_node_exit_ntf(clms_cb, nodeop);
 
 	rc = clms_send_is_member_info(clms_cb, nodeop->node_id, nodeop->member,
-				      true);
+				      SA_TRUE);
 	if (rc != NCSCC_RC_SUCCESS) {
 		TRACE("clms_send_is_member_info %u", rc);
 	}
@@ -2556,9 +2588,9 @@ uint32_t clms_imm_node_lock(CLMS_CLUSTER_NODE *nodeop)
 
 	if (nodeop->admin_state == SA_CLM_ADMIN_LOCKED) {
 		LOG_ER("Node is already locked");
-		nodeop->admin_op = 0;
+		nodeop->admin_op = ADMIN_OP{};
 		rc = NCSCC_RC_FAILURE;
-		(void)immutil_saImmOiAdminOperationResult(
+		immutil_saImmOiAdminOperationResult(
 		    clms_cb->immOiHandle, nodeop->curr_admin_inv,
 		    SA_AIS_ERR_NO_OP);
 		goto done;
@@ -2566,9 +2598,9 @@ uint32_t clms_imm_node_lock(CLMS_CLUSTER_NODE *nodeop)
 
 	if (nodeop->node_id == clms_cb->node_id) {
 		LOG_NO("Lock on active node not allowed");
-		nodeop->admin_op = 0;
+		nodeop->admin_op = ADMIN_OP{};
 		rc = NCSCC_RC_FAILURE;
-		(void)immutil_saImmOiAdminOperationResult(
+		immutil_saImmOiAdminOperationResult(
 		    clms_cb->immOiHandle, nodeop->curr_admin_inv,
 		    SA_AIS_ERR_NOT_SUPPORTED);
 		goto done;
@@ -2596,7 +2628,7 @@ uint32_t clms_imm_node_lock(CLMS_CLUSTER_NODE *nodeop)
 	} else {
 		TRACE("Node is not a member node");
 		nodeop->admin_state = SA_CLM_ADMIN_LOCKED;
-		nodeop->admin_op = 0;
+		nodeop->admin_op = ADMIN_OP{};
 		nodeop->stat_change = SA_FALSE;
 
 		/*except admin state other update are not */
@@ -2605,7 +2637,7 @@ uint32_t clms_imm_node_lock(CLMS_CLUSTER_NODE *nodeop)
 		clms_node_update_rattr(nodeop);
 		clms_cluster_update_rattr(osaf_cluster);
 
-		(void)immutil_saImmOiAdminOperationResult(
+		immutil_saImmOiAdminOperationResult(
 		    clms_cb->immOiHandle, nodeop->curr_admin_inv, SA_AIS_OK);
 
 		/*Send Notification */
@@ -2627,8 +2659,8 @@ uint32_t clms_imm_node_unlock(CLMS_CLUSTER_NODE *nodeop)
 	SaAisErrorT ais_rc = SA_AIS_OK;
 	if (nodeop->admin_state == SA_CLM_ADMIN_UNLOCKED) {
 		LOG_NO("Node is already in an unlocked state");
-		nodeop->admin_op = 0;
-		(void)immutil_saImmOiAdminOperationResult(
+		nodeop->admin_op = ADMIN_OP{};
+		immutil_saImmOiAdminOperationResult(
 		    clms_cb->immOiHandle, nodeop->curr_admin_inv,
 		    SA_AIS_ERR_NO_OP);
 		rc = NCSCC_RC_FAILURE;
@@ -2666,7 +2698,7 @@ uint32_t clms_imm_node_unlock(CLMS_CLUSTER_NODE *nodeop)
 
 				rc = clms_send_is_member_info(
 				    clms_cb, nodeop->node_id, nodeop->member,
-				    true);
+				    SA_TRUE);
 				if (rc != NCSCC_RC_SUCCESS) {
 					TRACE(
 					    "clms_send_is_member_info failed %u",
@@ -2706,7 +2738,7 @@ uint32_t clms_imm_node_unlock(CLMS_CLUSTER_NODE *nodeop)
 
 				rc = clms_send_is_member_info(
 				    clms_cb, nodeop->node_id, nodeop->member,
-				    true);
+				    SA_TRUE);
 				if (rc != NCSCC_RC_SUCCESS) {
 					TRACE(
 					    "clms_send_is_member_info failed %u",
@@ -2739,10 +2771,10 @@ uint32_t clms_imm_node_unlock(CLMS_CLUSTER_NODE *nodeop)
 
 	/*Clear stat_change and admin_op after sending the callback */
 	nodeop->stat_change = SA_FALSE;
-	nodeop->admin_op = 0;
+	nodeop->admin_op = ADMIN_OP{};
 
 	/* Send node join notification */
-	(void)immutil_saImmOiAdminOperationResult(
+	immutil_saImmOiAdminOperationResult(
 	    clms_cb->immOiHandle, nodeop->curr_admin_inv, ais_rc);
 	clms_node_admin_state_change_ntf(clms_cb, nodeop,
 					 SA_CLM_ADMIN_UNLOCKED);
@@ -2762,9 +2794,9 @@ uint32_t clms_imm_node_shutdown(CLMS_CLUSTER_NODE *nodeop)
 	if ((nodeop->admin_state == SA_CLM_ADMIN_LOCKED) ||
 	    (nodeop->admin_state == SA_CLM_ADMIN_SHUTTING_DOWN)) {
 		LOG_ER("Node is already in locked or shutting down state");
-		nodeop->admin_op = 0;
+		nodeop->admin_op = ADMIN_OP{};
 		rc = NCSCC_RC_FAILURE;
-		(void)immutil_saImmOiAdminOperationResult(
+		immutil_saImmOiAdminOperationResult(
 		    clms_cb->immOiHandle, nodeop->curr_admin_inv,
 		    SA_AIS_ERR_NO_OP);
 		goto done;
@@ -2772,9 +2804,9 @@ uint32_t clms_imm_node_shutdown(CLMS_CLUSTER_NODE *nodeop)
 
 	if (nodeop->node_id == clms_cb->node_id) {
 		LOG_ER("Shutdown of an active node not allowed");
-		nodeop->admin_op = 0;
+		nodeop->admin_op = ADMIN_OP{};
 		rc = NCSCC_RC_FAILURE;
-		(void)immutil_saImmOiAdminOperationResult(
+		immutil_saImmOiAdminOperationResult(
 		    clms_cb->immOiHandle, nodeop->curr_admin_inv,
 		    SA_AIS_ERR_NOT_SUPPORTED);
 		goto done;
@@ -2784,8 +2816,8 @@ uint32_t clms_imm_node_shutdown(CLMS_CLUSTER_NODE *nodeop)
 	    (nodeop->admin_state == SA_CLM_ADMIN_UNLOCKED)) {
 
 		nodeop->admin_state = SA_CLM_ADMIN_LOCKED;
-		nodeop->admin_op = 0;
-		(void)immutil_saImmOiAdminOperationResult(
+		nodeop->admin_op = ADMIN_OP{};
+		immutil_saImmOiAdminOperationResult(
 		    clms_cb->immOiHandle, nodeop->curr_admin_inv, SA_AIS_OK);
 		clms_admin_state_update_rattr(nodeop);
 
@@ -2826,10 +2858,10 @@ uint32_t clms_imm_node_shutdown(CLMS_CLUSTER_NODE *nodeop)
 					SA_CLM_CHANGE_COMPLETED, false);
 
 			/*Clear Admin_op and stat_change */
-			nodeop->admin_op = 0;
+			nodeop->admin_op = ADMIN_OP{};
 			nodeop->stat_change = SA_FALSE;
 
-			(void)immutil_saImmOiAdminOperationResult(
+			immutil_saImmOiAdminOperationResult(
 			    clms_cb->immOiHandle, nodeop->curr_admin_inv,
 			    SA_AIS_OK);
 
@@ -2841,7 +2873,7 @@ uint32_t clms_imm_node_shutdown(CLMS_CLUSTER_NODE *nodeop)
 							 SA_CLM_ADMIN_LOCKED);
 
 			rc = clms_send_is_member_info(clms_cb, nodeop->node_id,
-						      nodeop->member, true);
+						      nodeop->member, SA_TRUE);
 			if (rc != NCSCC_RC_SUCCESS) {
 				TRACE("clms_send_is_member_info failed %u", rc);
 				goto done;
@@ -2883,7 +2915,7 @@ static void clms_lock_send_start_cbk(CLMS_CLUSTER_NODE *nodeop)
 	nodeop->stat_change = SA_TRUE;
 
 	clms_send_track(clms_cb, nodeop, SA_CLM_CHANGE_START, false);
-	if (sigaction(SIGALRM, &act, NULL) != 0) {
+	if (sigaction(SIGALRM, &act, nullptr) != 0) {
 		TRACE("Sigaction failed");
 		osafassert(0);
 	}
@@ -2904,7 +2936,7 @@ static void clms_lock_send_start_cbk(CLMS_CLUSTER_NODE *nodeop)
 	timer.it_interval.tv_sec = 0;
 	timer.it_interval.tv_nsec = 0;
 
-	if ((timer_settime(nodeop->lock_timerid, 0, &timer, NULL)) != 0) {
+	if ((timer_settime(nodeop->lock_timerid, 0, &timer, nullptr)) != 0) {
 		LOG_ER("Setting lock timer value failed");
 		osafassert(0);
 	}
@@ -2924,7 +2956,7 @@ static void *clm_imm_reinit_thread(void *_cb)
 	CLMS_CB *cb = (CLMS_CB *)_cb;
 
 	TRACE_ENTER();
-	int msecs_waited = 0;
+	unsigned msecs_waited = 0;
 	for (;;) {
 		if (msecs_waited >= max_waiting_time_ms) {
 			LOG_ER("Timeout in clm_imm_reinit_thread, exiting");
@@ -2949,7 +2981,9 @@ static void *clm_imm_reinit_thread(void *_cb)
 		if (cb->ha_state == SA_AMF_HA_ACTIVE) {
 			/* Update IMM */
 			if ((ais_rc = immutil_saImmOiImplementerSet(
-				 cb->immOiHandle, IMPLEMENTER_NAME)) !=
+				     cb->immOiHandle,
+				     const_cast<SaImmOiImplementerNameT>(
+					     IMPLEMENTER_NAME))) !=
 			    SA_AIS_OK) {
 				if (ais_rc == SA_AIS_ERR_TIMEOUT) {
 					LOG_WA("saImmOiImplementerSet returned "
@@ -3015,7 +3049,7 @@ static void *clm_imm_reinit_thread(void *_cb)
 	}
 
 	TRACE_LEAVE();
-	return NULL;
+	return nullptr;
 }
 
 /**

@@ -31,16 +31,16 @@ lib_libclm_common_la_LDFLAGS = \
 	$(AM_LDFLAGS)
 
 lib_libclm_common_la_SOURCES = \
-	src/clm/common/clmsv_enc_dec.c
+	src/clm/common/clmsv_enc_dec.cc
 
 nodist_EXTRA_lib_libclm_common_la_SOURCES = dummy.cc
 
 lib_LTLIBRARIES += lib/libSaClm.la
 
 lib_libSaClm_la_SOURCES = \
-	src/clm/agent/clma_api.c \
-	src/clm/agent/clma_mds.c \
-	src/clm/agent/clma_util.c
+	src/clm/agent/clma_api.cc \
+	src/clm/agent/clma_mds.cc \
+	src/clm/agent/clma_util.cc
 
 nodist_EXTRA_lib_libSaClm_la_SOURCES = dummy.cc
 
@@ -117,18 +117,20 @@ endif
 
 endif
 
+bin_osafclmd_CXXFLAGS = $(AM_CXXFLAGS)
+
 bin_osafclmd_CPPFLAGS = \
 	$(AM_CPPFLAGS)
 
 bin_osafclmd_SOURCES = \
-	src/clm/clmd/clms_amf.c \
-	src/clm/clmd/clms_evt.c \
-	src/clm/clmd/clms_imm.c \
-	src/clm/clmd/clms_main.c \
-	src/clm/clmd/clms_mbcsv.c \
-	src/clm/clmd/clms_mds.c \
-	src/clm/clmd/clms_ntf.c \
-	src/clm/clmd/clms_util.c
+	src/clm/clmd/clms_amf.cc \
+	src/clm/clmd/clms_evt.cc \
+	src/clm/clmd/clms_imm.cc \
+	src/clm/clmd/clms_main.cc \
+	src/clm/clmd/clms_mbcsv.cc \
+	src/clm/clmd/clms_mds.cc \
+	src/clm/clmd/clms_ntf.cc \
+	src/clm/clmd/clms_util.cc
 
 bin_osafclmd_LDADD = \
 	lib/libclm_common.la \
@@ -143,21 +145,23 @@ bin_osafclmd_LDADD = \
 
 if ENABLE_AIS_PLM
 
-bin_osafclmd_SOURCES += src/clm/clmd/clms_plm.c
+bin_osafclmd_SOURCES += src/clm/clmd/clms_plm.cc
 
 bin_osafclmd_LDADD += \
 	lib/libSaPlm.la
 
 endif
 
+bin_osafclmna_CXXFLAGS = $(AM_CXXFLAGS)
+
 bin_osafclmna_CPPFLAGS = \
 	$(AM_CPPFLAGS)
 
 bin_osafclmna_SOURCES = \
-	src/clm/clmnd/amf.c \
+	src/clm/clmnd/amf.cc \
 	src/clm/clmnd/election_starter.cc \
 	src/clm/clmnd/election_starter_wrapper.cc \
-	src/clm/clmnd/main.c
+	src/clm/clmnd/main.cc
 
 bin_osafclmna_LDADD = \
 	lib/libclm_common.la \
@@ -169,12 +173,14 @@ dist_bin_SCRIPTS += \
        src/clm/tools/clm-find \
        src/clm/tools/clm-state
 
+bin_clmprint_CXXFLAGS = $(AM_CXXFLAGS)
+
 bin_clmprint_CPPFLAGS = \
         -DSA_EXTENDED_NAME_SOURCE \
         $(AM_CPPFLAGS)
 
 bin_clmprint_SOURCES = \
-        src/clm/tools/clm_print.c
+        src/clm/tools/clm_print.cc
 
 bin_clmprint_LDADD = \
         lib/libSaClm.la \
@@ -188,6 +194,8 @@ bin_PROGRAMS += bin/clmtest
 noinst_HEADERS += \
 	src/clm/apitest/clmtest.h \
 	src/clm/apitest/clm_api_with_try_again.h
+
+bin_clmtest_CXXFLAGS = $(AM_CXXFLAGS)
 
 bin_clmtest_CPPFLAGS = \
 	-DSA_CLM_B01=1 \

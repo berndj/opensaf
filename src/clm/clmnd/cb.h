@@ -19,13 +19,12 @@
 #ifndef CLM_CLMND_CB_H_
 #define CLM_CLMND_CB_H_
 
-#include <assert.h>
 #include <poll.h>
 #include <saClm.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
 #include "base/daemon.h"
 #include "base/ncssysf_ipc.h"
 #include "base/ncssysf_tmr.h"

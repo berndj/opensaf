@@ -18,6 +18,8 @@
 #ifndef CLM_CLMD_CLMS_IMM_H_
 #define CLM_CLMD_CLMS_IMM_H_
 
+#include "osaf/immutil/immutil.h"
+
 extern SaAisErrorT clms_node_ccb_apply_modify(CcbUtilOperationData_t *opdata);
 extern void clms_cluster_update_rattr(CLMS_CLUSTER_INFO *osaf_cluster);
 extern void clms_node_update_rattr(CLMS_CLUSTER_NODE *nd);
@@ -29,8 +31,8 @@ extern CLMS_CLUSTER_NODE *clms_node_new(SaNameT *name,
 extern void clms_send_track(CLMS_CB *cb, CLMS_CLUSTER_NODE *node,
                             SaClmChangeStepT step, bool node_reboot);
 extern uint32_t clms_node_dn_chk(SaNameT *objName);
-extern SaAisErrorT clms_cluster_config_get(void);
-extern SaAisErrorT clms_node_create_config(void);
+extern SaAisErrorT clms_cluster_config_get();
+extern SaAisErrorT clms_node_create_config();
 extern uint32_t clms_cluster_dn_chk(SaNameT *objName);
 extern SaClmClusterNotificationT_4 *clms_notbuffer_changes_only(
     SaClmChangeStepT step);
@@ -38,7 +40,7 @@ extern SaClmClusterNotificationT_4 *clms_notbuffer_changes(
     SaClmChangeStepT step);
 extern uint32_t clms_node_delete(CLMS_CLUSTER_NODE *nd, int i);
 extern uint32_t clms_nodedb_lookup(int i);
-extern uint32_t clms_num_mem_node(void);
+extern uint32_t clms_num_mem_node();
 extern SaAisErrorT clms_node_ccb_comp_modify(CcbUtilOperationData_t *opdata);
 extern void clms_lock_timer_exp(int signo, siginfo_t *info, void *context);
 extern SaAisErrorT clms_node_ccb_apply_cb(CcbUtilOperationData_t *opdata);
@@ -51,7 +53,8 @@ extern uint32_t clms_send_track_local(CLMS_CLUSTER_NODE *node,
                                       CLMS_CLIENT_INFO *client,
                                       SaClmChangeStepT step);
 extern void clms_trackresp_patricia_init(CLMS_CLUSTER_NODE *node);
-extern void clms_switchoff_all_pending_rtupdates(void);
-extern void clms_switchon_all_pending_rtupdates(void);
-extern void clms_retry_pending_rtupdates(void);
+extern void clms_switchoff_all_pending_rtupdates();
+extern void clms_switchon_all_pending_rtupdates();
+extern void clms_retry_pending_rtupdates();
+
 #endif  // CLM_CLMD_CLMS_IMM_H_

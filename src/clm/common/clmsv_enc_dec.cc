@@ -22,7 +22,7 @@
 uint32_t clmsv_decodeSaNameT(NCS_UBAID *uba, SaNameT *name)
 {
 	uint8_t local_data[2];
-	uint8_t *p8 = NULL;
+	uint8_t *p8 = nullptr;
 	uint32_t total_bytes = 0;
 	uint16_t length;
 	char valueBuffer[256];
@@ -52,11 +52,12 @@ uint32_t clmsv_decodeNodeAddressT(NCS_UBAID *uba,
 				  SaClmNodeAddressT *nodeAddress)
 {
 	uint8_t local_data[5];
-	uint8_t *p8 = NULL;
+	uint8_t *p8 = nullptr;
 	uint32_t total_bytes = 0;
 
 	p8 = ncs_dec_flatten_space(uba, local_data, 4);
-	nodeAddress->family = ncs_decode_32bit(&p8);
+	nodeAddress->family = static_cast<SaClmNodeAddressFamilyT>(
+            ncs_decode_32bit(&p8));
 	ncs_dec_skip_space(uba, 4);
 	total_bytes += 4;
 
@@ -79,13 +80,13 @@ uint32_t clmsv_decodeNodeAddressT(NCS_UBAID *uba,
 uint32_t clmsv_encodeSaNameT(NCS_UBAID *uba, SaNameT *name)
 {
 	TRACE_ENTER();
-	uint8_t *p8 = NULL;
+	uint8_t *p8 = nullptr;
 	uint32_t total_bytes = 0;
 	size_t length;
 
 	p8 = ncs_enc_reserve_space(uba, 2);
 	if (!p8) {
-		TRACE("p8 NULL!!!");
+		TRACE("p8 nullptr!!!");
 		return 0;
 	}
 	if (!osaf_is_extended_names_enabled() &&
@@ -107,12 +108,12 @@ uint32_t clmsv_encodeSaNameT(NCS_UBAID *uba, SaNameT *name)
 uint32_t clmsv_encodeNodeAddressT(NCS_UBAID *uba,
 				  SaClmNodeAddressT *nodeAddress)
 {
-	uint8_t *p8 = NULL;
+	uint8_t *p8 = nullptr;
 	uint32_t total_bytes = 0;
 
 	p8 = ncs_enc_reserve_space(uba, 4);
 	if (!p8) {
-		TRACE("p8 NULL!!!");
+		TRACE("p8 nullptr!!!");
 		return 0;
 	}
 	ncs_encode_32bit(&p8, nodeAddress->family);
@@ -120,7 +121,7 @@ uint32_t clmsv_encodeNodeAddressT(NCS_UBAID *uba,
 	total_bytes += 4;
 	p8 = ncs_enc_reserve_space(uba, 2);
 	if (!p8) {
-		TRACE("p8 NULL!!!");
+		TRACE("p8 nullptr!!!");
 		return 0;
 	}
 	if (nodeAddress->length > SA_CLM_MAX_ADDRESS_LENGTH) {

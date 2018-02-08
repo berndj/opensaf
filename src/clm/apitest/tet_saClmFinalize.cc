@@ -15,9 +15,10 @@
  * Author(s): Emerson Network Power
  *
  */
-#include "clmtest.h"
 
-void saClmFinalize_01(void) {
+#include "clm/apitest/clmtest.h"
+
+void saClmFinalize_01() {
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
   rc = ClmTest::saClmFinalize(clmHandle);
@@ -28,12 +29,12 @@ void saClmFinalize_01(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmFinalize_02(void) {
+void saClmFinalize_02() {
   rc = ClmTest::saClmFinalize(-1);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
-void saClmFinalize_03(void) {
+void saClmFinalize_03() {
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
@@ -41,7 +42,7 @@ void saClmFinalize_03(void) {
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
-__attribute__((constructor)) static void saClmFinalize_constructor(void) {
+__attribute__((constructor)) static void saClmFinalize_constructor() {
   test_suite_add(2, "Test case for saClmFinalize");
   test_case_add(2, saClmFinalize_01, "saClmFinalize SA_AIS_OK");
   test_case_add(2, saClmFinalize_02,

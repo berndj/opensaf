@@ -36,10 +36,10 @@ static void nodeGetCallBack4(SaInvocationT invocation,
   printf("Inside nodeGetCallBack4");
   printf("error= %d", error);
 }
-SaClmCallbacksT_4 clmCallbacks4 = {nodeGetCallBack4, NULL};
-SaClmCallbacksT clmCallbacks1 = {nodeGetCallBack1, NULL};
+SaClmCallbacksT_4 clmCallbacks4 = {nodeGetCallBack4, nullptr};
+SaClmCallbacksT clmCallbacks1 = {nodeGetCallBack1, nullptr};
 
-void saClmClusterNodeGetAsync_01(void) {
+void saClmClusterNodeGetAsync_01() {
   /*struct pollfd fds[1];*/
   /*int ret;*/
   nodeId = ncs_get_node_id();
@@ -62,7 +62,7 @@ void saClmClusterNodeGetAsync_01(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmClusterNodeGetAsync_02(void) {
+void saClmClusterNodeGetAsync_02() {
   struct pollfd fds[1];
   int ret;
   nodeId = ncs_get_node_id();
@@ -85,7 +85,7 @@ void saClmClusterNodeGetAsync_02(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmClusterNodeGetAsync_03(void) {
+void saClmClusterNodeGetAsync_03() {
   nodeId = ncs_get_node_id();
   invocation = 300;
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks1, &clmVersion_1),
@@ -113,7 +113,7 @@ void saClmClusterNodeGetAsync_03(void) {
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
-void saClmClusterNodeGetAsync_04(void) {
+void saClmClusterNodeGetAsync_04() {
   nodeId = ncs_get_node_id();
   invocation = 400;
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks1, &clmVersion_1),
@@ -123,7 +123,7 @@ void saClmClusterNodeGetAsync_04(void) {
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
-void saClmClusterNodeGetAsync_05(void)
+void saClmClusterNodeGetAsync_05()
 {
   nodeId = ncs_get_node_id();
   invocation = 500;
@@ -133,7 +133,7 @@ void saClmClusterNodeGetAsync_05(void)
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
-void saClmClusterNodeGetAsync_06(void) {
+void saClmClusterNodeGetAsync_06() {
   struct pollfd fds[1];
   int ret;
   nodeId = 255; /*node does not exist*/
@@ -156,7 +156,7 @@ void saClmClusterNodeGetAsync_06(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmClusterNodeGetAsync_07(void) {
+void saClmClusterNodeGetAsync_07() {
   struct pollfd fds[1];
   int ret;
 
@@ -177,7 +177,7 @@ void saClmClusterNodeGetAsync_07(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmClusterNodeGetAsync_08(void) {
+void saClmClusterNodeGetAsync_08() {
   struct pollfd fds[1];
   SaAisErrorT rc;
   int ret;
@@ -199,14 +199,14 @@ void saClmClusterNodeGetAsync_08(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmClusterNodeGetAsync_09(void) {
+void saClmClusterNodeGetAsync_09() {
   /*struct pollfd fds[1];*/
   /*int ret;*/
   nodeId = ncs_get_node_id();
   invocation = 600;
   SaAisErrorT rc;
 
-  safassert(ClmTest::saClmInitialize(&clmHandle, NULL, &clmVersion_1), SA_AIS_OK);
+  safassert(ClmTest::saClmInitialize(&clmHandle, nullptr, &clmVersion_1), SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGetAsync(clmHandle, invocation, nodeId);
@@ -220,7 +220,7 @@ void saClmClusterNodeGetAsync_09(void) {
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INIT);
 
-  safassert(ClmTest::saClmInitialize_4(&clmHandle, NULL, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, nullptr, &clmVersion_4),
             SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
@@ -237,7 +237,7 @@ void saClmClusterNodeGetAsync_09(void) {
 }
 
 __attribute__((constructor)) static void
-saClmClusterNodeGetAsyncAsync_constructor(void) {
+saClmClusterNodeGetAsyncAsync_constructor() {
   test_suite_add(6, "Test case for saClmClusterNodeGetAsync");
   test_case_add(
       6, saClmClusterNodeGetAsync_01,

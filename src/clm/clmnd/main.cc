@@ -19,7 +19,6 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <saClm.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -70,11 +69,11 @@ static MDS_CLIENT_MSG_FORMAT_VER
 
 static uint32_t clmna_mds_enc(struct ncsmds_callback_info *info);
 static uint32_t clmna_mds_callback(struct ncsmds_callback_info *info);
-static void clmna_process_dummyup_msg(void);
+static void clmna_process_dummyup_msg();
 static void clmna_handle_join_response(SaAisErrorT error,
 				       const SaNameT *node_name);
 static void start_scale_out_retry_tmr(int64_t timeout);
-static void stop_scale_out_retry_tmr(void);
+static void stop_scale_out_retry_tmr();
 static uint32_t clmna_mds_msg_send(CLMSV_MSG *i_msg);
 static void clmna_execute_action(const char *action);
 
@@ -85,7 +84,6 @@ static uint32_t clmna_mds_cpy(struct ncsmds_callback_info *info)
 
 static uint32_t clmna_mds_dec(struct ncsmds_callback_info *info)
 {
-	uint8_t *p8;
 	CLMSV_MSG *msg;
 	NCS_UBAID *uba = info->info.dec.io_uba;
 	uint8_t local_data[20];
@@ -104,15 +102,16 @@ static uint32_t clmna_mds_dec(struct ncsmds_callback_info *info)
 
 	/** Allocate a new msg in both sync/async cases
 	 **/
-	if (NULL == (msg = calloc(1, sizeof(CLMSV_MSG)))) {
+	if (nullptr == (msg = static_cast<CLMSV_MSG*>(
+			     calloc(1, sizeof(CLMSV_MSG))))) {
 		TRACE("calloc failed\n");
 		return NCSCC_RC_FAILURE;
 	}
 
 	info->info.dec.o_msg = (uint8_t *)msg;
 
-	p8 = ncs_dec_flatten_space(uba, local_data, 4);
-	msg->evt_type = ncs_decode_32bit(&p8);
+	uint8_t *p8 = ncs_dec_flatten_space(uba, local_data, 4);
+	msg->evt_type = static_cast<CLMSV_MSG_TYPE>(ncs_decode_32bit(&p8));
 	ncs_dec_skip_space(uba, 4);
 	total_bytes += 4;
 
@@ -148,8 +147,11 @@ static uint32_t clmna_mds_dec(struct ncsmds_callback_info *info)
 	}
 	case CLMSV_CLMS_TO_CLMA_API_RESP_MSG: {
 		p8 = ncs_dec_flatten_space(uba, local_data, 8);
-		msg->info.api_resp_info.type = ncs_decode_32bit(&p8);
-		msg->info.api_resp_info.rc = ncs_decode_32bit(&p8);
+		msg->info.api_resp_info.type =
+			static_cast<CLMSV_API_RESP_MSG_TYPE>(
+				ncs_decode_32bit(&p8));
+		msg->info.api_resp_info.rc = static_cast<SaAisErrorT>(
+			ncs_decode_32bit(&p8));
 		ncs_dec_skip_space(uba, 8);
 		total_bytes += 8;
 		TRACE_2("CLMSV_CLMA_API_RESP_MSG for Node_Up rc = %d",
@@ -224,7 +226,7 @@ static uint32_t clmna_mds_rcv(struct ncsmds_callback_info *mds_cb_info)
 		return NCSCC_RC_SUCCESS;
 	}
 
-	CLMNA_EVT *evt = calloc(1, sizeof(CLMNA_EVT));
+	CLMNA_EVT *evt = static_cast<CLMNA_EVT*>(calloc(1, sizeof(CLMNA_EVT)));
 	evt->type = CLMNA_EVT_JOIN_RESPONSE;
 	evt->join_response.rc = msg->info.api_resp_info.rc;
 	evt->join_response.node_name = msg->info.api_resp_info.param.node_name;
@@ -290,11 +292,11 @@ static void clmna_handle_join_response(SaAisErrorT error,
 		stop_scale_out_retry_tmr();
 		if (clmna_cb->server_synced == false) {
 			NODE_INFO self_node = clmna_cb->node_info;
-			clmna_cb->server_synced = true;
+			clmna_cb->server_synced = SA_TRUE;
 			LOG_NO("%s Joined cluster, nodeid=%x", node_name->value,
 			       self_node.node_id);
 			if (clmna_cb->nid_started &&
-			    nid_notify("CLMNA", NCSCC_RC_SUCCESS, NULL) !=
+			    nid_notify("CLMNA", NCSCC_RC_SUCCESS, nullptr) !=
 				NCSCC_RC_SUCCESS) {
 				LOG_ER("nid notify failed");
 			}
@@ -308,7 +310,6 @@ static void clmna_handle_join_response(SaAisErrorT error,
 static uint32_t clmna_mds_svc_evt(struct ncsmds_callback_info *mds_cb_info)
 {
 	TRACE_ENTER2("%d", mds_cb_info->info.svc_evt.i_change);
-	CLMNA_EVT *evt;
 
 	switch (mds_cb_info->info.svc_evt.i_change) {
 	case NCSMDS_NEW_ACTIVE:
@@ -329,7 +330,7 @@ static uint32_t clmna_mds_svc_evt(struct ncsmds_callback_info *mds_cb_info)
 		switch (mds_cb_info->info.svc_evt.i_svc_id) {
 		case NCSMDS_SVC_ID_CLMS:
 			// if CLMS dies, then we have to send nodeup again
-			clmna_cb->server_synced = false;
+			clmna_cb->server_synced = SA_FALSE;
 			clmna_cb->clms_mds_dest = 0;
 			clmna_cb->try_again_received = false;
 			break;
@@ -341,7 +342,7 @@ static uint32_t clmna_mds_svc_evt(struct ncsmds_callback_info *mds_cb_info)
 		break;
 	}
 
-	evt = calloc(1, sizeof(CLMNA_EVT));
+	CLMNA_EVT *evt = static_cast<CLMNA_EVT*>(calloc(1, sizeof(CLMNA_EVT)));
 	evt->type = CLMNA_EVT_CHANGE_MSG;
 	evt->change.caused_by_timer_expiry = false;
 	evt->change.change = mds_cb_info->info.svc_evt.i_change;
@@ -393,7 +394,7 @@ static uint32_t clmna_mds_enc(struct ncsmds_callback_info *info)
 
 	TRACE_2("msgtype: %d", msg->evt_type);
 
-	if (uba == NULL) {
+	if (uba == nullptr) {
 		LOG_ER("uba == NULL");
 		return NCSCC_RC_FAILURE;
 	}
@@ -483,6 +484,7 @@ static uint32_t clmna_mds_enc(struct ncsmds_callback_info *info)
 
 static uint32_t clmna_mds_callback(struct ncsmds_callback_info *info)
 {
+	TRACE_ENTER();
 	uint32_t rc;
 
 	static NCSMDS_CALLBACK_API cb_set[MDS_CALLBACK_SVC_MAX] = {
@@ -498,14 +500,13 @@ static uint32_t clmna_mds_callback(struct ncsmds_callback_info *info)
 		rc = (*cb_set[info->i_op])(info);
 		if (rc != NCSCC_RC_SUCCESS)
 			LOG_ER("MDS_CALLBACK_SVC_EVENT not in range");
-
-		TRACE_LEAVE();
 	}
 
+	TRACE_LEAVE();
 	return NCSCC_RC_SUCCESS;
 }
 
-static uint32_t clmna_mds_init(void)
+static uint32_t clmna_mds_init()
 {
 	NCSADA_INFO ada_info;
 	NCSMDS_INFO mds_info;
@@ -576,7 +577,7 @@ static void get_user_data(NODE_INFO *node)
 	FILE *fp;
 
 	fp = fopen(PKGSYSCONFDIR "/clm_user_data", "r");
-	if (fp == NULL) {
+	if (fp == nullptr) {
 		LOG_IN("Could not open file %s - %s", PKGSYSCONFDIR "/clm_user_data",
 		       strerror(errno));
 		return;
@@ -591,7 +592,7 @@ static void get_user_data(NODE_INFO *node)
 		LOG_WA("Could not read file %s", PKGSYSCONFDIR "/clm_user_data");
 	}
 
-	if (memchr(node->user_data.value, node->ifs, node->user_data.length) != NULL) {
+	if (memchr(node->user_data.value, node->ifs, node->user_data.length) != nullptr) {
 		LOG_WA("CLM IFS [%c] was found in %s", node->ifs, node->user_data.value);
 		memset(&node->user_data, 0, sizeof(SaNameT));
 	}
@@ -605,7 +606,7 @@ static int get_node_info(NODE_INFO *node)
 	FILE *fp;
 	const char *ifs;
 
-	if ((ifs = getenv("CLMNA_IFS")) == NULL) {
+	if ((ifs = getenv("CLMNA_IFS")) == nullptr) {
 		node->ifs = ',';  // default field separator
 	} else {
 		node->ifs = *ifs;
@@ -614,7 +615,7 @@ static int get_node_info(NODE_INFO *node)
 	get_user_data(node);
 
 	fp = fopen(PKGSYSCONFDIR "/node_name", "r");
-	if (fp == NULL) {
+	if (fp == nullptr) {
 		LOG_ER("Could not open file %s - %s", PKGSYSCONFDIR "node_name",
 		       strerror(errno));
 		return -1;
@@ -629,7 +630,7 @@ static int get_node_info(NODE_INFO *node)
 	node->node_name.length = strlen((char *)node->node_name.value);
 	TRACE("node name: '%s'", node->node_name.value);
 
-	if (memchr(node->node_name.value, node->ifs, node->node_name.length) != NULL) {
+	if (memchr(node->node_name.value, node->ifs, node->node_name.length) != nullptr) {
 		LOG_ER("CLM IFS [%c] was found in %s", node->ifs, node->node_name.value);
 		return -1;
 	}
@@ -648,19 +649,20 @@ static int get_node_info(NODE_INFO *node)
 	long family_val = 0;
 	char *family = getenv("CLMNA_ADDR_FAMILY");
 	char *value = getenv("CLMNA_ADDR_VALUE");
-	if (family != NULL) {
+	if (family != nullptr) {
 		char *endptr = family;
 		errno = 0;
 		family_val = strtol(family, &endptr, 0);
 		if (errno != 0 || *endptr != '\0' || *family == '\0')
-			family = NULL;
+			family = nullptr;
 	}
-	if (family != NULL && value != NULL &&
-		memchr(value, node->ifs, strlen(value)) == NULL) {
+	if (family != nullptr && value != nullptr &&
+		memchr(value, node->ifs, strlen(value)) == nullptr) {
 		size_t len = strlen(value);
 		if (len > SA_CLM_MAX_ADDRESS_LENGTH)
 			len = SA_CLM_MAX_ADDRESS_LENGTH;
-		node->address.family = family_val;
+		node->address.family = static_cast<SaClmNodeAddressFamilyT>(
+			family_val);
 		node->address.length = len;
 		memcpy(node->address.value, value, len);
 		node->no_of_addresses = 1;
@@ -700,7 +702,6 @@ static uint32_t clmna_mds_msg_send(CLMSV_MSG *i_msg)
 
 static void clmna_execute_action(const char *action) {
 	char str[1024];
-	int size;
 
 	if (!action) {
 		syslog(LOG_ERR, "Executing CLM action is NULL");
@@ -714,8 +715,9 @@ static void clmna_execute_action(const char *action) {
 		return;
 	}
 
-	size = snprintf(str, sizeof(str), PKGCLMSCRIPTDIR "/osafclm_%s", action);
-	if (size > sizeof(str)) {
+	int size = snprintf(str, sizeof(str), PKGCLMSCRIPTDIR "/osafclm_%s",
+			    action);
+	if (size < 0 || static_cast<size_t>(size) > sizeof(str)) {
 		syslog(LOG_ERR,
 				"Path for executing CLM script '%s' is longer than %zu",
 				action, sizeof(str));
@@ -744,8 +746,9 @@ static void scale_out_tmr_exp(void *arg)
 	TRACE_ENTER();
 	(void)arg;
 	if (clmna_cb->is_scale_out_retry_tmr_running == true) {
-		CLMNA_EVT *evt = calloc(1, sizeof(CLMNA_EVT));
-		if (evt != NULL) {
+		CLMNA_EVT *evt = static_cast<CLMNA_EVT*>(
+			calloc(1, sizeof(CLMNA_EVT)));
+		if (evt != nullptr) {
 			evt->type = CLMNA_EVT_CHANGE_MSG;
 			evt->change.caused_by_timer_expiry = true;
 			evt->change.change = NCSMDS_UP;
@@ -771,27 +774,28 @@ static void scale_out_tmr_exp(void *arg)
 static void start_scale_out_retry_tmr(int64_t timeout)
 {
 	TRACE_ENTER();
-	if (clmna_cb->scale_out_retry_tmr == NULL) {
-		m_NCS_TMR_CREATE(clmna_cb->scale_out_retry_tmr,
-				 CLMNA_SCALE_OUT_RETRY_TIME, scale_out_tmr_exp,
-				 NULL);
+	if (clmna_cb->scale_out_retry_tmr == nullptr) {
+	  clmna_cb->scale_out_retry_tmr =
+		  ncs_tmr_alloc(const_cast<char*>(__FILE__), __LINE__);
 	}
 
-	if (clmna_cb->scale_out_retry_tmr != NULL &&
+	if (clmna_cb->scale_out_retry_tmr != nullptr &&
 	    clmna_cb->is_scale_out_retry_tmr_running == false) {
-		m_NCS_TMR_START(clmna_cb->scale_out_retry_tmr, timeout,
-				scale_out_tmr_exp, NULL);
-		if (clmna_cb->scale_out_retry_tmr != NULL) {
+		clmna_cb->scale_out_retry_tmr =
+			ncs_tmr_start(clmna_cb->scale_out_retry_tmr, timeout,
+				      scale_out_tmr_exp, nullptr,
+				      const_cast<char*>(__FILE__), __LINE__);
+		if (clmna_cb->scale_out_retry_tmr != nullptr) {
 			clmna_cb->is_scale_out_retry_tmr_running = true;
 		}
 	}
 	TRACE_LEAVE();
 }
 
-static void stop_scale_out_retry_tmr(void)
+static void stop_scale_out_retry_tmr()
 {
 	TRACE_ENTER();
-	if (clmna_cb->scale_out_retry_tmr != NULL &&
+	if (clmna_cb->scale_out_retry_tmr != nullptr &&
 	    clmna_cb->is_scale_out_retry_tmr_running == true) {
 		m_NCS_TMR_STOP(clmna_cb->scale_out_retry_tmr);
 		clmna_cb->is_scale_out_retry_tmr_running = false;
@@ -799,7 +803,7 @@ static void stop_scale_out_retry_tmr(void)
 	TRACE_LEAVE();
 }
 
-static void clmna_process_dummyup_msg(void)
+static void clmna_process_dummyup_msg()
 {
 	if (clmna_cb->clms_mds_dest != 0) {
 		CLMSV_MSG msg;
@@ -842,7 +846,7 @@ void clmna_process_mbx(SYSF_MBX *mbx)
 	TRACE_ENTER();
 
 	msg = (CLMNA_EVT *)ncs_ipc_non_blk_recv(mbx);
-	if (msg == NULL) {
+	if (msg == nullptr) {
 		TRACE_LEAVE2("No mailbox message although fd is set!");
 		goto done;
 	}
@@ -892,13 +896,13 @@ int main(int argc, char *argv[])
 
 	/* Initialize some basic stuff */
 	clmna_cb->amf_hdl = 0;
-	clmna_cb->server_synced = false;
-	clmna_cb->scale_out_retry_tmr = NULL;
+	clmna_cb->server_synced = SA_FALSE;
+	clmna_cb->scale_out_retry_tmr = nullptr;
 	clmna_cb->is_scale_out_retry_tmr_running = false;
 	clmna_cb->try_again_received = false;
 
 	/* Determine how this process was started, by NID or AMF */
-	if (getenv("SA_AMF_COMPONENT_NAME") == NULL)
+	if (getenv("SA_AMF_COMPONENT_NAME") == nullptr)
 		clmna_cb->nid_started = true;
 
 	if ((rc = ncs_agents_startup()) != NCSCC_RC_SUCCESS) {
@@ -956,7 +960,7 @@ int main(int argc, char *argv[])
 	    clmna_cb->nid_started, clmna_cb->node_info.node_id);
 
 	if (clmna_cb->nid_started &&
-	    nid_notify("CLMNA", rc, NULL) != NCSCC_RC_SUCCESS) {
+	    nid_notify("CLMNA", rc, nullptr) != NCSCC_RC_SUCCESS) {
 		LOG_ER("nid notify failed");
 	}
 
@@ -971,7 +975,7 @@ int main(int argc, char *argv[])
 	while (1) {
 		struct timespec timeout =
 		    ElectionStarterPoll(clmna_cb->election_starter);
-		ret = osaf_ppoll(fds, nfds, &timeout, NULL);
+		ret = osaf_ppoll(fds, nfds, &timeout, nullptr);
 
 		if (ret == 0) {
 			continue;

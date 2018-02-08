@@ -25,9 +25,9 @@ static void nodeGetCallBack(SaInvocationT invocation,
   printf("error= %d", error);
 }
 
-SaClmCallbacksT clmCallback = {nodeGetCallBack, NULL};
+SaClmCallbacksT clmCallback = {nodeGetCallBack, nullptr};
 
-void saClmSelectionObjectGet_01(void) {
+void saClmSelectionObjectGet_01() {
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback, &clmVersion_1),
             SA_AIS_OK);
   rc = ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject);
@@ -35,7 +35,7 @@ void saClmSelectionObjectGet_01(void) {
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
 }
 
-void saClmSelectionObjectGet_02(void) {
+void saClmSelectionObjectGet_02() {
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback, &clmVersion_1),
             SA_AIS_OK);
   rc = ClmTest::saClmSelectionObjectGet(0, &selectionObject);
@@ -43,7 +43,7 @@ void saClmSelectionObjectGet_02(void) {
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
-void saClmSelectionObjectGet_03(void) {
+void saClmSelectionObjectGet_03() {
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback, &clmVersion_1),
             SA_AIS_OK);
   rc = ClmTest::saClmSelectionObjectGet(-1, &selectionObject);
@@ -51,16 +51,16 @@ void saClmSelectionObjectGet_03(void) {
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
-void saClmSelectionObjectGet_04(void) {
+void saClmSelectionObjectGet_04() {
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallback, &clmVersion_1),
             SA_AIS_OK);
-  rc = ClmTest::saClmSelectionObjectGet(clmHandle, NULL);
+  rc = ClmTest::saClmSelectionObjectGet(clmHandle, nullptr);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
 __attribute__((constructor)) static void
-saClmSelectionObjectGet_constructor(void) {
+saClmSelectionObjectGet_constructor() {
   test_suite_add(2, "Life Cykel API 3");
   test_case_add(2, saClmSelectionObjectGet_01,
                 "saClmSelectionObjectGet SA_AIS_OK");

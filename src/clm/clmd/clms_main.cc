@@ -23,11 +23,11 @@
  */
 
 #include <poll.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
+#include <signal.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include "base/daemon.h"
 #include "base/ncssysf_def.h"
 #include "base/osaf_time.h"
@@ -84,12 +84,12 @@ static void rda_cb(uint32_t cb_hdl, PCS_RDA_CB_INFO *cb_info,
 		   PCSRDA_RETURN_CODE error_code)
 {
 	uint32_t rc;
-	CLMSV_CLMS_EVT *evt = NULL;
+	CLMSV_CLMS_EVT *evt = nullptr;
 
 	TRACE_ENTER();
 
-	evt = calloc(1, sizeof(CLMSV_CLMS_EVT));
-	if (NULL == evt) {
+	evt = static_cast<CLMSV_CLMS_EVT*>(calloc(1, sizeof(CLMSV_CLMS_EVT)));
+	if (nullptr == evt) {
 		LOG_ER("calloc failed");
 		goto done;
 	}
@@ -97,8 +97,8 @@ static void rda_cb(uint32_t cb_hdl, PCS_RDA_CB_INFO *cb_info,
 	evt->type = CLMSV_CLMS_RDA_EVT;
 	evt->info.rda_info.io_role = cb_info->info.io_role;
 
-	rc = ncs_ipc_send(&clms_cb->mbx, (NCS_IPC_MSG *)evt,
-			  MDS_SEND_PRIORITY_HIGH);
+	rc = ncs_ipc_send(&clms_cb->mbx, reinterpret_cast<NCS_IPC_MSG*>(evt),
+			  NCS_IPC_PRIORITY_HIGH);
 	if (rc != NCSCC_RC_SUCCESS)
 		LOG_ER("IPC send failed %d", rc);
 
@@ -123,12 +123,12 @@ static void sigusr1_handler(int sig)
 /**
  * Get the Self node info
  */
-static uint32_t clms_self_node_info(void)
+static uint32_t clms_self_node_info()
 {
 	uint32_t rc = NCSCC_RC_FAILURE;
 	FILE *fp;
 	SaNameT node_name_dn = {0};
-	CLMS_CLUSTER_NODE *node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr;
 	char node_name[256];
 	const char *node_name_file = PKGSYSCONFDIR "/node_name";
 
@@ -140,7 +140,7 @@ static uint32_t clms_self_node_info(void)
 		return NCSCC_RC_SUCCESS;
 
 	fp = fopen(node_name_file, "r");
-	if (fp == NULL) {
+	if (fp == nullptr) {
 		LOG_ER("Could not open file %s - %s", node_name_file,
 		       strerror(errno));
 		goto done;
@@ -163,8 +163,8 @@ static uint32_t clms_self_node_info(void)
 
 	node = clms_node_get_by_name(&node_name_dn);
 
-	if (node == NULL) {
-		if (clms_cb->scale_out_script != NULL) {
+	if (node == nullptr) {
+		if (clms_cb->scale_out_script != nullptr) {
 			LOG_NO("Own node %s not found in the database. It will "
 			       "be scaled out since autoscaling is enabled.",
 			       node_name_dn.value);
@@ -237,8 +237,8 @@ uint32_t clms_cb_init(CLMS_CB *clms_cb)
 	ip_param.key_size = sizeof(uint32_t);
 
 	/* Assign Initial HA state */
-	clms_cb->ha_state = CLMS_HA_INIT_STATE;
-	osaf_cluster = NULL;
+	clms_cb->ha_state = SaAmfHAStateT{};
+	osaf_cluster = nullptr;
 	clms_cb->reg_with_plm = SA_FALSE;
 	clms_cb->cluster_view_num = 0;
 	clms_cb->fully_initialized = false;
@@ -246,25 +246,25 @@ uint32_t clms_cb_init(CLMS_CB *clms_cb)
 	clms_cb->immOiHandle = 0;
 	clms_cb->is_impl_set = false;
 	clms_cb->rtu_pending =
-	    false; /* Flag to control try-again of rt-updates */
+	    SA_FALSE; /* Flag to control try-again of rt-updates */
 
-	if (pthread_mutex_init(&clms_cb->scale_out_data_mutex, NULL) != 0) {
+	if (pthread_mutex_init(&clms_cb->scale_out_data_mutex, nullptr) != 0) {
 		return NCSCC_RC_FAILURE;
 	}
 	clms_cb->no_of_pending_nodes = 0;
 	clms_cb->no_of_inprogress_nodes = 0;
 	for (int i = 0; i != (MAX_PENDING_NODES + 1); ++i) {
-		clms_cb->pending_nodes[i] = NULL;
+		clms_cb->pending_nodes[i] = nullptr;
 		clms_cb->pending_node_ids[i] = 0;
 		clms_cb->inprogress_node_ids[i] = 0;
 	}
 	clms_cb->is_scale_out_thread_running = false;
-	clms_cb->scale_out_script = NULL;
+	clms_cb->scale_out_script = nullptr;
 	char *enable_scale_out = getenv("OPENSAF_CLUSTERAUTO_SCALE_ENABLED");
-	if (enable_scale_out != NULL && strcmp(enable_scale_out, "0") != 0) {
+	if (enable_scale_out != nullptr && strcmp(enable_scale_out, "0") != 0) {
 		LOG_IN("Scale out enabled");
 		clms_cb->scale_out_script = strdup(SCALE_OUT_SCRIPT);
-		if (clms_cb->scale_out_script == NULL)
+		if (clms_cb->scale_out_script == nullptr)
 			return NCSCC_RC_FAILURE;
 	} else {
 		LOG_IN("Scale out not enabled");
@@ -315,14 +315,14 @@ uint32_t clms_cb_init(CLMS_CB *clms_cb)
  *
  * @return uns32
  */
-static uint32_t clms_init(void)
+static uint32_t clms_init()
 {
 	uint32_t rc = NCSCC_RC_FAILURE;
 
 	TRACE_ENTER();
 
 	/* Determine how this process was started, by NID or AMF */
-	if (getenv("SA_AMF_COMPONENT_NAME") == NULL)
+	if (getenv("SA_AMF_COMPONENT_NAME") == nullptr)
 		clms_cb->nid_started = true;
 
 	if (ncs_agents_startup() != NCSCC_RC_SUCCESS) {
@@ -388,7 +388,7 @@ static uint32_t clms_init(void)
 
 done:
 	if (clms_cb->nid_started &&
-	    nid_notify("CLMD", rc, NULL) != NCSCC_RC_SUCCESS) {
+	    nid_notify("CLMD", rc, nullptr) != NCSCC_RC_SUCCESS) {
 		LOG_ER("nid_notify failed");
 		rc = NCSCC_RC_FAILURE;
 	}
@@ -461,10 +461,11 @@ done:
  */
 int main(int argc, char *argv[])
 {
+	TRACE_ENTER();
 	NCS_SEL_OBJ mbx_fd;
 	SaAisErrorT error = SA_AIS_OK;
 	uint32_t rc;
-	osaf_cluster = NULL;
+	osaf_cluster = nullptr;
 	int term_fd;
 	int timeout = -1;
 
@@ -642,10 +643,10 @@ done:
 /**
  * This dumps the CLMS CB
  */
-void clms_cb_dump(void)
+void clms_cb_dump()
 {
-	CLMS_CLUSTER_NODE *node = NULL;
-	CLMS_CLIENT_INFO *client = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr;
+	CLMS_CLIENT_INFO *client = nullptr;
 	uint32_t client_id = 0;
 	SaNameT nodename;
 
@@ -660,7 +661,7 @@ void clms_cb_dump(void)
 	TRACE("Dump nodedb");
 	memset(&nodename, '\0', sizeof(SaNameT));
 
-	while ((node = clms_node_getnext_by_name(&nodename)) != NULL) {
+	while ((node = clms_node_getnext_by_name(&nodename)) != nullptr) {
 		memcpy(&nodename, &node->node_name, sizeof(SaNameT));
 		TRACE("Dump Runtime data of the node: %s",
 		      node->node_name.value);
@@ -678,7 +679,7 @@ void clms_cb_dump(void)
 	}
 
 	TRACE("Dump Client data");
-	while ((client = clms_client_getnext_by_id(client_id)) != NULL) {
+	while ((client = clms_client_getnext_by_id(client_id)) != nullptr) {
 		client_id = client->client_id;
 		TRACE("Client_id %u", client->client_id);
 		TRACE("MDS Dest %" PRIx64, client->mds_dest);

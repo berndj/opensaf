@@ -29,7 +29,7 @@
 
 SaNameT node_name;
 
-void clm_init(void) {
+void clm_init() {
   FILE *fp;
   // Command list to execute before tests start
   const char *command[] = {
@@ -40,7 +40,7 @@ void clm_init(void) {
   int i;
 
   fp = fopen("/etc/opensaf/node_name", "r");
-  if (fp == NULL) {
+  if (fp == nullptr) {
     printf("Error: can't open file");
     assert(0);
   }
@@ -66,8 +66,8 @@ SaVersionT clmVersion_1 = CLM_LOWEST_SUPPORTED_VERSION;
 SaVersionT clmVersion = CLM_INVALID_VERSION;
 SaAisErrorT rc;
 SaClmHandleT clmHandle;
-SaClmCallbacksT_4 clmCallbacks_4 = {NULL, NULL};
-SaClmCallbacksT clmCallbacks_1 = {NULL, NULL};
+SaClmCallbacksT_4 clmCallbacks_4 = {nullptr, nullptr};
+SaClmCallbacksT clmCallbacks_1 = {nullptr, nullptr};
 SaSelectionObjectT selectionObject;
 
 int main(int argc, char **argv) {

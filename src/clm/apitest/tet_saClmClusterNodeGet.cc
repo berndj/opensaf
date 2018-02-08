@@ -24,7 +24,7 @@ static SaClmClusterNodeT_4 clusterNode_4;
 static SaClmNodeIdT nodeId;
 static SaTimeT timeout = 10000000000ll;
 
-void saClmClusterNodeGet_01(void) {
+void saClmClusterNodeGet_01() {
   nodeId = ncs_get_node_id();
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
@@ -33,7 +33,7 @@ void saClmClusterNodeGet_01(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmClusterNodeGet_02(void) {
+void saClmClusterNodeGet_02() {
   nodeId = ncs_get_node_id();
   safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
             SA_AIS_OK);
@@ -42,7 +42,7 @@ void saClmClusterNodeGet_02(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmClusterNodeGet_03(void) {
+void saClmClusterNodeGet_03() {
   nodeId = ncs_get_node_id();
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
@@ -72,7 +72,7 @@ void saClmClusterNodeGet_03(void) {
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
-void saClmClusterNodeGet_04(void)
+void saClmClusterNodeGet_04()
 {
   nodeId = ncs_get_node_id();
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
@@ -89,23 +89,23 @@ void saClmClusterNodeGet_04(void)
   test_validate(rc, SA_AIS_OK);
 }
 
-void saClmClusterNodeGet_05(void) {
+void saClmClusterNodeGet_05() {
   nodeId = ncs_get_node_id();
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterNodeGet(clmHandle, nodeId, timeout, NULL);
+  rc = ClmTest::saClmClusterNodeGet(clmHandle, nodeId, timeout, nullptr);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 
   nodeId = ncs_get_node_id();
   safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterNodeGet_4(clmHandle, nodeId, timeout, NULL);
+  rc = ClmTest::saClmClusterNodeGet_4(clmHandle, nodeId, timeout, nullptr);
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
-void saClmClusterNodeGet_06(void) {
+void saClmClusterNodeGet_06() {
   nodeId = 255; /*node does not exist*/
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
@@ -121,7 +121,7 @@ void saClmClusterNodeGet_06(void) {
   test_validate(rc, SA_AIS_ERR_NOT_EXIST);
 }
 
-void saClmClusterNodeGet_07(void) {
+void saClmClusterNodeGet_07() {
   nodeId = 170255; /*node is non member, 0x2990F*/
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
@@ -139,12 +139,12 @@ void saClmClusterNodeGet_07(void) {
   test_validate(rc, SA_AIS_ERR_NOT_EXIST);
 }
 
-void saClmClusterNodeGet_08(void) {
+void saClmClusterNodeGet_08() {
   nodeId = 5;
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGet_4(clmHandle, nodeId, timeout, &clusterNode_4);
-  /*rc = ClmTest::saClmClusterNodeGet(clmHandle, nodeId, timeout, NULL);*/
+  /*rc = ClmTest::saClmClusterNodeGet(clmHandle, nodeId, timeout, nullptr);*/
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_VERSION);
 
@@ -152,12 +152,12 @@ void saClmClusterNodeGet_08(void) {
   safassert(ClmTest::saClmInitialize_4(&clmHandle, &clmCallbacks_4, &clmVersion_4),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGet(clmHandle, nodeId, timeout, &clusterNode_1);
-  /*rc = ClmTest::saClmClusterNodeGet(clmHandle, nodeId, timeout, NULL);*/
+  /*rc = ClmTest::saClmClusterNodeGet(clmHandle, nodeId, timeout, nullptr);*/
   safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_VERSION);
 }
 
-void saClmClusterNodeGet_09(void) {
+void saClmClusterNodeGet_09() {
   safassert(ClmTest::saClmInitialize(&clmHandle, &clmCallbacks_1, &clmVersion_1),
             SA_AIS_OK);
   rc = ClmTest::saClmClusterNodeGet(clmHandle, SA_CLM_LOCAL_NODE_ID, timeout,
@@ -173,7 +173,7 @@ void saClmClusterNodeGet_09(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-__attribute__((constructor)) static void saClmClusterNodeGet_constructor(void) {
+__attribute__((constructor)) static void saClmClusterNodeGet_constructor() {
   test_suite_add(5, "Test case for saClmClusterNodeGet");
   test_case_add(5, saClmClusterNodeGet_01,
                 "saClmClusterNodeGet with valid arguments, SA_AIS_OK");

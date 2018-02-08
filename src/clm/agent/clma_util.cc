@@ -24,7 +24,7 @@ static void clma_hdl_list_del(clma_client_hdl_rec_t **list);
 /* Variables used during startup/shutdown only */
 static pthread_mutex_t clma_lock = PTHREAD_MUTEX_INITIALIZER;
 static unsigned int clma_use_count;
-static void clma_destroy(void);
+static void clma_destroy();
 
 /**
  *
@@ -53,7 +53,7 @@ uint32_t clma_validate_version(SaVersionT *version)
  *
  * @return unsigned int
  */
-static unsigned int clma_create(void)
+static unsigned int clma_create()
 {
 	unsigned int rc = NCSCC_RC_SUCCESS;
 
@@ -95,7 +95,7 @@ error:
  *
  * @return unsigned int
  */
-unsigned int clma_startup(void)
+unsigned int clma_startup()
 {
 	unsigned int rc = NCSCC_RC_SUCCESS;
 	pthread_mutex_lock(&clma_lock);
@@ -129,7 +129,7 @@ done:
  *
  * @return unsigned int
  */
-unsigned int clma_shutdown(void)
+unsigned int clma_shutdown()
 {
 	unsigned int rc = NCSCC_RC_SUCCESS;
 
@@ -155,7 +155,7 @@ unsigned int clma_shutdown(void)
  *
  * @return unsigned int
  */
-static void clma_destroy(void)
+static void clma_destroy()
 {
 	/* delete the hdl db */
 	clma_hdl_list_del(&clma_cb.client_list);
@@ -172,7 +172,7 @@ static void clma_destroy(void)
   Arguments     : cb      - ptr to the CLMA control block
 		  client_id  - cluster wide unique allocated by CLMS
 
-  Return Values : CLMA_CLIENT_HDL_REC * or NULL
+  Return Values : CLMA_CLIENT_HDL_REC * or nullptr
 
   Notes         : None
 ******************************************************************************/
@@ -181,13 +181,13 @@ clma_client_hdl_rec_t *clma_find_hdl_rec_by_client_id(clma_cb_t *clma_cb,
 {
 	clma_client_hdl_rec_t *clma_hdl_rec;
 
-	for (clma_hdl_rec = clma_cb->client_list; clma_hdl_rec != NULL;
+	for (clma_hdl_rec = clma_cb->client_list; clma_hdl_rec != nullptr;
 	     clma_hdl_rec = clma_hdl_rec->next) {
 		if (clma_hdl_rec->clms_client_id == client_id)
 			return clma_hdl_rec;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 /****************************************************************************
@@ -234,9 +234,10 @@ clma_client_hdl_rec_t *clma_hdl_rec_add(clma_cb_t *cb,
 					const SaClmCallbacksT_4 *reg_cbks_4,
 					SaVersionT *version, uint32_t client_id)
 {
-	clma_client_hdl_rec_t *rec = calloc(1, sizeof(clma_client_hdl_rec_t));
+	clma_client_hdl_rec_t *rec = static_cast<clma_client_hdl_rec_t*>(
+		calloc(1, sizeof(clma_client_hdl_rec_t)));
 
-	if (rec == NULL) {
+	if (rec == nullptr) {
 		TRACE("calloc failed");
 		goto done;
 	}
@@ -252,17 +253,17 @@ clma_client_hdl_rec_t *clma_hdl_rec_add(clma_cb_t *cb,
 	/* store the registered callbacks */
 	if (clma_validate_version(version)) {
 		if (reg_cbks_1)
-			memcpy((void *)&rec->cbk_param.reg_cbk,
-			       (void *)reg_cbks_1, sizeof(SaClmCallbacksT));
+			memcpy(&rec->cbk_param.reg_cbk,
+			       reg_cbks_1, sizeof(SaClmCallbacksT));
 	} else {
 		if (reg_cbks_4)
-			memcpy((void *)&rec->cbk_param.reg_cbk_4,
-			       (void *)reg_cbks_4, sizeof(SaClmCallbacksT_4));
+			memcpy(&rec->cbk_param.reg_cbk_4,
+			       reg_cbks_4, sizeof(SaClmCallbacksT_4));
 	}
 
 	/* Store verison in clma_client_hdl_rec_t */
-	rec->version = calloc(1, sizeof(SaVersionT));
-	if (rec->version == NULL) {
+	rec->version = static_cast<SaVersionT*>(calloc(1, sizeof(SaVersionT)));
+	if (rec->version == nullptr) {
 		TRACE("calloc failed");
 		goto err_destroy_hdl;
 	}
@@ -304,14 +305,14 @@ clma_client_hdl_rec_t *clma_hdl_rec_add(clma_cb_t *cb,
 	goto done;
 
 err_ipc_release:
-	(void)m_NCS_IPC_RELEASE(&rec->mbx, NULL);
+	m_NCS_IPC_RELEASE(&rec->mbx, nullptr);
 
 err_destroy_hdl:
 	ncshm_destroy_hdl(NCS_SERVICE_ID_CLMA, rec->local_hdl);
 
 err_free:
 	free(rec);
-	rec = NULL;
+	rec = nullptr;
 
 done:
 	return rec;
@@ -348,8 +349,8 @@ uint32_t clma_hdl_rec_del(clma_client_hdl_rec_t **list_head,
 
 		/** detach & release the IPC
 		 **/
-		m_NCS_IPC_DETACH(&rm_node->mbx, clma_clear_mbx, NULL);
-		m_NCS_IPC_RELEASE(&rm_node->mbx, NULL);
+		m_NCS_IPC_DETACH(&rm_node->mbx, clma_clear_mbx, nullptr);
+		m_NCS_IPC_RELEASE(&rm_node->mbx, nullptr);
 
 		ncshm_give_hdl(rm_node->local_hdl);
 		ncshm_destroy_hdl(NCS_SERVICE_ID_CLMA, rm_node->local_hdl);
@@ -361,14 +362,14 @@ uint32_t clma_hdl_rec_del(clma_client_hdl_rec_t **list_head,
 		goto out;
 	} else { /* find the rec */
 
-		while (NULL != list_iter) {
+		while (nullptr != list_iter) {
 			if (list_iter->next == rm_node) {
 				list_iter->next = rm_node->next;
 
 				/** detach & release the IPC */
 				m_NCS_IPC_DETACH(&rm_node->mbx, clma_clear_mbx,
-						 NULL);
-				m_NCS_IPC_RELEASE(&rm_node->mbx, NULL);
+						 nullptr);
+				m_NCS_IPC_RELEASE(&rm_node->mbx, nullptr);
 
 				ncshm_give_hdl(rm_node->local_hdl);
 				ncshm_destroy_hdl(NCS_SERVICE_ID_CLMA,
@@ -409,8 +410,8 @@ out:
 static SaAisErrorT clma_hdl_cbk_rec_prc(clma_cb_t *cb, CLMSV_MSG *msg,
 					clma_client_hdl_rec_t *hdl_rec)
 {
-	SaClmCallbacksT *reg_cbk = NULL;
-	SaClmCallbacksT_4 *reg_cbk_4 = NULL;
+	SaClmCallbacksT *reg_cbk = nullptr;
+	SaClmCallbacksT_4 *reg_cbk_4 = nullptr;
 	CLMSV_CBK_INFO *cbk_info = &msg->info.cbk_info;
 	SaAisErrorT rc = SA_AIS_ERR_BAD_OPERATION;
 
@@ -516,7 +517,7 @@ static SaAisErrorT clma_hdl_cbk_dispatch_one(clma_cb_t *cb,
 	SaAisErrorT rc = SA_AIS_OK;
 	TRACE_ENTER();
 	/* Nonblk receive to obtain the message from priority queue */
-	while (NULL != (cbk_msg = (CLMSV_MSG *)m_NCS_IPC_NON_BLK_RECEIVE(
+	while (nullptr != (cbk_msg = (CLMSV_MSG *)m_NCS_IPC_NON_BLK_RECEIVE(
 			    &hdl_rec->mbx, cbk_msg))) {
 		TRACE_1("In While loop type = %d",
 			(int)cbk_msg->info.cbk_info.type);
@@ -552,13 +553,13 @@ static SaAisErrorT clma_hdl_cbk_dispatch_one(clma_cb_t *cb,
 static uint32_t clma_hdl_cbk_dispatch_all(clma_cb_t *cb,
 					  clma_client_hdl_rec_t *hdl_rec)
 {
-	CLMSV_MSG *cbk_msg = NULL;
+	CLMSV_MSG *cbk_msg = nullptr;
 	uint32_t rc = SA_AIS_OK;
 	TRACE_ENTER();
 
 	/* Recv all the cbk notifications from the queue & process them */
 	do {
-		if (NULL == (cbk_msg = (CLMSV_MSG *)m_NCS_IPC_NON_BLK_RECEIVE(
+		if (nullptr == (cbk_msg = (CLMSV_MSG *)m_NCS_IPC_NON_BLK_RECEIVE(
 				 &hdl_rec->mbx, cbk_msg)))
 			break;
 		if (cbk_msg->info.cbk_info.type == CLMSV_TRACK_CBK ||
@@ -601,7 +602,7 @@ static uint32_t clma_hdl_cbk_dispatch_block(clma_cb_t *cb,
 	uint32_t rc = SA_AIS_OK;
 
 	for (;;) {
-		if (NULL != (cbk_msg = (CLMSV_MSG *)m_NCS_IPC_RECEIVE(
+		if (nullptr != (cbk_msg = (CLMSV_MSG *)m_NCS_IPC_RECEIVE(
 				 &hdl_rec->mbx, cbk_msg))) {
 
 			if (cbk_msg->info.cbk_info.type == CLMSV_TRACK_CBK ||
@@ -647,11 +648,13 @@ SaAisErrorT clma_hdl_cbk_dispatch(clma_cb_t *cb, clma_client_hdl_rec_t *hdl_rec,
 		break;
 
 	case SA_DISPATCH_ALL:
-		rc = clma_hdl_cbk_dispatch_all(cb, hdl_rec); /* need to do */
+		rc = static_cast<SaAisErrorT>(
+			clma_hdl_cbk_dispatch_all(cb, hdl_rec));
 		break;
 
 	case SA_DISPATCH_BLOCKING:
-		rc = clma_hdl_cbk_dispatch_block(cb, hdl_rec); /* need to do */
+		rc = static_cast<SaAisErrorT>(
+			clma_hdl_cbk_dispatch_block(cb, hdl_rec));
 		break;
 
 	default:
@@ -671,17 +674,17 @@ void clma_add_to_async_cbk_msg_list(CLMSV_MSG **head, CLMSV_MSG *new_node)
 
 	CLMSV_MSG *temp;
 
-	if (*head == NULL) {
-		new_node->next = NULL;
+	if (*head == nullptr) {
+		new_node->next = nullptr;
 		*head = new_node;
 		TRACE("in the head");
 	} else {
 		temp = *head;
-		while (temp->next != NULL)
+		while (temp->next != nullptr)
 			temp = temp->next;
 
 		TRACE("in the tail");
-		new_node->next = NULL;
+		new_node->next = nullptr;
 		temp->next = new_node;
 	}
 	TRACE_LEAVE();
@@ -742,24 +745,24 @@ static void clma_hdl_list_del(clma_client_hdl_rec_t **list)
 {
 	clma_client_hdl_rec_t *client_hdl;
 
-	while ((client_hdl = *list) != NULL) {
+	while ((client_hdl = *list) != nullptr) {
 		*list = client_hdl->next;
 		ncshm_destroy_hdl(NCS_SERVICE_ID_CLMA, client_hdl->local_hdl);
 
 		free(client_hdl);
-		client_hdl = 0;
+		client_hdl = nullptr;
 	}
 }
 
 /*
  * To enable tracing early in saClmInitialize, use a GCC constructor
  */
-__attribute__((constructor)) static void logtrace_init_constructor(void)
+__attribute__((constructor)) static void logtrace_init_constructor()
 {
 	char *value;
 
 	/* Initialize trace system first of all so we can see what is going. */
-	if ((value = getenv("CLMSV_TRACE_PATHNAME")) != NULL) {
+	if ((value = getenv("CLMSV_TRACE_PATHNAME")) != nullptr) {
 		if (logtrace_init("clma", value, CATEGORY_ALL) != 0) {
 			/* error, we cannot do anything */
 			return;

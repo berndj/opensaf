@@ -18,24 +18,23 @@
  */
 
 #include "osaf/configmake.h"
-
-#include "clms.h"
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <pthread.h>
-#include <inttypes.h>
-#include <unistd.h>
 #include <limits.h>
-#include <sys/time.h>
+#include <pthread.h>
 #include <sys/resource.h>
+#include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/stat.h>
+#include <unistd.h>
+#include <cerrno>
+#include <cinttypes>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include "base/logtrace.h"
 #include "base/ncsgl_defs.h"
 #include "base/osaf_utility.h"
+#include "clm/clmd/clms.h"
 
 static uint32_t process_api_evt(CLMSV_CLMS_EVT *evt);
 static uint32_t proc_clma_updn_mds_msg(CLMSV_CLMS_EVT *evt);
@@ -90,14 +89,14 @@ static char scale_out_path_env[] = "PATH=" SCALE_OUT_PATH_ENV;
  * Clear any pending clma_down records or node_down list
  *
  */
-static void clms_process_clma_down_list(void)
+static void clms_process_clma_down_list()
 {
 
 	TRACE_ENTER();
 	if (clms_cb->ha_state == SA_AMF_HA_ACTIVE) {
 		/* Process The Agent Downs during the role change */
-		CLMA_DOWN_LIST *clma_down_rec = NULL;
-		CLMA_DOWN_LIST *temp_clma_down_rec = NULL;
+		CLMA_DOWN_LIST *clma_down_rec = nullptr;
+		CLMA_DOWN_LIST *temp_clma_down_rec = nullptr;
 
 		clma_down_rec = clms_cb->clma_down_list_head;
 		while (clma_down_rec) {
@@ -105,13 +104,13 @@ static void clms_process_clma_down_list(void)
 			/* Free the CLMA_DOWN_REC */
 			/* Remove this CLMA entry from our processing lists */
 			temp_clma_down_rec = clma_down_rec;
-			(void)clms_client_delete_by_mds_dest(
+			clms_client_delete_by_mds_dest(
 			    clma_down_rec->mds_dest);
 			clma_down_rec = clma_down_rec->next;
 			free(temp_clma_down_rec);
 		}
-		clms_cb->clma_down_list_head = NULL;
-		clms_cb->clma_down_list_tail = NULL;
+		clms_cb->clma_down_list_head = nullptr;
+		clms_cb->clma_down_list_tail = nullptr;
 
 		/*Process pending admin op for each node,walk thru node list to
 		 * find if any pending admin op */
@@ -136,7 +135,7 @@ CLMS_CLIENT_INFO *clms_client_get_by_id(uint32_t client_id)
 	rec = (CLMS_CLIENT_INFO *)ncs_patricia_tree_get(
 	    &clms_cb->client_db, (uint8_t *)&client_id_net);
 
-	if (NULL == rec)
+	if (nullptr == rec)
 		TRACE("client_id: %u not found", client_id);
 
 	return rec;
@@ -154,12 +153,12 @@ CLMS_CLIENT_INFO *clms_client_getnext_by_id(uint32_t client_id)
 	CLMS_CLIENT_INFO *rec;
 
 	if (client_id == 0) {
-		rec = (CLMS_CLIENT_INFO *)ncs_patricia_tree_getnext(
-		    &clms_cb->client_db, (uint8_t *)0);
+		rec = reinterpret_cast<CLMS_CLIENT_INFO*>(ncs_patricia_tree_getnext(
+		    &clms_cb->client_db, nullptr));
 	} else {
 		client_id_net = m_NCS_OS_HTONL(client_id);
-		rec = (CLMS_CLIENT_INFO *)ncs_patricia_tree_getnext(
-		    &clms_cb->client_db, (uint8_t *)&client_id_net);
+		rec = reinterpret_cast<CLMS_CLIENT_INFO*>(ncs_patricia_tree_getnext(
+		    &clms_cb->client_db, reinterpret_cast<uint8_t*>(&client_id_net)));
 	}
 
 	return rec;
@@ -176,7 +175,7 @@ CLMS_CLIENT_INFO *clms_client_getnext_by_id(uint32_t client_id)
 uint32_t clms_client_delete_by_mds_dest(MDS_DEST mds_dest)
 {
 	uint32_t rc = 0;
-	CLMS_CLIENT_INFO *client = NULL;
+	CLMS_CLIENT_INFO *client = nullptr;
 	uint32_t client_id;
 
 	TRACE_ENTER2("mds_dest %" PRIx64, mds_dest);
@@ -184,7 +183,7 @@ uint32_t clms_client_delete_by_mds_dest(MDS_DEST mds_dest)
 	client = (CLMS_CLIENT_INFO *)ncs_patricia_tree_getnext(
 	    &clms_cb->client_db, (uint8_t *)0);
 
-	while (client != NULL) {
+	while (client != nullptr) {
 		/** Store the client_id for get Next  */
 		client_id = m_NCS_OS_HTONL(client->client_id);
 		if (m_NCS_MDS_DEST_EQUAL(&client->mds_dest, &mds_dest)) {
@@ -223,7 +222,7 @@ uint32_t clms_client_delete(uint32_t client_id)
 
 	TRACE_ENTER2("client_id %u", client_id);
 
-	if ((client = clms_client_get_by_id(client_id)) == NULL) {
+	if ((client = clms_client_get_by_id(client_id)) == nullptr) {
 		status = 1;
 		goto done;
 	}
@@ -254,11 +253,12 @@ done:
  */
 CLMS_CLIENT_INFO *clms_client_new(MDS_DEST mds_dest, uint32_t client_id)
 {
-	CLMS_CLIENT_INFO *client = NULL;
+	CLMS_CLIENT_INFO *client = nullptr;
 
 	TRACE_ENTER2("MDS dest %" PRIx64, mds_dest);
 
-	if (NULL == (client = calloc(1, sizeof(CLMS_CLIENT_INFO)))) {
+	if (nullptr == (client = static_cast<CLMS_CLIENT_INFO*>(
+			     calloc(1, sizeof(CLMS_CLIENT_INFO))))) {
 		LOG_ER("clms_client_new calloc FAILED");
 		goto done;
 	}
@@ -281,7 +281,7 @@ CLMS_CLIENT_INFO *clms_client_new(MDS_DEST mds_dest, uint32_t client_id)
 		LOG_WA("FAILED: ncs_patricia_tree_add, client_id %u",
 		       client_id);
 		free(client);
-		client = NULL;
+		client = nullptr;
 		goto done;
 	}
 
@@ -308,7 +308,7 @@ static void execute_scale_out_script(int argc, char *argv[], char clm_ifs)
 	char ifs[10];
 
 	TRACE_ENTER();
-	osafassert(argc >= 1 && argv[argc] == NULL);
+	osafassert(argc >= 1 && argv[argc] == nullptr);
 	LOG_NO("Running script %s to scale out %d node(s), clm_ifs: [%c] ",
 		argv[0], argc - 1, clm_ifs);
 
@@ -331,7 +331,7 @@ static void execute_scale_out_script(int argc, char *argv[], char clm_ifs)
 		snprintf(ifs,  sizeof(ifs), "CLM_IFS=%c", clm_ifs);
 		env[0] = scale_out_path_env;
 		env[1] = ifs;
-		env[2] = NULL;
+		env[2] = nullptr;
 		execve(argv[0], argv, env);
 		_Exit(123);
 	} else if (child_pid != (pid_t)-1) {
@@ -391,7 +391,7 @@ static void *scale_out_thread(void *arg)
 		for (size_t i = 0; i != (no_of_pending_nodes + 1); ++i) {
 			argv[i + 1] = cb->pending_nodes[i];
 			cb->inprogress_node_ids[i] = cb->pending_node_ids[i];
-			cb->pending_nodes[i] = NULL;
+			cb->pending_nodes[i] = nullptr;
 		}
 		cb->no_of_pending_nodes = 0;
 		cb->no_of_inprogress_nodes = no_of_pending_nodes;
@@ -410,7 +410,7 @@ static void *scale_out_thread(void *arg)
 	}
 	LOG_IN("Scale out thread terminating");
 	TRACE_LEAVE();
-	return NULL;
+	return nullptr;
 }
 
 /*
@@ -521,7 +521,7 @@ static void scale_out_node(CLMS_CB *cb,
 			       " (%s)",
 			       nodeup_info->node_id, node_name);
 			osafassert(cb->pending_nodes[no_of_pending_nodes] ==
-				   NULL);
+				   nullptr);
 			cb->pending_nodes[no_of_pending_nodes] = strp;
 			cb->pending_node_ids[no_of_pending_nodes] =
 			    nodeup_info->node_id;
@@ -571,7 +571,7 @@ uint32_t proc_node_up_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 	IPLIST *ip = (IPLIST *)ncs_patricia_tree_get(&clms_cb->iplist,
 						     (uint8_t *)&nodeid);
 
-	if (ip != NULL && ip->addr.length != 0 &&
+	if (ip != nullptr && ip->addr.length != 0 &&
 	    nodeup_info->no_of_addresses == 0) {
 		nodeup_info->no_of_addresses = 1;
 		memcpy(&(nodeup_info->address), &(ip->addr), sizeof(ip->addr));
@@ -580,7 +580,7 @@ uint32_t proc_node_up_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 	CLMS_CLUSTER_NODE *node = clms_node_get_by_name(&node_name);
 	clm_msg.info.api_resp_info.rc = SA_AIS_OK;
 
-	if (node == NULL) {
+	if (node == nullptr) {
 		/* The /etc/opensaf/node_name is an user exposed configuration
 		 * file. The node_name file contains the RDN value of the CLM
 		 * node name. (a) When opensaf cluster configuration is
@@ -591,7 +591,7 @@ uint32_t proc_node_up_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 		 * /etc/opensaf/node_name should contain the rdn value.
 		 */
 		struct stat buf;
-		if (cb->scale_out_script != NULL &&
+		if (cb->scale_out_script != nullptr &&
 		    stat(cb->scale_out_script, &buf) == 0 &&
 		    S_ISREG(buf.st_mode) &&
 		    (buf.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0) {
@@ -605,9 +605,9 @@ uint32_t proc_node_up_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 		}
 	}
 
-	if (node != NULL) {
+	if (node != nullptr) {
 		/* Retrieve IP information */
-		if (ip == NULL) {
+		if (ip == nullptr) {
 			clm_msg.info.api_resp_info.rc = SA_AIS_ERR_NOT_EXIST;
 			LOG_ER(
 			    "IP information not found for: %s with node_id: %u",
@@ -659,7 +659,7 @@ uint32_t proc_node_up_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 		if (rc != NCSCC_RC_SUCCESS)
 			LOG_NO("%s: send failed. dest:%" PRIx64, __FUNCTION__,
 			       evt->fr_dest);
-		/*as this is failure case of node == NULL, making rc = success
+		/*as this is failure case of node == nullptr, making rc = success
 		 * to avoid irrelevant error from process_api_evt() */
 		rc = NCSCC_RC_SUCCESS;
 		goto done;
@@ -685,7 +685,7 @@ uint32_t proc_node_up_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 
 	/* Self Node needs to be added tp patricia tree before hand during init
 	 */
-	if (NULL == clms_node_get_by_id(nodeid)) {
+	if (nullptr == clms_node_get_by_id(nodeid)) {
 		node->node_id = nodeup_info->node_id;
 
 		TRACE("node->node_id %u node->nodeup %d", node->node_id,
@@ -705,7 +705,8 @@ uint32_t proc_node_up_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 		memcpy(&(node->node_addr), &(nodeup_info->address),
 		       sizeof(nodeup_info->address));
 	} else {			    /* AF_TIPC */
-		node->node_addr.family = 1; /* For backward compatibility */
+		/* For backward compatibility */
+		node->node_addr.family = SA_CLM_AF_INET;
 		node->node_addr.length = 0;
 	}
 
@@ -762,13 +763,13 @@ static uint32_t proc_node_lock_tmr_exp_msg(CLMSV_CLMS_EVT *evt)
 {
 	uint32_t rc = NCSCC_RC_SUCCESS;
 	SaNameT node_name = {0};
-	CLMS_CLUSTER_NODE *op_node = NULL;
+	CLMS_CLUSTER_NODE *op_node = nullptr;
 
 	TRACE_ENTER();
 	/*Get the node details */
 	node_name = evt->info.tmr_info.node_name;
 	op_node = clms_node_get_by_name(&node_name);
-	osafassert(op_node != NULL);
+	osafassert(op_node != nullptr);
 
 	rc = clms_node_trackresplist_empty(op_node);
 	if (rc != NCSCC_RC_SUCCESS)
@@ -793,7 +794,7 @@ done:
 
 void clms_track_send_node_down(CLMS_CLUSTER_NODE *node)
 {
-	node->nodeup = 0;
+	node->nodeup = SA_FALSE;
 	TRACE_ENTER2("MDS Down nodeup info %d", node->nodeup);
 
 	if (node->member == SA_FALSE)
@@ -906,8 +907,8 @@ done:
 static bool delete_existing_nodedown_records(SaClmNodeIdT node_id)
 {
 	NODE_DOWN_LIST *node_down_rec = clms_cb->node_down_list_head;
-	NODE_DOWN_LIST *prev_rec = NULL;
-	NODE_DOWN_LIST *remove_rec = NULL;
+	NODE_DOWN_LIST *prev_rec = nullptr;
+	NODE_DOWN_LIST *remove_rec = nullptr;
 	bool found = false;
 	TRACE_ENTER();
 
@@ -931,7 +932,7 @@ static bool delete_existing_nodedown_records(SaClmNodeIdT node_id)
 
 			/* Remove the node down entry */
 			if (prev_rec ==
-			    NULL) { /* Must be the first entry that is removed
+			    nullptr) { /* Must be the first entry that is removed
 				     */
 				clms_cb->node_down_list_head =
 				    node_down_rec->next;
@@ -948,7 +949,7 @@ static bool delete_existing_nodedown_records(SaClmNodeIdT node_id)
 			node_down_rec = node_down_rec->next;
 		}
 	}
-	/* prev_rec points to the last entry or NULL in case list is empty or
+	/* prev_rec points to the last entry or nullptr in case list is empty or
 	 * the only entry was removed */
 	clms_cb->node_down_list_tail = prev_rec;
 
@@ -967,13 +968,13 @@ static bool delete_existing_nodedown_records(SaClmNodeIdT node_id)
 static uint32_t proc_mds_node_evt(CLMSV_CLMS_EVT *evt)
 {
 	uint32_t rc = NCSCC_RC_SUCCESS;
-	CLMS_CLUSTER_NODE *node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr;
 	SaUint32T node_id = evt->info.node_mds_info.node_id;
 	TRACE_ENTER();
 
 	node = clms_node_get_by_id(node_id);
 
-	if (node == NULL) {
+	if (node == nullptr) {
 		LOG_IN("Node %d doesn't exist", node_id);
 		rc = NCSCC_RC_FAILURE;
 		goto done;
@@ -1001,8 +1002,8 @@ static uint32_t proc_mds_node_evt(CLMSV_CLMS_EVT *evt)
 			TRACE(
 			    "Adding the node_down record for node: %u to the list",
 			    node_id);
-			NODE_DOWN_LIST *node_down_rec = NULL;
-			if (NULL == (node_down_rec = (NODE_DOWN_LIST *)malloc(
+			NODE_DOWN_LIST *node_down_rec = nullptr;
+			if (nullptr == (node_down_rec = (NODE_DOWN_LIST *)malloc(
 					 sizeof(NODE_DOWN_LIST)))) {
 				rc = SA_AIS_ERR_NO_MEMORY;
 				LOG_ER(
@@ -1011,7 +1012,7 @@ static uint32_t proc_mds_node_evt(CLMSV_CLMS_EVT *evt)
 			}
 			memset(node_down_rec, 0, sizeof(NODE_DOWN_LIST));
 			node_down_rec->node_id = node_id;
-			if (clms_cb->node_down_list_head == NULL) {
+			if (clms_cb->node_down_list_head == nullptr) {
 				clms_cb->node_down_list_head = node_down_rec;
 			} else {
 				if (clms_cb->node_down_list_tail)
@@ -1051,7 +1052,7 @@ static uint32_t proc_clma_updn_mds_msg(CLMSV_CLMS_EVT *evt)
 		if ((clms_cb->ha_state == SA_AMF_HA_ACTIVE) ||
 		    (clms_cb->ha_state == SA_AMF_HA_QUIESCED)) {
 			/* Remove this CLMA entry from our processing lists */
-			(void)clms_client_delete_by_mds_dest(evt->fr_dest);
+			clms_client_delete_by_mds_dest(evt->fr_dest);
 
 			/*Send an async checkpoint update to STANDBY EDS peer */
 			if (clms_cb->ha_state == SA_AMF_HA_ACTIVE) {
@@ -1069,9 +1070,9 @@ static uint32_t proc_clma_updn_mds_msg(CLMSV_CLMS_EVT *evt)
 			}
 		} else if (clms_cb->ha_state == SA_AMF_HA_STANDBY) {
 			TRACE("Adding to the clma down list");
-			CLMA_DOWN_LIST *clma_down_rec = NULL;
+			CLMA_DOWN_LIST *clma_down_rec = nullptr;
 			if (clms_clma_entry_valid(clms_cb, evt->fr_dest)) {
-				if (NULL ==
+				if (nullptr ==
 				    (clma_down_rec = (CLMA_DOWN_LIST *)malloc(
 					 sizeof(CLMA_DOWN_LIST)))) {
 					/* Log it */
@@ -1083,7 +1084,7 @@ static uint32_t proc_clma_updn_mds_msg(CLMSV_CLMS_EVT *evt)
 				memset(clma_down_rec, 0,
 				       sizeof(CLMA_DOWN_LIST));
 				clma_down_rec->mds_dest = evt->fr_dest;
-				if (clms_cb->clma_down_list_head == NULL) {
+				if (clms_cb->clma_down_list_head == nullptr) {
 					clms_cb->clma_down_list_head =
 					    clma_down_rec;
 				} else {
@@ -1119,7 +1120,7 @@ static uint32_t proc_mds_quiesced_ack_msg(CLMSV_CLMS_EVT *evt)
 	TRACE_ENTER();
 	if (clms_cb->is_quiesced_set == true) {
 		/* Give up our IMM OI implementer role */
-		(void)immutil_saImmOiImplementerClear(clms_cb->immOiHandle);
+		immutil_saImmOiImplementerClear(clms_cb->immOiHandle);
 		clms_cb->ha_state = SA_AMF_HA_QUIESCED;
 		/* Inform MBCSV of HA state change */
 		if (clms_mbcsv_change_HA_state(clms_cb, clms_cb->ha_state) !=
@@ -1149,8 +1150,8 @@ static uint32_t proc_clm_response_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 {
 	clmsv_clm_response_param_t *param =
 	    &(evt->info.msg.info.api_info.param).clm_resp;
-	CLMS_CLUSTER_NODE *op_node = NULL;
-	CLMS_TRACK_INFO *trkrec = NULL;
+	CLMS_CLUSTER_NODE *op_node = nullptr;
+	CLMS_TRACK_INFO *trkrec = nullptr;
 	SaUint32T nodeid;
 	SaAisErrorT ais_rc = SA_AIS_OK;
 	uint32_t rc = NCSCC_RC_SUCCESS;
@@ -1160,7 +1161,7 @@ static uint32_t proc_clm_response_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 	nodeid = (SaUint32T)m_CLMSV_INV_UNPACK_NODEID(param->inv);
 	op_node = clms_node_get_by_id(nodeid);
 
-	if (op_node == NULL) {
+	if (op_node == nullptr) {
 		LOG_ER("Invalid Invocation Id in saClmResponse");
 		ais_rc = SA_AIS_ERR_INVALID_PARAM;
 		rc = clms_ack_to_response_msg(cb, evt, ais_rc);
@@ -1182,7 +1183,7 @@ static uint32_t proc_clm_response_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 	trkrec = (CLMS_TRACK_INFO *)ncs_patricia_tree_get(
 	    &op_node->trackresp, (uint8_t *)&param->inv);
 
-	if (trkrec == NULL) {
+	if (trkrec == nullptr) {
 		LOG_ER("Invalid Invocation Id in saClmResponse");
 		ais_rc = SA_AIS_ERR_INVALID_PARAM;
 		rc = clms_ack_to_response_msg(cb, evt, ais_rc);
@@ -1252,7 +1253,7 @@ static uint32_t proc_track_start_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 	clmsv_track_start_param_t *param =
 	    &(evt->info.msg.info.api_info.param).track_start;
 	CLMS_CLIENT_INFO *client;
-	CLMS_CLUSTER_NODE *node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr;
 	CLMS_CKPT_REC ckpt;
 	SaAisErrorT ais_rc = SA_AIS_OK;
 	/*SaUint32T  node_id = evt->info.mds_info.node_id; */
@@ -1262,13 +1263,13 @@ static uint32_t proc_track_start_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 
 	node = clms_node_get_by_id(node_id);
 	TRACE("Node id = %d", node_id);
-	if (node == NULL) {
+	if (node == nullptr) {
 		TRACE("Client is tracking on an unconfigured node");
 		ais_rc = SA_AIS_ERR_UNAVAILABLE;
 	}
 
 	client = clms_client_get_by_id(param->client_id);
-	if (client == NULL) {
+	if (client == nullptr) {
 		TRACE("Bad client %d", param->client_id);
 		ais_rc = SA_AIS_ERR_BAD_HANDLE;
 	} else {
@@ -1291,7 +1292,7 @@ static uint32_t proc_track_start_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 	}
 
 	/*Send only the local node data */
-	if (client != NULL) {
+	if (client != nullptr) {
 		if ((client->track_flags & SA_TRACK_LOCAL) &&
 		    (client->track_flags & SA_TRACK_CURRENT)) {
 
@@ -1308,7 +1309,7 @@ static uint32_t proc_track_start_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 
 		} else if (client->track_flags & SA_TRACK_CURRENT) {
 			TRACE("Send response for SA_TRACK_CURRENT");
-			if (node != NULL) {
+			if (node != nullptr) {
 				if (node->member == SA_FALSE) {
 					TRACE(
 					    "Send reponse when the node is not a cluster member");
@@ -1320,7 +1321,7 @@ static uint32_t proc_track_start_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 					TRACE(
 					    "Send response for the node being cluster member");
 					rc = clms_track_current_resp(
-					    cb, NULL, param->sync_resp,
+					    cb, nullptr, param->sync_resp,
 					    &evt->fr_dest, &evt->mds_ctxt,
 					    param->client_id, ais_rc);
 				}
@@ -1335,7 +1336,7 @@ static uint32_t proc_track_start_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 		}
 
 		/*Checkpoint the client trackflags */
-		if ((client != NULL) && (cb->ha_state == SA_AMF_HA_ACTIVE) &&
+		if ((client != nullptr) && (cb->ha_state == SA_AMF_HA_ACTIVE) &&
 		    (ais_rc == SA_AIS_OK)) {
 
 			memset(&ckpt, 0, sizeof(CLMS_CKPT_REC));
@@ -1370,18 +1371,18 @@ static uint32_t proc_track_stop_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 	uint32_t rc = NCSCC_RC_SUCCESS;
 	clmsv_track_stop_param_t *param =
 	    &(evt->info.msg.info.api_info.param).track_stop;
-	CLMS_CLIENT_INFO *client = NULL;
+	CLMS_CLIENT_INFO *client = nullptr;
 	SaAisErrorT ais_rc = SA_AIS_OK;
 	CLMSV_MSG clm_msg;
 	CLMS_CKPT_REC ckpt;
 	SaUint32T node_id = m_NCS_NODE_ID_FROM_MDS_DEST(evt->fr_dest);
-	CLMS_CLUSTER_NODE *node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr;
 
 	TRACE_ENTER();
 
 	node = clms_node_get_by_id(node_id);
 	TRACE("Node id = %d", node_id);
-	if (node == NULL) {
+	if (node == nullptr) {
 		LOG_IN("Client tracking on an unconfigured node:nodeid = %d",
 		       node_id);
 		ais_rc = SA_AIS_ERR_UNAVAILABLE;
@@ -1390,7 +1391,7 @@ static uint32_t proc_track_stop_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 
 	client = clms_client_get_by_id(param->client_id);
 
-	if (client == NULL) {
+	if (client == nullptr) {
 		LOG_IN("Invalid Client ID:client_id = %d", param->client_id);
 		ais_rc = SA_AIS_ERR_BAD_HANDLE;
 		goto snd_rsp;
@@ -1451,7 +1452,7 @@ static uint32_t proc_node_get_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 	clmsv_node_get_param_t *param =
 	    &(evt->info.msg.info.api_info.param).node_get;
 	CLMSV_MSG clm_msg;
-	CLMS_CLUSTER_NODE *node = NULL, *local_node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr, *local_node = nullptr;
 	SaClmNodeIdT nodeid, local_nodeid;
 	SaAisErrorT ais_rc = SA_AIS_OK;
 
@@ -1536,7 +1537,7 @@ static uint32_t proc_node_get_async_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 	clmsv_node_get_async_param_t *param =
 	    &(evt->info.msg.info.api_info.param).node_get_async;
 	CLMSV_MSG clm_msg;
-	CLMS_CLUSTER_NODE *node = NULL, *local_node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr, *local_node = nullptr;
 	SaClmNodeIdT nodeid, local_nodeid;
 	SaAisErrorT ais_rc = SA_AIS_OK;
 
@@ -1623,7 +1624,7 @@ static uint32_t proc_node_get_async_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 	TRACE_LEAVE();
 
 	/*Send the valid node info to clma */
-	return clms_mds_msg_send(cb, &clm_msg, &evt->fr_dest, 0,
+	return clms_mds_msg_send(cb, &clm_msg, &evt->fr_dest, nullptr,
 				 MDS_SEND_PRIORITY_MEDIUM, NCSMDS_SVC_ID_CLMA);
 }
 
@@ -1642,7 +1643,7 @@ static uint32_t proc_initialize_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 	CLMS_CLIENT_INFO *client;
 	CLMSV_MSG msg;
 	SaUint32T node_id = m_NCS_NODE_ID_FROM_MDS_DEST(evt->fr_dest);
-	CLMS_CLUSTER_NODE *node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr;
 
 	TRACE_ENTER2("dest %" PRIx64, evt->fr_dest);
 
@@ -1654,7 +1655,7 @@ static uint32_t proc_initialize_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 
 	node = clms_node_get_by_id(node_id);
 	TRACE("Node id = %d", node_id);
-	if (node == NULL) {
+	if (node == nullptr) {
 		LOG_IN(
 		    "Initialize request of client on an unconfigured node: node_id = %d",
 		    node_id);
@@ -1662,7 +1663,7 @@ static uint32_t proc_initialize_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 	}
 
 	if ((client = clms_client_new(evt->fr_dest, clms_cb->last_client_id)) ==
-	    NULL) {
+	    nullptr) {
 		TRACE("Creating a new client failed");
 		ais_rc = SA_AIS_ERR_NO_MEMORY;
 	}
@@ -1670,7 +1671,7 @@ static uint32_t proc_initialize_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 	msg.evt_type = CLMSV_CLMS_TO_CLMA_API_RESP_MSG;
 	msg.info.api_resp_info.type = CLMSV_INITIALIZE_RESP;
 	msg.info.api_resp_info.rc = ais_rc;
-	if (client != NULL)
+	if (client != nullptr)
 		msg.info.api_resp_info.param.client_id = client->client_id;
 
 	rc = clms_mds_msg_send(cb, &msg, &evt->fr_dest, &evt->mds_ctxt,
@@ -1678,7 +1679,7 @@ static uint32_t proc_initialize_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 	if (rc != NCSCC_RC_SUCCESS) {
 		LOG_NO("%s: send failed. dest:%" PRIx64, __FUNCTION__,
 		       evt->fr_dest);
-		if (client != NULL)
+		if (client != nullptr)
 			clms_client_delete(client->client_id);
 		return rc;
 	}
@@ -1686,7 +1687,7 @@ static uint32_t proc_initialize_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 	if (node) {
 		if (node->member == false) {
 			rc = clms_send_is_member_info(clms_cb, node->node_id,
-						      node->member, true);
+						      node->member, SA_TRUE);
 			if (rc != NCSCC_RC_SUCCESS) {
 				TRACE("clms_send_is_member_info %u", rc);
 				return rc;
@@ -1694,7 +1695,7 @@ static uint32_t proc_initialize_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt)
 		}
 	}
 
-	if (client != NULL) {
+	if (client != nullptr) {
 
 		if ((cb->ha_state == SA_AMF_HA_ACTIVE) &&
 		    (ais_rc == SA_AIS_OK)) {
@@ -1831,7 +1832,7 @@ void clms_process_mbx(SYSF_MBX *mbx)
 
 	msg = (CLMSV_CLMS_EVT *)ncs_ipc_non_blk_recv(mbx);
 
-	if (msg == NULL) {
+	if (msg == nullptr) {
 		LOG_ER("No mbx message although indicated in fd");
 		goto done;
 	}
@@ -1913,7 +1914,7 @@ static void clms_track_current_apiresp(SaAisErrorT ais_rc, uint32_t num_mem,
 		msg.info.api_resp_info.param.track.notify_info->numberOfItems =
 		    0;
 		msg.info.api_resp_info.param.track.notify_info->notification =
-		    NULL;
+		    nullptr;
 	} else {
 		msg.info.api_resp_info.param.track.notify_info->numberOfItems =
 		    num_mem;
@@ -1973,13 +1974,13 @@ static void clms_send_track_current_cbkresp(SaAisErrorT ais_rc,
 
 	if (ais_rc != SA_AIS_OK) {
 		msg.info.cbk_info.param.track.buf_info.numberOfItems = 0;
-		msg.info.cbk_info.param.track.buf_info.notification = NULL;
+		msg.info.cbk_info.param.track.buf_info.notification = nullptr;
 	} else {
 		msg.info.cbk_info.param.track.buf_info.numberOfItems = num_mem;
 		msg.info.cbk_info.param.track.buf_info.notification = notify;
 	}
 
-	rc = clms_mds_msg_send(clms_cb, &msg, dest, NULL,
+	rc = clms_mds_msg_send(clms_cb, &msg, dest, nullptr,
 			       MDS_SEND_PRIORITY_MEDIUM, NCSMDS_SVC_ID_CLMA);
 	if (rc != NCSCC_RC_SUCCESS) {
 		LOG_NO("%s: send failed. dest:%" PRIx64, __FUNCTION__, *dest);
@@ -1997,7 +1998,7 @@ static void clms_send_track_current_cbkresp(SaAisErrorT ais_rc,
  * @param[in]  sync_resp  - Indication for synchronous/asynchronous call
  * @param[in]  dest       - mds_dest to send
  * @param[in]  client     - the client which requested for tracking
- * @param[in]  node       - node = NULL ==> track info only for local node else
+ * @param[in]  node       - node = nullptr ==> track info only for local node else
  *all nodes
  * @param[in]  ctxt       - context for sync call
  * @param[in]  ais_rc     - return value to sent to clma
@@ -2010,8 +2011,8 @@ static uint32_t clms_track_current_resp(CLMS_CB *cb, CLMS_CLUSTER_NODE *node,
 					uint32_t client_id, SaAisErrorT ais_rc)
 {
 
-	SaClmClusterNotificationT_4 *notify = NULL;
-	CLMS_CLUSTER_NODE *rp = NULL;
+	SaClmClusterNotificationT_4 *notify = nullptr;
+	CLMS_CLUSTER_NODE *rp = nullptr;
 	uint32_t rc = NCSCC_RC_SUCCESS, i = 0;
 	uint32_t num_mem = 0;
 	SaUint32T node_id = 0;
@@ -2035,7 +2036,7 @@ static uint32_t clms_track_current_resp(CLMS_CB *cb, CLMS_CLUSTER_NODE *node,
 		memset(notify, 0,
 		       num_mem * sizeof(SaClmClusterNotificationT_4));
 
-		while (((rp = clms_node_getnext_by_id(node_id)) != NULL) &&
+		while (((rp = clms_node_getnext_by_id(node_id)) != nullptr) &&
 		       (i < num_mem)) {
 			node_id = rp->node_id;
 			if (rp->member == SA_TRUE) {
@@ -2149,20 +2150,20 @@ snd_rsp:
 uint32_t clms_remove_clma_down_rec(CLMS_CB *cb, MDS_DEST mds_dest)
 {
 	CLMA_DOWN_LIST *clma_down_rec = cb->clma_down_list_head;
-	CLMA_DOWN_LIST *prev = NULL;
+	CLMA_DOWN_LIST *prev = nullptr;
 	while (clma_down_rec) {
 		if (m_NCS_MDS_DEST_EQUAL(&clma_down_rec->mds_dest, &mds_dest)) {
 			/* Remove the CLMA entry */
 			/* Reset pointers */
 			if (clma_down_rec ==
 			    cb->clma_down_list_head) { /* 1st in the list? */
-				if (clma_down_rec->next == NULL) {
+				if (clma_down_rec->next == nullptr) {
 					/* Only one in the list? */
 					cb->clma_down_list_head =
-					    NULL; /* Clear head sublist pointer
+					    nullptr; /* Clear head sublist pointer
 						   */
 					cb->clma_down_list_tail =
-					    NULL; /* Clear tail sublist pointer
+					    nullptr; /* Clear tail sublist pointer
 						   */
 				} else {
 					/* 1st but not only one */
@@ -2172,7 +2173,7 @@ uint32_t clms_remove_clma_down_rec(CLMS_CB *cb, MDS_DEST mds_dest)
 				}
 			} else {
 				if (prev) {
-					if (clma_down_rec->next == NULL)
+					if (clma_down_rec->next == nullptr)
 						cb->clma_down_list_tail = prev;
 					prev->next =
 					    clma_down_rec->next; /* Link
@@ -2183,7 +2184,7 @@ uint32_t clms_remove_clma_down_rec(CLMS_CB *cb, MDS_DEST mds_dest)
 
 			/* Free the CLMA_DOWN_REC */
 			free(clma_down_rec);
-			clma_down_rec = NULL;
+			clma_down_rec = nullptr;
 			break;
 		}
 		prev = clma_down_rec; /* Remember address of this entry */
@@ -2205,7 +2206,7 @@ uint32_t clms_remove_clma_down_rec(CLMS_CB *cb, MDS_DEST mds_dest)
 void clms_remove_node_down_rec(SaClmNodeIdT node_id)
 {
 	NODE_DOWN_LIST *node_down_rec = clms_cb->node_down_list_head;
-	NODE_DOWN_LIST *prev_rec = NULL;
+	NODE_DOWN_LIST *prev_rec = nullptr;
 	bool record_found = false;
 	TRACE_ENTER();
 
@@ -2216,13 +2217,13 @@ void clms_remove_node_down_rec(SaClmNodeIdT node_id)
 			if (node_down_rec ==
 			    clms_cb
 				->node_down_list_head) { /* 1st in the list? */
-				if (node_down_rec->next == NULL) {
+				if (node_down_rec->next == nullptr) {
 					/* Only one in the list? */
 					clms_cb->node_down_list_head =
-					    NULL; /* Clear head sublist pointer
+					    nullptr; /* Clear head sublist pointer
 						   */
 					clms_cb->node_down_list_tail =
-					    NULL; /* Clear tail sublist pointer
+					    nullptr; /* Clear tail sublist pointer
 						   */
 				} else {
 					/* 1st but not only one */
@@ -2232,7 +2233,7 @@ void clms_remove_node_down_rec(SaClmNodeIdT node_id)
 				}
 			} else {
 				if (prev_rec) {
-					if (node_down_rec->next == NULL)
+					if (node_down_rec->next == nullptr)
 						clms_cb->node_down_list_tail =
 						    prev_rec;
 					prev_rec->next =
@@ -2244,7 +2245,7 @@ void clms_remove_node_down_rec(SaClmNodeIdT node_id)
 
 			/* Free the NODE_DOWN_REC */
 			free(node_down_rec);
-			node_down_rec = NULL;
+			node_down_rec = nullptr;
 			record_found = true;
 			break;
 		}
@@ -2262,15 +2263,15 @@ void clms_remove_node_down_rec(SaClmNodeIdT node_id)
 		 * MDS_DOWN is recieved, then role change processing just
 		 * ignores the record and removes it from the list.
 		 */
-		node_down_rec = NULL;
+		node_down_rec = nullptr;
 		if ((node_down_rec = (NODE_DOWN_LIST *)malloc(
-			 sizeof(NODE_DOWN_LIST))) == NULL) {
+			 sizeof(NODE_DOWN_LIST))) == nullptr) {
 			LOG_CR("Memory Allocation for NODE_DOWN_LIST failed");
 			return;
 		}
 		memset(node_down_rec, 0, sizeof(NODE_DOWN_LIST));
 		node_down_rec->node_id = node_id;
-		if (clms_cb->node_down_list_head == NULL) {
+		if (clms_cb->node_down_list_head == nullptr) {
 			clms_cb->node_down_list_head = node_down_rec;
 		} else {
 			if (clms_cb->node_down_list_tail)
@@ -2292,7 +2293,7 @@ void clms_remove_node_down_rec(SaClmNodeIdT node_id)
  */
 void clms_evt_destroy(CLMSV_CLMS_EVT *evt)
 {
-	osafassert(evt != NULL);
+	osafassert(evt != nullptr);
 	if (evt->info.msg.info.api_info.type == CLMSV_CLUSTER_JOIN_REQ) {
 		TRACE("not calloced in server code,don't free it here");
 	} else
@@ -2326,11 +2327,11 @@ static uint32_t clms_ack_to_response_msg(CLMS_CB *cb, CLMSV_CLMS_EVT *evt,
 	return mds_rc;
 }
 
-void proc_downs_during_rolechange(void)
+void proc_downs_during_rolechange()
 {
-	NODE_DOWN_LIST *node_down_rec = NULL;
-	NODE_DOWN_LIST *temp_node_down_rec = NULL;
-	CLMS_CLUSTER_NODE *node = NULL;
+	NODE_DOWN_LIST *node_down_rec = nullptr;
+	NODE_DOWN_LIST *temp_node_down_rec = nullptr;
+	CLMS_CLUSTER_NODE *node = nullptr;
 	TRACE_ENTER();
 
 	/* Process The NodeDowns that occurred during the role change */
@@ -2345,15 +2346,15 @@ void proc_downs_during_rolechange(void)
 		 * rare chance, but good to have protection for it, by ignoring
 		 * the record if the record is in CHECKPOINT_PROCESSED state.
 		 */
-		if ((node != NULL) &&
+		if ((node != nullptr) &&
 		    (temp_node_down_rec->ndown_status != CHECKPOINT_PROCESSED))
 			clms_track_send_node_down(node);
 		node_down_rec = node_down_rec->next;
 		/*Free the NODE_DOWN_REC */
 		free(temp_node_down_rec);
 	}
-	clms_cb->node_down_list_head = NULL;
-	clms_cb->node_down_list_tail = NULL;
+	clms_cb->node_down_list_head = nullptr;
+	clms_cb->node_down_list_tail = nullptr;
 
 	TRACE_LEAVE();
 }

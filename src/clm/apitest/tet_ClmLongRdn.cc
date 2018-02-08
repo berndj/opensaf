@@ -16,17 +16,17 @@
  *
  */
 
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <pthread.h>
+#include <saAis.h>
+#include <saImm.h>
+#include <saImmOi.h>
+#include <saImmOm.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <pthread.h>
-#include <saImm.h>
-#include <saImmOm.h>
-#include <saImmOi.h>
-#include <saAis.h>
-#include "clmtest.h"
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include "clm/apitest/clmtest.h"
 
 // Node name that will be compared in
 static const char *s_clmTrackCallback_node;
@@ -44,18 +44,18 @@ static int testNodeExist() {
   SaImmHandleT immHandle;
   SaImmAccessorHandleT accessorHandle;
   SaVersionT version = {'A', 2, 15};
-  const SaImmAttrNameT attributeNames[1] = {NULL};
+  const SaImmAttrNameT attributeNames[1] = {nullptr};
 
   if (s_existTestNode) {
     return s_existTestNode;
   }
 
-  safassert(saImmOmInitialize(&immHandle, NULL, &version), SA_AIS_OK);
+  safassert(saImmOmInitialize(&immHandle, nullptr, &version), SA_AIS_OK);
   safassert(saImmOmAccessorInitialize(immHandle, &accessorHandle),
             SA_AIS_OK);
 
   rc = saImmOmAccessorGet_o3(accessorHandle, s_testNodeName,
-                             attributeNames, NULL);
+                             attributeNames, nullptr);
   assert(rc == SA_AIS_OK || rc == SA_AIS_ERR_NOT_EXIST);
   if (rc == SA_AIS_ERR_NOT_EXIST) {
     s_existTestNode = -1;
@@ -74,12 +74,12 @@ static SaClmNodeIdT getClmNodeId(const char *nodeName) {
   SaImmAccessorHandleT accessorHandle;
   SaVersionT version = {'A', 2, 15};
   SaImmAttrNameT attrNodeId = const_cast<SaImmAttrNameT>("saClmNodeID");
-  SaImmAttrNameT attrNames[2] = {attrNodeId, NULL};
-  SaImmAttrValuesT_2 **attributes = NULL;
+  SaImmAttrNameT attrNames[2] = {attrNodeId, nullptr};
+  SaImmAttrValuesT_2 **attributes = nullptr;
   SaClmNodeIdT ret = 0;
   int i;
 
-  safassert(saImmOmInitialize(&immHandle, NULL, &version), SA_AIS_OK);
+  safassert(saImmOmInitialize(&immHandle, nullptr, &version), SA_AIS_OK);
   safassert(saImmOmAccessorInitialize(immHandle, &accessorHandle),
             SA_AIS_OK);
   safassert(saImmOmAccessorGet_o3(accessorHandle,
@@ -107,8 +107,8 @@ static SaClmNodeIdT isLongDNAllowed() {
   SaImmAccessorHandleT accessorHandle;
   SaVersionT version = {'A', 2, 15};
   SaImmAttrNameT attrName = const_cast<SaImmAttrNameT>("longDnsAllowed");
-  SaImmAttrNameT attrNames[2] = {attrName, NULL};
-  SaImmAttrValuesT_2 **attributes = NULL;
+  SaImmAttrNameT attrNames[2] = {attrName, nullptr};
+  SaImmAttrValuesT_2 **attributes = nullptr;
   SaConstStringT immObjectName =
       "opensafImm=opensafImm,safApp=safImmService";
   int i;
@@ -117,7 +117,7 @@ static SaClmNodeIdT isLongDNAllowed() {
     return s_longDnAllowed;
   }
 
-  safassert(saImmOmInitialize(&immHandle, NULL, &version), SA_AIS_OK);
+  safassert(saImmOmInitialize(&immHandle, nullptr, &version), SA_AIS_OK);
   safassert(saImmOmAccessorInitialize(immHandle, &accessorHandle),
             SA_AIS_OK);
   safassert(saImmOmAccessorGet_o3(accessorHandle, immObjectName,
@@ -140,7 +140,7 @@ static SaClmNodeIdT isLongDNAllowed() {
   return s_longDnAllowed;
 }
 
-static void skipTest(void) { printf("       SKIPPED"); }
+static void skipTest() { printf("       SKIPPED"); }
 
 static void nodeGetCallBack(SaInvocationT invocation,
 			    const SaClmClusterNodeT *clusterNode,
@@ -237,13 +237,13 @@ static void remove_node(const char *nodename) {
   assert(rc != -1);
 }
 
-static void saClmLongRdn_01(void) {
+static void saClmLongRdn_01() {
   SaImmHandleT immHandle;
   SaImmAdminOwnerHandleT ownerHandle;
   SaImmCcbHandleT ccbHandle;
   SaImmAdminOwnerNameT ownerName = (SaImmAdminOwnerNameT) __FUNCTION__;
   SaConstStringT parent = "safCluster=myClmCluster";
-  SaConstStringT parentNames[] = {parent, NULL};
+  SaConstStringT parentNames[] = {parent, nullptr};
   // hostname is 63 character long
   SaConstStringT nodeName =
       "safNode=PL-ABCDEFGHIJ12345678901234567890123456789012345678901234567890,"
@@ -256,7 +256,7 @@ static void saClmLongRdn_01(void) {
     return;
   }
 
-  safassert(saImmOmInitialize(&immHandle, NULL, &version), SA_AIS_OK);
+  safassert(saImmOmInitialize(&immHandle, nullptr, &version), SA_AIS_OK);
   safassert(saImmOmAdminOwnerInitialize(immHandle, ownerName, SA_TRUE,
                                         &ownerHandle),
             SA_AIS_OK);
@@ -268,7 +268,7 @@ static void saClmLongRdn_01(void) {
   safassert(
       saImmOmCcbObjectCreate_o3(ccbHandle,
                                 const_cast<SaImmClassNameT>("SaClmNode"),
-                                nodeName, NULL),
+                                nodeName, nullptr),
       SA_AIS_OK);
 
   rc = saImmOmCcbApply(ccbHandle);
@@ -282,7 +282,7 @@ static void saClmLongRdn_01(void) {
   remove_node((char *)nodeName);
 }
 
-void saClmLongRdn_02(void) {
+void saClmLongRdn_02() {
   struct pollfd fds[1];
   int rc;
   const char *nodeName = s_testNodeName;
@@ -303,7 +303,7 @@ void saClmLongRdn_02(void) {
             SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack_4(clmHandle, trackFlags, nullptr);
   if (rc != SA_AIS_OK) {
     safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
     // Failed at saClmClusterTrack_4
@@ -336,7 +336,7 @@ void saClmLongRdn_02(void) {
   unlock_node(nodeName);
 }
 
-void saClmLongRdn_03(void) {
+void saClmLongRdn_03() {
   struct pollfd fds[1];
   int rc;
   const char *nodeName = s_testNodeName;
@@ -357,7 +357,7 @@ void saClmLongRdn_03(void) {
             SA_AIS_OK);
   safassert(ClmTest::saClmSelectionObjectGet(clmHandle, &selectionObject),
             SA_AIS_OK);
-  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, NULL);
+  rc = ClmTest::saClmClusterTrack(clmHandle, trackFlags, nullptr);
   if (rc != SA_AIS_OK) {
     safassert(ClmTest::saClmFinalize(clmHandle), SA_AIS_OK);
     // Failed at saClmClusterTrack
@@ -390,14 +390,14 @@ void saClmLongRdn_03(void) {
   unlock_node(nodeName);
 }
 
-void saClmLongRdn_04(void) {
+void saClmLongRdn_04() {
   SaImmHandleT immHandle;
   SaImmAdminOwnerHandleT ownerHandle;
   SaImmCcbHandleT ccbHandle;
   SaImmAdminOwnerNameT ownerName = (SaImmAdminOwnerNameT) __FUNCTION__;
   int rc;
   SaConstStringT parent = "safCluster=myClmCluster";
-  SaConstStringT parentNames[] = {parent, NULL};
+  SaConstStringT parentNames[] = {parent, nullptr};
   SaVersionT version = {'A', 2, 15};
   // Length of nodeName == 256
   const char *nodeName =
@@ -412,7 +412,7 @@ void saClmLongRdn_04(void) {
   }
 
   // Create a test node
-  safassert(saImmOmInitialize(&immHandle, NULL, &version), SA_AIS_OK);
+  safassert(saImmOmInitialize(&immHandle, nullptr, &version), SA_AIS_OK);
   safassert(saImmOmAdminOwnerInitialize(immHandle, ownerName, SA_TRUE,
                                         &ownerHandle),
             SA_AIS_OK);
@@ -426,7 +426,7 @@ void saClmLongRdn_04(void) {
   // SA_AIS_ERR_INVALID_PARAM
   rc = saImmOmCcbObjectCreate_o3(ccbHandle,
                                  const_cast<SaImmClassNameT>("SaClmNode"),
-                                 nodeName, NULL);
+                                 nodeName, nullptr);
   if (rc == SA_AIS_ERR_INVALID_PARAM) {
     test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
   } else {
@@ -438,7 +438,7 @@ void saClmLongRdn_04(void) {
   saImmOmFinalize(immHandle);
 }
 
-void saClmLongRdn_05(void) {
+void saClmLongRdn_05() {
   int rc;
   const char *nodeName = s_testNodeName;
   SaClmNodeIdT nodeId;
@@ -458,7 +458,7 @@ void saClmLongRdn_05(void) {
   nodeId = getClmNodeId(nodeName);
   assert(nodeId != 0);
 
-  safassert(ClmTest::saClmInitialize_4(&clmHandle, NULL, &clmVersion_4),
+  safassert(ClmTest::saClmInitialize_4(&clmHandle, nullptr, &clmVersion_4),
             SA_AIS_OK);
 
   rc = ClmTest::saClmClusterNodeGet_4(clmHandle, nodeId, 10000000000ll,
@@ -476,7 +476,7 @@ void saClmLongRdn_05(void) {
   saClmFinalize(clmHandle);
 }
 
-void saClmLongRdn_06(void) {
+void saClmLongRdn_06() {
   int rc;
   const char *nodeName = s_testNodeName;
   SaClmNodeIdT nodeId;
@@ -496,7 +496,7 @@ void saClmLongRdn_06(void) {
   nodeId = getClmNodeId(nodeName);
   assert(nodeId != 0);
 
-  safassert(ClmTest::saClmInitialize(&clmHandle, NULL, &clmVersion_1), SA_AIS_OK);
+  safassert(ClmTest::saClmInitialize(&clmHandle, nullptr, &clmVersion_1), SA_AIS_OK);
 
   rc =
       saClmClusterNodeGet(clmHandle, nodeId, 10000000000ll, &clusterNode);
@@ -513,7 +513,7 @@ void saClmLongRdn_06(void) {
   saClmFinalize(clmHandle);
 }
 
-__attribute__((constructor)) static void saClmLongRdn_constructor(void) {
+__attribute__((constructor)) static void saClmLongRdn_constructor() {
   test_suite_add(11, "CLM Long RDN (long DN support must be allowed)");
   test_case_add(11, saClmLongRdn_01,
                 "SA_AIS_OK - Create CLM node with long RDN");

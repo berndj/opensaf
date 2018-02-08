@@ -27,7 +27,7 @@ static void clms_plm_readiness_track_callback(
 {
 	SaUint32T i, rc = SA_AIS_OK;
 	SaAisErrorT ais_er;
-	CLMS_CLUSTER_NODE *node = NULL, *tmp_node = NULL;
+	CLMS_CLUSTER_NODE *node = nullptr, *tmp_node = nullptr;
 	uint32_t node_id = 0;
 
 	TRACE_ENTER2("step=%d,error=%d,number of tracked entites %d", step,
@@ -52,13 +52,13 @@ static void clms_plm_readiness_track_callback(
 			if (cause == SA_PLM_CAUSE_GROUP_CHANGE) {
 				if (trackedEntities->entities[i].change ==
 				    SA_PLM_GROUP_MEMBER_REMOVED) {
-					if (node == NULL)
+					if (node == nullptr)
 						TRACE(
 						    "Node removed from PLM Group,callback received for entity removal");
 					goto done;
 				}
 			} else {
-				if (node == NULL) {
+				if (node == nullptr) {
 					TRACE("node not in database");
 					osafassert(0);
 				}
@@ -80,7 +80,7 @@ static void clms_plm_readiness_track_callback(
 			node = clms_node_get_by_eename(
 			    &trackedEntities->entities[i].entityName);
 
-			if (node == NULL) {
+			if (node == nullptr) {
 				TRACE("node not in database");
 				osafassert(0);
 			}
@@ -170,13 +170,13 @@ static void clms_plm_readiness_track_callback(
 			if (cause == SA_PLM_CAUSE_GROUP_CHANGE) {
 				if (trackedEntities->entities[i].change ==
 				    SA_PLM_GROUP_MEMBER_REMOVED) {
-					if (node == NULL)
+					if (node == nullptr)
 						TRACE(
 						    "Node removed from PLM Group,callback received for entity removal");
 					goto done;
 				}
 			} else {
-				if (node == NULL) {
+				if (node == nullptr) {
 					TRACE("node not in database");
 					osafassert(0);
 				}
@@ -208,7 +208,7 @@ static void clms_plm_readiness_track_callback(
 
 						rc = clms_send_is_member_info(
 						    clms_cb, node->node_id,
-						    node->member, true);
+						    node->member, SA_TRUE);
 						if (rc != NCSCC_RC_SUCCESS) {
 							TRACE(
 							    "clms_send_is_member_info failed %u",
@@ -257,7 +257,7 @@ static void clms_plm_readiness_track_callback(
 								clms_cb,
 								node->node_id,
 								node->member,
-								true);
+								SA_TRUE);
 							if (rc !=
 							    NCSCC_RC_SUCCESS) {
 								TRACE(
@@ -293,11 +293,11 @@ static void clms_plm_readiness_track_callback(
 	node =
 	    clms_node_get_by_eename(&trackedEntities->entities[0].entityName);
 	/*this dependency list will be cleared in clms_send_track() */
-	while ((tmp_node = clms_node_getnext_by_id(node_id)) != NULL) {
+	while ((tmp_node = clms_node_getnext_by_id(node_id)) != nullptr) {
 		node_id = tmp_node->node_id;
 
 		if ((tmp_node->stat_change == SA_TRUE) && (tmp_node != node)) {
-			if (node->dep_node_list == NULL)
+			if (node->dep_node_list == nullptr)
 				node->dep_node_list = tmp_node;
 			else {
 				tmp_node->next = node->dep_node_list;
@@ -325,8 +325,8 @@ static void clms_plm_readiness_track_callback(
 					clms_cluster_update_rattr(osaf_cluster);
 				}
 				clms_send_track(
-				    clms_cb, node, step,
-				    false); /*dude you need to checkpoint
+				    clms_cb, node, static_cast<SaClmChangeStepT>(step),
+				    SA_FALSE); /*dude you need to checkpoint
 					       admin_op admin_state when track
 					       is complete or not decide */
 			}
@@ -366,12 +366,12 @@ SaAisErrorT clms_plm_init(CLMS_CB *cb)
 {
 	SaAisErrorT rc = SA_AIS_OK;
 	SaVersionT plmVersion = {'A', 0x01, 0x01};
-	SaNameT *entityNames = NULL;
-	CLMS_CLUSTER_NODE *node = NULL;
+	SaNameT *entityNames = nullptr;
+	CLMS_CLUSTER_NODE *node = nullptr;
 	SaNameT nodename;
 	SaUint32T i = 0, entityNamesNumber =
 			     ncs_patricia_tree_size(&clms_cb->ee_lookup);
-	SaPlmReadinessTrackedEntitiesT *trackedEntities = NULL;
+	SaPlmReadinessTrackedEntitiesT *trackedEntities = nullptr;
 
 	TRACE_ENTER();
 
@@ -406,11 +406,11 @@ SaAisErrorT clms_plm_init(CLMS_CB *cb)
 
 		TRACE("entityNamesNumber %d", entityNamesNumber);
 
-		while ((node = clms_node_getnext_by_name(&nodename)) != NULL) {
+		while ((node = clms_node_getnext_by_name(&nodename)) != nullptr) {
 			memcpy(&nodename, &node->node_name, sizeof(SaNameT));
 			if (node->ee_name.length != 0) {
 				entityNames[i].length = node->ee_name.length;
-				(void)memcpy(entityNames[i].value,
+				memcpy(entityNames[i].value,
 					     node->ee_name.value,
 					     entityNames[i].length);
 				i++;
@@ -455,12 +455,14 @@ SaAisErrorT clms_plm_init(CLMS_CB *cb)
 		for (i = 0; i < trackedEntities->numberOfEntities; i++) {
 			node = clms_node_get_by_eename(
 			    &trackedEntities->entities[i].entityName);
-			if (node != NULL) {
+			if (node != nullptr) {
 				node->ee_red_state =
 				    trackedEntities->entities[i]
 					.currentReadinessStatus.readinessState;
-				node->change =
-				    trackedEntities->entities[i].change;
+                                // FIXME is the cast from SaPlmGroupChangesT to
+                                // SaClmClusterChangesT really correct???
+				node->change = static_cast<SaClmClusterChangesT>(
+				    trackedEntities->entities[i].change);
 				TRACE("node->ee_red_state %d",
 				      node->ee_red_state);
 			}
