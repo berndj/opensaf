@@ -16,9 +16,11 @@
  *
  */
 
+#include "fm/fmd/fm_mds.h"
+#include <string>
 #include "base/ncssysf_def.h"
+#include "base/osaf_extended_name.h"
 #include "base/osaf_time.h"
-#include "fm.h"
 
 const MDS_CLIENT_MSG_FORMAT_VER fm_fm_msg_fmt_map_table[FM_SUBPART_VER_MAX] = {
     FM_FM_MSG_FMT_VER_1};
@@ -290,23 +292,23 @@ void fm_proc_svc_down(FM_CB *cb, uint32_t node_id, NCSMDS_SVC_ID svc_id) {
   switch (svc_id) {
     case NCSMDS_SVC_ID_IMMND:
       cb->immnd_down = true;
-      LOG_NO("IMMND down on: %x", cb->peer_node_id);
+      LOG_NO("IMMND down on: %x", unsigned(cb->peer_node_id));
       break;
     case NCSMDS_SVC_ID_AVND:
       cb->amfnd_down = true;
-      LOG_NO("AMFND down on: %x", cb->peer_node_id);
+      LOG_NO("AMFND down on: %x", unsigned(cb->peer_node_id));;
       break;
     case NCSMDS_SVC_ID_IMMD:
       cb->immd_down = true;
-      LOG_NO("IMMD down on: %x", cb->peer_node_id);
+      LOG_NO("IMMD down on: %x", unsigned(cb->peer_node_id));
       break;
     case NCSMDS_SVC_ID_AVD:
       cb->amfd_down = true;
-      LOG_NO("AVD down on: %x", cb->peer_node_id);
+      LOG_NO("AVD down on: %x", unsigned(cb->peer_node_id));
       break;
     case NCSMDS_SVC_ID_GFM:
       cb->fm_down = true;
-      LOG_NO("FM down on: %x", cb->peer_node_id);
+      LOG_NO("FM down on: %x", unsigned(cb->peer_node_id));
       break;
     default:
       break;
@@ -629,15 +631,16 @@ static uint32_t fm_mds_rcv_evt(FM_CB *cb, MDS_CALLBACK_RECEIVE_INFO *rcv_info) {
     gfm_rcv_msg = (GFM_GFM_MSG *)rcv_info->i_msg;
     switch (gfm_rcv_msg->msg_type) {
       case GFM_GFM_EVT_NODE_INFO_EXCHANGE:
-
-        cb->peer_node_id = gfm_rcv_msg->info.node_info.node_id;
-        cb->peer_node_name.length =
-            gfm_rcv_msg->info.node_info.node_name.length;
-        memcpy(cb->peer_node_name.value,
-               gfm_rcv_msg->info.node_info.node_name.value,
-               cb->peer_node_name.length);
-        LOG_IN("Peer Node_id  %u : EE_ID %s", cb->peer_node_id,
-               cb->peer_node_name.value);
+        {
+          const char* peer_node_name = osaf_extended_name_borrow(
+            &gfm_rcv_msg->info.node_info.node_name);
+          cb->peer_node_id = gfm_rcv_msg->info.node_info.node_id;
+          cb->mutex_.Lock();
+          cb->peer_node_name = peer_node_name;
+          cb->mutex_.Unlock();
+          LOG_IN("Peer Node_id  %u : EE_ID %s", unsigned(cb->peer_node_id),
+                 peer_node_name);
+        }
         break;
       case GFM_GFM_EVT_PEER_IS_TERMINATING:
         fm_cb->peer_node_terminated = true;

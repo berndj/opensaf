@@ -15,6 +15,8 @@
  *
  */
 
+#include "fm/fmd/fm.h"
+
 #ifndef FM_FMD_FM_MDS_H_
 #define FM_FMD_FM_MDS_H_
 

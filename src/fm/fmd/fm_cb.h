@@ -18,19 +18,20 @@
 #ifndef FM_FMD_FM_CB_H_
 #define FM_FMD_FM_CB_H_
 
-#include <saAmf.h>
-#include <saClm.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include "base/ncssysf_ipc.h"
-#include "base/ncssysf_tmr.h"
-#include "fm_amf.h"
-#include "mds/mds_papi.h"
-#include "rde/agent/rda_papi.h"
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
+#include <atomic>
+#include <string>
+#include <saAmf.h>
+#include <saClm.h>
+#include "base/mutex.h"
+#include "base/ncssysf_ipc.h"
+#include "base/ncssysf_tmr.h"
+#include "fm/fmd/fm_amf.h"
+#include "mds/mds_papi.h"
+#include "rde/agent/rda_papi.h"
+
 
 extern uint32_t gl_fm_hdl;
 
@@ -55,58 +56,60 @@ typedef struct fm_tmr {
 } FM_TMR;
 
 /* FM control block */
-typedef struct fm_cb {
-  uint32_t cb_hdl;
-  SYSF_MBX mbx;
+struct FM_CB {
+  uint32_t cb_hdl{};
+  SYSF_MBX mbx{};
 
   /* FM AMF CB */
-  FM_AMF_CB fm_amf_cb;
-  NODE_ID node_id;
-  SaNameT node_name;
+  FM_AMF_CB fm_amf_cb{};
+  std::atomic<NODE_ID> node_id{};
+  SaNameT node_name{};
 
-  SaNameT peer_node_name;
-  NODE_ID peer_node_id;
-  MDS_DEST peer_adest; /* will be 0 if peer is not up */
+  std::string peer_node_name{};
+  std::atomic<NODE_ID> peer_node_id{};
+  std::atomic<MDS_DEST> peer_adest{}; /* will be 0 if peer is not up */
 
   /* Holds own role. */
-  PCS_RDA_ROLE role;
+  PCS_RDA_ROLE role{};
 
   /* AMF HA state for FM */
-  SaAmfHAStateT amf_state;
+  SaAmfHAStateT amf_state{};
 
   /* MDS handles. */
-  MDS_DEST adest;
-  MDS_HDL adest_hdl;
-  MDS_HDL adest_pwe1_hdl;
+  MDS_DEST adest{};
+  MDS_HDL adest_hdl{};
+  MDS_HDL adest_pwe1_hdl{};
 
   /* Timers */
-  FM_TMR promote_active_tmr;
-  FM_TMR activation_supervision_tmr;
+  FM_TMR promote_active_tmr{};
+  FM_TMR activation_supervision_tmr{};
 
   /* Time in terms of one hundredth of seconds (500 for 5 secs.) */
-  uint32_t active_promote_tmr_val;
-  uint32_t activation_supervision_tmr_val;
-  bool fully_initialized;
-  bool csi_assigned;
+  uint32_t active_promote_tmr_val{};
+  uint32_t activation_supervision_tmr_val{};
+  bool fully_initialized{false};
+  bool csi_assigned{false};
   /* Variable to indicate OpenSAF control of TIPC transport */
-  bool control_tipc;
+  bool control_tipc{true};
   /* Booleans to mark service down events of critical Osaf Services */
-  bool immd_down;
-  bool immnd_down;
-  bool amfnd_down;
-  bool amfd_down;
-  bool fm_down;
+  bool immd_down{true};
+  bool immnd_down{true};
+  std::atomic<bool> amfnd_down{true};
+  bool amfd_down{true};
+  bool fm_down{false};
 
-  bool peer_sc_up;
-  bool well_connected;
-  uint64_t cluster_size;
-  struct timespec last_well_connected;
-  struct timespec node_isolation_timeout;
-  SaClmHandleT clm_hdl;
-  bool use_remote_fencing;
-  SaNameT peer_clm_node_name;
-  bool peer_node_terminated;
-} FM_CB;
+  std::atomic<bool> peer_sc_up{false};
+  bool well_connected{false};
+  uint64_t cluster_size{};
+  struct timespec last_well_connected{};
+  struct timespec node_isolation_timeout{};
+  SaClmHandleT clm_hdl{};
+  bool use_remote_fencing{false};
+  SaNameT peer_clm_node_name{};
+  std::atomic<bool> peer_node_terminated{false};
+
+  base::Mutex mutex_{};
+};
 
 extern const char *role_string[];
 extern FM_CB *fm_cb;
