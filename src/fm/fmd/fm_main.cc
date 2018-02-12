@@ -30,7 +30,7 @@ This file contains the main() routine for FM.
 #include "base/osaf_extended_name.h"
 #include "base/osaf_poll.h"
 #include "base/osaf_time.h"
-#include "fm/fmd/fm.h"
+#include "fm.h"
 #include "nid/agent/nid_api.h"
 #include "osaf/configmake.h"
 #include "osaf/consensus/consensus.h"
@@ -107,7 +107,7 @@ void rda_cb(uint32_t cb_hdl, PCS_RDA_CB_INFO *cb_info,
 
   rc = ncs_ipc_send(&fm_cb->mbx, (NCS_IPC_MSG *)evt, NCS_IPC_PRIORITY_HIGH);
   if (rc != NCSCC_RC_SUCCESS) {
-    syslog(LOG_ERR, "IPC send failed %u", rc);
+    syslog(LOG_ERR, "IPC send failed %d", rc);
     free(evt);
   }
 
@@ -150,8 +150,11 @@ int main(int argc, char *argv[]) {
     goto fm_init_failed;
   }
 
+  memset(fm_cb, 0, sizeof(FM_CB));
   fm_cb->fm_amf_cb.nid_started = nid_started;
   fm_cb->fm_amf_cb.amf_fd = -1;
+  fm_cb->fully_initialized = false;
+  fm_cb->csi_assigned = false;
 
   /* Variable to control whether FM will trigger failover immediately
    * upon recieving down event of critical services or will wait
@@ -165,6 +168,11 @@ int main(int argc, char *argv[]) {
    * service down events of AMFND, IMMD and IMMND to trigger failover.
    */
   fm_cb->control_tipc = true; /* Default behaviour */
+
+  fm_cb->immd_down = true;
+  fm_cb->immnd_down = true;
+  fm_cb->amfnd_down = true;
+  fm_cb->amfd_down = true;
 
   /* Create CB handle */
   gl_fm_hdl = ncshm_create_hdl(NCS_HM_POOL_ID_COMMON, NCS_SERVICE_ID_GFM,
@@ -387,9 +395,8 @@ static uint32_t fm_get_args(FM_CB *fm_cb) {
     fm_cb->node_name.length = strlen(value);
     memcpy(fm_cb->node_name.value, value, fm_cb->node_name.length);
     LOG_NO("EE_ID : %s", fm_cb->node_name.value);
-  } else {
+  } else
     fm_cb->node_name.length = 0;
-  }
 
   /* Update fm_cb configuration fields */
   fm_cb->node_id = m_NCS_GET_NODE_ID;
@@ -580,12 +587,8 @@ static void fm_mbx_msg_handler(FM_CB *fm_cb, FM_EVT *fm_mbx_evt) {
                   fm_cb->peer_clm_node_name.value);
             }
           } else {
-            std::string peer_node_name;
-            fm_cb->mutex_.Lock();
-            peer_node_name = fm_cb->peer_node_name;
-            fm_cb->mutex_.Unlock();
             opensaf_reboot(fm_cb->peer_node_id,
-                           peer_node_name.c_str(),
+                           (char *)fm_cb->peer_node_name.value,
                            "Received Node Down for peer controller");
           }
           if (!((fm_cb->role == PCS_RDA_ACTIVE) &&
@@ -607,7 +610,7 @@ static void fm_mbx_msg_handler(FM_CB *fm_cb, FM_EVT *fm_mbx_evt) {
         LOG_WA(
             "Two active controllers observed in a cluster, newActive: %x and "
             "old-Active: %x",
-            unsigned(fm_cb->node_id), unsigned(fm_cb->peer_node_id));
+            fm_cb->node_id, fm_cb->peer_node_id);
         opensaf_reboot(0, NULL,
                        "Received svc up from peer node (old-active is not "
                        "fully DOWN), hence rebooting the new Active");
@@ -641,8 +644,7 @@ static void fm_mbx_msg_handler(FM_CB *fm_cb, FM_EVT *fm_mbx_evt) {
         /* Now. Try resetting other blade */
         fm_cb->role = PCS_RDA_ACTIVE;
 
-        LOG_NO("Reseting peer controller node id: %x",
-               unsigned(fm_cb->peer_node_id));
+        LOG_NO("Reseting peer controller node id: %x", fm_cb->peer_node_id);
         if (fm_cb->use_remote_fencing) {
           if (fm_cb->peer_node_terminated == false) {
             opensaf_reboot(fm_cb->peer_node_id,
@@ -653,12 +655,8 @@ static void fm_mbx_msg_handler(FM_CB *fm_cb, FM_EVT *fm_mbx_evt) {
                    fm_cb->peer_clm_node_name.value);
           }
         } else {
-          std::string peer_node_name;
-          fm_cb->mutex_.Lock();
-          peer_node_name = fm_cb->peer_node_name;
-          fm_cb->mutex_.Unlock();
           opensaf_reboot(fm_cb->peer_node_id,
-                         peer_node_name.c_str(),
+                         (char *)fm_cb->peer_node_name.value,
                          "Received Node Down for Active peer");
         }
         fm_rda_set_role(fm_cb, PCS_RDA_ACTIVE);
