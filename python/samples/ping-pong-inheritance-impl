@@ -1,76 +1,85 @@
 #!/usr/bin/env python
-
-import select
+############################################################################
+#
+# (C) Copyright 2015 The OpenSAF Foundation
+# (C) Copyright 2018 Ericsson AB. All rights reserved.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. This file and program are licensed
+# under the GNU Lesser General Public License Version 2.1, February 1999.
+# The complete license can be accessed from the following location:
+# http://opensource.org/licenses/lgpl-license.php
+# See the Copying file included with the OpenSAF distribution for full
+# licensing terms.
+#
+# Author(s): Ericsson AB
+#
+############################################################################
+# pylint: disable=invalid-name
+""" Sample illustrates the admin operation handling in OI by inheritance way
+"""
+from __future__ import print_function
 import argparse
 
-from pyosaf.saAis import eSaAisErrorT
-
-from pyosaf.utils import immom
-from pyosaf.utils.immoi.implementer import Implementer, AdminOperation
+from pyosaf.utils.immoi.implementer import Implementer, AdminOperationFunction
 from pyosaf.utils.immom.object import ImmObject
 from pyosaf.utils.immom.ccb import Ccb
 
 class_name = "PingPong"
-dn         = "pingPongId=1"
+object_name = "pingPongId=1"
+
 
 class PingPong(Implementer):
-
+    """ Define PingPong class inheritance from Implementer class """
     def __init__(self):
-        Implementer.__init__(self, class_names=[class_name])
+        operations = [AdminOperationFunction(class_name, 0, self.ping),
+                      AdminOperationFunction(class_name, 1, self.pong)]
+        Implementer.__init__(self, class_names=[class_name],
+                             admin_operations=operations)
 
-    @AdminOperation(class_name, 0)
-    def ping(self, dn, arguments):
-        print
-        print
-        print "Pong!"
-        print
+    def ping(self, dn, params):
+        print("\nPing!\n")
+        self.print_admin_operation_info(dn, params)
 
-        self.print_admin_operation_info(dn, arguments)
+    def pong(self, dn, params):
+        print("\nPong!\n")
+        self.print_admin_operation_info(dn, params)
 
-    @AdminOperation(class_name, 1)
-    def pong(self, dn, arguments):
-        print 
-        print
-        print "Ping!"
-        print
+    @staticmethod
+    def print_admin_operation_info(dn, params):
+        print("INFO: I am %s" % dn)
 
-        self.print_admin_operation_info(dn, arguments)
+        if params:
+            print("INFO: Received parameters")
 
-    def print_admin_operation_info(self, dn, arguments):
-        print "INFO: I am %s" % dn
+            for param in params:
+                print(" - %s: %s (%s)" % (param.name, param.value, param.type))
 
-        if arguments:
-            print "INFO: Received arguments"
-
-            for argument in arguments:
-                print " - %s: %s (%s)" % \
-                    (argument.name, argument.value, argument.type)
 
 if __name__ == '__main__':
-
     # Parse command line arguments
+    description = """
+    Logs and replies to admin operations 0 and 1 towards %s, and replies
+
+    Use like this:
+
+    $ ping-pong-inheritance-impl &
+
+    $ immadm -o [0|1] pingPongId=1 <parameters..>
+    """ % object_name
     parser = argparse.ArgumentParser(
-        description='''Logs and replies to admin operations 0 and 1 towards %s,
-and replies
-
-Use like this:
-
-$ ping-pong-inheritance-impl &
-
-$ immadm -o [0|1] pingPongId=1 <parameters..>
-''' % dn, formatter_class=argparse.RawTextHelpFormatter)
-
+        description=description,
+        formatter_class=argparse.RawTextHelpFormatter)
     parser.parse_args()
 
     # Create the ping-pong instance if it doesn't exist
-    if not immom.get(dn):
-
-        with Ccb(flags=None) as ccb:
-            obj = ImmObject(class_name=class_name, dn=dn)
-
-            obj.pingPongId  = "pingPongId=1"
-
-            ccb.create(obj)
+    ccb = Ccb(flags=None)
+    obj = ImmObject(class_name=class_name, dn=object_name)
+    setattr(obj, "pingPongId", object_name)
+    ccb.init()
+    ccb.create(obj=obj)
+    ccb.apply()
 
     # Create the implementer instance
     implementer = PingPong()

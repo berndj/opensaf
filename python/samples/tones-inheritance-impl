@@ -1,13 +1,34 @@
 #!/usr/bin/env python
+############################################################################
+#
+# (C) Copyright 2015 The OpenSAF Foundation
+# (C) Copyright 2018 Ericsson AB. All rights reserved.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. This file and program are licensed
+# under the GNU Lesser General Public License Version 2.1, February 1999.
+# The complete license can be accessed from the following location:
+# http://opensource.org/licenses/lgpl-license.php
+# See the Copying file included with the OpenSAF distribution for full
+# licensing terms.
+#
+# Author(s): Ericsson AB
+#
+############################################################################
+# pylint: disable=invalid-name
+""" This is a Tones application give usage Implementer handle create object by
+    inheritance way
+"""
+import argparse
 
 from pyosaf.utils.immoi.implementer import Implementer, Constraints
 
-import argparse
 
 tone_class_names = ["Do", "Re", "Mi", "Fa", "So", "La", "Ti"]
 
-class Tones(Implementer):
 
+class Tones(Implementer):
     def __init__(self):
 
         Implementer.__init__(self, class_names=tone_class_names,
@@ -25,26 +46,28 @@ class Tones(Implementer):
 
         self.set_constraints(constraints)
 
-        
+
 if __name__ == "__main__":
-
     # Parse command line arguments
+    description = """
+    Ensures that instances of %s can only be created in this order.
+
+    Use like this:
+
+    $ tones &
+
+    $ immcfg -c Do doId=1                 (allowed)
+
+    $ immcfg -c Re reId=1,doId=1          (allowed)
+
+    $ immcfg -c Do doId=1,reId=1,doId=1   (not allowed)
+
+    $ immcfg -c Mi miId=1                 (not allowed)
+    """ % ', '.join(tone_class_names)
+
     parser = argparse.ArgumentParser(
-        description=('''Ensures that instances of %s can only be created in this '
-                     'order.
-
-Use like this:
-
-$ tones-inheritance-impl &
-
-$ immcfg -c Do doId=1                 (allowed)
-
-$ immcfg -c Re reId=1,doId=1          (allowed)
-
-$ immcfg -c Do doId=1,reId=1,doId=1   (not allowed)
-
-$ immcfg -c Mi miId=1                 (not allowed)
-''') % ', '.join(tone_class_names), formatter_class=argparse.RawTextHelpFormatter)
+        description=description,
+        formatter_class=argparse.RawTextHelpFormatter)
 
     args = parser.parse_args()
 

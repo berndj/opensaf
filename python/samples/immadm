@@ -2,6 +2,7 @@
 ############################################################################
 #
 # (C) Copyright 2011 The OpenSAF Foundation
+# (C) Copyright 2018 Ericsson AB. All rights reserved.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -13,79 +14,103 @@
 # licensing terms.
 #
 # Author(s): Wind River Systems, Inc.
+#            Ericsson AB
 #
 ############################################################################
-
-from optparse import OptionParser
-from pyosaf import saImm
-from pyosaf.utils import immom, SafException
-from socket import gethostname
-from os import getpid
-from pyosaf.saAis import eSaAisErrorT, SaAisErrorT
+""" Sample illustrates the usage of admin operation """
+from __future__ import print_function
 import json
 import sys
+import argparse
 
-from pyosaf.utils.log.logger import SafLogger
+from os import getpid
+from socket import gethostname
 
-def getExecName():
-	return ':'.join((gethostname(), sys.argv[0], str(getpid())))
+from pyosaf import saImm
+from pyosaf.utils import SafException
+from pyosaf.saAis import eSaAisErrorT
+from pyosaf.utils.immom.agent import ImmOmAgent
 
-def parseArgs(cmd=sys.argv[1:]):
-	usage = 'usage: %prog [options] OP_ID object_dn'
-	epilog = '\nOP_ID: an integer, dependent on the class of object.\n'\
-			'\nTYPE: one of:\n%s\n' % '\n'.join(saImm.eSaImmValueTypeT.lookup.keys())
-	OptionParser.format_epilog = lambda self, formatter: self.epilog
-	parser = OptionParser(usage=usage, epilog=epilog)
-	parser.add_option('-a', '--admin-owner', dest='adminOwner',
-			help='Name denoting owner of the operation.',
-			metavar='OWNERNAME', default=getExecName())
-	parser.add_option('-p', '--param', dest='params',
-			help='parameters to admin operation.',
-			metavar='NAME:TYPE:VAL', action='append', default=[])
-	parser.add_option('-u', '--pretty-off', dest='ugly',
-			help='turn off pretty printing.',
-			action='store_true', default=False)
-	(options, args) = parser.parse_args(cmd)
 
-	if len(args) < 2:
-		parser.print_help()
-		sys.exit()
+def get_execute_name():
+    """ Get execute name """
+    return ':'.join((gethostname(), sys.argv[0], str(getpid())))
 
-	return options, args
 
-def immadm(options, args):
+def cast(value_type, value):
+    """ Cast value to int, float or string type """
+    if value_type in [saImm.eSaImmValueTypeT.SA_IMM_ATTR_SAUINT64T,
+                      saImm.eSaImmValueTypeT.SA_IMM_ATTR_SAINT64T,
+                      saImm.eSaImmValueTypeT.SA_IMM_ATTR_SAUINT32T,
+                      saImm.eSaImmValueTypeT.SA_IMM_ATTR_SAINT32T]:
+        return int(value)
 
-	if len(args) < 2:
-		raise SafException(eSaAisErrorT.SA_AIS_ERR_INIT)
+    if value_type in [saImm.eSaImmValueTypeT.SA_IMM_ATTR_SADOUBLET,
+                      saImm.eSaImmValueTypeT.SA_IMM_ATTR_SAFLOATT]:
+        return float(value)
 
-        op_id  = int(args[0])
-        dn     = args[1]
-        retVal = SaAisErrorT(eSaAisErrorT.SA_AIS_OK)
+    return value
 
-	try:
-		params = []
-		for p in options.params:
-			(name, type, val) = p.split(':', 2)
-			ptype = saImm.eSaImmValueTypeT.lookup[type]
-			params.append(
-				saImm.SaImmAdminOperationParamsT_2(name, ptype, val))
 
-                immom.admin_op_invoke(dn, op_id, params=params)
+def immadm(args):
+    """ Return admin operation information """
+    dn = args.obj_dn
+    op_id = int(args.op_id)
+    params = args.params
 
-	except SafException, e:
-		if e.value != eSaAisErrorT.SA_AIS_ERR_NOT_EXIST:
-			raise e
+    rc = eSaAisErrorT.SA_AIS_OK
+    _params = []
 
-	return {'opId':   op_id,
-		'dname':  args[1],
-		'owner':  options.adminOwner,
-		'params': options.params,
-		'rc':     eSaAisErrorT.whatis(retVal.value)}
+    if params is not None:
+        try:
+            for param in params:
+                (name, val_type, val) = param.split(':', 2)
+                ptype = saImm.eSaImmValueTypeT.lookup[val_type]
+                val = cast(ptype, val)
+                _params.append(saImm.SaImmAdminOperationParamsT_2(
+                    name, ptype, val))
+            om_agent = ImmOmAgent()
+            om_agent.init()
+            rc = om_agent.invoke_admin_operation(dn, op_id, params=_params)
+        except SafException as err:
+            if err.value != eSaAisErrorT.SA_AIS_ERR_NOT_EXIST:
+                raise err
+
+    return {'dn': dn,
+            'opId': op_id,
+            'params': params,
+            'rc': eSaAisErrorT.whatis(rc)}
+
 
 if __name__ == '__main__':
-	(options, args) = parseArgs()
-	result = immadm(options, args)
-	logger = SafLogger(result['owner'])
-	logger.log('ADMIN_CMD: OP_ID %(opId)s %(dname)s: %(rc)s' % result)
+    description = """
+    Illustrates the usage of admin operation.
 
-	print json.dumps(result, indent=None if options.ugly else 4)
+    Use like this:
+
+    $ immadm -o 1 rdn=1
+
+    $ immadm -o 1 -p param_name:SA_IMM_ATTR_SAUINT32T:1 rdn=1
+
+    TYPE: one of:\n\t%s\n
+    """ % '\n\t'.join(saImm.eSaImmValueTypeT.lookup.keys())
+
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawTextHelpFormatter)
+
+    parser.add_argument('obj_dn', type=str, help='object DN')
+    parser.add_argument('-o', '--op-id', help='operation id', dest='op_id',
+                        required=True)
+    parser.add_argument('-p', '--params', help='param of admin operation',
+                        dest='params', action='append',
+                        metavar='NAME:TYPE:VAL')
+    parser.add_argument('-u', '--pretty-off', dest='ugly',
+                        help='turn off pretty printing.',
+                        action='store_true', default=False)
+
+    arguments = parser.parse_args()
+
+    result = immadm(arguments)
+
+    print(json.dumps(result, indent=None if arguments.ugly else 4))

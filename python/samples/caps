@@ -1,60 +1,77 @@
 #!/usr/bin/env python
-
+############################################################################
+#
+# (C) Copyright 2015 The OpenSAF Foundation
+# (C) Copyright 2018 Ericsson AB. All rights reserved.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. This file and program are licensed
+# under the GNU Lesser General Public License Version 2.1, February 1999.
+# The complete license can be accessed from the following location:
+# http://opensource.org/licenses/lgpl-license.php
+# See the Copying file included with the OpenSAF distribution for full
+# licensing terms.
+#
+# Author(s): Ericsson AB
+#
+############################################################################
+# pylint: disable=unused-argument
+""" Sample illustrates the usage of Implementer """
 import itertools
 import argparse
 
 from pyosaf.saAis import eSaAisErrorT
-
 from pyosaf.utils import SafException
-
 from pyosaf.utils.immoi.implementer import Implementer
 
-caps_class_name = "CapsSample"
 
-def handle_validate(all_instances, updated, created, deleted):
+def handle_validate(instances, updated, created, deleted):
+    """ Validates that the rules for upperCaps and lowerCaps are kept """
 
     # Verify that upper and lower caps are correct in created objects
     # and updated objects
-    for mo in itertools.chain(created, updated):
-
+    for obj in itertools.chain(created, updated):
         # Verify upper caps
-        if mo.upperCaps and not mo.upperCaps.isupper():
+        if obj.upperCaps and not obj.upperCaps.isupper():
             err_str = "ERROR: %s.upperCaps must be upper case (was %s)" % \
-                (mo.dn, mo.upperCaps)
+                (obj.dn, obj.upperCaps)
             raise SafException(eSaAisErrorT.SA_AIS_ERR_INVALID_PARAM, err_str)
 
         # Verify lower caps
-        if mo.lowerCaps and not mo.lowerCaps.islower():
+        if obj.lowerCaps and not obj.lowerCaps.islower():
             err_str = "ERROR: %s.lowerCaps must be lower case (was %s)" % \
-                      (mo.dn, mo.lowerCaps)
+                      (obj.dn, obj.lowerCaps)
             raise SafException(eSaAisErrorT.SA_AIS_ERR_INVALID_PARAM, err_str)
 
 
 if __name__ == "__main__":
-
     # Parse command line arguments
+    description = """
+    Validates that the lowerCaps and upperCaps attributes
+    of instances of the CapsSample class can only contain
+    lower case and upper case text respectively.
+
+    Use like this:
+
+    $ caps &
+
+    $ immcfg -c CapsSample capsId=<RDN>
+
+    $ immcfg -a upperCaps=ABC capsId=<RDN>  (allowed)
+
+    $ immcfg -a lowerCaps=Abc capsId=<RDN>  (not allowed)
+    """
     parser = argparse.ArgumentParser(
-        description='''Validates that the lowerCaps and upperCaps attributes
-of instances of the CapsSample class can only contain
-lower case and upper case text respectively.
-
-Use like this:
-$ caps &
-
-$ immcfg -c CapsSample capsId=<RDN>
-
-$ immcfg -a upperCaps=ABC capsId=<RDN>  (allowed)
-
-$ immcfg -a lowerCaps=Abc capsId=<RDN>  (not allowed)
-''', formatter_class=argparse.RawTextHelpFormatter)
+        description=description,
+        formatter_class=argparse.RawTextHelpFormatter)
 
     parser.parse_args()
 
     # Create the implementer
-    classes = [caps_class_name]
-
-    caps_implementer = Implementer(on_validate=handle_validate, 
-                                   class_names=classes,
+    class_name = "CapsSample"
+    caps_implementer = Implementer(on_validate=handle_validate,
+                                   class_names=[class_name],
                                    name="CapsImplementer")
 
     # Start the infinite dispatch loop

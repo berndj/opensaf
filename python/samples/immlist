@@ -2,6 +2,7 @@
 ############################################################################
 #
 # (C) Copyright 2011 The OpenSAF Foundation
+# (C) Copyright 2018 Ericsson AB. All rights reserved.
 #
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -13,54 +14,62 @@
 # licensing terms.
 #
 # Author(s): Wind River Systems, Inc.
+#            Ericsson AB.
 #
 ############################################################################
+""" Sample illustrates the usage of immlist """
+from __future__ import print_function
+import json
+import argparse
 
 from pyosaf import saImm
-from pyosaf.utils import immom
-from optparse import OptionParser
-import json
-import sys
+from pyosaf.utils.immom.accessor import ImmOmAccessor
 
-def parseArgs(cmd=sys.argv[1:]):
-	usage = 'usage: %prog [options] object_dn [object_dn ..]'
-	parser = OptionParser(usage)
-	parser.add_option('-a', '--attr', dest='attr',
-			help='Attribute name to collect.',
-			metavar='ATTRNAME', action='append', default=None)
-	parser.add_option('-n', '--numeric-states', dest='numeric',
-			help='report states in numeric format.',
-			action='store_true', default=False)
-	parser.add_option('-u', '--pretty-off', dest='ugly',
-			help='turn off pretty printing.',
-			action='store_true', default=False)
-	return parser.parse_args(cmd)
 
-class ListOptions(object):
-	def __init__(self):
-		self.attr = None
-		self.numeric = False
-		self.ugly = False
+def immlist(args):
+    """ Get imm objects with dn input in arguments """
+    objects = {}
+    accessor = ImmOmAccessor()
+    accessor.init()
 
-def immlist(options, args):
-        objects = {}
+    for dn in args.obj_dn:
+        _, obj = accessor.get(dn, attr_name_list=args.attributes)
+        if obj:
+            attributes = {}
+            for name, value_pair in obj.attrs.iteritems():
+                type_str = saImm.eSaImmValueTypeT.whatis(value_pair[0])
+                value = value_pair[1]
+                attributes[name] = [type_str, value]
 
-        for dn in args:
-                obj = immom.get(dn, attr_name_list=options.attr)
+            objects[dn] = attributes
+        else:
+            objects[dn] = None
 
-                if obj:
-                        attributes = {}
-                        for name, value_pair in obj.attrs.iteritems():
-                                type_str = saImm.eSaImmValueTypeT.whatis(value_pair[0])
-                                value    = value_pair[1]
+    return objects
 
-                                attributes[name] = [type_str, value]
-
-                        objects[dn] = attributes
-
-        return objects
 
 if __name__ == '__main__':
-	(options, args) = parseArgs()
-        print json.dumps(immlist(options, args), 
-                         indent=None if options.ugly else 4)
+    description = """
+    Illustrates the usage of immlist
+
+    Use like this
+
+    $ immlist -a attr_name_1 -a attr_name_2 obj_dn
+    """
+
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawTextHelpFormatter)
+
+    parser.add_argument('obj_dn', type=str, help='object DN', nargs='*')
+    parser.add_argument('-a', '--attributes', help='attribute list of object',
+                        dest='attributes', action='append')
+    parser.add_argument('-u', '--pretty-off', dest='ugly',
+                        help='turn off pretty printing.',
+                        action='store_true', default=False)
+
+    arguments = parser.parse_args()
+
+    result = immlist(arguments)
+
+    print(json.dumps(result, indent=None if arguments.ugly else 4))

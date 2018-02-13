@@ -1,98 +1,99 @@
 #!/usr/bin/env python
-
+############################################################################
+#
+# (C) Copyright 2015 The OpenSAF Foundation
+# (C) Copyright 2018 Ericsson AB. All rights reserved.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. This file and program are licensed
+# under the GNU Lesser General Public License Version 2.1, February 1999.
+# The complete license can be accessed from the following location:
+# http://opensource.org/licenses/lgpl-license.php
+# See the Copying file included with the OpenSAF distribution for full
+# licensing terms.
+#
+# Author(s): Ericsson AB
+#
+############################################################################
+# pylint: disable=invalid-name
+""" Sample illustrates runtime attribute update by inheritance way """
+from __future__ import print_function
 import select
 import datetime
 import argparse
 
-from pyosaf.utils import immom, immoi
 from pyosaf.utils.immoi.implementer import Implementer
 from pyosaf.utils.immom.object import ImmObject
 
-class_name = "TimeSample"
-dn         = "timeId=1"
-timeout    = 1
 
 class TimeReporter(Implementer):
-    ''' This implementer creates a runtime object and updates it with
-        the current time according to the configured timeout (in seconds)'''
+    """ This implementer creates a runtime object and updates it with
+        the current time according to the configured timeout (in seconds).
+    """
 
     def __init__(self, timeout=1, time_id=1):
-        ''' Initializes this time reporter instance '''
-
+        """ Initializes this time reporter instance """
         Implementer.__init__(self, name="TimeReporter")
-
+        self.dn = "timeId=%s" % time_id
         self.timeout = timeout
-        self.time_id = time_id
+        self.class_name = "TimeSample"
+        self.create_time_instance()
 
     def create_time_instance(self):
-
-        # Create the time instance if it doesn't exist
-        dn = "timeId=%s" % self.time_id
-
-        try:
-            now = datetime.datetime.now()
-
-            obj = ImmObject(class_name=class_name, dn=dn)
-
-            obj.hours   = now.hour
-            obj.minutes = now.minute
-            obj.seconds = now.second
-            obj.timeId  = "timeId=%" % self.time_id
-
-            self.create(obj)
-        except Exception as err:
-            pass
+        """ Create the time instance if it doesn't exist """
+        now = datetime.datetime.now()
+        obj = ImmObject(class_name=self.class_name, dn=self.dn)
+        obj.hours = now.hour
+        obj.minutes = now.minute
+        obj.seconds = now.second
+        obj.timeId = self.dn
+        self.create(obj)
 
     def enter_dispatch_loop(self):
-        ''' 
-            Loops continuously and dispatches callbacks or updates the 
+        """ Loops continuously and dispatches callbacks or updates the
             current time
-        '''
-
+        """
         # Get selection object for the implementer
         selection_object = self.get_selection_object()
 
         # Wait for next OI event or one second timeout
-        inputs  = [selection_object]
+        inputs = [selection_object.value]
         outputs = []
 
         while inputs:
+            ioe = select.select(inputs, outputs, inputs, self.timeout)
 
-            readable, writable, exceptional = \
-            select.select(inputs, outputs, inputs, self.timeout)
-
-            if selection_object in readable:
+            if selection_object in ioe[0]:
                 self.dispatch()
             else:
-
                 # Update the time
                 now = datetime.datetime.now()
+                attributes = {'hours': now.hour,
+                              'minutes': now.minute,
+                              'seconds': now.second}
+                self.update_runtime_attributes(self.dn, attributes)
 
-                attributes = {'hours'   : now.hour,
-                              'minutes' : now.minute,
-                              'seconds' : now.second}
-
-                self.update_runtime_attributes(dn, attributes)
 
 if __name__ == '__main__':
-
     # Parse command line arguments
+    description = """
+    Keeps the timeId=1 object updated with the current time.
+
+    Use like this:
+
+    $ time-reporter-inheritance-impl &
+
+    $ immlist timeId=1
+    """
     parser = argparse.ArgumentParser(
-        description='''Keeps the %s object updated with the current time.
-
-Use like this:
-
-$ time-reporter-inheritance-impl &
-
-$ immlist timeId=1
-
-''' % dn, formatter_class=argparse.RawTextHelpFormatter)
+        description=description,
+        formatter_class=argparse.RawTextHelpFormatter)
 
     parser.parse_args()
 
     # Create the implementer instance
-    time_implementer = TimeReporter(time_id=1)
-
+    time_implementer = TimeReporter()
 
     # Start dispatch and time update loop
     time_implementer.enter_dispatch_loop()

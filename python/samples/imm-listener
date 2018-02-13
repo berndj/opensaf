@@ -1,78 +1,98 @@
 #!/usr/bin/env python
-
+############################################################################
+#
+# (C) Copyright 2015 The OpenSAF Foundation
+# (C) Copyright 2018 Ericsson AB. All rights reserved.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. This file and program are licensed
+# under the GNU Lesser General Public License Version 2.1, February 1999.
+# The complete license can be accessed from the following location:
+# http://opensource.org/licenses/lgpl-license.php
+# See the Copying file included with the OpenSAF distribution for full
+# licensing terms.
+#
+# Author(s): Ericsson AB
+#
+############################################################################
+# pylint: disable=invalid-name
+# pylint: disable=unused-argument
+""" Sample illustrates the usage of Applier """
+from __future__ import print_function
 import argparse
 import sys
 
 from pyosaf.saImm import eSaImmClassCategoryT
-
-from pyosaf.utils.immoi import get_available_classes_in_imm
-from pyosaf.utils.immom import get_class_category
 from pyosaf.utils.immoi.implementer import Applier
+from pyosaf.utils.immoi.agent import OiAgent
 
 
-def is_config_class(class_name):
-
-    category = get_class_category(class_name)
-
+def is_config_class(cls_name):
+    """ Check is configuration class """
+    category = oi_agent.imm_om.get_class_category(cls_name)
     return category == eSaImmClassCategoryT.SA_IMM_CLASS_CONFIG
 
 
-def parse_class_names():
-
-    return args.classes
-
-def print_mo(mo):
-    ''' Prints an MO instance '''
-
-    print "    %s" % mo.dn
+def print_object(obj):
+    """ Prints an MO instance """
+    print("\t%s" % obj.dn)
 
     # Print attributes
-    for name, type_value_pair in mo.attrs.iteritems():
+    for name, type_value_pair in obj.attrs.iteritems():
         value = type_value_pair[1]
 
         if len(value) == 1:
             value = value[0]
 
-        print "        - %s: %s" % (name, value)
+        print("\t\t %s: %s" % (name, value))
 
-def handle_apply(all_instances, updated, created, to_delete):
 
-    print
-    print '-' * 10 + " Configuration changed " + '-' * 10
+def handle_apply(instances, updated, created, deleted):
+    """ Callback function of OI """
+    print('-' * 10 + " Configuration changed " + '-' * 10)
 
     # Handle creates
-    print "  Created objects"
-    for mo in created:
-        print_mo(mo)
+    print("Created objects")
+    for obj in created:
+        print_object(obj)
 
     # Handle deletes
-    print "  Deleted objects"
-    for mo in to_delete:
-        print "    %s" % mo
+    print("Deleted objects")
+    for obj in deleted:
+        print("\t%s" % obj.dn)
 
     # Handle updates
-    print "  Updated objects"
-    for mo in updated:
-        print_mo(mo)
-        
+    print("Updated objects")
+    for obj in updated:
+        print_object(obj)
+
+
 if __name__ == "__main__":
+    # Initialize OI agent
+    oi_agent = OiAgent()
+    oi_agent.initialize()
 
     # Parse command line arguments
+    description = """
+    Listens to changes to objects of the given configuration classes
+
+    Use like this:
+
+    $ imm-listener SampleClass1 SampleClass2
+
+    or, to listen for changes to all configuration classes:
+
+    $ imm-listener --all
+    """
     parser = argparse.ArgumentParser(
-        description='''Listens to changes to objects of the given classes
-Use like this:
+        description=description,
+        formatter_class=argparse.RawTextHelpFormatter)
 
-$ imm-listener SampleClass1
-
-or, to listen for changes to all configuration classes:
-
-$ imm-listener --all
-''', formatter_class=argparse.RawTextHelpFormatter)
-
-    parser.add_argument('classes', type=str, nargs='*', 
+    parser.add_argument('classes', type=str, nargs='*',
                         help='space-separated list of class names')
     parser.add_argument('--all', help='listens to changes to all classes',
-                        dest='all', action='store_const', const=all, 
+                        dest='all', action='store_const', const=all,
                         default=False)
 
     args = parser.parse_args()
@@ -83,38 +103,40 @@ $ imm-listener --all
 
     # Exit if no classes are passed
     if not listen_to_all and (not classes or classes == []):
-        print "ERROR: Must specify classes to listen to or '--all'"
+        print("ERROR: Must specify classes to listen to or '--all'")
         sys.exit(1)
 
     # Sort out which classes to listen to
-    all_available_classes = get_available_classes_in_imm()
+    all_available_classes = oi_agent.get_available_classes_in_imm()
     classes_to_listen_to = []
 
     if listen_to_all:
-        print "INFO: Listening to changes to all configuration classes"
-
-        classes_to_listen_to = [c for c in all_available_classes if is_config_class(c)]
+        print("INFO: Listening to changes to all configuration classes")
+        classes_to_listen_to = \
+            [c for c in all_available_classes if is_config_class(c)]
 
     else:
-
         # Validate classes
         for class_name in classes:
-
-            if not class_name in all_available_classes:
-                print "WARNING: Ignoring %s. It does not exist in IMM" % class_name
-
+            if class_name not in all_available_classes:
+                print("WARNING: Ignoring %s. It does not exist in IMM" %
+                      class_name)
                 continue
 
             elif not is_config_class(class_name):
-                print "WARNING: Ignoring runtime class %s" % class_name
-
+                print("WARNING: Ignoring runtime class %s" % class_name)
                 continue
 
             classes_to_listen_to.append(class_name)
 
-    print "INFO: Listening for changes in %s" % ", ".join(classes_to_listen_to)
+    if not classes_to_listen_to:
+        print("INFO: There is nothing to listen")
+        sys.exit(1)
 
-    echo_applier = Applier(on_apply=handle_apply, 
+    print("INFO: Listening for changes in %s" % ", "
+          .join(classes_to_listen_to))
+
+    echo_applier = Applier(on_apply=handle_apply,
                            class_names=classes_to_listen_to,
                            name="ImmListener")
 

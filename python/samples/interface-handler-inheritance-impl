@@ -1,39 +1,63 @@
 #!/usr/bin/env python
+############################################################################
+#
+# (C) Copyright 2015 The OpenSAF Foundation
+# (C) Copyright 2018 Ericsson AB. All rights reserved.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. This file and program are licensed
+# under the GNU Lesser General Public License Version 2.1, February 1999.
+# The complete license can be accessed from the following location:
+# http://opensource.org/licenses/lgpl-license.php
+# See the Copying file included with the OpenSAF distribution for full
+# licensing terms.
+#
+# Author(s): Ericsson AB
+#
+############################################################################
+# pylint: disable=invalid-name
+# pylint: disable=import-error
+""" This is a sample give inheritance and use Implementer class
 
-import argparse
-import sys
-import netifaces
+    Make sure 'netifaces' library installed on Opensaf environment, if NOT
+    please follow command: $sudo apt-get install python-netifaces
+"""
 import select
-
-from pyosaf.saAis import eSaAisErrorT
-
-from pyosaf.utils import immom, immoi
+import argparse
+import netifaces
 
 from pyosaf.utils.immom.object import ImmObject
 from pyosaf.utils.immom.iterator import InstanceIterator
-
-
-from pyosaf.utils.immoi import get_object_no_runtime
 from pyosaf.utils.immoi.implementer import Implementer
+
 
 interface_class_name = "InterfaceRO01"
 timeout = 1
 
+
 class InterfaceImplementer(Implementer):
-    
-
-    def __init__(self, timeout=1):
+    """ This is class inheritance from Implementer class """
+    def __init__(self):
         Implementer.__init__(self, name="InterfaceImplementer")
-
         self.timeout = timeout
 
-    def get_interface_name_from_dn(self, dn):
+    @staticmethod
+    def get_interface_name_from_dn(dn):
+        """ Split dn object by comma
 
+        Args:
+            dn (str): object dn
+
+        Returns:
+            str: dn name in string
+        """
         return dn.split(',')[0].split('=')[1]
 
     def create_rt_object_for_interface(self, interface):
-
-        mo = ImmObject(class_name=interface_class_name, dn='interfaceId=%s' % interface)
+        """ Create runtime object based on interface """
+        mo = ImmObject(class_name=interface_class_name,
+                       dn='interfaceId=%s' % interface)
 
         # Set the RDN with the right interface name
         mo.interfaceId = 'interfaceId=%s' % interface
@@ -53,57 +77,51 @@ class InterfaceImplementer(Implementer):
         else:
             mo.ipv6Addresses = "dummy"
 
-        ##
-        ## This exposes a potential fault in IMM.
-        ##
-        ## Cached attributes need to have their values set when 
-        ## the object is created. If there is an interface that lacks
-        ## an IPv4 or IPv6 address, this will be set to None and 
-        ## converted to an empty list in the implementer code. IMM
-        ## does not allow this and responds with SA_AIS_ERR_INVALID_PARAM
-        ##
-        ## Work around this for now by setting dummy values
-        ##
+        #
+        # This exposes a potential fault in IMM.
+        #
+        # Cached attributes need to have their values set when
+        # the object is created. If there is an interface that lacks
+        # an IPv4 or IPv6 address, this will be set to None and
+        # converted to an empty list in the implementer code. IMM
+        # does not allow this and responds with SA_AIS_ERR_INVALID_PARAM
+        #
+        # Work around this for now by setting dummy values
+        #
 
         self.create(mo)
 
     def enter_dispatch_loop(self):
-
+        """ Implementer poll a loop to select object """
         # Wait for next IO event or N seconds
-        inputs  = [self.get_selection_object()]
+        inputs = [self.get_selection_object().value]
         outputs = []
 
         while inputs:
+            ioe = select.select(inputs, outputs, inputs, timeout)
 
-            readable, writable, exceptional = \
-            select.select(inputs, outputs, inputs, timeout)
-
-            if self.get_selection_object() in readable:
+            if self.get_selection_object() in ioe[0]:
                 self.dispatch()
             else:
-
                 interfaces = netifaces.interfaces()
 
                 # Add objects for new interfaces
                 for interface in interfaces:
-                    try:
-                        self.create_rt_object_for_interface(interface)
-                    except Exception as err:
-                        pass
+                    self.create_rt_object_for_interface(interface)
 
                 # Go through existing objects
-                for mo in InstanceIterator('InterfaceRO01'):
+                inst_iter = InstanceIterator('InterfaceRO01')
+                inst_iter.init()
+                for mo in inst_iter:
                     interface_name = self.get_interface_name_from_dn(mo.dn)
 
                     # Remove objects for deleted interfaces
                     if not mo.interfaceId.split('=')[1] in interfaces:
                         self.delete(mo.dn)
-
                         continue
 
                     # Update interfaces
                     addresses = netifaces.ifaddresses(interface_name)
-
                     attributes = {}
 
                     if netifaces.AF_INET in addresses:
@@ -119,17 +137,23 @@ class InterfaceImplementer(Implementer):
 
 
 if __name__ == "__main__":
-
     # Parse command line arguments
+    description = """
+    Creates a runtime object per network interface on the machine and
+    populates the ipv4Addresses and ipv6Addresses attributes.
+
+    Make sure 'netifaces' library installed on Opensaf environment, if NOT
+    please follow command: $sudo apt-get install python-netifaces
+
+    Use like this:
+
+    $ interface-handler-inheritance-impl &
+
+    $ immfind -c InterfaceRO01
+    """
     parser = argparse.ArgumentParser(
-        description='''Creates a runtime object per network interface on the machine and populates the ipv4Addresses and ipv6Addresses attributes.
-
-Use like this:
-
-$ interface-handler-inheritance-impl &
-
-$ immfind -c InterfaceRO01
-''', formatter_class=argparse.RawTextHelpFormatter)
+        description=description,
+        formatter_class=argparse.RawTextHelpFormatter)
 
     parser.parse_args()
 

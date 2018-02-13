@@ -1,64 +1,83 @@
 #!/usr/bin/env python
+############################################################################
+#
+# (C) Copyright 2015 The OpenSAF Foundation
+# (C) Copyright 2018 Ericsson AB. All rights reserved.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. This file and program are licensed
+# under the GNU Lesser General Public License Version 2.1, February 1999.
+# The complete license can be accessed from the following location:
+# http://opensource.org/licenses/lgpl-license.php
+# See the Copying file included with the OpenSAF distribution for full
+# licensing terms.
+#
+# Author(s): Ericsson AB
+#
+############################################################################
+# pylint: disable=invalid-name
 
+""" Sample illustrates runtime attribute update """
+from __future__ import print_function
+import sys
 import select
 import datetime
 import argparse
 
-from pyosaf.utils import immom, immoi
+from pyosaf.saAis import eSaAisErrorT
 from pyosaf.utils.immoi.implementer import Implementer
 from pyosaf.utils.immom.object import ImmObject
 
+
 class_name = "TimeSample"
-dn         = "timeId=1"
-timeout    = 1
+dn = "timeId=1"
+timeout = 1
+
 
 def get_time():
+    """ Get current time """
     now = datetime.datetime.now()
+    return now.hour, now.minute, now.second
 
-    return (now.hour, now.minute, now.second)
 
 def select_loop(implementer):
-
+    """ Forever loop """
     # Get selection object for the implementer
     selection_object = implementer.get_selection_object()
 
     # Wait for next OI event or one second timeout
-    inputs  = [selection_object]
+    inputs = [selection_object.value]
     outputs = []
 
     while inputs:
+        ieo = select.select(inputs, outputs, inputs, timeout)
 
-        readable, writable, exceptional = \
-        select.select(inputs, outputs, inputs, timeout)
-
-        if selection_object in readable:
+        if selection_object in ieo[0]:
             implementer.dispatch()
         else:
-
             # Update the time
-            (hours, minutes, seconds) = get_time()
-
-            attributes = {'hours'   : hours,
-                          'minutes' : minutes,
-                          'seconds' : seconds}
-
+            _hours, _minutes, _seconds = get_time()
+            attributes = {'hours': _hours,
+                          'minutes': _minutes,
+                          'seconds': _seconds}
             implementer.update_runtime_attributes(dn, attributes)
 
+
 if __name__ == '__main__':
+    description = """
+    Keeps the timeId=1 object updated with the current time.
 
+    Use like this:
 
+    $ time-reporter &
+
+    $ immlist timeId=1
+    """
     # Parse command line arguments
     parser = argparse.ArgumentParser(
-        description='''Keeps the %s object updated with the current time.
-
-Use like this:
-
-$ time-reporter &
-
-$ immlist timeId=1
-
-''' % dn, formatter_class=argparse.RawTextHelpFormatter)
-
+        description=description,
+        formatter_class=argparse.RawTextHelpFormatter)
     parser.parse_args()
 
     # Create the implementer instance
@@ -68,17 +87,17 @@ $ immlist timeId=1
     (hours, minutes, seconds) = get_time()
 
     # Create the time instance if it doesn't exist
-    try:
-        obj = ImmObject(class_name=class_name, dn=dn)
+    obj = ImmObject(class_name=class_name, dn=dn)
 
-        obj.hours   = hours
-        obj.minutes = minutes
-        obj.seconds = seconds
-        obj.timeId  = "timeId=1"
+    obj.hours = hours
+    obj.minutes = minutes
+    obj.seconds = seconds
+    obj.timeId = "timeId=1"
 
-        time_implementer.create(obj)
-    except Exception as err:
-        pass
+    rc = time_implementer.create(obj)
+    if rc != eSaAisErrorT.SA_AIS_OK:
+        print("Create object failed")
+        sys.exit(1)
 
     # Start dispatch and time update loop
     select_loop(time_implementer)

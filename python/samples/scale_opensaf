@@ -1,41 +1,60 @@
 #!/usr/bin/env python
-""" Adds and removes IMM configuration for nodes """
-
+############################################################################
+#
+# (C) Copyright 2015 The OpenSAF Foundation
+# (C) Copyright 2018 Ericsson AB. All rights reserved.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. This file and program are licensed
+# under the GNU Lesser General Public License Version 2.1, February 1999.
+# The complete license can be accessed from the following location:
+# http://opensource.org/licenses/lgpl-license.php
+# See the Copying file included with the OpenSAF distribution for full
+# licensing terms.
+#
+# Author(s): Ericsson AB
+#
+############################################################################
+""" The Sample adds and removes IMM configuration for nodes """
+from __future__ import print_function
 import re
 import hashlib
 import time
 import argparse
 import os
 import subprocess
-from pyosaf.utils import immom
+
+from pyosaf.utils.immom.accessor import ImmOmAccessor
 from pyosaf.utils.immom.ccb import Ccb
 from pyosaf.utils.immom.iterator import InstanceIterator as inst_iter
 from pyosaf.saAmf import eSaAmfRedundancyModelT, eSaAmfAdminOperationIdT
 
+
 TWO_N = eSaAmfRedundancyModelT.SA_AMF_2N_REDUNDANCY_MODEL
 NWAYACTIVE = eSaAmfRedundancyModelT.SA_AMF_N_WAY_ACTIVE_REDUNDANCY_MODEL
 NORED = eSaAmfRedundancyModelT.SA_AMF_NO_REDUNDANCY_MODEL
-
 ADMIN_UNLOCK = eSaAmfAdminOperationIdT.SA_AMF_ADMIN_UNLOCK
 ADMIN_LOCK = eSaAmfAdminOperationIdT.SA_AMF_ADMIN_LOCK
 ADMIN_LOCK_IN = eSaAmfAdminOperationIdT.SA_AMF_ADMIN_LOCK_INSTANTIATION
 ADMIN_UNLOCK_IN = eSaAmfAdminOperationIdT.SA_AMF_ADMIN_UNLOCK_INSTANTIATION
+accessor = None
 
 
 def print_object(immobj, new_dn=None):
     """ Print an ImmObject and attributes with the type enum """
     if new_dn:
-        print new_dn
+        print(new_dn)
     else:
-        print immobj.dn
+        print(immobj.dn)
     for key, value in immobj.attrs.iteritems():
         val = ''
-        if len(value[1]):
+        if value[1]:
             val = value[1]
             if value[1][0]:
                 val = value[1][0]
         if val:
-            print '\t{0}: {1} : {2}'.format(key, val, value[0])
+            print('\t{0}: {1} : {2}'.format(key, val, value[0]))
 
 
 def find_object_type(class_name, parent_list):
@@ -44,7 +63,9 @@ def find_object_type(class_name, parent_list):
     """
     result = []
     for par in parent_list:
-        for immobj in inst_iter(class_name, par.dn):
+        _iter = inst_iter(class_name, par.dn)
+        _iter.init()
+        for immobj in _iter:
             result.append(immobj)
     return result
 
@@ -53,7 +74,9 @@ def find_node_dns(hostname):
     """ Find the DNs of CLM and AMF node for the hostname
         returns: AMF node DN and CLM node DN
     """
-    for node in inst_iter('SaAmfNode'):
+    _iter = inst_iter('SaAmfNode')
+    _iter.init()
+    for node in _iter:
         # Get the first value part of the DN
         hname = node.saAmfNodeClmNode.split(',')[0].split('=')[1]
         if hname == hostname:
@@ -67,9 +90,9 @@ def redundancy_of_su(su_dn):
     """
     # Get the SG DN from the SU DN
     sg_of_su = su_dn.split(',', 1)[1]
-    itsg = immom.get(sg_of_su)
+    _, itsg = accessor.get(sg_of_su)
     # Get the redundancy from the SG type
-    itsg_t = immom.get(itsg.saAmfSGType)
+    _, itsg_t = accessor.get(itsg.saAmfSGType)
     return itsg_t.saAmfSgtRedundancyModel
 
 
@@ -78,7 +101,9 @@ def find_sus(amfnode_dn, scalable_redundancy):
         returns: list of SUs (ImmObject)
     """
     sus = []
-    for itsu in inst_iter('SaAmfSU'):
+    _iter = inst_iter('SaAmfSU')
+    _iter.init()
+    for itsu in _iter:
         if amfnode_dn == itsu.saAmfSUHostedByNode:
             if redundancy_of_su(itsu.dn) in scalable_redundancy:
                 sus.append(itsu)
@@ -108,13 +133,15 @@ def find_sis_apps(sus, redundancy):
     matched_apps = sorted(set(matched_apps), key=matched_apps.index)
 
     # Collect the SIs protected by the SGs
-    for itsi in inst_iter('SaAmfSI'):
+    _iter = inst_iter('SaAmfSI')
+    _iter.init()
+    for itsi in _iter:
         if itsi.saAmfSIProtectedbySG in matched_sgs:
             protected_sis.append(itsi)
 
     # Collect the SvcTypes of the SUs
     for itsu in matched_sus:
-        su_type = immom.get(itsu.saAmfSUType)
+        _, su_type = accessor.get(itsu.saAmfSUType)
         for svc_type in su_type.saAmfSutProvidesSvcTypes:
             su_svctypes.append(svc_type)
 
@@ -133,7 +160,7 @@ def prepare_for_write(objects):
     """
     conf_objects = []
     for immobj in objects:
-        immobj = immom.get(immobj.dn, ['SA_IMM_SEARCH_GET_CONFIG_ATTR'])
+        _, immobj = accessor.get(immobj.dn, ['SA_IMM_SEARCH_GET_CONFIG_ATTR'])
         del immobj.attrs['SaImmAttrAdminOwnerName']
         del immobj.attrs['SaImmAttrClassName']
         del immobj.attrs['SaImmAttrImplementerName']
@@ -144,7 +171,9 @@ def prepare_for_write(objects):
 def find_node_groups(amf_node):
     """ fetch all node groups a node belongs to """
     matching_groups = []
-    for ngrp in inst_iter('SaAmfNodeGroup'):
+    _iter = inst_iter('SaAmfNodeGroup')
+    _iter.init()
+    for ngrp in _iter:
         if str.find(''.join(ngrp.saAmfNGNodeList), amf_node) >= 0:
             matching_groups.append(ngrp)
     return matching_groups
@@ -163,11 +192,13 @@ def collect_scalable_immobjects(from_amfnode_dn, from_clmnode_dn):
     csiattrs = find_object_type('SaAmfCSIAttribute', csis)
 
     swbundles = []
-    for immobj in inst_iter('SaAmfNodeSwBundle', from_amfnode_dn):
+    _iter = inst_iter(class_name='SaAmfNodeSwBundle', root_name=from_amfnode_dn)
+    _iter.init()
+    for immobj in _iter:
         swbundles.append(immobj)
 
-    from_amfnode = immom.get(from_amfnode_dn)
-    from_clmnode = immom.get(from_clmnode_dn)
+    _, from_amfnode = accessor.get(from_amfnode_dn)
+    _, from_clmnode = accessor.get(from_clmnode_dn)
 
     # Order is important
     return [from_amfnode, from_clmnode] + sus + sis + csis + comps + \
@@ -225,22 +256,24 @@ def scale_out(new_hostname, from_hostname):
             new_hostname - hostname of the new node
             from_hostname - hostname of the template node
     """
-    print '-Scaling out to [%s] config copied from [%s]' % (new_hostname,
-                                                            from_hostname)
-    for itsu in inst_iter('SaAmfSU'):
+    print('-Scaling out to [%s] config copied from [%s]' % (new_hostname,
+                                                            from_hostname))
+    print(new_hostname)
+    print(from_hostname)
+    _iter = inst_iter('SaAmfSU')
+    _iter.init()
+    for itsu in _iter:
         # Get the first value part of the DN
         hname = itsu.saAmfSUHostedByNode.split(',')[0].split('=')[1]
         if hname == new_hostname:
-            print 'Node already has SUs, no scaling-out done'
+            print('Node already has SUs, no scaling-out done')
             return 0
 
-    new_amfnode = new_hostname
     from_amfnode_dn, from_clmnode_dn = find_node_dns(from_hostname)
-    new_amfnode_dn = re.sub('safAmfNode=[^,]*,', 'safAmfNode={0},'.
-                            format(new_amfnode), from_amfnode_dn)
+    new_amfnode_dn = from_amfnode_dn.replace(from_hostname, new_hostname)
     objects = collect_scalable_immobjects(from_amfnode_dn, from_clmnode_dn)
     conf_objects = prepare_for_write(objects)
-    #nodegroups_to_join = find_node_groups(from_amfnode_dn)
+    # nodegroups_to_join = find_node_groups(from_amfnode_dn)
 
     suffix = str(time.time())
     for immobj in conf_objects:
@@ -255,6 +288,7 @@ def scale_out(new_hostname, from_hostname):
             objs.append(obj)
 
     ccb = Ccb(flags=None)
+    ccb.init()
 
     for immobj in objs:
         rdn, parent = split_rdn_and_parent(immobj)
@@ -263,31 +297,33 @@ def scale_out(new_hostname, from_hostname):
         del immobj.attrs['new_dn']
         ccb.create(immobj, parent)
     ccb.apply()
-    print '-Scaling out done'
+    print('-Scaling out done')
 
 
 def scale_in(hostname):
     """ Remove the configuration for the host node """
-    print '-Scaling in: %s' % hostname
+    print('-Scaling in: %s' % hostname)
     amfnode_dn, clmnode_dn = find_node_dns(hostname)
-    clmnode = immom.get(clmnode_dn)
-    amfnode = immom.get(amfnode_dn)
+    _, clmnode = accessor.get(clmnode_dn)
+    _, amfnode = accessor.get(amfnode_dn)
 
     subprocess.call(['amf-adm', 'lock', clmnode_dn])
 
     sus = find_sus(amfnode_dn, [TWO_N, NWAYACTIVE, NORED])
 
     ccb = Ccb(flags=None)
+    ccb.init()
     ccb.delete(amfnode.dn)
     ccb.delete(clmnode.dn)
     for itsu in sus:
-        print itsu.dn
+        print(itsu.dn)
         ccb.delete(itsu.dn)
 
     sis, apps = find_sis_apps(sus, NORED)
     for itsi in sis:
         # Check if this SI has a assignment
         siass = inst_iter('SaAmfSIAssignment')
+        siass.init()
         assigned = [ass for ass in siass if str.find(ass.dn, itsi.dn) != -1]
 
         # Check if the SU App is used by this SI... Why? Not sure, the example
@@ -297,15 +333,18 @@ def scale_in(hostname):
         if not assigned and usedapp and si_app in apps:
             csis = find_object_type('SaAmfCSI', [itsi])
             for csi in csis:
-                print csi.dn
+                print(csi.dn)
                 ccb.delete(csi.dn)
-            print itsi.dn
+            print(itsi.dn)
             ccb.delete(itsi.dn)
     ccb.apply()
-    print '-Scaling in done'
+    print('-Scaling in done')
 
 
 if __name__ == '__main__':
+    accessor = ImmOmAccessor()
+    accessor.init()
+
     parser = argparse.ArgumentParser(
         description='Scales OpenSAF by adding and removing node configuration')
     parser.add_argument(
