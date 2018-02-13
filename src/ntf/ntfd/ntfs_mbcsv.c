@@ -995,9 +995,8 @@ static uint32_t decode_reader_info(NCS_UBAID *uba, uint32_t* readerId,
     uint8_t* hasFilter, uint32_t *fIter, bool *firstRead)
 {
 	uint8_t *p8;
-	uint8_t local_data[9];
+	uint8_t local_data[10];
 
-	/* releaseCode, majorVersion, minorVersion */
 	p8 = ncs_dec_flatten_space(uba, local_data, 10);
 	*readerId = ncs_decode_32bit(&p8);
 	*hasFilter = ncs_decode_8bit(&p8);
@@ -1013,7 +1012,6 @@ static uint32_t decode_not_log_confirm_msg(NCS_UBAID *uba,
 	uint8_t *p8;
 	uint8_t local_data[8];
 
-	/* releaseCode, majorVersion, minorVersion */
 	p8 = ncs_dec_flatten_space(uba, local_data, 8);
 	param->notificationId = ncs_decode_64bit(&p8);
 	ncs_dec_skip_space(uba, 8);
@@ -1027,7 +1025,6 @@ static uint32_t decode_not_send_confirm_msg(NCS_UBAID *uba,
 	uint8_t *p8;
 	uint8_t local_data[20];
 
-	/* releaseCode, majorVersion, minorVersion */
 	p8 = ncs_dec_flatten_space(uba, local_data, 20);
 	param->clientId = ncs_decode_32bit(&p8);
 	param->subscriptionId = ncs_decode_32bit(&p8);
