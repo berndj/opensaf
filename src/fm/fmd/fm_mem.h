@@ -28,14 +28,6 @@ typedef enum ncs_fm_service_sub_id {
   NCS_FM_SVC_SUB_ID_DEFAULT_VAL
 } NCS_FM_SVC_SUB_ID;
 
-#define m_MMGR_ALLOC_FM_CB                                          \
-  (FM_CB*)m_NCS_MEM_ALLOC(sizeof(FM_CB), NCS_MEM_REGION_PERSISTENT, \
-                          NCS_SERVICE_ID_GFM, NCS_FM_SVC_SUB_ID_FM_CB)
-
-#define m_MMGR_FREE_FM_CB(ptr)                                       \
-  m_NCS_MEM_FREE(ptr, NCS_MEM_REGION_PERSISTENT, NCS_SERVICE_ID_GFM, \
-                 NCS_FM_SVC_SUB_ID_FM_CB)
-
 #define m_MMGR_ALLOC_FM_EVT                                           \
   (FM_EVT*)m_NCS_MEM_ALLOC(sizeof(FM_EVT), NCS_MEM_REGION_PERSISTENT, \
                            NCS_SERVICE_ID_GFM, NCS_FM_SVC_SUB_ID_FM_EVT)
