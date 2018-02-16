@@ -3194,7 +3194,9 @@ To enable/disable immd/immnd trace in a running system, send signal USR2 to the
 immd/immnd process. Each signal toggles the trace.
 Trace default is disabled.
 
-Traces are written to the file configured in immd.conf and immnd.conf
+Traces are written to the file configured in immd.conf and immnd.conf.
+Traces are always stored in $PKGLOGDIR directory and the directory component
+of the path name (if any) is ignored.
 
 To enable traces from the very start, uncomment:
 
@@ -3204,21 +3206,21 @@ in immd.conf/immnd.conf and restart the cluster.
 
 Errors, warnings and notice level messages are logged to the syslog.
 
-To enable traces in the IMM library, export the variable IMMA_TRACE_PATHNAME
+To enable traces in the IMM library, export the variable IMMA_TRACE_FILENAME
 with a valid pathname before starting the application using the IMM library.
 
 For example:
 
-$ export IMMA_TRACE_PATHNAME=/tmp/imm.trace
+$ export IMMA_TRACE_FILENAME=imm.trace
 $ ./immomtest
-$ cat /tmp/imm.trace
+$ cat $pkglogdir/imm.trace
 
 
 It is also possible to trace slave processes forked by the IMMND.
 This would be processes for loading, sync and dump/pbe.
 To enable such trace uncomment:
 
-	#export IMMSV_TRACE_PATHNAME=$pkglogdir/osafimmnd
+#export IMMSV_TRACE_FILENAME=osafimmnd
 
 
 TEST

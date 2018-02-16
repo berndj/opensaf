@@ -2487,7 +2487,7 @@ int immsync(int maxBatchSize) {
 int main(int argc, char *argv[]) {
   bool preload = false;
   SaUint32T preloadEpoch = 0;
-  const char *defaultLog = PKGLOGDIR "/osafimmnd";
+  const char *defaultLog = "osafimmnd";
   const char *logPath;
   unsigned int category_mask = 0;
   void *pbeHandle = NULL;
@@ -2507,7 +2507,7 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  if ((logPath = getenv("IMMSV_TRACE_PATHNAME"))) {
+  if ((logPath = getenv("IMMSV_TRACE_FILENAME"))) {
     category_mask = 0xffffffff; /* TODO: set using env variable ? */
   } else {
     logPath = defaultLog;

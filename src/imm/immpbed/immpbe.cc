@@ -118,7 +118,7 @@ int main(int argc, char* argv[]) {
   const SaImmAdminOperationParamsT_2* params[] = {NULL};
   SaImmAdminOperationParamsT_2** retParams = NULL;
 
-  if ((logPath = getenv("IMMSV_TRACE_PATHNAME"))) {
+  if ((logPath = getenv("IMMSV_TRACE_FILENAME"))) {
     category_mask = 0xffffffff; /* TODO: set using -t flag ? */
   } else {
     logPath = defaultLog;
