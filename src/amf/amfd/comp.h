@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2008 The OpenSAF Foundation
+ * (C) Copyright 2017, 2018 Ericsson AB. All rights reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -295,4 +296,5 @@ extern SaAisErrorT check_comp_stability(const AVD_COMP *);
 extern AVD_CTCS_TYPE *get_ctcstype(const std::string &comptype_name,
                                    const std::string &cstype_name);
 extern void comp_ccb_apply_delete_hdlr(struct CcbUtilOperationData *opdata);
+extern bool is_cmd_env_valid(const std::string &cmd_env_var);
 #endif  // AMF_AMFD_COMP_H_
