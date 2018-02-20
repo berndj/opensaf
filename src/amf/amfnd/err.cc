@@ -458,9 +458,6 @@ uint32_t avnd_err_process(AVND_CB *cb, AVND_COMP *comp,
   // add an entry to syslog if recovery method has changed
   log_recovery_escalation(*comp, previous_esc_rcvr, esc_rcvr);
 
-  LOG_NO("'%s' faulted due to '%s' : Recovery is '%s'", comp->name.c_str(),
-         g_comp_err[err_info->src], g_comp_rcvr[esc_rcvr - 1]);
-
   if (((comp->su->is_ncs == true) && (esc_rcvr != SA_AMF_COMPONENT_RESTART)) ||
       esc_rcvr == SA_AMF_NODE_FAILFAST) {
     LOG_ER("%s Faulted due to:%s Recovery is:%s", comp->name.c_str(),
@@ -477,6 +474,9 @@ uint32_t avnd_err_process(AVND_CB *cb, AVND_COMP *comp,
       goto done;
     }
   }
+
+  LOG_NO("'%s' faulted due to '%s' : Recovery is '%s'", comp->name.c_str(),
+         g_comp_err[err_info->src], g_comp_rcvr[esc_rcvr - 1]);
 
   /* execute the recovery */
   rc = avnd_err_recover(cb, comp->su, comp, esc_rcvr);
