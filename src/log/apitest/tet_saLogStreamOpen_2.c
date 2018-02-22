@@ -944,7 +944,7 @@ void saLogMultipleInitialize(void)
  */
 void saLogMultiThreadMultiInit(void)
 {
-	int ret, i, errno, nThreads = 50;
+	int i, errno, nThreads = 50;
 	SaAisErrorT rt[nThreads], rc = SA_AIS_OK;
 	pthread_t threads[nThreads];
 	struct timespec timeout_t;
@@ -968,7 +968,7 @@ void saLogMultiThreadMultiInit(void)
 
 	/* Wait for threads terminated with timeout */
 	for (i = 0; i < nThreads; i++) {
-		ret = pthread_timedjoin_np(threads[i], NULL, &timeout_t);
+		int ret = pthread_timedjoin_np(threads[i], NULL, &timeout_t);
 		if (ret != 0) {
 			fprintf(stderr, " Thread %d join error: %s\n",
 				i, strerror(ret));

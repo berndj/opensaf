@@ -191,7 +191,6 @@ void get_logRootDirectory(char *path_str)
 	const char logRootDirectory_name[] = "logRootDirectory";
 	SaImmAttrNameT attributeNames[2] = {(char *)logRootDirectory_name,
 					    NULL};
-	void *value;
 
 	/* NOTE: immutil init osaf_assert if error */
 	(void)immutil_saImmOmInitialize(&omHandle, NULL, &kImmVersion);
@@ -202,7 +201,7 @@ void get_logRootDirectory(char *path_str)
 					      attributeNames, &attributes);
 	if (ais_rc == SA_AIS_OK) {
 		attribute = attributes[0];
-		value = attribute->attrValues[0];
+		void *value = attribute->attrValues[0];
 		strncpy(path_str, *((char **)value), PATH_MAX);
 	} else {
 		/* We didn't get a root path from IMM. Use default */
@@ -750,11 +749,10 @@ static void usage(void)
 int main(int argc, char **argv)
 {
 	int rc = 0;
-	int opt_val = 0;
 
 	/* Handle options */
 	while (1) {
-		opt_val = getopt(argc, argv, "vsh");
+		int opt_val = getopt(argc, argv, "vsh");
 		if (opt_val < 0)
 			break;
 		switch (opt_val) {

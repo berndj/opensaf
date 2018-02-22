@@ -111,7 +111,6 @@ void init_logrootpath(void)
 	const char logRootDirectory_name[] = "logRootDirectory";
 	SaImmAttrNameT attributeNames[2] = {(char *)logRootDirectory_name,
 					    NULL};
-	void *value;
 
 	saAisNameLend(config, &objectName);
 	/* NOTE: immutil init osaf_assert if error */
@@ -123,7 +122,7 @@ void init_logrootpath(void)
 					      attributeNames, &attributes);
 	if (ais_rc == SA_AIS_OK) {
 		attribute = attributes[0];
-		value = attribute->attrValues[0];
+		void *value = attribute->attrValues[0];
 		strncpy(log_root_path, *((char **)value), PATH_MAX);
 	} else {
 		/* We didn't get a root path from IMM. Use default */
@@ -147,7 +146,6 @@ int get_attr_value(SaNameT *inObjName, char *inAttr, void *outValue)
 	SaImmAttrValuesT_2 **attributes;
 	SaAisErrorT ais_rc = SA_AIS_OK;
 	SaImmAttrNameT attributeNames[2] = {inAttr, NULL};
-	void *value = NULL;
 	int rc = 0;
 
 	/* NOTE: immutil init osaf_assert if error */
@@ -160,7 +158,7 @@ int get_attr_value(SaNameT *inObjName, char *inAttr, void *outValue)
 	if (ais_rc == SA_AIS_OK) {
 		attribute = attributes[0];
 		if ((attribute != NULL) && (attribute->attrValuesNumber != 0)) {
-			value = attribute->attrValues[0];
+			void *value = attribute->attrValues[0];
 			switch (attribute->attrValueType) {
 			case SA_IMM_ATTR_SAINT32T:
 				*((SaInt32T *)outValue) = *(SaInt32T *)value;

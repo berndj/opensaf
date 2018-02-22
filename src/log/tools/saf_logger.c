@@ -556,6 +556,9 @@ int main(int argc, char *argv[])
 		error = saLogFinalize(logHandle);
 	}
 
+	if (appLogFileCreateAttributes.logFileName != NULL)
+		free(appLogFileCreateAttributes.logFileName);
+
 	if (SA_AIS_OK != error) {
 		if (wait_time)
 			fprintf(stderr, "Waited for %u seconds.\n",

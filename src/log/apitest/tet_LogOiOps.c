@@ -3855,7 +3855,6 @@ void verTimeZoneMilliInDefaultLogFileFmt(void)
 	// Enable time-zone and millisecond token - @Cz @Ck
 	const char *modLogStrFileFmt =
 	    "@Cr @Ch:@Cn:@Cs @Cm/@Cd/@CY @Cz @Ck @Sv @Sl @Cb";
-	const char *app_stream_name = "safLgStr=verDefaultLogFileFmt";
 
 	// Get current value of the attribute
 	get_attr_value(&configurationObject, "logStreamFileFormat",
@@ -3869,6 +3868,7 @@ void verTimeZoneMilliInDefaultLogFileFmt(void)
 	rc = systemCall(command);
 	if (rc == 0) {
 		// Create app stream and write log record to it by saflogger
+	        const char *app_stream_name = "safLgStr=verDefaultLogFileFmt";
 		sprintf(command, "saflogger -a %s", app_stream_name);
 		rc = systemCall(command);
 		if (rc != 0) {

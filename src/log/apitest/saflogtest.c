@@ -313,12 +313,10 @@ static void create_log_record(SaLogRecordT *logRecord,
 	}
 
 	/* Create body of log record (if any) */
-	int sz;
-	char *logBuf = NULL;
 
 	if (log_message != NULL) {
-		sz = strlen(log_message) + 1;
-		logBuf = malloc(
+		int sz = strlen(log_message) + 1;
+		char *logBuf = malloc(
 		    sz + 64); /* add space for index/id in periodic writes */
 		strcpy(logBuf, log_message);
 		logBuffer->logBufSize = sz;
@@ -363,7 +361,7 @@ static void free_logFileCreateAttributes(
 
 int main(int argc, char *argv[])
 {
-	int c, i;
+	int i;
 	// SaNameT logStreamName;
 	SaLogStreamOpenFlagsT logStreamOpenFlags = 0;
 	SaNameT logSvcUsrName;
@@ -420,7 +418,7 @@ int main(int argc, char *argv[])
 	logSvcUsrName.length = strlen((char *)logSvcUsrName.value);
 
 	while (1) {
-		c = getopt_long(argc, argv, "eohklnya:b:s:i:c:", long_options,
+		int c = getopt_long(argc, argv, "eohklnya:b:s:i:c:", long_options,
 				NULL);
 		if (c == -1) {
 			break;

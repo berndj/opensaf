@@ -94,10 +94,9 @@ bool get_multivalue_type_string_from_imm(SaImmHandleT *omHandle,
 			    NULL; /* NULL terminated array */
 
 			/* Save values */
-			void *value = NULL;
 			for (uint32_t i = 0; i < attribute->attrValuesNumber;
 			     i++) {
-				value = attribute->attrValues[i];
+			        void *value = attribute->attrValues[i];
 				str_array[i] = *(char **)value;
 			}
 		}

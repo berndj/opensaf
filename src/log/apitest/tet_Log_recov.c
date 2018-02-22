@@ -388,7 +388,6 @@ static int tst_StreamOpen_app_logtest_sc(SaLogHandleT logHandle,
 	int trycnt = 0;
 	SaAisErrorT ais_rc = SA_AIS_OK;
 	int rc = 0;
-	int n;
 	int i;
 	char data[255];
 
@@ -397,7 +396,7 @@ static int tst_StreamOpen_app_logtest_sc(SaLogHandleT logHandle,
 		/* Prepare stream name and attributes for the stream to be
 		 * opened */
 		SaNameT stream_name;
-		n = sprintf(data, "safLgStr=%s_%d", STREAM_NAME_9, i + 1);
+		int n = sprintf(data, "safLgStr=%s_%d", STREAM_NAME_9, i + 1);
 		saAisNameLend(data, &stream_name);
 		if (n < 0) {
 			fprintf(stderr, "\t%s [%d] sprintf Fail\n",
@@ -501,7 +500,6 @@ static void tst_max_logrec_create(char *logrec_str, uint32_t lsize,
 {
 	int n;
 	size_t fill_size;
-	char *ptr_fill_start = NULL;
 
 	/* Create information part of message */
 	n = snprintf(logrec_str, lsize, "%s size %d ", log_msg, lsize);
@@ -514,7 +512,7 @@ static void tst_max_logrec_create(char *logrec_str, uint32_t lsize,
 
 	/* Fill message with dummy char to make it the wanted size  */
 	if (fill_size > 0) {
-		ptr_fill_start = logrec_str + n;
+		char *ptr_fill_start = logrec_str + n;
 		memset(ptr_fill_start, 'f', fill_size);
 		logrec_str[lsize - 1] = '\0';
 	}

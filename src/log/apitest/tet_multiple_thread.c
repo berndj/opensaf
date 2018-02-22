@@ -111,7 +111,7 @@ done:
 
 void delete_and_access_log_stream_on_multiple_threads(void)
 {
-	int i, errno, nThreads = 5;
+	int i, nThreads = 5;
 	SaAisErrorT rc_me = SA_AIS_OK;
 	pthread_t threads[nThreads];
 	pthread_t threads2[nThreads];
@@ -271,7 +271,7 @@ done:
 
 void delete_and_access_log_handle_on_multiple_threads(void)
 {
-	int i, errno, nThreads = 5;
+	int i, nThreads = 5;
 	SaAisErrorT rc_me = SA_AIS_OK;
 	pthread_t threads[nThreads];
 	pthread_t threads2[nThreads];
