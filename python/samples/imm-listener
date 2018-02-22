@@ -5,7 +5,8 @@ import sys
 
 from pyosaf.saImm import eSaImmClassCategoryT
 
-from pyosaf.utils.immoi import get_available_classes_in_imm, get_class_category
+from pyosaf.utils.immoi import get_available_classes_in_imm
+from pyosaf.utils.immom import get_class_category
 from pyosaf.utils.immoi.implementer import Applier
 
 
