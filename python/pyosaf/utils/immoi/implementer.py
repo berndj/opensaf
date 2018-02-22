@@ -1045,7 +1045,12 @@ class Implementer(OiAgent):
         while read_fds:
             read_evt, _, _ = select.select(read_fds, [], read_fds)
             if read_evt:
-                self.dispatch()
+                rc = self.dispatch()
+                if rc == eSaAisErrorT.SA_AIS_ERR_BAD_HANDLE:
+                    rc = self._register()
+                    if rc != eSaAisErrorT.SA_AIS_OK:
+                        raise Exception("ERROR: Can't re-register as applier")
+                    read_fds = [self.selection_object.value]
 
     def _validate_constraints(self, all_instances, updated, created, deleted):
         """ Validate configured constraints
