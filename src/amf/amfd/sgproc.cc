@@ -1669,7 +1669,8 @@ void avd_su_si_assign_evh(AVD_CL_CB *cb, AVD_EVT *evt) {
                 (su->sg_of_su->ng_using_saAmfSGAdminState == true))) {
       AVD_AMF_NG *ng = su->su_on_node->admin_ng;
       // Got response from AMFND for assignments decrement su_cnt_admin_oper.
-      if ((ng != nullptr) &&
+      if (su->su_on_node->su_cnt_admin_oper >=1 ) {
+        if ((ng != nullptr) &&
           (((((ng->admin_ng_pend_cbk.admin_oper == SA_AMF_ADMIN_SHUTDOWN) ||
               (ng->admin_ng_pend_cbk.admin_oper == SA_AMF_ADMIN_LOCK)) &&
              (su->saAmfSUNumCurrActiveSIs == 0) &&
@@ -1677,9 +1678,10 @@ void avd_su_si_assign_evh(AVD_CL_CB *cb, AVD_EVT *evt) {
              (AVSV_SUSI_ACT_DEL ==
               n2d_msg->msg_info.n2d_su_si_assign.msg_act))) ||
            (ng->admin_ng_pend_cbk.admin_oper == SA_AMF_ADMIN_UNLOCK))) {
-        su->su_on_node->su_cnt_admin_oper--;
-        TRACE("node:'%s', su_cnt_admin_oper:%u", su->su_on_node->name.c_str(),
+          su->su_on_node->su_cnt_admin_oper--;
+          TRACE("node:'%s', su_cnt_admin_oper:%u", su->su_on_node->name.c_str(),
               su->su_on_node->su_cnt_admin_oper);
+        }
       }
       process_su_si_response_for_ng(su, SA_AIS_OK);
     } else if (su->su_any_comp_undergoing_restart_admin_op() == true) {
