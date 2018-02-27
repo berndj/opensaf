@@ -1366,6 +1366,9 @@ fi
 %{_pkgimmxml_svcdir}/smfsv_objects.xml
 %{_pkgimmxml_svcdir}/smfsv_pl_template.xml
 %{_pkgimmxml_svcdir}/smfsv_sc_template.xml
+%if %is_tests
+%{_pkgimmxml_svcdir}/democlass.xml
+%endif
 %endif
 
 %files smf-nodedirector
@@ -1527,6 +1530,13 @@ fi
 %{_bindir}/clmtest
 %{_bindir}/mdstest
 %{_bindir}/amftest
+%if %is_ais_smf
+#SMF: Demo and test of CCB handling
+%{_bindir}/ccbdemo_create
+%{_bindir}/ccbdemo_delete
+%{_bindir}/ccbdemo_modify
+%{_bindir}/ccbhdl_test
+%endif
 %if %is_ais_ckpt
 %{_bindir}/ckpttest
 %endif

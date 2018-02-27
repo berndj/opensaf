@@ -1,0 +1,68 @@
+/*      -*- OpenSAF  -*-
+ *
+ * (C) Copyright 2008 The OpenSAF Foundation
+ * Copyright Ericsson AB 2018 - All Rights Reserved.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. This file and program are licensed
+ * under the GNU Lesser General Public License Version 2.1, February 1999.
+ * The complete license can be accessed from the following location:
+ * http://opensource.org/licenses/lgpl-license.php
+ * See the Copying file included with the OpenSAF distribution for full
+ * licensing terms.
+ *
+ * Author(s): Ericsson AB
+ *
+ */
+
+DEMO AND TEST PROGRAMS
+----------------------
+
+To use the demo and test programs in this directory the following has to be
+fulfilled:
+- The IMM demo-class as defined in democlass.xml must be installed in
+  /usr/local/share/opensaf/immxml/services/
+
+Building the demo and test programs:
+------------------------------------
+- The programs will be built and installed if --enable-tests is used with the
+  automake configure script
+- The democlass.xml file will be installed if --enable-immxml is used with the
+  automeke configure script
+Example: ./configure --enable-tests --enable-immxml <other options>
+
+Running demo programs:
+----------------------
+The demo programs are made in such a way that they can be run in the following
+order:
+1. ccbdemo_create
+   Creates two objects of the demo class. The first object has parent
+   safApp=safSmfService and the other has no parent meaning it is a root object.
+   The first object demonstrates filling in all attribute types with multi
+   value.
+2. ccbdemo_modify
+   Demonstrates modifying some of the attributes in the first object created in
+   1.
+3. ccbdemo_delete
+   Demonstrates deletion of the objects created in 1.
+
+The demo programs prints out the name of the demo class and the names of the
+objects that are created. This makes it easy to use cut and paste together
+with immlist and immfind to check the results
+
+Running the test program:
+-------------------------
+$ ccbhdl_test
+
+The test program is interactive. It runs a sequence prints out what has been
+done and suggests what the user should verify and stops execution. Execution
+continues with a new step when the user press Enter
+
+The test program executes a number of CCB operations on order to test:
+- All operations
+- Several operations of the same type and of different types in the same CCB
+- Using the IMM model modifier (se immccb.h in .../imm_modify_config/) in
+  different scopes e.g.
+  - Create a modifier object and use it once and let it go out of scope
+  - Create a modifier object that is reused to create and apply several CCBs

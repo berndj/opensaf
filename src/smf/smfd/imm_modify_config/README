@@ -1,0 +1,129 @@
+/*      -*- OpenSAF  -*-
+ *
+ * (C) Copyright 2008 The OpenSAF Foundation
+ * Copyright Ericsson AB 2017 - All Rights Reserved.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE. This file and program are licensed
+ * under the GNU Lesser General Public License Version 2.1, February 1999.
+ * The complete license can be accessed from the following location:
+ * http://opensource.org/licenses/lgpl-license.php
+ * See the Copying file included with the OpenSAF distribution for full
+ * licensing terms.
+ *
+ * Author(s): Ericsson AB
+ *
+ */
+
+IMM CCB handler
+===============
+
+Handles all steps involved in creating a CCB that may include object creation,
+object deletion and modifying an existing object. All possibilities to recover
+are handled in all steps. An API consisting of a set of structures is used to
+define a CCB. Include immccb.h
+
+The following structures are used, for more information see immccb.h:
+
+AttributeDescriptor:
+Defines an attribute to be set when creating or modifying an object.
+
+AttributeModifyDescriptor:
+Defines a modification of one attribute in an existing object. Takes one
+AttributeDescriptor.
+
+CreateDescriptor:
+Defines an object to be created. Takes one or more AttributeDescriptor(s)
+
+ModifyDescriptor:
+Define a modification of an existing object. Takes one or more
+AttributeModifyDescriptor(s).
+
+DeleteDescriptor:
+Define an object deletion.
+
+CcbDescriptor:
+Define a modification request (a CCB) by adding CreateDescriptor(s),
+ModifyDescriptor(s) and DeleteDescriptor(s).
+
+To create and apply the CCB an ObjectModification C++ object shall be created
+and the DoModification() method is used to execute. This method takes a
+CcbDescriptor as input. By using the SetCcbFlags() methods it can be defined
+whether the CCB shall be verified by IMM Object Implementers or not. See
+immccb.h and information about the SA_IMM_CCB_REGISTERED_OI flag in IMM AIS.
+
+
+Rules implemented for handling CCB sequence and recovery
+--------------------------------------------------------
+
+1.
+Finalize OM handle if one exist
+
+2.
+Create an OM handle. Try again timeout should be 60 seconds
+Recovery: No return code except TRY AGAIN is valid for retry
+Output: A valid OM handle
+
+3.
+Create an admin owner. Based on a valid OM handle (2.)
+Note:  Important to set releaseOwnershipOnFinalize to true
+Recovery:  BAD HANDLE; Start from (1.)
+Input: An admin owner name. Should be cluster unique and unique for each
+       instance of this class
+Output: A valid Owner handle
+
+4.
+Initialize a CCB. Based on a valid Owner handle (3.)
+Recovery:  BAD HANDLE; Start from (1.) Note: important to first Finalize OM
+                       handle
+Output: A valid CCB handle
+
+5.
+Set admin ownership. Based on a valid Owner handle (3.)
+For modify and create operations scope shall be SA_IMM_ONE (one object)
+For delete operations scope shall be set to SA_IMM_SUBTREE (object and its
+subtree)
+Recovery:  BAD HANDLE; Start from (1.)
+           EXIST;  Someone else is already owner of the object(s). Wait and
+                   re-try (5.)
+Input:   List of objects to become admin owner of.
+         Scope. Shall be SA_IMM_ONE for create and modify or SA_IMM_SUBTREE
+         for delete.
+Output:  None. We have taken ownership of one or several objects.
+         Note: This is a cluster wide resource. Others trying to become owner
+         of the object(s) will fail with EXIST
+
+6.
+Add a CCB operation. Based on a valid CCB handle (5.)
+Possible operations are:
+    Create an object. We have to be owner of the parent
+    Delete an object. We have to be owner of the object and its subtree
+    Modify the value of one or more attributes in one object. We have to be
+    owner of the object.
+Recovery:  BAD HANDLE; Start from (1.)
+           FAILED OPERATION; If Resource error start from (1.) else
+                             if validate error, Fail.
+                             It is possible to distinguish between resource and
+                             and validate error by using the
+                             saImmOmCcbGetErrorStrings() API
+           BUSY; An admin operation is ongoing on an object to be deleted or
+                 modified. We can try again (6.)
+
+6a.
+Set admin ownership for all objects to be created and/or modified with
+scope SA_IMM_ONE
+Add the create and modify operations to the CCB
+
+6b.
+Set admin ownership for all objects to be deleted with scope SA_IMM_SUBTREE
+Add the delete operations to the CCB
+
+7.
+Apply the CCB. Based on a valid CCB handle
+Recovery:  BAD HANDLE; Start from (1.)
+           FAILED OPERATION; If Resource error start from (1.) else
+                             if validate error, Fail.
+                             It is possible to distinguish between resource and
+                             and validate error by using the
+                             saImmOmCcbGetErrorStrings() API

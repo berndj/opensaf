@@ -1032,7 +1032,7 @@ SaAisErrorT SmfImmModifyOperation::execute(SmfRollbackData *o_rollbackData) {
       m_ccbHandle, &objectName,
       (const SaImmAttrModificationT_2 **)m_immAttrMods);
   if (result != SA_AIS_OK && result == SA_AIS_ERR_FAILED_OPERATION) {
-    SaAisErrorT result1 = SA_AIS_OK;    
+    SaAisErrorT result1 = SA_AIS_OK;
     result1 = saImmOmCcbGetErrorStrings(m_ccbHandle, &errStrings);
     if (result1 == SA_AIS_OK && errStrings) {
       TRACE("Received error string is %s", errStrings[0]);

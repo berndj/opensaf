@@ -18,7 +18,9 @@
 EXTRA_DIST += \
 	src/smf/README \
 	src/smf/README.doxygen \
-	src/smf/README.schema
+	src/smf/README.schema \
+	src/smf/smfd/imm_modify_config/README \
+	src/smf/smfd/imm_modify_demo/README
 
 if ENABLE_AIS_SMF
 
@@ -78,6 +80,7 @@ noinst_HEADERS += \
 	src/smf/agent/smfa.h \
 	src/smf/common/smfsv_defs.h \
 	src/smf/common/smfsv_evt.h \
+	src/smf/smfd/SmfAdminState.h \
 	src/smf/smfd/SmfCallback.h \
 	src/smf/smfd/SmfCampState.h \
 	src/smf/smfd/SmfCampaign.h \
@@ -110,6 +113,25 @@ noinst_HEADERS += \
 	src/smf/smfd/smfd_smfnd.h \
 	src/smf/smfnd/smfnd.h \
 	src/smf/smfnd/smfnd_evt.h
+
+# IMM configuration modifier
+noinst_HEADERS += \
+	src/smf/smfd/imm_modify_config/attribute.h \
+	src/smf/smfd/imm_modify_config/add_operation_to_ccb.h \
+	src/smf/smfd/imm_modify_config/immccb.h
+
+# IMM OM C++ APIs
+noinst_HEADERS += \
+	src/smf/smfd/imm_om_ccapi/common/common.h \
+	src/smf/smfd/imm_om_ccapi/common/imm_attribute.h \
+	src/smf/smfd/imm_om_ccapi/om_admin_owner_clear.h \
+	src/smf/smfd/imm_om_ccapi/om_admin_owner_handle.h \
+	src/smf/smfd/imm_om_ccapi/om_admin_owner_set.h \
+	src/smf/smfd/imm_om_ccapi/om_ccb_handle.h \
+	src/smf/smfd/imm_om_ccapi/om_ccb_object_create.h \
+	src/smf/smfd/imm_om_ccapi/om_ccb_object_delete.h \
+	src/smf/smfd/imm_om_ccapi/om_ccb_object_modify.h \
+	src/smf/smfd/imm_om_ccapi/om_handle.h
 
 osaf_execbin_PROGRAMS += bin/osafsmfd bin/osafsmfnd
 
@@ -150,6 +172,7 @@ bin_osafsmfd_CPPFLAGS = \
 	$(AM_CPPFLAGS)
 
 bin_osafsmfd_SOURCES = \
+	src/smf/smfd/SmfAdminState.cc \
 	src/smf/smfd/SmfCallback.cc \
 	src/smf/smfd/SmfCampState.cc \
 	src/smf/smfd/SmfCampaign.cc \
@@ -182,6 +205,25 @@ bin_osafsmfd_SOURCES = \
 	src/smf/smfd/smfd_mds.c \
 	src/smf/smfd/smfd_smfnd.c
 
+# IMM configuration modifier
+bin_osafsmfd_SOURCES += \
+	src/smf/smfd/imm_modify_config/attribute.cc \
+	src/smf/smfd/imm_modify_config/add_operation_to_ccb.cc \
+	src/smf/smfd/imm_modify_config/immccb.cc
+
+# IMM OM C++ APIs
+bin_osafsmfd_SOURCES += \
+	src/smf/smfd/imm_om_ccapi/common/common.cc \
+	src/smf/smfd/imm_om_ccapi/common/imm_attribute.cc \
+	src/smf/smfd/imm_om_ccapi/om_admin_owner_clear.cc \
+	src/smf/smfd/imm_om_ccapi/om_admin_owner_handle.cc \
+	src/smf/smfd/imm_om_ccapi/om_admin_owner_set.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_handle.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_object_create.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_object_delete.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_object_modify.cc \
+	src/smf/smfd/imm_om_ccapi/om_handle.cc
+
 bin_osafsmfd_LDFLAGS = \
 	$(AM_LDFLAGS) \
 	@XML2_LIBS@
@@ -212,6 +254,163 @@ bin_osafsmfnd_SOURCES = \
 bin_osafsmfnd_LDADD = \
 	lib/libsmfsv_common.la \
 	lib/libSaAmf.la \
+	lib/libopensaf_core.la
+
+endif
+
+# Demos and test
+if ENABLE_TESTS
+
+bin_PROGRAMS += bin/ccbdemo_create bin/ccbdemo_delete bin/ccbdemo_modify bin/ccbhdl_test
+
+dist_pkgimmxml_svc_DATA += \
+	src/smf/smfd/imm_modify_demo/democlass.xml
+
+noinst_HEADERS += \
+	src/smf/smfd/imm_modify_demo/common.h
+
+# DEMO Create
+# -----------
+bin_ccbdemo_create_CFLAGS = $(AM_CFLAGS) -Wformat=1
+
+bin_ccbdemo_create_CPPFLAGS = \
+	-DSA_EXTENDED_NAME_SOURCE \
+	$(AM_CPPFLAGS)
+
+bin_ccbdemo_create_SOURCES = \
+	src/smf/smfd/imm_modify_demo/common.cc \
+	src/smf/smfd/imm_modify_demo/ccbdemo_create.cc
+
+# IMM configuration modifier
+bin_ccbdemo_create_SOURCES += \
+	src/smf/smfd/imm_modify_config/attribute.cc \
+	src/smf/smfd/imm_modify_config/add_operation_to_ccb.cc \
+	src/smf/smfd/imm_modify_config/immccb.cc
+
+# IMM OM C++ APIs
+bin_ccbdemo_create_SOURCES += \
+	src/smf/smfd/imm_om_ccapi/common/common.cc \
+	src/smf/smfd/imm_om_ccapi/common/imm_attribute.cc \
+	src/smf/smfd/imm_om_ccapi/om_admin_owner_clear.cc \
+	src/smf/smfd/imm_om_ccapi/om_admin_owner_handle.cc \
+	src/smf/smfd/imm_om_ccapi/om_admin_owner_set.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_handle.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_object_create.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_object_delete.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_object_modify.cc \
+	src/smf/smfd/imm_om_ccapi/om_handle.cc
+
+bin_ccbdemo_create_LDADD = \
+	lib/libosaf_common.la \
+	lib/libSaImmOm.la \
+	lib/libopensaf_core.la
+
+# DEMO Delete
+# -----------
+bin_ccbdemo_delete_CFLAGS = $(AM_CFLAGS) -Wformat=1
+
+bin_ccbdemo_delete_CPPFLAGS = \
+	-DSA_EXTENDED_NAME_SOURCE \
+	$(AM_CPPFLAGS)
+
+bin_ccbdemo_delete_SOURCES = \
+	src/smf/smfd/imm_modify_demo/common.cc \
+	src/smf/smfd/imm_modify_demo/ccbdemo_delete.cc
+
+# IMM configuration modifier
+bin_ccbdemo_delete_SOURCES += \
+	src/smf/smfd/imm_modify_config/attribute.cc \
+	src/smf/smfd/imm_modify_config/add_operation_to_ccb.cc \
+	src/smf/smfd/imm_modify_config/immccb.cc
+
+# IMM OM C++ APIs
+bin_ccbdemo_delete_SOURCES += \
+	src/smf/smfd/imm_om_ccapi/common/common.cc \
+	src/smf/smfd/imm_om_ccapi/common/imm_attribute.cc \
+	src/smf/smfd/imm_om_ccapi/om_admin_owner_clear.cc \
+	src/smf/smfd/imm_om_ccapi/om_admin_owner_handle.cc \
+	src/smf/smfd/imm_om_ccapi/om_admin_owner_set.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_handle.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_object_create.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_object_delete.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_object_modify.cc \
+	src/smf/smfd/imm_om_ccapi/om_handle.cc
+
+bin_ccbdemo_delete_LDADD = \
+	lib/libosaf_common.la \
+	lib/libSaImmOm.la \
+	lib/libopensaf_core.la
+
+# DEMO Modify
+# -----------
+bin_ccbdemo_modify_CFLAGS = $(AM_CFLAGS) -Wformat=1
+
+bin_ccbdemo_modify_CPPFLAGS = \
+	-DSA_EXTENDED_NAME_SOURCE \
+	$(AM_CPPFLAGS)
+
+bin_ccbdemo_modify_SOURCES = \
+	src/smf/smfd/imm_modify_demo/common.cc \
+	src/smf/smfd/imm_modify_demo/ccbdemo_modify.cc
+
+# IMM configuration modifier
+bin_ccbdemo_modify_SOURCES += \
+	src/smf/smfd/imm_modify_config/attribute.cc \
+	src/smf/smfd/imm_modify_config/add_operation_to_ccb.cc \
+	src/smf/smfd/imm_modify_config/immccb.cc
+
+# IMM OM C++ APIs
+bin_ccbdemo_modify_SOURCES += \
+	src/smf/smfd/imm_om_ccapi/common/common.cc \
+	src/smf/smfd/imm_om_ccapi/common/imm_attribute.cc \
+	src/smf/smfd/imm_om_ccapi/om_admin_owner_clear.cc \
+	src/smf/smfd/imm_om_ccapi/om_admin_owner_handle.cc \
+	src/smf/smfd/imm_om_ccapi/om_admin_owner_set.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_handle.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_object_create.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_object_delete.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_object_modify.cc \
+	src/smf/smfd/imm_om_ccapi/om_handle.cc
+
+bin_ccbdemo_modify_LDADD = \
+	lib/libosaf_common.la \
+	lib/libSaImmOm.la \
+	lib/libopensaf_core.la
+
+# CCBHDL Test
+# -----------
+bin_ccbhdl_test_CFLAGS = $(AM_CFLAGS) -Wformat=1
+
+bin_ccbhdl_test_CPPFLAGS = \
+	-DSA_EXTENDED_NAME_SOURCE \
+	$(AM_CPPFLAGS)
+
+bin_ccbhdl_test_SOURCES = \
+	src/smf/smfd/imm_modify_demo/common.cc \
+	src/smf/smfd/imm_modify_demo/ccbhdl_test.cc
+
+# IMM configuration modifier
+bin_ccbhdl_test_SOURCES += \
+	src/smf/smfd/imm_modify_config/attribute.cc \
+	src/smf/smfd/imm_modify_config/add_operation_to_ccb.cc \
+	src/smf/smfd/imm_modify_config/immccb.cc
+
+# IMM OM C++ APIs
+bin_ccbhdl_test_SOURCES += \
+	src/smf/smfd/imm_om_ccapi/common/common.cc \
+	src/smf/smfd/imm_om_ccapi/common/imm_attribute.cc \
+	src/smf/smfd/imm_om_ccapi/om_admin_owner_clear.cc \
+	src/smf/smfd/imm_om_ccapi/om_admin_owner_handle.cc \
+	src/smf/smfd/imm_om_ccapi/om_admin_owner_set.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_handle.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_object_create.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_object_delete.cc \
+	src/smf/smfd/imm_om_ccapi/om_ccb_object_modify.cc \
+	src/smf/smfd/imm_om_ccapi/om_handle.cc
+
+bin_ccbhdl_test_LDADD = \
+	lib/libosaf_common.la \
+	lib/libSaImmOm.la \
 	lib/libopensaf_core.la
 
 endif

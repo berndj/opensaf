@@ -78,13 +78,12 @@ class SmfExecControlObjHandler {
   // NOTE: Info about private methods can be found in .cc file
 
   bool getValuesFromImmCopy();
-  bool readExecControlObject(const char *exec_ctrl_name);
+  bool readExecControlObject(const std::string& exec_ctrl_name);
   bool readOpenSafSmfConfig();
   bool copyExecControlObject();
   void removeExecControlObjectCopy();
   bool createImmOmHandles();
   void finalizeImmOmHandles();
-  void saveAttributeDescriptors();
 
   // For OpenSafSmfExecControl object data
   SmfImmUtils *p_immutil_object;
@@ -100,12 +99,8 @@ class SmfExecControlObjHandler {
   bool m_nodesForSingleStep_valid;
 
   // For OpenSafSmfExecControl object copy
-  const char *c_openSafSmfExecControl_copy = "openSafSmfExecControl=SmfHdlCopy";
+  std::string kOpenSafSmfExecControl_copy = "openSafSmfExecControl=SmfHdlCopy";
   SaImmAttrValuesT_2 **m_attributes;
-  SaImmAttrValuesT_2 *m_exec_ctrl_name_ad;
-  SaImmAttrValuesT_2 *m_procExecMode_ad;
-  SaImmAttrValuesT_2 *m_numberOfSingleSteps_ad;
-  SaImmAttrValuesT_2 *m_nodesForSingleStep_ad;
 
   // For storing IMM handles
   const SaVersionT m_immVersion{'A', 2, 17};

@@ -26,6 +26,7 @@
 #include "osaf/immutil/immutil.h"
 #include "smf/smfd/SmfUtils.h"
 #include "smf/smfd/SmfCampaign.h"
+#include "smf/smfd/imm_modify_config/immccb.h"
 
 // Note: Info about public methods can be found in .h file
 
@@ -38,10 +39,6 @@ SmfExecControlObjHandler::SmfExecControlObjHandler()
       m_numberOfSingleSteps_valid(false),
       m_nodesForSingleStep_valid(false),
       m_attributes(0),
-      m_exec_ctrl_name_ad(0),
-      m_procExecMode_ad(0),
-      m_numberOfSingleSteps_ad(0),
-      m_nodesForSingleStep_ad(0),
       m_omHandle(0),
       m_ownerHandle(0),
       m_ccbHandle(0) {
@@ -187,7 +184,7 @@ bool SmfExecControlObjHandler::getValuesFromImmCopy() {
   TRACE_ENTER();
   bool errinfo = true;
 
-  std::string copydn = c_openSafSmfExecControl_copy;
+  std::string copydn = kOpenSafSmfExecControl_copy;
   SaImmAttrValuesT_2 **attributes;
   if (!p_immutil_object->getObject(copydn, &attributes)) {
     // We do not have a copy so create it. This can happen when upgrading from
@@ -199,7 +196,7 @@ bool SmfExecControlObjHandler::getValuesFromImmCopy() {
     }
   }
 
-  if (readExecControlObject(c_openSafSmfExecControl_copy) == false) {
+  if (readExecControlObject(kOpenSafSmfExecControl_copy) == false) {
     LOG_NO("%s readExecControlObject(c_openSafSmfExecControl_copy) Fail",
            __FUNCTION__);
     errinfo = false;
@@ -216,10 +213,11 @@ bool SmfExecControlObjHandler::getValuesFromImmCopy() {
  * @return false on Fail
  */
 bool SmfExecControlObjHandler::readExecControlObject(
-    const char *exec_ctrl_name) {
+    const std::string& exec_ctrl_name) {
   TRACE_ENTER();
 
-  TRACE("%s: Name of exec control object '%s'", __FUNCTION__, exec_ctrl_name);
+  TRACE("%s: Name of exec control object '%s'", __FUNCTION__,
+        exec_ctrl_name.c_str());
 
   // Get all attributes of the exec control object
   if (p_immutil_object->getObject(exec_ctrl_name, &m_attributes) == false) {
@@ -227,12 +225,6 @@ bool SmfExecControlObjHandler::readExecControlObject(
           OPENSAF_SMF_EXEC_CONTROL);
     return false;
   }
-
-  // Store all existing attributes in member variables. Ignore if not existing
-  // attribute and keep variable default value
-  // Values are not validated here
-
-  saveAttributeDescriptors();
 
   const SaUint32T *p_procExecMode = immutil_getUint32Attr(
       (const SaImmAttrValuesT_2 **)m_attributes, "procExecMode", 0);
@@ -317,41 +309,16 @@ bool SmfExecControlObjHandler::readOpenSafSmfConfig() {
  * Delete the exec control object copy if exist
  */
 void SmfExecControlObjHandler::removeExecControlObjectCopy() {
-  SaAisErrorT ais_rc = SA_AIS_OK;
-
   TRACE_ENTER();
-  SaNameT node_name;
-  osaf_extended_name_lend(c_openSafSmfExecControl_copy, &node_name);
+  modelmodify::DeleteDescriptor copy_delete;
+  copy_delete.object_name = kOpenSafSmfExecControl_copy;
+  modelmodify::CcbDescriptor ccb_for_delete;
+  ccb_for_delete.AddDelete(copy_delete);
 
-  TRACE("Deleting object '%s'", c_openSafSmfExecControl_copy);
-
-  if (createImmOmHandles() == false) {
-    TRACE("createCcbHandle Fail");
+  modelmodify::ModelModification modifier;
+  if (modifier.DoModelModification(ccb_for_delete) == false) {
+    TRACE("%s: DoModelModification() Fail", __FUNCTION__);
   }
-
-  const SaNameT *names[2];
-  names[0] = &node_name;
-  names[1] = NULL;
-  ais_rc = immutil_saImmOmAdminOwnerSet(m_ownerHandle, names, SA_IMM_ONE);
-
-  if (ais_rc != SA_AIS_OK) {
-    LOG_NO("%s - saImmOmAdminOwnerSet FAILED: %s", __FUNCTION__,
-           saf_error(ais_rc));
-  }
-
-  ais_rc = immutil_saImmOmCcbObjectDelete(m_ccbHandle, &node_name);
-  if (ais_rc != SA_AIS_OK) {
-    LOG_NO("%s: saImmOmCcbObjectDelete '%s' Fail %s", __FUNCTION__,
-           c_openSafSmfExecControl_copy, saf_error(ais_rc));
-  } else {
-    ais_rc = saImmOmCcbApply(m_ccbHandle);
-    if (ais_rc != SA_AIS_OK) {
-      LOG_NO("%s: saImmOmCcbApply() Fail '%s'", __FUNCTION__,
-             saf_error(ais_rc));
-    }
-  }
-
-  finalizeImmOmHandles();
 
   TRACE_LEAVE();
 }
@@ -363,83 +330,40 @@ void SmfExecControlObjHandler::removeExecControlObjectCopy() {
  * @return false on fail
  */
 bool SmfExecControlObjHandler::copyExecControlObject() {
-  bool rc = true;
-
   TRACE_ENTER();
 
-  SaAisErrorT ais_rc = SA_AIS_OK;
-
-  // ------------------------------------
-  // Create handles needed
-  //
-  if (createImmOmHandles() == false) {
-    TRACE("createCcbHandle Fail");
+  modelmodify::AttributeDescriptor exec_control_attribute;
+  modelmodify::CreateDescriptor exec_control_object_create;
+  // Created as a top level object so no parent name is given
+  exec_control_object_create.class_name = c_class_name;
+  // Add the attributes and their values to the create descriptor
+  exec_control_attribute.attribute_name = "procExecMode";
+  exec_control_attribute.value_type = SA_IMM_ATTR_SAUINT32T;
+  exec_control_attribute.AddValue(std::to_string(m_procExecMode));
+  exec_control_object_create.AddAttribute(exec_control_attribute);
+  exec_control_attribute.attribute_name = "numberOfSingleSteps";
+  exec_control_attribute.value_type = SA_IMM_ATTR_SAUINT32T;
+  exec_control_attribute.values_as_strings.clear();
+  exec_control_attribute.AddValue(std::to_string(m_numberOfSingleSteps));
+  exec_control_object_create.AddAttribute(exec_control_attribute);
+  exec_control_attribute.attribute_name = "nodesForSingleStep";
+  exec_control_attribute.value_type = SA_IMM_ATTR_SASTRINGT;
+  exec_control_attribute.values_as_strings.clear();
+  for (auto& node : m_nodesForSingleStep) {
+    exec_control_attribute.AddValue(node);
   }
+  exec_control_object_create.AddAttribute(exec_control_attribute);
 
-  // ------------------------------------
-  // A new attribute descriptor for the node
-  // name has to be created
-  // Attribute: openSafSmfExecControl
-  //
-  SaImmAttrValuesT_2 smfExecControl_copy_ad;
-  smfExecControl_copy_ad.attrName =
-      const_cast<SaImmAttrNameT>("openSafSmfExecControl");
-  smfExecControl_copy_ad.attrValueType = SA_IMM_ATTR_SASTRINGT;
-  char *object_name = const_cast<char *>(c_openSafSmfExecControl_copy);
-  smfExecControl_copy_ad.attrValuesNumber = 1;
-  SaImmAttrValueT object_names[] = {&object_name};
-  smfExecControl_copy_ad.attrValues = object_names;
+  // Create the object
+  modelmodify::CcbDescriptor create_ccb;
+  create_ccb.AddCreate(exec_control_object_create);
+  modelmodify::ModelModification modifier;
+  bool rc = modifier.DoModelModification(create_ccb);
 
-  // ------------------------------------
-  // NULL terminated array of pointers to the list of attributes.
-  // In this case only one attribute, saAmfNGNodeListAttr
-  const SaImmAttrValuesT_2 *attrValues[] = {
-      &smfExecControl_copy_ad, m_procExecMode_ad, m_numberOfSingleSteps_ad,
-      m_nodesForSingleStep_ad, NULL};
-
-  // ---------------------------------------
-  // Create the node group. Top level object
-  SaImmClassNameT className = const_cast<SaImmClassNameT>(c_class_name);
-  ais_rc = immutil_saImmOmCcbObjectCreate_2(m_ccbHandle, className, NULL,
-                                            attrValues);
-
-  if (ais_rc != SA_AIS_OK) {
-    LOG_NO("%s: saImmOmCcbObjectCreate_2() '%s' Fail %s", __FUNCTION__,
-           object_name, saf_error(ais_rc));
-    rc = false;
-  } else {
-    ais_rc = saImmOmCcbApply(m_ccbHandle);
-    if (ais_rc != SA_AIS_OK) {
-      LOG_NO("%s: saImmOmCcbApply() Fail '%s'", __FUNCTION__,
-             saf_error(ais_rc));
-      rc = false;
-    }
-  }
-
-  finalizeImmOmHandles();
   TRACE_LEAVE();
   return rc;
 }
 
-/**
- * Save attribute descriptors for all attributes needed to create a copy
- * of the exec control object
- */
-void SmfExecControlObjHandler::saveAttributeDescriptors() {
-  TRACE_ENTER();
-  for (int i = 0; m_attributes[i] != NULL; i++) {
-    if (strcmp(m_attributes[i]->attrName, "openSafSmfExecControl") == 0) {
-      m_exec_ctrl_name_ad = m_attributes[i];
-    } else if (strcmp(m_attributes[i]->attrName, "procExecMode") == 0) {
-      m_procExecMode_ad = m_attributes[i];
-    } else if (strcmp(m_attributes[i]->attrName, "numberOfSingleSteps") == 0) {
-      m_numberOfSingleSteps_ad = m_attributes[i];
-    } else if (strcmp(m_attributes[i]->attrName, "nodesForSingleStep") == 0) {
-      m_nodesForSingleStep_ad = m_attributes[i];
-    }
-  }
-  TRACE_LEAVE();
-}
 /**
  * Get all needed IMM handles and store them in member variables
  * NOTE: This is a copy of a method in the SmfAdminOperation class.
