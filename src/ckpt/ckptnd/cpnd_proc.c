@@ -1489,9 +1489,7 @@ uint32_t cpnd_proc_update_remote(CPND_CB *cb, CPND_CKPT_NODE *cp_node,
 				all_repl_evt->write_rsp_tmr.write_type =
 				    in_evt->info.ckpt_write.type;
 				rc = cpnd_tmr_start(
-				    &all_repl_evt->write_rsp_tmr,
-				    m_CPSV_CONVERT_SATIME_TEN_MILLI_SEC(
-					timeout));
+				    &all_repl_evt->write_rsp_tmr, timeout);
 
 				while (head != NULL) {
 					rc = cpnd_mds_msg_send(

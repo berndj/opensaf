@@ -320,6 +320,8 @@ void fill_testcase_data()
 	fill_ckpt_attri(&tcd.my_app,
 			SA_CKPT_CHECKPOINT_COLLOCATED | SA_CKPT_WR_ALL_REPLICAS,
 			140, SA_TIME_END, 2, 85, 3);
+	fill_ckpt_attri(&tcd.large_buffer_attrs, SA_CKPT_WR_ALL_REPLICAS,
+			4096, 100, 2, 51200000, 3);
 
 	fill_ckpt_name(&tcd.all_replicas_ckpt,
 		       "safCkpt=all_replicas_ckpt,safApp=safCkptService");
@@ -417,6 +419,7 @@ void fill_testcase_data()
 		       SA_TIME_END);
 	fill_sec_attri(&tcd.section_attr_with_too_long_id,
 		       &tcd.too_long_section_id, SA_TIME_END);
+	fill_sec_attri(&tcd.large_buffer_sec, &tcd.section1, SA_TIME_END);
 
 	strcpy(tcd.data1, "This is data1");
 	strcpy(tcd.data2, "This is data2");
@@ -491,6 +494,8 @@ void fill_testcase_data()
 	tcd.sec_invalid = 6;
 
 	fill_ckpt_name(&tcd.invalidName2, "none");
+	fill_ckpt_name(&tcd.large_buffer_ckpt,
+			"safCkpt=large_dataBuffer_ckpt,safApp=safCkptService");
 }
 
 void test_cpsv_cleanup(CPSV_CLEANUP_TC_TYPE tc)
@@ -7196,6 +7201,87 @@ final1:
 	test_validate(result, TEST_PASS);
 }
 
+void cpsv_it_overwrite_13()
+{
+	SaAisErrorT rc;
+	int result, result1;
+
+	SaSizeT large_buffer_size = 25600000;
+	char *large_buffer;
+
+	printHead("To verify that overwrite writes into a section with large"
+			" dataBuffer");
+
+	result = test_ckptInitialize(CKPT_INIT_SUCCESS_T, TEST_CONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final1;
+
+	rc = saCkptCheckpointOpen(tcd.ckptHandle, &(tcd.large_buffer_ckpt),
+			&(tcd.large_buffer_attrs), SA_CKPT_CHECKPOINT_CREATE |
+			SA_CKPT_CHECKPOINT_WRITE | SA_CKPT_CHECKPOINT_READ,
+			SA_TIME_ONE_SECOND, &tcd.large_buffer_hdl);
+	result = cpsv_test_result(rc, SA_AIS_OK,
+			"Created large_dataBuffer_ckpt with all flags and"
+			" large maxSectionSize", TEST_CONFIG_MODE);
+	if (result == TEST_PASS)
+		m_TEST_CPSV_PRINTF(" Checkpoint Handle: %llu\n",
+				tcd.large_buffer_hdl);
+	else
+		goto final2;
+
+	rc = saCkptSectionCreate(tcd.large_buffer_hdl, &tcd.large_buffer_sec,
+			&tcd.data1, tcd.size);
+	result = cpsv_test_result(rc, SA_AIS_OK, "Created Section id 11",
+			TEST_CONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final3;
+
+	large_buffer = (char *)malloc((large_buffer_size+1)*sizeof(char));
+	if (!large_buffer){
+		m_TEST_CPSV_PRINTF("\nOut of memory\n");
+		result = TEST_FAIL;
+		goto final3;
+	}
+	memset(large_buffer, 'a', large_buffer_size);
+	large_buffer[large_buffer_size] = '\0';
+	rc = saCkptSectionOverwrite(tcd.large_buffer_hdl, &tcd.section1,
+			large_buffer, large_buffer_size);
+	result = cpsv_test_result(rc, SA_AIS_OK,
+			"OverWrite in section 11 with large dataBuffer",
+			TEST_NONCONFIG_MODE);
+	if (rc == SA_AIS_OK)
+		m_TEST_CPSV_PRINTF(" DataSize: %llu\n", large_buffer_size);
+	if (result != TEST_PASS)
+		goto final4;
+
+	rc = saCkptCheckpointRead(tcd.large_buffer_hdl, &tcd.general_read,
+			tcd.nOfE, &tcd.ind);
+	result = cpsv_test_result(rc, SA_AIS_OK,
+			"Read from section 11", TEST_CONFIG_MODE);
+	if (result != TEST_PASS)
+		goto final4;
+
+	if (strncmp(large_buffer, tcd.general_read.dataBuffer,
+			tcd.general_read.readSize) != 0)
+		result = TEST_FAIL;
+
+final4:
+	free(large_buffer);
+final3:
+	rc = saCkptCheckpointUnlink(tcd.ckptHandle, &tcd.large_buffer_ckpt);
+	result1 = cpsv_test_result(rc, SA_AIS_OK,
+			"Unlinked large_dataBuffer_ckpt", TEST_CONFIG_MODE);
+	if (result1 != TEST_PASS){
+		m_TEST_CPSV_PRINTF("\n Unlink failed ckpt not cleanedup\n");
+		result = result1;
+	}
+final2:
+	test_cpsv_cleanup(CPSV_CLEAN_INIT_SUCCESS_T);
+final1:
+	printResult(result);
+	test_validate(result, TEST_PASS);
+}
+
 /******** OpenCallback *******/
 
 void cpsv_it_openclbk_01()
@@ -8392,6 +8478,9 @@ __attribute__((constructor)) static void ckpt_cpa_test_constructor(void)
 		      "To verify overwrite when NULL dataBuffer is provided");
 	test_case_add(20, cpsv_it_overwrite_12,
 		      "To verify overwrite when NULL sectionId is provided");
+	test_case_add(20, cpsv_it_overwrite_13,
+			"To verify that overwrite writes into a section with"
+			" large dataBuffer");
 
 	test_suite_add(21, "CKPT OpenCallBack");
 	test_case_add(

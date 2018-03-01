@@ -73,7 +73,7 @@ struct cpsv_testcase_data {
   SaCkptCheckpointCreationAttributesT ckpt_all_collocated_replica,
       ckpt_weak_collocated_replica, multi_io_replica;
   SaCkptCheckpointCreationAttributesT invalid, invalid2, invalid3, invalid4,
-      invalid_collocated, my_app;
+      invalid_collocated, my_app, large_buffer_attrs;
 
   SaCkptCheckpointHandleT all_replicas_Createhdl, all_replicas_Writehdl,
       all_replicas_Readhdl, all_replicas_create_after_unlink;
@@ -86,7 +86,7 @@ struct cpsv_testcase_data {
   SaCkptCheckpointHandleT all_collocated_Readhdl, weak_collocated_Createhdl,
       weak_collocated_Writehdl, weak_collocated_Readhdl;
   SaCkptCheckpointHandleT multi_io_hdl, uninitckptHandle, testHandle,
-      async_all_replicas_hdl, open_clbk_hdl;
+      async_all_replicas_hdl, open_clbk_hdl, large_buffer_hdl;
 
   SaNameT all_replicas_ckpt, active_replica_ckpt, weak_replica_ckpt,
       collocated_ckpt, async_all_replicas_ckpt, async_active_replica_ckpt;
@@ -106,6 +106,7 @@ struct cpsv_testcase_data {
       special_attr, special_attr2, special_attr3, invalid_attr, multi_attr;
   SaCkptSectionCreationAttributesT section_attr_with_long_id;
   SaCkptSectionCreationAttributesT section_attr_with_too_long_id;
+  SaCkptSectionCreationAttributesT large_buffer_sec;
   char data1[14], data2[14], data3[14];
   SaSizeT size, size_zero;
 
@@ -136,7 +137,7 @@ struct cpsv_testcase_data {
       secjunkHandle, badHandle;
   SaCkptSectionsChosenT sec_forever, sec_any, exp_leq, exp_geq, sec_corrupt,
       sec_invalid;
-  SaNameT invalidName2, invalidName;
+  SaNameT invalidName2, invalidName, large_buffer_ckpt;
   SaInvocationT open_clbk_invo;
   SaInvocationT sync_clbk_invo;
   SaAisErrorT open_clbk_err;
