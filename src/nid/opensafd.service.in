@@ -11,6 +11,6 @@ PIDFile=@localstatedir@/run/opensaf/osafamfnd.pid
 ControlGroup=cpu:/
 TimeoutStartSec=3hours
 KillMode=none
-
+@systemdtasksmax@
 [Install]
 WantedBy=multi-user.target

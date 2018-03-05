@@ -286,19 +286,26 @@ AC_SUBST([TIPC_TRANSPORT_ENABLED], ["$enable_tipc"])
 #
 # Enable/disable use of systemd
 #
-PKG_CHECK_MODULES([SYSTEMD], [systemd], [enable_systemd=yes], [enable_systemd=no])
- 
+PKG_CHECK_MODULES([SYSTEMD], [systemd >= 219], [enable_systemd=yes],
+        [enable_systemd=no])
+
 if test "$enable_systemd" = yes; then
-       PKG_CHECK_MODULES([SYSTEMD], [systemd])
-       AC_DEFINE([ENABLE_SYSTEMD], 1, [Define if systemd is enabled])
-       systemdunitdir=$(pkg-config --variable=systemdsystemunitdir systemd)
-       systemdversion=$(pkg-config --modversion systemd)
+        AC_DEFINE([ENABLE_SYSTEMD], 1, [Define if systemd is enabled])
+        systemdunitdir=$(pkg-config --variable=systemdsystemunitdir systemd)
+        systemdversion=$(pkg-config --modversion systemd)
+        if test "$systemdversion" -ge 227; then
+                systemdtasksmax="TasksMax=infinity"$'\n'
+        else
+                systemdtasksmax=""
+        fi
 fi
- 
+
 AM_CONDITIONAL([ENABLE_SYSTEMD], [test "$enable_systemd" = yes])
 AC_SUBST([SYSTEMD_ENABLED], ["$enable_systemd"])
 AC_SUBST([systemdsystemunitdir], ["$systemdunitdir"])
 AC_SUBST([systemdmodversion], ["$systemdversion"])
+AC_SUBST([systemdtasksmax], ["$systemdtasksmax"])
+AM_SUBST_NOTMAKE([systemdtasksmax])
 
 #
 # Enable/disable building the OpenSAF tests
