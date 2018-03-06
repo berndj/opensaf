@@ -70,7 +70,7 @@ const SaUint64T UINT64VAR1 = 64;
 const SaTimeT TIMEVAR1 = 12345;
 const SaFloatT FLOATVAR1 = 3.140000;
 const SaDoubleT DOUBLEVAR1 = 2.712200;
-const SaStringT STRINGVAR1 = "firstString";
+const SaStringT STRINGVAR1 = const_cast<SaStringT>("firstString");
 
 const SaInt32T INT32VAR2 = -232;
 const SaUint32T UINT32VAR2 = 232;
@@ -79,7 +79,7 @@ const SaUint64T UINT64VAR2 = 264;
 const SaTimeT TIMEVAR2 = 67890;
 const SaFloatT FLOATVAR2 = 23.14359;
 const SaDoubleT DOUBLEVAR2 = 22.712223;
-const SaStringT STRINGVAR2 = "secondStringMultivalue";
+const SaStringT STRINGVAR2 = const_cast<SaStringT>("secondStringMultivalue");
 
 const SaInt32T INT32VAR3 = -332;
 const SaUint32T UINT32VAR3 = 332;
@@ -88,11 +88,12 @@ const SaUint64T UINT64VAR3 = 364;
 const SaTimeT TIMEVAR3 = 54545454;
 const SaFloatT FLOATVAR3 = 2333.14359;
 const SaDoubleT DOUBLEVAR3 = 2244.712223;
-const SaStringT STRINGVAR3 = "thirdStringMultivalue";
+const SaStringT STRINGVAR3 = const_cast<SaStringT>("thirdStringMultivalue");
 
 const int POLLWAIT = 100;
 
-static const SaImmOiImplementerNameT IMPLEMENTERNAME_RT = "Runtime_implementer";
+static const SaImmOiImplementerNameT IMPLEMENTERNAME_RT =
+		const_cast<SaImmOiImplementerNameT>("Runtime_implementer");
 static SaVersionT immVersion = {'A', 0x02, 0x0c};
 
 static const char* const DNTESTRT = "stringRdn=TestObject";

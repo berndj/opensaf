@@ -324,7 +324,7 @@ void attr_ch_send(int wrongAttrType, SaAisErrorT expectedStatus)
 	    myNotificationParams.changedAttributes[0].attributeType;
 	if (wrongAttrType)
 		myNotification.changedAttributes[0].attributeType =
-		    SA_NTF_VALUE_ARRAY + 1;
+		    static_cast<SaNtfValueTypeT>(SA_NTF_VALUE_ARRAY + 1);
 
 	myNotification.changedAttributes[0].newAttributeValue.int64Val =
 	    myNotificationParams.changedAttributes[0]
@@ -473,7 +473,8 @@ void saNtfNotificationSend_09(void)
 	fillInDefaultValues(&myNotificationAllocationParams,
 			    &myNotificationFilterAllocationParams,
 			    &myNotificationParams);
-	myNotificationParams.changedStates[0].oldStatePresent = 0xff00;
+	myNotificationParams.changedStates[0].oldStatePresent =
+	                                        static_cast<SaBoolT>(0xff00);
 	myNotificationParams.changedStates[0].oldState = 0xff;
 
 	rc = send_st_ch(&myNotificationAllocationParams,
@@ -566,7 +567,7 @@ void sec_al_send(int wrongValueType, SaAisErrorT expectedStatus)
 	    myNotificationParams.securityAlarmDetector.value.int32Val;
 	if (wrongValueType)
 		myNotification.securityAlarmDetector->valueType =
-		    SA_NTF_VALUE_ARRAY + 1;
+		    static_cast<SaNtfValueTypeT>(SA_NTF_VALUE_ARRAY + 1);
 	/* set additional text and additional info */
 	(void)strncpy(myNotification.notificationHeader.additionalText,
 		      myNotificationParams.additionalText,

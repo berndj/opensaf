@@ -229,6 +229,7 @@ void saNtfNotificationReadNext_02(void)
 	searchCriteria.searchMode = SA_NTF_SEARCH_AFTER_TIME;
 	SaAisErrorT errorCode;
 	SaUint32T readCounter = 0;
+	SaNtfIdentifierT last_id = 0;
 
 	fillInDefaultValues(&myNotificationAllocationParams,
 			    &myNotificationFilterAllocationParams,
@@ -328,7 +329,6 @@ void saNtfNotificationReadNext_02(void)
 	}
 
 	readCounter = 0;
-	SaNtfIdentifierT last_id = 0;
 	for (i = 0; (errorCode = saNtfNotificationReadNext(
 			 readHandle, SA_NTF_SEARCH_OLDER,
 			 &returnedNotification)) == SA_AIS_OK;) {

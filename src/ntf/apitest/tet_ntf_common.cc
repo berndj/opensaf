@@ -34,16 +34,26 @@
 #define TST_TAG_STB_REBOOT "\nTAG_STB_REBOOT\n" /* Tag for reboot the STANDBY SC */
 #define TST_TAG_SWITCHOVER "\nTAG_SWITCHOVER\n" /* Tag for switch over */
 SaNtfIdentifierT last_not_id = SA_NTF_IDENTIFIER_UNUSED;
-extern int verbose;
-extern int gl_tag_mode;
-extern int gl_prompt_mode;
-extern bool gl_suspending;
+int verbose;
+int gl_tag_mode;
+int gl_prompt_mode;
+bool gl_suspending;
 
 void assertvalue_impl(__const char *__assertion, __const char *__file,
 			  unsigned int __line, __const char *__function)
 {
 	fprintf(stderr, "assert failed in %s at %u, %s(): %s\n", __file, __line,
 		__function, __assertion);
+}
+
+void rc_assert_impl(const char *file, unsigned int line, int rc, int expected)
+{
+	if (rc != expected) {
+		fprintf(stderr,
+			"error: in %s at %u: %d, expected %d - exiting\n", file,
+			line, rc, expected);
+		exit(1);
+	}
 }
 
 static void sigusr2_handler(int sig)
@@ -59,7 +69,7 @@ void install_sigusr2() {
 /*
  * Loop of reading key press, stop if 'n+Enter'. Sleep 1 between reading key
  */
-static void *nonblk_io_getchar()
+static void *nonblk_io_getchar(void *arg)
 {
 	while (gl_suspending) {
 		int c = getchar();
@@ -68,7 +78,7 @@ static void *nonblk_io_getchar()
 		else
 			sleep(1);
 	}
-	return NULL;
+	pthread_exit(nullptr);
 }
 
 /*

@@ -83,8 +83,6 @@ static struct not_idsT sent_ok_ids = {
     0,
 };
 
-static SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles;
-
 /* Used to keep track of which ntf we got */
 static SaNtfNotificationTypeFilterHandlesT ntfRecieved;
 
@@ -919,7 +917,7 @@ void subscriber_life_cycle(int test_api)
 		fds[0].events = POLLIN;
 		ret = poll(fds, 1, 10000);
 		if (ret <= 0) {
-			saferror(true, false);
+			rc_assert(true, false);
 		}
 		if (test_api == SANTF_DISPATCH)
 			wait_controllers(2);

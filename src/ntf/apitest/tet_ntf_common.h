@@ -363,17 +363,31 @@ void install_sigusr2();
 
 extern void assertvalue_impl(__const char *__assertion, __const char *__file,
                              unsigned int __line, __const char *__function);
+void rc_assert_impl(const char *file, unsigned int line, int rc, int expected);
 
 extern void saNtfNotificationSend_01(void);
 extern void saNtfNotificationSend_02(void);
 extern void saNtfNotificationSend_03(void);
 extern void saNtfNotificationSend_04(void);
 extern void saNtfNotificationSend_05(void);
-extern const SaVersionT lowestVersion;
 #define assertvalue(expr)                                                      \
   (((expr)                                                                     \
         ? 0                                                                    \
         : (assertvalue_impl(__STRING(expr), __FILE__, __LINE__, __FUNCTION__), \
            1)))
+
+#define rc_assert(actual, expected) \
+  rc_assert_impl(__FILE__, __LINE__, actual, expected)
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
+extern void saAisNameLend(SaConstStringT value, SaNameT *name);
+extern SaConstStringT saAisNameBorrow(const SaNameT *name);
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif  // NTF_APITEST_TET_NTF_COMMON_H_

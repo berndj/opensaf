@@ -236,50 +236,50 @@ bin_ntftest_CPPFLAGS = \
 	$(AM_CPPFLAGS)
 
 bin_ntftest_SOURCES = \
-	src/ntf/apitest/tet_ntf_main.c \
-	src/ntf/apitest/sa_error.c \
-	src/ntf/apitest/tet_ntf_common.c \
-	src/ntf/apitest/tet_ntf_api_wrapper.c \
-	src/ntf/apitest/tet_saNtfInitialize.c \
-	src/ntf/apitest/tet_saNtfSelectionObjectGet.c \
-	src/ntf/apitest/tet_saNtfDispatch.c \
-	src/ntf/apitest/tet_saNtfFinalize.c \
-	src/ntf/apitest/tet_saNtfNotificationCallbackT.c \
-	src/ntf/apitest/tet_saNtfNotificationDiscardedCallbackT.c \
-	src/ntf/apitest/tet_saNtfMiscellaneousNotificationAllocate.c \
-	src/ntf/apitest/tet_saNtfAlarmNotificationAllocate.c \
-	src/ntf/apitest/tet_saNtfAttributeChangeNotificationAllocate.c \
-	src/ntf/apitest/tet_saNtfStateChangeNotificationAllocate.c \
-	src/ntf/apitest/tet_saNtfSecurityAlarmNotificationAllocate.c \
-	src/ntf/apitest/tet_saNtfNotificationSend.c \
-	src/ntf/apitest/tet_saNtfNotificationSubscribe.c \
-	src/ntf/apitest/tet_saNtfStateChangeNotificationFilterAllocate.c \
-	src/ntf/apitest/tet_saNtfSecurityAlarmNotificationFilterAllocate.c \
-	src/ntf/apitest/tet_saNtfObjectCreateDeleteNotificationFilterAllocate.c \
-	src/ntf/apitest/tet_saNtfAttributeChangeNotificationFilterAllocate.c \
-	src/ntf/apitest/tet_saNtfAlarmNotificationFilterAllocate.c \
-	src/ntf/apitest/tet_saNtfNotificationUnsubscribe.c \
-	src/ntf/apitest/tet_saNtfObjectCreateDeleteNotificationAllocate.c \
-	src/ntf/apitest/tet_saNtfNotificationReadInitialize.c \
-	src/ntf/apitest/tet_saNtfNotificationReadFinalize.c \
-	src/ntf/apitest/tet_saNtfNotificationReadNext.c \
-	src/ntf/apitest/tet_NotificationContentVerification.c \
-	src/ntf/apitest/tet_saNtfArrayValAllocate.c \
-	src/ntf/apitest/tet_saNtfPtrValAllocate.c \
-	src/ntf/apitest/tet_saNtfArrayValGet.c \
-	src/ntf/apitest/tet_saNtfPtrValGet.c \
-	src/ntf/apitest/test_ntfFilterVerification.c \
-	src/ntf/apitest/tet_longDnObject_notification.c \
-	src/ntf/apitest/tet_scOutage_reinitializeHandle.c \
-	src/ntf/apitest/tet_ntf_clm.c \
-	src/ntf/apitest/tet_coldsync.c
+	src/ntf/apitest/tet_ntf_main.cc \
+	src/ntf/apitest/sa_error.cc \
+	src/ntf/apitest/tet_ntf_common.cc \
+	src/ntf/apitest/tet_ntf_api_wrapper.cc \
+	src/ntf/apitest/tet_saNtfInitialize.cc \
+	src/ntf/apitest/tet_saNtfSelectionObjectGet.cc \
+	src/ntf/apitest/tet_saNtfDispatch.cc \
+	src/ntf/apitest/tet_saNtfFinalize.cc \
+	src/ntf/apitest/tet_saNtfNotificationCallbackT.cc \
+	src/ntf/apitest/tet_saNtfNotificationDiscardedCallbackT.cc \
+	src/ntf/apitest/tet_saNtfMiscellaneousNotificationAllocate.cc \
+	src/ntf/apitest/tet_saNtfAlarmNotificationAllocate.cc \
+	src/ntf/apitest/tet_saNtfAttributeChangeNotificationAllocate.cc \
+	src/ntf/apitest/tet_saNtfStateChangeNotificationAllocate.cc \
+	src/ntf/apitest/tet_saNtfSecurityAlarmNotificationAllocate.cc \
+	src/ntf/apitest/tet_saNtfNotificationSend.cc \
+	src/ntf/apitest/tet_saNtfNotificationSubscribe.cc \
+	src/ntf/apitest/tet_saNtfStateChangeNotificationFilterAllocate.cc \
+	src/ntf/apitest/tet_saNtfSecurityAlarmNotificationFilterAllocate.cc \
+	src/ntf/apitest/tet_saNtfObjectCreateDeleteNotificationFilterAllocate.cc \
+	src/ntf/apitest/tet_saNtfAttributeChangeNotificationFilterAllocate.cc \
+	src/ntf/apitest/tet_saNtfAlarmNotificationFilterAllocate.cc \
+	src/ntf/apitest/tet_saNtfNotificationUnsubscribe.cc \
+	src/ntf/apitest/tet_saNtfObjectCreateDeleteNotificationAllocate.cc \
+	src/ntf/apitest/tet_saNtfNotificationReadInitialize.cc \
+	src/ntf/apitest/tet_saNtfNotificationReadFinalize.cc \
+	src/ntf/apitest/tet_saNtfNotificationReadNext.cc \
+	src/ntf/apitest/tet_NotificationContentVerification.cc \
+	src/ntf/apitest/tet_saNtfArrayValAllocate.cc \
+	src/ntf/apitest/tet_saNtfPtrValAllocate.cc \
+	src/ntf/apitest/tet_saNtfArrayValGet.cc \
+	src/ntf/apitest/tet_saNtfPtrValGet.cc \
+	src/ntf/apitest/test_ntfFilterVerification.cc \
+	src/ntf/apitest/tet_longDnObject_notification.cc \
+	src/ntf/apitest/tet_scOutage_reinitializeHandle.cc \
+	src/ntf/apitest/tet_ntf_clm.cc \
+	src/ntf/apitest/tet_coldsync.cc
 
 bin_ntftest_LDADD = \
 	lib/libapitest.la
 
 if ENABLE_NTFIMCN
 
-bin_ntftest_SOURCES += src/ntf/apitest/test_ntf_imcn.c
+bin_ntftest_SOURCES += src/ntf/apitest/test_ntf_imcn.cc
 bin_ntftest_LDADD += lib/libosaf_common.la
 
 endif

@@ -103,7 +103,7 @@ static void *dispatchTread(void *arg)
 	/* TODO: stop this thread */
 	safassert(saNtfDispatch(ntfHandle, SA_DISPATCH_BLOCKING), SA_AIS_OK);
 	exit(0);
-	return 0;
+	return nullptr;
 }
 
 static SaNtfAlarmNotificationT myAlarmNotification;
@@ -466,8 +466,10 @@ void saNtfNotificationCallbackT_03(void)
 		  SA_AIS_OK);
 	myNotId[2] = *myAlarmNotification.notificationHeader.notificationId;
 
-	safassert(pthread_create(&tid, NULL, dispatchTread, NULL), 0);
-	safassert(pthread_detach(tid), 0);
+	int error = pthread_create(&tid, NULL, dispatchTread, NULL);
+	assert(error == 0);
+	error = pthread_detach(tid);
+	assert(error == 0);
 	/* TODO: fix sync */
 	for (; cb2_index < 3;) {
 		usleep(100000);

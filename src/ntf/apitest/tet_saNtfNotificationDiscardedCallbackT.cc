@@ -52,7 +52,7 @@ static void saNtfNotificationCallbackT(SaNtfSubscriptionIdT subscriptionId,
 	/*                 "notificationId %llu", */
 	/*                 subscriptionId, notId); */
 	/*  }                                                              */
-	safassert(my_subid, subscriptionId);
+	assert(my_subid == subscriptionId);
 
 	cb_notId[cb_index++] = notId;
 
@@ -209,7 +209,7 @@ void saNtfNotificationDiscardedCallbackT_01(void)
 
 	if (numDiscarded == 0) {
 		rc = SA_AIS_OK;
-	} else if (numDiscarded != (NUM_NOTIF - i)) {
+	} else if (numDiscarded != static_cast<SaUint32T>(NUM_NOTIF - i)) {
 		if (verbose) {
 			printf("failed num of discarded: %d\n", numDiscarded);
 		}

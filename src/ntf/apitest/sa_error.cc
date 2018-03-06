@@ -191,19 +191,6 @@ char *get_sa_error_b(SaAisErrorT error)
 	return ((char *)sa_error_list[error]);
 }
 
-char *get_test_output(SaAisErrorT result, SaAisErrorT expected)
-{
-	static char test_result[256];
-
-	if (result == expected) {
-		return ("PASSED");
-	} else {
-		(void)sprintf(test_result, "FAILED expected %s got %s",
-			      get_sa_error_b(expected), get_sa_error_b(result));
-		return (test_result);
-	}
-}
-
 void print_severity(SaNtfSeverityT input)
 {
 	exitIfFalse(input >= SA_NTF_SEVERITY_CLEARED);

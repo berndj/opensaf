@@ -32,6 +32,7 @@
 #include "osaf/apitest/utest.h"
 #include <saNtf.h>
 #include "test_ntf_imcn.h"
+#include "tet_ntf_common.h"
 
 /*
  * Global variables.
@@ -42,9 +43,6 @@ static SaImmOiHandleT immOiHnd = 0;
 #define DEFAULT_EXT_NAME_LENGTH 300
 static char extended_name_string_01[DEFAULT_EXT_NAME_LENGTH];
 static char extended_name_string_02[DEFAULT_EXT_NAME_LENGTH];
-
-extern void saAisNameLend(SaConstStringT value, SaNameT *name);
-extern SaConstStringT saAisNameBorrow(const SaNameT *name);
 
 /**
  * Callback routine, called when subscribed notification arrives.
@@ -1117,7 +1115,8 @@ static SaAisErrorT set_ntf(NotifData *n_exp, SaNtfEventTypeT ntfEventType,
 			   const char *dn, SaUint16T numAddi, SaUint16T numAttr)
 {
 	SaAisErrorT error = SA_AIS_ERR_FAILED_OPERATION;
-	SaBoolT configObj = !strncmp(dn, "stringRdnCfg", 12);
+	SaBoolT configObj = static_cast<SaBoolT>(
+			!strncmp(dn, "stringRdnCfg", 12));
 
 	n_exp->evType = ntfEventType;
 	n_exp->ccbInfoId = 0;
@@ -1128,7 +1127,8 @@ static SaAisErrorT set_ntf(NotifData *n_exp, SaNtfEventTypeT ntfEventType,
 	    n_exp->evType == SA_NTF_OBJECT_DELETION) {
 		n_exp->a_c_notif_ptr = NULL;
 		n_exp->c_d_notif_ptr =
-		    malloc(sizeof(SaNtfObjectCreateDeleteNotificationT));
+			static_cast<SaNtfObjectCreateDeleteNotificationT*>
+		    (malloc(sizeof(SaNtfObjectCreateDeleteNotificationT)));
 
 		if ((error = saNtfObjectCreateDeleteNotificationAllocate(
 			 ntfHandle, n_exp->c_d_notif_ptr, 0, 0, numAddi,
@@ -1143,7 +1143,8 @@ static SaAisErrorT set_ntf(NotifData *n_exp, SaNtfEventTypeT ntfEventType,
 	} else if (n_exp->evType == SA_NTF_ATTRIBUTE_CHANGED) {
 		n_exp->c_d_notif_ptr = NULL;
 		n_exp->a_c_notif_ptr =
-		    malloc(sizeof(SaNtfAttributeChangeNotificationT));
+				static_cast<SaNtfAttributeChangeNotificationT*>(
+		    malloc(sizeof(SaNtfAttributeChangeNotificationT)));
 
 		if ((error = saNtfAttributeChangeNotificationAllocate(
 			 ntfHandle, n_exp->a_c_notif_ptr, 0, 0, numAddi,
@@ -1305,7 +1306,7 @@ static SaAisErrorT set_attr_extended_name(NotifData *n_exp, SaUint16T idx,
 					  SaNtfValueTypeT valType,
 					  void *attrValue)
 {
-	safassert(valType == SA_NTF_VALUE_LDAP_NAME, true);
+	assert(valType == SA_NTF_VALUE_LDAP_NAME);
 	SaAisErrorT error = SA_AIS_OK;
 	SaUint16T numAlloc = strlen(saAisNameBorrow((SaNameT *)attrValue));
 	SaUint8T *temp = NULL;
@@ -1406,7 +1407,7 @@ static SaAisErrorT set_attr_change_extended_name(NotifData *n_exp,
 						 SaNtfValueTypeT valType,
 						 const void *newValue)
 {
-	safassert(valType == SA_NTF_VALUE_LDAP_NAME, true);
+	assert(valType == SA_NTF_VALUE_LDAP_NAME);
 	SaAisErrorT error = SA_AIS_OK;
 	SaUint16T numAlloc = strlen(saAisNameBorrow((SaNameT *)newValue));
 	SaUint8T *temp = NULL;
@@ -1483,74 +1484,75 @@ static void create_rt_test_object(const SaImmClassNameT cname, const char *dn,
 				  SaFloatT floatVar, SaDoubleT doubleVar,
 				  SaStringT *stringVar, SaAnyT *anyVar)
 {
-	char *rdn = strchr(dn, '=') + 1;
+	char *rdn = const_cast<char*>(strchr(dn, '=')) + 1;
 	void *attr1[] = {&rdn};
 	const SaImmAttrValuesT_2 attr_rdnVar = {
-	    .attrName = (strcmp(cname, "OsafNtfCmTestRT") == 0) ? "stringRdn"
-								: "stringRdn1",
+	    .attrName = (strcmp(cname, "OsafNtfCmTestRT") == 0) ?
+			    const_cast<SaImmAttrNameT>("stringRdn") :
+			    const_cast<SaImmAttrNameT>("stringRdn1"),
 	    .attrValueType = SA_IMM_ATTR_SASTRINGT,
 	    .attrValuesNumber = 1,
 	    .attrValues = attr1};
 	void *attr2[] = {&int32Var};
-	const SaImmAttrValuesT_2 attr_int32Var = {.attrName = "testInt32",
-						  .attrValueType =
-						      SA_IMM_ATTR_SAINT32T,
-						  .attrValuesNumber = 1,
-						  .attrValues = attr2};
+	const SaImmAttrValuesT_2 attr_int32Var = {
+			.attrName = const_cast<SaImmAttrNameT>("testInt32"),
+			.attrValueType = SA_IMM_ATTR_SAINT32T,
+			.attrValuesNumber = 1,
+			.attrValues = attr2};
 	void *attr3[] = {&uint32Var};
-	const SaImmAttrValuesT_2 attr_uint32Var = {.attrName = "testUint32",
-						   .attrValueType =
-						       SA_IMM_ATTR_SAUINT32T,
-						   .attrValuesNumber = 1,
-						   .attrValues = attr3};
+	const SaImmAttrValuesT_2 attr_uint32Var = {
+			.attrName = const_cast<SaImmAttrNameT>("testUint32"),
+			.attrValueType = SA_IMM_ATTR_SAUINT32T,
+			.attrValuesNumber = 1,
+			.attrValues = attr3};
 	void *attr4[] = {&int64Var};
-	const SaImmAttrValuesT_2 attr_int64Var = {.attrName = "testInt64",
-						  .attrValueType =
-						      SA_IMM_ATTR_SAINT64T,
-						  .attrValuesNumber = 1,
-						  .attrValues = attr4};
+	const SaImmAttrValuesT_2 attr_int64Var = {
+			.attrName = const_cast<SaImmAttrNameT>("testInt64"),
+			.attrValueType = SA_IMM_ATTR_SAINT64T,
+			.attrValuesNumber = 1,
+			.attrValues = attr4};
 	void *attr5[] = {&uint64Var};
-	const SaImmAttrValuesT_2 attr_uint64Var = {.attrName = "testUint64",
-						   .attrValueType =
-						       SA_IMM_ATTR_SAUINT64T,
-						   .attrValuesNumber = 1,
-						   .attrValues = attr5};
+	const SaImmAttrValuesT_2 attr_uint64Var = {
+			.attrName = const_cast<SaImmAttrNameT>("testUint64"),
+			.attrValueType = SA_IMM_ATTR_SAUINT64T,
+			.attrValuesNumber = 1,
+			.attrValues = attr5};
 	void *attr6[] = {timeVar};
-	const SaImmAttrValuesT_2 attr_timeVar = {.attrName = "testTime",
-						 .attrValueType =
-						     SA_IMM_ATTR_SATIMET,
-						 .attrValuesNumber = 1,
-						 .attrValues = attr6};
+	const SaImmAttrValuesT_2 attr_timeVar = {
+			.attrName = const_cast<SaImmAttrNameT>("testTime"),
+			.attrValueType = SA_IMM_ATTR_SATIMET,
+			.attrValuesNumber = 1,
+			.attrValues = attr6};
 	void *attr7[] = {nameVar};
-	const SaImmAttrValuesT_2 attr_nameVar = {.attrName = "testName",
-						 .attrValueType =
-						     SA_IMM_ATTR_SANAMET,
-						 .attrValuesNumber = 1,
-						 .attrValues = attr7};
+	const SaImmAttrValuesT_2 attr_nameVar = {
+			.attrName = const_cast<SaImmAttrNameT>("testName"),
+			.attrValueType = SA_IMM_ATTR_SANAMET,
+			.attrValuesNumber = 1,
+			.attrValues = attr7};
 	void *attr8[] = {&floatVar};
-	const SaImmAttrValuesT_2 attr_floatVar = {.attrName = "testFloat",
-						  .attrValueType =
-						      SA_IMM_ATTR_SAFLOATT,
-						  .attrValuesNumber = 1,
-						  .attrValues = attr8};
+	const SaImmAttrValuesT_2 attr_floatVar = {
+			.attrName = const_cast<SaImmAttrNameT>("testFloat"),
+			.attrValueType = SA_IMM_ATTR_SAFLOATT,
+			.attrValuesNumber = 1,
+			.attrValues = attr8};
 	void *attr9[] = {&doubleVar};
-	const SaImmAttrValuesT_2 attr_doubleVar = {.attrName = "testDouble",
-						   .attrValueType =
-						       SA_IMM_ATTR_SADOUBLET,
-						   .attrValuesNumber = 1,
-						   .attrValues = attr9};
+	const SaImmAttrValuesT_2 attr_doubleVar = {
+			.attrName = const_cast<SaImmAttrNameT>("testDouble"),
+			.attrValueType = SA_IMM_ATTR_SADOUBLET,
+			.attrValuesNumber = 1,
+			.attrValues = attr9};
 	void *attr10[] = {stringVar};
-	const SaImmAttrValuesT_2 attr_stringVar = {.attrName = "testString",
-						   .attrValueType =
-						       SA_IMM_ATTR_SASTRINGT,
-						   .attrValuesNumber = 1,
-						   .attrValues = attr10};
+	const SaImmAttrValuesT_2 attr_stringVar = {
+			.attrName = const_cast<SaImmAttrNameT>("testString"),
+			.attrValueType = SA_IMM_ATTR_SASTRINGT,
+			.attrValuesNumber = 1,
+			.attrValues = attr10};
 	void *attr11[] = {anyVar};
-	const SaImmAttrValuesT_2 attr_anyVar = {.attrName = "testAny",
-						.attrValueType =
-						    SA_IMM_ATTR_SAANYT,
-						.attrValuesNumber = 1,
-						.attrValues = attr11};
+	const SaImmAttrValuesT_2 attr_anyVar = {
+			.attrName = const_cast<SaImmAttrNameT>("testAny"),
+			.attrValueType = SA_IMM_ATTR_SAANYT,
+			.attrValuesNumber = 1,
+			.attrValues = attr11};
 	const SaImmAttrValuesT_2 *attrVal[] = {
 	    &attr_rdnVar,    &attr_int32Var,  &attr_uint32Var, &attr_int64Var,
 	    &attr_uint64Var, &attr_timeVar,   &attr_nameVar,   &attr_floatVar,
@@ -1572,7 +1574,7 @@ static void create_rt_test_object(const SaImmClassNameT cname, const char *dn,
 static void modify_rt_test_object(const char *dn, SaInt32T modType,
 				  TestAttributeValue *attr[])
 {
-	char *rdn = strchr(dn, '=') + 1;
+	char *rdn = const_cast<char*>(strchr(dn, '=')) + 1;
 	SaNameT objName;
 	strcpy((char *)objName.value, rdn);
 	objName.length = strlen(rdn) + 1;
@@ -1580,8 +1582,10 @@ static void modify_rt_test_object(const char *dn, SaInt32T modType,
 	SaImmAttrModificationT_2 *attrMod[20];
 	int i = 0;
 	while (attr[i] != NULL) {
-		attrMod[i] = malloc(sizeof(SaImmAttrModificationT_2));
-		attrMod[i]->modType = modType;
+		attrMod[i] = static_cast<SaImmAttrModificationT_2*>(
+				malloc(sizeof(SaImmAttrModificationT_2)));
+		attrMod[i]->modType = static_cast<SaImmAttrModificationTypeT>(
+				modType);
 		attrMod[i]->modAttr.attrName = (char *)attr[i]->attrName;
 		attrMod[i]->modAttr.attrValueType = attr[i]->attrType;
 		attrMod[i]->modAttr.attrValuesNumber = 1;
@@ -1610,7 +1614,7 @@ static void modify_rt_test_object(const char *dn, SaInt32T modType,
  */
 static void delete_rt_test_object(const char *dn)
 {
-	char *rdn = strchr(dn, '=') + 1;
+	char *rdn = const_cast<char*>(strchr(dn, '=')) + 1;
 	SaNameT objName;
 	strcpy((char *)objName.value, rdn);
 	objName.length = strlen(rdn);
@@ -1630,7 +1634,8 @@ static int isLongDnsAllowed()
 	SaImmHandleT immHandle;
 	SaImmAccessorHandleT accessorHandle;
 	SaVersionT immVersion = {'A', 2, 15};
-	SaImmAttrNameT attrName = "longDnsAllowed";
+	SaImmAttrNameT attrName = const_cast<SaImmAttrNameT>(
+			"longDnsAllowed");
 	SaImmAttrNameT attrNames[2] = {attrName, NULL};
 	SaImmAttrValuesT_2 **attributes = NULL;
 	SaConstStringT immObjectName = "opensafImm=opensafImm,safApp=safImmService";
@@ -1681,11 +1686,12 @@ void objectCreateTest_01(void)
 	SaStringT stringVar = STRINGVAR1;
 	SaAnyT anyVar = {.bufferSize = sizeof(BUF1),
 			 .bufferAddr = (SaUint8T *)BUF1};
-
+	const SaImmClassNameT class_name =
+			const_cast<SaImmClassNameT>("OsafNtfCmTestRT");
 	/*
 	 * Create the object in IMM.
 	 */
-	create_rt_test_object("OsafNtfCmTestRT", DNTESTRT, int32Var, uint32Var,
+	create_rt_test_object(class_name, DNTESTRT, int32Var, uint32Var,
 			      int64Var, uint64Var, &timeVar, &nameVar, floatVar,
 			      doubleVar, &stringVar, &anyVar);
 
@@ -4819,28 +4825,28 @@ void objectMultiCcbTest_38(void)
 
 	void *val1[] = {&var1};
 	SaImmAttrModificationT_2 am1 = {.modType = SA_IMM_ATTR_VALUES_REPLACE};
-	am1.modAttr.attrName = "testUint32Cfg";
+	am1.modAttr.attrName = const_cast<SaImmAttrNameT>("testUint32Cfg");
 	am1.modAttr.attrValueType = SA_IMM_ATTR_SAUINT32T;
 	am1.modAttr.attrValuesNumber = 1;
 	am1.modAttr.attrValues = val1;
 
 	void *val2[] = {&var2};
 	SaImmAttrModificationT_2 am2 = {.modType = SA_IMM_ATTR_VALUES_REPLACE};
-	am2.modAttr.attrName = "testInt32Cfg";
+	am2.modAttr.attrName = const_cast<SaImmAttrNameT>("testInt32Cfg");
 	am2.modAttr.attrValueType = SA_IMM_ATTR_SAINT32T;
 	am2.modAttr.attrValuesNumber = 1;
 	am2.modAttr.attrValues = val2;
 
 	void *val3[] = {&var3};
 	SaImmAttrModificationT_2 am3 = {.modType = SA_IMM_ATTR_VALUES_REPLACE};
-	am3.modAttr.attrName = "testUint64Cfg";
+	am3.modAttr.attrName = const_cast<SaImmAttrNameT>("testUint64Cfg");
 	am3.modAttr.attrValueType = SA_IMM_ATTR_SAUINT64T;
 	am3.modAttr.attrValuesNumber = 1;
 	am3.modAttr.attrValues = val3;
 
 	void *val4[] = {&var4};
 	SaImmAttrModificationT_2 am4 = {.modType = SA_IMM_ATTR_VALUES_REPLACE};
-	am4.modAttr.attrName = "testInt64Cfg";
+	am4.modAttr.attrName = const_cast<SaImmAttrNameT>("testInt64Cfg");
 	am4.modAttr.attrValueType = SA_IMM_ATTR_SAINT64T;
 	am4.modAttr.attrValuesNumber = 1;
 	am4.modAttr.attrValues = val4;
@@ -4849,8 +4855,10 @@ void objectMultiCcbTest_38(void)
 	SaImmAttrModificationT_2 *attrMod2[] = {&am3, &am4, NULL};
 	safassert(immutil_saImmOmInitialize(&omHandle, NULL, &immVersion),
 		  SA_AIS_OK);
-	safassert(immutil_saImmOmAdminOwnerInitialize(omHandle, "multiCcbOwner",
-						      SA_TRUE, &ownerHandle),
+	safassert(immutil_saImmOmAdminOwnerInitialize(
+			omHandle,
+			const_cast<SaImmAdminOwnerNameT>("multiCcbOwner"),
+			SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
 	const SaNameT *objName[] = {&objectName, NULL};
 	safassert(
@@ -5018,42 +5026,42 @@ void objectMultiCcbTest_39(void)
 
 	void *val1[] = {&var1};
 	SaImmAttrModificationT_2 am1 = {.modType = SA_IMM_ATTR_VALUES_ADD};
-	am1.modAttr.attrName = "testUint32Cfg";
+	am1.modAttr.attrName = const_cast<SaImmAttrNameT>("testUint32Cfg");
 	am1.modAttr.attrValueType = SA_IMM_ATTR_SAUINT32T;
 	am1.modAttr.attrValuesNumber = 1;
 	am1.modAttr.attrValues = val1;
 
 	void *val2[] = {&var2};
 	SaImmAttrModificationT_2 am2 = {.modType = SA_IMM_ATTR_VALUES_REPLACE};
-	am2.modAttr.attrName = "testInt32Cfg";
+	am2.modAttr.attrName = const_cast<SaImmAttrNameT>("testInt32Cfg");
 	am2.modAttr.attrValueType = SA_IMM_ATTR_SAINT32T;
 	am2.modAttr.attrValuesNumber = 1;
 	am2.modAttr.attrValues = val2;
 
 	void *val3[] = {&var3};
 	SaImmAttrModificationT_2 am3 = {.modType = SA_IMM_ATTR_VALUES_DELETE};
-	am3.modAttr.attrName = "testUint64Cfg";
+	am3.modAttr.attrName = const_cast<SaImmAttrNameT>("testUint64Cfg");
 	am3.modAttr.attrValueType = SA_IMM_ATTR_SAUINT64T;
 	am3.modAttr.attrValuesNumber = 1;
 	am3.modAttr.attrValues = val3;
 
 	void *val4[] = {&var4};
 	SaImmAttrModificationT_2 am4 = {.modType = SA_IMM_ATTR_VALUES_DELETE};
-	am4.modAttr.attrName = "testInt64Cfg";
+	am4.modAttr.attrName = const_cast<SaImmAttrNameT>("testInt64Cfg");
 	am4.modAttr.attrValueType = SA_IMM_ATTR_SAINT64T;
 	am4.modAttr.attrValuesNumber = 1;
 	am4.modAttr.attrValues = val4;
 
 	void *val5[] = {&var5};
 	SaImmAttrModificationT_2 am5 = {.modType = SA_IMM_ATTR_VALUES_DELETE};
-	am5.modAttr.attrName = "testDoubleCfg";
+	am5.modAttr.attrName = const_cast<SaImmAttrNameT>("testDoubleCfg");
 	am5.modAttr.attrValueType = SA_IMM_ATTR_SADOUBLET;
 	am5.modAttr.attrValuesNumber = 1;
 	am5.modAttr.attrValues = val5;
 
 	void *val6[] = {&var6};
 	SaImmAttrModificationT_2 am6 = {.modType = SA_IMM_ATTR_VALUES_DELETE};
-	am6.modAttr.attrName = "testFloatCfg";
+	am6.modAttr.attrName = const_cast<SaImmAttrNameT>("testFloatCfg");
 	am6.modAttr.attrValueType = SA_IMM_ATTR_SAFLOATT;
 	am6.modAttr.attrValuesNumber = 1;
 	am6.modAttr.attrValues = val6;
@@ -5064,8 +5072,10 @@ void objectMultiCcbTest_39(void)
 
 	safassert(immutil_saImmOmInitialize(&omHandle, NULL, &immVersion),
 		  SA_AIS_OK);
-	safassert(immutil_saImmOmAdminOwnerInitialize(omHandle, "multiCcbOwner",
-						      SA_TRUE, &ownerHandle),
+	safassert(immutil_saImmOmAdminOwnerInitialize(
+			omHandle,
+			const_cast<SaImmAdminOwnerNameT>("multiCcbOwner"),
+			SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
 	const SaNameT *objName[] = {&objectName, NULL};
 	safassert(
@@ -5353,11 +5363,13 @@ void objectCreateTest_3401(void)
 	SaStringT stringVar = STRINGVAR1;
 	SaAnyT anyVar = {.bufferSize = sizeof(BUF1),
 			 .bufferAddr = (SaUint8T *)BUF1};
+	const SaImmClassNameT class_name = const_cast<SaImmClassNameT>(
+			"OsafNtfCmTestRT1");
 
 	/*
 	 * Create the object in IMM.
 	 */
-	create_rt_test_object("OsafNtfCmTestRT1", DNTESTRT1, int32Var,
+	create_rt_test_object(class_name, DNTESTRT1, int32Var,
 			      uint32Var, int64Var, uint64Var, &timeVar,
 			      &nameVar, floatVar, doubleVar, &stringVar,
 			      &anyVar);
@@ -5660,11 +5672,13 @@ void objectCreateTest_3501(void)
 	SaStringT stringVar = STRINGVAR1;
 	SaAnyT anyVar = {.bufferSize = sizeof(BUF1),
 			 .bufferAddr = (SaUint8T *)BUF1};
+	const SaImmClassNameT class_name = const_cast<SaImmClassNameT>(
+				"OsafNtfCmTestRT");
 
 	/*
 	 * Create the object in IMM.
 	 */
-	create_rt_test_object("OsafNtfCmTestRT", DNTESTRT, int32Var, uint32Var,
+	create_rt_test_object(class_name, DNTESTRT, int32Var, uint32Var,
 			      int64Var, uint64Var, &timeVar, &nameVar, floatVar,
 			      doubleVar, &stringVar, &anyVar);
 

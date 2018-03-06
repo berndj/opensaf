@@ -39,14 +39,15 @@ extern void tet_result(int result);
 
 extern const SaVersionT refVersion;
 extern SaVersionT ntfVersion;
+extern const SaVersionT lowestVersion;
 extern SaAisErrorT rc;
 extern SaNtfHandleT ntfHandle;
 extern SaNtfCallbacksT ntfCallbacks;
 extern SaSelectionObjectT selectionObject;
-int verbose;
-int gl_tag_mode;
-int gl_prompt_mode;
-bool gl_suspending;
+extern int verbose;
+extern int gl_tag_mode;
+extern int gl_prompt_mode;
+extern bool gl_suspending;
 
 #define DEFAULT_ADDITIONAL_TEXT "this is additional text info"
 

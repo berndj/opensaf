@@ -123,13 +123,15 @@ void saNtfNotificationReadInitialize_01_7(void)
 
 void saNtfNotificationReadInitialize_01_8(void)
 {
-	saNtfNotificationReadInitialize_01(SA_NTF_SEARCH_ONLY_FILTER + 10,
-					   SA_AIS_ERR_INVALID_PARAM);
+	saNtfNotificationReadInitialize_01(
+	    static_cast<SaNtfSearchModeT>(SA_NTF_SEARCH_ONLY_FILTER + 10),
+	    SA_AIS_ERR_INVALID_PARAM);
 }
 
 void saNtfNotificationReadInitialize_01_9(void)
 {
-	saNtfNotificationReadInitialize_01(-1, SA_AIS_ERR_INVALID_PARAM);
+	saNtfNotificationReadInitialize_01(static_cast<SaNtfSearchModeT>(-1),
+	                                   SA_AIS_ERR_INVALID_PARAM);
 }
 
 /**

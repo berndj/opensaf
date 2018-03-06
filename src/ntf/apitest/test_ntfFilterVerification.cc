@@ -44,7 +44,7 @@
 #define NOTIFYING_OBJECT_TEST "AVND"
 #define NTF_REST_MAX_IDS 30
 struct not_idsT {
-	int length;
+	SaUint64T length;
 	SaNtfIdentifierT ids[NTF_REST_MAX_IDS];
 };
 
@@ -73,7 +73,7 @@ static SaNtfAttributeChangeNotificationT myAttrChangeNotification;
 static SaNtfStateChangeNotificationT myStateChangeNotification;
 static SaNtfSecurityAlarmNotificationT mySecAlarmNotification;
 
-static void saNameSet(SaNameT *sn, char *s)
+static void saNameSet(SaNameT *sn, const char *s)
 {
 	sn->length = strlen(s);
 	(void)memcpy(sn->value, s, sn->length);
@@ -94,7 +94,7 @@ static void ntf_id_store(SaNtfIdentifierT n_id)
  */
 static void printOkIds()
 {
-	int j;
+	SaUint64T j;
 	if (!id_verbose)
 		return;
 	for (j = 0; j < ok_ids.length; j++)
@@ -107,7 +107,7 @@ static void printOkIds()
  */
 static SaAisErrorT check_errors()
 {
-	int i, j, found;
+	SaUint64T i, j, found;
 	SaAisErrorT rc = SA_AIS_OK;
 
 	for (i = 0; i < received_ids.length; i++) {
@@ -423,7 +423,7 @@ void headerTest2(void)
 	    *myAlarmNotification.notificationHeader.notificationId;
 
 	fillHeader(head);
-	*(head->eventType) = SA_NTF_TYPE_ALARM;
+	*(head->eventType) = static_cast<SaNtfEventTypeT>(SA_NTF_TYPE_ALARM);
 	head->notifyingObject->length = strlen(NOTIFYING_OBJECT_TEST);
 	(void)memcpy(head->notifyingObject->value, NOTIFYING_OBJECT_TEST,
 		     head->notifyingObject->length);
@@ -1047,13 +1047,14 @@ void alarmNotificationFilterTest2(void)
 	safassert(saNtfNotificationSend(myAlarmNotification.notificationHandle),
 		  SA_AIS_OK);
 
-	*(myAlarmNotification.perceivedSeverity) = SA_NTF_ADAPTER_ERROR;
+	*(myAlarmNotification.perceivedSeverity) =
+			static_cast<SaNtfSeverityT>(SA_NTF_ADAPTER_ERROR);
 	*(myAlarmNotification.probableCause) = SA_NTF_PRESSURE_UNACCEPTABLE;
 	safassert(saNtfNotificationSend(myAlarmNotification.notificationHandle),
 		  SA_AIS_OK);
 
 	*(myAlarmNotification.perceivedSeverity) =
-	    SA_NTF_APPLICATION_SUBSYSTEM_FAILURE;
+			static_cast<SaNtfSeverityT>(SA_NTF_APPLICATION_SUBSYSTEM_FAILURE);
 	*(myAlarmNotification.probableCause) = SA_NTF_PRESSURE_UNACCEPTABLE;
 	safassert(saNtfNotificationSend(myAlarmNotification.notificationHandle),
 		  SA_AIS_OK);

@@ -15,7 +15,6 @@
  * Author(s): Ericsson AB
  *
  */
-
 #include <stdio.h>
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
@@ -31,7 +30,7 @@
 #define DEFAULT_EXT_NAME_LENGTH 300
 #define DEFAULT_UNEXT_NAME_STRING "This is unextended SaNameT string (<256)"
 struct not_idsT {
-	int length;
+	SaUint64T length;
 	SaNtfIdentifierT ids[NTF_REST_MAX_IDS];
 };
 
@@ -60,9 +59,6 @@ static SaNtfObjectCreateDeleteNotificationT myObjCrDelNotification;
 static SaNtfAttributeChangeNotificationT myAttrChangeNotification;
 static SaNtfStateChangeNotificationT myStateChangeNotification;
 static SaNtfSecurityAlarmNotificationT mySecAlarmNotification;
-
-extern void saAisNameLend(SaConstStringT value, SaNameT *name);
-extern SaConstStringT saAisNameBorrow(const SaNameT *name);
 
 //>
 // For backup, change, and restore IMM attribute values.
@@ -256,7 +252,7 @@ static void setupEnv(void)
  */
 static void init_ext_object()
 {
-	safassert(setenv("SA_ENABLE_EXTENDED_NAMES", "1", 1), 0);
+	rc_assert(setenv("SA_ENABLE_EXTENDED_NAMES", "1", 1), 0);
 
 	memset(&default_ext_notification_object, 'A',
 	       DEFAULT_EXT_NAME_LENGTH - 1);
@@ -290,7 +286,7 @@ static void ntf_id_store(SaNtfIdentifierT n_id)
  */
 static SaAisErrorT check_errors()
 {
-	int i, j, found;
+	SaUint64T i, j, found;
 	SaAisErrorT rc = SA_AIS_OK;
 
 	for (i = 0; i < received_ids.length; i++) {

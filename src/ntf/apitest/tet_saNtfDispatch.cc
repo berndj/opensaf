@@ -37,7 +37,7 @@ void saNtfDispatch_03(void)
 {
 	safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
 		  SA_AIS_OK);
-	rc = saNtfDispatch(ntfHandle, 0);
+	rc = saNtfDispatch(ntfHandle, static_cast<SaDispatchFlagsT>(0));
 	safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }

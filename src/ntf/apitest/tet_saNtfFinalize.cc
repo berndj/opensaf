@@ -94,7 +94,7 @@ void saNtfFinalize_04()
 void *allocate(void *arg)
 {
 	SaAisErrorT *ret = (SaAisErrorT *)arg;
-	SaStringT myAdditionalText = "My additional text";
+	const char* myAdditionalText = "My additional text";
 	SaNameT object = {9, "smallerdn"};
 
 	*ret = saNtfStateChangeNotificationAllocate(
