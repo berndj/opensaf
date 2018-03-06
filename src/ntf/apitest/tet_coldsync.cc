@@ -27,46 +27,45 @@
 extern int verbose;
 
 void free_notif_2(SaNtfSubscriptionIdT subscriptionId,
-		const SaNtfNotificationsT *notification)
-{
-	SaNtfNotificationHandleT notificationHandle = 0;
-	switch (notification->notificationType) {
-	case SA_NTF_TYPE_OBJECT_CREATE_DELETE:
-		notificationHandle =
-		    notification->notification.objectCreateDeleteNotification
-			.notificationHandle;
-		break;
+    const SaNtfNotificationsT *notification) {
+  SaNtfNotificationHandleT notificationHandle = 0;
+  switch (notification->notificationType) {
+  case SA_NTF_TYPE_OBJECT_CREATE_DELETE:
+    notificationHandle =
+        notification->notification.objectCreateDeleteNotification
+      .notificationHandle;
+    break;
 
-	case SA_NTF_TYPE_ATTRIBUTE_CHANGE:
-		notificationHandle =
-		    notification->notification.attributeChangeNotification
-			.notificationHandle;
-		break;
+  case SA_NTF_TYPE_ATTRIBUTE_CHANGE:
+    notificationHandle =
+        notification->notification.attributeChangeNotification
+      .notificationHandle;
+    break;
 
-	case SA_NTF_TYPE_STATE_CHANGE:
-		notificationHandle =
-		    notification->notification.stateChangeNotification
-			.notificationHandle;
-		break;
+  case SA_NTF_TYPE_STATE_CHANGE:
+    notificationHandle =
+        notification->notification.stateChangeNotification
+      .notificationHandle;
+    break;
 
-	case SA_NTF_TYPE_ALARM:
-		notificationHandle = notification->notification
-					 .alarmNotification.notificationHandle;
-		break;
+  case SA_NTF_TYPE_ALARM:
+    notificationHandle = notification->notification
+           .alarmNotification.notificationHandle;
+    break;
 
-	case SA_NTF_TYPE_SECURITY_ALARM:
-		notificationHandle =
-		    notification->notification.securityAlarmNotification
-			.notificationHandle;
-		break;
+  case SA_NTF_TYPE_SECURITY_ALARM:
+    notificationHandle =
+        notification->notification.securityAlarmNotification
+      .notificationHandle;
+    break;
 
-	default:
-		assert(0);
-		break;
-	}
-	if (notificationHandle != 0) {
-		safassert(saNtfNotificationFree(notificationHandle), SA_AIS_OK);
-	}
+  default:
+    assert(0);
+    break;
+  }
+  if (notificationHandle != 0) {
+    safassert(saNtfNotificationFree(notificationHandle), SA_AIS_OK);
+  }
 }
 
 /**
@@ -78,131 +77,130 @@ void free_notif_2(SaNtfSubscriptionIdT subscriptionId,
  * - switch over to make the standby become active
  * - Read alarms, reader is successful to read alarms from the new active
  */
-void test_coldsync_saNtfNotificationReadNext_01(void)
-{
-	saNotificationAllocationParamsT myNotificationAllocationParams;
-	saNotificationFilterAllocationParamsT
-			myNotificationFilterAllocationParams;
-	saNotificationParamsT myNotificationParams;
+void test_coldsync_saNtfNotificationReadNext_01(void) {
+  saNotificationAllocationParamsT myNotificationAllocationParams;
+  saNotificationFilterAllocationParamsT
+      myNotificationFilterAllocationParams;
+  saNotificationParamsT myNotificationParams;
 
-	SaNtfSearchCriteriaT searchCriteria;
-	SaNtfAlarmNotificationFilterT myAlarmFilter;
-	SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles = {
-			0, 0, 0, 0, 0};
-	SaNtfReadHandleT readHandle;
-	SaNtfHandleT ntfHandle;
-	SaNtfNotificationsT returnedNotification;
-	SaNtfAlarmNotificationT myNotification;
-	searchCriteria.searchMode = SA_NTF_SEARCH_ONLY_FILTER;
-	SaAisErrorT errorCode;
-	SaUint32T readCounter = 0;
+  SaNtfSearchCriteriaT searchCriteria;
+  SaNtfAlarmNotificationFilterT myAlarmFilter;
+  SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles = {
+      0, 0, 0, 0, 0};
+  SaNtfReadHandleT readHandle;
+  SaNtfHandleT ntfHandle;
+  SaNtfNotificationsT returnedNotification;
+  SaNtfAlarmNotificationT myNotification;
+  searchCriteria.searchMode = SA_NTF_SEARCH_ONLY_FILTER;
+  SaAisErrorT errorCode;
+  SaUint32T readCounter = 0;
 
-	fillInDefaultValues(&myNotificationAllocationParams,
-					&myNotificationFilterAllocationParams,
-					&myNotificationParams);
+  fillInDefaultValues(&myNotificationAllocationParams,
+          &myNotificationFilterAllocationParams,
+          &myNotificationParams);
 
-	safassert(ntftest_saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
-			SA_AIS_OK);
+  safassert(ntftest_saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+      SA_AIS_OK);
 
-	safassert(ntftest_saNtfAlarmNotificationFilterAllocate(
-		ntfHandle, /* handle to Notification Service instance */
-		&myAlarmFilter, /* put filter here */
-		/* number of event types */
-		myNotificationFilterAllocationParams.numEventTypes,
-		/* number of notification objects */
-		myNotificationFilterAllocationParams.numNotificationObjects,
-		/* number of notifying objects */
-		myNotificationFilterAllocationParams.numNotifyingObjects,
-		/* number of notification class ids */
-		myNotificationFilterAllocationParams.numNotificationClassIds,
-		/* number of probable causes */
-		myNotificationFilterAllocationParams.numProbableCauses,
-		/* number of perceived severities */
-		myNotificationFilterAllocationParams.numPerceivedSeverities,
-		/* number of trend indications */
-		myNotificationFilterAllocationParams.numTrends),
-		SA_AIS_OK);
+  safassert(ntftest_saNtfAlarmNotificationFilterAllocate(
+    ntfHandle, /* handle to Notification Service instance */
+    &myAlarmFilter, /* put filter here */
+    /* number of event types */
+    myNotificationFilterAllocationParams.numEventTypes,
+    /* number of notification objects */
+    myNotificationFilterAllocationParams.numNotificationObjects,
+    /* number of notifying objects */
+    myNotificationFilterAllocationParams.numNotifyingObjects,
+    /* number of notification class ids */
+    myNotificationFilterAllocationParams.numNotificationClassIds,
+    /* number of probable causes */
+    myNotificationFilterAllocationParams.numProbableCauses,
+    /* number of perceived severities */
+    myNotificationFilterAllocationParams.numPerceivedSeverities,
+    /* number of trend indications */
+    myNotificationFilterAllocationParams.numTrends),
+    SA_AIS_OK);
 
-	myNotificationFilterHandles.alarmFilterHandle =
-		myAlarmFilter.notificationFilterHandle;
-	myAlarmFilter.perceivedSeverities[0] = SA_NTF_SEVERITY_WARNING;
-	myAlarmFilter.perceivedSeverities[1] = SA_NTF_SEVERITY_CLEARED;
+  myNotificationFilterHandles.alarmFilterHandle =
+    myAlarmFilter.notificationFilterHandle;
+  myAlarmFilter.perceivedSeverities[0] = SA_NTF_SEVERITY_WARNING;
+  myAlarmFilter.perceivedSeverities[1] = SA_NTF_SEVERITY_CLEARED;
 
-	/* Send one alarm notification */
-	safassert(ntftest_saNtfAlarmNotificationAllocate(
-		ntfHandle, /* handle to Notification Service instance */
-		&myNotification,
-		/* number of correlated notifications */
-		myNotificationAllocationParams.numCorrelatedNotifications,
-		/* length of additional text */
-		myNotificationAllocationParams.lengthAdditionalText,
-		/* number of additional info items*/
-		myNotificationAllocationParams.numAdditionalInfo,
-		/* number of specific problems */
-		myNotificationAllocationParams.numSpecificProblems,
-		/* number of monitored attributes */
-		myNotificationAllocationParams.numMonitoredAttributes,
-		/* number of proposed repair actions */
-		myNotificationAllocationParams.numProposedRepairActions,
-		/* use default allocation size */
-		myNotificationAllocationParams.variableDataSize),
-		SA_AIS_OK);
+  /* Send one alarm notification */
+  safassert(ntftest_saNtfAlarmNotificationAllocate(
+    ntfHandle, /* handle to Notification Service instance */
+    &myNotification,
+    /* number of correlated notifications */
+    myNotificationAllocationParams.numCorrelatedNotifications,
+    /* length of additional text */
+    myNotificationAllocationParams.lengthAdditionalText,
+    /* number of additional info items*/
+    myNotificationAllocationParams.numAdditionalInfo,
+    /* number of specific problems */
+    myNotificationAllocationParams.numSpecificProblems,
+    /* number of monitored attributes */
+    myNotificationAllocationParams.numMonitoredAttributes,
+    /* number of proposed repair actions */
+    myNotificationAllocationParams.numProposedRepairActions,
+    /* use default allocation size */
+    myNotificationAllocationParams.variableDataSize),
+    SA_AIS_OK);
 
-	myNotificationParams.eventType = myNotificationParams.alarmEventType;
+  myNotificationParams.eventType = myNotificationParams.alarmEventType;
 
-	fill_header_part(&myNotification.notificationHeader,
-			 (saNotificationParamsT *)&myNotificationParams,
-			 myNotificationAllocationParams.lengthAdditionalText);
+  fill_header_part(&myNotification.notificationHeader,
+       (saNotificationParamsT *)&myNotificationParams,
+       myNotificationAllocationParams.lengthAdditionalText);
 
-	/* determine perceived severity */
-	*(myNotification.perceivedSeverity) =
-			myNotificationParams.perceivedSeverity;
+  /* determine perceived severity */
+  *(myNotification.perceivedSeverity) =
+      myNotificationParams.perceivedSeverity;
 
-	/* set probable cause*/
-	*(myNotification.probableCause) = myNotificationParams.probableCause;
+  /* set probable cause*/
+  *(myNotification.probableCause) = myNotificationParams.probableCause;
 
-	safassert(ntftest_saNtfNotificationSend(myNotification.notificationHandle),
-			SA_AIS_OK);
+  safassert(ntftest_saNtfNotificationSend(myNotification.notificationHandle),
+      SA_AIS_OK);
 
-	// reboot standby, switchover
-	wait_controllers(3);
-	wait_controllers(4);
+  // reboot standby, switchover
+  wait_controllers(3);
+  wait_controllers(4);
 
-	/* Read initialize here to get the notification above */
-	safassert(ntftest_saNtfNotificationReadInitialize(searchCriteria,
-		&myNotificationFilterHandles, &readHandle),
-		SA_AIS_OK);
+  /* Read initialize here to get the notification above */
+  safassert(ntftest_saNtfNotificationReadInitialize(searchCriteria,
+    &myNotificationFilterHandles, &readHandle),
+    SA_AIS_OK);
 
-	/* read as many matching notifications as exist for the time period
-	 between the last received one and now */
-	for (; (errorCode = ntftest_saNtfNotificationReadNext(
-				readHandle, SA_NTF_SEARCH_YOUNGER,
-				&returnedNotification)) == SA_AIS_OK;) {
-		safassert(errorCode, SA_AIS_OK);
-		readCounter++;
+  /* read as many matching notifications as exist for the time period
+   between the last received one and now */
+  for (; (errorCode = ntftest_saNtfNotificationReadNext(
+        readHandle, SA_NTF_SEARCH_YOUNGER,
+        &returnedNotification)) == SA_AIS_OK;) {
+    safassert(errorCode, SA_AIS_OK);
+    readCounter++;
 
-		if (verbose) {
-			newNotification(69, &returnedNotification);
-		} else {
-			free_notif_2(0, &returnedNotification);
-		}
-	}
-	if (verbose) {
-		(void)printf("\n errorcode to break loop: %d\n", (int)errorCode);
-	}
-	if (readCounter == 0) {
-		errorCode = SA_AIS_ERR_FAILED_OPERATION;
-	}
+    if (verbose) {
+      newNotification(69, &returnedNotification);
+    } else {
+      free_notif_2(0, &returnedNotification);
+    }
+  }
+  if (verbose) {
+    (void)printf("\n errorcode to break loop: %d\n", (int)errorCode);
+  }
+  if (readCounter == 0) {
+    errorCode = SA_AIS_ERR_FAILED_OPERATION;
+  }
 
-	// No more...
-	safassert(ntftest_saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
-	safassert(ntftest_saNtfNotificationFilterFree(myAlarmFilter.notificationFilterHandle),
-		SA_AIS_OK);
-	free(myNotificationParams.additionalText);
-	safassert(ntftest_saNtfNotificationFree(myNotification.notificationHandle),
-			SA_AIS_OK);
-	safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
-	test_validate(errorCode, SA_AIS_ERR_NOT_EXIST); /* read all notifications!! */
+  // No more...
+  safassert(ntftest_saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
+  safassert(ntftest_saNtfNotificationFilterFree(myAlarmFilter.notificationFilterHandle),
+    SA_AIS_OK);
+  free(myNotificationParams.additionalText);
+  safassert(ntftest_saNtfNotificationFree(myNotification.notificationHandle),
+      SA_AIS_OK);
+  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  test_validate(errorCode, SA_AIS_ERR_NOT_EXIST); /* read all notifications!! */
 }
 /**
  * This test function is to verify the reader Id to be
@@ -214,129 +212,128 @@ void test_coldsync_saNtfNotificationReadNext_01(void)
  * - switch over to make the standby become active
  * - Read alarms, reader is successful to read alarms from the new active
  */
-void test_coldsync_saNtfNotificationReadInitialize_01(void)
-{
-	saNotificationAllocationParamsT myNotificationAllocationParams;
-	saNotificationFilterAllocationParamsT
-			myNotificationFilterAllocationParams;
-	saNotificationParamsT myNotificationParams;
+void test_coldsync_saNtfNotificationReadInitialize_01(void) {
+  saNotificationAllocationParamsT myNotificationAllocationParams;
+  saNotificationFilterAllocationParamsT
+      myNotificationFilterAllocationParams;
+  saNotificationParamsT myNotificationParams;
 
-	SaNtfSearchCriteriaT searchCriteria;
-	SaNtfAlarmNotificationFilterT myAlarmFilter;
-	SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles = {
-			0, 0, 0, 0, 0};
-	SaNtfReadHandleT readHandle;
-	SaNtfHandleT ntfHandle;
-	SaNtfNotificationsT returnedNotification;
-	SaNtfAlarmNotificationT myNotification;
-	searchCriteria.searchMode = SA_NTF_SEARCH_ONLY_FILTER;
-	SaAisErrorT errorCode;
-	SaUint32T readCounter = 0;
+  SaNtfSearchCriteriaT searchCriteria;
+  SaNtfAlarmNotificationFilterT myAlarmFilter;
+  SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles = {
+      0, 0, 0, 0, 0};
+  SaNtfReadHandleT readHandle;
+  SaNtfHandleT ntfHandle;
+  SaNtfNotificationsT returnedNotification;
+  SaNtfAlarmNotificationT myNotification;
+  searchCriteria.searchMode = SA_NTF_SEARCH_ONLY_FILTER;
+  SaAisErrorT errorCode;
+  SaUint32T readCounter = 0;
 
-	fillInDefaultValues(&myNotificationAllocationParams,
-					&myNotificationFilterAllocationParams,
-					&myNotificationParams);
+  fillInDefaultValues(&myNotificationAllocationParams,
+          &myNotificationFilterAllocationParams,
+          &myNotificationParams);
 
-	safassert(ntftest_saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
-			SA_AIS_OK);
+  safassert(ntftest_saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+      SA_AIS_OK);
 
-	safassert(ntftest_saNtfAlarmNotificationFilterAllocate(
-		ntfHandle, /* handle to Notification Service instance */
-		&myAlarmFilter, /* put filter here */
-		/* number of event types */
-		myNotificationFilterAllocationParams.numEventTypes,
-		/* number of notification objects */
-		myNotificationFilterAllocationParams.numNotificationObjects,
-		/* number of notifying objects */
-		myNotificationFilterAllocationParams.numNotifyingObjects,
-		/* number of notification class ids */
-		myNotificationFilterAllocationParams.numNotificationClassIds,
-		/* number of probable causes */
-		myNotificationFilterAllocationParams.numProbableCauses,
-		/* number of perceived severities */
-		myNotificationFilterAllocationParams.numPerceivedSeverities,
-		/* number of trend indications */
-		myNotificationFilterAllocationParams.numTrends),
-		SA_AIS_OK);
+  safassert(ntftest_saNtfAlarmNotificationFilterAllocate(
+    ntfHandle, /* handle to Notification Service instance */
+    &myAlarmFilter, /* put filter here */
+    /* number of event types */
+    myNotificationFilterAllocationParams.numEventTypes,
+    /* number of notification objects */
+    myNotificationFilterAllocationParams.numNotificationObjects,
+    /* number of notifying objects */
+    myNotificationFilterAllocationParams.numNotifyingObjects,
+    /* number of notification class ids */
+    myNotificationFilterAllocationParams.numNotificationClassIds,
+    /* number of probable causes */
+    myNotificationFilterAllocationParams.numProbableCauses,
+    /* number of perceived severities */
+    myNotificationFilterAllocationParams.numPerceivedSeverities,
+    /* number of trend indications */
+    myNotificationFilterAllocationParams.numTrends),
+    SA_AIS_OK);
 
-	myNotificationFilterHandles.alarmFilterHandle =
-		myAlarmFilter.notificationFilterHandle;
-	myAlarmFilter.perceivedSeverities[0] = SA_NTF_SEVERITY_WARNING;
-	myAlarmFilter.perceivedSeverities[1] = SA_NTF_SEVERITY_CLEARED;
+  myNotificationFilterHandles.alarmFilterHandle =
+    myAlarmFilter.notificationFilterHandle;
+  myAlarmFilter.perceivedSeverities[0] = SA_NTF_SEVERITY_WARNING;
+  myAlarmFilter.perceivedSeverities[1] = SA_NTF_SEVERITY_CLEARED;
 
-	/* Send one alarm notification */
-	safassert(ntftest_saNtfAlarmNotificationAllocate(
-		ntfHandle, /* handle to Notification Service instance */
-		&myNotification,
-		/* number of correlated notifications */
-		myNotificationAllocationParams.numCorrelatedNotifications,
-		/* length of additional text */
-		myNotificationAllocationParams.lengthAdditionalText,
-		/* number of additional info items*/
-		myNotificationAllocationParams.numAdditionalInfo,
-		/* number of specific problems */
-		myNotificationAllocationParams.numSpecificProblems,
-		/* number of monitored attributes */
-		myNotificationAllocationParams.numMonitoredAttributes,
-		/* number of proposed repair actions */
-		myNotificationAllocationParams.numProposedRepairActions,
-		/* use default allocation size */
-		myNotificationAllocationParams.variableDataSize),
-		SA_AIS_OK);
+  /* Send one alarm notification */
+  safassert(ntftest_saNtfAlarmNotificationAllocate(
+    ntfHandle, /* handle to Notification Service instance */
+    &myNotification,
+    /* number of correlated notifications */
+    myNotificationAllocationParams.numCorrelatedNotifications,
+    /* length of additional text */
+    myNotificationAllocationParams.lengthAdditionalText,
+    /* number of additional info items*/
+    myNotificationAllocationParams.numAdditionalInfo,
+    /* number of specific problems */
+    myNotificationAllocationParams.numSpecificProblems,
+    /* number of monitored attributes */
+    myNotificationAllocationParams.numMonitoredAttributes,
+    /* number of proposed repair actions */
+    myNotificationAllocationParams.numProposedRepairActions,
+    /* use default allocation size */
+    myNotificationAllocationParams.variableDataSize),
+    SA_AIS_OK);
 
-	myNotificationParams.eventType = myNotificationParams.alarmEventType;
+  myNotificationParams.eventType = myNotificationParams.alarmEventType;
 
-	fill_header_part(&myNotification.notificationHeader,
-			 (saNotificationParamsT *)&myNotificationParams,
-			 myNotificationAllocationParams.lengthAdditionalText);
+  fill_header_part(&myNotification.notificationHeader,
+       (saNotificationParamsT *)&myNotificationParams,
+       myNotificationAllocationParams.lengthAdditionalText);
 
-	/* determine perceived severity */
-	*(myNotification.perceivedSeverity) =
-			myNotificationParams.perceivedSeverity;
+  /* determine perceived severity */
+  *(myNotification.perceivedSeverity) =
+      myNotificationParams.perceivedSeverity;
 
-	/* set probable cause*/
-	*(myNotification.probableCause) = myNotificationParams.probableCause;
+  /* set probable cause*/
+  *(myNotification.probableCause) = myNotificationParams.probableCause;
 
-	safassert(ntftest_saNtfNotificationSend(myNotification.notificationHandle),
-			SA_AIS_OK);
+  safassert(ntftest_saNtfNotificationSend(myNotification.notificationHandle),
+      SA_AIS_OK);
 
-	/* Read initialize here to get the notification above */
-	safassert(ntftest_saNtfNotificationReadInitialize(searchCriteria,
-		&myNotificationFilterHandles, &readHandle),
-		SA_AIS_OK);
-	// reboot standby, switchover
-	wait_controllers(3);
-	wait_controllers(4);
-	/* read as many matching notifications as exist for the time period
-	 between the last received one and now */
-	for (; (errorCode = ntftest_saNtfNotificationReadNext(
-				readHandle, SA_NTF_SEARCH_YOUNGER,
-				&returnedNotification)) == SA_AIS_OK;) {
-		safassert(errorCode, SA_AIS_OK);
-		readCounter++;
+  /* Read initialize here to get the notification above */
+  safassert(ntftest_saNtfNotificationReadInitialize(searchCriteria,
+    &myNotificationFilterHandles, &readHandle),
+    SA_AIS_OK);
+  // reboot standby, switchover
+  wait_controllers(3);
+  wait_controllers(4);
+  /* read as many matching notifications as exist for the time period
+   between the last received one and now */
+  for (; (errorCode = ntftest_saNtfNotificationReadNext(
+        readHandle, SA_NTF_SEARCH_YOUNGER,
+        &returnedNotification)) == SA_AIS_OK;) {
+    safassert(errorCode, SA_AIS_OK);
+    readCounter++;
 
-		if (verbose) {
-			newNotification(69, &returnedNotification);
-		} else {
-			free_notif_2(0, &returnedNotification);
-		}
-	}
-	if (verbose) {
-		(void)printf("\n errorcode to break loop: %d\n", (int)errorCode);
-	}
-	if (readCounter == 0) {
-		errorCode = SA_AIS_ERR_FAILED_OPERATION;
-	}
+    if (verbose) {
+      newNotification(69, &returnedNotification);
+    } else {
+      free_notif_2(0, &returnedNotification);
+    }
+  }
+  if (verbose) {
+    (void)printf("\n errorcode to break loop: %d\n", (int)errorCode);
+  }
+  if (readCounter == 0) {
+    errorCode = SA_AIS_ERR_FAILED_OPERATION;
+  }
 
-	// No more...
-	safassert(ntftest_saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
-	safassert(ntftest_saNtfNotificationFilterFree(myAlarmFilter.notificationFilterHandle),
-		SA_AIS_OK);
-	free(myNotificationParams.additionalText);
-	safassert(ntftest_saNtfNotificationFree(myNotification.notificationHandle),
-			SA_AIS_OK);
-	safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
-	test_validate(errorCode, SA_AIS_ERR_NOT_EXIST); /* read all notifications!! */
+  // No more...
+  safassert(ntftest_saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
+  safassert(ntftest_saNtfNotificationFilterFree(myAlarmFilter.notificationFilterHandle),
+    SA_AIS_OK);
+  free(myNotificationParams.additionalText);
+  safassert(ntftest_saNtfNotificationFree(myNotification.notificationHandle),
+      SA_AIS_OK);
+  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  test_validate(errorCode, SA_AIS_ERR_NOT_EXIST); /* read all notifications!! */
 }
 /**
  * This test function is to verify the reader Id, read iteration to be
@@ -349,134 +346,133 @@ void test_coldsync_saNtfNotificationReadInitialize_01(void)
  * - switch over to make the standby become active
  * - Read alarms, reader is successful to read alarms from the new active
  */
-void test_coldsync_saNtfNotificationReadNext_02(void)
-{
-	saNotificationAllocationParamsT myNotificationAllocationParams;
-	saNotificationFilterAllocationParamsT
-			myNotificationFilterAllocationParams;
-	saNotificationParamsT myNotificationParams;
+void test_coldsync_saNtfNotificationReadNext_02(void) {
+  saNotificationAllocationParamsT myNotificationAllocationParams;
+  saNotificationFilterAllocationParamsT
+      myNotificationFilterAllocationParams;
+  saNotificationParamsT myNotificationParams;
 
-	SaNtfSearchCriteriaT searchCriteria;
-	SaNtfAlarmNotificationFilterT myAlarmFilter;
-	SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles = {
-			0, 0, 0, 0, 0};
-	SaNtfReadHandleT readHandle;
-	SaNtfHandleT ntfHandle;
-	SaNtfNotificationsT returnedNotification;
-	SaNtfAlarmNotificationT myNotification;
-	searchCriteria.searchMode = SA_NTF_SEARCH_ONLY_FILTER;
-	SaAisErrorT errorCode;
-	SaUint32T readCounter = 0;
+  SaNtfSearchCriteriaT searchCriteria;
+  SaNtfAlarmNotificationFilterT myAlarmFilter;
+  SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles = {
+      0, 0, 0, 0, 0};
+  SaNtfReadHandleT readHandle;
+  SaNtfHandleT ntfHandle;
+  SaNtfNotificationsT returnedNotification;
+  SaNtfAlarmNotificationT myNotification;
+  searchCriteria.searchMode = SA_NTF_SEARCH_ONLY_FILTER;
+  SaAisErrorT errorCode;
+  SaUint32T readCounter = 0;
 
-	fillInDefaultValues(&myNotificationAllocationParams,
-					&myNotificationFilterAllocationParams,
-					&myNotificationParams);
+  fillInDefaultValues(&myNotificationAllocationParams,
+          &myNotificationFilterAllocationParams,
+          &myNotificationParams);
 
-	safassert(ntftest_saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
-			SA_AIS_OK);
+  safassert(ntftest_saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+      SA_AIS_OK);
 
-	safassert(ntftest_saNtfAlarmNotificationFilterAllocate(
-		ntfHandle, /* handle to Notification Service instance */
-		&myAlarmFilter, /* put filter here */
-		/* number of event types */
-		myNotificationFilterAllocationParams.numEventTypes,
-		/* number of notification objects */
-		myNotificationFilterAllocationParams.numNotificationObjects,
-		/* number of notifying objects */
-		myNotificationFilterAllocationParams.numNotifyingObjects,
-		/* number of notification class ids */
-		myNotificationFilterAllocationParams.numNotificationClassIds,
-		/* number of probable causes */
-		myNotificationFilterAllocationParams.numProbableCauses,
-		/* number of perceived severities */
-		myNotificationFilterAllocationParams.numPerceivedSeverities,
-		/* number of trend indications */
-		myNotificationFilterAllocationParams.numTrends),
-		SA_AIS_OK);
+  safassert(ntftest_saNtfAlarmNotificationFilterAllocate(
+    ntfHandle, /* handle to Notification Service instance */
+    &myAlarmFilter, /* put filter here */
+    /* number of event types */
+    myNotificationFilterAllocationParams.numEventTypes,
+    /* number of notification objects */
+    myNotificationFilterAllocationParams.numNotificationObjects,
+    /* number of notifying objects */
+    myNotificationFilterAllocationParams.numNotifyingObjects,
+    /* number of notification class ids */
+    myNotificationFilterAllocationParams.numNotificationClassIds,
+    /* number of probable causes */
+    myNotificationFilterAllocationParams.numProbableCauses,
+    /* number of perceived severities */
+    myNotificationFilterAllocationParams.numPerceivedSeverities,
+    /* number of trend indications */
+    myNotificationFilterAllocationParams.numTrends),
+    SA_AIS_OK);
 
-	myNotificationFilterHandles.alarmFilterHandle =
-		myAlarmFilter.notificationFilterHandle;
-	myAlarmFilter.perceivedSeverities[0] = SA_NTF_SEVERITY_WARNING;
-	myAlarmFilter.perceivedSeverities[1] = SA_NTF_SEVERITY_CLEARED;
+  myNotificationFilterHandles.alarmFilterHandle =
+    myAlarmFilter.notificationFilterHandle;
+  myAlarmFilter.perceivedSeverities[0] = SA_NTF_SEVERITY_WARNING;
+  myAlarmFilter.perceivedSeverities[1] = SA_NTF_SEVERITY_CLEARED;
 
-	/* Send one alarm notification */
-	safassert(ntftest_saNtfAlarmNotificationAllocate(
-		ntfHandle, /* handle to Notification Service instance */
-		&myNotification,
-		/* number of correlated notifications */
-		myNotificationAllocationParams.numCorrelatedNotifications,
-		/* length of additional text */
-		myNotificationAllocationParams.lengthAdditionalText,
-		/* number of additional info items*/
-		myNotificationAllocationParams.numAdditionalInfo,
-		/* number of specific problems */
-		myNotificationAllocationParams.numSpecificProblems,
-		/* number of monitored attributes */
-		myNotificationAllocationParams.numMonitoredAttributes,
-		/* number of proposed repair actions */
-		myNotificationAllocationParams.numProposedRepairActions,
-		/* use default allocation size */
-		myNotificationAllocationParams.variableDataSize),
-		SA_AIS_OK);
+  /* Send one alarm notification */
+  safassert(ntftest_saNtfAlarmNotificationAllocate(
+    ntfHandle, /* handle to Notification Service instance */
+    &myNotification,
+    /* number of correlated notifications */
+    myNotificationAllocationParams.numCorrelatedNotifications,
+    /* length of additional text */
+    myNotificationAllocationParams.lengthAdditionalText,
+    /* number of additional info items*/
+    myNotificationAllocationParams.numAdditionalInfo,
+    /* number of specific problems */
+    myNotificationAllocationParams.numSpecificProblems,
+    /* number of monitored attributes */
+    myNotificationAllocationParams.numMonitoredAttributes,
+    /* number of proposed repair actions */
+    myNotificationAllocationParams.numProposedRepairActions,
+    /* use default allocation size */
+    myNotificationAllocationParams.variableDataSize),
+    SA_AIS_OK);
 
-	myNotificationParams.eventType = myNotificationParams.alarmEventType;
+  myNotificationParams.eventType = myNotificationParams.alarmEventType;
 
-	fill_header_part(&myNotification.notificationHeader,
-			 (saNotificationParamsT *)&myNotificationParams,
-			 myNotificationAllocationParams.lengthAdditionalText);
+  fill_header_part(&myNotification.notificationHeader,
+       (saNotificationParamsT *)&myNotificationParams,
+       myNotificationAllocationParams.lengthAdditionalText);
 
-	/* determine perceived severity */
-	*(myNotification.perceivedSeverity) =
-			myNotificationParams.perceivedSeverity;
+  /* determine perceived severity */
+  *(myNotification.perceivedSeverity) =
+      myNotificationParams.perceivedSeverity;
 
-	/* set probable cause*/
-	*(myNotification.probableCause) = myNotificationParams.probableCause;
+  /* set probable cause*/
+  *(myNotification.probableCause) = myNotificationParams.probableCause;
 
-	safassert(ntftest_saNtfNotificationSend(myNotification.notificationHandle),
-			SA_AIS_OK);
-	safassert(ntftest_saNtfNotificationSend(myNotification.notificationHandle),
-			SA_AIS_OK);
+  safassert(ntftest_saNtfNotificationSend(myNotification.notificationHandle),
+      SA_AIS_OK);
+  safassert(ntftest_saNtfNotificationSend(myNotification.notificationHandle),
+      SA_AIS_OK);
 
-	/* Read initialize here to get the notification above */
-	safassert(ntftest_saNtfNotificationReadInitialize(searchCriteria,
-		&myNotificationFilterHandles, &readHandle),
-		SA_AIS_OK);
+  /* Read initialize here to get the notification above */
+  safassert(ntftest_saNtfNotificationReadInitialize(searchCriteria,
+    &myNotificationFilterHandles, &readHandle),
+    SA_AIS_OK);
 
-	/* read as many matching notifications as exist for the time period
-	 between the last received one and now */
-	for (; (errorCode = ntftest_saNtfNotificationReadNext(
-				readHandle, SA_NTF_SEARCH_YOUNGER,
-				&returnedNotification)) == SA_AIS_OK;) {
-		safassert(errorCode, SA_AIS_OK);
-		if (readCounter == 0) {
-			// reboot standby, switchover
-			wait_controllers(3);
-			wait_controllers(4);
-		}
-		readCounter++;
+  /* read as many matching notifications as exist for the time period
+   between the last received one and now */
+  for (; (errorCode = ntftest_saNtfNotificationReadNext(
+        readHandle, SA_NTF_SEARCH_YOUNGER,
+        &returnedNotification)) == SA_AIS_OK;) {
+    safassert(errorCode, SA_AIS_OK);
+    if (readCounter == 0) {
+      // reboot standby, switchover
+      wait_controllers(3);
+      wait_controllers(4);
+    }
+    readCounter++;
 
-		if (verbose) {
-			newNotification(69, &returnedNotification);
-		} else {
-			free_notif_2(0, &returnedNotification);
-		}
-	}
-	if (verbose) {
-		(void)printf("\n errorcode to break loop: %d\n", (int)errorCode);
-	}
-	if (readCounter == 0) {
-		errorCode = SA_AIS_ERR_FAILED_OPERATION;
-	}
+    if (verbose) {
+      newNotification(69, &returnedNotification);
+    } else {
+      free_notif_2(0, &returnedNotification);
+    }
+  }
+  if (verbose) {
+    (void)printf("\n errorcode to break loop: %d\n", (int)errorCode);
+  }
+  if (readCounter == 0) {
+    errorCode = SA_AIS_ERR_FAILED_OPERATION;
+  }
 
-	// No more...
-	safassert(ntftest_saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
-	safassert(ntftest_saNtfNotificationFilterFree(myAlarmFilter.notificationFilterHandle),
-		SA_AIS_OK);
-	free(myNotificationParams.additionalText);
-	safassert(ntftest_saNtfNotificationFree(myNotification.notificationHandle),
-			SA_AIS_OK);
-	safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
-	test_validate(errorCode, SA_AIS_ERR_NOT_EXIST); /* read all notifications!! */
+  // No more...
+  safassert(ntftest_saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
+  safassert(ntftest_saNtfNotificationFilterFree(myAlarmFilter.notificationFilterHandle),
+    SA_AIS_OK);
+  free(myNotificationParams.additionalText);
+  safassert(ntftest_saNtfNotificationFree(myNotification.notificationHandle),
+      SA_AIS_OK);
+  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  test_validate(errorCode, SA_AIS_ERR_NOT_EXIST); /* read all notifications!! */
 }
 
 /**
@@ -488,128 +484,127 @@ void test_coldsync_saNtfNotificationReadNext_02(void)
  * - switch over to make the standby become active
  * - ReadNext
  */
-void test_async_saNtfNotificationReadInitialize_01(void)
-{
-	saNotificationAllocationParamsT myNotificationAllocationParams;
-	saNotificationFilterAllocationParamsT
-			myNotificationFilterAllocationParams;
-	saNotificationParamsT myNotificationParams;
+void test_async_saNtfNotificationReadInitialize_01(void) {
+  saNotificationAllocationParamsT myNotificationAllocationParams;
+  saNotificationFilterAllocationParamsT
+      myNotificationFilterAllocationParams;
+  saNotificationParamsT myNotificationParams;
 
-	SaNtfSearchCriteriaT searchCriteria;
-	SaNtfAlarmNotificationFilterT myAlarmFilter;
-	SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles = {
-			0, 0, 0, 0, 0};
-	SaNtfReadHandleT readHandle;
-	SaNtfHandleT ntfHandle;
-	SaNtfNotificationsT returnedNotification;
-	SaNtfAlarmNotificationT myNotification;
-	searchCriteria.searchMode = SA_NTF_SEARCH_ONLY_FILTER;
-	SaAisErrorT errorCode;
-	SaUint32T readCounter = 0;
+  SaNtfSearchCriteriaT searchCriteria;
+  SaNtfAlarmNotificationFilterT myAlarmFilter;
+  SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles = {
+      0, 0, 0, 0, 0};
+  SaNtfReadHandleT readHandle;
+  SaNtfHandleT ntfHandle;
+  SaNtfNotificationsT returnedNotification;
+  SaNtfAlarmNotificationT myNotification;
+  searchCriteria.searchMode = SA_NTF_SEARCH_ONLY_FILTER;
+  SaAisErrorT errorCode;
+  SaUint32T readCounter = 0;
 
-	fillInDefaultValues(&myNotificationAllocationParams,
-					&myNotificationFilterAllocationParams,
-					&myNotificationParams);
+  fillInDefaultValues(&myNotificationAllocationParams,
+          &myNotificationFilterAllocationParams,
+          &myNotificationParams);
 
-	safassert(ntftest_saNtfInitialize(&ntfHandle,
-		&ntfCallbacks, &ntfVersion), SA_AIS_OK);
+  safassert(ntftest_saNtfInitialize(&ntfHandle,
+    &ntfCallbacks, &ntfVersion), SA_AIS_OK);
 
-	safassert(ntftest_saNtfAlarmNotificationFilterAllocate(
-		ntfHandle, /* handle to Notification Service instance */
-		&myAlarmFilter, /* put filter here */
-		/* number of event types */
-		myNotificationFilterAllocationParams.numEventTypes,
-		/* number of notification objects */
-		myNotificationFilterAllocationParams.numNotificationObjects,
-		/* number of notifying objects */
-		myNotificationFilterAllocationParams.numNotifyingObjects,
-		/* number of notification class ids */
-		myNotificationFilterAllocationParams.numNotificationClassIds,
-		/* number of probable causes */
-		myNotificationFilterAllocationParams.numProbableCauses,
-		/* number of perceived severities */
-		myNotificationFilterAllocationParams.numPerceivedSeverities,
-		/* number of trend indications */
-		myNotificationFilterAllocationParams.numTrends),
-		SA_AIS_OK);
+  safassert(ntftest_saNtfAlarmNotificationFilterAllocate(
+    ntfHandle, /* handle to Notification Service instance */
+    &myAlarmFilter, /* put filter here */
+    /* number of event types */
+    myNotificationFilterAllocationParams.numEventTypes,
+    /* number of notification objects */
+    myNotificationFilterAllocationParams.numNotificationObjects,
+    /* number of notifying objects */
+    myNotificationFilterAllocationParams.numNotifyingObjects,
+    /* number of notification class ids */
+    myNotificationFilterAllocationParams.numNotificationClassIds,
+    /* number of probable causes */
+    myNotificationFilterAllocationParams.numProbableCauses,
+    /* number of perceived severities */
+    myNotificationFilterAllocationParams.numPerceivedSeverities,
+    /* number of trend indications */
+    myNotificationFilterAllocationParams.numTrends),
+    SA_AIS_OK);
 
-	myNotificationFilterHandles.alarmFilterHandle =
-		myAlarmFilter.notificationFilterHandle;
-	myAlarmFilter.perceivedSeverities[0] = SA_NTF_SEVERITY_WARNING;
-	myAlarmFilter.perceivedSeverities[1] = SA_NTF_SEVERITY_CLEARED;
+  myNotificationFilterHandles.alarmFilterHandle =
+    myAlarmFilter.notificationFilterHandle;
+  myAlarmFilter.perceivedSeverities[0] = SA_NTF_SEVERITY_WARNING;
+  myAlarmFilter.perceivedSeverities[1] = SA_NTF_SEVERITY_CLEARED;
 
-	/* Send one alarm notification */
-	safassert(ntftest_saNtfAlarmNotificationAllocate(
-		ntfHandle, /* handle to Notification Service instance */
-		&myNotification,
-		/* number of correlated notifications */
-		myNotificationAllocationParams.numCorrelatedNotifications,
-		/* length of additional text */
-		myNotificationAllocationParams.lengthAdditionalText,
-		/* number of additional info items*/
-		myNotificationAllocationParams.numAdditionalInfo,
-		/* number of specific problems */
-		myNotificationAllocationParams.numSpecificProblems,
-		/* number of monitored attributes */
-		myNotificationAllocationParams.numMonitoredAttributes,
-		/* number of proposed repair actions */
-		myNotificationAllocationParams.numProposedRepairActions,
-		/* use default allocation size */
-		myNotificationAllocationParams.variableDataSize),
-		SA_AIS_OK);
+  /* Send one alarm notification */
+  safassert(ntftest_saNtfAlarmNotificationAllocate(
+    ntfHandle, /* handle to Notification Service instance */
+    &myNotification,
+    /* number of correlated notifications */
+    myNotificationAllocationParams.numCorrelatedNotifications,
+    /* length of additional text */
+    myNotificationAllocationParams.lengthAdditionalText,
+    /* number of additional info items*/
+    myNotificationAllocationParams.numAdditionalInfo,
+    /* number of specific problems */
+    myNotificationAllocationParams.numSpecificProblems,
+    /* number of monitored attributes */
+    myNotificationAllocationParams.numMonitoredAttributes,
+    /* number of proposed repair actions */
+    myNotificationAllocationParams.numProposedRepairActions,
+    /* use default allocation size */
+    myNotificationAllocationParams.variableDataSize),
+    SA_AIS_OK);
 
-	myNotificationParams.eventType = myNotificationParams.alarmEventType;
+  myNotificationParams.eventType = myNotificationParams.alarmEventType;
 
-	fill_header_part(&myNotification.notificationHeader,
-			 (saNotificationParamsT *)&myNotificationParams,
-			 myNotificationAllocationParams.lengthAdditionalText);
+  fill_header_part(&myNotification.notificationHeader,
+       (saNotificationParamsT *)&myNotificationParams,
+       myNotificationAllocationParams.lengthAdditionalText);
 
-	/* determine perceived severity */
-	*(myNotification.perceivedSeverity) =
-			myNotificationParams.perceivedSeverity;
+  /* determine perceived severity */
+  *(myNotification.perceivedSeverity) =
+      myNotificationParams.perceivedSeverity;
 
-	/* set probable cause*/
-	*(myNotification.probableCause) = myNotificationParams.probableCause;
+  /* set probable cause*/
+  *(myNotification.probableCause) = myNotificationParams.probableCause;
 
-	safassert(ntftest_saNtfNotificationSend(
-			myNotification.notificationHandle),SA_AIS_OK);
+  safassert(ntftest_saNtfNotificationSend(
+      myNotification.notificationHandle),SA_AIS_OK);
 
-	/* Read initialize here to get the notification above */
-	safassert(ntftest_saNtfNotificationReadInitialize(searchCriteria,
-		&myNotificationFilterHandles, &readHandle),
-		SA_AIS_OK);
-	wait_controllers(4);
-	/* read as many matching notifications as exist for the time period
-	 between the last received one and now */
-	for (; (errorCode = ntftest_saNtfNotificationReadNext(
-				readHandle, SA_NTF_SEARCH_YOUNGER,
-				&returnedNotification)) == SA_AIS_OK;) {
-		safassert(errorCode, SA_AIS_OK);
-		readCounter++;
+  /* Read initialize here to get the notification above */
+  safassert(ntftest_saNtfNotificationReadInitialize(searchCriteria,
+    &myNotificationFilterHandles, &readHandle),
+    SA_AIS_OK);
+  wait_controllers(4);
+  /* read as many matching notifications as exist for the time period
+   between the last received one and now */
+  for (; (errorCode = ntftest_saNtfNotificationReadNext(
+        readHandle, SA_NTF_SEARCH_YOUNGER,
+        &returnedNotification)) == SA_AIS_OK;) {
+    safassert(errorCode, SA_AIS_OK);
+    readCounter++;
 
-		if (verbose) {
-			newNotification(69, &returnedNotification);
-		} else {
-			free_notif_2(0, &returnedNotification);
-		}
-	}
-	if (verbose) {
-		(void)printf("\n errorcode to break loop: %d\n",
-			(int)errorCode);
-	}
-	if (readCounter == 0) {
-		errorCode = SA_AIS_ERR_FAILED_OPERATION;
-	}
+    if (verbose) {
+      newNotification(69, &returnedNotification);
+    } else {
+      free_notif_2(0, &returnedNotification);
+    }
+  }
+  if (verbose) {
+    (void)printf("\n errorcode to break loop: %d\n",
+      (int)errorCode);
+  }
+  if (readCounter == 0) {
+    errorCode = SA_AIS_ERR_FAILED_OPERATION;
+  }
 
-	// No more...
-	safassert(ntftest_saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
-	safassert(ntftest_saNtfNotificationFilterFree(
-		myAlarmFilter.notificationFilterHandle), SA_AIS_OK);
-	free(myNotificationParams.additionalText);
-	safassert(ntftest_saNtfNotificationFree(myNotification.notificationHandle),
-			SA_AIS_OK);
-	safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
-	test_validate(errorCode, SA_AIS_ERR_NOT_EXIST);
+  // No more...
+  safassert(ntftest_saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
+  safassert(ntftest_saNtfNotificationFilterFree(
+    myAlarmFilter.notificationFilterHandle), SA_AIS_OK);
+  free(myNotificationParams.additionalText);
+  safassert(ntftest_saNtfNotificationFree(myNotification.notificationHandle),
+      SA_AIS_OK);
+  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  test_validate(errorCode, SA_AIS_ERR_NOT_EXIST);
 }
 /**
  * This test function is to verify the reader iteration to be checkpointed
@@ -620,133 +615,132 @@ void test_async_saNtfNotificationReadInitialize_01(void)
  * - switch over to make the standby become active
  * - ReadNext
  */
-void test_async_saNtfNotificationReadNext_01(void)
-{
-	saNotificationAllocationParamsT myNotificationAllocationParams;
-	saNotificationFilterAllocationParamsT
-			myNotificationFilterAllocationParams;
-	saNotificationParamsT myNotificationParams;
+void test_async_saNtfNotificationReadNext_01(void) {
+  saNotificationAllocationParamsT myNotificationAllocationParams;
+  saNotificationFilterAllocationParamsT
+      myNotificationFilterAllocationParams;
+  saNotificationParamsT myNotificationParams;
 
-	SaNtfSearchCriteriaT searchCriteria;
-	SaNtfAlarmNotificationFilterT myAlarmFilter;
-	SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles = {
-			0, 0, 0, 0, 0};
-	SaNtfReadHandleT readHandle;
-	SaNtfHandleT ntfHandle;
-	SaNtfNotificationsT returnedNotification;
-	SaNtfAlarmNotificationT myNotification;
-	searchCriteria.searchMode = SA_NTF_SEARCH_ONLY_FILTER;
-	SaAisErrorT errorCode;
-	SaUint32T readCounter = 0;
+  SaNtfSearchCriteriaT searchCriteria;
+  SaNtfAlarmNotificationFilterT myAlarmFilter;
+  SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles = {
+      0, 0, 0, 0, 0};
+  SaNtfReadHandleT readHandle;
+  SaNtfHandleT ntfHandle;
+  SaNtfNotificationsT returnedNotification;
+  SaNtfAlarmNotificationT myNotification;
+  searchCriteria.searchMode = SA_NTF_SEARCH_ONLY_FILTER;
+  SaAisErrorT errorCode;
+  SaUint32T readCounter = 0;
 
-	fillInDefaultValues(&myNotificationAllocationParams,
-					&myNotificationFilterAllocationParams,
-					&myNotificationParams);
+  fillInDefaultValues(&myNotificationAllocationParams,
+          &myNotificationFilterAllocationParams,
+          &myNotificationParams);
 
-	safassert(ntftest_saNtfInitialize(&ntfHandle,
-		&ntfCallbacks, &ntfVersion), SA_AIS_OK);
+  safassert(ntftest_saNtfInitialize(&ntfHandle,
+    &ntfCallbacks, &ntfVersion), SA_AIS_OK);
 
-	safassert(ntftest_saNtfAlarmNotificationFilterAllocate(
-		ntfHandle, /* handle to Notification Service instance */
-		&myAlarmFilter, /* put filter here */
-		/* number of event types */
-		myNotificationFilterAllocationParams.numEventTypes,
-		/* number of notification objects */
-		myNotificationFilterAllocationParams.numNotificationObjects,
-		/* number of notifying objects */
-		myNotificationFilterAllocationParams.numNotifyingObjects,
-		/* number of notification class ids */
-		myNotificationFilterAllocationParams.numNotificationClassIds,
-		/* number of probable causes */
-		myNotificationFilterAllocationParams.numProbableCauses,
-		/* number of perceived severities */
-		myNotificationFilterAllocationParams.numPerceivedSeverities,
-		/* number of trend indications */
-		myNotificationFilterAllocationParams.numTrends),
-		SA_AIS_OK);
+  safassert(ntftest_saNtfAlarmNotificationFilterAllocate(
+    ntfHandle, /* handle to Notification Service instance */
+    &myAlarmFilter, /* put filter here */
+    /* number of event types */
+    myNotificationFilterAllocationParams.numEventTypes,
+    /* number of notification objects */
+    myNotificationFilterAllocationParams.numNotificationObjects,
+    /* number of notifying objects */
+    myNotificationFilterAllocationParams.numNotifyingObjects,
+    /* number of notification class ids */
+    myNotificationFilterAllocationParams.numNotificationClassIds,
+    /* number of probable causes */
+    myNotificationFilterAllocationParams.numProbableCauses,
+    /* number of perceived severities */
+    myNotificationFilterAllocationParams.numPerceivedSeverities,
+    /* number of trend indications */
+    myNotificationFilterAllocationParams.numTrends),
+    SA_AIS_OK);
 
-	myNotificationFilterHandles.alarmFilterHandle =
-		myAlarmFilter.notificationFilterHandle;
-	myAlarmFilter.perceivedSeverities[0] = SA_NTF_SEVERITY_WARNING;
-	myAlarmFilter.perceivedSeverities[1] = SA_NTF_SEVERITY_CLEARED;
+  myNotificationFilterHandles.alarmFilterHandle =
+    myAlarmFilter.notificationFilterHandle;
+  myAlarmFilter.perceivedSeverities[0] = SA_NTF_SEVERITY_WARNING;
+  myAlarmFilter.perceivedSeverities[1] = SA_NTF_SEVERITY_CLEARED;
 
-	/* Send one alarm notification */
-	safassert(ntftest_saNtfAlarmNotificationAllocate(
-		ntfHandle, /* handle to Notification Service instance */
-		&myNotification,
-		/* number of correlated notifications */
-		myNotificationAllocationParams.numCorrelatedNotifications,
-		/* length of additional text */
-		myNotificationAllocationParams.lengthAdditionalText,
-		/* number of additional info items*/
-		myNotificationAllocationParams.numAdditionalInfo,
-		/* number of specific problems */
-		myNotificationAllocationParams.numSpecificProblems,
-		/* number of monitored attributes */
-		myNotificationAllocationParams.numMonitoredAttributes,
-		/* number of proposed repair actions */
-		myNotificationAllocationParams.numProposedRepairActions,
-		/* use default allocation size */
-		myNotificationAllocationParams.variableDataSize),
-		SA_AIS_OK);
+  /* Send one alarm notification */
+  safassert(ntftest_saNtfAlarmNotificationAllocate(
+    ntfHandle, /* handle to Notification Service instance */
+    &myNotification,
+    /* number of correlated notifications */
+    myNotificationAllocationParams.numCorrelatedNotifications,
+    /* length of additional text */
+    myNotificationAllocationParams.lengthAdditionalText,
+    /* number of additional info items*/
+    myNotificationAllocationParams.numAdditionalInfo,
+    /* number of specific problems */
+    myNotificationAllocationParams.numSpecificProblems,
+    /* number of monitored attributes */
+    myNotificationAllocationParams.numMonitoredAttributes,
+    /* number of proposed repair actions */
+    myNotificationAllocationParams.numProposedRepairActions,
+    /* use default allocation size */
+    myNotificationAllocationParams.variableDataSize),
+    SA_AIS_OK);
 
-	myNotificationParams.eventType = myNotificationParams.alarmEventType;
+  myNotificationParams.eventType = myNotificationParams.alarmEventType;
 
-	fill_header_part(&myNotification.notificationHeader,
-			 (saNotificationParamsT *)&myNotificationParams,
-			 myNotificationAllocationParams.lengthAdditionalText);
+  fill_header_part(&myNotification.notificationHeader,
+       (saNotificationParamsT *)&myNotificationParams,
+       myNotificationAllocationParams.lengthAdditionalText);
 
-	/* determine perceived severity */
-	*(myNotification.perceivedSeverity) =
-			myNotificationParams.perceivedSeverity;
+  /* determine perceived severity */
+  *(myNotification.perceivedSeverity) =
+      myNotificationParams.perceivedSeverity;
 
-	/* set probable cause*/
-	*(myNotification.probableCause) = myNotificationParams.probableCause;
+  /* set probable cause*/
+  *(myNotification.probableCause) = myNotificationParams.probableCause;
 
-	safassert(ntftest_saNtfNotificationSend(
-			myNotification.notificationHandle),SA_AIS_OK);
+  safassert(ntftest_saNtfNotificationSend(
+      myNotification.notificationHandle),SA_AIS_OK);
 
-	safassert(ntftest_saNtfNotificationSend(
-			myNotification.notificationHandle),SA_AIS_OK);
+  safassert(ntftest_saNtfNotificationSend(
+      myNotification.notificationHandle),SA_AIS_OK);
 
-	/* Read initialize here to get the notification above */
-	safassert(ntftest_saNtfNotificationReadInitialize(searchCriteria,
-		&myNotificationFilterHandles, &readHandle),
-		SA_AIS_OK);
-	/* read as many matching notifications as exist for the time period
-	 between the last received one and now */
-	for (; (errorCode = ntftest_saNtfNotificationReadNext(
-				readHandle, SA_NTF_SEARCH_YOUNGER,
-				&returnedNotification)) == SA_AIS_OK;) {
-		safassert(errorCode, SA_AIS_OK);
-		if (readCounter == 0)
-			wait_controllers(4);
+  /* Read initialize here to get the notification above */
+  safassert(ntftest_saNtfNotificationReadInitialize(searchCriteria,
+    &myNotificationFilterHandles, &readHandle),
+    SA_AIS_OK);
+  /* read as many matching notifications as exist for the time period
+   between the last received one and now */
+  for (; (errorCode = ntftest_saNtfNotificationReadNext(
+        readHandle, SA_NTF_SEARCH_YOUNGER,
+        &returnedNotification)) == SA_AIS_OK;) {
+    safassert(errorCode, SA_AIS_OK);
+    if (readCounter == 0)
+      wait_controllers(4);
 
-		readCounter++;
+    readCounter++;
 
-		if (verbose) {
-			newNotification(69, &returnedNotification);
-		} else {
-			free_notif_2(0, &returnedNotification);
-		}
-	}
-	if (verbose) {
-		(void)printf("\n errorcode to break loop: %d\n",
-			(int)errorCode);
-	}
-	if (readCounter == 0) {
-		errorCode = SA_AIS_ERR_FAILED_OPERATION;
-	}
+    if (verbose) {
+      newNotification(69, &returnedNotification);
+    } else {
+      free_notif_2(0, &returnedNotification);
+    }
+  }
+  if (verbose) {
+    (void)printf("\n errorcode to break loop: %d\n",
+      (int)errorCode);
+  }
+  if (readCounter == 0) {
+    errorCode = SA_AIS_ERR_FAILED_OPERATION;
+  }
 
-	// No more...
-	safassert(ntftest_saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
-	safassert(ntftest_saNtfNotificationFilterFree(
-		myAlarmFilter.notificationFilterHandle), SA_AIS_OK);
-	free(myNotificationParams.additionalText);
-	safassert(ntftest_saNtfNotificationFree(myNotification.notificationHandle),
-			SA_AIS_OK);
-	safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
-	test_validate(errorCode, SA_AIS_ERR_NOT_EXIST);
+  // No more...
+  safassert(ntftest_saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
+  safassert(ntftest_saNtfNotificationFilterFree(
+    myAlarmFilter.notificationFilterHandle), SA_AIS_OK);
+  free(myNotificationParams.additionalText);
+  safassert(ntftest_saNtfNotificationFree(myNotification.notificationHandle),
+      SA_AIS_OK);
+  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  test_validate(errorCode, SA_AIS_ERR_NOT_EXIST);
 }
 /**
  * This test function is to verify the reader finalize to be checkpointed
@@ -756,146 +750,144 @@ void test_async_saNtfNotificationReadNext_01(void)
  * - ReadInitialize, ReadNext, ReadFinalize
  * - switch over to make the standby become active
  */
-void test_async_saNtfNotificationReadFinalize_01(void)
-{
-	saNotificationAllocationParamsT myNotificationAllocationParams;
-	saNotificationFilterAllocationParamsT
-			myNotificationFilterAllocationParams;
-	saNotificationParamsT myNotificationParams;
+void test_async_saNtfNotificationReadFinalize_01(void) {
+  saNotificationAllocationParamsT myNotificationAllocationParams;
+  saNotificationFilterAllocationParamsT
+      myNotificationFilterAllocationParams;
+  saNotificationParamsT myNotificationParams;
 
-	SaNtfSearchCriteriaT searchCriteria;
-	SaNtfAlarmNotificationFilterT myAlarmFilter;
-	SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles = {
-			0, 0, 0, 0, 0};
-	SaNtfReadHandleT readHandle;
-	SaNtfHandleT ntfHandle;
-	SaNtfNotificationsT returnedNotification;
-	SaNtfAlarmNotificationT myNotification;
-	searchCriteria.searchMode = SA_NTF_SEARCH_ONLY_FILTER;
-	SaAisErrorT errorCode;
-	SaUint32T readCounter = 0;
+  SaNtfSearchCriteriaT searchCriteria;
+  SaNtfAlarmNotificationFilterT myAlarmFilter;
+  SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles = {
+      0, 0, 0, 0, 0};
+  SaNtfReadHandleT readHandle;
+  SaNtfHandleT ntfHandle;
+  SaNtfNotificationsT returnedNotification;
+  SaNtfAlarmNotificationT myNotification;
+  searchCriteria.searchMode = SA_NTF_SEARCH_ONLY_FILTER;
+  SaAisErrorT errorCode;
+  SaUint32T readCounter = 0;
 
-	fillInDefaultValues(&myNotificationAllocationParams,
-					&myNotificationFilterAllocationParams,
-					&myNotificationParams);
+  fillInDefaultValues(&myNotificationAllocationParams,
+          &myNotificationFilterAllocationParams,
+          &myNotificationParams);
 
-	safassert(ntftest_saNtfInitialize(&ntfHandle,
-		&ntfCallbacks, &ntfVersion), SA_AIS_OK);
+  safassert(ntftest_saNtfInitialize(&ntfHandle,
+    &ntfCallbacks, &ntfVersion), SA_AIS_OK);
 
-	safassert(ntftest_saNtfAlarmNotificationFilterAllocate(
-		ntfHandle, /* handle to Notification Service instance */
-		&myAlarmFilter, /* put filter here */
-		/* number of event types */
-		myNotificationFilterAllocationParams.numEventTypes,
-		/* number of notification objects */
-		myNotificationFilterAllocationParams.numNotificationObjects,
-		/* number of notifying objects */
-		myNotificationFilterAllocationParams.numNotifyingObjects,
-		/* number of notification class ids */
-		myNotificationFilterAllocationParams.numNotificationClassIds,
-		/* number of probable causes */
-		myNotificationFilterAllocationParams.numProbableCauses,
-		/* number of perceived severities */
-		myNotificationFilterAllocationParams.numPerceivedSeverities,
-		/* number of trend indications */
-		myNotificationFilterAllocationParams.numTrends),
-		SA_AIS_OK);
+  safassert(ntftest_saNtfAlarmNotificationFilterAllocate(
+    ntfHandle, /* handle to Notification Service instance */
+    &myAlarmFilter, /* put filter here */
+    /* number of event types */
+    myNotificationFilterAllocationParams.numEventTypes,
+    /* number of notification objects */
+    myNotificationFilterAllocationParams.numNotificationObjects,
+    /* number of notifying objects */
+    myNotificationFilterAllocationParams.numNotifyingObjects,
+    /* number of notification class ids */
+    myNotificationFilterAllocationParams.numNotificationClassIds,
+    /* number of probable causes */
+    myNotificationFilterAllocationParams.numProbableCauses,
+    /* number of perceived severities */
+    myNotificationFilterAllocationParams.numPerceivedSeverities,
+    /* number of trend indications */
+    myNotificationFilterAllocationParams.numTrends),
+    SA_AIS_OK);
 
-	myNotificationFilterHandles.alarmFilterHandle =
-		myAlarmFilter.notificationFilterHandle;
-	myAlarmFilter.perceivedSeverities[0] = SA_NTF_SEVERITY_WARNING;
-	myAlarmFilter.perceivedSeverities[1] = SA_NTF_SEVERITY_CLEARED;
+  myNotificationFilterHandles.alarmFilterHandle =
+    myAlarmFilter.notificationFilterHandle;
+  myAlarmFilter.perceivedSeverities[0] = SA_NTF_SEVERITY_WARNING;
+  myAlarmFilter.perceivedSeverities[1] = SA_NTF_SEVERITY_CLEARED;
 
-	/* Send one alarm notification */
-	safassert(ntftest_saNtfAlarmNotificationAllocate(
-		ntfHandle, /* handle to Notification Service instance */
-		&myNotification,
-		/* number of correlated notifications */
-		myNotificationAllocationParams.numCorrelatedNotifications,
-		/* length of additional text */
-		myNotificationAllocationParams.lengthAdditionalText,
-		/* number of additional info items*/
-		myNotificationAllocationParams.numAdditionalInfo,
-		/* number of specific problems */
-		myNotificationAllocationParams.numSpecificProblems,
-		/* number of monitored attributes */
-		myNotificationAllocationParams.numMonitoredAttributes,
-		/* number of proposed repair actions */
-		myNotificationAllocationParams.numProposedRepairActions,
-		/* use default allocation size */
-		myNotificationAllocationParams.variableDataSize),
-		SA_AIS_OK);
+  /* Send one alarm notification */
+  safassert(ntftest_saNtfAlarmNotificationAllocate(
+    ntfHandle, /* handle to Notification Service instance */
+    &myNotification,
+    /* number of correlated notifications */
+    myNotificationAllocationParams.numCorrelatedNotifications,
+    /* length of additional text */
+    myNotificationAllocationParams.lengthAdditionalText,
+    /* number of additional info items*/
+    myNotificationAllocationParams.numAdditionalInfo,
+    /* number of specific problems */
+    myNotificationAllocationParams.numSpecificProblems,
+    /* number of monitored attributes */
+    myNotificationAllocationParams.numMonitoredAttributes,
+    /* number of proposed repair actions */
+    myNotificationAllocationParams.numProposedRepairActions,
+    /* use default allocation size */
+    myNotificationAllocationParams.variableDataSize),
+    SA_AIS_OK);
 
-	myNotificationParams.eventType = myNotificationParams.alarmEventType;
+  myNotificationParams.eventType = myNotificationParams.alarmEventType;
 
-	fill_header_part(&myNotification.notificationHeader,
-			 (saNotificationParamsT *)&myNotificationParams,
-			 myNotificationAllocationParams.lengthAdditionalText);
+  fill_header_part(&myNotification.notificationHeader,
+       (saNotificationParamsT *)&myNotificationParams,
+       myNotificationAllocationParams.lengthAdditionalText);
 
-	/* determine perceived severity */
-	*(myNotification.perceivedSeverity) =
-			myNotificationParams.perceivedSeverity;
+  /* determine perceived severity */
+  *(myNotification.perceivedSeverity) =
+      myNotificationParams.perceivedSeverity;
 
-	/* set probable cause*/
-	*(myNotification.probableCause) = myNotificationParams.probableCause;
+  /* set probable cause*/
+  *(myNotification.probableCause) = myNotificationParams.probableCause;
 
-	safassert(ntftest_saNtfNotificationSend(
-			myNotification.notificationHandle),SA_AIS_OK);
+  safassert(ntftest_saNtfNotificationSend(
+      myNotification.notificationHandle),SA_AIS_OK);
 
-	/* Read initialize here to get the notification above */
-	safassert(ntftest_saNtfNotificationReadInitialize(searchCriteria,
-		&myNotificationFilterHandles, &readHandle),
-		SA_AIS_OK);
-	/* read as many matching notifications as exist for the time period
-	 between the last received one and now */
-	for (; (errorCode = ntftest_saNtfNotificationReadNext(
-				readHandle, SA_NTF_SEARCH_YOUNGER,
-				&returnedNotification)) == SA_AIS_OK;) {
-		safassert(errorCode, SA_AIS_OK);
-		readCounter++;
+  /* Read initialize here to get the notification above */
+  safassert(ntftest_saNtfNotificationReadInitialize(searchCriteria,
+    &myNotificationFilterHandles, &readHandle),
+    SA_AIS_OK);
+  /* read as many matching notifications as exist for the time period
+   between the last received one and now */
+  for (; (errorCode = ntftest_saNtfNotificationReadNext(
+        readHandle, SA_NTF_SEARCH_YOUNGER,
+        &returnedNotification)) == SA_AIS_OK;) {
+    safassert(errorCode, SA_AIS_OK);
+    readCounter++;
 
-		if (verbose) {
-			newNotification(69, &returnedNotification);
-		} else {
-			free_notif_2(0, &returnedNotification);
-		}
-	}
-	if (verbose) {
-		(void)printf("\n errorcode to break loop: %d\n",
-			(int)errorCode);
-	}
-	if (readCounter == 0) {
-		errorCode = SA_AIS_ERR_FAILED_OPERATION;
-	}
+    if (verbose) {
+      newNotification(69, &returnedNotification);
+    } else {
+      free_notif_2(0, &returnedNotification);
+    }
+  }
+  if (verbose) {
+    (void)printf("\n errorcode to break loop: %d\n",
+      (int)errorCode);
+  }
+  if (readCounter == 0) {
+    errorCode = SA_AIS_ERR_FAILED_OPERATION;
+  }
 
-	// No more...
-	safassert(ntftest_saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
-	wait_controllers(4);
-	safassert(ntftest_saNtfNotificationFilterFree(
-		myAlarmFilter.notificationFilterHandle), SA_AIS_OK);
-	free(myNotificationParams.additionalText);
-	safassert(ntftest_saNtfNotificationFree(myNotification.notificationHandle),
-			SA_AIS_OK);
-	safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
-	test_validate(errorCode, SA_AIS_ERR_NOT_EXIST);
+  // No more...
+  safassert(ntftest_saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
+  wait_controllers(4);
+  safassert(ntftest_saNtfNotificationFilterFree(
+    myAlarmFilter.notificationFilterHandle), SA_AIS_OK);
+  free(myNotificationParams.additionalText);
+  safassert(ntftest_saNtfNotificationFree(myNotification.notificationHandle),
+      SA_AIS_OK);
+  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  test_validate(errorCode, SA_AIS_ERR_NOT_EXIST);
 }
 
-void add_coldsync_test(void)
-{
-	install_sigusr2();
+void add_coldsync_test(void) {
+  install_sigusr2();
 
-	test_suite_add(41, "Synchronization - Reader");
-	test_case_add(41, test_coldsync_saNtfNotificationReadNext_01,
-			"saNtfNotificationReadNext: Test cold sync of cached alarm");
-	test_case_add(41, test_coldsync_saNtfNotificationReadInitialize_01,
-			"saNtfNotificationReadNext: Test cold sync of reader Id, reader filter");
-	test_case_add(41, test_coldsync_saNtfNotificationReadNext_02,
-			"saNtfNotificationReadNext: Test cold sync of current reader iteration");
-	test_case_add(41, test_async_saNtfNotificationReadInitialize_01,
-			"saNtfNotificationReadInitialize: Test reader Id, reader filter to be checkpoint");
-	test_case_add(41, test_async_saNtfNotificationReadNext_01,
-			"saNtfNotificationReadNext:  Test current reader iteration to be checkpoint");
-	test_case_add(41, test_async_saNtfNotificationReadFinalize_01,
-			"saNtfNotificationReadFinalize: Test reader finalize to be checkpoint");
+  test_suite_add(41, "Synchronization - Reader");
+  test_case_add(41, test_coldsync_saNtfNotificationReadNext_01,
+      "saNtfNotificationReadNext: Test cold sync of cached alarm");
+  test_case_add(41, test_coldsync_saNtfNotificationReadInitialize_01,
+      "saNtfNotificationReadNext: Test cold sync of reader Id, reader filter");
+  test_case_add(41, test_coldsync_saNtfNotificationReadNext_02,
+      "saNtfNotificationReadNext: Test cold sync of current reader iteration");
+  test_case_add(41, test_async_saNtfNotificationReadInitialize_01,
+      "saNtfNotificationReadInitialize: Test reader Id, reader filter to be checkpoint");
+  test_case_add(41, test_async_saNtfNotificationReadNext_01,
+      "saNtfNotificationReadNext:  Test current reader iteration to be checkpoint");
+  test_case_add(41, test_async_saNtfNotificationReadFinalize_01,
+      "saNtfNotificationReadFinalize: Test reader finalize to be checkpoint");
 
 }
