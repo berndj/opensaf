@@ -26,9 +26,9 @@
  */
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 #define NOTIF_OBJECT_TEST                                                    \
   "safComp=CompT_SC_FAKE,safSu=SuT_SC_FAKE,safNode=SC_2_1"
@@ -195,10 +195,11 @@ static void saNtfNotificationCallbackT(SaNtfSubscriptionIdT subscriptionId,
     if (myNotificationFilterHandles.alarmFilterHandle == 0) {
       printf("alarmFilterHandle == 0\n");
       errors += 1;
-    } else
+    } else {
       ntf_id_store(
           *notification->notification.alarmNotification
          .notificationHeader.notificationId);
+    }
     break;
 
   case SA_NTF_TYPE_SECURITY_ALARM:
@@ -1353,7 +1354,7 @@ void objectCreateDeleteNotificationFilterTest(void) {
     safassert(NtfTest::saNtfNotificationSubscribe(&myNotificationFilterHandles,
               subscriptionId), SA_AIS_OK);
 
-    createObjectCreateDeleteNotification(ntfHandle,&myObjCrDelNotification);
+    createObjectCreateDeleteNotification(ntfHandle, &myObjCrDelNotification);
     *(myObjCrDelNotification.sourceIndicator) = SA_NTF_OBJECT_OPERATION;
     safassert(NtfTest::saNtfNotificationSend(
         myObjCrDelNotification.notificationHandle), SA_AIS_OK);
@@ -1677,9 +1678,7 @@ void securityAlarmNotificationFilterTest(void) {
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject), SA_AIS_OK);
 
   if ((rc = saNtfSecurityAlarmNotificationFilterAllocate(
-     ntfHandle, &myFilter, 0, 0, 0, 0, 3, 0, 0, 0, 0)) ==
-      SA_AIS_OK) {
-
+     ntfHandle, &myFilter, 0, 0, 0, 0, 3, 0, 0, 0, 0)) == SA_AIS_OK) {
     /* Initialize filter handles */
     myNotificationFilterHandles.alarmFilterHandle = 0;
     myNotificationFilterHandles.attributeChangeFilterHandle = 0;
@@ -1770,7 +1769,6 @@ void securityAlarmNotificationFilterTest2(void) {
 
   if ((rc = saNtfSecurityAlarmNotificationFilterAllocate(
      ntfHandle, &myFilter, 0, 0, 0, 0, 0, 2, 0, 0, 0)) == SA_AIS_OK) {
-
     /* Initialize filter handles */
     myNotificationFilterHandles.alarmFilterHandle = 0;
     myNotificationFilterHandles.attributeChangeFilterHandle = 0;
@@ -1850,7 +1848,6 @@ void securityAlarmNotificationFilterTest3(void) {
 
   if ((rc = saNtfSecurityAlarmNotificationFilterAllocate(
      ntfHandle, &myFilter, 0, 0, 0, 0, 0, 0, 3, 0, 0)) == SA_AIS_OK) {
-
     /* Initialize filter handles */
     myNotificationFilterHandles.alarmFilterHandle = 0;
     myNotificationFilterHandles.attributeChangeFilterHandle = 0;
@@ -1959,7 +1956,6 @@ void securityAlarmNotificationFilterTest4(void) {
 
   if ((rc = saNtfSecurityAlarmNotificationFilterAllocate(
      ntfHandle, &myFilter, 0, 0, 0, 0, 0, 0, 0, 3, 0)) == SA_AIS_OK) {
-
     /* Initialize filter handles */
     myNotificationFilterHandles.alarmFilterHandle = 0;
     myNotificationFilterHandles.attributeChangeFilterHandle = 0;
@@ -2062,7 +2058,6 @@ void securityAlarmNotificationFilterTest5(void) {
 
   if ((rc = saNtfSecurityAlarmNotificationFilterAllocate(
      ntfHandle, &myFilter, 0, 0, 0, 0, 0, 0, 0, 0, 3)) == SA_AIS_OK) {
-
     /* Initialize filter handles */
     myNotificationFilterHandles.alarmFilterHandle = 0;
     myNotificationFilterHandles.attributeChangeFilterHandle = 0;
@@ -2155,7 +2150,6 @@ void securityAlarmNotificationFilterTest5(void) {
  */
 void combinedNotificationFilterTest(void) {
   rc = SA_AIS_OK;
-  SaNtfNotificationHeaderT *head = NULL;
   saNotificationFilterAllocationParamsT
       myNotificationFilterAllocationParams;
   saNotificationAllocationParamsT myNotificationAllocationParams;
@@ -2224,11 +2218,11 @@ void combinedNotificationFilterTest(void) {
           mySecAlarmFilter.severities[0] = SA_NTF_SEVERITY_MAJOR;
           mySecAlarmFilter.probableCauses[0] = SA_NTF_AUTHENTICATION_FAILURE;
 
-          if ((rc =
-             saNtfStateChangeNotificationFilterAllocate(
+          if ((rc = saNtfStateChangeNotificationFilterAllocate(
                  ntfHandle,
                  &myStateChangeFilter, 1, 1,
                  1, 1, 1, 1)) == SA_AIS_OK) {
+            SaNtfNotificationHeaderT *head = nullptr;
             myStateChangeFilter.sourceIndicators[0] = SA_NTF_OBJECT_OPERATION;
             fillFilterHeader(&myStateChangeFilter.notificationFilterHeader);
             myStateChangeFilter
@@ -2283,7 +2277,7 @@ void combinedNotificationFilterTest(void) {
                 SA_NTF_ALARM_COMMUNICATION;
             *myAlarmNotification.probableCause = SA_NTF_CORRUPT_DATA;
             safassert(NtfTest::saNtfNotificationSend(
-                  myAlarmNotification.notificationHandle),SA_AIS_OK);
+                  myAlarmNotification.notificationHandle), SA_AIS_OK);
 
             /* === Oject create delete send
              * 5  */

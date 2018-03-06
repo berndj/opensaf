@@ -14,13 +14,13 @@
  * Author(s): Ericsson AB
  *
  */
+#include <sys/time.h>
+#include "base/logtrace.h"
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include "base/logtrace.h"
-#include <sys/time.h>
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 void saNtfAttributeChangeNotificationAllocate_01(void) {
   SaNtfAttributeChangeNotificationT myNotification;
@@ -33,8 +33,8 @@ void saNtfAttributeChangeNotificationAllocate_01(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
 
   rc = saNtfAttributeChangeNotificationAllocate(
       ntfHandle, /* handle to Notification Service instance */
@@ -93,8 +93,8 @@ void saNtfAttributeChangeNotificationAllocate_02(void) {
     TRACE("Test: FAILED");
   }
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
   safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   rc = saNtfAttributeChangeNotificationAllocate(
@@ -134,8 +134,8 @@ void saNtfAttributeChangeNotificationAllocate_03(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
 
   rc = saNtfAttributeChangeNotificationAllocate(
       ntfHandle, /* handle to Notification Service instance */

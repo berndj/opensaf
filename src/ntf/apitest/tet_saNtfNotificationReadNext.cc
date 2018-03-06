@@ -21,9 +21,9 @@
 #include <wait.h>
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 extern int verbose;
 
@@ -144,9 +144,10 @@ void saNtfNotificationReadNext_01(void) {
 
   myNotificationParams.eventType = myNotificationParams.alarmEventType;
 
-  fill_header_part(&myNotification.notificationHeader,
-       (saNotificationParamsT *)&myNotificationParams,
-       myNotificationAllocationParams.lengthAdditionalText);
+  fill_header_part(
+      &myNotification.notificationHeader,
+      reinterpret_cast<saNotificationParamsT *>(&myNotificationParams),
+      myNotificationAllocationParams.lengthAdditionalText);
 
   /* determine perceived severity */
   *(myNotification.perceivedSeverity) =
@@ -165,14 +166,12 @@ void saNtfNotificationReadNext_01(void) {
    between the last received one and now */
   for (; (errorCode = NtfTest::saNtfNotificationReadNext(
         readHandle, SA_NTF_SEARCH_YOUNGER,
-        &returnedNotification)) == SA_AIS_OK;)
-
+        &returnedNotification)) == SA_AIS_OK;) {
   /* errorCode = saNtfNotificationReadNext(*/
   /*          readHandle,                  */
   /*          SA_NTF_SEARCH_YOUNGER,       */
   /*          &returnedNotification);      */
   /* if (errorCode == SA_AIS_OK)           */
-  {
     safassert(errorCode, SA_AIS_OK);
     readCounter++;
 
@@ -183,7 +182,7 @@ void saNtfNotificationReadNext_01(void) {
     }
   }
   if (verbose) {
-    (void)printf("errorcode to break loop: %d\n", (int)errorCode);
+    (void)printf("errorcode to break loop: %d\n", static_cast<int>(errorCode));
   }
   if (readCounter == 0) {
     errorCode = SA_AIS_ERR_FAILED_OPERATION;
@@ -279,9 +278,10 @@ void saNtfNotificationReadNext_02(void) {
 
   myNotificationParams.eventType = myNotificationParams.alarmEventType;
 
-  fill_header_part(&myNotification.notificationHeader,
-       (saNotificationParamsT *)&myNotificationParams,
-       myNotificationAllocationParams.lengthAdditionalText);
+  fill_header_part(
+      &myNotification.notificationHeader,
+      reinterpret_cast<saNotificationParamsT *>(&myNotificationParams),
+      myNotificationAllocationParams.lengthAdditionalText);
 
   /* determine perceived severity */
   *(myNotification.perceivedSeverity) =
@@ -313,7 +313,7 @@ void saNtfNotificationReadNext_02(void) {
     }
   }
   if (verbose) {
-    (void)printf("errorcode to break loop: %d\n", (int)errorCode);
+    (void)printf("errorcode to break loop: %d\n", static_cast<int>(errorCode));
   }
   if (readCounter == 0) {
     errorCode = SA_AIS_ERR_FAILED_OPERATION;
@@ -336,7 +336,7 @@ void saNtfNotificationReadNext_02(void) {
   }
 
   if (verbose) {
-    (void)printf("errorcode to break loop: %d\n", (int)errorCode);
+    (void)printf("errorcode to break loop: %d\n", static_cast<int>(errorCode));
   }
   if (readCounter == 0) {
     errorCode = SA_AIS_ERR_FAILED_OPERATION;

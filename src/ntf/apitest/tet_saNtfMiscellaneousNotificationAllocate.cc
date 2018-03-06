@@ -14,12 +14,12 @@
  * Author(s): Ericsson AB
  *
  */
+#include <sys/time.h>
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include <sys/time.h>
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 void saNtfMiscellaneousNotificationAllocate_01(void) {
   test_validate(SA_AIS_ERR_NOT_SUPPORTED, SA_AIS_ERR_NOT_SUPPORTED);
@@ -34,8 +34,8 @@ void saNtfMiscellaneousNotificationAllocate_01(void) {
   fillInDefaultValues(&myNotificationAllocationParams,
       &myNotificationFilterAllocationParams, &myNotificationParams);
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-            SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject), SA_AIS_OK);
 
   AlarmNotificationParams myAlarmParams;
@@ -66,7 +66,8 @@ void saNtfMiscellaneousNotificationAllocate_01(void) {
           myAlarmParams.numProposedRepairActions,
           myAlarmParams.variableDataSize);
 
-  safassert(saNtfNotificationFree(myAlarmNotification.notificationHandle), SA_AIS_OK);
+  safassert(saNtfNotificationFree(myAlarmNotification.notificationHandle),
+            SA_AIS_OK);
   safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 #endif
@@ -119,13 +120,13 @@ void saNtfMiscellaneousNotificationAllocate_02(void) {
           myAlarmParams.numProposedRepairActions,
           myAlarmParams.variableDataSize);
 
-  if(rc != SA_AIS_ERR_BAD_HANDLE) {
+  if (rc != SA_AIS_ERR_BAD_HANDLE) {
     errors++;
   }
 
   /* Create a handle and then destroy it */
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-            SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
   safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   rc = saNtfAlarmNotificationAllocate(
@@ -139,7 +140,7 @@ void saNtfMiscellaneousNotificationAllocate_02(void) {
           myAlarmParams.numProposedRepairActions,
           myAlarmParams.variableDataSize);
 
-  if(rc != SA_AIS_ERR_BAD_HANDLE) {
+  if (rc != SA_AIS_ERR_BAD_HANDLE) {
     errors++;
   }
 
@@ -183,8 +184,8 @@ void saNtfMiscellaneousNotificationAllocate_03(void) {
   myAlarmParams.variableDataSize
       = myNotificationAllocationParams.variableDataSize;
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-            SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject), SA_AIS_OK);
 
   rc = saNtfMiscellaneousNotificationAllocate(
@@ -197,7 +198,7 @@ void saNtfMiscellaneousNotificationAllocate_03(void) {
           myAlarmParams.numMonitoredAttributes,
           myAlarmParams.numProposedRepairActions,
           myAlarmParams.variableDataSize);
-  if(rc != SA_AIS_ERR_INVALID_PARAM) {
+  if (rc != SA_AIS_ERR_INVALID_PARAM) {
     errors++;
   }
 
@@ -222,7 +223,7 @@ saNtfMiscellaneousNotificationAllocate_constructor(void) {
       6, saNtfMiscellaneousNotificationAllocate_03,
       "saNtfMiscellaneousNotificationAllocate SA_AIS_ERR_INVALID_PARAM");
   //  test_case_add(30, saNtfAlarmNotificationAllocate_04,
-  //"saNtfAlarmNotificationAllocate SA_AIS_ERR_TOO_BIG");
+  //    "saNtfAlarmNotificationAllocate SA_AIS_ERR_TOO_BIG");
   //  test_case_add(30, saNtfAlarmNotificationAllocate_05,
-  //"saNtfAlarmNotificationAllocate SA_AIS_ERR_UNAVAILABLE");
+  //    "saNtfAlarmNotificationAllocate SA_AIS_ERR_UNAVAILABLE");
 }

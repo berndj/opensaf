@@ -16,9 +16,9 @@
  */
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 static int errors = 0;
 /* Indicates which test to perform in the callBack */
@@ -50,19 +50,19 @@ void test1ArrayValGet_value_ok(SaNtfSubscriptionIdT subscriptionId,
   SaUint16T numElements;
   SaUint16T elementSize;
 
-  int iCount, jCount;
   const SaNtfAlarmNotificationT *ntfAlarm;
 
   ntfRecieved.alarmFilterHandle += 1;
-  if (myNotificationFilterHandles.alarmFilterHandle == 0)
+  if (myNotificationFilterHandles.alarmFilterHandle == 0) {
     errors += 1;
-  else {
+  } else {
     ntfAlarm = &notification->notification.alarmNotification;
     if (assertvalue(ntfAlarm->numProposedRepairActions ==
         myAlarmNotification.numProposedRepairActions)) {
       errors += 1;
       return;
     } else {
+      int iCount, jCount;
       for (iCount = 0;
            iCount < ntfAlarm->numProposedRepairActions;
            iCount++) {
@@ -76,10 +76,8 @@ void test1ArrayValGet_value_ok(SaNtfSubscriptionIdT subscriptionId,
 
         if ((rc = saNtfArrayValGet(
            ntfAlarm->notificationHandle,
-           &ntfAlarm
-                ->proposedRepairActions[iCount]
-                .actionValue,
-           (void **)&srcPtr, &numElements,
+           &ntfAlarm->proposedRepairActions[iCount].actionValue,
+           reinterpret_cast<void **>(&srcPtr), &numElements,
            &elementSize)) != SA_AIS_OK) {
           errors += 1;
           return;
@@ -105,7 +103,6 @@ void test1ArrayValGet_value_ok(SaNtfSubscriptionIdT subscriptionId,
  */
 void test2ArrayValGet_bad_return(SaNtfSubscriptionIdT subscriptionId,
          const SaNtfNotificationsT *notification) {
-  int iCount;
   SaStringT *srcPtr;
   SaUint16T numElements;
   SaUint16T elementSize;
@@ -119,30 +116,27 @@ void test2ArrayValGet_bad_return(SaNtfSubscriptionIdT subscriptionId,
     errors += 1;
     return;
   } else {
-    for (iCount = 0; iCount < ntfAlarm->numProposedRepairActions;
-         iCount++) {
-
+    int iCount;
+    for (iCount = 0; iCount < ntfAlarm->numProposedRepairActions; iCount++) {
       /* NULL in notificationHandle */
       if ((rc = saNtfArrayValGet(
          0,
-         &ntfAlarm->proposedRepairActions[iCount]
-              .actionValue,
-         (void **)&srcPtr, &numElements,
+         &ntfAlarm->proposedRepairActions[iCount].actionValue,
+         reinterpret_cast<void **>(&srcPtr), &numElements,
          &elementSize)) != SA_AIS_ERR_BAD_HANDLE)
         errors += 1;
 
       /* NULL in *value */
       if ((rc = saNtfArrayValGet(
          ntfAlarm->notificationHandle, NULL,
-         (void **)&srcPtr, &numElements,
+         reinterpret_cast<void **>(&srcPtr), &numElements,
          &elementSize)) != SA_AIS_ERR_INVALID_PARAM)
         errors += 1;
 
       /* NULL **arrayPtr */
       if ((rc = saNtfArrayValGet(
          ntfAlarm->notificationHandle,
-         &ntfAlarm->proposedRepairActions[iCount]
-              .actionValue,
+         &ntfAlarm->proposedRepairActions[iCount].actionValue,
          NULL, &numElements, &elementSize)) !=
           SA_AIS_ERR_INVALID_PARAM)
         errors += 1;
@@ -150,25 +144,23 @@ void test2ArrayValGet_bad_return(SaNtfSubscriptionIdT subscriptionId,
       /* NULL *numElements */
       if ((rc = saNtfArrayValGet(
          ntfAlarm->notificationHandle,
-         &ntfAlarm->proposedRepairActions[iCount]
-              .actionValue,
-         (void **)&srcPtr, NULL, &elementSize)) !=
+         &ntfAlarm->proposedRepairActions[iCount].actionValue,
+         reinterpret_cast<void **>(&srcPtr), NULL, &elementSize)) !=
           SA_AIS_ERR_INVALID_PARAM)
         errors += 1;
 
       /* NULL *elementSize */
       if ((rc = saNtfArrayValGet(
          ntfAlarm->notificationHandle,
-         &ntfAlarm->proposedRepairActions[iCount]
-              .actionValue,
-         (void **)&srcPtr, &numElements, NULL)) !=
-          SA_AIS_ERR_INVALID_PARAM)
+         &ntfAlarm->proposedRepairActions[iCount].actionValue,
+         reinterpret_cast<void **>(&srcPtr), &numElements, NULL)) !=
+           SA_AIS_ERR_INVALID_PARAM)
         errors += 1;
 
       /* actionValue not from notification */
       if ((rc = saNtfArrayValGet(
          ntfAlarm->notificationHandle, &myValue,
-         (void **)&srcPtr, &numElements,
+         reinterpret_cast<void **>(&srcPtr), &numElements,
          &elementSize)) != SA_AIS_ERR_INVALID_PARAM)
         errors += 1;
     }
@@ -284,12 +276,12 @@ void saNtfArrayGetTest_common_prep(void) {
 
   myAlarmNotification.notificationHeader.notificationObject->length = 4;
   myAlarmNotification.notificationHeader.notifyingObject->length = 4;
-  strncpy((char *)myAlarmNotification.notificationHeader
-        .notificationObject->value,
-    "nno", 4);
-  strncpy((char *)myAlarmNotification.notificationHeader.notifyingObject
-        ->value,
-    "ngo", 4);
+  strncpy(reinterpret_cast<char *>(
+      myAlarmNotification.notificationHeader.notificationObject->value),
+      "nno", 4);
+  strncpy(reinterpret_cast<char *>(
+      myAlarmNotification.notificationHeader.notifyingObject->value),
+      "ngo", 4);
   strncpy(myAlarmNotification.notificationHeader.additionalText,
     DEFAULT_ADDITIONAL_TEXT, strlen(DEFAULT_ADDITIONAL_TEXT) + 1);
 
@@ -298,7 +290,7 @@ void saNtfArrayGetTest_common_prep(void) {
   if ((rc = saNtfArrayValAllocate(
      myAlarmNotification.notificationHandle, 2,
      (SaUint16T)(strlen(DEFAULT_ADDITIONAL_TEXT) + 1),
-     (void **)&destPtr,
+     reinterpret_cast<void **>(&destPtr),
      &(myAlarmNotification.proposedRepairActions[0]
            .actionValue))) == SA_AIS_OK) {
     /* Copy the actual value */

@@ -14,14 +14,14 @@
  * Author(s): Ericsson AB
  *
  */
-#include "osaf/apitest/utest.h"
-#include "osaf/apitest/util.h"
 #include <sys/time.h>
 #include <poll.h>
 #include <unistd.h>
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "osaf/apitest/utest.h"
+#include "osaf/apitest/util.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 static SaNtfAlarmNotificationT myAlarmNotification;
 
@@ -81,8 +81,8 @@ void saNtfNotificationSend_01(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject),
       SA_AIS_OK);
 
@@ -115,9 +115,10 @@ void saNtfNotificationSend_01(void) {
       SA_AIS_OK);
 
   myNotificationParams.eventType = myNotificationParams.alarmEventType;
-  fill_header_part(&myAlarmNotification.notificationHeader,
-       (saNotificationParamsT *)&myNotificationParams,
-       myAlarmParams.lengthAdditionalText);
+  fill_header_part(
+      &myAlarmNotification.notificationHeader,
+      reinterpret_cast<saNotificationParamsT *>(&myNotificationParams),
+      myAlarmParams.lengthAdditionalText);
 
   /* determine perceived severity */
   *(myAlarmNotification.perceivedSeverity) =
@@ -155,8 +156,8 @@ void saNtfNotificationSend_02(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
   safassert(saNtfObjectCreateDeleteNotificationAllocate(
           ntfHandle, /* handle to Notification Service instance */
           &myNotification,
@@ -226,9 +227,10 @@ void saNtfNotificationSend_02(void) {
 
   myNotificationParams.eventType =
       myNotificationParams.objectCreateDeleteEventType;
-  fill_header_part(&myNotification.notificationHeader,
-       (saNotificationParamsT *)&myNotificationParams,
-       myNotificationAllocationParams.lengthAdditionalText);
+  fill_header_part(
+      &myNotification.notificationHeader,
+      reinterpret_cast<saNotificationParamsT *>(&myNotificationParams),
+      myNotificationAllocationParams.lengthAdditionalText);
 
   rc = NtfTest::saNtfNotificationSend(myNotification.notificationHandle);
   free(myNotificationParams.additionalText);
@@ -249,8 +251,8 @@ void attr_ch_send(int wrongAttrType, SaAisErrorT expectedStatus) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
 
   safassert(saNtfAttributeChangeNotificationAllocate(
           ntfHandle, /* handle to Notification Service instance */
@@ -334,9 +336,10 @@ void attr_ch_send(int wrongAttrType, SaAisErrorT expectedStatus) {
 
   myNotificationParams.eventType =
       myNotificationParams.attributeChangeEventType;
-  fill_header_part(&myNotification.notificationHeader,
-       (saNotificationParamsT *)&myNotificationParams,
-       myNotificationAllocationParams.lengthAdditionalText);
+  fill_header_part(
+      &myNotification.notificationHeader,
+      reinterpret_cast<saNotificationParamsT *>(&myNotificationParams),
+      myNotificationAllocationParams.lengthAdditionalText);
 
   /*  the magic */
   rc = NtfTest::saNtfNotificationSend(myNotification.notificationHandle);
@@ -355,8 +358,8 @@ SaAisErrorT send_st_ch(
     saNotificationParamsT *myNotificationParams) {
   SaNtfStateChangeNotificationT myNotification;
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
 
   safassert(
       saNtfStateChangeNotificationAllocate(
@@ -425,9 +428,10 @@ SaAisErrorT send_st_ch(
 
   myNotificationParams->eventType =
       myNotificationParams->stateChangeEventType;
-  fill_header_part(&myNotification.notificationHeader,
-       (saNotificationParamsT *)myNotificationParams,
-       myNotificationAllocationParams->lengthAdditionalText);
+  fill_header_part(
+      &myNotification.notificationHeader,
+      reinterpret_cast<saNotificationParamsT *>(myNotificationParams),
+      myNotificationAllocationParams->lengthAdditionalText);
 
   /*  the magic */
   rc = NtfTest::saNtfNotificationSend(myNotification.notificationHandle);
@@ -489,8 +493,8 @@ void sec_al_send(int wrongValueType, SaAisErrorT expectedStatus) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
 
   safassert(saNtfSecurityAlarmNotificationAllocate(
           ntfHandle, /* handle to Notification Service instance */
@@ -505,9 +509,10 @@ void sec_al_send(int wrongValueType, SaAisErrorT expectedStatus) {
           myNotificationAllocationParams.variableDataSize),
       SA_AIS_OK);
 
-  fill_header_part(&myNotification.notificationHeader,
-       (saNotificationParamsT *)&myNotificationParams,
-       myNotificationAllocationParams.lengthAdditionalText);
+  fill_header_part(
+      &myNotification.notificationHeader,
+      reinterpret_cast<saNotificationParamsT *>(&myNotificationParams),
+      myNotificationAllocationParams.lengthAdditionalText);
 
   /* Event type */
   *(myNotification.notificationHeader.eventType) =
@@ -578,7 +583,6 @@ void sec_al_send(int wrongValueType, SaAisErrorT expectedStatus) {
 void saNtfNotificationSend_05(void) { sec_al_send(0, SA_AIS_OK); }
 
 void saNtfNotificationSend_06(void) {
-  // TODO MiscellaneousNotification
   test_validate(SA_AIS_ERR_NOT_SUPPORTED, SA_AIS_ERR_NOT_SUPPORTED);
 }
 
@@ -587,7 +591,6 @@ static SaAisErrorT send_obj_cr_del(
     saNotificationFilterAllocationParamsT *myNotificationFilterAllocationParams,
     saNotificationParamsT *myNotificationParams) {
   struct pollfd fds[1];
-  int ret;
 
   SaNtfObjectCreateDeleteNotificationFilterT myObjCreDelFilter;
   SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles;
@@ -673,9 +676,9 @@ static SaAisErrorT send_obj_cr_del(
 
   rc = NtfTest::saNtfNotificationSend(myNotification.notificationHandle);
   if (rc == SA_AIS_OK) {
-    fds[0].fd = (int)selectionObject;
+    fds[0].fd = static_cast<int>(selectionObject);
     fds[0].events = POLLIN;
-    ret = poll(fds, 1, 10000);
+    int ret = poll(fds, 1, 10000);
     assert(ret > 0);
     safassert(NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ONE), SA_AIS_OK);
   }
@@ -843,9 +846,10 @@ void send_mismatch_addtext(void) {
 
   myNotificationParams.eventType =
       myNotificationParams.objectCreateDeleteEventType;
-  fill_header_part(&myNotification.notificationHeader,
-       (saNotificationParamsT *)&myNotificationParams,
-       myNotificationAllocationParams.lengthAdditionalText);
+  fill_header_part(
+      &myNotification.notificationHeader,
+      reinterpret_cast<saNotificationParamsT *>(&myNotificationParams),
+      myNotificationAllocationParams.lengthAdditionalText);
 
   rc = NtfTest::saNtfNotificationSend(myNotification.notificationHandle);
 
@@ -860,36 +864,32 @@ __attribute__((constructor)) static void saNtfNotificationSend_constructor(
     void) {
   test_suite_add(8, "Producer API 3 send");
   test_case_add(8, saNtfNotificationSend_01,
-          "saNtfNotificationSend Alarm");
+      "saNtfNotificationSend Alarm");
   test_case_add(8, saNtfNotificationSend_02,
-          "saNtfNotificationSend ObjectCreateDeleteNotification");
+      "saNtfNotificationSend ObjectCreateDeleteNotification");
   test_case_add(8, saNtfNotificationSend_03,
-          "saNtfNotificationSend AttributeChangeNotification");
+      "saNtfNotificationSend AttributeChangeNotification");
   test_case_add(8, saNtfNotificationSend_04,
-          "saNtfNotificationSend StateChangeNotification");
-  test_case_add(
-      8, saNtfNotificationSend_09,
+      "saNtfNotificationSend StateChangeNotification");
+  test_case_add(8, saNtfNotificationSend_09,
       "saNtfNotificationSend StateChangeNotification invalid oldStatePresent");
   test_case_add(8, saNtfNotificationSend_05,
-          "saNtfNotificationSend SecurityAlarm");
+       "saNtfNotificationSend SecurityAlarm");
   test_case_add(8, saNtfNotificationSend_06,
-          "saNtfNotificationSend Miscellaneous, Not supported");
-  test_case_add(
-      8, saNtfNotificationSend_07,
+      "saNtfNotificationSend Miscellaneous, Not supported");
+  test_case_add(8, saNtfNotificationSend_07,
       "saNtfNotificationSend ObjectCreateDeleteNotification  SaNameT length=0");
-  test_case_add(
-      8, saNtfNotificationSend_08,
-      "saNtfNotificationSend ObjectCreateDeleteNotification  SaNameT length too large");
-  test_case_add(
-      8, saNtfNotificationSend_10,
+  test_case_add(8, saNtfNotificationSend_08,
+      "saNtfNotificationSend ObjectCreateDeleteNotification  SaNameT "
+      "length too large");
+  test_case_add(8, saNtfNotificationSend_10,
       "changedAttributes.attributeType failed SA_AIS_ERR_INVALID_PARAM");
-  test_case_add(
-      8, saNtfNotificationSend_11,
+  test_case_add(8, saNtfNotificationSend_11,
       "securityAlarmDetector.valueType failed SA_AIS_ERR_INVALID_PARAM");
-  test_case_add(
-      8, saNtfNotificationSend_12,
-      "saNtfNotificationSend ObjectCreateDeleteNotification  SaNameT length == 256");
-  test_case_add(
-      8, send_mismatch_addtext,
-      "saNtfNotificationSend with mismatched in additionalText and lengthAdditionalText");
+  test_case_add(8, saNtfNotificationSend_12,
+      "saNtfNotificationSend ObjectCreateDeleteNotification  SaNameT "
+      "length == 256");
+  test_case_add(8, send_mismatch_addtext,
+      "saNtfNotificationSend with mismatched in additionalText and "
+      "lengthAdditionalText");
 }

@@ -16,15 +16,14 @@
  *
  */
 #include <stdio.h>
-#include "osaf/apitest/utest.h"
-#include "osaf/apitest/util.h"
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/types.h>
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
-//#include "osaf/apitest/util.h"
+#include "osaf/apitest/utest.h"
+#include "osaf/apitest/util.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 #define NOTIFYING_OBJECT_TEST "AVND"
 #define NTF_REST_MAX_IDS 30
@@ -96,11 +95,11 @@ typedef struct {
 
 // Store the attributes'value.
 static void getVal(imminfo_t *info) {
-  FILE *fp = NULL;
   attrinfo_t *tmp = NULL;
   char attrValue[MAX_DATA] = {0};
   char command[MAX_DATA + 512] = {0};
   size_t s = info->alist->size;
+  char *saveptr;
 
   tmp = info->alist->attr;
   while (s) {
@@ -108,11 +107,10 @@ static void getVal(imminfo_t *info) {
        "immlist -a %s %s "
        "| awk -F \"=\" '{print $2}' ",
        tmp->name, info->dn);
-    fp = popen(command, "r");
-    while (fgets(attrValue, sizeof(attrValue) - 1, fp) != NULL) {
-    };
+    FILE *fp = popen(command, "r");
+    while (fgets(attrValue, sizeof(attrValue) - 1, fp) != NULL) {}
     pclose(fp);
-    strtok(attrValue, "\n");
+    strtok_r(attrValue, "\n", &saveptr);
     strncpy(tmp->val, attrValue, MAX_DATA);
     s--;
     tmp++;
@@ -161,15 +159,14 @@ static int setVal(imminfo_t *info) {
 // to backup them. Since these attributes belong to alarm stream, put them in
 // one.
 static attrinfo_t g_alarm[] = {{
-           "saLogStreamFixedLogRecordSize",
-           "200", // default val
-           1      // val is num type
-             },
-             {
-           "saLogStreamLogFileFormat",
-           "@Cr @Ct @Nt @Ne6 @No30 @Ng30 \"@Cb\"",
-           0 // val is string type
-             }};
+    "saLogStreamFixedLogRecordSize",
+    "200",  // default val
+    1      // val is num type
+    }, {
+    "saLogStreamLogFileFormat",
+    "@Cr @Ct @Nt @Ne6 @No30 @Ng30 \"@Cb\"",
+    0  // val is string type
+    }};
 
 // Going to change `logMaxLogrecsize` of config class.
 // Have to backup them before Long DN test.
@@ -216,24 +213,24 @@ static void setupEnv(void) {
   // -a- prefix means info of -a-larm stream.
   attrinfo_t aData[2];
   memcpy(aData, g_alarm, sizeof(g_alarm));
-  strcpy(aData[0].val, "0");
-  strcpy(aData[1].val, "@Cr @Ct @Nt @Ne6 @No @Ng \"@Cb\"");
+  snprintf(aData[0].val, MAX_DATA, "0");
+  snprintf(aData[1].val, MAX_DATA, "@Cr @Ct @Nt @Ne6 @No @Ng \"@Cb\"");
 
   // -c- prefix means info of config class
   attrinfo_t cData[1];
   memcpy(cData, g_config, sizeof(g_config));
-  strcpy(cData[0].val, "65535");
+  snprintf(cData[0].val, MAX_DATA, "65535");
 
   attrlist_t aList = {aData, sizeof(aData) / sizeof(attrinfo_t)};
   attrlist_t cList = {cData, sizeof(cData) / sizeof(attrinfo_t)};
 
   imminfo_t aInfo;
   aInfo.alist = &aList;
-  strcpy(aInfo.dn, alarmInfo.dn);
+  snprintf(aInfo.dn, MAX_DATA, "%s", alarmInfo.dn);
 
   imminfo_t cInfo;
   cInfo.alist = &cList;
-  strcpy(cInfo.dn, configInfo.dn);
+  snprintf(cInfo.dn, MAX_DATA, "%s", configInfo.dn);
 
   setVal(&aInfo);
   setVal(&cInfo);
@@ -448,10 +445,11 @@ static void saNtfNotificationCallbackT(SaNtfSubscriptionIdT subscriptionId,
     if (myNotificationFilterHandles.alarmFilterHandle == 0) {
       printf("alarmFilterHandle == 0\n");
       errors += 1;
-    } else
+    } else {
       ntf_id_store(
           *notification->notification.alarmNotification
          .notificationHeader.notificationId);
+    }
     break;
 
   case SA_NTF_TYPE_SECURITY_ALARM:
@@ -539,10 +537,10 @@ void extFillHeaderAddInfo(SaNtfNotificationHeaderT *head,
 
   safassert(saNtfPtrValAllocate(
           notHandle, strlen(saAisNameBorrow(&name1)) + 3,
-          (void **)&dest_ptr, &(head->additionalInfo[0].infoValue)),
-      SA_AIS_OK);
+          reinterpret_cast<void **>(&dest_ptr),
+          &(head->additionalInfo[0].infoValue)), SA_AIS_OK);
 
-  saAisNameLend(saAisNameBorrow(&name1), (SaNameT *)dest_ptr);
+  saAisNameLend(saAisNameBorrow(&name1), reinterpret_cast<SaNameT *>(dest_ptr));
 
   // Fill sencond additionalInfo as extended SaNameT excluding NULL
   // character
@@ -552,10 +550,10 @@ void extFillHeaderAddInfo(SaNtfNotificationHeaderT *head,
 
   safassert(saNtfPtrValAllocate(
           notHandle, strlen(saAisNameBorrow(&name2)) + 2,
-          (void **)&dest_ptr, &(head->additionalInfo[1].infoValue)),
-      SA_AIS_OK);
+          reinterpret_cast<void **>(&dest_ptr),
+          &(head->additionalInfo[1].infoValue)), SA_AIS_OK);
 
-  saAisNameLend(saAisNameBorrow(&name2), (SaNameT *)dest_ptr);
+  saAisNameLend(saAisNameBorrow(&name2), reinterpret_cast<SaNameT *>(dest_ptr));
 
   // Fill third additionalInfo as extended SaNameT as legacy code ->
   // object is truncated
@@ -563,7 +561,7 @@ void extFillHeaderAddInfo(SaNtfNotificationHeaderT *head,
   head->additionalInfo[2].infoId = 1;
   saAisNameLend((SaConstStringT)&test_longdn_object_3, &name3);
   safassert(saNtfPtrValAllocate(notHandle, sizeof(name3) + 1,
-              (void **)&dest_ptr,
+              reinterpret_cast<void **>(&dest_ptr),
               &(head->additionalInfo[2].infoValue)),
       SA_AIS_OK);
 
@@ -575,7 +573,7 @@ void extFillHeaderAddInfo(SaNtfNotificationHeaderT *head,
   saAisNameLend(DEFAULT_UNEXT_NAME_STRING, &name4);
 
   safassert(saNtfPtrValAllocate(notHandle, sizeof(name4) + 1,
-              (void **)&dest_ptr,
+              reinterpret_cast<void **>(&dest_ptr),
               &(head->additionalInfo[3].infoValue)),
       SA_AIS_OK);
 
@@ -588,10 +586,10 @@ void extFillHeaderAddInfo(SaNtfNotificationHeaderT *head,
 
   safassert(saNtfPtrValAllocate(
           notHandle, strlen(saAisNameBorrow(&name5)) + 3,
-          (void **)&dest_ptr, &(head->additionalInfo[4].infoValue)),
-      SA_AIS_OK);
+          reinterpret_cast<void **>(&dest_ptr),
+          &(head->additionalInfo[4].infoValue)), SA_AIS_OK);
 
-  saAisNameLend(saAisNameBorrow(&name5), (SaNameT *)dest_ptr);
+  saAisNameLend(saAisNameBorrow(&name5), reinterpret_cast<SaNameT *>(dest_ptr));
 }
 
 /**

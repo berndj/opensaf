@@ -14,16 +14,13 @@
  * Author(s): Ericsson AB
  *
  */
-/**
-
- */
-#include "osaf/apitest/utest.h"
-#include "osaf/apitest/util.h"
 #include <unistd.h>
 #include <sys/stat.h>
 #include <poll.h>
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
+#include "osaf/apitest/utest.h"
+#include "osaf/apitest/util.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
 #define NTF_REST_MAX_IDS 30
 #define DEFAULT_UNEXT_NAME_STRING "This is unextended SaNameT string (<256)"
 
@@ -111,13 +108,13 @@ static void ntf_id_store(SaNtfIdentifierT n_id) {
  * are expected to be received.
  */
 static SaAisErrorT check_errors() {
-  int i, j, found;
+  int i, j;
   int rcv_notif_counter;
   int errors = 0;
   SaAisErrorT rc = SA_AIS_OK;
   rcv_notif_counter = 0;
   for (i = 0; i < received_ok_ids.length; i++) {
-    found = 0;
+    int found = 0;
     for (j = 0; j < sent_ok_ids.length; j++) {
       if (received_ok_ids.ids[i] == sent_ok_ids.ids[j]) {
         found = 1;
@@ -140,7 +137,7 @@ static SaAisErrorT check_errors() {
 }
 
 void saferror(SaAisErrorT rc, SaAisErrorT exp) {
-  if (rc != exp){
+  if (rc != exp) {
     glob_errors++;
     global_error_id = rc;
   }
@@ -172,13 +169,12 @@ static void saNtfNotificationCallbackT(SaNtfSubscriptionIdT subscriptionId,
       .notificationHandle;
     ntfRecieved.objectCreateDeleteFilterHandle += 1;
 
-    fprintf_v(
-        stdout,
+    fprintf_v(stdout,
         "\n Received notificationCallback: notifType:%d, notifId:%d",
-        (int)notification->notificationType,
-        (int)*notification->notification
-      .objectCreateDeleteNotification.notificationHeader
-      .notificationId);
+        static_cast<int>(notification->notificationType),
+        static_cast<int>(*notification->notification
+                         .objectCreateDeleteNotification.notificationHeader
+                         .notificationId));
 
     if (myNotificationFilterHandles
       .objectCreateDeleteFilterHandle == 0)
@@ -195,12 +191,11 @@ static void saNtfNotificationCallbackT(SaNtfSubscriptionIdT subscriptionId,
       .notificationHandle;
     ntfRecieved.attributeChangeFilterHandle += 1;
 
-    fprintf_v(
-        stdout,
+    fprintf_v(stdout,
         "\n Received notificationCallback: notifType:%d, notifId:%d",
-        (int)notification->notificationType,
-        (int)*notification->notification.attributeChangeNotification
-      .notificationHeader.notificationId);
+        static_cast<int>(notification->notificationType),
+        static_cast<int>(*notification->notification.attributeChangeNotification
+                         .notificationHeader.notificationId));
 
     if (myNotificationFilterHandles.attributeChangeFilterHandle ==
         0)
@@ -217,12 +212,11 @@ static void saNtfNotificationCallbackT(SaNtfSubscriptionIdT subscriptionId,
       .notificationHandle;
     ntfRecieved.stateChangeFilterHandle += 1;
 
-    fprintf_v(
-        stdout,
+    fprintf_v(stdout,
         "\n Received notificationCallback: notifType:%d, notifId:%d",
-        (int)notification->notificationType,
-        (int)*notification->notification.stateChangeNotification
-      .notificationHeader.notificationId);
+        static_cast<int>(notification->notificationType),
+        static_cast<int>(*notification->notification.stateChangeNotification
+                         .notificationHeader.notificationId));
 
     if (myNotificationFilterHandles.stateChangeFilterHandle == 0)
       glob_errors += 1;
@@ -237,19 +231,19 @@ static void saNtfNotificationCallbackT(SaNtfSubscriptionIdT subscriptionId,
            .alarmNotification.notificationHandle;
     ntfRecieved.alarmFilterHandle += 1;
 
-    fprintf_v(
-        stdout,
+    fprintf_v(stdout,
         "\n Received notificationCallback: notifType:%d, notifId:%d",
-        (int)notification->notificationType,
-        (int)*notification->notification.alarmNotification
-      .notificationHeader.notificationId);
+        static_cast<int>(notification->notificationType),
+        static_cast<int>(*notification->notification.alarmNotification
+                         .notificationHeader.notificationId));
 
     if (myNotificationFilterHandles.alarmFilterHandle == 0) {
       glob_errors += 1;
-    } else
+    } else {
       ntf_id_store(
           *notification->notification.alarmNotification
          .notificationHeader.notificationId);
+    }
     break;
 
   case SA_NTF_TYPE_SECURITY_ALARM:
@@ -261,9 +255,9 @@ static void saNtfNotificationCallbackT(SaNtfSubscriptionIdT subscriptionId,
     fprintf_v(
         stdout,
         "\n Received notificationCallback: notifType:%d, notifId:%d",
-        (int)notification->notificationType,
-        (int)*notification->notification.securityAlarmNotification
-      .notificationHeader.notificationId);
+        static_cast<int>(notification->notificationType),
+        static_cast<int>(*notification->notification.securityAlarmNotification
+                         .notificationHeader.notificationId));
 
     if (myNotificationFilterHandles.securityAlarmFilterHandle == 0)
       glob_errors += 1;
@@ -362,9 +356,10 @@ SaAisErrorT scoutage_saNtfPtrValAllocate(SaNtfNotificationHeaderT *head,
   name.length = strlen(DEFAULT_UNEXT_NAME_STRING);
   (void)memcpy(name.value, DEFAULT_UNEXT_NAME_STRING, name.length);
 
-  ret = ntftest_saNtfPtrValAllocate(notHandle, sizeof(name) + 1,
-            (void **)&dest_ptr,
-            &(head->additionalInfo[0].infoValue));
+  ret = ntftest_saNtfPtrValAllocate(
+      notHandle, sizeof(name) + 1,
+      reinterpret_cast<void **>(&dest_ptr),
+      &(head->additionalInfo[0].infoValue));
   if (ret == SA_AIS_OK)
     memcpy(dest_ptr, &name, sizeof(name));
 
@@ -548,8 +543,7 @@ SaAisErrorT scoutage_saNtfAttributeChangeNotificationAllocate(
 
 SaAisErrorT scoutage_saNtfAlarmNotificationFilterAllocate(
     SaNtfHandleT ntf_handle, SaNtfAlarmNotificationFilterT *alarm_filter) {
-  SaAisErrorT rc = SA_AIS_OK;
-  rc = ntftest_saNtfAlarmNotificationFilterAllocate(
+  SaAisErrorT rc = ntftest_saNtfAlarmNotificationFilterAllocate(
       ntf_handle, alarm_filter, 1, 1, 1, 1, 0, 0, 0);
   if (rc == SA_AIS_OK) {
     fillCommonFilterHeader(&alarm_filter->notificationFilterHeader);
@@ -562,8 +556,7 @@ SaAisErrorT scoutage_saNtfAlarmNotificationFilterAllocate(
 SaAisErrorT scoutage_saNtfSecurityAlarmNotificationFilterAllocate(
     SaNtfHandleT ntf_handle,
     SaNtfSecurityAlarmNotificationFilterT *secAlarm_filter) {
-  SaAisErrorT rc = SA_AIS_OK;
-  rc = ntftest_saNtfSecurityAlarmNotificationFilterAllocate(
+  SaAisErrorT rc = ntftest_saNtfSecurityAlarmNotificationFilterAllocate(
       ntf_handle, secAlarm_filter, 0, 0, 0, 0, 1, 0, 0, 0, 0);
   if (rc == SA_AIS_OK) {
     secAlarm_filter->probableCauses[0] =
@@ -575,8 +568,7 @@ SaAisErrorT scoutage_saNtfSecurityAlarmNotificationFilterAllocate(
 SaAisErrorT scoutage_saNtfStateChangeNotificationFilterAllocate(
     SaNtfHandleT ntf_handle,
     SaNtfStateChangeNotificationFilterT *stateChange_filter) {
-  SaAisErrorT rc = SA_AIS_OK;
-  rc = ntftest_saNtfStateChangeNotificationFilterAllocate(
+  SaAisErrorT rc = ntftest_saNtfStateChangeNotificationFilterAllocate(
       ntf_handle, stateChange_filter, 1, 1, 1, 1, 1, 0);
   if (rc == SA_AIS_OK) {
     fillCommonFilterHeader(
@@ -592,8 +584,7 @@ SaAisErrorT scoutage_saNtfStateChangeNotificationFilterAllocate(
 SaAisErrorT scoutage_saNtfObjectCreateDeleteNotificationFilterAllocate(
     SaNtfHandleT ntf_handle,
     SaNtfObjectCreateDeleteNotificationFilterT *objectCreateDelete_filter) {
-  SaAisErrorT rc = SA_AIS_OK;
-  rc = ntftest_saNtfObjectCreateDeleteNotificationFilterAllocate(
+  SaAisErrorT rc = ntftest_saNtfObjectCreateDeleteNotificationFilterAllocate(
       ntf_handle, objectCreateDelete_filter, 1, 1, 1, 1, 0);
   if (rc == SA_AIS_OK) {
     fillCommonFilterHeader(
@@ -607,8 +598,7 @@ SaAisErrorT scoutage_saNtfObjectCreateDeleteNotificationFilterAllocate(
 SaAisErrorT scoutage_saNtfAttributeChangeNotificationFilterAllocate(
     SaNtfHandleT ntf_handle,
     SaNtfAttributeChangeNotificationFilterT *attributeChange_filter) {
-  SaAisErrorT rc = SA_AIS_OK;
-  rc = ntftest_saNtfAttributeChangeNotificationFilterAllocate(
+  SaAisErrorT rc = ntftest_saNtfAttributeChangeNotificationFilterAllocate(
       ntf_handle, attributeChange_filter, 1, 1, 1, 1, 0);
   if (rc == SA_AIS_OK) {
     fillCommonFilterHeader(
@@ -768,17 +758,20 @@ void producer_life_cycle(int test_api) {
   }
   saferror(rc, SA_AIS_OK);
 
-  if ((rc = ntftest_saNtfNotificationFree(
-     myAlarmNotification.notificationHandle)) != SA_AIS_OK ||
-      (rc = ntftest_saNtfNotificationFree(
-     mySecAlarmNotification.notificationHandle)) != SA_AIS_OK ||
-      (rc = ntftest_saNtfNotificationFree(
-     myStateChangeNotification.notificationHandle)) != SA_AIS_OK ||
-      (rc = ntftest_saNtfNotificationFree(
-     myObjCrDelNotification.notificationHandle)) != SA_AIS_OK ||
-      (rc = ntftest_saNtfNotificationFree(
-     myAttrChangeNotification.notificationHandle)) != SA_AIS_OK)
-    ;
+  rc = ntftest_saNtfNotificationFree(
+     myAlarmNotification.notificationHandle);
+  saferror(rc, SA_AIS_OK);
+  rc = ntftest_saNtfNotificationFree(
+     mySecAlarmNotification.notificationHandle);
+  saferror(rc, SA_AIS_OK);
+  rc = ntftest_saNtfNotificationFree(
+     myStateChangeNotification.notificationHandle);
+  saferror(rc, SA_AIS_OK);
+  rc = ntftest_saNtfNotificationFree(
+     myObjCrDelNotification.notificationHandle);
+  saferror(rc, SA_AIS_OK);
+  rc = ntftest_saNtfNotificationFree(
+     myAttrChangeNotification.notificationHandle);
   saferror(rc, SA_AIS_OK);
 
   if (test_api == SANTF_FINALIZE)
@@ -800,7 +793,6 @@ void subscriber_life_cycle(int test_api) {
   SaNtfObjectCreateDeleteNotificationFilterT myObjectCreateDeleteFilter;
   SaNtfAttributeChangeNotificationFilterT myAttributeChangeFilter;
 
-  int ret;
   struct pollfd fds[1];
 
   fprintf_v(stdout, "\nStart test API: %s",
@@ -865,13 +857,11 @@ void subscriber_life_cycle(int test_api) {
   saferror(rc, SA_AIS_OK);
 
   // Free 2 filters here to test whether all filters are recovered
-  if ((rc = ntftest_saNtfNotificationFilterFree(
-     myObjectCreateDeleteFilter.notificationFilterHandle)) !=
-    SA_AIS_OK ||
-      (rc = ntftest_saNtfNotificationFilterFree(
-     myAttributeChangeFilter.notificationFilterHandle)) !=
-    SA_AIS_OK)
-    ;
+  rc = ntftest_saNtfNotificationFilterFree(
+      myObjectCreateDeleteFilter.notificationFilterHandle);
+  saferror(rc, SA_AIS_OK);
+  rc = ntftest_saNtfNotificationFilterFree(
+     myAttributeChangeFilter.notificationFilterHandle);
   saferror(rc, SA_AIS_OK);
 
   sent_ok_ids.ids[sent_ok_ids.length++] =
@@ -886,11 +876,11 @@ void subscriber_life_cycle(int test_api) {
   sent_ok_ids.ids[sent_ok_ids.length++] =
       send_attrChangeNotification(ntfHandle, &myAttrChangeNotification);
 
-  fds[0].fd = (int)selectionObject;
+  fds[0].fd = static_cast<int>(selectionObject);
 
   while (1) {
     fds[0].events = POLLIN;
-    ret = poll(fds, 1, 10000);
+    int ret = poll(fds, 1, 10000);
     if (ret <= 0) {
       rc_assert(true, false);
     }
@@ -935,14 +925,14 @@ void subscriber_life_cycle(int test_api) {
     }
   }
 
-  if ((rc = ntftest_saNtfNotificationFilterFree(
-     myAlarmFilter.notificationFilterHandle)) != SA_AIS_OK ||
-      (rc = ntftest_saNtfNotificationFilterFree(
-     mySecurityAlarmFilter.notificationFilterHandle)) !=
-    SA_AIS_OK ||
-      (rc = ntftest_saNtfNotificationFilterFree(
-     myStateChangeFilter.notificationFilterHandle)) != SA_AIS_OK)
-    ;
+  rc = ntftest_saNtfNotificationFilterFree(
+      myAlarmFilter.notificationFilterHandle);
+  saferror(rc, SA_AIS_OK);
+  rc = ntftest_saNtfNotificationFilterFree(
+      mySecurityAlarmFilter.notificationFilterHandle);
+  saferror(rc, SA_AIS_OK);
+  rc = ntftest_saNtfNotificationFilterFree(
+      myStateChangeFilter.notificationFilterHandle);
   saferror(rc, SA_AIS_OK);
 
   if (test_api == SANTF_NOTIFICATION_UNSUBSCRIBE)

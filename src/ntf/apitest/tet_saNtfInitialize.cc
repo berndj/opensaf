@@ -16,8 +16,8 @@
  */
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include "tet_ntf.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 SaAisErrorT checkReturnedVersion(SaVersionT rVersion) {
   if (rVersion.releaseCode == refVersion.releaseCode &&

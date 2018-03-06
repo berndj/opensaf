@@ -16,9 +16,9 @@
  */
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 static int errors = 0;
 /* Indicates which test to perform in the callBack */
@@ -48,37 +48,32 @@ void test1_value_ok(SaNtfSubscriptionIdT subscriptionId,
         const SaNtfNotificationsT *notification) {
   SaStringT srcPtr;
   SaUint16T dataSize;
-  int iCount;
   const SaNtfAlarmNotificationT *ntfAlarm;
 
   ntfRecieved.alarmFilterHandle += 1;
-  if (myNotificationFilterHandles.alarmFilterHandle == 0)
+  if (myNotificationFilterHandles.alarmFilterHandle == 0) {
     errors += 1;
-  else {
+  } else {
     ntfAlarm = &notification->notification.alarmNotification;
     if (assertvalue(ntfAlarm->numProposedRepairActions ==
         myAlarmNotification.numProposedRepairActions)) {
       errors += 1;
       return;
     } else {
-      for (iCount = 0;
+      for (int iCount = 0;
            iCount < ntfAlarm->numProposedRepairActions;
            iCount++) {
         if (assertvalue(
-          ntfAlarm->proposedRepairActions[iCount]
-              .actionValueType ==
-          SA_NTF_VALUE_STRING)) {
+          ntfAlarm->proposedRepairActions[iCount].actionValueType ==
+              SA_NTF_VALUE_STRING)) {
           errors += 1;
           return;
         }
 
         if ((rc = saNtfPtrValGet(
            ntfAlarm->notificationHandle,
-           &ntfAlarm
-                ->proposedRepairActions[iCount]
-                .actionValue,
-           (void **)&srcPtr, &dataSize)) !=
-            SA_AIS_OK) {
+           &ntfAlarm->proposedRepairActions[iCount].actionValue,
+           reinterpret_cast<void **>(&srcPtr), &dataSize)) != SA_AIS_OK) {
           errors += 1;
           return;
         }
@@ -98,7 +93,6 @@ void test1_value_ok(SaNtfSubscriptionIdT subscriptionId,
  */
 void test2_bad_return(SaNtfSubscriptionIdT subscriptionId,
           const SaNtfNotificationsT *notification) {
-  int iCount;
   SaNtfValueT myValue = {0};
   SaStringT srcPtr;
   SaUint16T dataSize;
@@ -110,20 +104,19 @@ void test2_bad_return(SaNtfSubscriptionIdT subscriptionId,
     errors += 1;
     return;
   } else {
-    for (iCount = 0; iCount < ntfAlarm->numProposedRepairActions;
+    for (int iCount = 0; iCount < ntfAlarm->numProposedRepairActions;
          iCount++) {
       /* NULL in notificationHandle */
       if ((rc = saNtfPtrValGet(
          0,
-         &ntfAlarm->proposedRepairActions[iCount]
-              .actionValue,
-         (void **)&srcPtr, &dataSize)) !=
+         &ntfAlarm->proposedRepairActions[iCount].actionValue,
+         reinterpret_cast<void **>(&srcPtr), &dataSize)) !=
           SA_AIS_ERR_BAD_HANDLE)
         errors += 1;
 
       /* NULL in *value */
       if ((rc = saNtfPtrValGet(ntfAlarm->notificationHandle,
-             NULL, (void **)&srcPtr,
+             NULL, reinterpret_cast<void **>(&srcPtr),
              &dataSize)) !=
           SA_AIS_ERR_INVALID_PARAM)
         errors += 1;
@@ -139,17 +132,14 @@ void test2_bad_return(SaNtfSubscriptionIdT subscriptionId,
       /* NULL *dataSize */
       if ((rc = saNtfPtrValGet(
          ntfAlarm->notificationHandle,
-         &ntfAlarm->proposedRepairActions[iCount]
-              .actionValue,
-         (void **)&srcPtr, NULL)) !=
-          SA_AIS_ERR_INVALID_PARAM)
+         &ntfAlarm->proposedRepairActions[iCount].actionValue,
+         reinterpret_cast<void **>(&srcPtr), NULL)) != SA_AIS_ERR_INVALID_PARAM)
         errors += 1;
 
       /* actionValue not from notification */
       if ((rc = saNtfPtrValGet(ntfAlarm->notificationHandle,
-             &myValue, (void **)&srcPtr,
-             &dataSize)) !=
-          SA_AIS_ERR_INVALID_PARAM)
+             &myValue, reinterpret_cast<void **>(&srcPtr),
+             &dataSize)) != SA_AIS_ERR_INVALID_PARAM)
         errors += 1;
     }
   }
@@ -267,12 +257,11 @@ void saNtfPtrGetTest_common_prep(void) {
 
   myAlarmNotification.notificationHeader.notificationObject->length = 4;
   myAlarmNotification.notificationHeader.notifyingObject->length = 4;
-  strncpy((char *)myAlarmNotification.notificationHeader
-        .notificationObject->value,
-    "nno", 4);
-  strncpy((char *)myAlarmNotification.notificationHeader.notifyingObject
-        ->value,
-    "ngo", 4);
+  strncpy(reinterpret_cast<char *>(
+      myAlarmNotification.notificationHeader.notificationObject->value),
+      "nno", 4);
+  strncpy(reinterpret_cast<char *>(
+      myAlarmNotification.notificationHeader.notifyingObject->value), "ngo", 4);
   strncpy(myAlarmNotification.notificationHeader.additionalText,
     DEFAULT_ADDITIONAL_TEXT, strlen(DEFAULT_ADDITIONAL_TEXT) + 1);
 
@@ -281,7 +270,7 @@ void saNtfPtrGetTest_common_prep(void) {
      (SaUint16T)(strlen(DEFAULT_ADDITIONAL_TEXT) + 1), &destPtr,
      &(myAlarmNotification.proposedRepairActions[0]
            .actionValue))) == SA_AIS_OK) {
-    charPtr = (char *)destPtr;
+    charPtr = reinterpret_cast<char *>(destPtr);
     /* Copy the actual value */
     strncpy(charPtr, DEFAULT_ADDITIONAL_TEXT,
       strlen(DEFAULT_ADDITIONAL_TEXT) + 1);
@@ -336,8 +325,11 @@ __attribute__((constructor)) static void saNtfPtrValGet_constructor(void) {
       29, saNtfPtrGetTest_02,
       "saNtfPtrValGet provoke SA_AIS_ERR_BAD_HANDLE/SA_AIS_ERR_INVLID_PARAM");
 #if 0
-    test_case_add(29, saNtfPtrGetTest_03, "saNtfPtrValGet handle freed SA_AIS_ERR_BAD_HANDLE");
-    test_case_add(29, saNtfPtrGetTest_04, "saNtfPtrValGet bad dataPtr SA_AIS_ERR_INVLID_PARAM");
-    test_case_add(29, saNtfPtrGetTest_05, "saNtfPtrValGet bad value pointer SA_AIS_ERR_INVLID_PARAM");
+    test_case_add(29, saNtfPtrGetTest_03,
+                  "saNtfPtrValGet handle freed SA_AIS_ERR_BAD_HANDLE");
+    test_case_add(29, saNtfPtrGetTest_04,
+                  "saNtfPtrValGet bad dataPtr SA_AIS_ERR_INVLID_PARAM");
+    test_case_add(29, saNtfPtrGetTest_05,
+                  "saNtfPtrValGet bad value pointer SA_AIS_ERR_INVLID_PARAM");
 #endif
 }

@@ -16,9 +16,9 @@
  */
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 void saNtfStateChangeNotificationFilterAllocate_01(void) {
   SaNtfHandleT ntfHandle;
@@ -28,9 +28,7 @@ void saNtfStateChangeNotificationFilterAllocate_01(void) {
       SA_AIS_OK);
 
   if ((rc = saNtfStateChangeNotificationFilterAllocate(
-     ntfHandle, &myStateChangefilter, 0, 0, 0, 1, 0, 0)) ==
-      SA_AIS_OK) {
-
+     ntfHandle, &myStateChangefilter, 0, 0, 0, 1, 0, 0)) == SA_AIS_OK) {
     safassert(saNtfNotificationFilterFree(
             myStateChangefilter.notificationFilterHandle),
         SA_AIS_OK);
@@ -86,14 +84,13 @@ __attribute__((constructor)) static void
 saNtfStateChangeNotificationFilterAllocate_constructor(void) {
   test_suite_add(7, "Consumer operations - filter allocate");
   test_case_add(7, saNtfStateChangeNotificationFilterAllocate_01,
-          "saNtfStateChangeNotificationFilterAllocate - SA_AIS_OK");
-  test_case_add(
-      7, saNtfStateChangeNotificationFilterAllocate_02,
-      "saNtfStateChangeNotificationFilterAllocate - handle null SA_AIS_ERR_BAD_HANDLE");
-  test_case_add(
-      7, saNtfStateChangeNotificationFilterAllocate_03,
-      "saNtfStateChangeNotificationFilterAllocate - handle returned SA_AIS_ERR_BAD_HANDLE");
-  test_case_add(
-      7, saNtfStateChangeNotificationFilterAllocate_04,
+      "saNtfStateChangeNotificationFilterAllocate - SA_AIS_OK");
+  test_case_add(7, saNtfStateChangeNotificationFilterAllocate_02,
+      "saNtfStateChangeNotificationFilterAllocate - handle null "
+      "SA_AIS_ERR_BAD_HANDLE");
+  test_case_add(7, saNtfStateChangeNotificationFilterAllocate_03,
+      "saNtfStateChangeNotificationFilterAllocate - handle returned "
+      "SA_AIS_ERR_BAD_HANDLE");
+  test_case_add(7, saNtfStateChangeNotificationFilterAllocate_04,
       "saNtfStateChangeNotificationFilterAllocate - SA_AIS_ERR_INVALID_PARAM");
 }

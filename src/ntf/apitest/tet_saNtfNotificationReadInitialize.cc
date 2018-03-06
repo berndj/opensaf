@@ -16,9 +16,9 @@
  */
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 /* Parameter struct instances */
 static saNotificationAllocationParamsT myNotificationAllocationParams;
@@ -316,47 +316,46 @@ void saNtfNotificationReadInitialize_06() {
 __attribute__((constructor)) static void
 saNtfNotificationReadInitialize_constructor(void) {
   test_suite_add(20, "Consumer operations - Reader API 1");
-  test_case_add(
-      20, saNtfNotificationReadInitialize_01_1,
-      "saNtfNotificationReadInitialize searchCriteria SA_NTF_SEARCH_BEFORE_OR_AT_TIME");
-  test_case_add(
-      20, saNtfNotificationReadInitialize_01_2,
+  test_case_add(20, saNtfNotificationReadInitialize_01_1,
+      "saNtfNotificationReadInitialize searchCriteria "
+      "SA_NTF_SEARCH_BEFORE_OR_AT_TIME");
+  test_case_add(20, saNtfNotificationReadInitialize_01_2,
       "saNtfNotificationReadInitialize searchCriteria SA_NTF_SEARCH_AT_TIME");
-  test_case_add(
-      20, saNtfNotificationReadInitialize_01_3,
-      "saNtfNotificationReadInitialize searchCriteria SA_NTF_SEARCH_AT_OR_AFTER_TIME");
-  test_case_add(
-      20, saNtfNotificationReadInitialize_01_4,
-      "saNtfNotificationReadInitialize searchCriteria SA_NTF_SEARCH_BEFORE_TIME");
-  test_case_add(
-      20, saNtfNotificationReadInitialize_01_5,
-      "saNtfNotificationReadInitialize searchCriteria SA_NTF_SEARCH_AFTER_TIME");
-  test_case_add(
-      20, saNtfNotificationReadInitialize_01_6,
-      "saNtfNotificationReadInitialize searchCriteria SA_NTF_SEARCH_NOTIFICATION_ID");
-  test_case_add(
-      20, saNtfNotificationReadInitialize_01_7,
-      "saNtfNotificationReadInitialize searchCriteria SA_NTF_SEARCH_ONLY_FILTER");
-  test_case_add(
-      20, saNtfNotificationReadInitialize_01_8,
-      "saNtfNotificationReadInitialize searchCriteria invalid SaNtfSearchModeT too big");
-  test_case_add(
-      20, saNtfNotificationReadInitialize_01_9,
-      "saNtfNotificationReadInitialize searchCriteria invalid SaNtfSearchModeT -1");
+  test_case_add(20, saNtfNotificationReadInitialize_01_3,
+      "saNtfNotificationReadInitialize searchCriteria "
+      "SA_NTF_SEARCH_AT_OR_AFTER_TIME");
+  test_case_add(20, saNtfNotificationReadInitialize_01_4,
+      "saNtfNotificationReadInitialize searchCriteria "
+      "SA_NTF_SEARCH_BEFORE_TIME");
+  test_case_add(20, saNtfNotificationReadInitialize_01_5,
+      "saNtfNotificationReadInitialize searchCriteria "
+      "SA_NTF_SEARCH_AFTER_TIME");
+  test_case_add(20, saNtfNotificationReadInitialize_01_6,
+      "saNtfNotificationReadInitialize searchCriteria "
+      "SA_NTF_SEARCH_NOTIFICATION_ID");
+  test_case_add(20, saNtfNotificationReadInitialize_01_7,
+      "saNtfNotificationReadInitialize searchCriteria "
+      "SA_NTF_SEARCH_ONLY_FILTER");
+  test_case_add(20, saNtfNotificationReadInitialize_01_8,
+      "saNtfNotificationReadInitialize searchCriteria invalid "
+      "SaNtfSearchModeT too big");
+  test_case_add(20, saNtfNotificationReadInitialize_01_9,
+      "saNtfNotificationReadInitialize searchCriteria invalid "
+      "SaNtfSearchModeT -1");
 
-  test_case_add(
-      20, saNtfNotificationReadInitialize_02,
-      "saNtfNotificationReadInitialize filter NULL pointer SA_AIS_ERR_INVALID_PARAM");
-  test_case_add(
-      20, saNtfNotificationReadInitialize_03,
-      "saNtfNotificationReadInitialize filterHandle freed SA_AIS_ERR_BAD_HANDLE");
-  test_case_add(
-      20, saNtfNotificationReadInitialize_04,
-      "saNtfNotificationReadInitialize multiple filters with objCreateDelete SA_AIS_ERR_NOT_SUPPORTED");
-  test_case_add(
-      20, saNtfNotificationReadInitialize_05,
-      "saNtfNotificationReadInitialize multiple filters with stateChangeFilter SA_AIS_ERR_NOT_SUPPORTED");
-  test_case_add(
-      20, saNtfNotificationReadInitialize_06,
-      "saNtfNotificationReadInitialize multiple filters with attributeChange SA_AIS_ERR_NOT_SUPPORTED");
+  test_case_add(20, saNtfNotificationReadInitialize_02,
+      "saNtfNotificationReadInitialize filter NULL pointer "
+      "SA_AIS_ERR_INVALID_PARAM");
+  test_case_add(20, saNtfNotificationReadInitialize_03,
+      "saNtfNotificationReadInitialize filterHandle freed "
+      "SA_AIS_ERR_BAD_HANDLE");
+  test_case_add(20, saNtfNotificationReadInitialize_04,
+      "saNtfNotificationReadInitialize multiple filters with objCreateDelete "
+      "SA_AIS_ERR_NOT_SUPPORTED");
+  test_case_add(20, saNtfNotificationReadInitialize_05,
+      "saNtfNotificationReadInitialize multiple filters with stateChangeFilter "
+      "SA_AIS_ERR_NOT_SUPPORTED");
+  test_case_add(20, saNtfNotificationReadInitialize_06,
+      "saNtfNotificationReadInitialize multiple filters with attributeChange "
+      "SA_AIS_ERR_NOT_SUPPORTED");
 }

@@ -16,9 +16,9 @@
  */
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 void saNtfSecurityAlarmNotificationFilterAllocate_01(void) {
   SaNtfHandleT ntfHandle;
@@ -79,16 +79,15 @@ void saNtfSecurityAlarmNotificationFilterAllocate_04(void) {
 __attribute__((constructor)) static void
 saNtfSecurityAlarmNotificationFilterAllocate_constructor(void) {
   test_suite_add(7, "Consumer operations - filter allocate");
-  test_case_add(
-      7, saNtfSecurityAlarmNotificationFilterAllocate_01,
+  test_case_add(7, saNtfSecurityAlarmNotificationFilterAllocate_01,
       "saNtfSecurityAlarmNotificationFilterAllocate - SA_AIS_OK");
-  test_case_add(
-      7, saNtfSecurityAlarmNotificationFilterAllocate_02,
-      "saNtfSecurityAlarmNotificationFilterAllocate - handle null SA_AIS_ERR_BAD_HANDLE");
-  test_case_add(
-      7, saNtfSecurityAlarmNotificationFilterAllocate_03,
-      "saNtfSecurityAlarmNotificationFilterAllocate - handle returned SA_AIS_ERR_BAD_HANDLE");
-  test_case_add(
-      7, saNtfSecurityAlarmNotificationFilterAllocate_04,
-      "saNtfSecurityAlarmNotificationFilterAllocate - SA_AIS_ERR_INVALID_PARAM");
+  test_case_add(7, saNtfSecurityAlarmNotificationFilterAllocate_02,
+      "saNtfSecurityAlarmNotificationFilterAllocate - handle null "
+      "SA_AIS_ERR_BAD_HANDLE");
+  test_case_add(7, saNtfSecurityAlarmNotificationFilterAllocate_03,
+      "saNtfSecurityAlarmNotificationFilterAllocate - handle returned "
+      "SA_AIS_ERR_BAD_HANDLE");
+  test_case_add(7, saNtfSecurityAlarmNotificationFilterAllocate_04,
+      "saNtfSecurityAlarmNotificationFilterAllocate - "
+      "SA_AIS_ERR_INVALID_PARAM");
 }

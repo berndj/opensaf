@@ -14,14 +14,15 @@
  * Author(s): Ericsson AB
  *
  */
-#include "osaf/apitest/utest.h"
-#include "osaf/apitest/util.h"
 #include <poll.h>
 #include <unistd.h>
 #include <pthread.h>
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "base/time.h"
+#include "osaf/apitest/utest.h"
+#include "osaf/apitest/util.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 static SaNtfIdentifierT cb_notId[8];
 static SaNtfSubscriptionIdT cb_subId[8];
@@ -177,9 +178,10 @@ void saNtfNotificationCallbackT_01(void) {
       SA_AIS_OK);
 
   myNotificationParams.eventType = myNotificationParams.alarmEventType;
-  fill_header_part(&myAlarmNotification.notificationHeader,
-       (saNotificationParamsT *)&myNotificationParams,
-       myAlarmParams.lengthAdditionalText);
+  fill_header_part(
+      &myAlarmNotification.notificationHeader,
+      reinterpret_cast<saNotificationParamsT *>(&myNotificationParams),
+      myAlarmParams.lengthAdditionalText);
 
   /* determine perceived severity */
   *(myAlarmNotification.perceivedSeverity) =
@@ -191,7 +193,7 @@ void saNtfNotificationCallbackT_01(void) {
 
   safassert(NtfTest::saNtfNotificationSend(
       myAlarmNotification.notificationHandle), SA_AIS_OK);
-  fds[0].fd = (int)selectionObject;
+  fds[0].fd = static_cast<int>(selectionObject);
   fds[0].events = POLLIN;
   ret = poll(fds, 1, 10000);
   assert(ret > 0);
@@ -299,8 +301,9 @@ void saNtfNotificationCallbackT_02(void) {
       SA_AIS_OK);
 
   myNotificationParams.eventType = myNotificationParams.alarmEventType;
-  fill_header_part(&myAlarmNotification.notificationHeader,
-       (saNotificationParamsT *)&myNotificationParams,
+  fill_header_part(
+      &myAlarmNotification.notificationHeader,
+      reinterpret_cast<saNotificationParamsT *>(&myNotificationParams),
        myAlarmParams.lengthAdditionalText);
 
   /* determine perceived severity */
@@ -321,7 +324,7 @@ void saNtfNotificationCallbackT_02(void) {
       myAlarmNotification.notificationHandle), SA_AIS_OK);
   myNotId[2] = *myAlarmNotification.notificationHeader.notificationId;
   sleep(1);
-  fds[0].fd = (int)selectionObject;
+  fds[0].fd = static_cast<int>(selectionObject);
   fds[0].events = POLLIN;
   ret = poll(fds, 1, 10000);
   assert(ret > 0);
@@ -433,9 +436,10 @@ void saNtfNotificationCallbackT_03(void) {
       SA_AIS_OK);
 
   myNotificationParams.eventType = myNotificationParams.alarmEventType;
-  fill_header_part(&myAlarmNotification.notificationHeader,
-       (saNotificationParamsT *)&myNotificationParams,
-       myAlarmParams.lengthAdditionalText);
+  fill_header_part(
+      &myAlarmNotification.notificationHeader,
+      reinterpret_cast<saNotificationParamsT *>(&myNotificationParams),
+      myAlarmParams.lengthAdditionalText);
 
   /* determine perceived severity */
   *(myAlarmNotification.perceivedSeverity) =
@@ -461,7 +465,7 @@ void saNtfNotificationCallbackT_03(void) {
   assert(error == 0);
   /* TODO: fix sync */
   for (; cb2_index < 3;) {
-    usleep(100000);
+    base::Sleep(base::kOneHundredMilliseconds);
   }
   rc = SA_AIS_OK;
   for (i = 0; i < 3; i++) {

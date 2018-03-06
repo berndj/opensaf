@@ -15,8 +15,8 @@
  *
  */
 #include "osaf/apitest/utest.h"
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
 
 SaAisErrorT ntftest_saNtfInitialize(SaNtfHandleT *ntfHandle,
             const SaNtfCallbacksT *ntfCallbacks,

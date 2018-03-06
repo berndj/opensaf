@@ -17,7 +17,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include "osaf/apitest/utest.h"
-#include "tet_ntf.h"
+#include "ntf/apitest/tet_ntf.h"
 
 /* Change this to current highest supported version */
 #define NTF_HIGHEST_SUPPORTED_VERSION                                          \
@@ -37,11 +37,6 @@ extern int verbose;
 extern int gl_tag_mode;
 extern int gl_prompt_mode;
 
-struct tet_testlist {
-  void (*testfunc)();
-  int icref;
-  int tpnum;
-};
 static void print_usage(void) {
   printf("\nNAME\n");
   printf("\nntftest - Test NTF service\n");
@@ -112,7 +107,6 @@ static void err_exit(void) {
 
 int main(int argc, char **argv) {
   int suite = ALL_SUITES, tcase = ALL_TESTS;
-  int option = 0;
   int extendedTest = 0;
 
   srandom(getpid());
@@ -121,9 +115,10 @@ int main(int argc, char **argv) {
   gl_tag_mode = 0;
   gl_prompt_mode = 0;
   /* Check option */
-  char optstr[] = "hle:vpt";
 
   if (argc >= 1) {
+    int option = 0;
+    char optstr[] = "hle:vpt";
     while ((option = getopt(argc, argv, optstr)) != -1) {
       switch (option) {
       case 'h':
@@ -157,8 +152,9 @@ int main(int argc, char **argv) {
           extendedTest = 1;
           add_scOutage_reinitializeHandle_test();
           add_coldsync_test();
-        } else
+        } else {
           err_exit();
+        }
         if (optind < argc && argv[optind] != NULL)
           tcase = atoi(argv[optind]);
 

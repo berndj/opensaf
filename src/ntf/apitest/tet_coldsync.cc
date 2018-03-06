@@ -21,9 +21,9 @@
 #include <wait.h>
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 extern int verbose;
 
@@ -148,9 +148,10 @@ void test_coldsync_saNtfNotificationReadNext_01(void) {
 
   myNotificationParams.eventType = myNotificationParams.alarmEventType;
 
-  fill_header_part(&myNotification.notificationHeader,
-       (saNotificationParamsT *)&myNotificationParams,
-       myNotificationAllocationParams.lengthAdditionalText);
+  fill_header_part(
+      &myNotification.notificationHeader,
+      reinterpret_cast<saNotificationParamsT *>(&myNotificationParams),
+      myNotificationAllocationParams.lengthAdditionalText);
 
   /* determine perceived severity */
   *(myNotification.perceivedSeverity) =
@@ -186,7 +187,8 @@ void test_coldsync_saNtfNotificationReadNext_01(void) {
     }
   }
   if (verbose) {
-    (void)printf("\n errorcode to break loop: %d\n", (int)errorCode);
+    (void)printf("\n errorcode to break loop: %d\n",
+                 static_cast<int>(errorCode));
   }
   if (readCounter == 0) {
     errorCode = SA_AIS_ERR_FAILED_OPERATION;
@@ -194,8 +196,8 @@ void test_coldsync_saNtfNotificationReadNext_01(void) {
 
   // No more...
   safassert(NtfTest::saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
-  safassert(ntftest_saNtfNotificationFilterFree(myAlarmFilter.notificationFilterHandle),
-    SA_AIS_OK);
+  safassert(ntftest_saNtfNotificationFilterFree(
+      myAlarmFilter.notificationFilterHandle), SA_AIS_OK);
   free(myNotificationParams.additionalText);
   safassert(ntftest_saNtfNotificationFree(myNotification.notificationHandle),
       SA_AIS_OK);
@@ -282,9 +284,10 @@ void test_coldsync_saNtfNotificationReadInitialize_01(void) {
 
   myNotificationParams.eventType = myNotificationParams.alarmEventType;
 
-  fill_header_part(&myNotification.notificationHeader,
-       (saNotificationParamsT *)&myNotificationParams,
-       myNotificationAllocationParams.lengthAdditionalText);
+  fill_header_part(
+      &myNotification.notificationHeader,
+      reinterpret_cast<saNotificationParamsT *>(&myNotificationParams),
+      myNotificationAllocationParams.lengthAdditionalText);
 
   /* determine perceived severity */
   *(myNotification.perceivedSeverity) =
@@ -318,7 +321,8 @@ void test_coldsync_saNtfNotificationReadInitialize_01(void) {
     }
   }
   if (verbose) {
-    (void)printf("\n errorcode to break loop: %d\n", (int)errorCode);
+    (void)printf("\n errorcode to break loop: %d\n",
+                 static_cast<int>(errorCode));
   }
   if (readCounter == 0) {
     errorCode = SA_AIS_ERR_FAILED_OPERATION;
@@ -326,7 +330,8 @@ void test_coldsync_saNtfNotificationReadInitialize_01(void) {
 
   // No more...
   safassert(NtfTest::saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
-  safassert(ntftest_saNtfNotificationFilterFree(myAlarmFilter.notificationFilterHandle),
+  safassert(ntftest_saNtfNotificationFilterFree(
+      myAlarmFilter.notificationFilterHandle),
     SA_AIS_OK);
   free(myNotificationParams.additionalText);
   safassert(ntftest_saNtfNotificationFree(myNotification.notificationHandle),
@@ -415,9 +420,10 @@ void test_coldsync_saNtfNotificationReadNext_02(void) {
 
   myNotificationParams.eventType = myNotificationParams.alarmEventType;
 
-  fill_header_part(&myNotification.notificationHeader,
-       (saNotificationParamsT *)&myNotificationParams,
-       myNotificationAllocationParams.lengthAdditionalText);
+  fill_header_part(
+      &myNotification.notificationHeader,
+      reinterpret_cast<saNotificationParamsT *>(&myNotificationParams),
+      myNotificationAllocationParams.lengthAdditionalText);
 
   /* determine perceived severity */
   *(myNotification.perceivedSeverity) =
@@ -456,7 +462,8 @@ void test_coldsync_saNtfNotificationReadNext_02(void) {
     }
   }
   if (verbose) {
-    (void)printf("\n errorcode to break loop: %d\n", (int)errorCode);
+    (void)printf("\n errorcode to break loop: %d\n",
+                 static_cast<int>(errorCode));
   }
   if (readCounter == 0) {
     errorCode = SA_AIS_ERR_FAILED_OPERATION;
@@ -464,8 +471,8 @@ void test_coldsync_saNtfNotificationReadNext_02(void) {
 
   // No more...
   safassert(NtfTest::saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
-  safassert(ntftest_saNtfNotificationFilterFree(myAlarmFilter.notificationFilterHandle),
-    SA_AIS_OK);
+  safassert(ntftest_saNtfNotificationFilterFree(
+      myAlarmFilter.notificationFilterHandle), SA_AIS_OK);
   free(myNotificationParams.additionalText);
   safassert(ntftest_saNtfNotificationFree(myNotification.notificationHandle),
       SA_AIS_OK);
@@ -552,9 +559,10 @@ void test_async_saNtfNotificationReadInitialize_01(void) {
 
   myNotificationParams.eventType = myNotificationParams.alarmEventType;
 
-  fill_header_part(&myNotification.notificationHeader,
-       (saNotificationParamsT *)&myNotificationParams,
-       myNotificationAllocationParams.lengthAdditionalText);
+  fill_header_part(
+      &myNotification.notificationHeader,
+      reinterpret_cast<saNotificationParamsT *>(&myNotificationParams),
+      myNotificationAllocationParams.lengthAdditionalText);
 
   /* determine perceived severity */
   *(myNotification.perceivedSeverity) =
@@ -587,7 +595,7 @@ void test_async_saNtfNotificationReadInitialize_01(void) {
   }
   if (verbose) {
     (void)printf("\n errorcode to break loop: %d\n",
-      (int)errorCode);
+                 static_cast<int>(errorCode));
   }
   if (readCounter == 0) {
     errorCode = SA_AIS_ERR_FAILED_OPERATION;
@@ -682,9 +690,10 @@ void test_async_saNtfNotificationReadNext_01(void) {
 
   myNotificationParams.eventType = myNotificationParams.alarmEventType;
 
-  fill_header_part(&myNotification.notificationHeader,
-       (saNotificationParamsT *)&myNotificationParams,
-       myNotificationAllocationParams.lengthAdditionalText);
+  fill_header_part(
+      &myNotification.notificationHeader,
+      reinterpret_cast<saNotificationParamsT *>(&myNotificationParams),
+      myNotificationAllocationParams.lengthAdditionalText);
 
   /* determine perceived severity */
   *(myNotification.perceivedSeverity) =
@@ -722,7 +731,7 @@ void test_async_saNtfNotificationReadNext_01(void) {
   }
   if (verbose) {
     (void)printf("\n errorcode to break loop: %d\n",
-      (int)errorCode);
+                 static_cast<int>(errorCode));
   }
   if (readCounter == 0) {
     errorCode = SA_AIS_ERR_FAILED_OPERATION;
@@ -817,9 +826,10 @@ void test_async_saNtfNotificationReadFinalize_01(void) {
 
   myNotificationParams.eventType = myNotificationParams.alarmEventType;
 
-  fill_header_part(&myNotification.notificationHeader,
-       (saNotificationParamsT *)&myNotificationParams,
-       myNotificationAllocationParams.lengthAdditionalText);
+  fill_header_part(
+      &myNotification.notificationHeader,
+      reinterpret_cast<saNotificationParamsT *>(&myNotificationParams),
+      myNotificationAllocationParams.lengthAdditionalText);
 
   /* determine perceived severity */
   *(myNotification.perceivedSeverity) =
@@ -851,7 +861,7 @@ void test_async_saNtfNotificationReadFinalize_01(void) {
   }
   if (verbose) {
     (void)printf("\n errorcode to break loop: %d\n",
-      (int)errorCode);
+                 static_cast<int>(errorCode));
   }
   if (readCounter == 0) {
     errorCode = SA_AIS_ERR_FAILED_OPERATION;
@@ -880,10 +890,11 @@ void add_coldsync_test(void) {
   test_case_add(41, test_coldsync_saNtfNotificationReadNext_02,
       "saNtfNotificationReadNext: Test cold sync of current reader iteration");
   test_case_add(41, test_async_saNtfNotificationReadInitialize_01,
-      "saNtfNotificationReadInitialize: Test reader Id, reader filter to be checkpoint");
+      "saNtfNotificationReadInitialize: "
+      "Test reader Id, reader filter to be checkpoint");
   test_case_add(41, test_async_saNtfNotificationReadNext_01,
-      "saNtfNotificationReadNext:  Test current reader iteration to be checkpoint");
+      "saNtfNotificationReadNext: "
+      "Test current reader iteration to be checkpoint");
   test_case_add(41, test_async_saNtfNotificationReadFinalize_01,
       "saNtfNotificationReadFinalize: Test reader finalize to be checkpoint");
-
 }

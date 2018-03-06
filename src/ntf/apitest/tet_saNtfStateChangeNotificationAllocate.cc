@@ -14,12 +14,12 @@
  * Author(s): Ericsson AB
  *
  */
+#include <sys/time.h>
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include <sys/time.h>
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 void saNtfStateChangeNotificationAllocate_01(void) {
   SaNtfStateChangeNotificationT myNotification;
@@ -32,8 +32,8 @@ void saNtfStateChangeNotificationAllocate_01(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
 
   rc = saNtfStateChangeNotificationAllocate(
       ntfHandle, /* handle to Notification Service instance */
@@ -93,8 +93,8 @@ void saNtfStateChangeNotificationAllocate_02(void) {
   }
 
   free(myNotificationParams.additionalText);
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
   safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   rc = saNtfStateChangeNotificationAllocate(
       ntfHandle, /* handle to Notification Service instance */
@@ -134,8 +134,8 @@ void saNtfStateChangeNotificationAllocate_03(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
 
   rc = saNtfStateChangeNotificationAllocate(
       ntfHandle, /* handle to Notification Service instance */
@@ -159,11 +159,10 @@ __attribute__((constructor)) static void
 saNtfStateChangeNotificationAllocate_constructor(void) {
   test_suite_add(6, "Producer API 2 allocate");
   test_case_add(6, saNtfStateChangeNotificationAllocate_01,
-          "saNtfStateChangeNotificationAllocate SA_AIS_OK");
-  test_case_add(
-      6, saNtfStateChangeNotificationAllocate_02,
+      "saNtfStateChangeNotificationAllocate SA_AIS_OK");
+  test_case_add(6, saNtfStateChangeNotificationAllocate_02,
       "saNtfStateChangeNotificationAllocate SA_AIS_ERR_BAD_HANDLE");
-  test_case_add(
-      6, saNtfStateChangeNotificationAllocate_03,
-      "saNtfStateChangeNotificationAllocate NULL notification SA_AIS_ERR_INVALID_PARAM");
+  test_case_add(6, saNtfStateChangeNotificationAllocate_03,
+      "saNtfStateChangeNotificationAllocate NULL notification "
+      "SA_AIS_ERR_INVALID_PARAM");
 }

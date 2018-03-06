@@ -14,12 +14,12 @@
  * Author(s): Ericsson AB
  *
  */
+#include <sys/time.h>
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include <sys/time.h>
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 static SaNtfAlarmNotificationT myAlarmNotification;
 
@@ -35,10 +35,9 @@ void saNtfAlarmNotificationAllocate_01(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
-  safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
+  safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject), SA_AIS_OK);
 
   AlarmNotificationParams myAlarmParams;
 
@@ -122,8 +121,8 @@ void saNtfAlarmNotificationAllocate_02(void) {
 
   free(myNotificationParams.additionalText);
   /* Create a handle and then destroy it */
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
   safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   rc = saNtfAlarmNotificationAllocate(
@@ -177,10 +176,9 @@ void saNtfAlarmNotificationAllocate_03(void) {
   myAlarmParams.variableDataSize =
       myNotificationAllocationParams.variableDataSize;
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
-  safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
+  safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject), SA_AIS_OK);
 
   rc = saNtfAlarmNotificationAllocate(
       ntfHandle, NULL, myAlarmParams.numCorrelatedNotifications,
@@ -201,7 +199,8 @@ void saNtfAlarmNotificationAllocate_03(void) {
   test_validate(rc, SA_AIS_OK);
 }
 
-__attribute__((constructor)) static void saNtfNotificationSend_constructor(void) {
+__attribute__((constructor)) static void
+saNtfNotificationSend_constructor(void) {
   test_suite_add(6, "Producer API 2 allocate");
   test_case_add(6, saNtfAlarmNotificationAllocate_01,
           "saNtfAlarmNotificationAllocate SA_AIS_OK");

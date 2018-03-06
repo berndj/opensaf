@@ -14,14 +14,14 @@
  * Author(s): Ericsson AB
  *
  */
-#include "osaf/apitest/utest.h"
-#include "osaf/apitest/util.h"
 #include <poll.h>
 #include <unistd.h>
 #include <pthread.h>
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "osaf/apitest/utest.h"
+#include "osaf/apitest/util.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 #define NUM_NOTIF 2
 static SaNtfIdentifierT cb_notId[NUM_NOTIF];
@@ -166,9 +166,10 @@ void saNtfNotificationDiscardedCallbackT_01(void) {
       SA_AIS_OK);
 
   myNotificationParams.eventType = myNotificationParams.alarmEventType;
-  fill_header_part(&myAlarmNotification.notificationHeader,
-       (saNotificationParamsT *)&myNotificationParams,
-       myAlarmParams.lengthAdditionalText);
+  fill_header_part(
+      &myAlarmNotification.notificationHeader,
+      reinterpret_cast<saNotificationParamsT *>(&myNotificationParams),
+      myAlarmParams.lengthAdditionalText);
 
   /* determine perceived severity */
   *(myAlarmNotification.perceivedSeverity) =
@@ -190,7 +191,7 @@ void saNtfNotificationDiscardedCallbackT_01(void) {
   }
   sleep(10);
 
-  fds[0].fd = (int)selectionObject;
+  fds[0].fd = static_cast<int>(selectionObject);
   fds[0].events = POLLIN;
   ret = poll(fds, 1, 10000);
   assert(ret > 0);

@@ -16,9 +16,9 @@
  */
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 void saNtfNotificationUnsubscribe_01(void) {
   SaNtfHandleT ntfHandle;
@@ -140,11 +140,9 @@ __attribute__((constructor)) static void
 saNtfNotificationUnsubscribe_constructor(void) {
   test_suite_add(11, "Consumer operations - unsubscribe");
   test_case_add(11, saNtfNotificationUnsubscribe_01,
-          "saNtfNotificationUnsubscribe first simple SA_AIS_OK");
-  test_case_add(
-      11, saNtfNotificationUnsubscribe_02,
-      "saNtfNotificationUnsubscribe wrong id SA_AIS_ERR_NOT_EXIST");
-  test_case_add(
-      11, saNtfNotificationUnsubscribe_03,
-      "saNtfNotificationUnsubscribe no subscription exist SA_AIS_ERR_NOT_EXIST");
+     "saNtfNotificationUnsubscribe first simple SA_AIS_OK");
+  test_case_add(11, saNtfNotificationUnsubscribe_02,
+     "saNtfNotificationUnsubscribe wrong id SA_AIS_ERR_NOT_EXIST");
+  test_case_add(11, saNtfNotificationUnsubscribe_03,
+     "saNtfNotificationUnsubscribe no subscription exist SA_AIS_ERR_NOT_EXIST");
 }

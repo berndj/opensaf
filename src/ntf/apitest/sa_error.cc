@@ -14,7 +14,7 @@
  * Author(s): Ericsson AB
  *
  */
-#include "sa_error.h"
+#include "ntf/apitest/sa_error.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -185,21 +185,21 @@ char *get_sa_error_b(SaAisErrorT error) {
   exitIfFalse(error >= SA_AIS_OK);
   exitIfFalse(error <= SA_AIS_ERR_NO_SECTIONS);
 
-  return ((char *)sa_error_list[error]);
+  return const_cast<char *>(sa_error_list[error]);
 }
 
 void print_severity(SaNtfSeverityT input) {
   exitIfFalse(input >= SA_NTF_SEVERITY_CLEARED);
   exitIfFalse(input <= SA_NTF_SEVERITY_CRITICAL);
 
-  (void)printf("%s\n", (char *)sa_severity_list[input]);
+  (void)printf("%s\n", sa_severity_list[input]);
 }
 
 void print_probable_cause(SaNtfProbableCauseT input) {
   exitIfFalse(input >= SA_NTF_ADAPTER_ERROR);
   exitIfFalse(input <= SA_NTF_UNSPECIFIED_REASON);
 
-  (void)printf("%s\n", (char *)sa_probable_cause_list[input]);
+  (void)printf("%s\n", sa_probable_cause_list[input]);
 }
 
 void print_event_type(SaNtfEventTypeT input,
@@ -208,76 +208,64 @@ void print_event_type(SaNtfEventTypeT input,
 
   switch (notificationType) {
   case SA_NTF_TYPE_STATE_CHANGE:
-    if (input >= (int)SA_NTF_STATE_CHANGE_NOTIFICATIONS_START) {
-      listIndex = (int)input - (int)SA_NTF_TYPE_STATE_CHANGE;
+    if (input >= static_cast<int>(SA_NTF_STATE_CHANGE_NOTIFICATIONS_START)) {
+      listIndex =
+          static_cast<int>(input) - static_cast<int>(SA_NTF_TYPE_STATE_CHANGE);
 
       exitIfFalse(input >=
             SA_NTF_STATE_CHANGE_NOTIFICATIONS_START);
       exitIfFalse(input <= SA_NTF_OBJECT_STATE_CHANGE);
 
-      (void)printf(
-          "%s\n",
-          (char *)sa_state_change_event_type_list[listIndex]);
+      (void)printf("%s\n", sa_state_change_event_type_list[listIndex]);
     }
     break;
 
   case SA_NTF_TYPE_ALARM:
-    if (input >= (int)SA_NTF_ALARM_NOTIFICATIONS_START) {
-      listIndex = (int)input - (int)SA_NTF_TYPE_ALARM;
+    if (input >= static_cast<int>(SA_NTF_ALARM_NOTIFICATIONS_START)) {
+      listIndex = static_cast<int>(input) - static_cast<int>(SA_NTF_TYPE_ALARM);
 
       exitIfFalse(input >= SA_NTF_ALARM_NOTIFICATIONS_START);
       exitIfFalse(input <= SA_NTF_ALARM_ENVIRONMENT);
 
-      (void)printf(
-          "%s\n",
-          (char *)sa_alarm_event_type_list[listIndex]);
+      (void)printf("%s\n", sa_alarm_event_type_list[listIndex]);
     }
     break;
 
   case SA_NTF_TYPE_OBJECT_CREATE_DELETE:
-    if (input >= (int)SA_NTF_OBJECT_NOTIFICATIONS_START) {
-      listIndex =
-          (int)input - (int)SA_NTF_TYPE_OBJECT_CREATE_DELETE;
+    if (input >= static_cast<int>(SA_NTF_OBJECT_NOTIFICATIONS_START)) {
+      listIndex = static_cast<int>(input) -
+          static_cast<int>(SA_NTF_TYPE_OBJECT_CREATE_DELETE);
 
       exitIfFalse(input >= SA_NTF_OBJECT_NOTIFICATIONS_START);
       exitIfFalse(input <= SA_NTF_OBJECT_DELETION);
 
-      (void)printf(
-          "%s\n",
-          (char *)sa_object_create_delete_event_type_list
-        [listIndex]);
+      (void)printf("%s\n", sa_object_create_delete_event_type_list[listIndex]);
     }
     break;
 
   case SA_NTF_TYPE_ATTRIBUTE_CHANGE:
-    if (input >= (int)SA_NTF_ATTRIBUTE_NOTIFICATIONS_START) {
-      listIndex =
-          (int)input - (int)SA_NTF_TYPE_ATTRIBUTE_CHANGE;
+    if (input >= static_cast<int>(SA_NTF_ATTRIBUTE_NOTIFICATIONS_START)) {
+      listIndex = static_cast<int>(input) -
+          static_cast<int>(SA_NTF_TYPE_ATTRIBUTE_CHANGE);
 
       exitIfFalse(input >=
             SA_NTF_ATTRIBUTE_NOTIFICATIONS_START);
       exitIfFalse(input <= SA_NTF_ATTRIBUTE_RESET);
 
-      (void)printf(
-          "%s\n",
-          (char *)
-        sa_attribute_change_event_type_list[listIndex]);
+      (void)printf("%s\n", sa_attribute_change_event_type_list[listIndex]);
     }
     break;
 
   case SA_NTF_TYPE_SECURITY_ALARM:
-    if (input >= (int)SA_NTF_SECURITY_ALARM_NOTIFICATIONS_START) {
+    if (input >= static_cast<int>(SA_NTF_SECURITY_ALARM_NOTIFICATIONS_START)) {
       listIndex =
-          (int)input - (int)SA_NTF_TYPE_SECURITY_ALARM;
+         static_cast<int>(input) - static_cast<int>(SA_NTF_TYPE_SECURITY_ALARM);
 
       exitIfFalse(input >=
             SA_NTF_SECURITY_ALARM_NOTIFICATIONS_START);
       exitIfFalse(input <= SA_NTF_TIME_VIOLATION);
 
-      (void)printf(
-          "%s\n",
-          (char *)
-        sa_security_alarm_event_type_list[listIndex]);
+      (void)printf("%s\n", sa_security_alarm_event_type_list[listIndex]);
     }
     break;
 
@@ -341,5 +329,5 @@ void print_source_indicator(SaNtfSourceIndicatorT input) {
   exitIfFalse(input >= SA_NTF_OBJECT_OPERATION);
   exitIfFalse(input <= SA_NTF_MANAGEMENT_OPERATION);
 
-  (void)printf("%s\n", (char *)sa_source_indicator_list[input]);
+  (void)printf("%s\n", sa_source_indicator_list[input]);
 }

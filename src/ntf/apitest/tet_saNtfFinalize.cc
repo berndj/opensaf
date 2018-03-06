@@ -16,10 +16,11 @@
  */
 #include <unistd.h>
 #include <pthread.h>
+
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include "tet_ntf.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 SaNtfStateChangeNotificationT myNotification;
 void saNtfFinalize_01(void) {
@@ -48,8 +49,8 @@ SaAisErrorT subscribe() {
   SaNtfNotificationTypeFilterHandlesT FilterHandles;
   memset(&FilterHandles, 0, sizeof(FilterHandles));
 
-  ret = saNtfObjectCreateDeleteNotificationFilterAllocate(
-      ntfHandle, &obcf, 0, 0, 0, 1, 0);
+  safassert(saNtfObjectCreateDeleteNotificationFilterAllocate(
+      ntfHandle, &obcf, 0, 0, 0, 1, 0), SA_AIS_OK);
   obcf.notificationFilterHeader.notificationClassIds->vendorId =
       SA_NTF_VENDOR_ID_SAF;
   obcf.notificationFilterHeader.notificationClassIds->majorId = 222;
@@ -61,7 +62,7 @@ SaAisErrorT subscribe() {
 }
 
 void *unsubscribe(void *arg) {
-  SaAisErrorT *ret = (SaAisErrorT *)arg;
+  SaAisErrorT *ret = reinterpret_cast<SaAisErrorT *>(arg);
   *ret = saNtfNotificationUnsubscribe(111);
   pthread_exit(NULL);
 }
@@ -72,8 +73,8 @@ void saNtfFinalize_04() {
       SA_AIS_OK);
   safassert(subscribe(), SA_AIS_OK);
   pthread_t thread;
-  pthread_create(&thread, NULL, unsubscribe, (void *)&ret2);
-  usleep(1);
+  pthread_create(&thread, NULL, unsubscribe, reinterpret_cast<void *>(&ret2));
+  base::Sleep(base::kOneMillisecond);
   ret1 = NtfTest::saNtfFinalize(ntfHandle);
   pthread_join(thread, NULL);
   printf("    Return value from thread:%u\n", ret2);
@@ -87,7 +88,7 @@ void saNtfFinalize_04() {
   test_validate(ret1, SA_AIS_OK);
 }
 void *allocate(void *arg) {
-  SaAisErrorT *ret = (SaAisErrorT *)arg;
+  SaAisErrorT *ret = reinterpret_cast<SaAisErrorT *>(arg);
   const char* myAdditionalText = "My additional text";
   SaNameT object = {9, "smallerdn"};
 
@@ -115,8 +116,8 @@ void *allocate(void *arg) {
   myNotification.changedStates[0].oldState = 1;
   myNotification.changedStates[0].newState = 2;
 
-  strcpy(myNotification.notificationHeader.additionalText,
-         myAdditionalText);
+  strncpy(myNotification.notificationHeader.additionalText,
+          myAdditionalText, strlen(myAdditionalText) + 1);
 
   myNotification.notificationHeader.additionalInfo[0].infoId = 2;
   myNotification.notificationHeader.additionalInfo[0].infoType =
@@ -136,8 +137,8 @@ void saNtfFinalize_05() {
   safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   pthread_t thread;
-  pthread_create(&thread, NULL, allocate, (void *)&ret2);
-  usleep(1);
+  pthread_create(&thread, NULL, allocate, reinterpret_cast<void *>(&ret2));
+  base::Sleep(base::kOneMillisecond);
   ret1 = NtfTest::saNtfFinalize(ntfHandle);
   pthread_join(thread, NULL);
   printf("    Return value from thread:%u\n", ret2);
@@ -154,13 +155,12 @@ __attribute__((constructor)) static void saNtfFinalize_constructor(void) {
   test_suite_add(2, "Life cycle, finalize, API 2");
   test_case_add(2, saNtfFinalize_01, "saNtfFinalize SA_AIS_OK");
   test_case_add(2, saNtfFinalize_02,
-          "saNtfFinalize SA_AIS_ERR_BAD_HANDLE - invalid handle");
-  test_case_add(
-      2, saNtfFinalize_03,
+      "saNtfFinalize SA_AIS_ERR_BAD_HANDLE - invalid handle");
+  test_case_add(2, saNtfFinalize_03,
       "saNtfFinalize SA_AIS_ERR_BAD_HANDLE - handle already returned");
   test_case_add(2, saNtfFinalize_04,
-          "Finalize and Unsubscribe in parallel SA_AIS_OK");
-  test_case_add(
-      2, saNtfFinalize_05,
-      "Finalize and saNtfStateChangeNotificationAllocate in parallel SA_AIS_OK");
+      "Finalize and Unsubscribe in parallel SA_AIS_OK");
+  test_case_add(2, saNtfFinalize_05,
+      "Finalize and saNtfStateChangeNotificationAllocate in parallel "
+      "SA_AIS_OK");
 }

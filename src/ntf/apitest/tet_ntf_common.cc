@@ -16,24 +16,24 @@
  */
 #include <stdio.h>
 #include <time.h>
-#include <saNtf.h>
-#include "osaf/apitest/util.h"
 #include <poll.h>
 #include <unistd.h>
 #include <stdarg.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <pthread.h>
-#include "sa_error.h"
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include <saNtf.h>
+#include "osaf/apitest/util.h"
+#include "ntf/apitest/sa_error.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 #define CALLBACK_USED 1
-#define TST_TAG_ND "\nTAG_ND\n" /* Tag for take SC nodes down */
-#define TST_TAG_NU "\nTAG_NU\n" /* Tag for start SC nodes */
-#define TST_TAG_STB_REBOOT "\nTAG_STB_REBOOT\n" /* Tag for reboot the STANDBY SC */
-#define TST_TAG_SWITCHOVER "\nTAG_SWITCHOVER\n" /* Tag for switch over */
+#define TST_TAG_ND "\nTAG_ND\n"  // Tag for take SC nodes down
+#define TST_TAG_NU "\nTAG_NU\n"  // Tag for start SC nodes
+#define TST_TAG_STB_REBOOT "\nTAG_STB_REBOOT\n"  // Tag for reboot STANDBY SC
+#define TST_TAG_SWITCHOVER "\nTAG_SWITCHOVER\n"  // Tag for switch over
 SaNtfIdentifierT last_not_id = SA_NTF_IDENTIFIER_UNUSED;
 int verbose;
 int gl_tag_mode;
@@ -106,16 +106,13 @@ void wait_controllers(int wished_scs_state) {
       fprintf_t(stdout, TST_TAG_ND);
     }
   } else if (wished_scs_state == 3) {
-    fprintf_p(
-      stdout,
-      "\nNext: manually REBOOT standby SC");
+    fprintf_p(stdout, "\nNext: manually REBOOT standby SC");
     if (gl_tag_mode == 1) {
       fprintf_t(stdout, TST_TAG_STB_REBOOT);
     }
   } else if (wished_scs_state == 4) {
-    fprintf_p(
-      stdout,
-      "\nNext: manually switch over(amf-adm si-swap safSi=SC-2N,safApp=OpenSAF)");
+    fprintf_p(stdout, "\nNext: manually switch over("
+                      "amf-adm si-swap safSi=SC-2N,safApp=OpenSAF)");
     if (gl_tag_mode == 1) {
       fprintf_t(stdout, TST_TAG_SWITCHOVER);
     }
@@ -131,9 +128,8 @@ void wait_controllers(int wished_scs_state) {
       __LINE__, __FUNCTION__, strerror(errno));
     exit(EXIT_FAILURE);
   }
-  fprintf_p(
-    stdout,
-    "\nThen press 'n' and 'Enter' (or 'pkill -USR2 ntftest') to continue. Waiting ...\n");
+  fprintf_p(stdout, "\nThen press 'n' and 'Enter' (or 'pkill -USR2 ntftest') "
+                    "to continue. Waiting ...\n");
   while (gl_suspending) {
     i++;
     i = i % 20;
@@ -172,15 +168,14 @@ extern SaNtfIdentifierT get_ntf_id(const SaNtfNotificationsT *notif) {
 
 void poll_until_received(SaNtfHandleT ntfHandle, SaNtfIdentifierT wanted_id) {
   struct pollfd fds[1];
-  int ret;
 
   SaSelectionObjectT so;
   safassert(saNtfSelectionObjectGet(ntfHandle, &so), SA_AIS_OK);
 
-  fds[0].fd = (int)so;
+  fds[0].fd = static_cast<int>(so);
   do {
     fds[0].events = POLLIN;
-    ret = poll(fds, 1, 10000);
+    int ret = poll(fds, 1, 10000);
     if (ret <= 0) {
       if (ret == 0)
         perror("timeout");
@@ -196,12 +191,12 @@ static void print_header(SaNtfNotificationHeaderT *notificationHeader,
        SaNtfSubscriptionIdT subscriptionId,
        SaNtfNotificationTypeT notificationType) {
   SaTimeT totalTime;
-  SaTimeT ntfTime = (SaTimeT)0;
   char time_str[24];
+  struct tm result;
 
   /* Notification ID */
   (void)printf("notificationID = %d\n",
-         (int)*(notificationHeader->notificationId));
+               static_cast<int>(*(notificationHeader->notificationId)));
 
   (void)printf("subscriptionId = %u\n", (unsigned int)subscriptionId);
 
@@ -230,11 +225,11 @@ static void print_header(SaNtfNotificationHeaderT *notificationHeader,
          notificationHeader->notificationClassId->minorId);
 
   /* Event Time */
-  ntfTime = *notificationHeader->eventTime;
+  SaTimeT ntfTime = *notificationHeader->eventTime;
 
   totalTime = (ntfTime / (SaTimeT)SA_TIME_ONE_SECOND);
   (void)strftime(time_str, sizeof(time_str), "%d-%m-%Y %T",
-           localtime((const time_t *)&totalTime));
+           localtime_r((const time_t *)&totalTime, &result));
 
   (void)printf("eventTime = %lld = %s\n", (SaTimeT)ntfTime, time_str);
 
@@ -260,9 +255,10 @@ void newNotification(SaNtfSubscriptionIdT subscriptionId,
            .alarmNotification.notificationHandle;
 
     print_header(
-        (SaNtfNotificationHeaderT *)&notification->notification
-      .alarmNotification.notificationHeader,
-        subscriptionId, notification->notificationType);
+        const_cast<SaNtfNotificationHeaderT *>(
+            &notification->notification
+            .alarmNotification.notificationHeader),
+            subscriptionId, notification->notificationType);
 
     /* Probable Cause */
     (void)printf("probableCause = ");
@@ -283,9 +279,10 @@ void newNotification(SaNtfSubscriptionIdT subscriptionId,
       .notificationHandle;
 
     print_header(
-        (SaNtfNotificationHeaderT *)&notification->notification
-      .stateChangeNotification.notificationHeader,
-        subscriptionId, notification->notificationType);
+        const_cast<SaNtfNotificationHeaderT *>(
+            &notification->notification
+            .stateChangeNotification.notificationHeader),
+            subscriptionId, notification->notificationType);
 
     (void)printf("sourceIndicator = ");
     print_source_indicator(
@@ -298,9 +295,7 @@ void newNotification(SaNtfSubscriptionIdT subscriptionId,
 
     /* Changed states */
     for (i = 0; i < notification->notification
-            .stateChangeNotification.numStateChanges;
-         i++) {
-
+            .stateChangeNotification.numStateChanges; i++) {
       print_change_states(
           &notification->notification.stateChangeNotification
          .changedStates[i]);
@@ -314,9 +309,10 @@ void newNotification(SaNtfSubscriptionIdT subscriptionId,
         notification->notification.objectCreateDeleteNotification
       .notificationHandle;
     print_header(
-        (SaNtfNotificationHeaderT *)&notification->notification
-      .objectCreateDeleteNotification.notificationHeader,
-        subscriptionId, notification->notificationType);
+        const_cast<SaNtfNotificationHeaderT *>(
+            &notification->notification
+            .objectCreateDeleteNotification.notificationHeader),
+            subscriptionId, notification->notificationType);
 
     (void)printf("sourceIndicator = ");
     print_source_indicator(
@@ -326,9 +322,7 @@ void newNotification(SaNtfSubscriptionIdT subscriptionId,
     /* Object Attributes */
     for (i = 0;
          i < notification->notification
-           .objectCreateDeleteNotification.numAttributes;
-         i++) {
-
+           .objectCreateDeleteNotification.numAttributes; i++) {
       print_object_attributes(
           &notification->notification
          .objectCreateDeleteNotification
@@ -343,9 +337,10 @@ void newNotification(SaNtfSubscriptionIdT subscriptionId,
         notification->notification.attributeChangeNotification
       .notificationHandle;
     print_header(
-        (SaNtfNotificationHeaderT *)&notification->notification
-      .attributeChangeNotification.notificationHeader,
-        subscriptionId, notification->notificationType);
+        const_cast<SaNtfNotificationHeaderT *>(
+            &notification->notification
+            .attributeChangeNotification.notificationHeader),
+            subscriptionId, notification->notificationType);
 
     (void)printf("sourceIndicator = ");
     print_source_indicator(
@@ -354,9 +349,7 @@ void newNotification(SaNtfSubscriptionIdT subscriptionId,
 
     /* Changed Attributes */
     for (i = 0; i < notification->notification
-            .attributeChangeNotification.numAttributes;
-         i++) {
-
+            .attributeChangeNotification.numAttributes; i++) {
       print_changed_attributes(
           &notification->notification
          .attributeChangeNotification
@@ -371,9 +364,10 @@ void newNotification(SaNtfSubscriptionIdT subscriptionId,
         notification->notification.securityAlarmNotification
       .notificationHandle;
     print_header(
-        (SaNtfNotificationHeaderT *)&notification->notification
-      .securityAlarmNotification.notificationHeader,
-        subscriptionId, notification->notificationType);
+        const_cast<SaNtfNotificationHeaderT *>(
+            &notification->notification
+            .securityAlarmNotification.notificationHeader),
+            subscriptionId, notification->notificationType);
 
     (void)printf("probableCause = ");
     print_probable_cause(
@@ -385,14 +379,14 @@ void newNotification(SaNtfSubscriptionIdT subscriptionId,
              .securityAlarmNotification.severity));
 
     print_security_alarm_types(
-        (SaNtfSecurityAlarmNotificationT *)&notification
-      ->notification.securityAlarmNotification);
+        const_cast<SaNtfSecurityAlarmNotificationT *>(
+            &notification->notification.securityAlarmNotification));
 
     break;
 
   default:
     (void)printf("unknown notification type %d",
-           (int)notification->notificationType);
+                 static_cast<int>(notification->notificationType));
     break;
   }
   (void)printf("==========================================\n");
@@ -407,11 +401,12 @@ void discardedNotification(
     SaNtfNotificationTypeT notificationType, SaUint32T numberDiscarded,
     const SaNtfIdentifierT *discardedNotificationIdentifiers) {
   unsigned int i = 0;
-  (void)printf("Discarded callback function  notificationType: %d\n\
-                  subscriptionId  : %u \n\
-                  numberDiscarded : %u\n",
-         (int)notificationType, (unsigned int)subscriptionId,
-         (unsigned int)numberDiscarded);
+  (void)printf("Discarded callback function  notificationType: %d\n "
+      "subscriptionId  : %u \n"
+      "numberDiscarded : %u \n",
+       static_cast<int>(notificationType),
+       static_cast<unsigned int>(subscriptionId),
+       static_cast<unsigned int>(numberDiscarded));
   for (i = 0; i < numberDiscarded; i++) {
     (void)printf("[%u]",
            (unsigned int)discardedNotificationIdentifiers[i]);
@@ -1006,7 +1001,6 @@ int verifyObjectCreateDeleteNotification(
     const SaNtfObjectCreateDeleteNotificationT *aNtf1,
     const SaNtfObjectCreateDeleteNotificationT *aNtf2) {
   int errors = 0;
-  int iCount; /* General counter */
 
   errors += verifyNotificationHeader(&aNtf1->notificationHeader,
              &aNtf2->notificationHeader);
@@ -1016,7 +1010,7 @@ int verifyObjectCreateDeleteNotification(
       assertvalue(*aNtf1->sourceIndicator == *aNtf2->sourceIndicator);
   if ((errors +=
        assertvalue(aNtf1->numAttributes == aNtf2->numAttributes)) == 0) {
-    for (iCount = 0; iCount < aNtf1->numAttributes; iCount++) {
+    for (int iCount = 0; iCount < aNtf1->numAttributes; iCount++) {
       errors += assertvalue(
           aNtf1->objectAttributes[iCount].attributeId ==
           aNtf2->objectAttributes[iCount].attributeId);
@@ -1122,7 +1116,6 @@ int verifyAttributeChangeNotification(
     const SaNtfAttributeChangeNotificationT *aNtf1,
     const SaNtfAttributeChangeNotificationT *aNtf2) {
   int errors = 0;
-  int iCount; /* General counter */
 
   errors += verifyNotificationHeader(&aNtf1->notificationHeader,
              &aNtf2->notificationHeader);
@@ -1133,7 +1126,7 @@ int verifyAttributeChangeNotification(
   /* Verify the attributes */
   if ((errors +=
        assertvalue(aNtf1->numAttributes == aNtf2->numAttributes)) == 0) {
-    for (iCount = 0; iCount < aNtf1->numAttributes; iCount++) {
+    for (int iCount = 0; iCount < aNtf1->numAttributes; iCount++) {
       errors += assertvalue(
           aNtf1->changedAttributes[iCount].attributeId ==
           aNtf2->changedAttributes[iCount].attributeId);
@@ -1247,7 +1240,6 @@ void createStateChangeNotification(
 int verifyStateChangeNotification(const SaNtfStateChangeNotificationT *aNtf1,
           const SaNtfStateChangeNotificationT *aNtf2) {
   int errors = 0;
-  int iCount; /* General counter */
 
   errors += verifyNotificationHeader(&aNtf1->notificationHeader,
              &aNtf2->notificationHeader);
@@ -1257,7 +1249,7 @@ int verifyStateChangeNotification(const SaNtfStateChangeNotificationT *aNtf1,
 
   if ((errors += assertvalue(aNtf1->numStateChanges ==
            aNtf2->numStateChanges)) == 0) {
-    for (iCount = 0; iCount < aNtf1->numStateChanges; iCount++) {
+    for (int iCount = 0; iCount < aNtf1->numStateChanges; iCount++) {
       errors +=
           assertvalue(aNtf1->changedStates[iCount].stateId ==
           aNtf2->changedStates[iCount].stateId);

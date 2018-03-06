@@ -16,9 +16,9 @@
  */
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 extern int verbose;
 
@@ -404,7 +404,6 @@ void objectCreateDeleteNotificationTest(void) {
 
   if ((rc = saNtfObjectCreateDeleteNotificationFilterAllocate(
      ntfHandle, &myFilter, 0, 0, 0, 0, 0)) == SA_AIS_OK) {
-
     /* Initialize filter handles */
     myNotificationFilterHandles.alarmFilterHandle = 0;
     myNotificationFilterHandles.attributeChangeFilterHandle = 0;
@@ -465,7 +464,6 @@ void attributeChangeNotificationTest(void) {
 
   if ((rc = saNtfAttributeChangeNotificationFilterAllocate(
      ntfHandle, &myFilter, 0, 0, 0, 0, 0)) == SA_AIS_OK) {
-
     /* Initialize filter handles */
     myNotificationFilterHandles.alarmFilterHandle = 0;
     myNotificationFilterHandles.attributeChangeFilterHandle =
@@ -527,7 +525,6 @@ void stateChangeNotificationTest(void) {
 
   if ((rc = saNtfStateChangeNotificationFilterAllocate(
      ntfHandle, &myFilter, 0, 0, 0, 0, 0, 0)) == SA_AIS_OK) {
-
     /* Initialize filter handles */
     myNotificationFilterHandles.alarmFilterHandle = 0;
     myNotificationFilterHandles.attributeChangeFilterHandle = 0;
@@ -590,7 +587,6 @@ void securityAlarmNotificationTest(void) {
   if ((rc = saNtfSecurityAlarmNotificationFilterAllocate(
      ntfHandle, &myFilter, 0, 0, 0, 0, 0, 0, 0, 0, 0)) ==
       SA_AIS_OK) {
-
     /* Initialize filter handles */
     myNotificationFilterHandles.alarmFilterHandle = 0;
     myNotificationFilterHandles.attributeChangeFilterHandle = 0;
@@ -684,7 +680,6 @@ void allNotificationTest(void) {
      myNotificationFilterAllocationParams.numPerceivedSeverities,
      myNotificationFilterAllocationParams.numTrends)) ==
       SA_AIS_OK) {
-
     /* Set perceived severities */
     myAlarmFilter.perceivedSeverities[0] = SA_NTF_SEVERITY_WARNING;
     myAlarmFilter.perceivedSeverities[1] = SA_NTF_SEVERITY_CLEARED;
@@ -700,7 +695,6 @@ void allNotificationTest(void) {
            .numNotificationClassIds,
        myNotificationFilterAllocationParams
            .numSourceIndicators)) == SA_AIS_OK) {
-
       if ((rc =
          saNtfAttributeChangeNotificationFilterAllocate(
              ntfHandle, &myAttrChangeFilter,
@@ -714,7 +708,6 @@ void allNotificationTest(void) {
            .numNotificationClassIds,
              myNotificationFilterAllocationParams
            .numSourceIndicators)) == SA_AIS_OK) {
-
         if ((rc = saNtfSecurityAlarmNotificationFilterAllocate(
            ntfHandle, &mySecAlarmFilter,
            myNotificationFilterAllocationParams
@@ -736,7 +729,6 @@ void allNotificationTest(void) {
            myNotificationFilterAllocationParams
                .numServiceProviders)) ==
             SA_AIS_OK) {
-
           if ((rc = saNtfStateChangeNotificationFilterAllocate(
              ntfHandle,
              &myStateChangeFilter,
@@ -753,7 +745,6 @@ void allNotificationTest(void) {
              myNotificationFilterAllocationParams
                  .numChangedStates)) ==
               SA_AIS_OK) {
-
             /* Initialize filter handles */
             myNotificationFilterHandles
                 .alarmFilterHandle =
@@ -824,37 +815,19 @@ void allNotificationTest(void) {
                .notificationHeader
                .notificationId);
 
-            if (ntfRecieved
-                  .alarmFilterHandle !=
-              1 ||
-                ntfRecieved
-                  .attributeChangeFilterHandle !=
-              1 ||
-                ntfRecieved
-                  .objectCreateDeleteFilterHandle !=
-              1 ||
-                ntfRecieved
-                  .securityAlarmFilterHandle !=
-              1 ||
-                ntfRecieved
-                  .stateChangeFilterHandle !=
-              1) {
-              fprintf(
-                  stderr,
-                  "ntfreceived fh: a: %llu, att: %llu, o: %llu, se: %llu, st: %llu \n",
-                  ntfRecieved
-                .alarmFilterHandle,
-                  ntfRecieved
-                .attributeChangeFilterHandle,
-                  ntfRecieved
-                .objectCreateDeleteFilterHandle,
-                  ntfRecieved
-                .securityAlarmFilterHandle,
-                  ntfRecieved
-                .stateChangeFilterHandle);
-              safassert(
-                  SA_AIS_ERR_BAD_FLAGS,
-                  SA_AIS_OK);
+            if (ntfRecieved.alarmFilterHandle != 1 ||
+                ntfRecieved.attributeChangeFilterHandle != 1 ||
+                ntfRecieved.objectCreateDeleteFilterHandle != 1 ||
+                ntfRecieved.securityAlarmFilterHandle != 1 ||
+                ntfRecieved.stateChangeFilterHandle != 1) {
+              fprintf(stderr, "ntfreceived fh: a: %llu, att: %llu, "
+                  "o: %llu, se: %llu, st: %llu \n",
+                  ntfRecieved.alarmFilterHandle,
+                  ntfRecieved.attributeChangeFilterHandle,
+                  ntfRecieved.objectCreateDeleteFilterHandle,
+                  ntfRecieved.securityAlarmFilterHandle,
+                  ntfRecieved.stateChangeFilterHandle);
+              safassert(SA_AIS_ERR_BAD_FLAGS, SA_AIS_OK);
             }
 
             safassert(

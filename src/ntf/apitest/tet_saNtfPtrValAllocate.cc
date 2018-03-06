@@ -16,9 +16,9 @@
  */
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 /**
  * Test saNtfPtrValAllocate.
@@ -28,8 +28,8 @@ void saNtfPtrAllocateTest_01(void) {
   SaStringT *destPtr;
   SaNtfAlarmNotificationT myAlarmNotification;
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
 
   safassert(saNtfAlarmNotificationAllocate(
           ntfHandle, &myAlarmNotification, 0, 0, 0, 0, 0, 2,
@@ -40,7 +40,8 @@ void saNtfPtrAllocateTest_01(void) {
       SA_NTF_VALUE_STRING;
   rc = saNtfPtrValAllocate(
       myAlarmNotification.notificationHandle,
-      (SaUint16T)(strlen(DEFAULT_ADDITIONAL_TEXT) + 1), (void **)&destPtr,
+      (SaUint16T)(strlen(DEFAULT_ADDITIONAL_TEXT) + 1),
+      reinterpret_cast<void **>(&destPtr),
       &(myAlarmNotification.proposedRepairActions[0].actionValue));
 
   safassert(saNtfNotificationFree(myAlarmNotification.notificationHandle),
@@ -58,8 +59,8 @@ void saNtfPtrAllocateTest_02(void) {
   SaStringT *destPtr;
   SaNtfAlarmNotificationT myAlarmNotification;
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
 
   safassert(saNtfAlarmNotificationAllocate(
           ntfHandle, &myAlarmNotification, 0, 0, 0, 0, 0, 2,
@@ -70,7 +71,7 @@ void saNtfPtrAllocateTest_02(void) {
       SA_NTF_VALUE_STRING;
   rc = saNtfPtrValAllocate(
       0, (SaUint16T)(strlen(DEFAULT_ADDITIONAL_TEXT) + 1),
-      (void **)&destPtr,
+      reinterpret_cast<void **>(&destPtr),
       &(myAlarmNotification.proposedRepairActions[0].actionValue));
 
   safassert(saNtfNotificationFree(myAlarmNotification.notificationHandle),
@@ -88,8 +89,8 @@ void saNtfPtrAllocateTest_03(void) {
   SaStringT *destPtr;
   SaNtfAlarmNotificationT myAlarmNotification;
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
 
   safassert(saNtfAlarmNotificationAllocate(
           ntfHandle, &myAlarmNotification, 0, 0, 0, 0, 0, 2,
@@ -104,7 +105,8 @@ void saNtfPtrAllocateTest_03(void) {
 
   rc = saNtfPtrValAllocate(
       myAlarmNotification.notificationHandle,
-      (SaUint16T)(strlen(DEFAULT_ADDITIONAL_TEXT) + 1), (void **)&destPtr,
+      (SaUint16T)(strlen(DEFAULT_ADDITIONAL_TEXT) + 1),
+      reinterpret_cast<void **>(&destPtr),
       &(myAlarmNotification.proposedRepairActions[0].actionValue));
 
   safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
@@ -118,8 +120,8 @@ void saNtfPtrAllocateTest_03(void) {
 void saNtfPtrAllocateTest_04(void) {
   SaNtfAlarmNotificationT myAlarmNotification;
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
 
   safassert(saNtfAlarmNotificationAllocate(
           ntfHandle, &myAlarmNotification, 0, 0, 0, 0, 0, 2,
@@ -149,8 +151,8 @@ void saNtfPtrAllocateTest_05(void) {
   SaStringT *destPtr;
   SaNtfAlarmNotificationT myAlarmNotification;
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
 
   safassert(saNtfAlarmNotificationAllocate(
           ntfHandle, &myAlarmNotification, 0, 0, 0, 0, 0, 2,
@@ -162,7 +164,8 @@ void saNtfPtrAllocateTest_05(void) {
 
   rc = saNtfPtrValAllocate(
       myAlarmNotification.notificationHandle,
-      (SaUint16T)(strlen(DEFAULT_ADDITIONAL_TEXT) + 1), (void **)&destPtr,
+      (SaUint16T)(strlen(DEFAULT_ADDITIONAL_TEXT) + 1),
+      reinterpret_cast<void **>(&destPtr),
       NULL);
 
   safassert(saNtfNotificationFree(myAlarmNotification.notificationHandle),
@@ -180,8 +183,8 @@ void saNtfPtrAllocateTest_05(void) {
 void saNtfPtrAllocateTest_06(void) {
   SaNtfAlarmNotificationT myAlarmNotification;
 
-  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(
+      &ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
 
   rc = saNtfAlarmNotificationAllocate(ntfHandle, &myAlarmNotification, 0,
               0, 0, 0, 0, 2,
@@ -193,18 +196,16 @@ void saNtfPtrAllocateTest_06(void) {
 __attribute__((constructor)) static void saNtfPtrValAllocate_constructor(void) {
   test_suite_add(28, "Producer API ");
   test_case_add(28, saNtfPtrAllocateTest_01,
-          "saNtfPtrValAllocate SA_AIS_OK");
+       "saNtfPtrValAllocate SA_AIS_OK");
   test_case_add(28, saNtfPtrAllocateTest_02,
-          "saNtfPtrValAllocate bad handle SA_AIS_ERR_BAD_HANDLE");
+       "saNtfPtrValAllocate bad handle SA_AIS_ERR_BAD_HANDLE");
   test_case_add(28, saNtfPtrAllocateTest_03,
-          "saNtfPtrValAllocate handle freed SA_AIS_ERR_BAD_HANDLE");
-  test_case_add(
-      28, saNtfPtrAllocateTest_04,
+       "saNtfPtrValAllocate handle freed SA_AIS_ERR_BAD_HANDLE");
+  test_case_add(28, saNtfPtrAllocateTest_04,
       "saNtfPtrValAllocate bad dataPtr SA_AIS_ERR_INVLID_PARAM");
-  test_case_add(
-      28, saNtfPtrAllocateTest_05,
+  test_case_add(28, saNtfPtrAllocateTest_05,
       "saNtfPtrValAllocate bad value pointer SA_AIS_ERR_INVLID_PARAM");
-  test_case_add(
-      28, saNtfPtrAllocateTest_06,
-      "datasize bigger than implementation specific system limit SA_AIS_ERR_TOO_BIG");
+  test_case_add(28, saNtfPtrAllocateTest_06,
+      "datasize bigger than implementation specific system limit "
+      "SA_AIS_ERR_TOO_BIG");
 }

@@ -16,9 +16,9 @@
  */
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 void saNtfNotificationSubscribe_01(void) {
   SaNtfHandleT ntfHandle;
@@ -180,8 +180,8 @@ SaAisErrorT saNtfSubscribe(SaNtfSubscriptionIdT subscriptionId) {
   SaNtfNotificationTypeFilterHandlesT FilterHandles;
   memset(&FilterHandles, 0, sizeof(FilterHandles));
 
-  ret = saNtfObjectCreateDeleteNotificationFilterAllocate(
-      ntfHandle, &obcf, 0, 0, 0, 1, 0);
+  safassert(saNtfObjectCreateDeleteNotificationFilterAllocate(
+      ntfHandle, &obcf, 0, 0, 0, 1, 0), SA_AIS_OK);
   obcf.notificationFilterHeader.notificationClassIds->vendorId =
       SA_NTF_VENDOR_ID_SAF;
   obcf.notificationFilterHeader.notificationClassIds->majorId = 222;
@@ -213,17 +213,15 @@ __attribute__((constructor)) static void
 saNtfNotificationSubscribe_constructor(void) {
   test_suite_add(10, "Consumer operations - subscribe");
   test_case_add(10, saNtfNotificationSubscribe_01,
-          "saNtfNotificationSubscribe first simple SA_AIS_OK");
-  test_case_add(
-      10, saNtfNotificationSubscribe_02,
+      "saNtfNotificationSubscribe first simple SA_AIS_OK");
+  test_case_add(10, saNtfNotificationSubscribe_02,
       "saNtfNotificationSubscribe null handle SA_AIS_ERR_INVALID_PARAM");
-  test_case_add(
-      10, saNtfNotificationSubscribe_03,
-      "saNtfNotificationSubscribe All filter handles null  SA_AIS_ERR_INVALID_PARAM");
-  test_case_add(
-      10, saNtfNotificationSubscribe_04,
+  test_case_add(10, saNtfNotificationSubscribe_03,
+      "saNtfNotificationSubscribe All filter handles null  "
+      "SA_AIS_ERR_INVALID_PARAM");
+  test_case_add(10, saNtfNotificationSubscribe_04,
       "saNtfNotificationSubscribe subscriptionId exist SA_AIS_ERR_EXIST");
-  test_case_add(
-      10, saNtfNotificationSubscribe_05,
-      "saNtfNotificationSubscribe subscriptionId if old handle has subscriptionId had been finalized SA_AIS_OK");
+  test_case_add(10, saNtfNotificationSubscribe_05,
+      "saNtfNotificationSubscribe subscriptionId if old handle has "
+      "subscriptionId had been finalized SA_AIS_OK");
 }

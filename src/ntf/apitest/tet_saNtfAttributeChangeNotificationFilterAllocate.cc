@@ -16,9 +16,9 @@
  */
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
-#include "tet_ntf.h"
-#include "tet_ntf_common.h"
-#include "ntf_api_with_try_again.h"
+#include "ntf/apitest/tet_ntf.h"
+#include "ntf/apitest/tet_ntf_common.h"
+#include "ntf/apitest/ntf_api_with_try_again.h"
 
 void saNtfAttributeChangeNotificationFilterAllocate_01(void) {
   SaNtfHandleT ntfHandle;
@@ -29,9 +29,7 @@ void saNtfAttributeChangeNotificationFilterAllocate_01(void) {
       SA_AIS_OK);
 
   if ((rc = saNtfAttributeChangeNotificationFilterAllocate(
-     ntfHandle, &myAttributeChangeFilter, 0, 0, 0, 1, 0)) ==
-      SA_AIS_OK) {
-
+     ntfHandle, &myAttributeChangeFilter, 0, 0, 0, 1, 0)) == SA_AIS_OK) {
     myAttributeChangeFilter.notificationFilterHeader
         .notificationClassIds[0]
         .vendorId = 33333;
@@ -99,16 +97,15 @@ void saNtfAttributeChangeNotificationFilterAllocate_04(void) {
 __attribute__((constructor)) static void
 saNtfAttributeChangeNotificationFilterAllocate_constructor(void) {
   test_suite_add(7, "Consumer operations - filter allocate");
-  test_case_add(
-      7, saNtfAttributeChangeNotificationFilterAllocate_01,
+  test_case_add(7, saNtfAttributeChangeNotificationFilterAllocate_01,
       "saNtfAttributeChangeNotificationFilterAllocate - SA_AIS_OK");
-  test_case_add(
-      7, saNtfAttributeChangeNotificationFilterAllocate_02,
-      "saNtfAttributeChangeNotificationFilterAllocate - handle NULL SA_AIS_ERR_BAD_HANDLE");
-  test_case_add(
-      7, saNtfAttributeChangeNotificationFilterAllocate_03,
-      "saNtfAttributeChangeNotificationFilterAllocate - handle returned SA_AIS_ERR_BAD_HANDLE");
-  test_case_add(
-      7, saNtfAttributeChangeNotificationFilterAllocate_04,
-      "saNtfAttributeChangeNotificationFilterAllocate - SA_AIS_ERR_INVALID_PARAM");
+  test_case_add(7, saNtfAttributeChangeNotificationFilterAllocate_02,
+      "saNtfAttributeChangeNotificationFilterAllocate - handle NULL "
+      "SA_AIS_ERR_BAD_HANDLE");
+  test_case_add(7, saNtfAttributeChangeNotificationFilterAllocate_03,
+      "saNtfAttributeChangeNotificationFilterAllocate - handle returned "
+      "SA_AIS_ERR_BAD_HANDLE");
+  test_case_add(7, saNtfAttributeChangeNotificationFilterAllocate_04,
+      "saNtfAttributeChangeNotificationFilterAllocate - "
+      "SA_AIS_ERR_INVALID_PARAM");
 }
