@@ -18,12 +18,13 @@
 #include "osaf/apitest/util.h"
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 void saNtfSecurityAlarmNotificationFilterAllocate_01(void) {
   SaNtfHandleT ntfHandle;
   SaNtfSecurityAlarmNotificationFilterT mySecurityAlarmFilter;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   if ((rc = saNtfSecurityAlarmNotificationFilterAllocate(
@@ -34,7 +35,7 @@ void saNtfSecurityAlarmNotificationFilterAllocate_01(void) {
         SA_AIS_OK);
   }
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -51,9 +52,9 @@ void saNtfSecurityAlarmNotificationFilterAllocate_03(void) {
   SaNtfHandleT ntfHandle;
   SaNtfSecurityAlarmNotificationFilterT mySecurityAlarmFilter;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   rc = saNtfSecurityAlarmNotificationFilterAllocate(
       ntfHandle, &mySecurityAlarmFilter, 0, 0, 0, 1, 0, 0, 0, 0, 0);
@@ -64,13 +65,13 @@ void saNtfSecurityAlarmNotificationFilterAllocate_03(void) {
 void saNtfSecurityAlarmNotificationFilterAllocate_04(void) {
   SaNtfHandleT ntfHandle;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   rc = saNtfSecurityAlarmNotificationFilterAllocate(ntfHandle, NULL, 0, 0,
                 0, 1, 0, 0, 0, 0, 0);
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }

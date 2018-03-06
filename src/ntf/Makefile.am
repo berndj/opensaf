@@ -230,7 +230,8 @@ noinst_HEADERS += \
 	src/ntf/apitest/sa_error.h \
 	src/ntf/apitest/test_ntf_imcn.h \
 	src/ntf/apitest/tet_ntf.h \
-	src/ntf/apitest/tet_ntf_common.h
+	src/ntf/apitest/tet_ntf_common.h \
+	src/ntf/apitest/ntf_api_with_try_again.h
 
 bin_ntftest_CPPFLAGS = \
 	$(AM_CPPFLAGS)

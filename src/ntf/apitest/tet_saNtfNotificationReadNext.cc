@@ -23,6 +23,7 @@
 #include "osaf/apitest/util.h"
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 extern int verbose;
 
@@ -78,7 +79,7 @@ void saNtfNotificationReadNext_01(void) {
       myNotificationFilterAllocationParams;
   saNotificationParamsT myNotificationParams;
 
-  SaNtfSearchCriteriaT searchCriteria;
+  SaNtfSearchCriteriaT searchCriteria = {SA_NTF_SEARCH_ONLY_FILTER, 0, 0};
   SaNtfAlarmNotificationFilterT myAlarmFilter;
   SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles = {
       0, 0, 0, 0, 0};
@@ -86,7 +87,6 @@ void saNtfNotificationReadNext_01(void) {
   SaNtfHandleT ntfHandle;
   SaNtfNotificationsT returnedNotification;
   SaNtfAlarmNotificationT myNotification;
-  searchCriteria.searchMode = SA_NTF_SEARCH_ONLY_FILTER;
   SaAisErrorT errorCode;
   SaUint32T readCounter = 0;
 
@@ -94,7 +94,7 @@ void saNtfNotificationReadNext_01(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   safassert(
@@ -155,17 +155,15 @@ void saNtfNotificationReadNext_01(void) {
   /* set probable cause*/
   *(myNotification.probableCause) = myNotificationParams.probableCause;
 
-  safassert(saNtfNotificationSend(myNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(myNotification.notificationHandle),
+            SA_AIS_OK);
   /* Read initialize here to get the notification above */
-  safassert(saNtfNotificationReadInitialize(searchCriteria,
-              &myNotificationFilterHandles,
-              &readHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationReadInitialize(
+      searchCriteria, &myNotificationFilterHandles, &readHandle), SA_AIS_OK);
 
   /* read as many matching notifications as exist for the time period
    between the last received one and now */
-  for (; (errorCode = saNtfNotificationReadNext(
+  for (; (errorCode = NtfTest::saNtfNotificationReadNext(
         readHandle, SA_NTF_SEARCH_YOUNGER,
         &returnedNotification)) == SA_AIS_OK;)
 
@@ -191,14 +189,14 @@ void saNtfNotificationReadNext_01(void) {
     errorCode = SA_AIS_ERR_FAILED_OPERATION;
   }
   // No more...
-  safassert(saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
   safassert(
       saNtfNotificationFilterFree(myAlarmFilter.notificationFilterHandle),
       SA_AIS_OK);
   free(myNotificationParams.additionalText);
   safassert(saNtfNotificationFree(myNotification.notificationHandle),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(errorCode,
           SA_AIS_ERR_NOT_EXIST); /* read all notifications!! */
 }
@@ -215,7 +213,7 @@ void saNtfNotificationReadNext_02(void) {
       myNotificationFilterAllocationParams;
   saNotificationParamsT myNotificationParams;
 
-  SaNtfSearchCriteriaT searchCriteria;
+  SaNtfSearchCriteriaT searchCriteria = {SA_NTF_SEARCH_AFTER_TIME, 0, 0};
   SaNtfAlarmNotificationFilterT myAlarmFilter;
   SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles = {
       0, 0, 0, 0, 0};
@@ -223,7 +221,6 @@ void saNtfNotificationReadNext_02(void) {
   SaNtfHandleT ntfHandle;
   SaNtfNotificationsT returnedNotification;
   SaNtfAlarmNotificationT myNotification;
-  searchCriteria.searchMode = SA_NTF_SEARCH_AFTER_TIME;
   SaAisErrorT errorCode;
   SaUint32T readCounter = 0;
   SaNtfIdentifierT last_id = 0;
@@ -232,7 +229,7 @@ void saNtfNotificationReadNext_02(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   safassert(
@@ -293,17 +290,15 @@ void saNtfNotificationReadNext_02(void) {
   /* set probable cause*/
   *(myNotification.probableCause) = myNotificationParams.probableCause;
 
-  safassert(saNtfNotificationSend(myNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(myNotification.notificationHandle),
+            SA_AIS_OK);
   /* Read initialize here to get the notification above */
-  safassert(saNtfNotificationReadInitialize(searchCriteria,
-              &myNotificationFilterHandles,
-              &readHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationReadInitialize(
+      searchCriteria, &myNotificationFilterHandles, &readHandle), SA_AIS_OK);
 
   /* read as many matching notifications as exist for the time period
    between the last received one and now */
-  for (i = 0; i < 3 && (errorCode = saNtfNotificationReadNext(
+  for (i = 0; i < 3 && (errorCode = NtfTest::saNtfNotificationReadNext(
           readHandle, SA_NTF_SEARCH_YOUNGER,
           &returnedNotification)) == SA_AIS_OK;
        i++) {
@@ -326,7 +321,7 @@ void saNtfNotificationReadNext_02(void) {
   }
 
   readCounter = 0;
-  for (i = 0; (errorCode = saNtfNotificationReadNext(
+  for (i = 0; (errorCode = NtfTest::saNtfNotificationReadNext(
        readHandle, SA_NTF_SEARCH_OLDER,
        &returnedNotification)) == SA_AIS_OK;) {
     safassert(errorCode, SA_AIS_OK);
@@ -353,13 +348,13 @@ void saNtfNotificationReadNext_02(void) {
   }
 // No more...
 error:
-  safassert(saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
   safassert(
       saNtfNotificationFilterFree(myAlarmFilter.notificationFilterHandle),
       SA_AIS_OK);
   safassert(saNtfNotificationFree(myNotification.notificationHandle),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   free(myNotificationParams.additionalText);
   test_validate(errorCode,
           SA_AIS_ERR_NOT_EXIST); /* read all notifications!! */

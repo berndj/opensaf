@@ -18,6 +18,7 @@
 #include "osaf/apitest/util.h"
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 void saNtfNotificationUnsubscribe_01(void) {
   SaNtfHandleT ntfHandle;
@@ -33,7 +34,7 @@ void saNtfNotificationUnsubscribe_01(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   safassert(
@@ -59,14 +60,14 @@ void saNtfNotificationUnsubscribe_01(void) {
   myNotificationFilterHandles.securityAlarmFilterHandle = 0;
   myNotificationFilterHandles.stateChangeFilterHandle = 0;
 
-  safassert(saNtfNotificationSubscribe(&myNotificationFilterHandles, 4),
-      SA_AIS_OK);
-  rc = saNtfNotificationUnsubscribe(4);
+  safassert(NtfTest::saNtfNotificationSubscribe(
+      &myNotificationFilterHandles, 4), SA_AIS_OK);
+  rc = NtfTest::saNtfNotificationUnsubscribe(4);
   safassert(saNtfNotificationFilterFree(
           myNotificationFilterHandles.alarmFilterHandle),
       SA_AIS_OK);
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   free(myNotificationParams
      .additionalText); /* allocated in fillInDefaultValues */
   test_validate(rc, SA_AIS_OK);
@@ -86,7 +87,7 @@ void saNtfNotificationUnsubscribe_02(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   safassert(
       saNtfAlarmNotificationFilterAllocate(
@@ -111,15 +112,15 @@ void saNtfNotificationUnsubscribe_02(void) {
   myNotificationFilterHandles.securityAlarmFilterHandle = 0;
   myNotificationFilterHandles.stateChangeFilterHandle = 0;
 
-  safassert(saNtfNotificationSubscribe(&myNotificationFilterHandles, 4),
-      SA_AIS_OK);
-  rc = saNtfNotificationUnsubscribe(2);
-  safassert(saNtfNotificationUnsubscribe(4), SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSubscribe(
+      &myNotificationFilterHandles, 4), SA_AIS_OK);
+  rc = NtfTest::saNtfNotificationUnsubscribe(2);
+  safassert(NtfTest::saNtfNotificationUnsubscribe(4), SA_AIS_OK);
   safassert(saNtfNotificationFilterFree(
           myNotificationFilterHandles.alarmFilterHandle),
       SA_AIS_OK);
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   free(myNotificationParams
      .additionalText); /* allocated in fillInDefaultValues */
   test_validate(rc, SA_AIS_ERR_NOT_EXIST);
@@ -128,10 +129,10 @@ void saNtfNotificationUnsubscribe_02(void) {
 void saNtfNotificationUnsubscribe_03(void) {
   SaNtfHandleT ntfHandle;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
-  rc = saNtfNotificationUnsubscribe(44);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  rc = NtfTest::saNtfNotificationUnsubscribe(44);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_NOT_EXIST);
 }
 

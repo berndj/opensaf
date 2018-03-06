@@ -19,6 +19,7 @@
 #include <sys/time.h>
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 static SaNtfAlarmNotificationT myAlarmNotification;
 
@@ -34,7 +35,7 @@ void saNtfAlarmNotificationAllocate_01(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject),
       SA_AIS_OK);
@@ -68,7 +69,7 @@ void saNtfAlarmNotificationAllocate_01(void) {
   free(myNotificationParams.additionalText);
   safassert(saNtfNotificationFree(myAlarmNotification.notificationHandle),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -121,9 +122,9 @@ void saNtfAlarmNotificationAllocate_02(void) {
 
   free(myNotificationParams.additionalText);
   /* Create a handle and then destroy it */
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   rc = saNtfAlarmNotificationAllocate(
       ntfHandle, &myAlarmNotification,
@@ -176,7 +177,7 @@ void saNtfAlarmNotificationAllocate_03(void) {
   myAlarmParams.variableDataSize =
       myNotificationAllocationParams.variableDataSize;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject),
       SA_AIS_OK);
@@ -193,7 +194,7 @@ void saNtfAlarmNotificationAllocate_03(void) {
   }
 
   free(myNotificationParams.additionalText);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   rc = (errors == 0) ? SA_AIS_OK : SA_AIS_ERR_INVALID_PARAM;
 

@@ -18,6 +18,7 @@
 #include "osaf/apitest/util.h"
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 static int errors = 0;
 /* Indicates which test to perform in the callBack */
@@ -209,7 +210,7 @@ void saNtfPtrGetTest_common_prep(void) {
 
   resetCounters();
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCbTest, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCbTest, &ntfVersion),
       SA_AIS_OK);
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject),
       SA_AIS_OK);
@@ -238,9 +239,8 @@ void saNtfPtrGetTest_common_prep(void) {
   myNotificationFilterHandles.stateChangeFilterHandle = 0;
 
   /* subscribe */
-  safassert(saNtfNotificationSubscribe(&myNotificationFilterHandles,
-               subscriptionId),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSubscribe(
+      &myNotificationFilterHandles, subscriptionId), SA_AIS_OK);
 
   /* Create a notification and send it */
   safassert(saNtfAlarmNotificationAllocate(
@@ -285,7 +285,7 @@ void saNtfPtrGetTest_common_prep(void) {
     /* Copy the actual value */
     strncpy(charPtr, DEFAULT_ADDITIONAL_TEXT,
       strlen(DEFAULT_ADDITIONAL_TEXT) + 1);
-    if (saNtfNotificationSend(
+    if (NtfTest::saNtfNotificationSend(
       myAlarmNotification.notificationHandle) == SA_AIS_OK) {
       poll_until_received(
           ntfHandle, *myAlarmNotification.notificationHeader
@@ -297,8 +297,8 @@ void saNtfPtrGetTest_common_prep(void) {
   safassert(
       saNtfNotificationFilterFree(myAlarmFilter.notificationFilterHandle),
       SA_AIS_OK);
-  safassert(saNtfNotificationUnsubscribe(subscriptionId), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationUnsubscribe(subscriptionId), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 }
 
 /**

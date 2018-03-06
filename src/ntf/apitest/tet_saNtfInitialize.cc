@@ -17,6 +17,7 @@
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
 #include "tet_ntf.h"
+#include "ntf_api_with_try_again.h"
 
 SaAisErrorT checkReturnedVersion(SaVersionT rVersion) {
   if (rVersion.releaseCode == refVersion.releaseCode &&
@@ -28,43 +29,43 @@ SaAisErrorT checkReturnedVersion(SaVersionT rVersion) {
 }
 
 void saNtfInitialize_01(void) {
-  rc = saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion);
+  rc = NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion);
   safassert(checkReturnedVersion(ntfVersion), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
 void saNtfInitialize_02(void) {
-  rc = saNtfInitialize(NULL, &ntfCallbacks, &ntfVersion);
+  rc = NtfTest::saNtfInitialize(NULL, &ntfCallbacks, &ntfVersion);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
 void saNtfInitialize_03(void) {
-  rc = saNtfInitialize(&ntfHandle, NULL, &ntfVersion);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  rc = NtfTest::saNtfInitialize(&ntfHandle, NULL, &ntfVersion);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
 void saNtfInitialize_04(void) {
-  rc = saNtfInitialize(&ntfHandle, NULL, NULL);
+  rc = NtfTest::saNtfInitialize(&ntfHandle, NULL, NULL);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
 void saNtfInitialize_05(void) {
-  rc = saNtfInitialize(0, &ntfCallbacks, &ntfVersion);
+  rc = NtfTest::saNtfInitialize(0, &ntfCallbacks, &ntfVersion);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
 void saNtfInitialize_06(void) {
   SaVersionT version = {0, 0, 0};
-  rc = saNtfInitialize(&ntfHandle, &ntfCallbacks, &version);
+  rc = NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &version);
   safassert(checkReturnedVersion(ntfVersion), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_VERSION);
 }
 
 void saNtfInitialize_07(void) {
   SaVersionT version = {'B', 1, 1};
-  rc = saNtfInitialize(&ntfHandle, &ntfCallbacks, &version);
+  rc = NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &version);
   safassert(checkReturnedVersion(ntfVersion), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_VERSION);
 }
@@ -72,16 +73,16 @@ void saNtfInitialize_07(void) {
 void saNtfInitialize_08(void) {
   SaVersionT version = refVersion;
   version.minorVersion++;
-  rc = saNtfInitialize(&ntfHandle, &ntfCallbacks, &version);
+  rc = NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &version);
   safassert(checkReturnedVersion(ntfVersion), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 }
 
 void saNtfInitialize_09(void) {
   SaVersionT version = refVersion;
   version.majorVersion++;
-  rc = saNtfInitialize(&ntfHandle, &ntfCallbacks, &version);
+  rc = NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &version);
   safassert(checkReturnedVersion(ntfVersion), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_VERSION);
 }
@@ -89,21 +90,21 @@ void saNtfInitialize_10(void) {
   SaVersionT version = refVersion;
   version.minorVersion--;
 
-  rc = saNtfInitialize(&ntfHandle, &ntfCallbacks, &version);
+  rc = NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &version);
   test_validate(rc, SA_AIS_OK);
   safassert(checkReturnedVersion(ntfVersion), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 }
 void saNtfInitialize_11(void) {
   SaVersionT version = refVersion;
   version.majorVersion--;
   SaUint8T zeroVersion = 0;
 
-  rc = saNtfInitialize(&ntfHandle, &ntfCallbacks, &version);
+  rc = NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &version);
   safassert(checkReturnedVersion(ntfVersion), SA_AIS_OK);
   if (version.majorVersion <= zeroVersion) {
     test_validate(rc, SA_AIS_OK);
-    safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+    safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   } else {
     test_validate(rc, SA_AIS_ERR_VERSION);
   }
@@ -111,7 +112,7 @@ void saNtfInitialize_11(void) {
 
 void saNtfInitialize_12(void) {
   SaVersionT version = {'A', 0, 0};
-  rc = saNtfInitialize(&ntfHandle, &ntfCallbacks, &version);
+  rc = NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &version);
   safassert(checkReturnedVersion(ntfVersion), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_VERSION);
 }

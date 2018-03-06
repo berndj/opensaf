@@ -33,6 +33,7 @@
 #include "osaf/apitest/utest.h"
 #include "test_ntf_imcn.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 /*
  * Global variables.
@@ -105,7 +106,7 @@ static SaNtfCallbacksT ntfCallbacks = {saNtfNotificationCallback,
  */
 static inline SaAisErrorT init_ntf() {
   SaVersionT version = {'A', 0x01, 0x01};
-  return saNtfInitialize(&ntfHandle, &ntfCallbacks, &version);
+  return NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &version);
 }
 
 /**
@@ -1058,7 +1059,7 @@ static SaAisErrorT subscribe_notifications() {
             .notificationClassIds->minorId = 0;
 
         /* make the subscription */
-        errorCode = saNtfNotificationSubscribe(
+        errorCode = NtfTest::saNtfNotificationSubscribe(
             &notifFilterHandles, 1);
         saNtfNotificationFilterFree(
             notifFilterHandles.stateChangeFilterHandle);
@@ -1690,7 +1691,7 @@ void objectCreateTest_01(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -1760,7 +1761,7 @@ void objectCreateTest_01(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -1796,7 +1797,7 @@ void objectModifyTest_02(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -1836,7 +1837,7 @@ void objectModifyTest_02(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -1874,7 +1875,7 @@ void objectModifyTest_03(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -1914,7 +1915,7 @@ void objectModifyTest_03(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -1949,7 +1950,7 @@ void objectModifyTest_04(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -1988,7 +1989,7 @@ void objectModifyTest_04(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -2022,7 +2023,7 @@ void objectModifyTest_05(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -2061,7 +2062,7 @@ void objectModifyTest_05(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -2095,7 +2096,7 @@ void objectModifyTest_06(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -2134,7 +2135,7 @@ void objectModifyTest_06(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -2168,7 +2169,7 @@ void objectModifyTest_07(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -2207,7 +2208,7 @@ void objectModifyTest_07(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -2241,7 +2242,7 @@ void objectModifyTest_08(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -2280,7 +2281,7 @@ void objectModifyTest_08(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -2314,7 +2315,7 @@ void objectModifyTest_09(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -2353,7 +2354,7 @@ void objectModifyTest_09(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -2387,7 +2388,7 @@ void objectModifyTest_10(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -2426,7 +2427,7 @@ void objectModifyTest_10(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -2460,7 +2461,7 @@ void objectModifyTest_11(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -2495,7 +2496,7 @@ void objectModifyTest_11(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -2531,7 +2532,7 @@ void objectModifyTest_12(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -2570,7 +2571,7 @@ void objectModifyTest_12(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -2606,7 +2607,7 @@ void objectModifyTest_13(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -2645,7 +2646,7 @@ void objectModifyTest_13(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -2681,7 +2682,7 @@ void objectModifyTest_14(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -2719,7 +2720,7 @@ void objectModifyTest_14(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -2750,7 +2751,7 @@ void objectModifyTest_15(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -2786,7 +2787,7 @@ void objectModifyTest_15(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -2825,7 +2826,7 @@ void objectModifyTest_16(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -2870,7 +2871,7 @@ void objectModifyTest_16(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -2909,7 +2910,7 @@ void objectModifyTest_17(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -2950,7 +2951,7 @@ void objectModifyTest_17(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -3031,7 +3032,7 @@ void objectModifyTest_18(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -3151,7 +3152,7 @@ void objectModifyTest_18(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -3170,7 +3171,7 @@ void objectDeleteTest_19(void) {
 
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -3193,7 +3194,7 @@ void objectDeleteTest_19(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -3219,7 +3220,7 @@ void objectCreateTest_20(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -3321,7 +3322,7 @@ void objectCreateTest_20(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -3348,7 +3349,7 @@ void objectModifyTest_21(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -3400,7 +3401,7 @@ void objectModifyTest_21(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -3429,7 +3430,7 @@ void objectModifyTest_22(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -3479,7 +3480,7 @@ void objectModifyTest_22(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -3505,7 +3506,7 @@ void objectModifyTest_23(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -3555,7 +3556,7 @@ void objectModifyTest_23(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -3581,7 +3582,7 @@ void objectModifyTest_24(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -3631,7 +3632,7 @@ void objectModifyTest_24(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -3657,7 +3658,7 @@ void objectModifyTest_25(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -3707,7 +3708,7 @@ void objectModifyTest_25(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -3733,7 +3734,7 @@ void objectModifyTest_26(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -3783,7 +3784,7 @@ void objectModifyTest_26(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -3809,7 +3810,7 @@ void objectModifyTest_27(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -3859,7 +3860,7 @@ void objectModifyTest_27(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -3885,7 +3886,7 @@ void objectModifyTest_28(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -3935,7 +3936,7 @@ void objectModifyTest_28(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -3961,7 +3962,7 @@ void objectModifyTest_29(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -4010,7 +4011,7 @@ void objectModifyTest_29(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -4036,7 +4037,7 @@ void objectModifyTest_30(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -4082,7 +4083,7 @@ void objectModifyTest_30(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -4109,7 +4110,7 @@ void objectModifyTest_31(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -4158,7 +4159,7 @@ void objectModifyTest_31(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -4185,7 +4186,7 @@ void objectModifyTest_32(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -4234,7 +4235,7 @@ void objectModifyTest_32(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -4261,7 +4262,7 @@ void objectModifyTest_33(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -4311,7 +4312,7 @@ void objectModifyTest_33(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -4336,7 +4337,7 @@ void objectModifyTest_34(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -4382,7 +4383,7 @@ void objectModifyTest_34(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -4412,7 +4413,7 @@ void objectModifyTest_35(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -4471,7 +4472,7 @@ void objectModifyTest_35(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -4501,7 +4502,7 @@ void objectModifyTest_36(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -4555,7 +4556,7 @@ void objectModifyTest_36(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -4610,7 +4611,7 @@ void objectModifyTest_37(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -4751,7 +4752,7 @@ void objectModifyTest_37(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -4843,7 +4844,7 @@ void objectMultiCcbTest_38(void) {
      */
     int dwCnt = 0;
     while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-      saNtfDispatch(ntfHandle, SA_DISPATCH_ONE);
+      NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ONE);
       if (!rec_notif_data.populated)
         usleep(100);
     }
@@ -4945,7 +4946,7 @@ void objectMultiCcbTest_38(void) {
     noOfNotifs++;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -5072,7 +5073,7 @@ void objectMultiCcbTest_39(void) {
      */
     int dwCnt = 0;
     while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-      saNtfDispatch(ntfHandle, SA_DISPATCH_ONE);
+      NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ONE);
       if (!rec_notif_data.populated)
         usleep(100);
     }
@@ -5226,7 +5227,7 @@ void objectMultiCcbTest_39(void) {
     noOfNotifs++;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -5249,7 +5250,7 @@ void objectDeleteTest_40(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -5286,7 +5287,7 @@ void objectDeleteTest_40(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -5329,7 +5330,7 @@ void objectCreateTest_3401(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -5399,7 +5400,7 @@ void objectCreateTest_3401(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -5435,7 +5436,7 @@ void objectModifyTest_3402(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -5475,7 +5476,7 @@ void objectModifyTest_3402(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -5510,7 +5511,7 @@ void objectModifyTest_3403(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -5549,7 +5550,7 @@ void objectModifyTest_3403(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -5568,7 +5569,7 @@ void objectDeleteTest_3404(void) {
 
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(10000);
   }
@@ -5591,7 +5592,7 @@ void objectDeleteTest_3404(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -5633,7 +5634,7 @@ void objectCreateTest_3501(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -5704,7 +5705,7 @@ void objectCreateTest_3501(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -5743,7 +5744,7 @@ void objectModifyTest_3502(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -5783,7 +5784,7 @@ void objectModifyTest_3502(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -5819,7 +5820,7 @@ void objectModifyTest_3503(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -5858,7 +5859,7 @@ void objectModifyTest_3503(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -5885,7 +5886,7 @@ void objectCreateTest_3505(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -5988,7 +5989,7 @@ void objectCreateTest_3505(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -6019,7 +6020,7 @@ void objectModifyTest_3506(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -6069,7 +6070,7 @@ void objectModifyTest_3506(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 
@@ -6098,7 +6099,7 @@ void objectModifyTest_3507(void) {
    */
   int dwCnt = 0;
   while (dwCnt++ < POLLWAIT && !rec_notif_data.populated) {
-    saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+    NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
     if (!rec_notif_data.populated)
       usleep(100);
   }
@@ -6147,7 +6148,7 @@ void objectModifyTest_3507(void) {
     error = SA_AIS_ERR_FAILED_OPERATION;
   }
   safassert(unsub_notifications(), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(error, SA_AIS_OK);
 }
 

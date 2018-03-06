@@ -18,6 +18,7 @@
 #include "osaf/apitest/util.h"
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 /* Parameter stuct instances */
 static saNotificationAllocationParamsT myNotificationAllocationParams;
@@ -29,20 +30,18 @@ static saNotificationParamsT myNotificationParams;
  * A successful finalization of the reader interface.
  */
 void saNtfNotificationReadFinalize_01(void) {
-  SaNtfSearchCriteriaT searchCriteria;
+  SaNtfSearchCriteriaT searchCriteria = {SA_NTF_SEARCH_AT_OR_AFTER_TIME, 0, 0};
   SaNtfAlarmNotificationFilterT myAlarmFilter;
   SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles = {
       0, 0, 0, 0, 0};
   SaNtfReadHandleT readHandle;
   SaNtfHandleT ntfHandle;
 
-  searchCriteria.searchMode = SA_NTF_SEARCH_AT_OR_AFTER_TIME;
-
   fillInDefaultValues(&myNotificationAllocationParams,
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   myNotificationFilterAllocationParams.numPerceivedSeverities = 0;
   safassert(
@@ -68,16 +67,14 @@ void saNtfNotificationReadFinalize_01(void) {
   myNotificationFilterHandles.alarmFilterHandle =
       myAlarmFilter.notificationFilterHandle;
 
-  safassert(saNtfNotificationReadInitialize(searchCriteria,
-              &myNotificationFilterHandles,
-              &readHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationReadInitialize(
+      searchCriteria, &myNotificationFilterHandles, &readHandle), SA_AIS_OK);
 
-  rc = saNtfNotificationReadFinalize(readHandle);
+  rc = NtfTest::saNtfNotificationReadFinalize(readHandle);
   safassert(
       saNtfNotificationFilterFree(myAlarmFilter.notificationFilterHandle),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   free(myNotificationParams.additionalText);
   test_validate(rc, SA_AIS_OK);
 }

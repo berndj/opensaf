@@ -18,13 +18,14 @@
 #include "osaf/apitest/util.h"
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 void saNtfAttributeChangeNotificationFilterAllocate_01(void) {
   SaNtfHandleT ntfHandle;
   SaNtfAttributeChangeNotificationFilterT myAttributeChangeFilter;
   SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   if ((rc = saNtfAttributeChangeNotificationFilterAllocate(
@@ -55,7 +56,7 @@ void saNtfAttributeChangeNotificationFilterAllocate_01(void) {
         SA_AIS_OK);
   }
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -72,9 +73,9 @@ void saNtfAttributeChangeNotificationFilterAllocate_03(void) {
   SaNtfHandleT ntfHandle;
   SaNtfAttributeChangeNotificationFilterT myAttributeChangeFilter;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   rc = saNtfAttributeChangeNotificationFilterAllocate(
       ntfHandle, &myAttributeChangeFilter, 0, 0, 0, 1, 0);
@@ -85,13 +86,13 @@ void saNtfAttributeChangeNotificationFilterAllocate_03(void) {
 void saNtfAttributeChangeNotificationFilterAllocate_04(void) {
   SaNtfHandleT ntfHandle;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   rc = saNtfAttributeChangeNotificationFilterAllocate(ntfHandle, NULL, 0,
                   0, 0, 1, 0);
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 

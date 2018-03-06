@@ -19,6 +19,7 @@
 #include "osaf/apitest/util.h"
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 char lock_cmd[80];
 char unlock_cmd[80];
@@ -106,12 +107,12 @@ void ntf_clm_A0101_05() {
 
 void ntf_clm_01() {
   rc_assert(lock_clm_node(), 0);
-  rc = saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion);
+  rc = NtfTest::saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion);
   test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
   rc_assert(unlock_clm_node(), 0);
 }
 void ntf_clm_02() {
-  safassert(saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   rc_assert(lock_clm_node(), 0);
   rc = saNtfSelectionObjectGet(ntf_Handle, &selectionObject);
@@ -119,24 +120,24 @@ void ntf_clm_02() {
   rc_assert(unlock_clm_node(), 0);
 }
 void ntf_clm_03() {
-  safassert(saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   rc_assert(lock_clm_node(), 0);
-  rc = saNtfDispatch(ntf_Handle, SA_DISPATCH_ALL);
+  rc = NtfTest::saNtfDispatch(ntf_Handle, SA_DISPATCH_ALL);
   test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
   rc_assert(unlock_clm_node(), 0);
 }
 void ntf_clm_04() {
-  safassert(saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   rc_assert(lock_clm_node(), 0);
-  rc = saNtfFinalize(ntf_Handle);
+  rc = NtfTest::saNtfFinalize(ntf_Handle);
   test_validate(rc, SA_AIS_OK);
   rc_assert(unlock_clm_node(), 0);
 }
 
 void ntf_clm_not_allocate_APIs(SaNtfNotificationTypeT notificationtype) {
-  safassert(saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   rc_assert(lock_clm_node(), 0);
   switch (notificationtype) {
@@ -165,7 +166,7 @@ void ntf_clm_not_allocate_APIs(SaNtfNotificationTypeT notificationtype) {
     break;
   }
   rc_assert(unlock_clm_node(), 0);
-  safassert(saNtfFinalize(ntf_Handle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntf_Handle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
 }
 
@@ -180,7 +181,7 @@ void ntf_clm_08() { ntf_clm_not_allocate_APIs(SA_NTF_TYPE_ALARM); }
 void ntf_clm_09() { ntf_clm_not_allocate_APIs(SA_NTF_TYPE_SECURITY_ALARM); }
 
 void ntf_clm_10() {
-  safassert(saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   rc = saNtfStateChangeNotificationAllocate(ntf_Handle, &st_not, 0, 0, 0,
               0, 0);
@@ -188,14 +189,14 @@ void ntf_clm_10() {
   fill_head(&st_not.notificationHeader);
   *(st_not.notificationHeader.eventType) = SA_NTF_OBJECT_STATE_CHANGE;
   rc_assert(lock_clm_node(), 0);
-  rc = saNtfNotificationSend(st_not.notificationHandle);
+  rc = NtfTest::saNtfNotificationSend(st_not.notificationHandle);
   rc_assert(unlock_clm_node(), 0);
-  safassert(saNtfFinalize(ntf_Handle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntf_Handle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
 }
 
 void ntf_clm_11() {
-  safassert(saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   rc = saNtfStateChangeNotificationAllocate(ntf_Handle, &st_not, 0, 0, 0,
               0, 0);
@@ -205,12 +206,12 @@ void ntf_clm_11() {
   rc_assert(lock_clm_node(), 0);
   rc = saNtfNotificationFree(st_not.notificationHandle);
   rc_assert(unlock_clm_node(), 0);
-  safassert(saNtfFinalize(ntf_Handle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntf_Handle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
 }
 
 void ntf_clm_filter_allocate_APIs(SaNtfNotificationTypeT notificationtype) {
-  safassert(saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   rc_assert(lock_clm_node(), 0);
   switch (notificationtype) {
@@ -238,7 +239,7 @@ void ntf_clm_filter_allocate_APIs(SaNtfNotificationTypeT notificationtype) {
     break;
   }
   rc_assert(unlock_clm_node(), 0);
-  safassert(saNtfFinalize(ntf_Handle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntf_Handle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
 }
 void ntf_clm_12() { ntf_clm_filter_allocate_APIs(SA_NTF_TYPE_STATE_CHANGE); }
@@ -251,7 +252,7 @@ void ntf_clm_14() {
 void ntf_clm_15() { ntf_clm_filter_allocate_APIs(SA_NTF_TYPE_ALARM); }
 void ntf_clm_16() { ntf_clm_filter_allocate_APIs(SA_NTF_TYPE_SECURITY_ALARM); }
 void ntf_clm_17() {
-  safassert(saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   rc = saNtfStateChangeNotificationFilterAllocate(ntf_Handle, &sc_Filter,
               0, 0, 0, 0, 0, 0);
@@ -259,11 +260,11 @@ void ntf_clm_17() {
   rc_assert(lock_clm_node(), 0);
   rc = saNtfNotificationFilterFree(sc_Filter.notificationFilterHandle);
   rc_assert(unlock_clm_node(), 0);
-  safassert(saNtfFinalize(ntf_Handle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntf_Handle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
 }
 void ntf_clm_18() {
-  safassert(saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   rc = saNtfStateChangeNotificationFilterAllocate(ntf_Handle, &sc_Filter,
               0, 0, 0, 0, 0, 0);
@@ -276,14 +277,14 @@ void ntf_clm_18() {
   all_NotificationFilterHandles.securityAlarmFilterHandle = 0;
 
   rc_assert(lock_clm_node(), 0);
-  rc = saNtfNotificationSubscribe(&all_NotificationFilterHandles, 1);
+  rc = NtfTest::saNtfNotificationSubscribe(&all_NotificationFilterHandles, 1);
   rc_assert(unlock_clm_node(), 0);
-  safassert(saNtfFinalize(ntf_Handle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntf_Handle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
 }
 
 void ntf_clm_19() {
-  safassert(saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   rc = saNtfStateChangeNotificationFilterAllocate(ntf_Handle, &sc_Filter,
               0, 0, 0, 0, 0, 0);
@@ -295,17 +296,17 @@ void ntf_clm_19() {
   all_NotificationFilterHandles.alarmFilterHandle = 0;
   all_NotificationFilterHandles.securityAlarmFilterHandle = 0;
 
-  safassert(saNtfNotificationSubscribe(&all_NotificationFilterHandles, 1),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSubscribe(
+      &all_NotificationFilterHandles, 1), SA_AIS_OK);
   rc_assert(lock_clm_node(), 0);
   rc = saNtfNotificationUnsubscribe(1);
   rc_assert(unlock_clm_node(), 0);
-  safassert(saNtfFinalize(ntf_Handle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntf_Handle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
 }
 
 void ntf_clm_20() {
-  safassert(saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   rc = saNtfAlarmNotificationFilterAllocate(ntf_Handle, &alarm_Filter, 0,
               0, 0, 0, 0, 0, 0);
@@ -318,14 +319,14 @@ void ntf_clm_20() {
   all_NotificationFilterHandles.securityAlarmFilterHandle = 0;
   search_criteria.searchMode = SA_NTF_SEARCH_ONLY_FILTER;
   rc_assert(lock_clm_node(), 0);
-  rc = saNtfNotificationReadInitialize(
+  rc = NtfTest::saNtfNotificationReadInitialize(
       search_criteria, &all_NotificationFilterHandles, &readHandle);
   rc_assert(unlock_clm_node(), 0);
-  safassert(saNtfFinalize(ntf_Handle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntf_Handle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
 }
 void ntf_clm_21() {
-  safassert(saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   rc = saNtfAlarmNotificationFilterAllocate(ntf_Handle, &alarm_Filter, 0,
               0, 0, 0, 0, 0, 0);
@@ -337,19 +338,17 @@ void ntf_clm_21() {
       alarm_Filter.notificationFilterHandle;
   all_NotificationFilterHandles.securityAlarmFilterHandle = 0;
   search_criteria.searchMode = SA_NTF_SEARCH_ONLY_FILTER;
-  safassert(
-      saNtfNotificationReadInitialize(
-    search_criteria, &all_NotificationFilterHandles, &readHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationReadInitialize(
+    search_criteria, &all_NotificationFilterHandles, &readHandle), SA_AIS_OK);
   rc_assert(lock_clm_node(), 0);
-  rc = saNtfNotificationReadNext(readHandle, SA_NTF_SEARCH_YOUNGER,
-               &notification);
+  rc = NtfTest::saNtfNotificationReadNext(
+      readHandle, SA_NTF_SEARCH_YOUNGER, &notification);
   rc_assert(unlock_clm_node(), 0);
-  safassert(saNtfFinalize(ntf_Handle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntf_Handle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
 }
 void ntf_clm_22() {
-  safassert(saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntf_Handle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   rc = saNtfAlarmNotificationFilterAllocate(ntf_Handle, &alarm_Filter, 0,
               0, 0, 0, 0, 0, 0);
@@ -361,14 +360,12 @@ void ntf_clm_22() {
       alarm_Filter.notificationFilterHandle;
   all_NotificationFilterHandles.securityAlarmFilterHandle = 0;
   search_criteria.searchMode = SA_NTF_SEARCH_ONLY_FILTER;
-  safassert(
-      saNtfNotificationReadInitialize(
-    search_criteria, &all_NotificationFilterHandles, &readHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationReadInitialize(
+    search_criteria, &all_NotificationFilterHandles, &readHandle), SA_AIS_OK);
   rc_assert(lock_clm_node(), 0);
-  rc = saNtfNotificationReadFinalize(readHandle);
+  rc = NtfTest::saNtfNotificationReadFinalize(readHandle);
   rc_assert(unlock_clm_node(), 0);
-  safassert(saNtfFinalize(ntf_Handle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntf_Handle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_UNAVAILABLE);
 }
 
@@ -477,7 +474,7 @@ __attribute__((constructor)) static void ntf_clm_constructor(void) {
       "saNtfDispatch() with A0102 on CLM locked node - SA_AIS_ERR_UNAVAILABLE");
   test_case_add(
       40, ntf_clm_04,
-      "saNtfFinalize() with A0102 on CLM locked node - SA_AIS_OK");
+      "NtfTest::saNtfFinalize() with A0102 on CLM locked node - SA_AIS_OK");
   test_case_add(
       40, ntf_clm_05,
       "saNtfStateChangeNotificationAllocate() with A0102 on CLM locked node - SA_AIS_ERR_UNAVAILABLE");

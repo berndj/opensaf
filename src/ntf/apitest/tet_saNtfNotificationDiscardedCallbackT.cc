@@ -21,6 +21,7 @@
 #include <pthread.h>
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 #define NUM_NOTIF 2
 static SaNtfIdentifierT cb_notId[NUM_NOTIF];
@@ -106,7 +107,7 @@ void saNtfNotificationDiscardedCallbackT_01(void) {
   //   test_validate(rc, SA_AIS_OK);       /* See above             */
   //   return;                      /*                       */
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCbTest, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCbTest, &ntfVersion),
       SA_AIS_OK);
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject),
       SA_AIS_OK);
@@ -177,9 +178,8 @@ void saNtfNotificationDiscardedCallbackT_01(void) {
   *(myAlarmNotification.probableCause) =
       myNotificationParams.probableCause;
   for (i = 0; i < NUM_NOTIF; i++) {
-    if ((rc = saNtfNotificationSend(
-       myAlarmNotification.notificationHandle)) !=
-        SA_AIS_OK) {
+    if ((rc = NtfTest::saNtfNotificationSend(
+       myAlarmNotification.notificationHandle)) != SA_AIS_OK) {
       if (verbose) {
         printf("send failed rc: %d\n", rc);
       }
@@ -194,7 +194,7 @@ void saNtfNotificationDiscardedCallbackT_01(void) {
   fds[0].events = POLLIN;
   ret = poll(fds, 1, 10000);
   assert(ret > 0);
-  safassert(saNtfDispatch(ntfHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+  safassert(NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL), SA_AIS_OK);
 
   rc = SA_AIS_ERR_FAILED_OPERATION;
   for (i = 0; i < NUM_NOTIF; i++) {
@@ -223,8 +223,8 @@ void saNtfNotificationDiscardedCallbackT_01(void) {
       SA_AIS_OK);
   safassert(saNtfNotificationFree(myAlarmNotification.notificationHandle),
       SA_AIS_OK);
-  safassert(saNtfNotificationUnsubscribe(my_subid), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationUnsubscribe(my_subid), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 

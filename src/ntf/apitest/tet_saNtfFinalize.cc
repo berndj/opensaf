@@ -14,30 +14,31 @@
  * Author(s): Ericsson AB
  *
  */
+#include <unistd.h>
+#include <pthread.h>
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
 #include "tet_ntf.h"
-#include <unistd.h>
-#include <pthread.h>
+#include "ntf_api_with_try_again.h"
 
 SaNtfStateChangeNotificationT myNotification;
 void saNtfFinalize_01(void) {
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
-  rc = saNtfFinalize(ntfHandle);
+  rc = NtfTest::saNtfFinalize(ntfHandle);
   test_validate(rc, SA_AIS_OK);
 }
 
 void saNtfFinalize_02(void) {
-  rc = saNtfFinalize(-1);
+  rc = NtfTest::saNtfFinalize(-1);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
 void saNtfFinalize_03(void) {
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
-  rc = saNtfFinalize(ntfHandle);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
+  rc = NtfTest::saNtfFinalize(ntfHandle);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
@@ -55,7 +56,7 @@ SaAisErrorT subscribe() {
   obcf.notificationFilterHeader.notificationClassIds->minorId = 222;
   FilterHandles.objectCreateDeleteFilterHandle =
       obcf.notificationFilterHandle;
-  ret = saNtfNotificationSubscribe(&FilterHandles, 111);
+  ret = NtfTest::saNtfNotificationSubscribe(&FilterHandles, 111);
   return ret;
 }
 
@@ -67,13 +68,13 @@ void *unsubscribe(void *arg) {
 
 void saNtfFinalize_04() {
   SaAisErrorT ret1, ret2;
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   safassert(subscribe(), SA_AIS_OK);
   pthread_t thread;
   pthread_create(&thread, NULL, unsubscribe, (void *)&ret2);
   usleep(1);
-  ret1 = saNtfFinalize(ntfHandle);
+  ret1 = NtfTest::saNtfFinalize(ntfHandle);
   pthread_join(thread, NULL);
   printf("    Return value from thread:%u\n", ret2);
 
@@ -132,12 +133,12 @@ done:
 }
 void saNtfFinalize_05() {
   SaAisErrorT ret1, ret2;
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   pthread_t thread;
   pthread_create(&thread, NULL, allocate, (void *)&ret2);
   usleep(1);
-  ret1 = saNtfFinalize(ntfHandle);
+  ret1 = NtfTest::saNtfFinalize(ntfHandle);
   pthread_join(thread, NULL);
   printf("    Return value from thread:%u\n", ret2);
 

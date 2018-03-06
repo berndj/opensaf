@@ -27,6 +27,7 @@
 #include "sa_error.h"
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 #define CALLBACK_USED 1
 #define TST_TAG_ND "\nTAG_ND\n" /* Tag for take SC nodes down */
@@ -187,7 +188,7 @@ void poll_until_received(SaNtfHandleT ntfHandle, SaNtfIdentifierT wanted_id) {
         perror(NULL);
       break;
     }
-    safassert(saNtfDispatch(ntfHandle, SA_DISPATCH_ALL), SA_AIS_OK);
+    safassert(NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL), SA_AIS_OK);
   } while (last_not_id != wanted_id);
 }
 

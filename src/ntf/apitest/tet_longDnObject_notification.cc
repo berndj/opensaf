@@ -23,7 +23,9 @@
 #include <sys/types.h>
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 //#include "osaf/apitest/util.h"
+
 #define NOTIFYING_OBJECT_TEST "AVND"
 #define NTF_REST_MAX_IDS 30
 
@@ -607,7 +609,7 @@ void extAdditionalInfoTest(void) {
 
   resetCounters();
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCbTest, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCbTest, &ntfVersion),
       SA_AIS_OK);
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject),
       SA_AIS_OK);
@@ -627,9 +629,8 @@ void extAdditionalInfoTest(void) {
   myNotificationFilterHandles.securityAlarmFilterHandle = 0;
   myNotificationFilterHandles.stateChangeFilterHandle = 0;
 
-  safassert(saNtfNotificationSubscribe(&myNotificationFilterHandles,
-               subscriptionId),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSubscribe(
+      &myNotificationFilterHandles, subscriptionId), SA_AIS_OK);
 
   /* Create a notification and send it */
   safassert(saNtfAlarmNotificationAllocate(
@@ -654,8 +655,8 @@ void extAdditionalInfoTest(void) {
   myAlarmNotification.thresholdInformation->observedValue.uint32Val = 567;
   myAlarmNotification.thresholdInformation->armTime = SA_TIME_UNKNOWN;
 
-  safassert(saNtfNotificationSend(myAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myAlarmNotification.notificationHandle), SA_AIS_OK);
 
   /* only this notification should be caught */
   ok_ids.ids[ok_ids.length++] =
@@ -666,8 +667,8 @@ void extAdditionalInfoTest(void) {
   /* Resend notification with short dn object header */
   saAisNameLend(DEFAULT_NOTIFICATION_OBJECT, head->notificationObject);
   saAisNameLend(DEFAULT_NOTIFYING_OBJECT, head->notifyingObject);
-  safassert(saNtfNotificationSend(myAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myAlarmNotification.notificationHandle), SA_AIS_OK);
 
   if (ntfRecieved.alarmFilterHandle != 1 ||
       ntfRecieved.attributeChangeFilterHandle != 0 ||
@@ -681,9 +682,9 @@ void extAdditionalInfoTest(void) {
   safassert(
       saNtfNotificationFilterFree(myAlarmFilter.notificationFilterHandle),
       SA_AIS_OK);
-  safassert(saNtfNotificationUnsubscribe(subscriptionId), SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationUnsubscribe(subscriptionId), SA_AIS_OK);
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   rc = check_errors();
   test_validate(rc, SA_AIS_OK);
   restoreEnv();
@@ -704,7 +705,7 @@ void extFilterNotificationTest(void) {
 
   resetCounters();
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCbTest, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCbTest, &ntfVersion),
       SA_AIS_OK);
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject),
       SA_AIS_OK);
@@ -724,9 +725,8 @@ void extFilterNotificationTest(void) {
   myNotificationFilterHandles.securityAlarmFilterHandle = 0;
   myNotificationFilterHandles.stateChangeFilterHandle = 0;
 
-  safassert(saNtfNotificationSubscribe(&myNotificationFilterHandles,
-               subscriptionId),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSubscribe(
+      &myNotificationFilterHandles, subscriptionId), SA_AIS_OK);
 
   /* Create a notification and send it */
   safassert(saNtfAlarmNotificationAllocate(
@@ -753,37 +753,37 @@ void extFilterNotificationTest(void) {
   myAlarmNotification.thresholdInformation->armTime = SA_TIME_UNKNOWN;
 
   *(head->eventType) = SA_NTF_ALARM_EQUIPMENT;
-  safassert(saNtfNotificationSend(myAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myAlarmNotification.notificationHandle), SA_AIS_OK);
 
   saAisNameLend((SaConstStringT)&test_longdn_object_1,
           head->notificationObject);
-  safassert(saNtfNotificationSend(myAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myAlarmNotification.notificationHandle), SA_AIS_OK);
 
   extFillHeader(head);
   saAisNameLend(NOTIFYING_OBJECT_TEST, head->notifyingObject);
-  safassert(saNtfNotificationSend(myAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myAlarmNotification.notificationHandle), SA_AIS_OK);
 
   extFillHeader(head);
   head->notificationClassId->vendorId = 199;
-  safassert(saNtfNotificationSend(myAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myAlarmNotification.notificationHandle), SA_AIS_OK);
 
   extFillHeader(head);
   head->notificationClassId->majorId = 89;
-  safassert(saNtfNotificationSend(myAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myAlarmNotification.notificationHandle), SA_AIS_OK);
 
   extFillHeader(head);
   head->notificationClassId->minorId = 24;
-  safassert(saNtfNotificationSend(myAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myAlarmNotification.notificationHandle), SA_AIS_OK);
 
   extFillHeader(head);
-  safassert(saNtfNotificationSend(myAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myAlarmNotification.notificationHandle), SA_AIS_OK);
 
   /* only this notification should be caught */
   ok_ids.ids[ok_ids.length++] =
@@ -803,9 +803,9 @@ void extFilterNotificationTest(void) {
   safassert(
       saNtfNotificationFilterFree(myAlarmFilter.notificationFilterHandle),
       SA_AIS_OK);
-  safassert(saNtfNotificationUnsubscribe(subscriptionId), SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationUnsubscribe(subscriptionId), SA_AIS_OK);
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   rc = check_errors();
   test_validate(rc, SA_AIS_OK);
   restoreEnv();
@@ -825,7 +825,7 @@ void extAlarmNotificationTest(void) {
 
   resetCounters();
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCbTest, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCbTest, &ntfVersion),
       SA_AIS_OK);
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject),
       SA_AIS_OK);
@@ -846,9 +846,8 @@ void extAlarmNotificationTest(void) {
   myNotificationFilterHandles.securityAlarmFilterHandle = 0;
   myNotificationFilterHandles.stateChangeFilterHandle = 0;
 
-  safassert(saNtfNotificationSubscribe(&myNotificationFilterHandles,
-               subscriptionId),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSubscribe(
+      &myNotificationFilterHandles, subscriptionId), SA_AIS_OK);
 
   /* Create a notification and send it */
   safassert(saNtfAlarmNotificationAllocate(
@@ -861,19 +860,19 @@ void extAlarmNotificationTest(void) {
   *(myAlarmNotification.perceivedSeverity) = SA_NTF_SEVERITY_CRITICAL;
   *(myAlarmNotification.probableCause) = SA_NTF_CALL_ESTABLISHMENT_ERROR;
   *myAlarmNotification.trend = SA_NTF_TREND_NO_CHANGE;
-  safassert(saNtfNotificationSend(myAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myAlarmNotification.notificationHandle), SA_AIS_OK);
 
   *(myAlarmNotification.perceivedSeverity) = SA_NTF_SEVERITY_WARNING;
   *(myAlarmNotification.probableCause) = SA_NTF_PRESSURE_UNACCEPTABLE;
-  safassert(saNtfNotificationSend(myAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myAlarmNotification.notificationHandle), SA_AIS_OK);
 
   *(myAlarmNotification.perceivedSeverity) = SA_NTF_SEVERITY_WARNING;
   *(myAlarmNotification.probableCause) = SA_NTF_BANDWIDTH_REDUCED;
   *myAlarmNotification.trend = SA_NTF_TREND_NO_CHANGE;
-  safassert(saNtfNotificationSend(myAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myAlarmNotification.notificationHandle), SA_AIS_OK);
 
   extFillHeader(&myAlarmNotification.notificationHeader);
   /* These 3 fields is filter items */
@@ -888,8 +887,8 @@ void extAlarmNotificationTest(void) {
       .uint32Val = 100;
   myAlarmNotification.thresholdInformation->observedValue.uint32Val = 567;
   myAlarmNotification.thresholdInformation->armTime = SA_TIME_UNKNOWN;
-  safassert(saNtfNotificationSend(myAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myAlarmNotification.notificationHandle), SA_AIS_OK);
   /* only this notification should be caught*/
   ok_ids.ids[ok_ids.length++] =
       *myAlarmNotification.notificationHeader.notificationId;
@@ -908,8 +907,8 @@ void extAlarmNotificationTest(void) {
       saNtfNotificationFilterFree(myAlarmFilter.notificationFilterHandle),
       SA_AIS_OK);
 
-  safassert(saNtfNotificationUnsubscribe(subscriptionId), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationUnsubscribe(subscriptionId), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   rc = check_errors();
   test_validate(rc, SA_AIS_OK);
   restoreEnv();
@@ -925,7 +924,7 @@ void extObjectCreateDeleteNotificationTest(void) {
 
   resetCounters();
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCbTest, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCbTest, &ntfVersion),
       SA_AIS_OK);
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject),
       SA_AIS_OK);
@@ -945,28 +944,24 @@ void extObjectCreateDeleteNotificationTest(void) {
       myFilter.notificationFilterHandle;
   myNotificationFilterHandles.securityAlarmFilterHandle = 0;
   myNotificationFilterHandles.stateChangeFilterHandle = 0;
-  safassert(saNtfNotificationSubscribe(&myNotificationFilterHandles,
-               subscriptionId),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSubscribe(
+      &myNotificationFilterHandles, subscriptionId), SA_AIS_OK);
   extCreateObjectCreateDeleteNotification(ntfHandle,
             &myObjCrDelNotification);
   *(myObjCrDelNotification.sourceIndicator) = SA_NTF_OBJECT_OPERATION;
-  safassert(
-      saNtfNotificationSend(myObjCrDelNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myObjCrDelNotification.notificationHandle), SA_AIS_OK);
   /* this notification should be caught*/
   ok_ids.ids[ok_ids.length++] =
       *myObjCrDelNotification.notificationHeader.notificationId;
 
   *(myObjCrDelNotification.sourceIndicator) = SA_NTF_UNKNOWN_OPERATION;
-  safassert(
-      saNtfNotificationSend(myObjCrDelNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myObjCrDelNotification.notificationHandle), SA_AIS_OK);
 
   *(myObjCrDelNotification.sourceIndicator) = SA_NTF_MANAGEMENT_OPERATION;
-  safassert(
-      saNtfNotificationSend(myObjCrDelNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myObjCrDelNotification.notificationHandle), SA_AIS_OK);
   /* this notification should be caught*/
   ok_ids.ids[ok_ids.length++] =
       *myObjCrDelNotification.notificationHeader.notificationId;
@@ -986,8 +981,8 @@ void extObjectCreateDeleteNotificationTest(void) {
       saNtfNotificationFilterFree(myFilter.notificationFilterHandle),
       SA_AIS_OK);
 
-  safassert(saNtfNotificationUnsubscribe(subscriptionId), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationUnsubscribe(subscriptionId), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   rc = check_errors();
   test_validate(rc, SA_AIS_OK);
 }
@@ -1002,7 +997,7 @@ void extAttributeChangeNotificationTest(void) {
 
   resetCounters();
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCbTest, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCbTest, &ntfVersion),
       SA_AIS_OK);
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject),
       SA_AIS_OK);
@@ -1023,29 +1018,25 @@ void extAttributeChangeNotificationTest(void) {
   myNotificationFilterHandles.objectCreateDeleteFilterHandle = 0;
   myNotificationFilterHandles.securityAlarmFilterHandle = 0;
   myNotificationFilterHandles.stateChangeFilterHandle = 0;
-  safassert(saNtfNotificationSubscribe(&myNotificationFilterHandles,
-               subscriptionId),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSubscribe(
+      &myNotificationFilterHandles, subscriptionId), SA_AIS_OK);
   extCreateAttributeChangeNotification(ntfHandle,
                &myAttrChangeNotification);
   *(myAttrChangeNotification.sourceIndicator) = SA_NTF_OBJECT_OPERATION;
-  safassert(
-      saNtfNotificationSend(myAttrChangeNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myAttrChangeNotification.notificationHandle), SA_AIS_OK);
   /* this notification should be caught*/
   ok_ids.ids[ok_ids.length++] =
       *myAttrChangeNotification.notificationHeader.notificationId;
 
   *(myAttrChangeNotification.sourceIndicator) = SA_NTF_UNKNOWN_OPERATION;
-  safassert(
-      saNtfNotificationSend(myAttrChangeNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myAttrChangeNotification.notificationHandle), SA_AIS_OK);
 
   *(myAttrChangeNotification.sourceIndicator) =
       SA_NTF_MANAGEMENT_OPERATION;
-  safassert(
-      saNtfNotificationSend(myAttrChangeNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myAttrChangeNotification.notificationHandle), SA_AIS_OK);
   /* this notification should be caught*/
   ok_ids.ids[ok_ids.length++] =
       *myAttrChangeNotification.notificationHeader.notificationId;
@@ -1065,8 +1056,8 @@ void extAttributeChangeNotificationTest(void) {
       saNtfNotificationFilterFree(myFilter.notificationFilterHandle),
       SA_AIS_OK);
 
-  safassert(saNtfNotificationUnsubscribe(subscriptionId), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationUnsubscribe(subscriptionId), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   rc = check_errors();
   test_validate(rc, SA_AIS_OK);
 }
@@ -1081,7 +1072,7 @@ void extStateChangeNotificationTest(void) {
 
   resetCounters();
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCbTest, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCbTest, &ntfVersion),
       SA_AIS_OK);
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject),
       SA_AIS_OK);
@@ -1102,29 +1093,25 @@ void extStateChangeNotificationTest(void) {
   myNotificationFilterHandles.securityAlarmFilterHandle = 0;
   myNotificationFilterHandles.stateChangeFilterHandle =
       myFilter.notificationFilterHandle;
-  safassert(saNtfNotificationSubscribe(&myNotificationFilterHandles,
-               subscriptionId),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSubscribe(
+      &myNotificationFilterHandles, subscriptionId), SA_AIS_OK);
 
   extCreateStateChangeNotification(ntfHandle, &myStateChangeNotification);
   *(myStateChangeNotification.sourceIndicator) = SA_NTF_OBJECT_OPERATION;
-  safassert(
-      saNtfNotificationSend(myStateChangeNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myStateChangeNotification.notificationHandle), SA_AIS_OK);
   /* this notification should be caught*/
   ok_ids.ids[ok_ids.length++] =
       *myStateChangeNotification.notificationHeader.notificationId;
 
   *(myStateChangeNotification.sourceIndicator) = SA_NTF_UNKNOWN_OPERATION;
-  safassert(
-      saNtfNotificationSend(myStateChangeNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myStateChangeNotification.notificationHandle), SA_AIS_OK);
 
   *(myStateChangeNotification.sourceIndicator) =
       SA_NTF_MANAGEMENT_OPERATION;
-  safassert(
-      saNtfNotificationSend(myStateChangeNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      myStateChangeNotification.notificationHandle), SA_AIS_OK);
   /* this notification should be caught*/
   ok_ids.ids[ok_ids.length++] =
       *myStateChangeNotification.notificationHeader.notificationId;
@@ -1144,8 +1131,8 @@ void extStateChangeNotificationTest(void) {
       saNtfNotificationFilterFree(myFilter.notificationFilterHandle),
       SA_AIS_OK);
 
-  safassert(saNtfNotificationUnsubscribe(subscriptionId), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationUnsubscribe(subscriptionId), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   rc = check_errors();
   test_validate(rc, SA_AIS_OK);
 }
@@ -1162,7 +1149,7 @@ void extSecurityAlarmNotificationTest(void) {
   setupEnv();
 
   resetCounters();
-  safassert(saNtfInitialize(&ntfHandle, &ntfCbTest, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCbTest, &ntfVersion),
       SA_AIS_OK);
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject),
       SA_AIS_OK);
@@ -1183,49 +1170,40 @@ void extSecurityAlarmNotificationTest(void) {
   myFilter.probableCauses[2] = SA_NTF_VERSION_MISMATCH;
 
   /* subscribe */
-  safassert(saNtfNotificationSubscribe(&myNotificationFilterHandles,
-               subscriptionId),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSubscribe(
+      &myNotificationFilterHandles, subscriptionId), SA_AIS_OK);
   extCreateSecurityAlarmNotification(ntfHandle, &mySecAlarmNotification);
-  safassert(
-      saNtfNotificationSend(mySecAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      mySecAlarmNotification.notificationHandle), SA_AIS_OK);
 
   *mySecAlarmNotification.probableCause = SA_NTF_VERSION_MISMATCH;
-  safassert(
-      saNtfNotificationSend(mySecAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      mySecAlarmNotification.notificationHandle), SA_AIS_OK);
   ok_ids.ids[ok_ids.length++] =
       *mySecAlarmNotification.notificationHeader.notificationId;
 
   *mySecAlarmNotification.probableCause = SA_NTF_RESPONSE_TIME_EXCESSIVE;
-  safassert(
-      saNtfNotificationSend(mySecAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      mySecAlarmNotification.notificationHandle), SA_AIS_OK);
 
   *mySecAlarmNotification.probableCause = SA_NTF_NON_REPUDIATION_FAILURE;
-  safassert(
-      saNtfNotificationSend(mySecAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      mySecAlarmNotification.notificationHandle), SA_AIS_OK);
 
   *mySecAlarmNotification.probableCause = SA_NTF_EQUIPMENT_MALFUNCTION;
-  safassert(
-      saNtfNotificationSend(mySecAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      mySecAlarmNotification.notificationHandle), SA_AIS_OK);
   ok_ids.ids[ok_ids.length++] =
       *mySecAlarmNotification.notificationHeader.notificationId;
   *mySecAlarmNotification.probableCause = SA_NTF_STORAGE_CAPACITY_PROBLEM;
-  safassert(
-      saNtfNotificationSend(mySecAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      mySecAlarmNotification.notificationHandle), SA_AIS_OK);
   *mySecAlarmNotification.probableCause = SA_NTF_DENIAL_OF_SERVICE;
-  safassert(
-      saNtfNotificationSend(mySecAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+      mySecAlarmNotification.notificationHandle), SA_AIS_OK);
   *mySecAlarmNotification.probableCause = SA_NTF_ADAPTER_ERROR;
-  safassert(
-      saNtfNotificationSend(mySecAlarmNotification.notificationHandle),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSend(
+          mySecAlarmNotification.notificationHandle), SA_AIS_OK);
   ok_ids.ids[ok_ids.length++] =
       *mySecAlarmNotification.notificationHeader.notificationId;
   poll_until_received(
@@ -1244,8 +1222,8 @@ void extSecurityAlarmNotificationTest(void) {
       saNtfNotificationFilterFree(myFilter.notificationFilterHandle),
       SA_AIS_OK);
 
-  safassert(saNtfNotificationUnsubscribe(subscriptionId), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationUnsubscribe(subscriptionId), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   rc = check_errors();
   test_validate(rc, SA_AIS_OK);
   restoreEnv();

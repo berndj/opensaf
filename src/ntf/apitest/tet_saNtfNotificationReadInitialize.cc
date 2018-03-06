@@ -18,6 +18,7 @@
 #include "osaf/apitest/util.h"
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 /* Parameter struct instances */
 static saNotificationAllocationParamsT myNotificationAllocationParams;
@@ -28,19 +29,17 @@ static saNotificationParamsT myNotificationParams;
 void saNtfNotificationReadInitialize_01(SaNtfSearchModeT sMode,
           SaAisErrorT expectedRC) {
   SaNtfHandleT ntfHandle = 0;
-  SaNtfSearchCriteriaT searchCriteria;
+  SaNtfSearchCriteriaT searchCriteria = {sMode, 0, 0};
   SaNtfAlarmNotificationFilterT myAlarmFilter;
   SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles = {
       0, 0, 0, 0, 0};
   SaNtfReadHandleT readHandle = 0;
 
-  searchCriteria.searchMode = sMode;
-
   fillInDefaultValues(&myNotificationAllocationParams,
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   safassert(
@@ -68,15 +67,15 @@ void saNtfNotificationReadInitialize_01(SaNtfSearchModeT sMode,
   myAlarmFilter.perceivedSeverities[0] = SA_NTF_SEVERITY_WARNING;
   myAlarmFilter.perceivedSeverities[1] = SA_NTF_SEVERITY_CLEARED;
 
-  rc = saNtfNotificationReadInitialize(
+  rc = NtfTest::saNtfNotificationReadInitialize(
       searchCriteria, &myNotificationFilterHandles, &readHandle);
 
   if (rc == SA_AIS_OK)
-    safassert(saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
+    safassert(NtfTest::saNtfNotificationReadFinalize(readHandle), SA_AIS_OK);
   safassert(
       saNtfNotificationFilterFree(myAlarmFilter.notificationFilterHandle),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   free(myNotificationParams.additionalText);
   test_validate(rc, expectedRC);
 }
@@ -129,18 +128,17 @@ void saNtfNotificationReadInitialize_01_9(void) {
  */
 void saNtfNotificationReadInitialize_02(void) {
   SaNtfHandleT ntfHandle;
-  SaNtfSearchCriteriaT searchCriteria;
+  SaNtfSearchCriteriaT searchCriteria = {SA_NTF_SEARCH_AT_OR_AFTER_TIME, 0, 0};
   SaNtfNotificationTypeFilterHandlesT *myNotificationFilterHandles = NULL;
   SaNtfReadHandleT readHandle;
 
-  searchCriteria.searchMode = SA_NTF_SEARCH_AT_OR_AFTER_TIME;
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
 
-  rc = saNtfNotificationReadInitialize(
+  rc = NtfTest::saNtfNotificationReadInitialize(
       searchCriteria, myNotificationFilterHandles, &readHandle);
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
@@ -149,19 +147,17 @@ void saNtfNotificationReadInitialize_02(void) {
  */
 void saNtfNotificationReadInitialize_03(void) {
   SaNtfHandleT ntfHandle;
-  SaNtfSearchCriteriaT searchCriteria;
+  SaNtfSearchCriteriaT searchCriteria = {SA_NTF_SEARCH_AT_OR_AFTER_TIME, 0, 0};
   SaNtfAlarmNotificationFilterT myAlarmFilter;
   SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles = {
       0, 0, 0, 0, 0};
   SaNtfReadHandleT readHandle;
 
-  searchCriteria.searchMode = SA_NTF_SEARCH_AT_OR_AFTER_TIME;
-
   fillInDefaultValues(&myNotificationAllocationParams,
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   safassert(
@@ -191,17 +187,17 @@ void saNtfNotificationReadInitialize_03(void) {
       saNtfNotificationFilterFree(myAlarmFilter.notificationFilterHandle),
       SA_AIS_OK);
 
-  rc = saNtfNotificationReadInitialize(
+  rc = NtfTest::saNtfNotificationReadInitialize(
       searchCriteria, &myNotificationFilterHandles, &readHandle);
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   free(myNotificationParams.additionalText);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
 void saNtfNotificationReadInitialize_not_supported(int filter) {
   SaNtfHandleT ntfHandle;
-  SaNtfSearchCriteriaT searchCriteria;
+  SaNtfSearchCriteriaT searchCriteria = {SA_NTF_SEARCH_AT_OR_AFTER_TIME, 0, 0};
   SaNtfAlarmNotificationFilterT myAlarmFilter;
   SaNtfObjectCreateDeleteNotificationFilterT myObjCrDeFilter;
   SaNtfAttributeChangeNotificationFilterT myAttributeChangeFilter;
@@ -210,13 +206,11 @@ void saNtfNotificationReadInitialize_not_supported(int filter) {
       0, 0, 0, 0, 0};
   SaNtfReadHandleT readHandle;
 
-  searchCriteria.searchMode = SA_NTF_SEARCH_AT_OR_AFTER_TIME;
-
   fillInDefaultValues(&myNotificationAllocationParams,
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   safassert(
@@ -281,7 +275,7 @@ void saNtfNotificationReadInitialize_not_supported(int filter) {
     myNotificationFilterHandles.attributeChangeFilterHandle =
         myAttributeChangeFilter.notificationFilterHandle;
 
-  rc = saNtfNotificationReadInitialize(
+  rc = NtfTest::saNtfNotificationReadInitialize(
       searchCriteria, &myNotificationFilterHandles, &readHandle);
 
   safassert(
@@ -299,7 +293,7 @@ void saNtfNotificationReadInitialize_not_supported(int filter) {
     safassert(saNtfNotificationFilterFree(
             myAttributeChangeFilter.notificationFilterHandle),
         SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   free(myNotificationParams.additionalText);
   test_validate(rc, SA_AIS_ERR_NOT_SUPPORTED);
 }

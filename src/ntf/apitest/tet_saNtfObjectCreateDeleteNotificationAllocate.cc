@@ -18,6 +18,7 @@
 #include "osaf/apitest/util.h"
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 void saNtfObjectCreateDeleteNotificationAllocate_01(void) {
   SaNtfObjectCreateDeleteNotificationT myNotification;
@@ -31,7 +32,7 @@ void saNtfObjectCreateDeleteNotificationAllocate_01(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   rc = saNtfObjectCreateDeleteNotificationAllocate(
       ntfHandle, /* handle to Notification Service instance */
@@ -102,7 +103,7 @@ void saNtfObjectCreateDeleteNotificationAllocate_01(void) {
   free(myNotificationParams.additionalText);
   safassert(saNtfNotificationFree(myNotification.notificationHandle),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -145,9 +146,9 @@ void saNtfObjectCreateDeleteNotificationAllocate_02(void) {
   }
 
   free(myNotificationParams.additionalText);
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   rc = saNtfObjectCreateDeleteNotificationAllocate(
       ntfHandle, /* handle to Notification Service instance */
@@ -186,7 +187,7 @@ void saNtfObjectCreateDeleteNotificationAllocate_03(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
   rc = saNtfObjectCreateDeleteNotificationAllocate(
       ntfHandle, /* handle to Notification Service instance */
@@ -203,7 +204,7 @@ void saNtfObjectCreateDeleteNotificationAllocate_03(void) {
       myNotificationAllocationParams.variableDataSize);
 
   free(myNotificationParams.additionalText);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 

@@ -18,6 +18,7 @@
 #include "osaf/apitest/util.h"
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 void saNtfAlarmNotificationFilterAllocate_01(void) {
   SaNtfHandleT ntfHandle;
@@ -33,7 +34,7 @@ void saNtfAlarmNotificationFilterAllocate_01(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   rc = saNtfAlarmNotificationFilterAllocate(
@@ -62,7 +63,7 @@ void saNtfAlarmNotificationFilterAllocate_01(void) {
   safassert(saNtfNotificationFilterFree(
           myNotificationFilterHandles.alarmFilterHandle),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -79,9 +80,9 @@ void saNtfAlarmNotificationFilterAllocate_03(void) {
   SaNtfHandleT ntfHandle;
   SaNtfAlarmNotificationFilterT myAlarmFilter;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   rc = saNtfAlarmNotificationFilterAllocate(ntfHandle, &myAlarmFilter, 0,
               0, 0, 1, 0, 1, 0);
@@ -92,13 +93,13 @@ void saNtfAlarmNotificationFilterAllocate_03(void) {
 void saNtfAlarmNotificationFilterAllocate_04(void) {
   SaNtfHandleT ntfHandle;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   rc = saNtfAlarmNotificationFilterAllocate(ntfHandle, NULL, 0, 0, 0, 1,
               0, 1, 0);
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }

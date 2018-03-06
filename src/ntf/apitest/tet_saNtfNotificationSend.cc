@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 static SaNtfAlarmNotificationT myAlarmNotification;
 
@@ -80,7 +81,7 @@ void saNtfNotificationSend_01(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject),
       SA_AIS_OK);
@@ -126,7 +127,7 @@ void saNtfNotificationSend_01(void) {
   *(myAlarmNotification.probableCause) =
       myNotificationParams.probableCause;
 
-  rc = saNtfNotificationSend(myAlarmNotification.notificationHandle);
+  rc = NtfTest::saNtfNotificationSend(myAlarmNotification.notificationHandle);
 
   /*  fds[0].fd = (int) selectionObject;                             */
   /*  fds[0].events = POLLIN;                                        */
@@ -138,7 +139,7 @@ void saNtfNotificationSend_01(void) {
   free(myNotificationParams.additionalText);
   safassert(saNtfNotificationFree(myAlarmNotification.notificationHandle),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -154,7 +155,7 @@ void saNtfNotificationSend_02(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
   safassert(saNtfObjectCreateDeleteNotificationAllocate(
           ntfHandle, /* handle to Notification Service instance */
@@ -229,11 +230,11 @@ void saNtfNotificationSend_02(void) {
        (saNotificationParamsT *)&myNotificationParams,
        myNotificationAllocationParams.lengthAdditionalText);
 
-  rc = saNtfNotificationSend(myNotification.notificationHandle);
+  rc = NtfTest::saNtfNotificationSend(myNotification.notificationHandle);
   free(myNotificationParams.additionalText);
   safassert(saNtfNotificationFree(myNotification.notificationHandle),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -248,7 +249,7 @@ void attr_ch_send(int wrongAttrType, SaAisErrorT expectedStatus) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   safassert(saNtfAttributeChangeNotificationAllocate(
@@ -338,11 +339,11 @@ void attr_ch_send(int wrongAttrType, SaAisErrorT expectedStatus) {
        myNotificationAllocationParams.lengthAdditionalText);
 
   /*  the magic */
-  rc = saNtfNotificationSend(myNotification.notificationHandle);
+  rc = NtfTest::saNtfNotificationSend(myNotification.notificationHandle);
   free(myNotificationParams.additionalText);
   safassert(saNtfNotificationFree(myNotification.notificationHandle),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, expectedStatus);
 }
 
@@ -354,7 +355,7 @@ SaAisErrorT send_st_ch(
     saNotificationParamsT *myNotificationParams) {
   SaNtfStateChangeNotificationT myNotification;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   safassert(
@@ -429,10 +430,10 @@ SaAisErrorT send_st_ch(
        myNotificationAllocationParams->lengthAdditionalText);
 
   /*  the magic */
-  rc = saNtfNotificationSend(myNotification.notificationHandle);
+  rc = NtfTest::saNtfNotificationSend(myNotification.notificationHandle);
   safassert(saNtfNotificationFree(myNotification.notificationHandle),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   return rc;
 }
 
@@ -488,7 +489,7 @@ void sec_al_send(int wrongValueType, SaAisErrorT expectedStatus) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   safassert(saNtfSecurityAlarmNotificationAllocate(
@@ -566,11 +567,11 @@ void sec_al_send(int wrongValueType, SaAisErrorT expectedStatus) {
           myNotificationAllocationParams.lengthAdditionalText);
 
   /*  the magic */
-  rc = saNtfNotificationSend(myNotification.notificationHandle);
+  rc = NtfTest::saNtfNotificationSend(myNotification.notificationHandle);
   free(myNotificationParams.additionalText);
   safassert(saNtfNotificationFree(myNotification.notificationHandle),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, expectedStatus);
 }
 
@@ -591,7 +592,7 @@ static SaAisErrorT send_obj_cr_del(
   SaNtfObjectCreateDeleteNotificationFilterT myObjCreDelFilter;
   SaNtfNotificationTypeFilterHandlesT myNotificationFilterHandles;
 
-  safassert(saNtfInitialize(&ntfHandle, &dummyCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &dummyCallbacks, &ntfVersion),
       SA_AIS_OK);
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject),
       SA_AIS_OK);
@@ -607,8 +608,8 @@ static SaAisErrorT send_obj_cr_del(
       myObjCreDelFilter.notificationFilterHandle;
   myNotificationFilterHandles.securityAlarmFilterHandle = 0;
   myNotificationFilterHandles.stateChangeFilterHandle = 0;
-  safassert(saNtfNotificationSubscribe(&myNotificationFilterHandles, 4),
-      SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationSubscribe(
+      &myNotificationFilterHandles, 4), SA_AIS_OK);
 
   SaNtfObjectCreateDeleteNotificationT myNotification;
   safassert(
@@ -670,22 +671,22 @@ static SaAisErrorT send_obj_cr_del(
        myNotificationParams,
        myNotificationAllocationParams->lengthAdditionalText);
 
-  rc = saNtfNotificationSend(myNotification.notificationHandle);
+  rc = NtfTest::saNtfNotificationSend(myNotification.notificationHandle);
   if (rc == SA_AIS_OK) {
     fds[0].fd = (int)selectionObject;
     fds[0].events = POLLIN;
     ret = poll(fds, 1, 10000);
     assert(ret > 0);
-    safassert(saNtfDispatch(ntfHandle, SA_DISPATCH_ONE), SA_AIS_OK);
+    safassert(NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ONE), SA_AIS_OK);
   }
   free(myNotificationParams->additionalText);
   safassert(saNtfNotificationFilterFree(
           myObjCreDelFilter.notificationFilterHandle),
       SA_AIS_OK);
-  safassert(saNtfNotificationUnsubscribe(4), SA_AIS_OK);
+  safassert(NtfTest::saNtfNotificationUnsubscribe(4), SA_AIS_OK);
   safassert(saNtfNotificationFree(myNotification.notificationHandle),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   return rc;
 }
 void saNtfNotificationSend_07() {
@@ -772,7 +773,7 @@ void send_mismatch_addtext(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, NULL, &ntfVersion), SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, NULL, &ntfVersion), SA_AIS_OK);
   safassert(saNtfObjectCreateDeleteNotificationAllocate(
           ntfHandle, /* handle to Notification Service instance */
           &myNotification,
@@ -846,16 +847,17 @@ void send_mismatch_addtext(void) {
        (saNotificationParamsT *)&myNotificationParams,
        myNotificationAllocationParams.lengthAdditionalText);
 
-  rc = saNtfNotificationSend(myNotification.notificationHandle);
+  rc = NtfTest::saNtfNotificationSend(myNotification.notificationHandle);
 
   free(myNotificationParams.additionalText);
   safassert(saNtfNotificationFree(myNotification.notificationHandle),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
-__attribute__((constructor)) static void saNtfNotificationSend_constructor(void) {
+__attribute__((constructor)) static void saNtfNotificationSend_constructor(
+    void) {
   test_suite_add(8, "Producer API 3 send");
   test_case_add(8, saNtfNotificationSend_01,
           "saNtfNotificationSend Alarm");

@@ -18,12 +18,13 @@
 #include "osaf/apitest/util.h"
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 void saNtfObjectCreateDeleteNotificationFilterAllocate_01(void) {
   SaNtfHandleT ntfHandle;
   SaNtfObjectCreateDeleteNotificationFilterT myObjCreDelFilter;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   if ((rc = saNtfObjectCreateDeleteNotificationFilterAllocate(
@@ -33,7 +34,7 @@ void saNtfObjectCreateDeleteNotificationFilterAllocate_01(void) {
         SA_AIS_OK);
   }
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -50,9 +51,9 @@ void saNtfObjectCreateDeleteNotificationFilterAllocate_03(void) {
   SaNtfHandleT ntfHandle;
   SaNtfObjectCreateDeleteNotificationFilterT myObjCreDelFilter;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   rc = saNtfObjectCreateDeleteNotificationFilterAllocate(
       ntfHandle, &myObjCreDelFilter, 0, 0, 0, 1, 0);
@@ -63,13 +64,13 @@ void saNtfObjectCreateDeleteNotificationFilterAllocate_03(void) {
 void saNtfObjectCreateDeleteNotificationFilterAllocate_04(void) {
   SaNtfHandleT ntfHandle;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   rc = saNtfObjectCreateDeleteNotificationFilterAllocate(ntfHandle, NULL,
                      0, 0, 0, 1, 0);
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 

@@ -20,6 +20,7 @@
 #include <sys/time.h>
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 void saNtfAttributeChangeNotificationAllocate_01(void) {
   SaNtfAttributeChangeNotificationT myNotification;
@@ -32,7 +33,7 @@ void saNtfAttributeChangeNotificationAllocate_01(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   rc = saNtfAttributeChangeNotificationAllocate(
@@ -51,7 +52,7 @@ void saNtfAttributeChangeNotificationAllocate_01(void) {
   free(myNotificationParams.additionalText);
   safassert(saNtfNotificationFree(myNotification.notificationHandle),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -92,9 +93,9 @@ void saNtfAttributeChangeNotificationAllocate_02(void) {
     TRACE("Test: FAILED");
   }
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   rc = saNtfAttributeChangeNotificationAllocate(
       ntfHandle, /* handle to Notification Service instance */
@@ -133,7 +134,7 @@ void saNtfAttributeChangeNotificationAllocate_03(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   rc = saNtfAttributeChangeNotificationAllocate(
@@ -151,7 +152,7 @@ void saNtfAttributeChangeNotificationAllocate_03(void) {
       myNotificationAllocationParams.variableDataSize);
 
   free(myNotificationParams.additionalText);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 

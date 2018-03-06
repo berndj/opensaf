@@ -19,6 +19,7 @@
 #include <sys/time.h>
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 void saNtfMiscellaneousNotificationAllocate_01(void) {
   test_validate(SA_AIS_ERR_NOT_SUPPORTED, SA_AIS_ERR_NOT_SUPPORTED);
@@ -33,7 +34,8 @@ void saNtfMiscellaneousNotificationAllocate_01(void) {
   fillInDefaultValues(&myNotificationAllocationParams,
       &myNotificationFilterAllocationParams, &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+            SA_AIS_OK);
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject), SA_AIS_OK);
 
   AlarmNotificationParams myAlarmParams;
@@ -65,7 +67,7 @@ void saNtfMiscellaneousNotificationAllocate_01(void) {
           myAlarmParams.variableDataSize);
 
   safassert(saNtfNotificationFree(myAlarmNotification.notificationHandle), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 #endif
 }
@@ -122,8 +124,9 @@ void saNtfMiscellaneousNotificationAllocate_02(void) {
   }
 
   /* Create a handle and then destroy it */
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+            SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   rc = saNtfAlarmNotificationAllocate(
           ntfHandle,
@@ -180,7 +183,8 @@ void saNtfMiscellaneousNotificationAllocate_03(void) {
   myAlarmParams.variableDataSize
       = myNotificationAllocationParams.variableDataSize;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion), SA_AIS_OK);
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+            SA_AIS_OK);
   safassert(saNtfSelectionObjectGet(ntfHandle, &selectionObject), SA_AIS_OK);
 
   rc = saNtfMiscellaneousNotificationAllocate(
@@ -197,7 +201,7 @@ void saNtfMiscellaneousNotificationAllocate_03(void) {
     errors++;
   }
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   rc = (errors == 0)? SA_AIS_OK:  SA_AIS_ERR_INVALID_PARAM;
 

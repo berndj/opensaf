@@ -18,6 +18,7 @@
 #include "osaf/apitest/util.h"
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 /**
  * Test saNtfPtrValAllocate.
@@ -27,7 +28,7 @@ void saNtfPtrAllocateTest_01(void) {
   SaStringT *destPtr;
   SaNtfAlarmNotificationT myAlarmNotification;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   safassert(saNtfAlarmNotificationAllocate(
@@ -45,7 +46,7 @@ void saNtfPtrAllocateTest_01(void) {
   safassert(saNtfNotificationFree(myAlarmNotification.notificationHandle),
       SA_AIS_OK);
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   test_validate(rc, SA_AIS_OK);
 }
@@ -57,7 +58,7 @@ void saNtfPtrAllocateTest_02(void) {
   SaStringT *destPtr;
   SaNtfAlarmNotificationT myAlarmNotification;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   safassert(saNtfAlarmNotificationAllocate(
@@ -75,7 +76,7 @@ void saNtfPtrAllocateTest_02(void) {
   safassert(saNtfNotificationFree(myAlarmNotification.notificationHandle),
       SA_AIS_OK);
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
@@ -87,7 +88,7 @@ void saNtfPtrAllocateTest_03(void) {
   SaStringT *destPtr;
   SaNtfAlarmNotificationT myAlarmNotification;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   safassert(saNtfAlarmNotificationAllocate(
@@ -106,7 +107,7 @@ void saNtfPtrAllocateTest_03(void) {
       (SaUint16T)(strlen(DEFAULT_ADDITIONAL_TEXT) + 1), (void **)&destPtr,
       &(myAlarmNotification.proposedRepairActions[0].actionValue));
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
@@ -117,7 +118,7 @@ void saNtfPtrAllocateTest_03(void) {
 void saNtfPtrAllocateTest_04(void) {
   SaNtfAlarmNotificationT myAlarmNotification;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   safassert(saNtfAlarmNotificationAllocate(
@@ -136,7 +137,7 @@ void saNtfPtrAllocateTest_04(void) {
   safassert(saNtfNotificationFree(myAlarmNotification.notificationHandle),
       SA_AIS_OK);
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
@@ -148,7 +149,7 @@ void saNtfPtrAllocateTest_05(void) {
   SaStringT *destPtr;
   SaNtfAlarmNotificationT myAlarmNotification;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   safassert(saNtfAlarmNotificationAllocate(
@@ -167,7 +168,7 @@ void saNtfPtrAllocateTest_05(void) {
   safassert(saNtfNotificationFree(myAlarmNotification.notificationHandle),
       SA_AIS_OK);
 
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
 
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
@@ -179,13 +180,13 @@ void saNtfPtrAllocateTest_05(void) {
 void saNtfPtrAllocateTest_06(void) {
   SaNtfAlarmNotificationT myAlarmNotification;
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   rc = saNtfAlarmNotificationAllocate(ntfHandle, &myAlarmNotification, 0,
               0, 0, 0, 0, 2,
               SA_NTF_ALLOC_SYSTEM_LIMIT - 1);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_TOO_BIG);
 }
 

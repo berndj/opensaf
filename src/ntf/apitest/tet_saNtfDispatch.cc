@@ -17,25 +17,26 @@
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
 #include "tet_ntf.h"
+#include "ntf_api_with_try_again.h"
 
 void saNtfDispatch_01(void) {
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
-  rc = saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  rc = NtfTest::saNtfDispatch(ntfHandle, SA_DISPATCH_ALL);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
 void saNtfDispatch_02(void) {
-  rc = saNtfDispatch(0, SA_DISPATCH_ALL);
+  rc = NtfTest::saNtfDispatch(0, SA_DISPATCH_ALL);
   test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
 
 void saNtfDispatch_03(void) {
-  safassert(saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfCallbacks, &ntfVersion),
       SA_AIS_OK);
-  rc = saNtfDispatch(ntfHandle, static_cast<SaDispatchFlagsT>(0));
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  rc = NtfTest::saNtfDispatch(ntfHandle, static_cast<SaDispatchFlagsT>(0));
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 

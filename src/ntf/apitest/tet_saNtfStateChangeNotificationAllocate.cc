@@ -19,6 +19,7 @@
 #include <sys/time.h>
 #include "tet_ntf.h"
 #include "tet_ntf_common.h"
+#include "ntf_api_with_try_again.h"
 
 void saNtfStateChangeNotificationAllocate_01(void) {
   SaNtfStateChangeNotificationT myNotification;
@@ -31,7 +32,7 @@ void saNtfStateChangeNotificationAllocate_01(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   rc = saNtfStateChangeNotificationAllocate(
@@ -51,7 +52,7 @@ void saNtfStateChangeNotificationAllocate_01(void) {
   safassert(saNtfNotificationFree(myNotification.notificationHandle),
       SA_AIS_OK);
   free(myNotificationParams.additionalText);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_OK);
 }
 
@@ -92,9 +93,9 @@ void saNtfStateChangeNotificationAllocate_02(void) {
   }
 
   free(myNotificationParams.additionalText);
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   rc = saNtfStateChangeNotificationAllocate(
       ntfHandle, /* handle to Notification Service instance */
       &myNotification,
@@ -133,7 +134,7 @@ void saNtfStateChangeNotificationAllocate_03(void) {
           &myNotificationFilterAllocationParams,
           &myNotificationParams);
 
-  safassert(saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
+  safassert(NtfTest::saNtfInitialize(&ntfHandle, &ntfSendCallbacks, &ntfVersion),
       SA_AIS_OK);
 
   rc = saNtfStateChangeNotificationAllocate(
@@ -150,7 +151,7 @@ void saNtfStateChangeNotificationAllocate_03(void) {
       /* use default allocation size */
       myNotificationAllocationParams.variableDataSize);
   free(myNotificationParams.additionalText);
-  safassert(saNtfFinalize(ntfHandle), SA_AIS_OK);
+  safassert(NtfTest::saNtfFinalize(ntfHandle), SA_AIS_OK);
   test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
