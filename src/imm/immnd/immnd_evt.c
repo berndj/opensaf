@@ -3592,6 +3592,17 @@ agent_rsp:
 	return rc;
 }
 
+static bool is_class_name_reserved(const IMMND_CB* cb, const char* name)
+{
+	int i = 0;
+	const char* r_name;
+	char** list = cb->reserved_class_names;
+	while ((r_name = list[i++])) {
+		if (!strcmp(name, r_name)) return true;
+	}
+	return false;
+}
+
 /*
   Function for performing immnd local checks on fevs packed messages.
   Normally they pass the checks and are forwarded to the IMMD.
@@ -3862,6 +3873,12 @@ static SaAisErrorT immnd_fevs_local_checks(IMMND_CB *cb, IMMSV_FEVS *fevsReq,
 				}
 				list = list->next;
 			}
+		}
+
+		char *class_name =
+			frwrd_evt.info.immnd.info.classDescr.className.buf;
+		if (is_class_name_reserved(cb, class_name)) {
+			error = SA_AIS_ERR_INVALID_PARAM;
 		}
 
 		break;

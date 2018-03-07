@@ -13355,61 +13355,11 @@ bool ImmModel::checkSubLevel(const std::string& objectName, size_t rootStart) {
 }
 
 bool ImmModel::schemaNameCheck(const std::string& name) const {
-  /* Dont allow some chars in class & attribute names that cause
-     problems in sqlite. Each imm-class is mapped to several tables,
-     but one table is named using the classname.
-  */
-  unsigned char chr;
-  size_t pos;
-  size_t len = name.length();
-
-  if (name.empty()) {
-    return false;
-  }
-
-  if (!nameCheck(name)) {
-    return false;
-  }
-
-  for (pos = 0; pos < len; ++pos) {
-    chr = name.at(pos);
-    if (isalnum(chr) || (chr == 95)) {
-      continue; /* _ */
-    } else {
-      LOG_NO("Bad class/attribute name: '%s' (%c): pos=%zu", name.c_str(), chr,
-             pos);
-      return false;
-    }
-  }
-
-  chr = name.at(0);
-
-  if (isdigit(chr)) {
-    LOG_NO("Bad class/attribute name starts with number: '%s' (%c): pos=%u",
-           name.c_str(), chr, 0);
-    return false;
-  }
-
-  return true;
+  return is_valid_schema_name(name.c_str());
 }
 
 bool ImmModel::nameCheck(const std::string& name, bool strict) const {
-  size_t pos;
-  size_t len = name.length();
-  unsigned char prev_chr = '\0';
-
-  for (pos = 0; pos < len; ++pos) {
-    unsigned char chr = name.at(pos);
-
-    if ((((chr == ',') || (strict && (chr == '#'))) && (prev_chr == '\\')) ||
-        (!isgraph(chr) && !(chr == '\0' && pos == len - 1))) {
-      TRACE_5("Irregular name. string size:%zu isgraph(%c):%u, pos=%zu", len,
-              chr, isgraph(chr), pos);
-      return false;
-    }
-    prev_chr = chr;
-  }
-  return true;
+  return is_regular_name(name.c_str(), strict);
 }
 
 bool ImmModel::nameToInternal(std::string& name) {

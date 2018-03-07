@@ -170,6 +170,7 @@ typedef struct immnd_cb_tag {
   struct timespec
       mJobStart;    // Start time for major server tasks like start, load, sync.
   char *mProgName;  // The full path name of the immnd executable.
+  char **reserved_class_names;  // List of class names are reserved for PBE
   const char *mDir;      // The directory where imm.xml & pbe files reside
   const char *mFile;     // The imm.xml file to start from
   const char *mPbeFile;  // Pbe feature is configured (IMMSV_PBE_FILE).

@@ -485,6 +485,9 @@ void immModel_sendSyncAbortAt(IMMND_CB *cb, struct timespec time);
 
 void immModel_getSyncAbortRsp(IMMND_CB *cb);
 
+bool is_regular_name(const char* name, bool strict);
+bool is_valid_schema_name(const char* name);
+
 #ifdef __cplusplus
 }
 #endif

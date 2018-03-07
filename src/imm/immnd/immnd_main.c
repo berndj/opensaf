@@ -36,7 +36,6 @@
 #include "base/daemon.h"
 #include "nid/agent/nid_api.h"
 #include "mds/mds_dl_api.h"
-
 #include "immnd.h"
 
 #define FD_TERM 0
@@ -48,7 +47,157 @@
 static IMMND_CB _immnd_cb;
 IMMND_CB *immnd_cb = &_immnd_cb;
 
+static const char* default_reserved_names[] = {
+	"attr_def",
+	"attr_dflt",
+	"ccb_commits",
+	"classes",
+	"objects",
+	"objects_blob_multi",
+	"objects_int_multi",
+	"objects_real_multi",
+	"objects_text_multi",
+	"pbe_rep_version"
+};
+
+bool is_regular_name(const char* name, bool strict) {
+	size_t pos;
+	size_t len = strlen(name);
+	unsigned char prev_chr = '\0';
+
+	for (pos = 0; pos < len; ++pos) {
+		unsigned char chr = *(name + pos);
+
+		if ((((chr == ',') || (strict && (chr == '#')))
+		     && (prev_chr == '\\')) ||
+		    (!isgraph(chr) && !(chr == '\0' && pos == len - 1))) {
+			TRACE_5("Irregular name (%s). String size: %zu,"
+			       " isgraph(%c): %u, pos = %zu",
+			       name, len,  chr, isgraph(chr), pos);
+			return false;
+		}
+		prev_chr = chr;
+	}
+	return true;
+}
+
+/*
+  Dont allow some chars in class & attribute names that cause
+  problems in sqlite. Each imm-class is mapped to several tables,
+  but one table is named using the classname.
+*/
+bool is_valid_schema_name(const char* name) {
+	unsigned char chr;
+	size_t pos;
+	size_t len = strlen(name);
+
+	if (len == 0) return false;
+	if (!is_regular_name(name, true)) return false;
+
+	for (pos = 0; pos < len; ++pos) {
+		chr = *(name + pos);
+		/* _ character */
+		if (isalnum(chr) || (chr == 95)) {
+			continue;
+		} else {
+			LOG_NO("Bad name: '%s' (%c): pos=%zu", name, chr, pos);
+			return false;
+		}
+	}
+
+	chr = *name;
+	if (isdigit(chr)) {
+		LOG_NO("Bad name. Starts with number: '%s' (%c): pos=%u",
+		       name, chr, 0);
+		return false;
+	}
+
+	return true;
+}
+
 /* Static Function Declerations */
+
+static char* trim_string(char* s)
+{
+	while (isspace((unsigned char) *s)) s++;
+	if (*s) {
+		char *p = s;
+		while (*p) p++;
+		while (isspace((unsigned char) *(--p)));
+		p[1] = '\0';
+	}
+	return s;
+}
+
+/*
+  Return the list of reserved class names if the input is valid, NULL otherwise.
+ */
+static char** parse_reserved_class_names(const char* input)
+{
+	char** result = NULL;
+	char* dup, *tofree;
+	char* token;
+	int i = 0, n_elements = 0;
+
+	dup = tofree = strdup(input);
+	token = strsep(&dup, ",");
+	while (token) {
+		token = trim_string(token);
+		if (is_valid_schema_name(token) == false) {
+			LOG_ER("The reserved name `%s` is invalid!", token);
+			goto freedata;
+		}
+		result = (char**)realloc(result, sizeof(char*) * ++n_elements);
+		result[n_elements - 1] = strdup(token);
+		token = strsep(&dup, ",");
+	}
+
+	result = (char**)realloc(result, sizeof(char*) * (n_elements + 1));
+	result[n_elements] = 0;
+
+	free(tofree);
+	return result;
+
+freedata:
+	for (i = 0; i < n_elements; i++) {
+		if (result[i]) free(result[i]);
+	}
+	free(tofree);
+	free(result);
+	return NULL;
+}
+
+/*
+  Save list of reserved class names into global control block.
+  Use the default list if the environment variable `IMMSV_RESERVED_CLASS_NAMES`
+  is not defined. If any invalid name exists, terminate IMMND and notify
+  the error to syslog.
+ */
+static void populate_reserved_class_names(IMMND_CB* cb)
+{
+	const char *envVar = NULL;
+	if ((envVar = getenv("IMMSV_RESERVED_CLASS_NAMES"))) {
+		cb->reserved_class_names = parse_reserved_class_names(envVar);
+		/* IMMND is terminated if any wrong with the input value */
+		if (!cb->reserved_class_names) {
+			LOG_ER("The reserved class names are invalid! Exit...");
+			assert(0);
+		}
+		LOG_NO("The list of reserved class names: %s", envVar);
+	} else {
+		size_t i = 0;
+		size_t len = sizeof(default_reserved_names)/
+			sizeof(default_reserved_names[0]);
+		cb->reserved_class_names =
+			(char**)calloc(1, (len + 1) * sizeof(char*));
+		for (; i < len; i++) {
+			cb->reserved_class_names[i] =
+				strdup(default_reserved_names[i]);
+		}
+		cb->reserved_class_names[i] = NULL;
+		LOG_NO("Use default reserved class names.");
+	}
+}
 
 /**
  * USR1 signal is used when AMF wants instantiate us as a
@@ -149,6 +298,8 @@ static uint32_t immnd_initialize(char *progname)
 	immnd_cb->mFile = getenv("IMMSV_LOAD_FILE");
 	immnd_cb->clm_hdl = 0;
 	immnd_cb->clmSelectionObject = -1;
+
+	populate_reserved_class_names(immnd_cb);
 
 	/* isClmNodeJoined will be intially set to true, untill CLMS service is
 	   up. from there isClmNodeJoined will be controlled by CLM membership

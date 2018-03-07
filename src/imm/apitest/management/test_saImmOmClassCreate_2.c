@@ -426,6 +426,46 @@ void saImmOmClassCreate_2_19(void)
 	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
+/*
+  Verify it is not allowed to create IMM object class with reserved name.
+  NOTE: As the list of reserved class names is read from the environment
+  variable IMMSV_RESERVED_CLASS_NAMES which is defined in immnd.conf file,
+  these 02 below test cases could fail if "objects" or "classes" name do
+  not exist in the list.
+ */
+void saImmOmClassCreate_with_reserved_name_01(void)
+{
+	const SaImmClassNameT className = (SaImmClassNameT) "objects";
+	SaImmAttrDefinitionT_2 attr1 = {"rdn", SA_IMM_ATTR_SANAMET,
+					SA_IMM_ATTR_CONFIG | SA_IMM_ATTR_RDN,
+					NULL};
+	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, NULL};
+
+	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+		  SA_AIS_OK);
+	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+				  attrDefinitions);
+	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
+	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+}
+
+void saImmOmClassCreate_with_reserved_name_02(void)
+{
+	const SaImmClassNameT className = (SaImmClassNameT) "classes";
+	SaImmAttrDefinitionT_2 attr1 = {
+		"rdn", SA_IMM_ATTR_SANAMET,
+		SA_IMM_ATTR_RUNTIME | SA_IMM_ATTR_RDN | SA_IMM_ATTR_CACHED,
+		NULL};
+	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, NULL};
+
+	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+		  SA_AIS_OK);
+	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
+				  attrDefinitions);
+	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
+	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+}
+
 #define OPENSAF_IMM_NOSTD_FLAG_PARAM "opensafImmNostdFlags"
 #define OPENSAF_IMM_NOSTD_FLAG_ON 1
 #define OPENSAF_IMM_NOSTD_FLAG_OFF 2
@@ -1457,6 +1497,14 @@ __attribute__((constructor)) static void saImmOmInitialize_constructor(void)
 	test_case_add(
 	    2, saImmOmClassCreate_2_19,
 	    "saImmOmClassCreate_2 - SA_AIS_OK, Create a class that has STRONG_DEFAULT flag without having default value");
+	test_case_add(
+		2, saImmOmClassCreate_with_reserved_name_01,
+		"saImmOmClassCreate_2 - SA_AIS_ERR_INVALID_PARAM,"
+		"Create a config class with reserved name");
+	test_case_add(
+		2, saImmOmClassCreate_with_reserved_name_02,
+		"saImmOmClassCreate_2 - SA_AIS_ERR_INVALID_PARAM,"
+		" Create a rt class with reserved name");
 
 	test_case_add(2, saImmOmClassDescriptionGet_2_01,
 		      "saImmOmClassDescriptionGet_2 - SA_AIS_OK");
