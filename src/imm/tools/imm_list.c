@@ -141,19 +141,19 @@ static void print_attr_value(SaImmValueTypeT attrValueType,
 {
 	switch (attrValueType) {
 	case SA_IMM_ATTR_SAINT32T:
-		printf("%d (0x%x)", *((SaInt32T *)attrValue),
+		printf("%d (0x%x) ", *((SaInt32T *)attrValue),
 		       *((SaInt32T *)attrValue));
 		break;
 	case SA_IMM_ATTR_SAUINT32T:
-		printf("%u (0x%x)", *((SaUint32T *)attrValue),
+		printf("%u (0x%x) ", *((SaUint32T *)attrValue),
 		       *((SaUint32T *)attrValue));
 		break;
 	case SA_IMM_ATTR_SAINT64T:
-		printf("%lld (0x%llx)", *((SaInt64T *)attrValue),
+		printf("%lld (0x%llx) ", *((SaInt64T *)attrValue),
 		       *((SaInt64T *)attrValue));
 		break;
 	case SA_IMM_ATTR_SAUINT64T:
-		printf("%llu (0x%llx)", *((SaUint64T *)attrValue),
+		printf("%llu (0x%llx) ", *((SaUint64T *)attrValue),
 		       *((SaUint64T *)attrValue));
 		break;
 	case SA_IMM_ATTR_SATIMET: {
@@ -163,15 +163,15 @@ static void print_attr_value(SaImmValueTypeT attrValueType,
 
 		ctime_r(&time, buf);
 		buf[strlen(buf) - 1] = '\0'; /* Remove new line */
-		printf("%llu (0x%llx, %s)", *((SaTimeT *)attrValue),
+		printf("%llu (0x%llx, %s) ", *((SaTimeT *)attrValue),
 		       *((SaTimeT *)attrValue), buf);
 		break;
 	}
 	case SA_IMM_ATTR_SAFLOATT:
-		printf("%.8g", *((SaFloatT *)attrValue));
+		printf("%.8g ", *((SaFloatT *)attrValue));
 		break;
 	case SA_IMM_ATTR_SADOUBLET:
-		printf("%.17g", *((SaDoubleT *)attrValue));
+		printf("%.17g ", *((SaDoubleT *)attrValue));
 		break;
 	case SA_IMM_ATTR_SANAMET: {
 		SaNameT *myNameT = (SaNameT *)attrValue;
@@ -194,12 +194,12 @@ static void print_attr_value(SaImmValueTypeT attrValueType,
 				printf("%x", (int)anyp->bufferAddr[i]);
 			}
 		}
-		printf(" size(%u)", (unsigned int)anyp->bufferSize);
+		printf(" size(%u) ", (unsigned int)anyp->bufferSize);
 
 		break;
 	}
 	default:
-		printf("Unknown");
+		printf("Unknown ");
 		break;
 	}
 }
