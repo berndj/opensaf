@@ -186,11 +186,11 @@ static void populate_reserved_class_names(IMMND_CB* cb)
 		LOG_NO("The list of reserved class names: %s", envVar);
 	} else {
 		size_t i = 0;
-		size_t len = sizeof(default_reserved_names)/
+		size_t no_of_elements = sizeof(default_reserved_names)/
 			sizeof(default_reserved_names[0]);
 		cb->reserved_class_names =
-			(char**)calloc(1, (len + 1) * sizeof(char*));
-		for (; i < len; i++) {
+			(char**)calloc(1, (no_of_elements + 1) * sizeof(char*));
+		for (; i < no_of_elements; i++) {
 			cb->reserved_class_names[i] =
 				strdup(default_reserved_names[i]);
 		}
