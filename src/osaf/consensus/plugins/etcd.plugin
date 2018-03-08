@@ -18,6 +18,7 @@
 
 readonly keyname="opensaf_consensus_lock"
 readonly directory="/opensaf/"
+readonly etcd_options="--no-sync"
 readonly etcd_timeout="5s"
 
 # get
@@ -30,7 +31,7 @@ readonly etcd_timeout="5s"
 get() {
   readonly key=$1
 
-  if value=$(etcdctl --timeout $etcd_timeout get "$directory$key" 2>&1)
+  if value=$(etcdctl $etcd_options --timeout $etcd_timeout get "$directory$key" 2>&1)
   then
     echo "$value"
     return 0
@@ -51,7 +52,8 @@ setkey() {
   readonly key=$1
   readonly value=$2
 
-  if etcdctl --timeout $etcd_timeout set "$directory$key" "$value" >/dev/null
+  if etcdctl $etcd_options --timeout $etcd_timeout set "$directory$key" \
+    "$value" >/dev/null
   then
     return 0
   else
@@ -69,7 +71,8 @@ setkey() {
 erase() {
   readonly key=$1
 
-  if etcdctl --timeout $etcd_timeout rm "$directory$key" >/dev/null 2>&1
+  if etcdctl $etcd_options --timeout $etcd_timeout \
+    rm "$directory$key" >/dev/null 2>&1
   then
     return 0
   else
@@ -90,7 +93,8 @@ lock() {
   readonly owner=$1
   readonly timeout=$2
 
-  if etcdctl --timeout $etcd_timeout mk "$directory$keyname" "$owner" \
+  if etcdctl $etcd_options --timeout $etcd_timeout \
+    mk "$directory$keyname" "$owner" \
     --ttl "$timeout" >/dev/null 2>&1
   then
     return 0
@@ -101,7 +105,8 @@ lock() {
     # see if we already hold the lock
     if [ "$current_owner" = "$owner" ]; then
       # refresh TTL
-      if etcdctl --timeout $etcd_timeout set "$directory$keyname" "$owner" \
+      if etcdctl $etcd_options --timeout $etcd_timeout \
+        set "$directory$keyname" "$owner" \
         --swap-with-value "$owner" --ttl "$timeout" >/dev/null 2>&1
       then
         return 0
@@ -145,14 +150,14 @@ unlock() {
 
   if [ "$forced" = false ]; then
     # unlock only succeeds if owner matches
-    if etcdctl --timeout $etcd_timeout rm "$directory$keyname" \
+    if etcdctl $etcd_options --timeout $etcd_timeout rm "$directory$keyname" \
       --with-value "$owner" >/dev/null 2>&1
     then
       return 0
     fi
 
     # failed! check we own the lock
-    if current_owner=$(etcdctl --timeout $etcd_timeout get \
+    if current_owner=$(etcdctl $etcd_options --timeout $etcd_timeout get \
       "$directory$keyname" 2>&1)
     then
       if [ "$owner" != "$current_owner" ]; then
@@ -163,7 +168,8 @@ unlock() {
     return 2
   fi
 
-  if etcdctl --timeout $etcd_timeout rm "$directory$keyname" >/dev/null 2>&1
+  if etcdctl $etcd_options --timeout $etcd_timeout \
+    rm "$directory$keyname" >/dev/null 2>&1
   then
     return 0
   else
@@ -181,7 +187,8 @@ unlock() {
 watch() {
   readonly key=$1
 
-  if value=$(etcdctl --timeout $etcd_timeout watch "$directory$key" 2>&1)
+  if value=$(etcdctl $etcd_options --timeout $etcd_timeout \
+    watch "$directory$key" 2>&1)
   then
     # if the key is removed, then "PrevNode.Value: <value>" is returned
     echo "$value"
