@@ -3206,12 +3206,12 @@ in immd.conf/immnd.conf and restart the cluster.
 
 Errors, warnings and notice level messages are logged to the syslog.
 
-To enable traces in the IMM library, export the variable IMMA_TRACE_FILENAME
+To enable traces in the IMM library, export the variable IMMA_TRACE_PATHNAME
 with a valid pathname before starting the application using the IMM library.
 
 For example:
 
-$ export IMMA_TRACE_FILENAME=imm.trace
+$ export IMMA_TRACE_PATHNAME=imm.trace
 $ ./immomtest
 $ cat $pkglogdir/imm.trace
 
@@ -3220,8 +3220,11 @@ It is also possible to trace slave processes forked by the IMMND.
 This would be processes for loading, sync and dump/pbe.
 To enable such trace uncomment:
 
-#export IMMSV_TRACE_FILENAME=osafimmnd
+#export IMMSV_TRACE_PATHNAME=osafimmnd
 
+It is recommended to use osaflog command as it takes care of flushing
+unwritten trace messages from memory to disk, as well as concatenating
+the pieces that may have resulted from log rotation of the trace stream.
 
 TEST
 

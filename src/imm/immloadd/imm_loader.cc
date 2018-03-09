@@ -2507,7 +2507,7 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  if ((logPath = getenv("IMMSV_TRACE_FILENAME"))) {
+  if ((logPath = getenv("IMMSV_TRACE_PATHNAME"))) {
     category_mask = 0xffffffff; /* TODO: set using env variable ? */
   } else {
     logPath = defaultLog;

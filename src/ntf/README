@@ -260,17 +260,20 @@ in ntfd.conf (see CONFIGURATION above) and restart the cluster.
 
 For fatal errors syslog is used.
 
-To enable traces in the NTF library, export the variable NTFSV_TRACE_FILENAME
+To enable traces in the NTF library, export the variable NTFSV_TRACE_PATHNAME
 with a valid filename before starting the application using the NTF library.
 Traces are always stored in $PKGLOGDIR directory and the directory component
 of the path name (if any) is ignored.
 
 For example:
 
-$ export NTFSV_TRACE_FILENAME=ntf.trace
+$ export NTFSV_TRACE_PATHNAME=ntf.trace
 $ ntfsend
 $ cat $pkglogdir/ntf.trace
 
+It is recommended to use osaflog command as it takes care of flushing
+unwritten trace messages from memory to disk, as well as concatenating
+the pieces that may have resulted from log rotation of the trace stream.
 
 TEST
 

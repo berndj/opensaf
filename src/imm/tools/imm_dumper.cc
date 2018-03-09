@@ -123,7 +123,7 @@ int main(int argc, char* argv[]) {
    * osaf_extended_name_* before saImmOmInitialize and saImmOiInitialize */
   osaf_extended_name_init();
 
-  if ((logPath = getenv("IMMSV_TRACE_FILENAME"))) {
+  if ((logPath = getenv("IMMSV_TRACE_PATHNAME"))) {
     category_mask = 0xffffffff; /* TODO: set using -t flag ? */
   } else {
     logPath = defaultLog;

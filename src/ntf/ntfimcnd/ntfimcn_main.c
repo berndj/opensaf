@@ -109,7 +109,7 @@ int main(int argc, char **argv)
 	 * Activate Log Trace
 	 */
 	openlog(basename(argv[0]), LOG_PID, LOG_LOCAL0);
-	if ((logPath = getenv("NTFSCN_TRACE_FILENAME"))) {
+	if ((logPath = getenv("NTFSCN_TRACE_PATHNAME"))) {
 		category_mask = 0xffffffff;
 	} else {
 		logPath =  NTFIMCN_DEFAULT_LOG;
