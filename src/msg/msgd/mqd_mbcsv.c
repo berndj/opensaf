@@ -1057,7 +1057,6 @@ static uint32_t mqd_ckpt_encode_cold_sync_data(MQD_CB *pMqd,
 	MQD_OBJ_NODE *queue_record = 0;
 	MQD_OBJ_INFO queue_obj_info;
 	MQD_A2S_MSG cold_sync_data;
-	SaNameT queue_name;
 	SaNameT queue_index_name;
 	NCS_PATRICIA_NODE *q_node = 0;
 	NCS_LOCK *q_rec_lock = &pMqd->mqd_cb_lock;
@@ -1075,7 +1074,6 @@ static uint32_t mqd_ckpt_encode_cold_sync_data(MQD_CB *pMqd,
 	}
 	memset(&queue_obj_info, 0, sizeof(MQD_OBJ_INFO));
 	memset(&cold_sync_data, 0, sizeof(MQD_A2S_MSG));
-	memset(&queue_name, 0, sizeof(SaNameT));
 	memset(&queue_index_name, 0, sizeof(SaNameT));
 
 	/*First reserve space to store the number of checkpoints that will be
@@ -1388,7 +1386,6 @@ static uint32_t mqd_a2s_make_record_from_coldsync(MQD_CB *pMqd,
 
 	uint32_t rc = NCSCC_RC_SUCCESS;
 	MQD_OBJ_NODE *q_obj_node = 0, *q_node = 0;
-	MQD_TRACK_OBJ *q_track_obj = 0;
 	uint32_t index = 0;
 	SaNameT record_qindex_name;
 	MQD_OBJECT_ELEM *pOelm = 0;
@@ -1458,17 +1455,9 @@ static uint32_t mqd_a2s_make_record_from_coldsync(MQD_CB *pMqd,
 
 	/* Filling the track info to the queue database */
 	for (index = 0; index < q_data_msg.track_cnt; index++) {
-		q_track_obj = m_MMGR_ALLOC_MQD_TRACK_OBJ;
-		if (q_track_obj == NULL) {
-			LOG_CR("%s:%u: ERR_MEMORY: Failed To Allocate Memory",
-			       __FILE__, __LINE__);
-			rc = NCSCC_RC_FAILURE;
-			return NCSCC_RC_FAILURE;
-		}
-		memset(q_track_obj, 0, sizeof(MQD_TRACK_OBJ));
-		q_track_obj->dest = q_data_msg.track_info[index].dest;
-		q_track_obj->to_svc = q_data_msg.track_info[index].to_svc;
-		ncs_enqueue(&q_obj_node->oinfo.tlist, q_track_obj);
+		mqd_track_add(&q_obj_node->oinfo.tlist,
+				&q_data_msg.track_info[index].dest,
+				q_data_msg.track_info[index].to_svc);
 	}
 	if (new_record)
 		rc = mqd_db_node_add(pMqd, q_obj_node);
