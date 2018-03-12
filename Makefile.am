@@ -431,7 +431,7 @@ checkpatch:
 	@test -d $(top_builddir)/bin || mkdir $(top_builddir)/bin
 	@checkpatch=$$(find $(top_builddir)/bin -name checkpatch.pl -mtime -30); \
 	test -z "$$checkpatch" && wget -O $(top_builddir)/bin/checkpatch.pl https://raw.githubusercontent.com/torvalds/linux/master/scripts/checkpatch.pl 2>&1 && touch $(top_builddir)/bin/checkpatch.pl; \
-	test -z "$$checkpatch" && wget -O $(top_builddir)/bin/spelling.txt https://raw.githubusercontent.com/torvalds/linux/master/scripts/spelling.txt 2>&1 && touch $(top_builddir)/bin/const_structs.checkpatch; \
+	test -z "$$checkpatch" && wget -O $(top_builddir)/bin/spelling.txt https://raw.githubusercontent.com/torvalds/linux/master/scripts/spelling.txt 2>&1 && echo __dummy_struct__ > $(top_builddir)/bin/const_structs.checkpatch; \
 	builddir=$$(cd $(top_builddir); pwd; cd - > /dev/null); \
 	cd "$$srcdir"; find samples src -name '*.c' > "$$builddir/checkpatch_files.txt"; \
 	perl "$$builddir/bin/checkpatch.pl" --no-tree --file --ignore SPLIT_STRING --summary-file $$(cat "$$builddir/checkpatch_files.txt") 1>&2; \
