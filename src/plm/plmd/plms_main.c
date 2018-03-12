@@ -70,20 +70,6 @@ static void sigusr1_handler(int sig)
 	ncs_sel_obj_ind(&plms_cb->usr1_sel_obj);
 }
 
-static void usr2_sig_handler(int sig)
-{
-	PLMS_CB *cb = plms_cb;
-	PLMS_EVT *evt;
-	evt = (PLMS_EVT *)malloc(sizeof(PLMS_EVT));
-	memset(evt, 0, sizeof(PLMS_EVT));
-	evt->req_res = PLMS_REQ;
-	evt->req_evt.req_type = PLMS_DUMP_CB_EVT_T;
-	(void)sig;
-	/* Put it in PLMS's Event Queue */
-	m_NCS_IPC_SEND(&cb->mbx, (NCSCONTEXT)evt, NCS_IPC_PRIORITY_HIGH);
-	signal(SIGUSR2, usr2_sig_handler);
-}
-
 /****************************************************************************
  * Name          : plms_db_init
  *
@@ -324,12 +310,6 @@ static uint32_t plms_init()
 	 */
 	if (cb->nid_started && (signal(SIGUSR1, sigusr1_handler)) == SIG_ERR) {
 		LOG_ER("signal USR1 failed: %s", strerror(errno));
-		rc = NCSCC_RC_FAILURE;
-		goto done;
-	}
-	/* Initialize a signal handler for debugging purpose */
-	if ((signal(SIGUSR2, usr2_sig_handler)) == SIG_ERR) {
-		LOG_ER("signal USR2 failed: %s", strerror(errno));
 		rc = NCSCC_RC_FAILURE;
 		goto done;
 	}
