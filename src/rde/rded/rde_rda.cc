@@ -179,11 +179,12 @@ static uint32_t rde_rda_sock_close(RDE_RDA_CB *rde_rda_cb) {
  *****************************************************************************/
 static uint32_t rde_rda_write_msg(int fd, char *msg) {
   int rc = NCSCC_RC_SUCCESS;
-  int msg_size = 0;
+  const size_t msg_size = strlen(msg) + 1;
 
   TRACE_ENTER2("%u - '%s'", fd, msg);
-  msg_size = send(fd, msg, strlen(msg) + 1, 0);
-  if (msg_size < 0) {
+  ssize_t bytes_sent = send(fd, msg, msg_size, MSG_NOSIGNAL);
+  if (bytes_sent < 0 || static_cast<size_t>(bytes_sent) != msg_size) {
+    // @todo handle partial write?
     if (errno != EINTR && errno != EWOULDBLOCK)
       LOG_ER("send FAILED %s", strerror(errno));
 

@@ -654,14 +654,15 @@ static PCSRDA_RETURN_CODE rda_callback_req(int sockfd, PCS_RDA_ROLE *role) {
 
  *****************************************************************************/
 static PCSRDA_RETURN_CODE rda_write_msg(int sockfd, char *msg) {
-  int msg_size = 0;
+  const size_t msg_size = strlen(msg) + 1;
 
   /*
    ** Read from socket into input buffer
    */
 
-  msg_size = send(sockfd, msg, strlen(msg) + 1, 0);
-  if (msg_size < 0) {
+  ssize_t bytes_sent = send(sockfd, msg, msg_size, MSG_NOSIGNAL);
+  if (bytes_sent < 0 || static_cast<size_t>(bytes_sent) != msg_size) {
+    // @todo handle partial write?
     return PCSRDA_RC_IPC_SEND_FAILED;
   }
 
