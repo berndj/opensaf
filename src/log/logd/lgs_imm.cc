@@ -399,7 +399,7 @@ static void adminOperationCallback(
 
   if (opId == SA_LOG_ADMIN_CHANGE_FILTER) {
     /* Only allowed to update runtime objects (application streams) */
-    if (stream->streamType != STREAM_TYPE_APPLICATION) {
+    if (stream->streamType != STREAM_TYPE_APPLICATION_RT) {
       report_om_error(immOiHandle, invocation,
                       "Admin op change filter for non app stream");
       goto done;
@@ -1644,7 +1644,8 @@ static SaAisErrorT check_attr_validity(
       SaBoolT dummy;
       if (opdata->operationType == CCBUTIL_CREATE) {
         if (!lgs_is_valid_format_expression(i_logFileFormat,
-                                            STREAM_TYPE_APPLICATION, &dummy)) {
+                                            STREAM_TYPE_APPLICATION_RT,
+                                            &dummy)) {
           report_oi_error(immOiHandle, opdata->ccbId,
                           "Invalid logFileFormat: %s", i_logFileFormat);
           rc = SA_AIS_ERR_BAD_OPERATION;
@@ -2276,7 +2277,7 @@ static SaAisErrorT stream_create_and_configure1(
   i = 0;
 
   // a configurable application stream.
-  (*stream)->streamType = STREAM_TYPE_APPLICATION;
+  (*stream)->streamType = STREAM_TYPE_APPLICATION_CFG;
 
   while (ccb->param.create.attrValues[i] != NULL) {
     if (ccb->param.create.attrValues[i]->attrValuesNumber > 0) {
@@ -2775,7 +2776,7 @@ static SaAisErrorT stream_create_and_configure(
   else if (dn == SA_LOG_STREAM_SYSTEM)
     stream->streamType = STREAM_TYPE_SYSTEM;
   else
-    stream->streamType = STREAM_TYPE_APPLICATION;
+    stream->streamType = STREAM_TYPE_APPLICATION_CFG;
 
   while ((attribute = attributes[i++]) != NULL) {
     void *value;
@@ -2815,7 +2816,7 @@ static SaAisErrorT stream_create_and_configure(
         LOG_WA("Invalid logFileFormat for stream %s, using default",
                stream->name.c_str());
 
-        if (stream->streamType == STREAM_TYPE_APPLICATION) {
+        if (stream->streamType == STREAM_TYPE_APPLICATION_CFG) {
           logFileFormat = const_cast<char *>(static_cast<const char *>(
               lgs_cfg_get(LGS_IMM_LOG_STREAM_FILE_FORMAT)));
         } else {
@@ -2864,7 +2865,7 @@ static SaAisErrorT stream_create_and_configure(
   }
 
   if (stream->logFileFormat == NULL) {
-    if (stream->streamType == STREAM_TYPE_APPLICATION) {
+    if (stream->streamType == STREAM_TYPE_APPLICATION_CFG) {
       const char *logFileFormat = static_cast<const char *>(
           lgs_cfg_get(LGS_IMM_LOG_STREAM_FILE_FORMAT));
       stream->logFileFormat = strdup(logFileFormat);

@@ -361,9 +361,11 @@ EXTERN_C SaAisErrorT immutil_update_one_rattr(SaImmOiHandleT immOiHandle,
 
 /**
  * Get class name from object name.
+ *
  * @param objectName
  *
- * @return SaImmClassNameT
+ * @return SaImmClassNameT or NULL if the object does not exist
+ * NOTE: Will segv if object does exist, is a RT object and there is no OI
  */
 EXTERN_C SaImmClassNameT immutil_get_className(const SaNameT *objectName);
 

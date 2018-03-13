@@ -109,7 +109,7 @@ extern int lgs_populate_log_stream(
     SaBoolT twelveHourModeFlag, uint32_t logRecordId,
     log_stream_t *const o_stream);
 
-extern SaAisErrorT lgs_create_rt_appstream(log_stream_t *const rt);
+extern SaAisErrorT lgs_create_appstream_rt_object(log_stream_t *const rt);
 extern log_stream_t *log_stream_new(const std::string &name, int stream_id);
 
 extern void log_stream_open_fileinit(log_stream_t *stream);

@@ -172,7 +172,13 @@ typedef enum {
   STREAM_TYPE_ALARM = 0,
   STREAM_TYPE_NOTIFICATION = 1,
   STREAM_TYPE_SYSTEM = 2,
-  STREAM_TYPE_APPLICATION = 3
+  // Note: STREAM_TYPE_APPLICATION is only used to handle backwards
+  //       compatibility if a log service version before the ...APPLICATION_RT
+  //       and CFG was added is running as active and a log server of this
+  //       version is started/running as standby
+  STREAM_TYPE_APPLICATION = 3,
+  STREAM_TYPE_APPLICATION_RT = 4,
+  STREAM_TYPE_APPLICATION_CFG = 5
 } logStreamTypeT;
 
 extern SaBoolT lgs_is_valid_format_expression(const SaStringT, logStreamTypeT,

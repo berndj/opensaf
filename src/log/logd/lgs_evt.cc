@@ -877,7 +877,7 @@ SaAisErrorT create_new_app_stream(lgsv_stream_open_req_t *open_sync_param,
 
   /* Check the format string */
   if (!lgs_is_valid_format_expression(open_sync_param->logFileFmt,
-                                      STREAM_TYPE_APPLICATION,
+                                      STREAM_TYPE_APPLICATION_RT,
                                       &twelveHourModeFlag)) {
     TRACE("format expression failure");
     rc = SA_AIS_ERR_INVALID_PARAM;
@@ -947,16 +947,15 @@ SaAisErrorT create_new_app_stream(lgsv_stream_open_req_t *open_sync_param,
       open_sync_param->logFileName, open_sync_param->logFilePathName,
       open_sync_param->maxLogFileSize, open_sync_param->maxLogRecordSize,
       open_sync_param->logFileFullAction, open_sync_param->maxFilesRotated,
-      open_sync_param->logFileFmt, STREAM_TYPE_APPLICATION, twelveHourModeFlag,
-      0,
-      *o_stream);  // output
+      open_sync_param->logFileFmt, STREAM_TYPE_APPLICATION_RT,
+      twelveHourModeFlag, 0, *o_stream);  // output
   if (err == -1) {
     log_stream_delete(o_stream);
     rc = SA_AIS_ERR_NO_MEMORY;
     goto done;
   }
 
-  rc = lgs_create_rt_appstream(*o_stream);
+  rc = lgs_create_appstream_rt_object(*o_stream);
   if (rc != SA_AIS_OK) log_stream_delete(o_stream);
 
 done:
@@ -1055,7 +1054,7 @@ static uint32_t proc_stream_open_msg(lgs_cb_t *cb, lgsv_lgs_evt_t *evt) {
   logStream = log_stream_get_by_name(name);
   if (logStream != nullptr) {
     TRACE("existing stream - id %u", logStream->streamId);
-    if (logStream->streamType == STREAM_TYPE_APPLICATION) {
+    if (logStream->streamType == STREAM_TYPE_APPLICATION_RT) {
       /* Verify the creation attributes for an existing appl. stream */
       if (open_sync_param->lstr_open_flags & SA_LOG_STREAM_CREATE) {
         ais_rv = file_attribute_cmp(open_sync_param, logStream);
@@ -1218,7 +1217,7 @@ static uint32_t proc_stream_close_msg(lgs_cb_t *cb, lgsv_lgs_evt_t *evt) {
 
   // This check is to avoid the client getting SA_AIS_BAD_OPERATION
   // as there is no IMM OI implementer set.
-  if ((stream->streamType == STREAM_TYPE_APPLICATION) &&
+  if ((stream->streamType == STREAM_TYPE_APPLICATION_RT) &&
       (cb->immOiHandle == 0)) {
     TRACE("IMM service unavailable, close stream failed");
     ais_rc = SA_AIS_ERR_TRY_AGAIN;

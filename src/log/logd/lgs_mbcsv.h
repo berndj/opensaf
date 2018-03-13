@@ -39,9 +39,10 @@
 #define LGS_MBCSV_VERSION_4 4
 #define LGS_MBCSV_VERSION_5 5
 #define LGS_MBCSV_VERSION_6 6
+#define LGS_MBCSV_VERSION_7 7
 
 /* Current version */
-#define LGS_MBCSV_VERSION 6
+#define LGS_MBCSV_VERSION 7
 #define LGS_MBCSV_VERSION_MIN 1
 
 /* Checkpoint message types(Used as 'reotype' w.r.t mbcsv)  */
@@ -110,6 +111,10 @@ bool lgs_is_peer_v3();
 bool lgs_is_peer_v4();
 bool lgs_is_peer_v5();
 bool lgs_is_peer_v6();
+// New numeric values added to logStreamTypeT used in the
+// lgs_ckpt_stream_open_t structure
+bool lgs_is_peer_v7();
+
 bool lgs_is_split_file_system();
 uint32_t lgs_mbcsv_dispatch(NCS_MBCSV_HDL mbcsv_hdl);
 void lgs_free_edu_mem(char *ptr);

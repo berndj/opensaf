@@ -524,12 +524,14 @@ int lgs_restore_one_app_stream(const std::string &stream_name,
 
   /* Get twelveHourModeFlag from the logFileFmt */
   lgs_is_valid_format_expression(open_stream_param.logFileFmt,
-                                 STREAM_TYPE_APPLICATION, &twelveHourModeFlag);
+                                 STREAM_TYPE_APPLICATION_RT,
+                                 &twelveHourModeFlag);
   rc_out = lgs_populate_log_stream(
       open_stream_param.logFileName, open_stream_param.logFilePathName,
       open_stream_param.maxLogFileSize, open_stream_param.maxLogRecordSize,
       open_stream_param.logFileFullAction, open_stream_param.maxFilesRotated,
-      open_stream_param.logFileFmt, STREAM_TYPE_APPLICATION, twelveHourModeFlag,
+      open_stream_param.logFileFmt, STREAM_TYPE_APPLICATION_RT,
+                                    twelveHourModeFlag,
       0,
       log_stream);  // output
   if (rc_out == -1) {

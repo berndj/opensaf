@@ -586,7 +586,7 @@ int lgs_cfg_verify_log_file_format(const char *log_file_format) {
   SaBoolT dummy;
 
   if (!lgs_is_valid_format_expression((const SaStringT)log_file_format,
-                                      STREAM_TYPE_APPLICATION, &dummy)) {
+                                      STREAM_TYPE_APPLICATION_RT, &dummy)) {
     LOG_NO("logStreamFileFormat has invalid value = %s", log_file_format);
     rc = -1;
   }

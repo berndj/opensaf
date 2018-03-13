@@ -460,6 +460,18 @@ bool lgs_is_peer_v6() {
 }
 
 /**
+ * Check if peer is version 7 (or later)
+ * @return bool
+ */
+bool lgs_is_peer_v7() {
+  if (lgs_cb->mbcsv_peer_version >= LGS_MBCSV_VERSION_7) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+/**
  * Check if configured for split file system.
  * If other node is version 1 split file system mode is not applicable.
  *
@@ -697,7 +709,18 @@ void lgs_ckpt_stream_open_set(log_stream_t *logStream,
   stream_open->maxFilesRotated = logStream->maxFilesRotated;
   stream_open->creationTimeStamp = logStream->creationTimeStamp;
   stream_open->numOpeners = logStream->numOpeners;
-  stream_open->streamType = logStream->streamType;
+
+  if (lgs_is_peer_v7() == true) {
+    stream_open->streamType = logStream->streamType;
+  } else {
+    if ((logStream->streamType == STREAM_TYPE_APPLICATION_RT) ||
+       (logStream->streamType == STREAM_TYPE_APPLICATION_CFG)) {
+      stream_open->streamType = STREAM_TYPE_APPLICATION;
+    } else {
+      stream_open->streamType = logStream->streamType;
+    }
+  }
+
   stream_open->logRecordId = logStream->logRecordId;
 }
 
@@ -2037,7 +2060,6 @@ uint32_t ckpt_proc_open_stream(lgs_cb_t *cb, void *data) {
   lgs_ckpt_stream_open_t *param;
   log_stream_t *stream;
   int pos = 0, err = 0;
-  SaNameT objectName;
 
   TRACE_ENTER();
 
@@ -2072,7 +2094,6 @@ uint32_t ckpt_proc_open_stream(lgs_cb_t *cb, void *data) {
   } else {
     TRACE("\tNew stream %s, id %u", param->logStreamName, param->streamId);
 
-    SaAisErrorT rc = SA_AIS_OK;
     stream = log_stream_new(param->logStreamName, param->streamId);
     if (stream == NULL) {
       LOG_ER("Failed to create log stream %s", param->logStreamName);
@@ -2092,26 +2113,31 @@ uint32_t ckpt_proc_open_stream(lgs_cb_t *cb, void *data) {
       goto done;
     }
 
-    rc = lgs_create_rt_appstream(stream);
-    if (rc != SA_AIS_OK) {
-      log_stream_delete(&stream);
-      goto done;
-    }
-
     stream->numOpeners = param->numOpeners;
     stream->creationTimeStamp = param->creationTimeStamp;
     stream->stb_curFileSize = 0;
     stream->logFileCurrent = param->logFileCurrent;
     stream->stb_prev_actlogFileCurrent = param->logFileCurrent;
     stream->stb_logFileCurrent = param->logFileCurrent;
-    osaf_extended_name_lend(param->logStreamName, &objectName);
-    SaImmClassNameT className = immutil_get_className(&objectName);
-    if (className != nullptr && strcmp(className, "SaLogStreamConfig") == 0) {
-      stream->isRtStream = SA_FALSE;
-    } else {
+
+    if (stream->streamType == STREAM_TYPE_APPLICATION) {
+      // Note: Previous handling for backwards compatibility
+      SaNameT objectName;
+      osaf_extended_name_lend(param->logStreamName, &objectName);
+      SaImmClassNameT className = immutil_get_className(&objectName);
+      if (className != nullptr && strcmp(className, "SaLogStreamConfig") == 0) {
+        stream->isRtStream = SA_FALSE;
+        stream->streamType = STREAM_TYPE_APPLICATION_CFG;
+      } else {
+        stream->isRtStream = SA_TRUE;
+        stream->streamType = STREAM_TYPE_APPLICATION_RT;
+      }
+      if (className != nullptr) free(className);
+    } else if (stream->streamType == STREAM_TYPE_APPLICATION_RT) {
       stream->isRtStream = SA_TRUE;
+    } else {
+      stream->isRtStream = SA_FALSE;
     }
-    if (className != nullptr) free(className);
 
     // Only update destination names if peer is v6 or upper.
     if (lgs_is_peer_v6()) {

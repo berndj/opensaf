@@ -33,8 +33,6 @@
 #include "base/osaf_extended_name.h"
 #include <saAis.h>
 
-#define LLDTEST
-
 SaNameT systemStreamName;
 SaNameT alarmStreamName;
 SaNameT globalConfig;

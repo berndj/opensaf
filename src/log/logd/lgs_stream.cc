@@ -394,7 +394,7 @@ void log_stream_print(log_stream_t *stream) {
   TRACE_2("  pathName:             %s", stream->pathName.c_str());
   TRACE_2("  maxLogFileSize:       %llu", stream->maxLogFileSize);
   TRACE_2("  fixedLogRecordSize:   %u", stream->fixedLogRecordSize);
-  if (stream->streamType == STREAM_TYPE_APPLICATION)
+  if (stream->streamType >= STREAM_TYPE_APPLICATION_RT)
     TRACE_2("  haProperty:           %u", stream->haProperty);
   TRACE_2("  logFullAction:        %u", stream->logFullAction);
   TRACE_2("  logFullHaltThreshold: %u", stream->logFullHaltThreshold);
@@ -520,7 +520,7 @@ int lgs_populate_log_stream(
  * @param stream runtimem app stream
  * @return SaAisErrorT
  */
-SaAisErrorT lgs_create_rt_appstream(log_stream_t *const stream) {
+SaAisErrorT lgs_create_appstream_rt_object(log_stream_t *const stream) {
   SaAisErrorT rc = SA_AIS_OK;
   TRACE_ENTER2("%s, l: %zu", stream->name.c_str(), stream->name.size());
 
@@ -622,20 +622,14 @@ SaAisErrorT lgs_create_rt_appstream(log_stream_t *const stream) {
         &attr_saLogStreamCreationTimestamp,
         NULL};
 
-    {
-      /**
-       * Have to have retry for Rt creation.
-       * Rt update could consider removing retry to avoid blocking
-       */
-      rc = immutil_saImmOiRtObjectCreate_2(
-          lgs_cb->immOiHandle, const_cast<SaImmClassNameT>("SaLogStream"),
-          parentName, attrValues);
-      free(dndup);
+    rc = immutil_saImmOiRtObjectCreate_2(
+        lgs_cb->immOiHandle, const_cast<SaImmClassNameT>("SaLogStream"),
+        parentName, attrValues);
+    free(dndup);
 
-      if (rc != SA_AIS_OK) {
-        LOG_WA("saImmOiRtObjectCreate_2 returned %u for %s, parent %s", rc,
-               stream->name.c_str(), parent_name);
-      }
+    if (rc != SA_AIS_OK) {
+      LOG_WA("saImmOiRtObjectCreate_2 returned %u for %s, parent %s", rc,
+             stream->name.c_str(), parent_name);
     }
   }
 
@@ -799,7 +793,7 @@ void log_stream_close(log_stream_t **s, time_t *close_time_ptr) {
     /* Delete stream if last opener
      * Note: standard streams can never be deleted
      */
-    osafassert(stream->streamType == STREAM_TYPE_APPLICATION);
+    osafassert(stream->streamType >= STREAM_TYPE_APPLICATION_RT);
 
     if (*stream->p_fd != -1) {
       /* Note: Stream fd is always initiated to -1
