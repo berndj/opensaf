@@ -1401,6 +1401,9 @@ void imma_proc_free_pointers(IMMA_CB *cb, IMMA_EVT *evt) {
     case IMMA_EVT_ND2A_OI_CCB_ABORT_UC:
       break;
 
+    case IMMA_EVT_ND2A_PROC_STALE_CLIENTS:
+      break;
+
     default:
       TRACE_4("Unknown event type %u", evt->type);
       break;
