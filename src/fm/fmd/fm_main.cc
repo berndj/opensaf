@@ -600,13 +600,18 @@ static void fm_mbx_msg_handler(FM_CB *fm_cb, FM_EVT *fm_mbx_evt) {
        * progress of shutdown (i.e., amfd/immd is still alive).
        */
       if ((fm_cb->role == PCS_RDA_ACTIVE) && (fm_cb->csi_assigned == false)) {
-        LOG_WA(
-            "Two active controllers observed in a cluster, newActive: %x and "
-            "old-Active: %x",
-            unsigned(fm_cb->node_id), unsigned(fm_cb->peer_node_id));
-        opensaf_reboot(0, NULL,
-                       "Received svc up from peer node (old-active is not "
-                       "fully DOWN), hence rebooting the new Active");
+        Consensus consensus_service;
+        if (consensus_service.IsEnabled() == false) {
+          // If split-brain prevention is enabled, then the 'old active' has
+          // already initiated a self-reboot, or it is fenced.
+          LOG_WA(
+              "Two active controllers observed in a cluster, newActive: %x and "
+              "old-Active: %x",
+              unsigned(fm_cb->node_id), unsigned(fm_cb->peer_node_id));
+          opensaf_reboot(0, NULL,
+                         "Received svc up from peer node (old-active is not "
+                         "fully DOWN), hence rebooting the new Active");
+        }
       }
 
       /* Peer fm came up so sending ee_id of this node */
