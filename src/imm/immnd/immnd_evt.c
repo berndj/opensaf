@@ -10766,6 +10766,18 @@ static uint32_t immnd_evt_proc_fevs_rcv(IMMND_CB *cb, IMMND_EVT *evt,
 	    (m_IMMSV_UNPACK_HANDLE_LOW(clnt_hdl) == cb->node_id);
 
 	if (originatedAtThisNd) {
+		/* The message comes from local IMMND but not me
+		   (reply_dest != cb->immnd_mdest_id). Probably IMMND is just
+		   restarted (e.g: OUT OF ORDER detection),
+		   and this message belongs to previous (dead) IMMND.
+		   So, discard this message. */
+		if (reply_dest && reply_dest != cb->immnd_mdest_id) {
+			LOG_WA("DISCARD FEVS message sent by previous dead IMMND");
+			dequeue_outgoing(cb);
+			TRACE_LEAVE();
+			return NCSCC_RC_SUCCESS;
+		}
+
 		osafassert(!reply_dest || (reply_dest == cb->immnd_mdest_id) ||
 			   isObjSync);
 		if (cb->fevs_replies_pending) {
