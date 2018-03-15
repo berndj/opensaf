@@ -775,7 +775,7 @@ static uint32_t immsv_evt_enc_name_list(NCS_UBAID *o_ub, IMMSV_OBJ_NAME_LIST *p)
 
 	if (objs >= IMMSV_MAX_OBJECTS) {
 		LOG_ER("TOO MANY Object Names line:%u", __LINE__);
-		return NCSCC_RC_OUT_OF_MEM;
+		return NCSCC_RC_NO_OBJECT;
 	}
 	return NCSCC_RC_SUCCESS;
 }

@@ -3545,6 +3545,15 @@ SaAisErrorT imma_evt_fake_evs(IMMA_CB *cb, IMMSV_EVT *i_evt, IMMSV_EVT **o_evt,
   /* Encode non-flat since we broadcast to unknown receivers. */
   proc_rc = immsv_evt_enc(i_evt, &uba);
 
+  /* Validation of the number of objects in the trasaction is done in
+  immsv_evt_enc. In case if the number of objects is greater then the limit,
+  then NCSCC_RC_NO_OBJECT is returned back.*/
+  if (proc_rc == NCSCC_RC_NO_OBJECT) {
+    TRACE_2("ERR_NO_RESOURCES: Failed to pre-pack");
+    rc = SA_AIS_ERR_NO_RESOURCES;
+    goto fail;
+  }
+
   if (proc_rc != NCSCC_RC_SUCCESS) {
     TRACE_2("ERR_LIBRARY: Failed to pre-pack");
     rc = SA_AIS_ERR_LIBRARY;
