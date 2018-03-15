@@ -10778,8 +10778,6 @@ static uint32_t immnd_evt_proc_fevs_rcv(IMMND_CB *cb, IMMND_EVT *evt,
 			return NCSCC_RC_SUCCESS;
 		}
 
-		osafassert(!reply_dest || (reply_dest == cb->immnd_mdest_id) ||
-			   isObjSync);
 		if (cb->fevs_replies_pending) {
 			--(cb->fevs_replies_pending); /*flow control towards
 							 IMMD */
