@@ -1400,6 +1400,7 @@ fi
 %config(noreplace) %{_pkgsysconfdir}/nodeinit.conf.controller
 %config(noreplace) %{_pkgsysconfdir}/nodeinit.conf.payload
 %config(noreplace) %{_pkgsysconfdir}/dtmd.conf
+%config(noreplace) %{_pkgsysconfdir}/transportd.conf
 %{_pkglibdir}/osafrded
 %{_pkgclcclidir}/osaf-rded
 %{_pkglibdir}/osaffmd
@@ -1426,6 +1427,7 @@ fi
 %dir %{_pkgsysconfdir}
 %config(noreplace) %{_pkgsysconfdir}/nodeinit.conf.payload
 %config(noreplace) %{_pkgsysconfdir}/dtmd.conf
+%config(noreplace) %{_pkgsysconfdir}/transportd.conf
 %{_pkglibdir}/osafdtmd
 %{_pkglibdir}/osaftransportd
 %{_pkgclcclidir}/osaf-dtm

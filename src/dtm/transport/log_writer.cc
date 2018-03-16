@@ -16,7 +16,6 @@
  *
  */
 
-#include "dtm/transport/log_writer.h"
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -24,14 +23,18 @@
 #include <cstdio>
 #include "base/getenv.h"
 #include "osaf/configmake.h"
+#include "dtm/transport/log_writer.h"
+#include "dtm/transport/log_server.h"
 
-LogWriter::LogWriter(const std::string& log_name, size_t no_of_backups)
+LogWriter::LogWriter(const std::string& log_name, size_t no_of_backups,
+                                                  size_t max_file_size)
     : log_file_{base::GetEnv<std::string>("pkglogdir", PKGLOGDIR) + "/" +
                 log_name},
       fd_{-1},
       current_file_size_{0},
       current_buffer_size_{0},
       no_of_backups_{no_of_backups},
+      max_file_size_{max_file_size},
       buffer_{new char[kBufferSize]} {}
 
 LogWriter::~LogWriter() {
@@ -86,7 +89,8 @@ void LogWriter::RotateLog() {
 
 void LogWriter::Write(size_t size) {
   current_buffer_size_ += size;
-  if (current_buffer_size_ > kBufferSize - kMaxMessageSize) Flush();
+  if (current_buffer_size_ > kBufferSize - kMaxMessageSize ||
+      current_buffer_size_ >= max_file_size_) Flush();
 }
 
 void LogWriter::Flush() {
@@ -95,7 +99,7 @@ void LogWriter::Flush() {
   if (size == 0) return;
   if (fd_ < 0) Open();
   if (fd_ < 0) return;
-  if (current_file_size_ >= kMaxFileSize) {
+  if (current_file_size_ >= max_file_size_) {
     RotateLog();
     if (fd_ < 0) Open();
     if (fd_ < 0) return;

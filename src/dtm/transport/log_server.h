@@ -33,6 +33,8 @@
 class LogServer {
  public:
   static constexpr size_t kMaxNoOfStreams = 32;
+  static constexpr const char* kTransportdConfigFile =
+                                       PKGSYSCONFDIR "/transportd.conf";
   // @a term_fd is a file descriptor that will become readable when the program
   // should exit because it has received the SIGTERM signal.
   explicit LogServer(int term_fd);
@@ -42,12 +44,15 @@ class LogServer {
   // process has received the SIGTERM signal, which is indicated by the caller
   // by making the term_fd (provided in the constructor) readable.
   void Run();
+  // To read Transportd.conf
+  bool ReadConfig(const char *transport_config_file);
 
  private:
   class LogStream {
    public:
     static constexpr size_t kMaxLogNameSize = 32;
-    LogStream(const std::string& log_name, size_t no_of_backups);
+    LogStream(const std::string& log_name, size_t no_of_backups,
+                                                 size_t max_file_size);
 
     size_t log_name_size() const { return log_name_.size(); }
     const char* log_name_data() const { return log_name_.data(); }
@@ -81,8 +86,12 @@ class LogServer {
                       const struct sockaddr_un& addr, socklen_t addrlen);
   static bool ValidateAddress(const struct sockaddr_un& addr,
                               socklen_t addrlen);
-  std::string ExecuteCommand(const std::string& command);
+  Osaflog::Command ExecuteCommand(const char* command, size_t size);
   int term_fd_;
+  // Configuration for LogServer
+  size_t no_of_backups_;
+  size_t max_file_size_;
+
   base::UnixServerSocket log_socket_;
   std::map<std::string, LogStream*> log_streams_;
   LogStream* current_stream_;

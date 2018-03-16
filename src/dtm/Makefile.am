@@ -57,6 +57,9 @@ nodist_pkgclccli_SCRIPTS += \
 dist_pkgsysconf_DATA += \
 	src/dtm/dtmnd/dtmd.conf
 
+dist_pkgsysconf_DATA += \
+	src/dtm/transport/transportd.conf
+
 bin_osaftransportd_CXXFLAGS = $(AM_CXXFLAGS)
 
 bin_osaftransportd_CPPFLAGS = \

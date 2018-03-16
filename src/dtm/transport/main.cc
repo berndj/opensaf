@@ -26,6 +26,9 @@
 #include "dtm/transport/log_server.h"
 #include "dtm/transport/transport_monitor.h"
 
+
+static constexpr const char* kTransportdConfigFile =
+                             PKGSYSCONFDIR "/transportd.conf";
 constexpr static const int kDaemonStartWaitTimeInSeconds = 15;
 
 enum Termination { kExit, kDaemonExit, kReboot };
@@ -39,6 +42,7 @@ struct Result {
 
 static void* LogServerStartFunction(void* instance) {
   LogServer* log_server = static_cast<LogServer*>(instance);
+  log_server->ReadConfig(kTransportdConfigFile);
   log_server->Run();
   return nullptr;
 }

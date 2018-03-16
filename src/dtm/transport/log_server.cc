@@ -16,23 +16,28 @@
  *
  */
 
-#include "dtm/transport/log_server.h"
+#include <signal.h>
+#include <syslog.h>
 #include <cstring>
 #include "base/osaf_poll.h"
 #include "base/time.h"
+#include "dtm/transport/log_server.h"
 #include "dtm/common/osaflog_protocol.h"
 #include "osaf/configmake.h"
+
 
 const Osaflog::ClientAddressConstantPrefix LogServer::address_header_{};
 
 LogServer::LogServer(int term_fd)
     : term_fd_{term_fd},
+      no_of_backups_{9},
+      max_file_size_{5 * 1024 * 1024},
       log_socket_{Osaflog::kServerSocketPath, base::UnixSocket::kNonblocking},
       log_streams_{},
-      current_stream_{new LogStream{"mds.log", 1}},
+      current_stream_{new LogStream{"mds.log", 1, 5 * 1024 * 1024}},
       no_of_log_streams_{1} {
   log_streams_["mds.log"] = current_stream_;
-}
+  }
 
 LogServer::~LogServer() {
   for (const auto& s : log_streams_) delete s.second;
@@ -40,6 +45,7 @@ LogServer::~LogServer() {
 
 void LogServer::Run() {
   struct pollfd pfd[2] = {{term_fd_, POLLIN, 0}, {log_socket_.fd(), POLLIN, 0}};
+
   do {
     for (int i = 0; i < 256; ++i) {
       char* buffer = current_stream_->current_buffer_position();
@@ -99,12 +105,78 @@ LogServer::LogStream* LogServer::GetStream(const char* msg_id,
   if (iter != log_streams_.end()) return iter->second;
   if (no_of_log_streams_ >= kMaxNoOfStreams) return nullptr;
   if (!ValidateLogName(msg_id, msg_id_size)) return nullptr;
-  LogStream* stream = new LogStream{log_name, 9};
+
+  LogStream* stream = new LogStream{log_name, no_of_backups_, max_file_size_};
   auto result = log_streams_.insert(
       std::map<std::string, LogStream*>::value_type{log_name, stream});
   if (!result.second) osaf_abort(msg_id_size);
   ++no_of_log_streams_;
   return stream;
+}
+
+bool LogServer::ReadConfig(const char *transport_config_file) {
+  FILE *transport_conf_file;
+  char line[256];
+  size_t max_file_size = 0;
+  size_t number_of_backup_files = 0;
+  int i, n, comment_line, tag_len = 0;
+
+  /* Open transportd.conf config file. */
+  transport_conf_file = fopen(transport_config_file, "r");
+  if (transport_conf_file == nullptr) {
+    syslog(LOG_ERR, "Not able to read transportd.conf: %s", strerror(errno));
+    return false;
+  }
+
+
+  /* Read file. */
+  while (fgets(line, 256, transport_conf_file)) {
+    /* If blank line, skip it - and set tag back to 0. */
+    if (strcmp(line, "\n") == 0) {
+      continue;
+    }
+
+    /* If a comment line, skip it. */
+    n = strlen(line);
+    comment_line = 0;
+    for (i = 0; i < n; i++) {
+      if ((line[i] == ' ') || (line[i] == '\t')) {
+        continue;
+      } else if (line[i] == '#') {
+        comment_line = 1;
+        break;
+      } else {
+        break;
+      }
+    }
+    if (comment_line) continue;
+    line[n - 1] = 0;
+
+    if (strncmp(line, "TRANSPORT_MAX_LOG_FILESIZE=",
+                  strlen("TRANSPORT_MAX_LOG_FILESIZE=")) == 0) {
+      tag_len = strlen("TRANSPORT_MAX_LOG_FILESIZE=");
+      max_file_size = atoi(&line[tag_len]);
+
+      if (max_file_size > 1) {
+        max_file_size_ = max_file_size;
+      }
+    }
+
+    if (strncmp(line, "TRANSPORT_NO_OF_BACKUP_LOG_FILES=",
+                  strlen("TRANSPORT_NO_OF_BACKUP_LOG_FILES=")) == 0) {
+      tag_len = strlen("TRANSPORT_NO_OF_BACKUP_LOG_FILES=");
+      number_of_backup_files = atoi(&line[tag_len]);
+
+      if (number_of_backup_files > 1) {
+         no_of_backups_ = number_of_backup_files;
+      }
+    }
+  }
+
+  /* Close file. */
+  fclose(transport_conf_file);
+
+  return true;
 }
 
 bool LogServer::ValidateLogName(const char* msg_id, size_t msg_id_size) {
@@ -125,8 +197,11 @@ void LogServer::ExecuteCommand(const char* command, size_t size,
                                const struct sockaddr_un& addr,
                                socklen_t addrlen) {
   if (ValidateAddress(addr, addrlen)) {
-    std::string cmd_result = ExecuteCommand(std::string{command, size});
-    log_socket_.SendTo(cmd_result.data(), cmd_result.size(), &addr, addrlen);
+    struct Osaflog::Message result;
+    memset(&result, 0, sizeof(result));
+    result.marker[0] = '!';
+    result.command = ExecuteCommand(command, size);
+    log_socket_.SendTo(&result, sizeof(result), &addr, addrlen);
   }
 }
 
@@ -139,21 +214,32 @@ bool LogServer::ValidateAddress(const struct sockaddr_un& addr,
   }
 }
 
-std::string LogServer::ExecuteCommand(const std::string& command) {
-  if (command == "?flush") {
-    for (const auto& s : log_streams_) {
-      LogStream* stream = s.second;
-      stream->Flush();
-    }
-    return std::string{"!flush"};
-  } else {
-    return std::string{"!not_supported"};
+Osaflog::Command LogServer::ExecuteCommand(const char * command,
+                                                 size_t size) {
+  Osaflog::Message message;
+
+  if (size != sizeof(message)) {
+     return Osaflog::kFailure;
   }
+  memset(&message, 0, sizeof(message));
+  memcpy(&message, command, size);
+
+  if (message.command == Osaflog::kMaxfilesize) {
+    max_file_size_ = message.value;
+    return Osaflog::kMaxfilesize;
+  } else if (message.command == Osaflog::kMaxbackups) {
+    no_of_backups_ = message.value;
+    return Osaflog::kMaxbackups;
+  } else if (message.command == Osaflog::kFlush) {
+    return Osaflog::kFlush;
+  }
+  return Osaflog::kFailure;
 }
 
 LogServer::LogStream::LogStream(const std::string& log_name,
-                                size_t no_of_backups)
-    : log_name_{log_name}, last_flush_{}, log_writer_{log_name, no_of_backups} {
+                                size_t no_of_backups_, size_t max_file_size_)
+    : log_name_{log_name}, last_flush_{}, log_writer_{log_name, no_of_backups_,
+                                                             max_file_size_} {
   if (log_name.size() > kMaxLogNameSize) osaf_abort(log_name.size());
 }
 
