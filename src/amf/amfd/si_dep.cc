@@ -799,7 +799,10 @@ void avd_sidep_assign_evh(AVD_CL_CB *cb, AVD_EVT *evt) {
   } else {
     /*Check sponsors state once agian then take action*/
     sidep_update_si_self_dep_state(dep_si);
-    if (dep_si->si_dep_state == AVD_SI_READY_TO_ASSIGN) {
+    if (dep_si->si_dep_state == AVD_SI_READY_TO_ASSIGN ||
+        (dep_si->si_dep_state == AVD_SI_ASSIGNED &&
+            dep_si->saAmfSINumCurrActiveAssignments <
+            dep_si->pref_active_assignments())) {
       if ((sidep_sg_red_si_process_assignment(avd_cb, dep_si) ==
            NCSCC_RC_FAILURE) &&
           (dep_si->num_dependents != 0)) {
@@ -979,6 +982,10 @@ void sidep_take_action_on_dependents(AVD_SI *si) {
     if (dep_si->si_dep_state == AVD_SI_READY_TO_UNASSIGN) {
       sidep_process_ready_to_unassign_depstate(dep_si);
     } else if (dep_si->si_dep_state == AVD_SI_READY_TO_ASSIGN) {
+      sidep_si_dep_state_evt_send(avd_cb, dep_si, AVD_EVT_ASSIGN_SI_DEP_STATE);
+    } else if (dep_si->si_dep_state == AVD_SI_ASSIGNED &&
+        si->sg_of_si->sg_fsm_state == AVD_SG_FSM_STABLE &&
+        si->saAmfSINumCurrActiveAssignments < si->pref_active_assignments()) {
       sidep_si_dep_state_evt_send(avd_cb, dep_si, AVD_EVT_ASSIGN_SI_DEP_STATE);
     }
   }
