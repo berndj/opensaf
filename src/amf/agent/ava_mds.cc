@@ -378,6 +378,10 @@ uint32_t ava_mds_send(AVA_CB *cb, AVSV_NDA_AVA_MSG *i_msg,
       /* retrieve the response */
       *o_msg = (AVSV_NDA_AVA_MSG *)mds_info.info.svc_send.info.sndrsp.o_rsp;
       mds_info.info.svc_send.info.sndrsp.o_rsp = 0;
+      if (*o_msg == nullptr) {
+        LOG_ER("No response received");
+        rc = NCSCC_RC_FAILURE;
+      }
     }
   } else
     /* just a 'normal' send */
