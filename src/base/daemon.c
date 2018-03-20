@@ -68,6 +68,9 @@ static unsigned int __tracemask;
 static unsigned int __nofork = 0;
 static int __logmask;
 static int fifo_fd = -1;
+static pid_t sending_pid_ = -1;
+static uid_t sending_uid_ = -1;
+
 
 static void install_fatal_signal_handlers(void);
 
@@ -519,8 +522,11 @@ extern uint32_t ncs_sel_obj_ind(NCS_SEL_OBJ *i_ind_obj);
  * TERM signal handler
  * @param sig
  */
-static void sigterm_handler(int sig)
+static void sigterm_handler(int signum, siginfo_t *info, void *ptr)
 {
+	sending_pid_ = info->si_pid;
+	sending_uid_ = info->si_uid;
+
 	ncs_sel_obj_ind(&term_sel_obj);
 	signal(SIGTERM, SIG_IGN);
 }
@@ -534,7 +540,8 @@ static void sigterm_handler(int sig)
  */
 void daemon_exit(void)
 {
-	syslog(LOG_NOTICE, "exiting for shutdown");
+	syslog(LOG_NOTICE, "exiting for shutdown, (sigterm from pid %d uid %d)",
+		sending_pid_, sending_uid_);
 
 	close(fifo_fd);
 
@@ -551,13 +558,18 @@ void daemon_exit(void)
  */
 void daemon_sigterm_install(int *term_fd)
 {
+	struct sigaction act;
+
 	if (ncs_sel_obj_create(&term_sel_obj) != NCSCC_RC_SUCCESS) {
 		syslog(LOG_ERR, "ncs_sel_obj_create failed");
 		exit(EXIT_FAILURE);
 	}
 
-	if (signal(SIGTERM, sigterm_handler) == SIG_ERR) {
-		syslog(LOG_ERR, "signal TERM failed: %s", strerror(errno));
+	sigemptyset(&act.sa_mask);
+	act.sa_sigaction = sigterm_handler;
+	act.sa_flags = SA_SIGINFO | SA_RESETHAND;
+	if (sigaction(SIGTERM, &act, NULL) < 0) {
+		syslog(LOG_ERR, "sigaction TERM failed: %s", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
