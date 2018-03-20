@@ -533,11 +533,19 @@ void imma_oi_ccb_record_augment(IMMA_CLIENT_NODE *cl_node, SaImmOiCcbIdT ccbId,
                                 SaImmHandleT privateOmHandle,
                                 SaImmAdminOwnerHandleT privateAoHandle) {
   TRACE_ENTER();
+
   struct imma_oi_ccb_record *tmp = imma_oi_ccb_record_find(cl_node, ccbId);
+  osafassert(tmp);
+  // Perform saImmOiAugmentCcbInitialize() on just-aborted CCB,
+  // but since most of OiAugmentCcbInitialize's work have been finished,
+  // we don't interrupt the on-going work such as change error code, finalize
+  // private om handle, etc, they will be handled when IMM app dispatches
+  // CCB abort callback event.
+  if (tmp->isAborted) {
+    TRACE_1("Abort upcall received by mds thread on this CCB 0x%llx", ccbId);
+  }
 
-  osafassert(tmp && tmp->isCcbAugOk);
-
-  osafassert(!(tmp->isAborted));
+  osafassert(tmp->isCcbAugOk);
 
   osafassert(!(tmp->isCritical));
 

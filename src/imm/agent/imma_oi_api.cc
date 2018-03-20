@@ -4077,12 +4077,20 @@ done:
   }
 
   if (rc == SA_AIS_OK || rc == SA_AIS_ERR_TRY_AGAIN) {
-    /* mark oi_ccb_record with privateOmHandle to avoid repeated open/close
+    /* Mark oi_ccb_record with privateOmHandle to avoid repeated open/close
        of private-om-handle for each try again or each ccb op. The handle
        is closed when the ccb is terminated (apply-uc or abort-uc).
-     */
+
+       And the CCB record could be changed in MDS thread if CCB is aborted.
+       Lock/unlock is here to ensure no race-condition b/w the MDS thread
+       and IMM application thread. */
+    m_NCS_LOCK(&cb->cb_lock, NCS_LOCK_WRITE);
+
     imma_oi_ccb_record_augment(cl_node, ccbId, privateOmHandle,
                                privateAoHandle);
+
+    m_NCS_UNLOCK(&cb->cb_lock, NCS_LOCK_WRITE);
+
     if (privateAoHandle) {
       *ownerHandle = privateAoHandle;
     }
