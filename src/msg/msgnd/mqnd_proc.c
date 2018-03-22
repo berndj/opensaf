@@ -468,6 +468,21 @@ reg_req:
 		asapi_msg_free(&opr.info.msg.resp);
 
 send_rsp:
+	/*
+	 * Delete the runtime object before responding, otherwise the other side
+	 * might create it before we have removed it
+	 */
+	rc = immutil_saImmOiRtObjectDelete(cb->immOiHandle,
+			&qnode->qinfo.queueName);
+
+	if (rc != SA_AIS_OK) {
+		LOG_ER("immutil_saImmOiRtObjectDelete: Deletion of MsgQueue "
+				"object %s failed: %i",
+				qnode->qinfo.queueName.value,
+				rc);
+		return NCSCC_RC_FAILURE;
+	}
+
 	/* Send the response */
 	transfer_rsp.type = MQSV_EVT_MQP_RSP;
 	transfer_rsp.msg.mqp_rsp.type = MQP_EVT_TRANSFER_QUEUE_RSP;
@@ -485,18 +500,23 @@ send_rsp:
 	transfer_rsp.msg.mqp_rsp.error = err;
 
 	rc = mqnd_mds_send_rsp(cb, &req->sinfo, &transfer_rsp);
-	if (rc != NCSCC_RC_SUCCESS)
+	if (rc != NCSCC_RC_SUCCESS) {
 		TRACE_2(
 		    "Queue Attribute get :Mds Send Response Failed %" PRIx64,
 		    cb->my_dest);
-	else
-	    /* delete Message Queue Objetc at IMMSV */
-	    if (immutil_saImmOiRtObjectDelete(
-		    cb->immOiHandle, &qnode->qinfo.queueName) != SA_AIS_OK) {
-		LOG_ER(
-		    "immutil_saImmOiRtObjectDelete: Deletion of MsgQueue object %s",
-		    qnode->qinfo.queueName.value);
-		return NCSCC_RC_FAILURE;
+
+		/* readd the runtime object which was deleted above */
+		err = mqnd_create_runtime_MsgQobject(
+				(char *)qnode->qinfo.queueName.value,
+				qnode->qinfo.creationTime,
+			       	qnode,
+			       	cb->immOiHandle);
+
+		if (err != SA_AIS_OK) {
+			LOG_ER("failed to recreate IMM q object for %s: %i",
+					qnode->qinfo.queueName.value,
+					err);
+		}
 	}
 
 	if (mqsv_message_cpy)
