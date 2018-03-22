@@ -23,15 +23,27 @@
 #include "base/osaf_poll.h"
 extern int fill_syncparameters(int);
 extern uint32_t mds_vdest_tbl_get_role(MDS_VDEST_ID vdest_id, V_DEST_RL *role);
+extern pthread_mutex_t gl_mds_library_mutex;
+
+extern _Thread_local NCSMDS_INFO svc_to_mds_info;
+extern pthread_mutex_t safe_printf_mutex;
+extern pthread_mutex_t gl_mutex;
+
+extern void safe_printf(const char* format, ... );
+extern int safe_fflush(FILE *stream);
+#define printf safe_printf
+#define fflush safe_fflush
+
 /****************** ADEST WRAPPERS ***********************/
 uint32_t adest_get_handle(void)
 {
-	memset(&ada_info, '\0', sizeof(ada_info));
-	memset(&gl_tet_adest, '\0', sizeof(gl_tet_adest));
+	NCSADA_INFO ada_info;
 
 	ada_info.req = NCSADA_GET_HDLS;
 
 	if (ncsada_api(&ada_info) == NCSCC_RC_SUCCESS) {
+		pthread_mutex_lock(&gl_mutex);
+		memset(&gl_tet_adest, '\0', sizeof(gl_tet_adest));
 
 		gl_tet_adest.adest = ada_info.info.adest_get_hdls.o_adest;
 		printf("\nADEST <%llx > : GET_HDLS is SUCCESSFUL",
@@ -41,6 +53,7 @@ uint32_t adest_get_handle(void)
 		    ada_info.info.adest_get_hdls.o_mds_pwe1_hdl;
 		gl_tet_adest.mds_adest_hdl =
 		    ada_info.info.adest_get_hdls.o_mds_adest_hdl;
+		pthread_mutex_unlock(&gl_mutex);
 		return NCSCC_RC_SUCCESS;
 	} else {
 		printf("\nRequest to ncsada_api: GET_HDLS has FAILED");
@@ -50,7 +63,7 @@ uint32_t adest_get_handle(void)
 
 uint32_t create_pwe_on_adest(MDS_HDL mds_adest_hdl, PW_ENV_ID pwe_id)
 {
-	memset(&ada_info, '\0', sizeof(ada_info));
+	NCSADA_INFO ada_info;
 	ada_info.req = NCSADA_PWE_CREATE;
 
 	ada_info.info.pwe_create.i_mds_adest_hdl = mds_adest_hdl;
@@ -59,10 +72,12 @@ uint32_t create_pwe_on_adest(MDS_HDL mds_adest_hdl, PW_ENV_ID pwe_id)
 	if (ncsada_api(&ada_info) == NCSCC_RC_SUCCESS) {
 
 		printf("\nPWE_CREATE is SUCCESSFUL : PWE = %d", pwe_id);
+		pthread_mutex_lock(&gl_mutex);
 		gl_tet_adest.pwe[gl_tet_adest.pwe_count].pwe_id = pwe_id;
 		gl_tet_adest.pwe[gl_tet_adest.pwe_count].mds_pwe_hdl =
 		    ada_info.info.pwe_create.o_mds_pwe_hdl;
 		gl_tet_adest.pwe_count++;
+		pthread_mutex_unlock(&gl_mutex);
 		return NCSCC_RC_SUCCESS;
 	} else {
 		printf("\nRequest to PWE_CREATE on ADEST has FAILED\n");
@@ -72,14 +87,16 @@ uint32_t create_pwe_on_adest(MDS_HDL mds_adest_hdl, PW_ENV_ID pwe_id)
 
 uint32_t destroy_pwe_on_adest(MDS_HDL mds_pwe_hdl)
 {
-	memset(&ada_info, '\0', sizeof(ada_info));
+	NCSADA_INFO ada_info;
 	ada_info.req = NCSADA_PWE_DESTROY;
 
 	ada_info.info.pwe_destroy.i_mds_pwe_hdl = mds_pwe_hdl;
 
 	if (ncsada_api(&ada_info) == NCSCC_RC_SUCCESS) {
 		printf("\nADEST: PWE_DESTROY is SUCCESSFUL");
+		pthread_mutex_lock(&gl_mutex);
 		gl_tet_adest.pwe_count--;
+		pthread_mutex_unlock(&gl_mutex);
 		return NCSCC_RC_SUCCESS;
 	} else {
 		printf("\nRequest tO PWE_DESTROY on ADEST: has FAILED");
@@ -91,26 +108,28 @@ uint32_t destroy_pwe_on_adest(MDS_HDL mds_pwe_hdl)
 
 uint32_t create_vdest(NCS_VDEST_TYPE policy, MDS_DEST vdest)
 {
-	memset(&vda_info, '\0', sizeof(vda_info));
-	memset(&gl_tet_vdest[gl_vdest_indx], '\0', sizeof(TET_VDEST));
+	NCSVDA_INFO vda_info;
 
 	vda_info.req = NCSVDA_VDEST_CREATE;
 
 	vda_info.info.vdest_create.i_policy = policy;
 	vda_info.info.vdest_create.i_create_type = NCSVDA_VDEST_CREATE_SPECIFIC;
-	vda_info.info.vdest_create.info.specified.i_vdest =
-	    gl_tet_vdest[gl_vdest_indx].vdest = vdest;
+	vda_info.info.vdest_create.info.specified.i_vdest = vdest;
 
 	if (ncsvda_api(&vda_info) == NCSCC_RC_SUCCESS) {
 
 		printf("\n %lld : VDEST_CREATE is SUCCESSFUL",
 		       (long long unsigned int)vdest);
 		fflush(stdout);
+		pthread_mutex_lock(&gl_mutex);
+		memset(&gl_tet_vdest[gl_vdest_indx], '\0', sizeof(TET_VDEST));
+		gl_tet_vdest[gl_vdest_indx].vdest = vdest;
 		gl_tet_vdest[gl_vdest_indx].mds_pwe1_hdl =
 		    vda_info.info.vdest_create.o_mds_pwe1_hdl;
 		gl_tet_vdest[gl_vdest_indx].mds_vdest_hdl =
 		    vda_info.info.vdest_create.o_mds_vdest_hdl;
 		gl_vdest_indx++;
+		pthread_mutex_unlock(&gl_mutex);
 		return NCSCC_RC_SUCCESS;
 	} else {
 		printf("\nRequest to ncsvda_api: VDEST_CREATE has FAILED\n");
@@ -119,7 +138,7 @@ uint32_t create_vdest(NCS_VDEST_TYPE policy, MDS_DEST vdest)
 }
 uint32_t destroy_vdest(MDS_DEST vdest)
 {
-	memset(&vda_info, '\0', sizeof(vda_info)); /*zeroizing*/
+	NCSVDA_INFO vda_info;
 	/*request*/
 	vda_info.req = NCSVDA_VDEST_DESTROY;
 
@@ -131,8 +150,10 @@ uint32_t destroy_vdest(MDS_DEST vdest)
 		printf("\n %lld : VDEST_DESTROY is SUCCESSFULL",
 		       (long long unsigned int)vdest);
 		fflush(stdout);
+		pthread_mutex_lock(&gl_mutex);
 		memset(&gl_tet_vdest[gl_vdest_indx], '\0', sizeof(TET_VDEST));
 		gl_vdest_indx--;
+		pthread_mutex_unlock(&gl_mutex);
 		return NCSCC_RC_SUCCESS;
 	} else {
 		printf("\nRequest to ncsvda_api: VDEST_DESTROY has FAILED\n");
@@ -142,8 +163,7 @@ uint32_t destroy_vdest(MDS_DEST vdest)
 
 uint32_t create_named_vdest(bool persistent, NCS_VDEST_TYPE policy, char *vname)
 {
-	memset(&vda_info, '\0', sizeof(vda_info));
-	memset(&gl_tet_vdest[gl_vdest_indx], '\0', sizeof(TET_VDEST));
+	NCSVDA_INFO vda_info;
 
 	vda_info.req = NCSVDA_VDEST_CREATE;
 
@@ -169,6 +189,8 @@ uint32_t create_named_vdest(bool persistent, NCS_VDEST_TYPE policy, char *vname)
 	if (ncsvda_api(&vda_info) == NCSCC_RC_SUCCESS) {
 
 		printf("\nNAMED VDEST_CREATE is SUCCESSFULL\n");
+		pthread_mutex_lock(&gl_mutex);
+		memset(&gl_tet_vdest[gl_vdest_indx], '\0', sizeof(TET_VDEST));
 		gl_tet_vdest[gl_vdest_indx].vdest =
 		    vda_info.info.vdest_create.info.named.o_vdest;
 		gl_tet_vdest[gl_vdest_indx].mds_pwe1_hdl =
@@ -176,6 +198,7 @@ uint32_t create_named_vdest(bool persistent, NCS_VDEST_TYPE policy, char *vname)
 		gl_tet_vdest[gl_vdest_indx].mds_vdest_hdl =
 		    vda_info.info.vdest_create.o_mds_vdest_hdl;
 		gl_vdest_indx++;
+		pthread_mutex_unlock(&gl_mutex);
 		return NCSCC_RC_SUCCESS;
 	} else {
 		printf("\nNAMED VDEST_CREATE has FAILED\n");
@@ -185,7 +208,7 @@ uint32_t create_named_vdest(bool persistent, NCS_VDEST_TYPE policy, char *vname)
 uint32_t destroy_named_vdest(bool non_persistent, MDS_DEST vdest, char *vname)
 {
 
-	memset(&vda_info, '\0', sizeof(vda_info));
+	NCSVDA_INFO vda_info;
 
 	vda_info.req = NCSVDA_VDEST_DESTROY;
 
@@ -201,8 +224,10 @@ uint32_t destroy_named_vdest(bool non_persistent, MDS_DEST vdest, char *vname)
 	if (ncsvda_api(&vda_info) == NCSCC_RC_SUCCESS) {
 		printf("\n %lld : VDEST_NAMED DESTROY is SUCCESSFULL\n",
 		       (long long unsigned int)vdest);
+		pthread_mutex_lock(&gl_mutex);
 		memset(&gl_tet_vdest[gl_vdest_indx], '\0', sizeof(TET_VDEST));
 		gl_vdest_indx--;
+		pthread_mutex_unlock(&gl_mutex);
 		return NCSCC_RC_SUCCESS;
 	} else {
 		printf(
@@ -213,7 +238,7 @@ uint32_t destroy_named_vdest(bool non_persistent, MDS_DEST vdest, char *vname)
 
 MDS_DEST vdest_lookup(char *vname)
 {
-	memset(&vda_info, '\0', sizeof(vda_info));
+	NCSVDA_INFO vda_info;
 
 	vda_info.req = NCSVDA_VDEST_LOOKUP;
 
@@ -241,7 +266,7 @@ MDS_DEST vdest_lookup(char *vname)
 
 uint32_t vdest_change_role(MDS_DEST vdest, V_DEST_RL new_role)
 {
-	memset(&vda_info, '\0', sizeof(vda_info));
+	NCSVDA_INFO vda_info;
 
 	vda_info.req = NCSVDA_VDEST_CHG_ROLE;
 
@@ -251,10 +276,14 @@ uint32_t vdest_change_role(MDS_DEST vdest, V_DEST_RL new_role)
 	if (ncsvda_api(&vda_info) == NCSCC_RC_SUCCESS) {
 		/*Making sure vdest change role done*/
 		V_DEST_RL role = 0;
+		pthread_mutex_lock(&gl_mds_library_mutex);
 		mds_vdest_tbl_get_role(vdest, &role);
+		pthread_mutex_unlock(&gl_mds_library_mutex);
 		while (role != new_role) {
 			sleep(1);
+			pthread_mutex_lock(&gl_mds_library_mutex);
 			mds_vdest_tbl_get_role(vdest, &role);
+			pthread_mutex_unlock(&gl_mds_library_mutex);
 		}
 		printf("\nVDEST_CHANGE ROLE to %d is SUCCESSFULL", new_role);
 		return NCSCC_RC_SUCCESS;
@@ -265,7 +294,7 @@ uint32_t vdest_change_role(MDS_DEST vdest, V_DEST_RL new_role)
 uint32_t create_pwe_on_vdest(MDS_HDL mds_vdest_hdl, PW_ENV_ID pwe_id)
 {
 	int i;
-	memset(&vda_info, '\0', sizeof(vda_info));
+	NCSVDA_INFO vda_info;
 
 	vda_info.req = NCSVDA_PWE_CREATE;
 
@@ -274,7 +303,7 @@ uint32_t create_pwe_on_vdest(MDS_HDL mds_vdest_hdl, PW_ENV_ID pwe_id)
 
 	if (ncsvda_api(&vda_info) == NCSCC_RC_SUCCESS) {
 		printf("\nVDEST_PWE CREATE PWE= %d is SUCCESSFULL", pwe_id);
-
+		pthread_mutex_lock(&gl_mutex);
 		for (i = 0; i < gl_vdest_indx; i++) {
 			if (gl_tet_vdest[i].mds_vdest_hdl == mds_vdest_hdl) {
 				gl_tet_vdest[i]
@@ -287,6 +316,7 @@ uint32_t create_pwe_on_vdest(MDS_HDL mds_vdest_hdl, PW_ENV_ID pwe_id)
 				gl_tet_vdest[i].pwe_count++;
 			}
 		}
+		pthread_mutex_unlock(&gl_mutex);
 		return NCSCC_RC_SUCCESS;
 	} else {
 		printf("\nRequest to ncsvda_api: VDEST_PWE CREATE has FAILED");
@@ -297,13 +327,14 @@ uint32_t create_pwe_on_vdest(MDS_HDL mds_vdest_hdl, PW_ENV_ID pwe_id)
 uint32_t destroy_pwe_on_vdest(MDS_HDL mds_pwe_hdl)
 {
 	int i, j;
-	memset(&vda_info, '\0', sizeof(vda_info));
+	NCSVDA_INFO vda_info;
 
 	vda_info.req = NCSVDA_PWE_DESTROY;
 
 	vda_info.info.pwe_destroy.i_mds_pwe_hdl = mds_pwe_hdl;
 
 	if (ncsvda_api(&vda_info) == NCSCC_RC_SUCCESS) {
+		pthread_mutex_lock(&gl_mutex);
 		for (i = 0; i < gl_vdest_indx; i++) {
 			for (j = gl_tet_vdest[i].pwe_count - 1; j >= 0; j--) {
 				if (gl_tet_vdest[i].pwe[j].mds_pwe_hdl ==
@@ -313,6 +344,7 @@ uint32_t destroy_pwe_on_vdest(MDS_HDL mds_pwe_hdl)
 				}
 			}
 		}
+		pthread_mutex_unlock(&gl_mutex);
 		return NCSCC_RC_SUCCESS;
 	} else {
 		printf("\nRequest to ncsvda_api: VDEST_PWE DESTROY has FAILED");
@@ -402,7 +434,7 @@ uint32_t mds_service_install(MDS_HDL mds_hdl, MDS_SVC_ID svc_id,
 
 	if (ncsmds_api(&svc_to_mds_info) == NCSCC_RC_SUCCESS) {
 		printf("\n %d : SERVICE INSTALL is SUCCESSFULL", svc_id);
-
+		pthread_mutex_lock(&gl_mutex);
 		gl_tet_svc.dest = svc_to_mds_info.info.svc_install.o_dest;
 		if (m_MDS_DEST_IS_AN_ADEST(gl_tet_svc.dest) == 0) {
 			gl_tet_svc.anc = svc_to_mds_info.info.svc_install.o_anc;
@@ -422,6 +454,7 @@ uint32_t mds_service_install(MDS_HDL mds_hdl, MDS_SVC_ID svc_id,
 					    gl_tet_svc;
 		} else
 			gl_tet_adest.svc[gl_tet_adest.svc_count++] = gl_tet_svc;
+		pthread_mutex_unlock(&gl_mutex);
 		return NCSCC_RC_SUCCESS;
 	} else {
 		printf("\nRequest to ncsmds_api: MDS INSTALL has FAILED\n");
@@ -444,7 +477,7 @@ uint32_t mds_service_uninstall(MDS_HDL mds_hdl, MDS_SVC_ID svc_id)
 
 	if (ncsmds_api(&svc_to_mds_info) == NCSCC_RC_SUCCESS) {
 		printf("\n %d : SERVICE UNINSTALL is SUCCESSFULL", svc_id);
-
+		pthread_mutex_lock(&gl_mutex);
 		FOUND = 0;
 		/*VDEST*/
 		if (YES_ADEST == 0) {
@@ -501,6 +534,7 @@ uint32_t mds_service_uninstall(MDS_HDL mds_hdl, MDS_SVC_ID svc_id)
 				}
 			}
 		}
+		pthread_mutex_unlock(&gl_mutex);
 		return NCSCC_RC_SUCCESS;
 	} else {
 		printf("\nRequest to ncsmds_api: MDS UNINSTALL has FAILED\n");
@@ -540,7 +574,7 @@ uint32_t mds_service_subscribe(MDS_HDL mds_hdl, MDS_SVC_ID svc_id,
 
 	if (ncsmds_api(&svc_to_mds_info) == NCSCC_RC_SUCCESS) {
 		printf("\n MDS SERVICE SUBSCRIBE is SUCCESSFULL");
-
+		pthread_mutex_lock(&gl_mutex);
 		FOUND = 0;
 		/*VDEST*/
 		if (YES_ADEST == 0) {
@@ -698,6 +732,7 @@ uint32_t mds_service_subscribe(MDS_HDL mds_hdl, MDS_SVC_ID svc_id,
 				}
 			}
 		}
+		pthread_mutex_unlock(&gl_mutex);
 		return NCSCC_RC_SUCCESS;
 	} else {
 		printf("\nRequest to ncsmds_api: MDS SUBSCRIBE has FAILED\n");
@@ -725,7 +760,7 @@ uint32_t mds_service_redundant_subscribe(MDS_HDL mds_hdl, MDS_SVC_ID svc_id,
 
 	if (ncsmds_api(&svc_to_mds_info) == NCSCC_RC_SUCCESS) {
 		printf("\n MDS RED SUBSCRIBE is SUCCESSFULL");
-
+		pthread_mutex_lock(&gl_mutex);
 		FOUND = 0;
 		/*VDEST*/
 		if (YES_ADEST == 0) {
@@ -883,7 +918,7 @@ uint32_t mds_service_redundant_subscribe(MDS_HDL mds_hdl, MDS_SVC_ID svc_id,
 				}
 			}
 		}
-
+		pthread_mutex_unlock(&gl_mutex);
 		return NCSCC_RC_SUCCESS;
 	} else {
 		printf(
@@ -906,7 +941,7 @@ uint32_t mds_service_cancel_subscription(MDS_HDL mds_hdl, MDS_SVC_ID svc_id,
 
 	if (ncsmds_api(&svc_to_mds_info) == NCSCC_RC_SUCCESS) {
 		printf("\n MDS CANCEL SUBSCRIBE is SUCCESSFULL");
-
+		pthread_mutex_lock(&gl_mutex);
 		FOUND = 0;
 		for (i = 0; i < gl_vdest_indx; i++) {
 			for (j = 0; j < gl_tet_vdest[i].svc_count; j++) {
@@ -947,6 +982,7 @@ uint32_t mds_service_cancel_subscription(MDS_HDL mds_hdl, MDS_SVC_ID svc_id,
 					break;
 				}
 		}
+		pthread_mutex_unlock(&gl_mutex);
 		return NCSCC_RC_SUCCESS;
 	} else {
 		printf(
@@ -1972,7 +2008,7 @@ uint32_t tet_mds_cb_rcv(NCSMDS_CALLBACK_INFO *mds_to_svc_info)
 	/*Now Display what message did u receive*/
 	printf("\nReceived Message len = %d \nThe message is=%s",
 	       msg->recvd_len, msg->recvd_data);
-
+	pthread_mutex_lock(&gl_mutex);
 	/*Now storing the message context on a global structure*/
 	gl_rcvdmsginfo.yr_svc_hdl =
 	    mds_to_svc_info->i_yr_svc_hdl; /*the decider*/
@@ -1993,7 +2029,7 @@ uint32_t tet_mds_cb_rcv(NCSMDS_CALLBACK_INFO *mds_to_svc_info)
 	gl_rcvdmsginfo.to_dest =
 	    mds_to_svc_info->info.receive.i_to_dest; /*FIX THIS*/
 	gl_rcvdmsginfo.node_id = mds_to_svc_info->info.receive.i_node_id;
-
+	pthread_mutex_unlock(&gl_mutex);
 	return NCSCC_RC_SUCCESS;
 }
 uint32_t tet_mds_cb_direct_rcv(NCSMDS_CALLBACK_INFO *mds_to_svc_info)
@@ -2029,6 +2065,7 @@ uint32_t tet_mds_cb_direct_rcv(NCSMDS_CALLBACK_INFO *mds_to_svc_info)
 	       mds_to_svc_info->info.direct_receive.i_direct_buff);
 	fflush(stdout);
 	/*Now storing the message context on a global structure*/
+	pthread_mutex_lock(&gl_mutex);
 	gl_direct_rcvmsginfo.yr_svc_hdl =
 	    mds_to_svc_info->i_yr_svc_hdl; /*the decider*/
 
@@ -2056,6 +2093,7 @@ uint32_t tet_mds_cb_direct_rcv(NCSMDS_CALLBACK_INFO *mds_to_svc_info)
 		gl_direct_rcvmsginfo.msg_ctxt =
 		    mds_to_svc_info->info.direct_receive.i_msg_ctxt;
 	}
+	pthread_mutex_unlock(&gl_mutex);
 	mds_free_direct_buff(
 	    mds_to_svc_info->info.direct_receive.i_direct_buff);
 	return NCSCC_RC_SUCCESS;
@@ -2064,6 +2102,8 @@ uint32_t tet_mds_cb_direct_rcv(NCSMDS_CALLBACK_INFO *mds_to_svc_info)
 uint32_t tet_mds_svc_event(NCSMDS_CALLBACK_INFO *mds_to_svc_info)
 {
 	int i, j, k;
+	TET_EVENT_INFO gl_event_data;
+
 	gl_event_data.ur_svc_id = mds_to_svc_info->info.svc_evt.i_your_id;
 
 	gl_event_data.event = mds_to_svc_info->info.svc_evt.i_change;
@@ -2076,6 +2116,7 @@ uint32_t tet_mds_svc_event(NCSMDS_CALLBACK_INFO *mds_to_svc_info)
 	gl_event_data.rem_svc_pvt_ver =
 	    mds_to_svc_info->info.svc_evt.i_rem_svc_pvt_ver;
 	gl_event_data.svc_pwe_hdl = mds_to_svc_info->info.svc_evt.svc_pwe_hdl;
+	pthread_mutex_lock(&gl_mutex);
 	if (is_service_on_adest(gl_event_data.svc_pwe_hdl,
 				gl_event_data.ur_svc_id) == NCSCC_RC_SUCCESS) {
 		printf("\nThe Subscriber Service id = %d is on ADEST",
@@ -2120,6 +2161,7 @@ uint32_t tet_mds_svc_event(NCSMDS_CALLBACK_INFO *mds_to_svc_info)
 			}
 		}
 	}
+	pthread_mutex_unlock(&gl_mutex);
 	/*fill in the event info of this service*/
 	/* If this service is installed with MDS queue ownership model hen use
 	   MDS_RETREIVE */

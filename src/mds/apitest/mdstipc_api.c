@@ -33,6 +33,29 @@ static MDS_CLIENT_MSG_FORMAT_VER gl_set_msg_fmt_ver;
 
 MDS_SVC_ID svc_ids[3] = {2006, 2007, 2008};
 
+_Thread_local NCSMDS_INFO svc_to_mds_info;
+pthread_mutex_t safe_printf_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t gl_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+void safe_printf(const char* format, ... ) {
+	pthread_mutex_lock(&safe_printf_mutex);
+	va_list args;
+	va_start(args, format);
+	vfprintf(stdout, format, args);
+	va_end(args);
+	pthread_mutex_unlock(&safe_printf_mutex);
+}
+int safe_fflush(FILE *stream) {
+	int rc = 0;
+	pthread_mutex_lock(&safe_printf_mutex);
+	rc = fflush(stream);
+	pthread_mutex_unlock(&safe_printf_mutex);
+	return rc;
+}
+
+#define printf safe_printf
+#define fflush safe_fflush
+
 /*****************************************************************************/
 /************        SERVICE API TEST CASES   ********************************/
 /*****************************************************************************/
@@ -363,6 +386,7 @@ void tet_svc_install_tp_10()
 {
 	int FAIL = 0;
 	SaUint32T rc;
+	NCSCONTEXT t_handle = 0;
 	// Creating a MxN VDEST with id = 2000
 	rc = create_vdest(NCS_VDEST_TYPE_MxN, 2000);
 	if (rc != NCSCC_RC_SUCCESS) {
@@ -373,25 +397,25 @@ void tet_svc_install_tp_10()
 	printf(
 	    "\nTest case 10:Installing the External MIN service EXTMIN in a seperate thread and Uninstalling it here\n");
 	// Install thread
-	rc = tet_create_task((NCS_OS_CB)tet_vdest_install_thread,
-			     gl_tet_vdest[0].svc[0].task.t_handle);
+	rc = tet_create_task((NCS_OS_CB)tet_vdest_install_thread, t_handle);
 	if (rc != NCSCC_RC_SUCCESS) {
 		printf("\nFail to Install thread\n");
 		FAIL = 1;
 	}
-
 	// Now Release the Install Thread
-	rc = tet_release_task(gl_tet_vdest[0].svc[0].task.t_handle);
+	rc = tet_release_task(t_handle);
 	if (rc != NCSCC_RC_SUCCESS) {
 		printf("\nFail to release thread\n");
 		FAIL = 1;
 	}
 
 	// Counter shall be != 0
+	pthread_mutex_lock(&gl_mutex);
 	if (gl_tet_vdest[0].svc_count == 0) {
 		printf("\nsvc_count == 0\n");
 		FAIL = 1;
 	};
+	pthread_mutex_unlock(&gl_mutex);
 
 	// Uninstalling the above service
 	rc = mds_service_uninstall(gl_tet_vdest[0].mds_pwe1_hdl,
@@ -809,8 +833,7 @@ void tet_vdest_uninstall_thread()
 {
 	// Inside Thread
 	printf("tet_vdest_uninstall_thread\n");
-	test_validate(mds_service_uninstall(gl_tet_vdest[0].mds_pwe1_hdl, 500),
-		      NCSCC_RC_SUCCESS);
+	mds_service_uninstall(gl_tet_vdest[0].mds_pwe1_hdl, 500);
 }
 
 void tet_svc_unstall_tp_1()
@@ -989,11 +1012,13 @@ void tet_svc_unstall_tp_5()
 	}
 
 	// Test gl_tet_vdest[0].svc_count == 0
+	pthread_mutex_lock(&gl_mutex);
 	if (gl_tet_vdest[0].svc_count != 0) {
 		printf("\nsvc_count is %d, should be 0\n",
 		       gl_tet_vdest[0].svc_count);
 		FAIL = 1;
 	}
+	pthread_mutex_unlock(&gl_mutex);
 
 	// Destroying a MxN VDEST with id = 1001
 	rc = destroy_vdest(1001);
@@ -2425,11 +2450,13 @@ void tet_svc_subscr_ADEST_8()
 		    NCSCC_RC_SUCCESS) {
 			printf("\nTASK is released\n");
 		}
+		pthread_mutex_lock(&gl_mutex);
 		if (gl_tet_adest.svc[0].subscr_count) {
 			printf("Cancel Fail\n");
 			FAIL = 1;
 		} else
 			printf("\nSuccess\n");
+		pthread_mutex_unlock(&gl_mutex);
 	}
 
 	// clean up
@@ -4636,7 +4663,7 @@ void tet_query_pwe_tp_3()
 void tet_adest_rcvr_thread()
 {
 	MDS_SVC_ID svc_id;
-	int FAIL = 0;
+	bool rsp_reqd = false;
 	char tmp[] = " Hi Sender! My Name is RECEIVER ";
 	TET_MDS_MSG *mesg;
 	mesg = (TET_MDS_MSG *)malloc(sizeof(TET_MDS_MSG));
@@ -4653,29 +4680,32 @@ void tet_adest_rcvr_thread()
 					 NCSMDS_SVC_ID_EXTERNAL_MIN,
 					 SA_DISPATCH_ALL) != NCSCC_RC_SUCCESS) {
 			printf("Fail mds_service_retrieve\n");
-			FAIL = 1;
 		}
 
 		/*after that send a response to the sender, if it expects*/
-		if (gl_rcvdmsginfo.rsp_reqd) {
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_rcvdmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (mds_send_response(gl_tet_adest.pwe[0].mds_pwe_hdl,
 					      NCSMDS_SVC_ID_EXTERNAL_MIN,
 					      mesg) != NCSCC_RC_SUCCESS) {
 				printf("Response Fail\n");
-				FAIL = 1;
 			} else
 				printf("Response Success\n");
+			pthread_mutex_lock(&gl_mutex);
 			gl_rcvdmsginfo.rsp_reqd = 0;
+			pthread_mutex_unlock(&gl_mutex);
 		}
 	}
 
 	free(mesg);
-	test_validate(FAIL, 0);
 }
 
 void tet_adest_rcvr_svc_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	char tmp[] = " Hi Sender! My Name is RECEIVER ";
 	TET_MDS_MSG *mesg;
 	mesg = (TET_MDS_MSG *)malloc(sizeof(TET_MDS_MSG));
@@ -4695,14 +4725,19 @@ void tet_adest_rcvr_svc_thread()
 			printf("Fail mds_service_retrieve\n");
 		}
 		/*after that send a response to the sender, if it expects*/
-		if (gl_rcvdmsginfo.rsp_reqd) {
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_rcvdmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (mds_send_response(gl_tet_adest.mds_pwe1_hdl,
 					      NCSMDS_SVC_ID_EXTERNAL_MIN,
 					      mesg) != NCSCC_RC_SUCCESS) {
 				printf("Response Fail\n");
 			} else
 				printf("Response Success\n");
+			pthread_mutex_lock(&gl_mutex);
 			gl_rcvdmsginfo.rsp_reqd = 0;
+			pthread_mutex_unlock(&gl_mutex);
 		}
 	}
 
@@ -4712,6 +4747,7 @@ void tet_adest_rcvr_svc_thread()
 void tet_vdest_rcvr_resp_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	char tmp[] = " Hi Sender! My Name is RECEIVER ";
 	TET_MDS_MSG *mesg;
 	mesg = (TET_MDS_MSG *)malloc(sizeof(TET_MDS_MSG));
@@ -4728,7 +4764,10 @@ void tet_vdest_rcvr_resp_thread()
 			printf("Fail mds_service_retrieve\n");
 		}
 		/*after that send a response to the sender, if it expects*/
-		if (gl_rcvdmsginfo.rsp_reqd) {
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_rcvdmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (mds_send_response(gl_tet_vdest[1].mds_pwe1_hdl,
 					      NCSMDS_SVC_ID_EXTERNAL_MIN,
 					      mesg) != NCSCC_RC_SUCCESS) {
@@ -5571,6 +5610,7 @@ TODO: Check this testcase, it was outcomment already in the "tet"-files
 void tet_vdest_rcvr_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	char tmp[] = " Yes Sender! I am in. Message Delivered?";
 	TET_MDS_MSG *mesg;
 	mesg = (TET_MDS_MSG *)malloc(sizeof(TET_MDS_MSG));
@@ -5588,14 +5628,19 @@ void tet_vdest_rcvr_thread()
 		}
 
 		/*after that send a response to the sender, if it expects*/
-		if (gl_rcvdmsginfo.rsp_reqd) {
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_rcvdmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (mds_sendrsp_getack(gl_tet_vdest[1].mds_pwe1_hdl,
 					       NCSMDS_SVC_ID_EXTERNAL_MIN, 0,
 					       mesg) != NCSCC_RC_SUCCESS) {
 				printf("Response Fail\n");
 			} else
 				printf("Response Ack Success\n");
+			pthread_mutex_lock(&gl_mutex);
 			gl_rcvdmsginfo.rsp_reqd = 0;
+			pthread_mutex_unlock(&gl_mutex);
 			/*if(mds_send_redrsp_getack(gl_tet_vdest[1].mds_pwe1_hdl,
 			  2000,300)!=NCSCC_RC_SUCCESS)
 			  {      printf("Response Fail\n");FAIL=1;    }
@@ -5610,6 +5655,7 @@ void tet_vdest_rcvr_thread()
 void tet_Dadest_all_rcvr_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	char tmp[] = " Hi Sender! My Name is RECEIVER ";
 	TET_MDS_MSG *mesg;
 	mesg = (TET_MDS_MSG *)malloc(sizeof(TET_MDS_MSG));
@@ -5629,8 +5675,10 @@ void tet_Dadest_all_rcvr_thread()
 		}
 
 		/*after that send a response to the sender, if it expects*/
-		if (gl_direct_rcvmsginfo.rsp_reqd) {
-			printf("i am here\n");
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_direct_rcvmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (vdest_change_role(200, V_DEST_RL_STANDBY) !=
 			    NCSCC_RC_SUCCESS) {
 				printf("\nFail\n");
@@ -5641,7 +5689,9 @@ void tet_Dadest_all_rcvr_thread()
 				MDS_SENDTYPE_RSP, 0) != NCSCC_RC_SUCCESS) {
 				printf("\nFail\n");
 			}
+			pthread_mutex_lock(&gl_mutex);
 			gl_rcvdmsginfo.rsp_reqd = 0;
+			pthread_mutex_unlock(&gl_mutex);
 		}
 	}
 	fflush(stdout);
@@ -5652,7 +5702,7 @@ void tet_Dadest_all_rcvr_thread()
 void tet_Dadest_all_chgrole_rcvr_thread()
 {
 	MDS_SVC_ID svc_id;
-
+	bool rsp_reqd = false;
 	printf("\nInside CHG ROLE ADEST direct Receiver Thread\n");
 	fflush(stdout);
 	if ((svc_id = is_adest_sel_obj_found(1))) {
@@ -5665,7 +5715,10 @@ void tet_Dadest_all_chgrole_rcvr_thread()
 			printf("\nFail mds_service_retrieve\n");
 		}
 		/*after that send a response to the sender, if it expects*/
-		if (gl_direct_rcvmsginfo.rsp_reqd) {
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_direct_rcvmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (vdest_change_role(200, V_DEST_RL_STANDBY) !=
 			    NCSCC_RC_SUCCESS) {
 				printf("\nFail\n");
@@ -5682,8 +5735,9 @@ void tet_Dadest_all_chgrole_rcvr_thread()
 			    NCSCC_RC_SUCCESS) {
 				printf("\nFail\n");
 			}
-
+			pthread_mutex_lock(&gl_mutex);
 			gl_rcvdmsginfo.rsp_reqd = 0;
+			pthread_mutex_unlock(&gl_mutex);
 		}
 	}
 	fflush(stdout);
@@ -5692,6 +5746,7 @@ void tet_Dadest_all_chgrole_rcvr_thread()
 void tet_adest_all_chgrole_rcvr_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	char tmp[] = " Hi Sender! My Name is RECEIVER ";
 	TET_MDS_MSG *mesg;
 	mesg = (TET_MDS_MSG *)malloc(sizeof(TET_MDS_MSG));
@@ -5712,7 +5767,10 @@ void tet_adest_all_chgrole_rcvr_thread()
 		} else {
 			/*after that send a response to the sender, if it
 			 * expects*/
-			if (gl_rcvdmsginfo.rsp_reqd) {
+			pthread_mutex_lock(&gl_mutex);
+			rsp_reqd = gl_rcvdmsginfo.rsp_reqd;
+			pthread_mutex_unlock(&gl_mutex);
+			if (rsp_reqd) {
 				if (vdest_change_role(200, V_DEST_RL_STANDBY) !=
 				    NCSCC_RC_SUCCESS) {
 					printf("\nFail\n");
@@ -5729,8 +5787,9 @@ void tet_adest_all_chgrole_rcvr_thread()
 				    NCSCC_RC_SUCCESS) {
 					printf("\nFail\n");
 				}
-
+				pthread_mutex_lock(&gl_mutex);
 				gl_rcvdmsginfo.rsp_reqd = 0;
+				pthread_mutex_unlock(&gl_mutex);
 			}
 		}
 	}
@@ -5740,6 +5799,7 @@ void tet_adest_all_chgrole_rcvr_thread()
 void tet_vdest_all_rcvr_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	char tmp[] = " Hi Sender! My Name is RECEIVER ";
 	TET_MDS_MSG *mesg;
 	mesg = (TET_MDS_MSG *)malloc(sizeof(TET_MDS_MSG));
@@ -5764,13 +5824,18 @@ void tet_vdest_all_rcvr_thread()
 			printf("\nFail\n");
 		}
 		/*after that send a response to the sender, if it expects*/
-		if (gl_rcvdmsginfo.rsp_reqd) {
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_rcvdmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (mds_send_response(gl_tet_vdest[1].mds_pwe1_hdl,
 					      NCSMDS_SVC_ID_EXTERNAL_MIN,
 					      mesg) != NCSCC_RC_SUCCESS) {
 				printf("\nFail\n");
 			}
+			pthread_mutex_lock(&gl_mutex);
 			gl_rcvdmsginfo.rsp_reqd = 0;
+			pthread_mutex_unlock(&gl_mutex);
 		}
 	}
 	fflush(stdout);
@@ -5779,6 +5844,7 @@ void tet_vdest_all_rcvr_thread()
 void tet_adest_all_rcvrack_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	uint32_t rs;
 	char tmp[] = " Hi Sender! My Name is RECEIVER ";
 	TET_MDS_MSG *mesg;
@@ -5798,7 +5864,10 @@ void tet_adest_all_rcvrack_thread()
 			printf("\nFailmds_service_retrieve \n");
 		}
 		/*after that send a response to the sender, if it expects*/
-		if (gl_rcvdmsginfo.rsp_reqd) {
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_rcvdmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (vdest_change_role(200, V_DEST_RL_STANDBY) !=
 			    NCSCC_RC_SUCCESS) {
 				printf("\nFail\n");
@@ -5809,7 +5878,9 @@ void tet_adest_all_rcvrack_thread()
 						mesg);
 
 			printf("\nResponse code is %d", rs);
+			pthread_mutex_lock(&gl_mutex);
 			gl_rcvdmsginfo.rsp_reqd = 0;
+			pthread_mutex_unlock(&gl_mutex);
 		}
 	}
 	fflush(stdout);
@@ -5819,6 +5890,7 @@ void tet_adest_all_rcvrack_thread()
 void tet_adest_all_rcvrack_chgrole_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	uint32_t rs;
 	char tmp[] = " Hi Sender! My Name is RECEIVER ";
 	TET_MDS_MSG *mesg;
@@ -5838,7 +5910,10 @@ void tet_adest_all_rcvrack_chgrole_thread()
 			printf("\nFail mds_service_retrieve\n");
 		}
 		/*after that send a response to the sender, if it expects*/
-		if (gl_rcvdmsginfo.rsp_reqd) {
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_rcvdmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (vdest_change_role(200, V_DEST_RL_STANDBY) !=
 			    NCSCC_RC_SUCCESS) {
 				printf("\nFail\n");
@@ -5860,7 +5935,9 @@ void tet_adest_all_rcvrack_chgrole_thread()
 			fflush(stdout);
 
 			printf("\nResponse code is %d", rs);
+			pthread_mutex_lock(&gl_mutex);
 			gl_rcvdmsginfo.rsp_reqd = 0;
+			pthread_mutex_unlock(&gl_mutex);
 		}
 	}
 	fflush(stdout);
@@ -5870,6 +5947,7 @@ void tet_adest_all_rcvrack_chgrole_thread()
 void tet_Dadest_all_rcvrack_chgrole_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	uint32_t rs = 0;
 
 	printf("\nInside Receiver Thread\n");
@@ -5883,7 +5961,10 @@ void tet_Dadest_all_rcvrack_chgrole_thread()
 			printf("\nFail mds_service_retrieve\n");
 		}
 		/*after that send a response to the sender, if it expects*/
-		if (gl_direct_rcvmsginfo.rsp_reqd) {
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_direct_rcvmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (vdest_change_role(200, V_DEST_RL_STANDBY) !=
 			    NCSCC_RC_SUCCESS) {
 				printf("\nFail\n");
@@ -5911,7 +5992,9 @@ void tet_Dadest_all_rcvrack_chgrole_thread()
 			fflush(stdout);
 
 			printf("\nResponse code is %d", rs);
+			pthread_mutex_lock(&gl_mutex);
 			gl_rcvdmsginfo.rsp_reqd = 0;
+			pthread_mutex_unlock(&gl_mutex);
 		}
 	}
 	fflush(stdout);
@@ -5932,6 +6015,7 @@ void tet_change_role_thread()
 void tet_adest_all_rcvr_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	char tmp[] = " Hi Sender! My Name is RECEIVER ";
 	TET_MDS_MSG *mesg;
 	mesg = (TET_MDS_MSG *)malloc(sizeof(TET_MDS_MSG));
@@ -5950,7 +6034,10 @@ void tet_adest_all_rcvr_thread()
 			printf("\nFail mds_service_retrieve\n");
 		}
 		/*after that send a response to the sender, if it expects*/
-		if (gl_rcvdmsginfo.rsp_reqd) {
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_rcvdmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (vdest_change_role(200, V_DEST_RL_STANDBY) !=
 			    NCSCC_RC_SUCCESS) {
 				printf("\nFail\n");
@@ -5960,7 +6047,9 @@ void tet_adest_all_rcvr_thread()
 					      mesg) != NCSCC_RC_SUCCESS) {
 				printf("\nFail\n");
 			}
+			pthread_mutex_lock(&gl_mutex);
 			gl_rcvdmsginfo.rsp_reqd = 0;
+			pthread_mutex_unlock(&gl_mutex);
 		}
 	}
 	fflush(stdout);
@@ -6985,9 +7074,11 @@ void tet_vdest_Srcvr_thread()
 			printf("\nFail mds_service_retrieve\n");
 		}
 		/*after that send a response to the sender, if it expects*/
+		pthread_mutex_lock(&gl_mutex);
 		if (gl_rcvdmsginfo.rsp_reqd) {
 			gl_rcvdmsginfo.rsp_reqd = 0;
 		}
+		pthread_mutex_unlock(&gl_mutex);
 		/*      if(mds_send_redrsp_getack(gl_tet_vdest[0].mds_pwe1_hdl,2000,
 			300)!=NCSCC_RC_SUCCESS)
 			{      printf("Response Ack Fail\n");FAIL=1;    }
@@ -10189,6 +10280,7 @@ void tet_direct_send_ack_tp_13()
 void tet_Dadest_rcvr_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	printf("\nInside Receiver Thread\n");
 	fflush(stdout);
 	if ((svc_id = is_adest_sel_obj_found(3))) {
@@ -10198,7 +10290,10 @@ void tet_Dadest_rcvr_thread()
 					 SA_DISPATCH_ALL) == NCSCC_RC_SUCCESS) {
 			/*after that send a response to the sender, if it
 			 * expects*/
-			if (gl_direct_rcvmsginfo.rsp_reqd) {
+			pthread_mutex_lock(&gl_mutex);
+			rsp_reqd = gl_direct_rcvmsginfo.rsp_reqd;
+			pthread_mutex_unlock(&gl_mutex);
+			if (rsp_reqd) {
 				if (mds_direct_response(
 					gl_tet_adest.pwe[0].mds_pwe_hdl,
 					NCSMDS_SVC_ID_EXTERNAL_MIN, 1,
@@ -10217,6 +10312,7 @@ void tet_Dadest_rcvr_thread()
 void tet_Dvdest_rcvr_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	printf("\nInside Receiver Thread\n");
 	fflush(stdout);
 	if ((svc_id = is_vdest_sel_obj_found(1, 1))) {
@@ -10226,7 +10322,10 @@ void tet_Dvdest_rcvr_thread()
 			printf("\nFail mds_service_retrieve\n");
 		}
 		/*after that send a response to the sender, if it expects*/
-		if (gl_direct_rcvmsginfo.rsp_reqd) {
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_direct_rcvmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (mds_direct_response(gl_tet_vdest[1].mds_pwe1_hdl,
 						NCSMDS_SVC_ID_EXTERNAL_MIN, 1,
 						MDS_SENDTYPE_SNDRACK,
@@ -10241,6 +10340,7 @@ void tet_Dvdest_rcvr_thread()
 void tet_Dvdest_rcvr_all_rack_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	printf("\nInside Receiver Thread\n");
 	fflush(stdout);
 	if ((svc_id = is_vdest_sel_obj_found(1, 1))) {
@@ -10250,7 +10350,10 @@ void tet_Dvdest_rcvr_all_rack_thread()
 			printf("Fail mds_service_retrieve\n");
 		}
 		/*after that send a response to the sender, if it expects*/
-		if (gl_direct_rcvmsginfo.rsp_reqd) {
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_direct_rcvmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (mds_direct_response(
 				gl_tet_vdest[1].mds_pwe1_hdl,
 				NCSMDS_SVC_ID_EXTERNAL_MIN, gl_set_msg_fmt_ver,
@@ -10266,6 +10369,7 @@ void tet_Dvdest_rcvr_all_rack_thread()
 void tet_Dvdest_rcvr_all_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	printf("\nInside Receiver Thread\n");
 	fflush(stdout);
 	if ((svc_id = is_vdest_sel_obj_found(1, 1))) {
@@ -10275,7 +10379,10 @@ void tet_Dvdest_rcvr_all_thread()
 			printf("Fail mds_service_retrieve\n");
 		}
 		/*after that send a response to the sender, if it expects*/
-		if (gl_direct_rcvmsginfo.rsp_reqd) {
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_direct_rcvmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (mds_direct_response(
 				gl_tet_vdest[1].mds_pwe1_hdl,
 				NCSMDS_SVC_ID_EXTERNAL_MIN, gl_set_msg_fmt_ver,
@@ -10290,6 +10397,7 @@ void tet_Dvdest_rcvr_all_thread()
 void tet_Dvdest_rcvr_all_chg_role_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	printf("\nInside Receiver Thread\n");
 	fflush(stdout);
 	sleep(10);
@@ -10304,7 +10412,10 @@ void tet_Dvdest_rcvr_all_chg_role_thread()
 			printf("Fail mds_service_retrieve\n");
 		}
 		/*after that send a response to the sender, if it expects*/
-		if (gl_direct_rcvmsginfo.rsp_reqd) {
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_direct_rcvmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (mds_direct_response(
 				gl_tet_vdest[1].mds_pwe1_hdl,
 				NCSMDS_SVC_ID_EXTERNAL_MIN, gl_set_msg_fmt_ver,
@@ -10320,6 +10431,7 @@ void tet_Dvdest_rcvr_all_chg_role_thread()
 void tet_Dvdest_Srcvr_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	printf("\nInside Receiver Thread\n");
 	fflush(stdout);
 	if ((svc_id = is_vdest_sel_obj_found(0, 0))) {
@@ -10329,7 +10441,10 @@ void tet_Dvdest_Srcvr_thread()
 			printf("Fail mds_service_retrieve\n");
 		}
 		/*after that send a response to the sender, if it expects*/
-		if (gl_direct_rcvmsginfo.rsp_reqd) {
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_direct_rcvmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (mds_direct_response(gl_tet_vdest[0].mds_pwe1_hdl,
 						NCSMDS_SVC_ID_EXTERNAL_MIN, 1,
 						MDS_SENDTYPE_RRSP,
@@ -10344,6 +10459,7 @@ void tet_Dvdest_Srcvr_thread()
 void tet_Dvdest_Srcvr_all_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	printf("\nInside Receiver Thread\n");
 	fflush(stdout);
 	if ((svc_id = is_vdest_sel_obj_found(0, 0))) {
@@ -10353,7 +10469,10 @@ void tet_Dvdest_Srcvr_all_thread()
 			printf("Fail mds_service_retrieve\n");
 		}
 		/*after that send a response to the sender, if it expects*/
-		if (gl_direct_rcvmsginfo.rsp_reqd) {
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_direct_rcvmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (mds_direct_response(
 				gl_tet_vdest[0].mds_pwe1_hdl,
 				NCSMDS_SVC_ID_EXTERNAL_MIN, gl_set_msg_fmt_ver,
@@ -10369,6 +10488,7 @@ void tet_Dvdest_Srcvr_all_thread()
 void tet_Dvdest_Arcvr_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	printf("\nInside Receiver Thread\n");
 	fflush(stdout);
 	if ((svc_id = is_vdest_sel_obj_found(0, 0))) {
@@ -10378,7 +10498,10 @@ void tet_Dvdest_Arcvr_thread()
 			printf("Fail mds_service_retrieve\n");
 		}
 		/*after that send a response to the sender, if it expects*/
-		if (gl_direct_rcvmsginfo.rsp_reqd) {
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_direct_rcvmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (mds_direct_response(gl_tet_vdest[0].mds_pwe1_hdl,
 						NCSMDS_SVC_ID_EXTERNAL_MIN, 1,
 						MDS_SENDTYPE_REDRACK,
@@ -10394,6 +10517,7 @@ void tet_Dvdest_Arcvr_thread()
 void tet_Dvdest_Arcvr_all_thread()
 {
 	MDS_SVC_ID svc_id;
+	bool rsp_reqd = false;
 	printf("\nInside Receiver Thread\n");
 	fflush(stdout);
 	if ((svc_id = is_vdest_sel_obj_found(0, 0))) {
@@ -10403,7 +10527,10 @@ void tet_Dvdest_Arcvr_all_thread()
 			printf("Fail mds_service_retrieve\n");
 		}
 		/*after that send a response to the sender, if it expects*/
-		if (gl_direct_rcvmsginfo.rsp_reqd) {
+		pthread_mutex_lock(&gl_mutex);
+		rsp_reqd = gl_direct_rcvmsginfo.rsp_reqd;
+		pthread_mutex_unlock(&gl_mutex);
+		if (rsp_reqd) {
 			if (mds_direct_response(
 				gl_tet_vdest[0].mds_pwe1_hdl,
 				NCSMDS_SVC_ID_EXTERNAL_MIN, gl_set_msg_fmt_ver,

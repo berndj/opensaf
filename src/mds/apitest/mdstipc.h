@@ -148,10 +148,6 @@ typedef struct tet_mds_recvd_msg_info {
 TET_ADEST gl_tet_adest;
 TET_VDEST
     gl_tet_vdest[4]; /*change it to 6 to run VDS Redundancy: 101 for Stress*/
-NCSADA_INFO ada_info;
-NCSVDA_INFO vda_info;
-NCSMDS_INFO svc_to_mds_info;
-TET_EVENT_INFO gl_event_data;
 TET_SVC gl_tet_svc;
 TET_MDS_RECVD_MSG_INFO gl_rcvdmsginfo, gl_direct_rcvmsginfo;
 int gl_vdest_indx;
