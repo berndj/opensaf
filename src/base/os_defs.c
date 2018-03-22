@@ -1052,14 +1052,34 @@ uint32_t ncs_os_process_execute_timed(NCS_OS_PROC_EXECUTE_TIMED_INFO *req)
 		 * child */
 		if (getenv("OPENSAF_KEEP_FD_OPEN_AFTER_FORK") == NULL) {
 			/* Close all inherited file descriptors */
-			int i = sysconf(_SC_OPEN_MAX);
-			if (i == -1) {
+			long fd_max = sysconf(_SC_OPEN_MAX);
+
+			if (fd_max == -1) {
 				syslog(LOG_ERR, "%s: sysconf failed - %s",
-				       __FUNCTION__, strerror(errno));
+					__FUNCTION__, strerror(errno));
 				exit(EXIT_FAILURE);
 			}
-			for (i--; i >= 0; --i)
-				(void)close(i); /* close all descriptors */
+			struct dirent *dir_entry = NULL;
+			DIR *dir = opendir("/proc/self/fd");
+
+			if (dir != NULL) {
+				while ((dir_entry = readdir(dir)) != NULL) {
+					if (dir_entry->d_name[0] != '\0' &&
+						strcmp(dir_entry->d_name, ".") != 0 &&
+						strcmp(dir_entry->d_name, "..") != 0) {
+						long fd = strtol(dir_entry->d_name, NULL, 10);
+
+						if (fd >= 0 && fd < fd_max) close((int) fd);
+					}
+				}
+				closedir(dir);
+			} else {
+				/* fall back, close all possible descriptors */
+				syslog(LOG_ERR, "%s: opendir failed - %s",
+					__FUNCTION__, strerror(errno));
+				for (fd_max--; fd_max >= 0; --fd_max)
+					close((int) fd_max);
+			}
 
 			/* Redirect standard files to /dev/null */
 			if (freopen("/dev/null", "r", stdin) == NULL)
