@@ -984,8 +984,9 @@ void sidep_take_action_on_dependents(AVD_SI *si) {
     } else if (dep_si->si_dep_state == AVD_SI_READY_TO_ASSIGN) {
       sidep_si_dep_state_evt_send(avd_cb, dep_si, AVD_EVT_ASSIGN_SI_DEP_STATE);
     } else if (dep_si->si_dep_state == AVD_SI_ASSIGNED &&
-        si->sg_of_si->sg_fsm_state == AVD_SG_FSM_STABLE &&
-        si->saAmfSINumCurrActiveAssignments < si->pref_active_assignments()) {
+        dep_si->sg_of_si->sg_fsm_state == AVD_SG_FSM_STABLE &&
+        dep_si->saAmfSINumCurrActiveAssignments <
+        dep_si->pref_active_assignments()) {
       sidep_si_dep_state_evt_send(avd_cb, dep_si, AVD_EVT_ASSIGN_SI_DEP_STATE);
     }
   }
