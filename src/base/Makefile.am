@@ -65,6 +65,7 @@ lib_libopensaf_core_la_SOURCES += \
 	src/base/process.cc \
 	src/base/saf_edu.c \
 	src/base/saf_error.c \
+	src/base/string_parse.cc \
 	src/base/sysf_def.c \
 	src/base/sysf_exc_scr.c \
 	src/base/sysf_ipc.c \
@@ -140,6 +141,7 @@ noinst_HEADERS += \
 	src/base/saf_error.h \
 	src/base/saf_mem.h \
 	src/base/sprr_dl_api.h \
+	src/base/string_parse.h \
 	src/base/sysf_exc_scr.h \
 	src/base/sysf_ipc.h \
 	src/base/tests/mock_clock_gettime.h \
@@ -206,6 +208,7 @@ bin_libbase_test_SOURCES = \
 	src/base/tests/mock_logtrace.cc \
 	src/base/tests/mock_osaf_abort.cc \
 	src/base/tests/mock_osafassert.cc \
+	src/base/tests/string_parse_test.cc \
 	src/base/tests/time_add_test.cc \
 	src/base/tests/time_compare_test.cc \
 	src/base/tests/time_convert_test.cc \
