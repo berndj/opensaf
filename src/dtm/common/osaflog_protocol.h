@@ -24,13 +24,6 @@
 
 namespace Osaflog {
 
-enum Command { kFlush, kMaxbackups, kMaxfilesize, kFailure };
-struct Message {
-    char marker[4];
-    Command  command; // Command Enum
-    size_t   value;   // Value based on the command
-};
-
 static constexpr const char* kServerSocketPath =
     PKGLOCALSTATEDIR "/osaf_log.sock";
 

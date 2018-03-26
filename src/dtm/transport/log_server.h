@@ -86,7 +86,8 @@ class LogServer {
                       const struct sockaddr_un& addr, socklen_t addrlen);
   static bool ValidateAddress(const struct sockaddr_un& addr,
                               socklen_t addrlen);
-  Osaflog::Command ExecuteCommand(const char* command, size_t size);
+  std::string ExecuteCommand(const std::string& command,
+                             const std::string& argument);
   int term_fd_;
   // Configuration for LogServer
   size_t no_of_backups_;

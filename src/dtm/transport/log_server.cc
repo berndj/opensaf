@@ -16,15 +16,15 @@
  *
  */
 
+#include "dtm/transport/log_server.h"
 #include <signal.h>
 #include <syslog.h>
+#include <cstdlib>
 #include <cstring>
 #include "base/osaf_poll.h"
 #include "base/time.h"
-#include "dtm/transport/log_server.h"
 #include "dtm/common/osaflog_protocol.h"
 #include "osaf/configmake.h"
-
 
 const Osaflog::ClientAddressConstantPrefix LogServer::address_header_{};
 
@@ -45,7 +45,6 @@ LogServer::~LogServer() {
 
 void LogServer::Run() {
   struct pollfd pfd[2] = {{term_fd_, POLLIN, 0}, {log_socket_.fd(), POLLIN, 0}};
-
   do {
     for (int i = 0; i < 256; ++i) {
       char* buffer = current_stream_->current_buffer_position();
@@ -105,7 +104,6 @@ LogServer::LogStream* LogServer::GetStream(const char* msg_id,
   if (iter != log_streams_.end()) return iter->second;
   if (no_of_log_streams_ >= kMaxNoOfStreams) return nullptr;
   if (!ValidateLogName(msg_id, msg_id_size)) return nullptr;
-
   LogStream* stream = new LogStream{log_name, no_of_backups_, max_file_size_};
   auto result = log_streams_.insert(
       std::map<std::string, LogStream*>::value_type{log_name, stream});
@@ -193,15 +191,21 @@ bool LogServer::ValidateLogName(const char* msg_id, size_t msg_id_size) {
   return no_of_dots < 2;
 }
 
-void LogServer::ExecuteCommand(const char* command, size_t size,
+void LogServer::ExecuteCommand(const char* request, size_t size,
                                const struct sockaddr_un& addr,
                                socklen_t addrlen) {
   if (ValidateAddress(addr, addrlen)) {
-    struct Osaflog::Message result;
-    memset(&result, 0, sizeof(result));
-    result.marker[0] = '!';
-    result.command = ExecuteCommand(command, size);
-    log_socket_.SendTo(&result, sizeof(result), &addr, addrlen);
+    size_t command_size;
+    size_t argument_size;
+    const char* command = Osaflog::GetField(request, size, 0, &command_size);
+    const char* argument = Osaflog::GetField(request, size, 1, &argument_size);
+    std::string reply = ExecuteCommand(command != nullptr
+                                       ? std::string{command, command_size}
+                                       : std::string{},
+                                       argument != nullptr
+                                       ? std::string{argument, argument_size}
+                                       : std::string{});
+    log_socket_.SendTo(reply.data(), reply.size(), &addr, addrlen);
   }
 }
 
@@ -214,26 +218,23 @@ bool LogServer::ValidateAddress(const struct sockaddr_un& addr,
   }
 }
 
-Osaflog::Command LogServer::ExecuteCommand(const char * command,
-                                                 size_t size) {
-  Osaflog::Message message;
-
-  if (size != sizeof(message)) {
-     return Osaflog::kFailure;
+std::string LogServer::ExecuteCommand(const std::string& command,
+                                      const std::string& argument) {
+  if (command == "?max-file-size") {
+    max_file_size_ = atoi(argument.c_str());
+    return std::string{"!max-file-size " + std::to_string(max_file_size_)};
+  } else if (command == "?max-backups") {
+    no_of_backups_ = atoi(argument.c_str());
+    return std::string{"!max-backups " + std::to_string(no_of_backups_)};
+  } else if (command == "?flush") {
+    for (const auto& s : log_streams_) {
+      LogStream* stream = s.second;
+      stream->Flush();
+    }
+    return std::string{"!flush"};
+  } else {
+    return std::string{"!not_supported"};
   }
-  memset(&message, 0, sizeof(message));
-  memcpy(&message, command, size);
-
-  if (message.command == Osaflog::kMaxfilesize) {
-    max_file_size_ = message.value;
-    return Osaflog::kMaxfilesize;
-  } else if (message.command == Osaflog::kMaxbackups) {
-    no_of_backups_ = message.value;
-    return Osaflog::kMaxbackups;
-  } else if (message.command == Osaflog::kFlush) {
-    return Osaflog::kFlush;
-  }
-  return Osaflog::kFailure;
 }
 
 LogServer::LogStream::LogStream(const std::string& log_name,

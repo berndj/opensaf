@@ -158,9 +158,9 @@ void PrintUsage(const char* program_name) {
           program_name);
 }
 
-
-bool SendCommand(Osaflog::Message message,
-                         Osaflog::Command command) {
+bool SendCommand(const std::string& command) {
+  std::string request{std::string{"?"} + command};
+  std::string expected_reply{std::string{"!"} + command};
   auto sock = std::unique_ptr<base::UnixServerSocket>(CreateSocket());
 
   if (!sock) {
@@ -172,13 +172,12 @@ bool SendCommand(Osaflog::Message message,
   socklen_t addrlen = base::UnixSocket::SetAddress(Osaflog::kServerSocketPath,
                                                    &osaftransportd_addr);
 
-  ssize_t result = sock->SendTo(&message, sizeof(message),
+  ssize_t result = sock->SendTo(request.data(), request.size(),
                                                 &osaftransportd_addr, addrlen);
   if (result < 0) {
     perror("Failed to send message to osaftransportd");
     return false;
-  } else if (static_cast<size_t>(result) !=
-                                 (sizeof(Osaflog::Message))) {
+  } else if (static_cast<size_t>(result) != request.size()) {
     fprintf(stderr, "Failed to send message to osaftransportd\n");
     return false;
   }
@@ -214,50 +213,26 @@ bool SendCommand(Osaflog::Message message,
   if (result < 0) {
     perror("Failed to receive reply from osaftransportd");
     return false;
-  } else if (static_cast<size_t>(result) !=
-                               (sizeof(Osaflog::Message) )) {
-    Osaflog::Message result_message;
-    memset(&result_message, 0, sizeof(result_message));
-    memcpy(&result_message, buf, result);
-    if (result_message.command != command) {
-       fprintf(stderr, "Received unexpected reply from osaftransportd\n");
-       return false;
-    }
+  } else if (static_cast<size_t>(result) != expected_reply.size() ||
+             memcmp(buf, expected_reply.data(), result) != 0) {
+    fprintf(stderr, "ERROR: osaftransportd replied '%s'\n",
+            std::string{buf, static_cast<size_t>(result)}.c_str());
+    return false;
   }
   return true;
 }
 
 bool MaxTraceFileSize(size_t max_file_size) {
-  Osaflog::Message message;
-
-  memset(&message, 0, sizeof(message));
-  message.marker[0] = '?';
-  message.command = Osaflog::kMaxfilesize;
-  message.value = max_file_size;
-
-  return SendCommand(message, Osaflog::kMaxfilesize);
+  return SendCommand(std::string{"max-file-size "} +
+                     std::to_string(max_file_size));
 }
 
-bool NoOfBackupFiles(size_t number_of_files) {
-  Osaflog::Message message;
-
-  memset(&message, 0, sizeof(message));
-  message.marker[0] = '?';
-  message.command = Osaflog::kMaxbackups;
-  message.value = number_of_files;
-
-  return SendCommand(message, Osaflog::kMaxbackups);
+bool NoOfBackupFiles(size_t max_backups) {
+  return SendCommand(std::string{"max-backups "} + std::to_string(max_backups));
 }
 
 bool Flush() {
-  Osaflog::Message message;
-
-  memset(&message, 0, sizeof(message));
-  message.marker[0] = '?';
-  message.command = Osaflog::kFlush;
-  message.value = 0;
-
-  return SendCommand(message, Osaflog::kFlush);
+  return SendCommand(std::string{"flush"});
 }
 
 base::UnixServerSocket* CreateSocket() {
