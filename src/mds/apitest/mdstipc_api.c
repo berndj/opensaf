@@ -33,7 +33,6 @@ static MDS_CLIENT_MSG_FORMAT_VER gl_set_msg_fmt_ver;
 
 MDS_SVC_ID svc_ids[3] = {2006, 2007, 2008};
 
-_Thread_local NCSMDS_INFO svc_to_mds_info;
 pthread_mutex_t safe_printf_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t gl_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -3513,6 +3512,7 @@ void tet_just_send_tp_11()
 	MDS_SVC_ID svcids[] = {NCSMDS_SVC_ID_EXTERNAL_MIN};
 	gl_vdest_indx = 0;
 
+	NCSMDS_INFO svc_to_mds_info;
 	char tmp[] = " Hi Receiver ";
 	TET_MDS_MSG *mesg;
 	mesg = (TET_MDS_MSG *)malloc(sizeof(TET_MDS_MSG));
@@ -8020,6 +8020,7 @@ void tet_direct_just_send_tp_9()
 {
 	int FAIL = 0;
 	MDS_SVC_ID svcids[] = {NCSMDS_SVC_ID_EXTERNAL_MIN};
+	NCSMDS_INFO svc_to_mds_info;
 	char message[] = "Direct Message";
 
 	/*start up*/
@@ -8145,6 +8146,7 @@ void tet_direct_just_send_tp_11()
 {
 	int FAIL = 0;
 	MDS_SVC_ID svcids[] = {NCSMDS_SVC_ID_EXTERNAL_MIN};
+	NCSMDS_INFO svc_to_mds_info;
 	char message[] = "Direct Message";
 
 	/*start up*/
@@ -9998,6 +10000,7 @@ void tet_direct_send_ack_tp_10()
 {
 	int FAIL = 0;
 	MDS_SVC_ID svcids[] = {NCSMDS_SVC_ID_EXTERNAL_MIN};
+	NCSMDS_INFO svc_to_mds_info;
 	char message[] = "Direct Message";
 	/*start up*/
 	if (tet_initialise_setup(false)) {
@@ -10074,6 +10077,7 @@ void tet_direct_send_ack_tp_11()
 {
 	int FAIL = 0;
 	MDS_SVC_ID svcids[] = {NCSMDS_SVC_ID_EXTERNAL_MIN};
+	NCSMDS_INFO svc_to_mds_info;
 	char message[] = "Direct Message";
 	/*start up*/
 	if (tet_initialise_setup(false)) {
@@ -11709,6 +11713,7 @@ void tet_direct_broadcast_to_svc_tp_8()
 {
 	int FAIL = 0;
 	MDS_SVC_ID svcids[] = {NCSMDS_SVC_ID_EXTERNAL_MIN};
+	NCSMDS_INFO svc_to_mds_info;
 	/*Start up*/
 	if (tet_initialise_setup(false)) {
 		printf("\n Setup Initialisation has Failed \n");
