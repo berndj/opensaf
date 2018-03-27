@@ -51,7 +51,7 @@ class LogServer {
   class LogStream {
    public:
     static constexpr size_t kMaxLogNameSize = 32;
-    LogStream(const std::string& log_name, size_t no_of_backups,
+    LogStream(const std::string& log_name, size_t max_backups,
                                                  size_t max_file_size);
 
     size_t log_name_size() const { return log_name_.size(); }
@@ -90,7 +90,7 @@ class LogServer {
                              const std::string& argument);
   int term_fd_;
   // Configuration for LogServer
-  size_t no_of_backups_;
+  size_t max_backups_;
   size_t max_file_size_;
 
   base::UnixServerSocket log_socket_;

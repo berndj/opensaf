@@ -19,9 +19,11 @@
 #include "dtm/transport/log_server.h"
 #include <signal.h>
 #include <syslog.h>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include "base/osaf_poll.h"
+#include "base/string_parse.h"
 #include "base/time.h"
 #include "dtm/common/osaflog_protocol.h"
 #include "osaf/configmake.h"
@@ -30,7 +32,7 @@ const Osaflog::ClientAddressConstantPrefix LogServer::address_header_{};
 
 LogServer::LogServer(int term_fd)
     : term_fd_{term_fd},
-      no_of_backups_{9},
+      max_backups_{9},
       max_file_size_{5 * 1024 * 1024},
       log_socket_{Osaflog::kServerSocketPath, base::UnixSocket::kNonblocking},
       log_streams_{},
@@ -104,7 +106,7 @@ LogServer::LogStream* LogServer::GetStream(const char* msg_id,
   if (iter != log_streams_.end()) return iter->second;
   if (no_of_log_streams_ >= kMaxNoOfStreams) return nullptr;
   if (!ValidateLogName(msg_id, msg_id_size)) return nullptr;
-  LogStream* stream = new LogStream{log_name, no_of_backups_, max_file_size_};
+  LogStream* stream = new LogStream{log_name, max_backups_, max_file_size_};
   auto result = log_streams_.insert(
       std::map<std::string, LogStream*>::value_type{log_name, stream});
   if (!result.second) osaf_abort(msg_id_size);
@@ -115,8 +117,6 @@ LogServer::LogStream* LogServer::GetStream(const char* msg_id,
 bool LogServer::ReadConfig(const char *transport_config_file) {
   FILE *transport_conf_file;
   char line[256];
-  size_t max_file_size = 0;
-  size_t number_of_backup_files = 0;
   int i, n, comment_line, tag_len = 0;
 
   /* Open transportd.conf config file. */
@@ -153,20 +153,26 @@ bool LogServer::ReadConfig(const char *transport_config_file) {
     if (strncmp(line, "TRANSPORT_MAX_FILE_SIZE=",
                   strlen("TRANSPORT_MAX_FILE_SIZE=")) == 0) {
       tag_len = strlen("TRANSPORT_MAX_FILE_SIZE=");
-      max_file_size = atoi(&line[tag_len]);
-
-      if (max_file_size > 1) {
+      bool success;
+      uint64_t max_file_size = base::StrToUint64(&line[tag_len], &success);
+      if (success && max_file_size <= SIZE_MAX) {
         max_file_size_ = max_file_size;
+      } else {
+        syslog(LOG_ERR, "TRANSPORT_MAX_FILE_SIZE has illegal value '%s'",
+               &line[tag_len]);
       }
     }
 
     if (strncmp(line, "TRANSPORT_MAX_BACKUPS=",
                   strlen("TRANSPORT_MAX_BACKUPS=")) == 0) {
       tag_len = strlen("TRANSPORT_MAX_BACKUPS=");
-      number_of_backup_files = atoi(&line[tag_len]);
-
-      if (number_of_backup_files > 1) {
-         no_of_backups_ = number_of_backup_files;
+      bool success;
+      uint64_t max_backups = base::StrToUint64(&line[tag_len], &success);
+      if (success && max_backups <= SIZE_MAX) {
+         max_backups_ = max_backups;
+      } else {
+        syslog(LOG_ERR, "TRANSPORT_MAX_BACKUPS "
+               "has illegal value '%s'", &line[tag_len]);
       }
     }
   }
@@ -221,11 +227,15 @@ bool LogServer::ValidateAddress(const struct sockaddr_un& addr,
 std::string LogServer::ExecuteCommand(const std::string& command,
                                       const std::string& argument) {
   if (command == "?max-file-size") {
-    max_file_size_ = atoi(argument.c_str());
+    bool success;
+    uint64_t max_file_size = base::StrToUint64(argument.c_str(), &success);
+    if (success && max_file_size <= SIZE_MAX) max_file_size_ = max_file_size;
     return std::string{"!max-file-size " + std::to_string(max_file_size_)};
   } else if (command == "?max-backups") {
-    no_of_backups_ = atoi(argument.c_str());
-    return std::string{"!max-backups " + std::to_string(no_of_backups_)};
+    bool success;
+    uint64_t max_backups = base::StrToUint64(argument.c_str(), &success);
+    if (success && max_backups <= SIZE_MAX) max_backups_ = max_backups;
+    return std::string{"!max-backups " + std::to_string(max_backups_)};
   } else if (command == "?flush") {
     for (const auto& s : log_streams_) {
       LogStream* stream = s.second;
@@ -238,9 +248,9 @@ std::string LogServer::ExecuteCommand(const std::string& command,
 }
 
 LogServer::LogStream::LogStream(const std::string& log_name,
-                                size_t no_of_backups_, size_t max_file_size_)
-    : log_name_{log_name}, last_flush_{}, log_writer_{log_name, no_of_backups_,
-                                                             max_file_size_} {
+                                size_t max_backups, size_t max_file_size)
+    : log_name_{log_name}, last_flush_{}, log_writer_{log_name, max_backups,
+                                                             max_file_size} {
   if (log_name.size() > kMaxLogNameSize) osaf_abort(log_name.size());
 }
 

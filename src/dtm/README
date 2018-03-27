@@ -179,15 +179,19 @@ print the messages stored on disk for the specified
 LOGSTREAM. When a LOGSTREAM argument is specified, the option
 --flush is implied.
 
-Opions:
+Options:
 
---flush               Flush all buffered messages in the log server to
-                      disk even when no LOGSTREAM is specified.
+--flush               Flush all buffered messages in the log
+                      server to disk even when no LOGSTREAM
+                      is specified.
 --print               print the messages stored on disk for the
-                      specified LOGSTREAM.This option is default
+                      specified LOGSTREAM. This option is default
                       when no option is specified.
---max-file-size=SIZE  Set the maximum size of the log file to SIZE bytes.
-                      The log file will be rotated when it exceeds this size.
---max-backups=NUM     Set the maximum number of backup files to retain
-                      during log rotation to NUM.
+--max-file-size=SIZE  Set the maximum size of the log file to
+                      SIZE bytes. The log file will be rotated
+                      when it exceeds this size. Suffixes k, M and
+                      G can be used for kilo-, mega- and
+                      gigabytes.
+--max-backups=NUM     Set the maximum number of backup files to
+                      retain during log rotation to NUM.
 

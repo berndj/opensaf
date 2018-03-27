@@ -29,7 +29,7 @@ class LogWriter {
  public:
   constexpr static const size_t kMaxMessageSize = 2 * size_t{1024};
 
-  LogWriter(const std::string& log_name, size_t no_of_backups,
+  LogWriter(const std::string& log_name, size_t max_backups,
                                           size_t max_file_size);
   virtual ~LogWriter();
 
@@ -54,7 +54,7 @@ class LogWriter {
   int fd_;
   size_t current_file_size_;
   size_t current_buffer_size_;
-  size_t no_of_backups_;
+  size_t max_backups_;
   size_t max_file_size_;
   char* buffer_;
 

@@ -31,6 +31,7 @@
 #include <memory>
 #include <random>
 #include <string>
+#include "base/string_parse.h"
 #include "base/time.h"
 #include "base/unix_server_socket.h"
 #include "dtm/common/osaflog_protocol.h"
@@ -39,9 +40,10 @@
 namespace {
 
 void PrintUsage(const char* program_name);
+bool SendCommand(const std::string& command);
+bool MaxTraceFileSize(uint64_t max_file_size);
+bool NoOfBackupFiles(uint64_t number_of_backups);
 bool Flush();
-bool MaxTraceFileSize(size_t max_file_size);
-bool NoOfBackupFiles(size_t number_of_backups);
 base::UnixServerSocket* CreateSocket();
 uint64_t Random64Bits(uint64_t seed);
 bool PrettyPrint(const std::string& log_stream);
@@ -62,8 +64,8 @@ int main(int argc, char** argv) {
                                   {"print", required_argument, nullptr, 'p'},
                                   {0, 0, 0, 0}};
 
-  size_t max_file_size = 0;
-  size_t max_backups = 0;
+  uint64_t max_file_size = 0;
+  uint64_t max_backups = 0;
   char *pretty_print_argument = NULL;
   int option = 0;
 
@@ -94,12 +96,19 @@ int main(int argc, char** argv) {
                    flush_set = true;
                  break;
              case 'm':
-                   max_file_size_set = true;
-                   max_file_size = atoi(optarg);
+                   max_file_size = base::StrToUint64(optarg,
+                                                     &max_file_size_set);
+                   if (!max_file_size_set || max_file_size > SIZE_MAX) {
+                     fprintf(stderr, "Illegal max-file-size argument\n");
+                     exit(EXIT_FAILURE);
+                   }
                  break;
              case 'b':
-                   max_backups_set = true;
-                   max_backups = atoi(optarg);
+                   max_backups = base::StrToUint64(optarg, &max_backups_set);
+                   if (!max_backups_set || max_backups > SIZE_MAX) {
+                     fprintf(stderr, "Illegal max-backups argument\n");
+                     exit(EXIT_FAILURE);
+                   }
                  break;
              default: PrintUsage(argv[0]);
                  exit(EXIT_FAILURE);
@@ -144,25 +153,27 @@ void PrintUsage(const char* program_name) {
           "LOGSTREAM. When a LOGSTREAM argument is specified, the option\n"
           "--flush is implied.\n"
           "\n"
-          "Opions:\n"
+          "Options:\n"
           "\n"
           "--flush               Flush all buffered messages in the log\n"
           "                      server to disk even when no LOGSTREAM\n"
           "                      is specified.\n"
-          "--print               print the messages stored on disk for the \n"
-          "                      specified LOGSTREAM.This option is default\n"
+          "--print               print the messages stored on disk for the\n"
+          "                      specified LOGSTREAM. This option is default\n"
           "                      when no option is specified.\n"
-          "--max-file-size=SIZE  Set the maximum size of the log file\n"
-          "                      to SIZE bytes.The log file will be rotated\n"
-          "                      when it exceeds this size.\n"
+          "--max-file-size=SIZE  Set the maximum size of the log file to\n"
+          "                      SIZE bytes. The log file will be rotated\n"
+          "                      when it exceeds this size. Suffixes k, M and\n"
+          "                      G can be used for kilo-, mega- and\n"
+          "                      gigabytes.\n"
           "--max-backups=NUM     Set the maximum number of backup files to\n"
           "                      retain during log rotation to NUM.\n",
           program_name);
 }
 
 bool SendCommand(const std::string& command) {
-  std::string request{std::string{"?"} + command};
-  std::string expected_reply{std::string{"!"} + command};
+  std::string request(std::string("?") + command);
+  std::string expected_reply(std::string("!") + command);
   auto sock = std::unique_ptr<base::UnixServerSocket>(CreateSocket());
 
   if (!sock) {
@@ -224,13 +235,13 @@ bool SendCommand(const std::string& command) {
   return true;
 }
 
-bool MaxTraceFileSize(size_t max_file_size) {
-  return SendCommand(std::string{"max-file-size "} +
+bool MaxTraceFileSize(uint64_t max_file_size) {
+  return SendCommand(std::string("max-file-size ") +
                      std::to_string(max_file_size));
 }
 
-bool NoOfBackupFiles(size_t max_backups) {
-  return SendCommand(std::string{"max-backups "} + std::to_string(max_backups));
+bool NoOfBackupFiles(uint64_t max_backups) {
+  return SendCommand(std::string("max-backups ") + std::to_string(max_backups));
 }
 
 bool Flush() {
@@ -311,7 +322,7 @@ std::list<int> OpenLogFiles(const std::string& log_stream) {
 std::string PathName(const std::string& log_stream, int suffix) {
   std::string path_name{PKGLOGDIR "/"};
   path_name += log_stream;
-  if (suffix != 0) path_name += std::string{"."} + std::to_string(suffix);
+  if (suffix != 0) path_name += std::string(".") + std::to_string(suffix);
   return path_name;
 }
 

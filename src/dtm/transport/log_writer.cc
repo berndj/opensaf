@@ -26,14 +26,14 @@
 #include "dtm/transport/log_writer.h"
 #include "dtm/transport/log_server.h"
 
-LogWriter::LogWriter(const std::string& log_name, size_t no_of_backups,
+LogWriter::LogWriter(const std::string& log_name, size_t max_backups,
                                                   size_t max_file_size)
     : log_file_{base::GetEnv<std::string>("pkglogdir", PKGLOGDIR) + "/" +
                 log_name},
       fd_{-1},
       current_file_size_{0},
       current_buffer_size_{0},
-      no_of_backups_{no_of_backups},
+      max_backups_{max_backups},
       max_file_size_{max_file_size},
       buffer_{new char[kBufferSize]} {}
 
@@ -46,7 +46,7 @@ LogWriter::~LogWriter() {
 std::string LogWriter::log_file(size_t backup) const {
   std::string file_name = log_file_;
   if (backup != 0) {
-    file_name += std::string{"."} + std::to_string(backup);
+    file_name += std::string(".") + std::to_string(backup);
   }
   return file_name;
 }
@@ -77,8 +77,8 @@ void LogWriter::Close() {
 
 void LogWriter::RotateLog() {
   Close();
-  unlink(log_file(no_of_backups_).c_str());
-  for (size_t i = no_of_backups_; i != 0; --i) {
+  unlink(log_file(max_backups_).c_str());
+  for (size_t i = max_backups_; i != 0; --i) {
     std::string backup_name = log_file(i);
     std::string previous_backup = log_file(i - 1);
     if (rename(previous_backup.c_str(), backup_name.c_str()) != 0) {
