@@ -4437,10 +4437,9 @@ static SaUint32T plms_ent_unlock(PLMS_ENTITY *ent, PLMS_TRACK_INFO *trk_info,
 		/* Unlock the EE.*/
 		unlck_err = plms_ee_unlock(ent, true, 1 /*mngt_cbk*/);
 		if (NCSCC_RC_SUCCESS != unlck_err) {
-			/* TODO: Should I return from here, sending failure to
-			IMM and calling management lost callback.*/
 			LOG_ER("EE unlock operation failed. Ent: %s",
 			       ent->dn_name_str);
+			goto send_rsp;
 		}
 	}
 
@@ -4548,6 +4547,8 @@ static SaUint32T plms_ent_unlock(PLMS_ENTITY *ent, PLMS_TRACK_INFO *trk_info,
 
 	plms_ent_exp_rdness_status_clear(ent);
 	plms_aff_ent_exp_rdness_status_clear(trk_info->aff_ent_list);
+
+send_rsp:
 	/* Respnd to IMM.*/
 	if (NCSCC_RC_SUCCESS == unlck_err) {
 		ret_err = saImmOiAdminOperationResult(cb->oi_hdl, adm_op.inv_id,
