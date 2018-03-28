@@ -1,6 +1,7 @@
 /*      OpenSAF
  *
  * (C) Copyright 2008 The OpenSAF Foundation
+ * Copyright (C) 2018 Ericsson AB. All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -212,6 +213,14 @@ uint32_t smfnd_down(SaClmNodeIdT i_node_id)
 	/* Update the node info */
 	while (smfnd != NULL) {
 		if (smfnd->clmInfo.nodeId == i_node_id) {
+			/* Check if the node state was already Down,
+			 * probably due to previous failed SMFND UP event
+			 */
+			if (smfnd->nd_state == ndDown) {
+				TRACE("SMFND node state was already Down. No update needed");
+				pthread_mutex_unlock(&smfnd_list_lock);
+				return NCSCC_RC_FAILURE;
+			}
 			/* Store the nd state */
 			TRACE(
 			    "SMFND state updated for node [%s], id [%x]",

@@ -1,6 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2008 The OpenSAF Foundation
+ * Copyright (C) 2018 Ericsson AB. All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -86,7 +87,7 @@ static void proc_mds_info(smfd_cb_t *cb, SMFSV_EVT *evt)
 
 		if (mds_info->svc_id == NCSMDS_SVC_ID_SMFND) {
 			if (smfnd_up(mds_info->node_id, mds_info->dest,
-				     mds_info->rem_svc_pvt_ver) == SA_AIS_OK)
+						mds_info->rem_svc_pvt_ver) == NCSCC_RC_SUCCESS)
 				cb->no_of_smfnd++;
 			else
 				LOG_WA("%s: SMFND UP failed", __FUNCTION__);
@@ -100,8 +101,8 @@ static void proc_mds_info(smfd_cb_t *cb, SMFSV_EVT *evt)
 		}
 
 		if (mds_info->svc_id == NCSMDS_SVC_ID_SMFND) {
-			smfnd_down(mds_info->node_id);
-			cb->no_of_smfnd--;
+			if (smfnd_down(mds_info->node_id) == NCSCC_RC_SUCCESS)
+				cb->no_of_smfnd--;
 		}
 		break;
 
