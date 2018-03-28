@@ -5510,6 +5510,116 @@ void plms_deact_completed_cbk_call(PLMS_ENTITY *ent, PLMS_TRACK_INFO *trk_info)
 	return;
 }
 
+void plms_post_abrupt_restart(PLMS_ENTITY *ent,
+		PLMS_EVT *evt,
+		PLMS_GROUP_ENTITY *aff_ent_list) {
+	SaUint32T count = 0;
+	PLMS_GROUP_ENTITY *head = 0;
+	PLMS_ENTITY_GROUP_INFO_LIST *log_head_grp = 0;
+	PLMS_TRACK_INFO *trk_info = 0;
+
+	TRACE_ENTER();
+
+	/* Admin operation started. */
+	ent->adm_op_in_progress = SA_PLM_CAUSE_EE_RESTART;
+	ent->am_i_aff_ent = true;
+	plms_aff_ent_flag_mark_unmark(aff_ent_list, true);
+
+	/* Take care of target EE. */
+	plms_presence_state_set(ent, SA_PLM_EE_PRESENCE_INSTANTIATING, NULL,
+				SA_NTF_MANAGEMENT_OPERATION,
+				SA_PLM_NTFID_STATE_CHANGE_ROOT);
+
+	plms_readiness_state_set(ent, SA_PLM_READINESS_OUT_OF_SERVICE, NULL,
+				 SA_NTF_MANAGEMENT_OPERATION,
+				 SA_PLM_NTFID_STATE_CHANGE_ROOT);
+	count++;
+
+	/* Get the trk_info ready.*/
+	trk_info = (PLMS_TRACK_INFO *)calloc(1, sizeof(PLMS_TRACK_INFO));
+	trk_info->root_entity = ent;
+	ent->trk_info = trk_info;
+
+	/* Reset all the dependent EEs.*/
+	head = aff_ent_list;
+	while (head) {
+		SaUint32T ret_err =
+			plms_ee_reboot(head->plm_entity, false, true);
+
+		if (NCSCC_RC_SUCCESS == ret_err) {
+			plms_presence_state_set(
+			    head->plm_entity, SA_PLM_EE_PRESENCE_UNINSTANTIATED,
+			    ent, SA_NTF_MANAGEMENT_OPERATION,
+			    SA_PLM_NTFID_STATE_CHANGE_DEP);
+			head->plm_entity->trk_info = trk_info;
+			count++;
+		} else {
+			LOG_ER("EE reset failed. Ent: %s",
+			       head->plm_entity->dn_name_str);
+		}
+		plms_readiness_state_set(
+		    head->plm_entity, SA_PLM_READINESS_OUT_OF_SERVICE, ent,
+		    SA_NTF_MANAGEMENT_OPERATION, SA_PLM_NTFID_STATE_CHANGE_DEP);
+		plms_readiness_flag_mark_unmark(
+		    head->plm_entity, SA_PLM_RF_DEPENDENCY, 1 /* mark */, ent,
+		    SA_NTF_MANAGEMENT_OPERATION, SA_PLM_NTFID_STATE_CHANGE_DEP);
+		head = head->next;
+	}
+
+	plms_aff_ent_exp_rdness_state_ow(aff_ent_list);
+	plms_ent_exp_rdness_state_ow(ent);
+
+	trk_info->aff_ent_list = aff_ent_list;
+
+	/* Add the groups, root entity(ent) belong to.*/
+	plms_ent_grp_list_add(ent, &(trk_info->group_info_list));
+
+	/* Find out all the groups, all affected entities belong to and add
+	the groups to trk_info->group_info_list.*/
+	plms_ent_list_grp_list_add(aff_ent_list, &(trk_info->group_info_list));
+
+	TRACE("Affected groups for ent %s: ", ent->dn_name_str);
+	log_head_grp = trk_info->group_info_list;
+	while (log_head_grp) {
+		TRACE("%llu,", log_head_grp->ent_grp_inf->entity_grp_hdl);
+		log_head_grp = log_head_grp->next;
+	}
+
+	trk_info->imm_adm_opr_id = evt ? evt->req_evt.admin_op.operation_id : 0;
+	trk_info->inv_id = evt ? evt->req_evt.admin_op.inv_id : 0;
+	trk_info->change_step = SA_PLM_CHANGE_COMPLETED;
+	trk_info->track_cause = SA_PLM_CAUSE_EE_RESTART;
+	trk_info->root_correlation_id = SA_NTF_IDENTIFIER_UNUSED;
+	trk_info->grp_op = SA_PLM_GROUP_MEMBER_READINESS_CHANGE;
+	trk_info->root_entity = ent;
+	trk_info->track_count = count;
+	/* 1. Call the 1st callback for restart.*/
+	plms_cbk_call(trk_info, 1);
+
+	plms_aff_ent_exp_rdness_status_clear(aff_ent_list);
+	plms_ent_exp_rdness_status_clear(ent);
+	plms_ent_grp_list_free(trk_info->group_info_list);
+	trk_info->group_info_list = NULL;
+	/* Not needed for abrupt restart.*/
+	trk_info->track_cause = 0;
+
+	/********************************************************************/
+
+	/* Target EE as well as affected EEs are restarted. When each restarted
+	EE is instantiated, move the EE to InSvc and call the completed cbk
+	with track cause as SA_PLM_CAUSE_EE_INSTANTIATED and root entity as
+	the target entity. Make sure to free the trk_info->group_info_list
+	and decrement the trk_info->count.
+
+	After all the aff EEs are instantiated (trk_info->count becomes 0),
+	return to IMM. Clear the admin context.
+	Free trk_info->group_info_list, trk_info, trk_info->aff_ent_list.
+
+	*/
+
+	TRACE_LEAVE();
+}
+
 /******************************************************************************
 @brief		: Process EE abrupt restart.
 @param[in]	: ent - EE to be restarted.
@@ -5521,10 +5631,7 @@ void plms_deact_completed_cbk_call(PLMS_ENTITY *ent, PLMS_TRACK_INFO *trk_info)
 static SaUint32T plms_ee_abrupt_restart_process(PLMS_ENTITY *ent, PLMS_EVT *evt,
 						PLMS_GROUP_ENTITY *aff_ent_list)
 {
-	SaUint32T ret_err = NCSCC_RC_SUCCESS, count = 0;
-	PLMS_TRACK_INFO *trk_info;
-	PLMS_GROUP_ENTITY *head;
-	PLMS_ENTITY_GROUP_INFO_LIST *log_head_grp;
+	SaUint32T ret_err = NCSCC_RC_SUCCESS;
 	PLMS_CB *cb = plms_cb;
 
 	TRACE_ENTER2("Entity: %s. Op: Admin restart variant: Abrupt.",
@@ -5616,6 +5723,9 @@ static SaUint32T plms_ee_abrupt_restart_process(PLMS_ENTITY *ent, PLMS_EVT *evt,
 				    SA_PLM_NTFID_STATE_CHANGE_ROOT);
 
 				plms_mngt_lost_clear_cbk_call(ent, 1 /*mark*/);
+
+				ent->mngt_lost_tri =
+					PLMS_MNGT_EE_RESTART_ABRUPT;
 			}
 
 			ret_err = saImmOiAdminOperationResult(
@@ -5633,100 +5743,7 @@ static SaUint32T plms_ee_abrupt_restart_process(PLMS_ENTITY *ent, PLMS_EVT *evt,
 		assert(0);
 	}
 
-	/* Admin operation started. */
-	ent->adm_op_in_progress = SA_PLM_CAUSE_EE_RESTART;
-	ent->am_i_aff_ent = true;
-	plms_aff_ent_flag_mark_unmark(aff_ent_list, true);
-
-	/* Take care of target EE. */
-	plms_presence_state_set(ent, SA_PLM_EE_PRESENCE_INSTANTIATING, NULL,
-				SA_NTF_MANAGEMENT_OPERATION,
-				SA_PLM_NTFID_STATE_CHANGE_ROOT);
-
-	plms_readiness_state_set(ent, SA_PLM_READINESS_OUT_OF_SERVICE, NULL,
-				 SA_NTF_MANAGEMENT_OPERATION,
-				 SA_PLM_NTFID_STATE_CHANGE_ROOT);
-	count++;
-
-	/* Get the trk_info ready.*/
-	trk_info = (PLMS_TRACK_INFO *)calloc(1, sizeof(PLMS_TRACK_INFO));
-	trk_info->root_entity = ent;
-	ent->trk_info = trk_info;
-
-	/* Reset all the dependent EEs.*/
-	head = aff_ent_list;
-	while (head) {
-		ret_err = plms_ee_reboot(head->plm_entity, false, true);
-		if (NCSCC_RC_SUCCESS == ret_err) {
-			plms_presence_state_set(
-			    head->plm_entity, SA_PLM_EE_PRESENCE_UNINSTANTIATED,
-			    ent, SA_NTF_MANAGEMENT_OPERATION,
-			    SA_PLM_NTFID_STATE_CHANGE_DEP);
-			head->plm_entity->trk_info = trk_info;
-			count++;
-		} else {
-			LOG_ER("EE reset failed. Ent: %s",
-			       head->plm_entity->dn_name_str);
-		}
-		plms_readiness_state_set(
-		    head->plm_entity, SA_PLM_READINESS_OUT_OF_SERVICE, ent,
-		    SA_NTF_MANAGEMENT_OPERATION, SA_PLM_NTFID_STATE_CHANGE_DEP);
-		plms_readiness_flag_mark_unmark(
-		    head->plm_entity, SA_PLM_RF_DEPENDENCY, 1 /* mark */, ent,
-		    SA_NTF_MANAGEMENT_OPERATION, SA_PLM_NTFID_STATE_CHANGE_DEP);
-		head = head->next;
-	}
-
-	plms_aff_ent_exp_rdness_state_ow(aff_ent_list);
-	plms_ent_exp_rdness_state_ow(ent);
-
-	trk_info->aff_ent_list = aff_ent_list;
-
-	/* Add the groups, root entity(ent) belong to.*/
-	plms_ent_grp_list_add(ent, &(trk_info->group_info_list));
-
-	/* Find out all the groups, all affected entities belong to and add
-	the groups to trk_info->group_info_list.*/
-	plms_ent_list_grp_list_add(aff_ent_list, &(trk_info->group_info_list));
-
-	TRACE("Affected groups for ent %s: ", ent->dn_name_str);
-	log_head_grp = trk_info->group_info_list;
-	while (log_head_grp) {
-		TRACE("%llu,", log_head_grp->ent_grp_inf->entity_grp_hdl);
-		log_head_grp = log_head_grp->next;
-	}
-
-	trk_info->imm_adm_opr_id = evt->req_evt.admin_op.operation_id;
-	trk_info->inv_id = evt->req_evt.admin_op.inv_id;
-	trk_info->change_step = SA_PLM_CHANGE_COMPLETED;
-	trk_info->track_cause = SA_PLM_CAUSE_EE_RESTART;
-	trk_info->root_correlation_id = SA_NTF_IDENTIFIER_UNUSED;
-	trk_info->grp_op = SA_PLM_GROUP_MEMBER_READINESS_CHANGE;
-	trk_info->root_entity = ent;
-	trk_info->track_count = count;
-	/* 1. Call the 1st callback for restart.*/
-	plms_cbk_call(trk_info, 1);
-
-	plms_aff_ent_exp_rdness_status_clear(aff_ent_list);
-	plms_ent_exp_rdness_status_clear(ent);
-	plms_ent_grp_list_free(trk_info->group_info_list);
-	trk_info->group_info_list = NULL;
-	/* Not needed for abrupt restart.*/
-	trk_info->track_cause = 0;
-
-	/********************************************************************/
-
-	/* Target EE as well as affected EEs are restarted. When each restarted
-	EE is instantiated, move the EE to InSvc and call the completed cbk
-	with track cause as SA_PLM_CAUSE_EE_INSTANTIATED and root entity as
-	the target entity. Make sure to free the trk_info->group_info_list
-	and decrement the trk_info->count.
-
-	After all the aff EEs are instantiated (trk_info->count becomes 0),
-	return to IMM. Clear the admin context.
-	Free trk_info->group_info_list, trk_info, trk_info->aff_ent_list.
-
-	*/
+	plms_post_abrupt_restart(ent, evt, aff_ent_list);
 
 	TRACE_LEAVE2("ret_err: %d", ret_err);
 	return ret_err;

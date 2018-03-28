@@ -409,6 +409,7 @@ typedef enum {
   PLMS_MNGT_EE_UNLOCK,
   PLMS_MNGT_EE_TERM,
   PLMS_MNGT_EE_RESTART,
+  PLMS_MNGT_EE_RESTART_ABRUPT,
   PLMS_MNGT_EE_GET_OS_INFO,
   PLMS_MNGT_EE_INST,
   PLMS_MNGT_EE_ISOLATE,
@@ -547,6 +548,9 @@ SaUint32T plms_imm_adm_op_req_process(PLMS_EVT *);
 SaUint32T plms_cbk_response_process(PLMS_EVT *);
 void plms_deact_completed_cbk_call(PLMS_ENTITY *, PLMS_TRACK_INFO *);
 void plms_deact_start_cbk_call(PLMS_ENTITY *, PLMS_TRACK_INFO *);
+void plms_post_abrupt_restart(PLMS_ENTITY *,
+				PLMS_EVT *,
+				PLMS_GROUP_ENTITY *aff_ent_list);
 
 /* Function declaration from plms_utils.c*/
 SaUint32T plms_readiness_impact_process(PLMS_EVT *);

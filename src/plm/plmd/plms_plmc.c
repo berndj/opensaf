@@ -401,7 +401,43 @@ SaUint32T plms_plmc_tcp_connect_process(PLMS_ENTITY *ent)
        }
 
 	if (plms_is_rdness_state_set(ent, SA_PLM_READINESS_IN_SERVICE)) {
+		PLMS_ENTITY *child = ent->leftmost_child;
 		TRACE("Ent %s is already in insvc.", ent->dn_name_str);
+
+		/* if this is a parent EE, connect to the hypervisor */
+		if (child)
+                        plms_ee_hypervisor_instantiated(ent);
+
+		/* do any pending admin operations on child EEs */
+		while (child) {
+			if (plms_rdness_flag_is_set(
+				child, SA_PLM_RF_ADMIN_OPERATION_PENDING)) {
+				/* hypervisor can handle these operations */
+				if (child->mngt_lost_tri == PLMS_MNGT_EE_INST)
+					plms_ee_instantiate(child, false, true);
+				else if (child->mngt_lost_tri ==
+					PLMS_MNGT_EE_RESTART_ABRUPT) {
+					ret_err = plms_ee_restart_vm(child);
+
+					if (ret_err == NCSCC_RC_SUCCESS) {
+						PLMS_GROUP_ENTITY *aff_ent_list
+							= 0;
+						plms_affected_ent_list_get(
+							ent,
+							&aff_ent_list,
+							0);
+
+						plms_post_abrupt_restart(
+							child,
+							0,
+							aff_ent_list);
+					}
+				}
+			}
+
+			child = child->right_sibling;
+		}
+
 		return NCSCC_RC_SUCCESS;
 	}
 	/*If previous state is not instantiating/intantiated, then get os info
