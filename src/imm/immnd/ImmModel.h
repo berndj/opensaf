@@ -219,7 +219,8 @@ class ImmModel {
                            ObjectNameVector& objNameVector,
                            ConnVector& connVector, IdVector& continuations,
                            unsigned int pbeIsLocal,
-                           ObjectInfo** readLockedObject);
+                           ObjectInfo** readLockedObject,
+                           bool sendToPbe);
 
   void setCcbErrorString(CcbInfo* ccb, const char* errorString, va_list vl);
 

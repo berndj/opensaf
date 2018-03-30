@@ -33,9 +33,12 @@
 #include <stdint.h>
 #include <sys/stat.h>
 #include <libgen.h>
+#include <set>
+#include <vector>
 
 #include <saAis.h>
 #include "base/osaf_extended_name.h"
+#include "imm/common/immsv_utils.h"
 
 #ifdef HAVE_IMM_PBE
 
@@ -146,20 +149,37 @@ static const char *preparedSql[] = {
 
 static sqlite3_stmt *preparedStmt[SQL_STMT_SIZE] = {NULL};
 
+struct ObjectInfo {
+  unsigned obj_id;
+  unsigned class_id;
+  char *dn;
+};
+
+using ObjectSet    = std::set<ObjectInfo*>;
+using ReverseDnMap = std::map<std::string, ObjectInfo*>;
+using ClassNameMap = std::map<unsigned, std::string>;
+
+// Used for collecting objects and classes
+using ClassInstanceMap = std::map<unsigned, ObjectSet>;
+
+static ObjectSet    sObjectSet;
+static ReverseDnMap sReverseDnMap;
+static ClassNameMap sClassNameMap;
+
 static int prepareSqlStatements(sqlite3 *dbHandle) {
   int i;
-  int rc;
+  int rc = SQLITE_OK;
 
   for (i = 0; i < SQL_STMT_SIZE; i++) {
     rc = sqlite3_prepare_v2(dbHandle, preparedSql[i], -1, &(preparedStmt[i]),
                             NULL);
     if (rc != SQLITE_OK) {
       LOG_ER("Failed to prepare SQL statement for: %s", preparedSql[i]);
-      return -1;
+      return rc;
     }
   }
 
-  return 0;
+  return rc;
 }
 
 int finalizeSqlStatement(void *stmt) {
@@ -546,6 +566,323 @@ void pbeAtomicSwitchFile(const char *filePath, std::string localTmpFilename) {
   }
 }
 
+// Reverse object DN and use the reverse DN as key in sReverseDnMap
+// which is used mainly to collect child objects when we perform cascade delete.
+static void reverseAndInsertDn(const std::string &dn,
+                               unsigned obj_id,
+                               unsigned class_id) {
+  ObjectInfo *info = new ObjectInfo();
+  osafassert(info);
+
+  info->obj_id = obj_id;
+  info->class_id = class_id;
+  info->dn = strdup(dn.c_str());
+
+  std::string revdn = ReverseDn(dn);
+  sReverseDnMap[revdn] = info;
+  sObjectSet.insert(info);
+}
+
+static ObjectInfo *findObjectInfo(const std::string &dn) {
+  std::string revDn = ReverseDn(dn);
+  auto obj = sReverseDnMap.find(revDn);
+  return (obj != sReverseDnMap.end()) ? obj->second : nullptr;
+}
+
+// Build up local databases when pbe have just attached.
+static bool prepareLocalData(sqlite3 *dbHandle) {
+  const char *classSql = "SELECT class_id, class_name FROM classes";
+  const char *objSql = "SELECT dn, obj_id, class_id FROM objects";
+  sqlite3_stmt *stmt = nullptr;
+  int rc;
+  bool ret = false;
+  unsigned obj_id;
+  unsigned class_id;
+  char *class_name;
+  std::string dn;
+  int count = 0;
+
+  TRACE_ENTER();
+
+  rc = sqlite3_prepare_v2(dbHandle, classSql, -1, &stmt, nullptr);
+  if (rc != SQLITE_OK) {
+    LOG_ER("Failed to prepare SQL statement for: %s", classSql);
+    goto failed;
+  }
+
+  while((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
+    class_id = static_cast<unsigned>(sqlite3_column_int(stmt, 0));
+    class_name = const_cast<char*>(reinterpret_cast<const char *>
+                                   (sqlite3_column_text(stmt, 1)));
+
+    sClassNameMap[class_id] = class_name;
+    ++count;
+  }
+  if (rc != SQLITE_DONE) {
+    LOG_ER("SQL statement ('%s') failed. Error code: %d", classSql, rc);
+    goto failed;
+  }
+  sqlite3_finalize(stmt);
+  stmt = NULL;
+
+  TRACE("Added %d classes local class map", count);
+
+  rc = sqlite3_prepare_v2(dbHandle, objSql, -1, &stmt, nullptr);
+  if (rc != SQLITE_OK) {
+    LOG_ER("Failed to prepare SQL statement for: %s", objSql);
+    goto failed;
+  }
+
+  count = 0;
+  while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
+    dn = const_cast<char*>(reinterpret_cast<const char *>
+                           (sqlite3_column_text(stmt, 0)));
+    obj_id = sqlite3_column_int(stmt, 1);
+    class_id = sqlite3_column_int(stmt, 2);
+
+    reverseAndInsertDn(dn, obj_id, class_id);
+
+    ++count;
+  }
+
+  if (rc != SQLITE_DONE) {
+    LOG_ER("SQL statement ('%s') failed. Error code: %d", objSql, rc);
+    goto failed;
+  }
+
+  TRACE("Added %d reverse DNs to reverse_dn table", count);
+
+  ret = true;
+
+failed:
+  if (stmt) {
+    sqlite3_finalize(stmt);
+  }
+
+  return ret;
+}
+
+// Collect child objects and child objects' classes under root.
+static void collectObjectInfo(const std::string &root,
+                              ObjectSet &objects,
+                              ClassInstanceMap &class_instances) {
+  /* The function returns the root object and all its children in 'objects'.
+   * 'class_instances' contains all classes with classes instances in
+   * returned objects.
+   */
+  std::string revDn = ReverseDn(root);
+  std::string childDnStart = revDn + ",";
+  auto it = sReverseDnMap.find(revDn);
+
+  if (it == sReverseDnMap.end()) {
+    return;
+  }
+  // Add root object
+  objects.insert(it->second);
+  class_instances[it->second->class_id].insert(it->second);
+
+  // Skip possible objects between "dn" and "dn,"
+  ++it;
+  while (it != sReverseDnMap.end() &&
+         !strncmp(it->first.c_str(), revDn.c_str(), revDn.size()) &&
+         strncmp(it->first.c_str(), childDnStart.c_str(),
+                 childDnStart.size())) {
+    ++it;
+  }
+
+  // Add all children objects
+  for (; it != sReverseDnMap.end()
+        && !strncmp(it->first.c_str(), childDnStart.c_str(),
+                    childDnStart.size());
+        ++it) {
+    objects.insert(it->second);
+    class_instances[it->second->class_id].insert(it->second);
+  }
+}
+
+// Delete all records from `objects` and `objects_xxx_multi` PBE tables
+// which have same obj_id as in `objectSet`.
+static bool deleteObjectList(sqlite3 *dbHandle,
+                             ObjectSet &objectSet, bool *badfile) {
+  sqlite3_stmt *stmt = nullptr;
+  int rc = 0;
+  bool ret = false;
+  unsigned object_id;
+
+  TRACE_ENTER();
+
+  if (badfile) {
+    *badfile = false;
+  }
+
+  for (auto &obj : objectSet) {
+    object_id = obj->obj_id;
+
+    /*
+      First, delete the root object tuple in objects for obj_id.
+     */
+    stmt = preparedStmt[SQL_DEL_OBJECTS];
+    if ((rc = sqlite3_bind_int(stmt, 1, object_id)) != SQLITE_OK) {
+      LOG_ER("Failed to bind obj_id with error code: %d", rc);
+      goto failed;
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE) {
+      LOG_ER("SQL statement ('%s') failed because:\n %s",
+          preparedSql[SQL_DEL_OBJECTS], sqlite3_errmsg(dbHandle));
+      if (badfile) {
+        *badfile = true;
+      }
+      goto failed;
+    }
+
+    sqlite3_reset(stmt);
+    stmt = nullptr;
+    TRACE("Deleted %u values", sqlite3_changes(dbHandle));
+
+    /*
+      Second, delete from objects_int_multi, objects_real_multi,
+      objects_text_multi
+      where obj_id == OBJ_ID
+     */
+    stmt = preparedStmt[SQL_DEL_OBJ_INT_MULTI_ID];
+    if ((rc = sqlite3_bind_int(stmt, 1, object_id)) != SQLITE_OK) {
+      LOG_ER("Failed to bind obj_id with error code: %d", rc);
+      goto failed;
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE) {
+      LOG_ER("SQL statement ('%s') failed because:\n %s",
+             preparedSql[SQL_DEL_OBJ_INT_MULTI_ID], sqlite3_errmsg(dbHandle));
+      goto failed;
+    }
+
+    TRACE("Deleted %u values", sqlite3_changes(dbHandle));
+    sqlite3_reset(stmt);
+    stmt = nullptr;
+
+    stmt = preparedStmt[SQL_DEL_OBJ_REAL_MULTI_ID];
+    if ((rc = sqlite3_bind_int(stmt, 1, object_id)) != SQLITE_OK) {
+      LOG_ER("Failed to bind obj_id with error code: %d", rc);
+      goto failed;
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE) {
+      LOG_ER("SQL statement ('%s') failed because:\n %s",
+             preparedSql[SQL_DEL_OBJ_REAL_MULTI_ID], sqlite3_errmsg(dbHandle));
+      goto failed;
+    }
+
+    TRACE("Deleted %u values", sqlite3_changes(dbHandle));
+    sqlite3_reset(stmt);
+    stmt = nullptr;
+
+    stmt = preparedStmt[SQL_DEL_OBJ_TEXT_MULTI_ID];
+    if ((rc = sqlite3_bind_int(stmt, 1, object_id)) != SQLITE_OK) {
+      LOG_ER("Failed to bind obj_id with error code: %d", rc);
+      goto failed;
+    }
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE) {
+      LOG_ER("SQL statement ('%s') failed because:\n %s",
+             preparedSql[SQL_DEL_OBJ_TEXT_MULTI_ID], sqlite3_errmsg(dbHandle));
+      goto failed;
+    }
+
+    TRACE("Deleted %u values", sqlite3_changes(dbHandle));
+    sqlite3_reset(stmt);
+    stmt = nullptr;
+  }
+
+  ret = true;
+
+failed:
+  if (stmt) {
+    sqlite3_reset(stmt);
+  }
+
+  TRACE_LEAVE();
+  return ret;
+}
+
+// Remove class instances from object's class such as SaLogStreamConfig
+// if there is any configuable LOG stream deleted.
+static bool deleteClassInstances(sqlite3 *dbHandle,
+                                 ClassInstanceMap &classInstances) {
+  sqlite3_stmt *stmt = nullptr;
+  int rc = 0;
+  std::string className;
+  std::string sql;
+
+  TRACE_ENTER();
+
+  for (auto &cii : classInstances) {
+    auto cmi = sClassNameMap.find(cii.first);
+    assert(cmi != sClassNameMap.end());
+
+    sql = "DELETE FROM '";
+    sql.append(cmi->second);
+    sql.append("' WHERE obj_id = ?");
+
+    rc = sqlite3_prepare_v2(dbHandle, sql.c_str(), -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+      LOG_ER("Failed to prepare SQL statement for: %s", sql.c_str());
+      goto failed;
+    }
+
+    for (auto &it : cii.second) {
+      if ((rc = sqlite3_bind_int(stmt, 1, it->obj_id)) != SQLITE_OK) {
+        LOG_ER("Failed to bind obj_id with error code: %d", rc);
+        goto failed;
+      }
+
+      rc = sqlite3_step(stmt);
+      if (rc != SQLITE_DONE) {
+        LOG_ER("SQL statement ('%s') failed because:\n %s",
+               sql.c_str(), sqlite3_errmsg(dbHandle));
+        goto failed;
+      }
+      sqlite3_reset(stmt);
+    }
+
+    sqlite3_finalize(stmt);
+    stmt = nullptr;
+  }
+
+  return true;
+
+failed:
+  if (stmt) {
+    sqlite3_finalize(stmt);
+  }
+  return false;
+}
+
+// Remove object DN from local database
+static void removeObject(const std::string &dn) {
+  std::string revDn;
+
+  revDn = ReverseDn(dn);
+  sReverseDnMap.erase(revDn);
+}
+
+// Remove set of objects from local databases and free up allocated memories.
+static void removeObjects(ObjectSet &objects) {
+  std::string dn;
+
+  for (auto obj : objects) {
+    sObjectSet.erase(obj);
+    dn = obj->dn;
+    removeObject(dn);
+    free(obj->dn);
+    free(obj);
+  }
+}
+
 void *pbeRepositoryInit(const char *filePath, bool create,
                         std::string &localTmpFilename) {
   int fd = (-1);
@@ -719,7 +1056,9 @@ void *pbeRepositoryInit(const char *filePath, bool create,
     TRACE("Successfully executed %s", sql_tr[ix]);
   }
 
-  prepareSqlStatements(dbHandle);
+  if (prepareSqlStatements(dbHandle) != SQLITE_OK) {
+    goto bailout;
+  }
 
   *sPbeFileName = std::string(filePath);
   if (localTmpDir) free(localTmpDir);
@@ -822,7 +1161,13 @@ re_attach:
   *sPbeFileName =
       std::string(filePath); /* Avoid apend to presumed empty string */
 
-  prepareSqlStatements(dbHandle);
+  if (prepareSqlStatements(dbHandle) != SQLITE_OK) {
+    goto bailout;
+  }
+
+  if (!prepareLocalData(dbHandle)) {
+    goto bailout;
+  }
 
   TRACE_LEAVE();
   return dbHandle;
@@ -1087,6 +1432,8 @@ ClassInfo *classToPBE(std::string classNameString, SaImmHandleT immHandle,
     goto bailout;
   }
 
+  sClassNameMap[class_id] = classNameString;
+
   TRACE_LEAVE();
   return classInfo;
 
@@ -1199,6 +1546,8 @@ void deleteClassToPBE(std::string classNameString, void *db_handle,
     rowsModified = sqlite3_changes(dbHandle);
     TRACE("Dropped table %s rows:%u", classNameString.c_str(), rowsModified);
   }
+
+  sClassNameMap.erase(theClass->mClassId);
 
   TRACE_LEAVE();
   return;
@@ -2046,6 +2395,10 @@ unsigned int purgeInstancesOfClassToPBE(SaImmHandleT immHandle,
   sqlite3 *dbHandle = (sqlite3 *)db_handle;
   const char *classNamePar = className.c_str();
   unsigned int nrofDeletes = 0;
+  ObjectSet objects;
+  ObjectInfo *object;
+  ClassInstanceMap classInstances;
+  std::string dn;
   TRACE_ENTER();
 
   searchParam.searchOneAttr.attrName = (SaImmAttrNameT)SA_IMM_ATTR_CLASS_NAME;
@@ -2084,10 +2437,30 @@ unsigned int purgeInstancesOfClassToPBE(SaImmHandleT immHandle,
 
     // assert(attrs[0] == NULL);
 
-    objectDeleteToPBE(std::string(osaf_extended_name_borrow(&objectName)),
-                      db_handle);
+    dn = std::string(osaf_extended_name_borrow(&objectName));
+    object = findObjectInfo(dn);
+    if (object) {
+      objects.insert(object);
+      classInstances[object->class_id].insert(object);
+    } else {
+      LOG_WA("%s cannot be found in PBE cache", dn.c_str());
+      goto bailout;
+    }
+
     ++nrofDeletes;
   } while (true);
+
+  if (!deleteObjectList(dbHandle, objects, nullptr)) {
+    LOG_ER("Failed to delete object.");
+    goto bailout;
+  }
+
+  if (!deleteClassInstances(dbHandle, classInstances)) {
+    LOG_ER("Failed to delete instance of a class");
+    goto bailout;
+  }
+
+  removeObjects(objects);
 
   if (SA_AIS_ERR_NOT_EXIST != errorCode) {
     LOG_ER("Failed in saImmOmSearchNext_2:%u - exiting", errorCode);
@@ -2180,163 +2553,32 @@ bailout:
 
 void objectDeleteToPBE(std::string objectNameString, void *db_handle) {
   sqlite3 *dbHandle = (sqlite3 *)db_handle;
-  sqlite3_stmt *stmt;
-  std::string sql("delete from \"");
-
-  int rc = 0;
-  char *zErr = NULL;
-  std::string object_id_str;
-  int object_id;
-  int class_id;
-  std::string class_name;
+  ObjectSet objects;
+  ClassInstanceMap classInstances;
   bool badfile = false;
   TRACE_ENTER();
   assert(dbHandle);
 
-  /* First, look up obj_id and class_id  from objects where dn == objname. */
-  stmt = preparedStmt[SQL_SEL_OBJECTS_DN];
-  if ((rc = sqlite3_bind_text(stmt, 1, objectNameString.c_str(), -1, NULL)) !=
-      SQLITE_OK) {
-    LOG_ER("Failed to bind dn with error code: %d", rc);
-    goto bailout;
-  }
-  rc = sqlite3_step(stmt);
-  if (rc == SQLITE_DONE) {
-    LOG_ER("Expected 1 row got 0 rows (line: %u)", __LINE__);
-    badfile = true;
-    goto bailout;
-  }
-  if (rc != SQLITE_ROW) {
-    LOG_ER("Could not access object '%s' for delete, error:%s",
-           objectNameString.c_str(), sqlite3_errmsg(dbHandle));
-    badfile = true;
+
+  collectObjectInfo(objectNameString, objects, classInstances);
+  if (!objects.size()) {
+    LOG_ER("Object %s does not exist. Possible corrupted data",
+        objectNameString.c_str());
     goto bailout;
   }
 
-  object_id = sqlite3_column_int(stmt, 0);
-  object_id_str.append((char *)sqlite3_column_text(stmt, 0));
-  class_id = sqlite3_column_int(stmt, 1);
-
-  if (sqlite3_step(stmt) == SQLITE_ROW) {
-    LOG_ER("Expected 1 row got more then 1 row (line: %u)", __LINE__);
-    badfile = true;
-    goto bailout;
-  }
-  sqlite3_reset(stmt);
-
-  TRACE_2("Successfully accessed object '%s'.", objectNameString.c_str());
-  TRACE_2("object_id:%d class_id:%d", object_id, class_id);
-
-  /*
-    Second, delete the root object tuple in objects for obj_id.
-  */
-  stmt = preparedStmt[SQL_DEL_OBJECTS];
-  if ((rc = sqlite3_bind_int(stmt, 1, object_id)) != SQLITE_OK) {
-    LOG_ER("Failed to bind obj_id with error code: %d", rc);
-    goto bailout;
-  }
-  rc = sqlite3_step(stmt);
-  if (rc != SQLITE_DONE) {
-    LOG_ER("SQL statement ('%s') failed because:\n %s",
-           preparedSql[SQL_DEL_OBJECTS], sqlite3_errmsg(dbHandle));
-    goto bailout;
-  }
-  sqlite3_reset(stmt);
-  TRACE("Deleted %u values", sqlite3_changes(dbHandle));
-
-  /* Third get the class-name for the object */
-  stmt = preparedStmt[SQL_SEL_CLASSES_ID];
-  if ((rc = sqlite3_bind_int(stmt, 1, class_id)) != SQLITE_OK) {
-    LOG_ER("Failed to bind class_id with error code: %d", rc);
-    goto bailout;
-  }
-  rc = sqlite3_step(stmt);
-  if (rc == SQLITE_DONE) {
-    LOG_ER("Expected 1 row got 0 rows (line: %u)", __LINE__);
-    badfile = true;
-    goto bailout;
-  }
-  if (rc != SQLITE_ROW) {
-    LOG_ER("SQL statement ('%s') failed because:\n %s",
-           preparedSql[SQL_SEL_CLASSES_ID], sqlite3_errmsg(dbHandle));
+  if (!deleteObjectList(dbHandle, objects, &badfile)) {
+    LOG_ER("Failed to delete object.");
     goto bailout;
   }
 
-  class_name.append((char *)sqlite3_column_text(stmt, 0));
-
-  if (sqlite3_step(stmt) == SQLITE_ROW) {
-    LOG_ER("Expected 1 row got more then 1 row (line: %u)", __LINE__);
-    badfile = true;
-    goto bailout;
-  }
-  sqlite3_reset(stmt);
-
-  TRACE_2("Successfully accessed classes class_id:%d class_name:'%s'", class_id,
-          class_name.c_str());
-
-  /* Fourth delete the base attribute tuple from table 'classname' for obj_id.
-   */
-  sql.append(class_name);
-  sql.append("\" where obj_id = ");
-  sql.append(object_id_str);
-
-  TRACE("GENERATED 4:%s", sql.c_str());
-  rc = sqlite3_exec(dbHandle, sql.c_str(), NULL, NULL, &zErr);
-  if (rc) {
-    LOG_ER("SQL statement ('%s') failed because:\n %s", sql.c_str(), zErr);
-    sqlite3_free(zErr);
+  if (!deleteClassInstances(dbHandle, classInstances)) {
+    LOG_ER("Failed to delete instance of a class");
     goto bailout;
   }
 
-  TRACE("Deleted %u values", sqlite3_changes(dbHandle));
+  removeObjects(objects);
 
-  /*
-    Fifth delete from objects_int_multi, objects_real_multi, objects_text_multi
-    where obj_id ==OBJ_ID
-   */
-  stmt = preparedStmt[SQL_DEL_OBJ_INT_MULTI_ID];
-  if ((rc = sqlite3_bind_int(stmt, 1, object_id)) != SQLITE_OK) {
-    LOG_ER("Failed to bind obj_id with error code: %d", rc);
-    goto bailout;
-  }
-  rc = sqlite3_step(stmt);
-  if (rc != SQLITE_DONE) {
-    LOG_ER("SQL statement ('%s') failed because:\n %s",
-           preparedSql[SQL_DEL_OBJ_INT_MULTI_ID], sqlite3_errmsg(dbHandle));
-    goto bailout;
-  }
-  TRACE("Deleted %u values", sqlite3_changes(dbHandle));
-  sqlite3_reset(stmt);
-
-  stmt = preparedStmt[SQL_DEL_OBJ_REAL_MULTI_ID];
-  if ((rc = sqlite3_bind_int(stmt, 1, object_id)) != SQLITE_OK) {
-    LOG_ER("Failed to bind obj_id with error code: %d", rc);
-    goto bailout;
-  }
-  rc = sqlite3_step(stmt);
-  if (rc != SQLITE_DONE) {
-    LOG_ER("SQL statement ('%s') failed because:\n %s",
-           preparedSql[SQL_DEL_OBJ_REAL_MULTI_ID], sqlite3_errmsg(dbHandle));
-    goto bailout;
-  }
-  TRACE("Deleted %u values", sqlite3_changes(dbHandle));
-  sqlite3_reset(stmt);
-
-  stmt = preparedStmt[SQL_DEL_OBJ_TEXT_MULTI_ID];
-  if ((rc = sqlite3_bind_int(stmt, 1, object_id)) != SQLITE_OK) {
-    LOG_ER("Failed to bind obj_id with error code: %d", rc);
-    goto bailout;
-  }
-  rc = sqlite3_step(stmt);
-  if (rc != SQLITE_DONE) {
-    LOG_ER("SQL statement ('%s') failed because:\n %s",
-           preparedSql[SQL_DEL_OBJ_TEXT_MULTI_ID], sqlite3_errmsg(dbHandle));
-    goto bailout;
-  }
-  TRACE("Deleted %u values", sqlite3_changes(dbHandle));
-  sqlite3_reset(stmt);
-
-  TRACE_LEAVE();
   return;
 
 bailout:
@@ -2485,6 +2727,8 @@ bool objectToPBE(std::string objectNameString, const SaImmAttrValuesT_2 **attrs,
   }
   sqlite3_reset(stmt);
   sqlite3_clear_bindings(stmt);
+
+  reverseAndInsertDn(objectNameString, object_id, class_id);
 
   TRACE_LEAVE();
   return true;

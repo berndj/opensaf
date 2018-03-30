@@ -8298,15 +8298,6 @@ static void immnd_evt_proc_object_delete(IMMND_CB *cb, IMMND_EVT *evt,
 		osafassert(pbeNodeId);
 		osafassert(pbeNodeId == cb->node_id);
 		implHandle = m_IMMSV_PACK_HANDLE(pbeConn, pbeNodeId);
-		memset(&send_evt, '\0', sizeof(IMMSV_EVT));
-		send_evt.type = IMMSV_EVT_TYPE_IMMA;
-		/* PBE is internal => can handle long DNs */
-		send_evt.info.imma.type = IMMA_EVT_ND2A_OI_OBJ_DELETE_UC;
-		send_evt.info.imma.info.objDelete.ccbId =
-		    evt->info.objDelete.ccbId;
-		send_evt.info.imma.info.objDelete.immHandle = implHandle;
-		send_evt.info.imma.info.objDelete.adminOwnerId =
-		    0; /* No reply!*/
 
 		/*Fetch client node for PBE */
 		immnd_client_node_get(cb, implHandle, &oi_cl_node);
@@ -8322,7 +8313,11 @@ static void immnd_evt_proc_object_delete(IMMND_CB *cb, IMMND_EVT *evt,
 			err = SA_AIS_ERR_FAILED_OPERATION;
 			immnd_proc_global_abort_ccb(cb,
 						    evt->info.objDelete.ccbId);
-		} else {
+		} else if (arrSize > 0) {
+			/* If arrSize == 0, it means that the object has been already
+			* deleted, and in that case we don't need to send anything
+			* to PBE
+			*/
 			/* We have obtained PBE handle & dest info for PBE.
 			   Iterate through objNameArray and send delete upcalls
 			   to PBE. PBE delete upcalls are generated for all
@@ -8331,28 +8326,29 @@ static void immnd_evt_proc_object_delete(IMMND_CB *cb, IMMND_EVT *evt,
 			   upcalls are generated for cached non-persistent
 			   runtime objects that are delete as a side effect.
 			 */
-			int ix = 0;
-			for (; ix < arrSize && err == SA_AIS_OK; ++ix) {
-				send_evt.info.imma.info.objDelete.objectName
-				    .size =
-				    (SaUint32T)strlen(objNameArr[ix]) + 1;
-				send_evt.info.imma.info.objDelete.objectName
-				    .buf = objNameArr[ix];
+			/* PBE will handle children objects */
+			memset(&send_evt, '\0', sizeof(IMMSV_EVT));
+			send_evt.type = IMMSV_EVT_TYPE_IMMA;
+			/* PBE is internal => can handle long DNs */
+			send_evt.info.imma.type = IMMA_EVT_ND2A_OI_OBJ_DELETE_UC;
+			send_evt.info.imma.info.objDelete.ccbId =
+					evt->info.objDelete.ccbId;
+			send_evt.info.imma.info.objDelete.immHandle = implHandle;
+			send_evt.info.imma.info.objDelete.adminOwnerId = 0; /* No reply!*/
+			send_evt.info.imma.info.objDelete.objectName.size =
+					evt->info.objDelete.objectName.size;
+			send_evt.info.imma.info.objDelete.objectName.buf =
+					evt->info.objDelete.objectName.buf;
 
-				TRACE_2(
-				    "MAKING PBE-IMPLEMENTER OBJ DELETE upcall");
-				if (immnd_mds_msg_send(
-					cb, NCSMDS_SVC_ID_IMMA_OI,
-					oi_cl_node->agent_mds_dest,
-					&send_evt) != NCSCC_RC_SUCCESS) {
-					LOG_ER(
-					    "Immnd upcall over MDS for ccbObjectDelete "
-					    "to PBE failed! - aborting ccb %u",
-					    evt->info.objDelete.ccbId);
-					err = SA_AIS_ERR_FAILED_OPERATION;
-					immnd_proc_global_abort_ccb(
-					    cb, evt->info.objDelete.ccbId);
-				}
+			TRACE_2("MAKING PBE-IMPLEMENTER OBJ DELETE upcall");
+			if (immnd_mds_msg_send(cb, NCSMDS_SVC_ID_IMMA_OI,
+								oi_cl_node->agent_mds_dest,
+								&send_evt) != NCSCC_RC_SUCCESS) {
+				LOG_ER("Immnd upcall over MDS for ccbObjectDelete "
+						"to PBE failed! - aborting ccb %u",
+						evt->info.objDelete.ccbId);
+				err = SA_AIS_ERR_FAILED_OPERATION;
+				immnd_proc_global_abort_ccb(cb, evt->info.objDelete.ccbId);
 			}
 		}
 	} /* End of PersistentBackEnd handling. */
@@ -8717,16 +8713,6 @@ static void immnd_evt_proc_rt_object_delete(IMMND_CB *cb, IMMND_EVT *evt,
 			osafassert(cb->mIsCoord);
 			osafassert(pbeNodeId == cb->node_id);
 			implHandle = m_IMMSV_PACK_HANDLE(pbeConn, pbeNodeId);
-			memset(&send_evt, '\0', sizeof(IMMSV_EVT));
-			send_evt.type = IMMSV_EVT_TYPE_IMMA;
-			/* PBE is internal => can handle long DNs */
-			send_evt.info.imma.type =
-			    IMMA_EVT_ND2A_OI_OBJ_DELETE_UC;
-			send_evt.info.imma.info.objDelete.ccbId = 0;
-			send_evt.info.imma.info.objDelete.adminOwnerId =
-			    continuationId;
-			send_evt.info.imma.info.objDelete.immHandle =
-			    implHandle;
 
 			/*Fetch client node for PBE */
 			immnd_client_node_get(cb, implHandle, &pbe_cl_node);
@@ -8743,51 +8729,55 @@ static void immnd_evt_proc_rt_object_delete(IMMND_CB *cb, IMMND_EVT *evt,
 				goto done;
 			} else {
 				/* We have obtained PBE handle & dest info for
-				   PBE. Iterate through objNameArray and send
-				   delete upcalls to PBE.
+				   PBE. Send delete upcalls to PBE.
 				*/
-				int ix = 0;
-				for (; ix < arrSize && err == SA_AIS_OK; ++ix) {
-					send_evt.info.imma.info.objDelete
-					    .objectName.size =
-					    (SaUint32T)strlen(objNameArr[ix]) +
-					    1;
-					send_evt.info.imma.info.objDelete
-					    .objectName.buf = objNameArr[ix];
+				memset(&send_evt, '\0', sizeof(IMMSV_EVT));
+				send_evt.type = IMMSV_EVT_TYPE_IMMA;
+				/* PBE is internal => can handle long DNs */
+				send_evt.info.imma.type = IMMA_EVT_ND2A_OI_OBJ_DELETE_UC;
+				send_evt.info.imma.info.objDelete.ccbId = 0;
+				send_evt.info.imma.info.objDelete.adminOwnerId =
+						continuationId;
+				send_evt.info.imma.info.objDelete.immHandle = implHandle;
 
-					TRACE_2(
-					    "MAKING PBE-IMPLEMENTER PERSISTENT RT-OBJ DELETE upcalls");
-					if (immnd_mds_msg_send(
-						cb, NCSMDS_SVC_ID_IMMA_OI,
-						pbe_cl_node->agent_mds_dest,
-						&send_evt) !=
-					    NCSCC_RC_SUCCESS) {
-						LOG_WA(
-						    "Upcall over MDS for persistent rt obj delete "
-						    "to PBE failed!");
-						/* TODO: we could possibly
-						   revert the delete here an
-						   return TRY_AGAIN. We may have
-						   succeeded in sending some
-						   deletes, but since we did not
-						   send the completed, the PRTO
-						   deletes will not be commited
-						   by the PBE.
-						 */
-						goto done;
-					}
+				send_evt.info.imma.info.objDelete.objectName.size =
+						evt->info.objDelete.objectName.size;
+				send_evt.info.imma.info.objDelete.objectName.buf =
+						evt->info.objDelete.objectName.buf;
+
+				if (immnd_mds_msg_send(cb, NCSMDS_SVC_ID_IMMA_OI,
+									pbe_cl_node->agent_mds_dest,
+									&send_evt) !=
+											NCSCC_RC_SUCCESS) {
+					LOG_WA("Upcall over MDS for persistent rt obj delete "
+							"to PBE failed!");
+					/* TODO: we could possibly
+					   revert the delete here an
+					   return TRY_AGAIN. We may have
+					   succeeded in sending some
+					   deletes, but since we did not
+					   send the completed, the PRTO
+					   deletes will not be commited
+					   by the PBE.
+					*/
+					goto done;
 				}
 
+				memset(&send_evt, '\0', sizeof(IMMSV_EVT));
 				send_evt.info.imma.type =
 				    IMMA_EVT_ND2A_OI_CCB_COMPLETED_UC;
 				send_evt.info.imma.info.ccbCompl.ccbId = 0;
 				send_evt.info.imma.info.ccbCompl.immHandle =
 				    implHandle;
 				send_evt.info.imma.info.ccbCompl.implId =
-				    arrSize;
+				    1;
 				/* ^^Hack: Use implId to store objCount, see
 				   #1809.^^ This avoids having to change the
 				   protocol.
+				 */
+				/* It will be always 1 for number of delete objects.
+				 * Cascade delete is done on PBE size, and only
+				 * parent DN is sent to PBE
 				 */
 				send_evt.info.imma.info.ccbCompl.invocation =
 				    continuationId;
@@ -8818,17 +8808,6 @@ static void immnd_evt_proc_rt_object_delete(IMMND_CB *cb, IMMND_EVT *evt,
 			implHandle =
 			    m_IMMSV_PACK_HANDLE(pbe2BConn, cb->node_id);
 
-			memset(&send_evt, '\0', sizeof(IMMSV_EVT));
-			send_evt.type = IMMSV_EVT_TYPE_IMMA;
-
-			send_evt.info.imma.type =
-			    IMMA_EVT_ND2A_OI_OBJ_DELETE_UC;
-			send_evt.info.imma.info.objDelete.ccbId = 0;
-			send_evt.info.imma.info.objDelete.adminOwnerId =
-			    continuationId;
-			send_evt.info.imma.info.objDelete.immHandle =
-			    implHandle;
-
 			/*Fetch client node for Slave PBE */
 			immnd_client_node_get(cb, implHandle, &pbe_cl_node);
 			osafassert(pbe_cl_node);
@@ -8838,39 +8817,38 @@ static void immnd_evt_proc_rt_object_delete(IMMND_CB *cb, IMMND_EVT *evt,
 				goto done;
 			} else {
 				/* We have obtained handle & dest info for Slave
-				   PBE. Iterate through objNameArray and send
-				   delete upcalls to Slave PBE.
+				   PBE. Send delete upcalls to Slave PBE.
 				*/
-				int ix = 0;
-				for (; ix < arrSize && err == SA_AIS_OK; ++ix) {
-					send_evt.info.imma.info.objDelete
-					    .objectName.size =
-					    (SaUint32T)strlen(objNameArr[ix]) +
-					    1;
-					send_evt.info.imma.info.objDelete
-					    .objectName.buf = objNameArr[ix];
+				memset(&send_evt, '\0', sizeof(IMMSV_EVT));
+				send_evt.type = IMMSV_EVT_TYPE_IMMA;
 
-					TRACE_2(
-					    "MAKING PBE-SLAVE PERSISTENT RT-OBJ DELETE upcalls");
-					if (immnd_mds_msg_send(
-						cb, NCSMDS_SVC_ID_IMMA_OI,
-						pbe_cl_node->agent_mds_dest,
-						&send_evt) !=
-					    NCSCC_RC_SUCCESS) {
-						LOG_WA(
-						    "Upcall over MDS for persistent rt obj delete "
-						    "to Slave PBE failed!");
-						/* TODO: we could possibly
-						   revert the delete here an
-						   return TRY_AGAIN. We may have
-						   succeeded in sending some
-						   deletes, but since we did not
-						   send the completed, the PRTO
-						   deletes will not be commited
-						   by the PBE.
-						 */
-						goto done;
-					}
+				send_evt.info.imma.type = IMMA_EVT_ND2A_OI_OBJ_DELETE_UC;
+				send_evt.info.imma.info.objDelete.ccbId = 0;
+				send_evt.info.imma.info.objDelete.adminOwnerId =
+						continuationId;
+				send_evt.info.imma.info.objDelete.immHandle = implHandle;
+				send_evt.info.imma.info.objDelete.objectName.size =
+						evt->info.objDelete.objectName.size;
+				send_evt.info.imma.info.objDelete.objectName.buf =
+						evt->info.objDelete.objectName.buf;
+
+				TRACE_2("MAKING PBE-SLAVE PERSISTENT RT-OBJ DELETE upcalls");
+				if (immnd_mds_msg_send(cb, NCSMDS_SVC_ID_IMMA_OI,
+									pbe_cl_node->agent_mds_dest,
+									&send_evt) !=
+											NCSCC_RC_SUCCESS) {
+					LOG_WA("Upcall over MDS for persistent rt obj delete "
+							"to Slave PBE failed!");
+					/* TODO: we could possibly
+					   revert the delete here an
+					   return TRY_AGAIN. We may have
+					   succeeded in sending some
+					   deletes, but since we did not
+					   send the completed, the PRTO
+					   deletes will not be commited
+					   by the PBE.
+					 */
+					goto done;
 				}
 			}
 			implHandle = 0LL;

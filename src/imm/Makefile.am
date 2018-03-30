@@ -135,7 +135,8 @@ lib_libimmpbe_dump_la_LIBADD = \
 	lib/libSaImmOm.la
 
 lib_libimmpbe_dump_la_SOURCES = \
-	src/imm/common/immpbe_dump.cc
+	src/imm/common/immpbe_dump.cc \
+	src/imm/common/immsv_utils.cc
 
 nodist_EXTRA_lib_libimmpbe_dump_la_SOURCES = dummy.cc
 
@@ -149,6 +150,7 @@ noinst_HEADERS += \
 	src/imm/common/immsv.h \
 	src/imm/common/immsv_api.h \
 	src/imm/common/immsv_evt.h \
+	src/imm/common/immsv_utils.h \
 	src/imm/common/immsv_evt_model.h \
 	src/imm/immd/immd.h \
 	src/imm/immd/immd_cb.h \
@@ -240,7 +242,8 @@ bin_immdump_CXXFLAGS = $(AM_CXXFLAGS)
 
 bin_immdump_SOURCES = \
 	src/imm/tools/imm_dumper.cc \
-	src/imm/tools/imm_xmlw_dump.cc
+	src/imm/tools/imm_xmlw_dump.cc \
+	src/imm/common/immsv_utils.cc
 
 bin_immdump_CPPFLAGS = \
 	-DSA_EXTENDED_NAME_SOURCE \

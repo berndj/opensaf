@@ -20,9 +20,10 @@
 #include <libxml/encoding.h>
 #include <unistd.h>
 #include <saAis.h>
+#include <set>
 #include "base/osaf_unicode.h"
 #include "base/osaf_extended_name.h"
-#include <set>
+#include "imm/common/immsv_utils.h"
 
 typedef std::pair<std::string, std::list<std::string> > Attribute;
 
@@ -41,8 +42,8 @@ struct ObjectComp {
   }
 };
 
-static std::string ReverseDn(std::string& input);
-static void StoreObject(std::string objectName, SaImmAttrValuesT_2** attrs,
+static void StoreObject(const std::string& objectName,
+                        SaImmAttrValuesT_2** attrs,
                         std::set<Object, ObjectComp>& objectSet,
                         std::map<std::string, std::string>& classRDNMap);
 static void ObjectSetToXMLw(std::set<Object, ObjectComp>& objectSet,
@@ -456,30 +457,8 @@ void objectToXMLw(std::string objectNameString, SaImmAttrValuesT_2** attrs,
   TRACE_LEAVE();
 }
 
-static std::string ReverseDn(std::string& input) {
-  std::string result = "";
-  size_t start_cut = 0;
-  size_t comma_pos = 0;
-
-  do {
-    size_t start_search = start_cut;
-    while ((comma_pos = input.find(",", start_search)) ==
-           input.find("\\,", start_search) + 1)
-      start_search = input.find(",", start_search) +
-                     1; /* Skip the "\," by shifting start position*/
-
-    /* Insert RDN to the begin of the result */
-    if (!result.empty()) result.insert(0, ",");
-    result.insert(0, input, start_cut, comma_pos - start_cut);
-
-    /* Next RDN */
-    start_cut = comma_pos + 1;
-  } while (comma_pos != std::string::npos);
-
-  return result;
-}
-
-static void StoreObject(std::string objectName, SaImmAttrValuesT_2** attrs,
+static void StoreObject(const std::string& objectName,
+                        SaImmAttrValuesT_2** attrs,
                         std::set<Object, ObjectComp>& objectSet,
                         std::map<std::string, std::string>& classRDNMap) {
   TRACE_ENTER();

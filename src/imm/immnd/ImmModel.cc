@@ -2532,6 +2532,7 @@ void ImmModel::pbePrtoPurgeMutations(unsigned int nodeId,
   ContinuationMap2::iterator ci;
   ImmAttrValueMap::iterator oavi;
   ObjectInfo* afim = NULL;
+  std::set<SaUint32T> connSet;
   TRACE_ENTER();
   bool dummy = false;
   bool dummy2 = false;
@@ -2560,7 +2561,11 @@ void ImmModel::pbePrtoPurgeMutations(unsigned int nodeId,
            be the only proper reply, so we let the client
            timeout by not replying.
         */
-        connVector.push_back(ci->second.mConn);
+        if(connSet.find(ci->second.mConn) == connSet.end()) {
+          /* Don't add a connection more that once */
+          connSet.insert(ci->second.mConn);
+          connVector.push_back(ci->second.mConn);
+        }
       }
       sPbeRtReqContinuationMap.erase(ci);
     }
@@ -10440,7 +10445,8 @@ SaAisErrorT ImmModel::ccbObjectDelete(
 
     err = deleteObject(oi, reqConn, adminOwner, ccb, doIt, objNameVector,
                        connVector, continuations,
-                       pbeConnPtr ? (*pbeConnPtr) : 0, &readLockedObject);
+                       pbeConnPtr ? (*pbeConnPtr) : 0, &readLockedObject,
+                       true);
 
     if (err == SA_AIS_OK && readLockedObject != NULL) {
       safeReadObjSet.insert(readLockedObject);
@@ -10462,7 +10468,8 @@ SaAisErrorT ImmModel::ccbObjectDelete(
           --childCount;
           err = deleteObject(oi2, reqConn, adminOwner, ccb, doIt, objNameVector,
                              connVector, continuations,
-                             pbeConnPtr ? (*pbeConnPtr) : 0, &readLockedObject);
+                             pbeConnPtr ? (*pbeConnPtr) : 0, &readLockedObject,
+                             false);
           if (err == SA_AIS_OK && readLockedObject != NULL) {
             safeReadObjSet.insert(readLockedObject);
           }
@@ -10493,7 +10500,8 @@ SaAisErrorT ImmModel::deleteObject(ObjectMap::iterator& oi, SaUint32T reqConn,
                                    ConnVector& connVector,
                                    IdVector& continuations,
                                    unsigned int pbeIsLocal,
-                                   ObjectInfo** readLockedObject) {
+                                   ObjectInfo** readLockedObject,
+                                   bool sendToPbe) {
   /*TRACE_ENTER();*/
   bool configObj = true;
   std::string objAdminOwnerName;
@@ -10794,7 +10802,7 @@ SaAisErrorT ImmModel::deleteObject(ObjectMap::iterator& oi, SaUint32T reqConn,
 
     if (nonPersistentRto) {
       TRACE_7("Not incrementing op-count for ccb delete of non-persistent RTO");
-    } else {
+    } else if (sendToPbe) {
       ccb->mOpCount++;
     }
 
