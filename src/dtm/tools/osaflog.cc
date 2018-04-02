@@ -146,15 +146,17 @@ void PrintUsage(const char* program_name) {
           "\n"
           "Opions:\n"
           "\n"
-          "--flush          Flush all buffered messages in the log server to\n"
-          "                 disk even when no LOGSTREAM is specified\n"
-          "--print          print the messages stored on disk for the \n"
-          "                 specified LOGSTREAM.This option is default\n"
-          "                 when no option is specified.\n"
-          "--max-file-size  Set the maximum size (in bytes) of the log file\n"
-          "                 before the log is rotated.\n"
-          "--max-backups    Set the maximum number of backup files to keep\n"
-          "                 when rotating the log.\n",
+          "--flush               Flush all buffered messages in the log\n"
+          "                      server to disk even when no LOGSTREAM\n"
+          "                      is specified.\n"
+          "--print               print the messages stored on disk for the \n"
+          "                      specified LOGSTREAM.This option is default\n"
+          "                      when no option is specified.\n"
+          "--max-file-size=SIZE  Set the maximum size of the log file\n"
+          "                      to SIZE bytes.The log file will be rotated\n"
+          "                      when it exceeds this size.\n"
+          "--max-backups=NUM     Set the maximum number of backup files to\n"
+          "                      retain during log rotation to NUM.\n",
           program_name);
 }
 

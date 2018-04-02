@@ -150,9 +150,9 @@ bool LogServer::ReadConfig(const char *transport_config_file) {
     if (comment_line) continue;
     line[n - 1] = 0;
 
-    if (strncmp(line, "TRANSPORT_MAX_LOG_FILESIZE=",
-                  strlen("TRANSPORT_MAX_LOG_FILESIZE=")) == 0) {
-      tag_len = strlen("TRANSPORT_MAX_LOG_FILESIZE=");
+    if (strncmp(line, "TRANSPORT_MAX_FILE_SIZE=",
+                  strlen("TRANSPORT_MAX_FILE_SIZE=")) == 0) {
+      tag_len = strlen("TRANSPORT_MAX_FILE_SIZE=");
       max_file_size = atoi(&line[tag_len]);
 
       if (max_file_size > 1) {
@@ -160,9 +160,9 @@ bool LogServer::ReadConfig(const char *transport_config_file) {
       }
     }
 
-    if (strncmp(line, "TRANSPORT_NO_OF_BACKUP_LOG_FILES=",
-                  strlen("TRANSPORT_NO_OF_BACKUP_LOG_FILES=")) == 0) {
-      tag_len = strlen("TRANSPORT_NO_OF_BACKUP_LOG_FILES=");
+    if (strncmp(line, "TRANSPORT_MAX_BACKUPS=",
+                  strlen("TRANSPORT_MAX_BACKUPS=")) == 0) {
+      tag_len = strlen("TRANSPORT_MAX_BACKUPS=");
       number_of_backup_files = atoi(&line[tag_len]);
 
       if (number_of_backup_files > 1) {

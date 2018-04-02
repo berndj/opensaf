@@ -168,3 +168,26 @@ in dtmd.conf (see CONFIGURATION above) and restart the cluster.
  
 For fatal errors, syslog is used.
 
+Command Line Tool:
+
+Use the osaflog command line tool to change the log server configuration.
+osaflog tool supports the below options.
+
+Usage: osaflog [OPTION] [LOGSTREAM]
+
+print the messages stored on disk for the specified
+LOGSTREAM. When a LOGSTREAM argument is specified, the option
+--flush is implied.
+
+Opions:
+
+--flush               Flush all buffered messages in the log server to
+                      disk even when no LOGSTREAM is specified.
+--print               print the messages stored on disk for the
+                      specified LOGSTREAM.This option is default
+                      when no option is specified.
+--max-file-size=SIZE  Set the maximum size of the log file to SIZE bytes.
+                      The log file will be rotated when it exceeds this size.
+--max-backups=NUM     Set the maximum number of backup files to retain
+                      during log rotation to NUM.
+
