@@ -1,7 +1,6 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2008 The OpenSAF Foundation
- * (C) Copyright 2017, 2018 Ericsson AB. All rights reserved.
  * Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is distributed in the hope that it will be useful, but
@@ -96,6 +95,9 @@ static AVD_COMP_TYPE *comptype_create(const std::string &dn,
   (void)immutil_getAttr(const_cast<SaImmAttrNameT>("saAmfCtSwBundle"),
                         attributes, 0, &ct_sw_bundle);
   compt->saAmfCtSwBundle = Amf::to_string(&ct_sw_bundle);
+  if ((str = immutil_getStringAttr(attributes, "saAmfCtDefCmdEnv", 0)) !=
+      nullptr)
+    strcpy(compt->saAmfCtDefCmdEnv, str);
   (void)immutil_getAttr(const_cast<SaImmAttrNameT>("saAmfCtDefClcCliTimeout"),
                         attributes, 0, &compt->saAmfCtDefClcCliTimeout);
   (void)immutil_getAttr(const_cast<SaImmAttrNameT>("saAmfCtDefCallbackTimeout"),
@@ -201,7 +203,6 @@ static bool config_is_valid(const std::string &dn,
   SaUint32T value;
   SaTimeT time;
   SaAisErrorT rc;
-  unsigned int num_of_cmd_env;
   const char *cmd;
   const char *attr_name;
   std::string::size_type pos;
@@ -391,28 +392,6 @@ static bool config_is_valid(const std::string &dn,
         opdata, "Illegal saAmfCtDefDisableRestart value %u for '%s'", value,
         dn.c_str());
     return false;
-  }
-
-  if ((immutil_getAttrValuesNumber(const_cast<SaImmAttrNameT>
-                                   ("saAmfCtDefCmdEnv"), attributes,
-                                   &num_of_cmd_env)) == SA_AIS_OK)
-  {
-    for (unsigned int i = 0; i < num_of_cmd_env; i++) {
-      std::string cmd_env = immutil_getStringAttr(attributes,
-                                                  "saAmfCtDefCmdEnv", i);
-
-      if (!is_cmd_env_valid(cmd_env)) {
-        report_ccb_validation_error(opdata, "Unknown environment variable"
-                                    " format '%s' for '%s'."
-                                    " Should be 'var=value'",
-                                    cmd_env.c_str(), dn.c_str());
-        /* NOTE: We shall only fail the env variable format validation at CCB-
-         * CREATE operation, but not during initial config read, so as to avoid
-         * breaking systems with invalid env variables pre-existing in IMM */
-        if (opdata != nullptr)
-          return false;
-      }
-    } // for (...; i < num_of_cmd_env;...)
   }
 
   return true;

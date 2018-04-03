@@ -1,7 +1,7 @@
 /*      -*- OpenSAF  -*-
  *
  * (C) Copyright 2008 The OpenSAF Foundation
- * (C) Copyright 2017, 2018 Ericsson AB. All rights reserved.
+ * (C) Copyright 2017 Ericsson AB - All Rights Reserved.
  * Copyright (C) 2017, Oracle and/or its affiliates. All rights reserved.
  *
  * This program is distributed in the hope that it will be useful, but
@@ -328,26 +328,6 @@ done:
   TRACE_LEAVE();
 }
 
-/*
- * Validate the component CmdEnv attribute
- *
- * @param const std::string
- *
- * @return bool
- */
-bool is_cmd_env_valid(const std::string &cmd_env_var) {
-  /* following environment variable format is considered as invalid:
-   * - containing 'whitespace'
-   * - having none or more than one '='
-   */
-  if ((cmd_env_var.find_first_of(' ') != std::string::npos) ||
-      (std::count(cmd_env_var.begin(), cmd_env_var.end(), '=') != 1)) {
-    return false;
-  }
-
-  return true;
-}
-
 /**
  * Validate configuration attributes for an AMF Comp object
  * @param comp
@@ -359,7 +339,6 @@ static int is_config_valid(const std::string &dn,
                            CcbUtilOperationData_t *opdata) {
   SaAisErrorT rc;
   SaNameT aname;
-  unsigned int num_of_cmd_env;
   std::string::size_type pos;
   SaUint32T value;
 
@@ -418,27 +397,6 @@ static int is_config_valid(const std::string &dn,
         opdata, "Illegal saAmfCompDisableRestart value %u for '%s'", value,
         dn.c_str());
     return 0;
-  }
-
-  if ((immutil_getAttrValuesNumber(const_cast<SaImmAttrNameT>("saAmfCompCmdEnv")
-                                   ,attributes, &num_of_cmd_env)) == SA_AIS_OK)
-  {
-    for (unsigned int i = 0; i < num_of_cmd_env; i++) {
-      std::string cmd_env = immutil_getStringAttr(attributes,
-                                                  "saAmfCompCmdEnv", i);
-
-      if (!is_cmd_env_valid(cmd_env)) {
-        report_ccb_validation_error(opdata, "Unknown environment variable"
-                                    " format '%s' for '%s'."
-                                    " Should be 'var=value'",
-                                    cmd_env.c_str(), dn.c_str());
-        /* NOTE: We shall only fail the env variable format validation at CCB-
-         * CREATE operation, but not during initial config read, so as to avoid
-         * breaking systems with invalid env variables pre-existing in IMM */
-        if (opdata != nullptr)
-          return 0;
-      }
-    } // for (...; i < num_of_cmd_env;...)
   }
 
 #if 0
@@ -1079,21 +1037,6 @@ static SaAisErrorT ccb_completed_modify_hdlr(CcbUtilOperationData_t *opdata) {
         report_ccb_validation_error(
             opdata, "Modification of saAmfCompCmdEnv failed, nullptr arg");
         goto done;
-      }
-      for (unsigned index = 0; index < attribute->attrValuesNumber; index++) {
-        std::string mod_comp_env = *(static_cast<char **>(attribute->
-                                                          attrValues[index]));
-
-        if (!is_cmd_env_valid(mod_comp_env)) {
-          report_ccb_validation_error(opdata, "Modification of saAmfCompCmdEnv"
-                                      " failed. Unknown environment variable"
-                                      " format '%s' for '%s'."
-                                      " Should be 'var=value'",
-                                      mod_comp_env.c_str(),
-                                      osaf_extended_name_borrow(&opdata->
-                                                                objectName));
-          goto done;
-        }
       }
     } else if (!strcmp(attribute->attrName, "saAmfCompInstantiateCmdArgv")) {
       if (value_is_deleted == true) continue;
