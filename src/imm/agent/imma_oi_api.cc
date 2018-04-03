@@ -4097,7 +4097,8 @@ done:
 
     TRACE("ownerHandle:%llx", *ownerHandle);
 
-  } else if (privateOmHandle) {
+  } else if (privateOmHandle &&
+                  privateOmHandle != ccb_oi_record->privateAugOmHandle) {
     osafassert(immsv_om_handle_finalize);
     immsv_om_handle_finalize(
         privateOmHandle); /* Also finalizes admo handles & ccb handles*/
