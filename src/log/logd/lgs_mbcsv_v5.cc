@@ -22,8 +22,9 @@
  * V5 applies to log server configuration check-pointing
  */
 
-#include "lgs_mbcsv_v5.h"
 #include "log/logd/lgs_dest.h"
+#include "log/logd/lgs_imm.h"
+#include "log/logd/lgs_mbcsv_v5.h"
 
 /****************************************************************************
  * Name          : ckpt_proc_lgs_cfg

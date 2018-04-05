@@ -31,6 +31,7 @@
 #include "log/logd/lgs_imm_gcfg.h"
 #include "log/logd/lgs_clm.h"
 #include "log/logd/lgs_dest.h"
+#include "log/logd/lgs_oi_admin.h"
 
 void *client_db = nullptr; /* used for C++ STL map */
 
@@ -569,7 +570,7 @@ static uint32_t proc_rda_cb_msg(lgsv_lgs_evt_t *evt) {
     }
 
     /* fail over, become implementer */
-    lgs_imm_impl_set(&lgs_cb->immOiHandle, &lgs_cb->immSelectionObject);
+    lgsOiCreateBackground();
     lgs_start_gcfg_applier();
 
     /* Agent down list has to be processed first */
@@ -613,7 +614,6 @@ uint32_t lgs_cb_init(lgs_cb_t *lgs_cb) {
 
   lgs_cb->fully_initialized = false;
   lgs_cb->amfSelectionObject = -1;
-  lgs_cb->immSelectionObject = -1;
   lgs_cb->mbcsv_sel_obj = -1;
   lgs_cb->clm_hdl = 0;
   lgs_cb->clmSelectionObject = -1;
@@ -835,7 +835,7 @@ snd_rsp:
  */
 SaAisErrorT create_new_app_stream(lgsv_stream_open_req_t *open_sync_param,
                                   log_stream_t **o_stream) {
-  SaAisErrorT rc = SA_AIS_OK;
+  SaAisErrorT ais_rc = SA_AIS_OK;
   log_stream_t *stream;
   SaBoolT twelveHourModeFlag;
   SaUint32T logMaxLogrecsize_conf = 0;
@@ -848,13 +848,13 @@ SaAisErrorT create_new_app_stream(lgsv_stream_open_req_t *open_sync_param,
 
   if (lgs_is_extended_name_valid(&open_sync_param->lstr_name) == false) {
     TRACE("SaNameT is invalid");
-    rc = SA_AIS_ERR_INVALID_PARAM;
+    ais_rc = SA_AIS_ERR_INVALID_PARAM;
     goto done;
   }
 
   if (open_sync_param->logFileFullAction != SA_LOG_FILE_FULL_ACTION_ROTATE) {
     TRACE("Unsupported logFileFullAction");
-    rc = SA_AIS_ERR_NOT_SUPPORTED;
+    ais_rc = SA_AIS_ERR_NOT_SUPPORTED;
     goto done;
   }
 
@@ -864,7 +864,7 @@ SaAisErrorT create_new_app_stream(lgsv_stream_open_req_t *open_sync_param,
       ((open_sync_param->maxFilesRotated < 1) ||
        (open_sync_param->maxFilesRotated > 127))) {
     TRACE("Invalid maxFilesRotated. Valid Range = [1-127]");
-    rc = SA_AIS_ERR_INVALID_PARAM;
+    ais_rc = SA_AIS_ERR_INVALID_PARAM;
     goto done;
   }
 
@@ -880,21 +880,21 @@ SaAisErrorT create_new_app_stream(lgsv_stream_open_req_t *open_sync_param,
                                       STREAM_TYPE_APPLICATION_RT,
                                       &twelveHourModeFlag)) {
     TRACE("format expression failure");
-    rc = SA_AIS_ERR_INVALID_PARAM;
+    ais_rc = SA_AIS_ERR_INVALID_PARAM;
     goto done;
   }
 
   /* Verify if there is any special character in logFileName */
   if (lgs_has_special_char(open_sync_param->logFileName) == true) {
     TRACE("Invalid logFileName - %s", open_sync_param->logFileName);
-    rc = SA_AIS_ERR_INVALID_PARAM;
+    ais_rc = SA_AIS_ERR_INVALID_PARAM;
     goto done;
   }
 
   /* Verify if logFileName length is valid */
   if (lgs_is_valid_filelength(open_sync_param->logFileName) == false) {
     TRACE("logFileName is invalid");
-    rc = SA_AIS_ERR_INVALID_PARAM;
+    ais_rc = SA_AIS_ERR_INVALID_PARAM;
     goto done;
   }
 
@@ -902,7 +902,7 @@ SaAisErrorT create_new_app_stream(lgsv_stream_open_req_t *open_sync_param,
   if (lgs_is_valid_pathlength(open_sync_param->logFilePathName,
                               open_sync_param->logFileName) == false) {
     TRACE("logFilePathName is invalid");
-    rc = SA_AIS_ERR_INVALID_PARAM;
+    ais_rc = SA_AIS_ERR_INVALID_PARAM;
     goto done;
   }
 
@@ -913,7 +913,7 @@ SaAisErrorT create_new_app_stream(lgsv_stream_open_req_t *open_sync_param,
     if ((stream->fileName == open_sync_param->logFileName) &&
         (stream->pathName == open_sync_param->logFilePathName)) {
       TRACE("pathname already exist");
-      rc = SA_AIS_ERR_INVALID_PARAM;
+      ais_rc = SA_AIS_ERR_INVALID_PARAM;
       goto done;
     }
   }
@@ -922,7 +922,7 @@ SaAisErrorT create_new_app_stream(lgsv_stream_open_req_t *open_sync_param,
   str_name = osaf_extended_name_borrow(&open_sync_param->lstr_name);
   if (strncmp(dnPrefix, str_name, strlen(dnPrefix)) != 0) {
     TRACE("'%s' is not a valid stream name => invalid param", str_name);
-    rc = SA_AIS_ERR_INVALID_PARAM;
+    ais_rc = SA_AIS_ERR_INVALID_PARAM;
     goto done;
   }
 
@@ -933,13 +933,13 @@ SaAisErrorT create_new_app_stream(lgsv_stream_open_req_t *open_sync_param,
       ((open_sync_param->maxLogRecordSize < SA_LOG_MIN_RECORD_SIZE) ||
        (open_sync_param->maxLogRecordSize > logMaxLogrecsize_conf))) {
     TRACE("maxLogRecordSize is invalid");
-    rc = SA_AIS_ERR_INVALID_PARAM;
+    ais_rc = SA_AIS_ERR_INVALID_PARAM;
     goto done;
   }
 
   *o_stream = log_stream_new(str_name, STREAM_NEW);
   if (*o_stream == nullptr) {
-    rc = SA_AIS_ERR_NO_MEMORY;
+    ais_rc = SA_AIS_ERR_NO_MEMORY;
     goto done;
   }
 
@@ -951,16 +951,19 @@ SaAisErrorT create_new_app_stream(lgsv_stream_open_req_t *open_sync_param,
       twelveHourModeFlag, 0, *o_stream);  // output
   if (err == -1) {
     log_stream_delete(o_stream);
-    rc = SA_AIS_ERR_NO_MEMORY;
+    ais_rc = SA_AIS_ERR_NO_MEMORY;
     goto done;
   }
 
-  rc = lgs_create_appstream_rt_object(*o_stream);
-  if (rc != SA_AIS_OK) log_stream_delete(o_stream);
+  ais_rc = lgs_create_appstream_rt_object(*o_stream);
+  if (ais_rc != SA_AIS_OK) log_stream_delete(o_stream);
+
+  TRACE("%s: lgs_create_appstream_rt_object return, %s",
+         __FUNCTION__, saf_error(ais_rc));
 
 done:
   TRACE_LEAVE();
-  return rc;
+  return ais_rc;
 }
 
 /**
@@ -1069,15 +1072,7 @@ static uint32_t proc_stream_open_msg(lgs_cb_t *cb, lgsv_lgs_evt_t *evt) {
       }
     }
   } else {
-    /* Stream does not exist */
-
-    // This check is to avoid the client getting SA_AIS_BAD_OPERATION
-    // as there is no IMM OI implementer set.
-    if (cb->immOiHandle == 0) {
-      TRACE("IMM service unavailable, open stream failed");
-      ais_rv = SA_AIS_ERR_TRY_AGAIN;
-      goto snd_rsp;
-    }
+    /* Stream does not exist. Create a new stream */
 
     /*
      * Check if the stream is in the list of stream objects
@@ -1125,6 +1120,11 @@ static uint32_t proc_stream_open_msg(lgs_cb_t *cb, lgsv_lgs_evt_t *evt) {
     if (ais_rv != SA_AIS_OK) {
       TRACE("%s create_new_app_stream Fail \"%s\"", __FUNCTION__,
             saf_error(ais_rv));
+      if (ais_rv == SA_AIS_ERR_BAD_HANDLE) {
+        // This means that the stream RT object could not be created because
+        // of a bad OI handle. Change to TRY AGAIN in the reply to the agent
+        ais_rv = SA_AIS_ERR_TRY_AGAIN;
+      }
       goto snd_rsp;
     }
   }
@@ -1218,7 +1218,7 @@ static uint32_t proc_stream_close_msg(lgs_cb_t *cb, lgsv_lgs_evt_t *evt) {
   // This check is to avoid the client getting SA_AIS_BAD_OPERATION
   // as there is no IMM OI implementer set.
   if ((stream->streamType == STREAM_TYPE_APPLICATION_RT) &&
-      (cb->immOiHandle == 0)) {
+      (lgsGetOiHandle() == 0)) {
     TRACE("IMM service unavailable, close stream failed");
     ais_rc = SA_AIS_ERR_TRY_AGAIN;
     goto snd_rsp;

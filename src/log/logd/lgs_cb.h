@@ -81,9 +81,6 @@ typedef struct lgs_cb {
   SaInvocationT
       amf_invocation_id; /* AMF InvocationID - needed to handle Quiesed state */
   bool is_quiesced_set;
-  SaImmOiHandleT immOiHandle; /* IMM OI handle                           */
-  SaSelectionObjectT
-      immSelectionObject; /* Selection Object to wait for IMM events */
   SaSelectionObjectT
       clmSelectionObject;  /* Selection Object to wait for clms events */
   SaClmHandleT clm_hdl;    /* CLM handle, obtained through CLM init        */

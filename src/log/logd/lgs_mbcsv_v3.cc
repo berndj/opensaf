@@ -21,9 +21,10 @@
  * version 3 check-pointing. See also lgs_mbcsv_v3.h
  */
 
-#include "lgs_mbcsv_v3.h"
-#include "lgs_mbcsv_v2.h"
-#include "lgs_mbcsv.h"
+#include "log/logd/lgs_imm.h"
+#include "log/logd/lgs_mbcsv_v3.h"
+#include "log/logd/lgs_mbcsv_v2.h"
+#include "log/logd/lgs_mbcsv.h"
 
 /****************************************************************************
  * Name          : ckpt_proc_lgs_cfg

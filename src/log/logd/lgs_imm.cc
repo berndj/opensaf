@@ -31,6 +31,8 @@
 #define _GNU_SOURCE
 #endif
 
+#include "log/logd/lgs_imm.h"
+
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -46,6 +48,7 @@
 #include "log/logd/lgs_recov.h"
 #include "log/logd/lgs_config.h"
 #include "log/logd/lgs_dest.h"
+#include "log/logd/lgs_oi_admin.h"
 #include "base/saf_error.h"
 
 #include "lgs_mbcsv_v1.h"
@@ -58,11 +61,6 @@
  * ----------------
  */
 
-/* Used for protecting global imm OI handle and selection object during
- * initialize of OI
- */
-pthread_mutex_t lgs_OI_init_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 /* Used for checkpointing time when files are closed */
 static time_t chkp_file_close_time = 0;
 
@@ -74,13 +72,6 @@ const unsigned int max_waiting_time_10s = 10 * 1000; /* 10 secs */
 static const char *log_file_format[] = {
     DEFAULT_ALM_NOT_FORMAT_EXP, DEFAULT_ALM_NOT_FORMAT_EXP,
     DEFAULT_APP_SYS_FORMAT_EXP, DEFAULT_APP_SYS_FORMAT_EXP};
-
-static const SaImmOiImplementerNameT implementerName =
-    const_cast<SaImmOiImplementerNameT>("safLogService");
-static const SaImmClassNameT logConfig_str =
-    const_cast<SaImmClassNameT>("OpenSafLogConfig");
-static const SaImmClassNameT streamConfig_str =
-    const_cast<SaImmClassNameT>("SaLogStreamConfig");
 
 // The list contains path-file names when validating its name in CCB completed
 // callback. This help for log service prevents that creating any streams
@@ -118,7 +109,10 @@ static void report_oi_error(SaImmOiHandleT immOiHandle, SaImmOiCcbIdT ccbId,
   va_end(ap);
 
   TRACE("%s", err_str);
-  (void)saImmOiCcbSetErrorString(immOiHandle, ccbId, err_str);
+  if (saImmOiCcbSetErrorString(immOiHandle, ccbId, err_str) ==
+      SA_AIS_ERR_BAD_HANDLE) {
+    lgsOiCreateBackground();
+  }
 }
 
 static void report_om_error(SaImmOiHandleT immOiHandle,
@@ -137,8 +131,11 @@ static void report_om_error(SaImmOiHandleT immOiHandle,
   va_end(ap);
 
   TRACE("%s", ao_err_string);
-  (void)saImmOiAdminOperationResult_o2(immOiHandle, invocation,
-                                       SA_AIS_ERR_INVALID_PARAM, ao_err_params);
+  if (saImmOiAdminOperationResult_o2(immOiHandle, invocation,
+                                     SA_AIS_ERR_INVALID_PARAM,
+                                     ao_err_params) == SA_AIS_ERR_BAD_HANDLE) {
+    lgsOiCreateBackground();
+  }
 }
 
 /**
@@ -409,6 +406,7 @@ static void adminOperationCallback(
     if (stream->isRtStream != SA_TRUE) {
       ais_rc = immutil_saImmOiAdminOperationResult(immOiHandle, invocation,
                                                    SA_AIS_ERR_NOT_SUPPORTED);
+      // TODO(Lennart) May be relevant to recover OI if BAD HANDLE
       if (ais_rc != SA_AIS_OK) {
         LOG_ER("immutil_saImmOiAdminOperationResult failed %s",
                saf_error(ais_rc));
@@ -448,6 +446,7 @@ static void adminOperationCallback(
     if (severityFilter == stream->severityFilter) {
       ais_rc = immutil_saImmOiAdminOperationResult(immOiHandle, invocation,
                                                    SA_AIS_ERR_NO_OP);
+      // TODO(Lennart) May be relevant to recover OI if BAD HANDLE
       if (ais_rc != SA_AIS_OK) {
         LOG_ER("immutil_saImmOiAdminOperationResult failed %s",
                saf_error(ais_rc));
@@ -466,12 +465,14 @@ static void adminOperationCallback(
         const_cast<SaImmAttrNameT>("saLogStreamSeverityFilter"),
         SA_IMM_ATTR_SAUINT32T, &stream->severityFilter);
     if (ais_rc != SA_AIS_OK) {
-      LOG_ER("immutil_update_one_rattr failed %s", saf_error(ais_rc));
+      LOG_ER("%s: immutil_update_one_rattr failed %s", __FUNCTION__,
+             saf_error(ais_rc));
       osaf_abort(0);
     }
 
     ais_rc =
         immutil_saImmOiAdminOperationResult(immOiHandle, invocation, SA_AIS_OK);
+    // TODO(Lennart) May be relevant to recover OI if BAD HANDLE
     if (ais_rc != SA_AIS_OK) {
       LOG_ER("immutil_saImmOiAdminOperationResult failed %s",
              saf_error(ais_rc));
@@ -2375,11 +2376,12 @@ static SaAisErrorT stream_create_and_configure1(
 
   /* Update creation timestamp */
   rc = immutil_update_one_rattr(
-      lgs_cb->immOiHandle, objectName.c_str(),
+      lgsGetOiHandle(), objectName.c_str(),
       const_cast<SaImmAttrNameT>("saLogStreamCreationTimestamp"),
       SA_IMM_ATTR_SATIMET, &(*stream)->creationTimeStamp);
   if (rc != SA_AIS_OK) {
-    LOG_ER("immutil_update_one_rattr failed %s", saf_error(rc));
+    LOG_ER("%s: immutil_update_one_rattr failed %s", __FUNCTION__,
+           saf_error(rc));
     osaf_abort(0);
   }
 
@@ -2702,7 +2704,7 @@ static SaAisErrorT rtAttrUpdateCallback(SaImmOiHandleT immOiHandle,
   /* Handle configuration runtime object */
   if (strncmp(objName, LGS_CFG_RUNTIME_OBJECT, strlen(objName)) == 0) {
     /* Handle Runtome configuration object */
-    conf_runtime_obj_hdl(immOiHandle, attributeNames);
+    conf_runtime_obj_handler(immOiHandle, attributeNames);
   } else {
     /* Handle stream object if valid
      */
@@ -2889,11 +2891,15 @@ static const SaImmOiCallbacksT_2 callbacks = {
     .saImmOiCcbObjectModifyCallback = ccbObjectModifyCallback,
     .saImmOiRtAttrUpdateCallback = rtAttrUpdateCallback};
 
+// Export the callback structure. OI init is done in lgs_oi_admin
+const SaImmOiCallbacksT_2* getImmOiCallbacks(void) {
+  return &callbacks;
+}
+
 /**
  * Retrieve the LOG stream configuration from IMM using the
  * IMM-OM interface and initialize the corresponding information
- * in the LOG control block. Initialize the LOG IMM-OI
- * interface. Become class implementer.
+ * in the LOG control block.
  *
  * @param cb[in] control block
  * @return
@@ -2987,20 +2993,6 @@ SaAisErrorT lgs_imm_init_configStreams(lgs_cb_t *cb) {
     }
   }
 
-  /* 1.Become implementer
-   * 2.Update creation timestamp for all configure object, must be object
-   * implementer first 3.Open all streams Config file and log file will be
-   * created. If this fails we give up without returning any error. A new
-   * attempt to create the files will be done when trying to write a log
-   * record to the stream.
-   */
-  ais_rc =
-      immutil_saImmOiClassImplementerSet(cb->immOiHandle, "SaLogStreamConfig");
-  if (ais_rc != SA_AIS_OK) {
-    LOG_ER("immutil_saImmOiClassImplementerSet failed %s", saf_error(ais_rc));
-    osaf_abort(0);
-  }
-
   // Iterate all existing log streams in cluster.
   while ((stream = iterate_all_streams(endloop, jstart)) && !endloop) {
     jstart = SA_FALSE;
@@ -3021,7 +3013,7 @@ SaAisErrorT lgs_imm_init_configStreams(lgs_cb_t *cb) {
     }
 
     ais_rc = immutil_update_one_rattr(
-        cb->immOiHandle, stream->name.c_str(),
+        lgsGetOiHandle(), stream->name.c_str(),
         const_cast<SaImmAttrNameT>("saLogStreamCreationTimestamp"),
         SA_IMM_ATTR_SATIMET, &stream->creationTimeStamp);
     if (ais_rc != SA_AIS_OK) {
@@ -3044,255 +3036,6 @@ done:
 
   TRACE_LEAVE2("rc: %s", saf_error(ais_rc));
   return ais_rc;
-}
-
-/**
- * Initialize the OI interface and get a selection object.
- * Become OI for safLogService if Active
- *
- * @param immOiHandle[out]
- * @param immSelectionObject[out]
- */
-void lgs_imm_init_OI_handle(SaImmOiHandleT *immOiHandle,
-                            SaSelectionObjectT *immSelectionObject) {
-  SaAisErrorT rc;
-  uint32_t msecs_waited = 0;
-
-  TRACE_ENTER();
-
-  /* Initialize IMM OI service */
-  SaVersionT imm_version = kImmVersion;
-  rc = saImmOiInitialize_2(immOiHandle, &callbacks, &imm_version);
-  while ((rc == SA_AIS_ERR_TRY_AGAIN) &&
-         (msecs_waited < max_waiting_time_60s)) {
-    usleep(sleep_delay_ms * 1000);
-    msecs_waited += sleep_delay_ms;
-    imm_version = kImmVersion;
-    rc = saImmOiInitialize_2(immOiHandle, &callbacks, &imm_version);
-  }
-  if (rc != SA_AIS_OK) {
-    lgs_exit("saImmOiInitialize_2 failed", SA_AMF_COMPONENT_RESTART);
-  }
-
-  /* Get selection object for event handling */
-  msecs_waited = 0;
-  rc = saImmOiSelectionObjectGet(*immOiHandle, immSelectionObject);
-  while ((rc == SA_AIS_ERR_TRY_AGAIN) &&
-         (msecs_waited < max_waiting_time_10s)) {
-    usleep(sleep_delay_ms * 1000);
-    msecs_waited += sleep_delay_ms;
-    rc = saImmOiSelectionObjectGet(*immOiHandle, immSelectionObject);
-  }
-  if (rc != SA_AIS_OK) {
-    lgs_exit("saImmOiSelectionObjectGet failed", SA_AMF_COMPONENT_RESTART);
-  }
-
-  TRACE_LEAVE2("rc: %s", saf_error(rc));
-}
-
-/**
- * Does the sequence of setting an implementer name and class implementer
- *
- * @param immOiHandle[in]
- * @return SaAisErrorT
- */
-static SaAisErrorT imm_impl_set_sequence(
-    SaImmOiHandleT *immOiHandle, SaSelectionObjectT *immSelectionObject) {
-  SaAisErrorT rc = SA_AIS_OK;
-  uint32_t msecs_waited = 0;
-
-  TRACE_ENTER();
-
-  for (;;) {
-    if (msecs_waited >= max_waiting_time_60s) {
-      TRACE("Timeout in imm_impl_set_sequence");
-      goto done;
-    }
-
-    /* Become object implementer
-     */
-    rc = saImmOiImplementerSet(*immOiHandle, implementerName);
-    while (((rc == SA_AIS_ERR_TRY_AGAIN) || (rc == SA_AIS_ERR_EXIST)) &&
-           (msecs_waited < max_waiting_time_60s)) {
-      usleep(sleep_delay_ms * 1000);
-      msecs_waited += sleep_delay_ms;
-      rc = saImmOiImplementerSet(*immOiHandle, implementerName);
-    }
-    if (rc == SA_AIS_ERR_BAD_HANDLE || rc == SA_AIS_ERR_TIMEOUT) {
-      LOG_WA("saImmOiImplementerSet returned %s", saf_error(rc));
-      usleep(sleep_delay_ms * 1000);
-      msecs_waited += sleep_delay_ms;
-      saImmOiFinalize(*immOiHandle);
-      *immOiHandle = 0;
-      *immSelectionObject = -1;
-      lgs_imm_init_OI_handle(immOiHandle, immSelectionObject);
-      continue;
-    }
-    if (rc != SA_AIS_OK) {
-      TRACE("saImmOiImplementerSet failed %s", saf_error(rc));
-      goto done;
-    }
-
-    /*
-     * Become class implementer for the OpenSafLogConfig class if it exists
-     * Become class implementer for the SaLogStreamConfig class
-     */
-    if (true == *static_cast<const bool *>(
-                    lgs_cfg_get(LGS_IMM_LOG_OPENSAFLOGCONFIG_CLASS_EXIST))) {
-      rc = saImmOiClassImplementerSet(*immOiHandle, logConfig_str);
-      while (((rc == SA_AIS_ERR_TRY_AGAIN) || (rc == SA_AIS_ERR_EXIST)) &&
-             (msecs_waited < max_waiting_time_60s)) {
-        usleep(sleep_delay_ms * 1000);
-        msecs_waited += sleep_delay_ms;
-        rc = saImmOiClassImplementerSet(*immOiHandle, logConfig_str);
-      }
-      if (rc == SA_AIS_ERR_BAD_HANDLE || rc == SA_AIS_ERR_TIMEOUT) {
-        LOG_WA("saImmOiClassImplementerSet returned %s", saf_error(rc));
-        usleep(sleep_delay_ms * 1000);
-        msecs_waited += sleep_delay_ms;
-        saImmOiFinalize(*immOiHandle);
-        *immOiHandle = 0;
-        *immSelectionObject = -1;
-        lgs_imm_init_OI_handle(immOiHandle, immSelectionObject);
-        continue;
-      }
-      if (rc != SA_AIS_OK) {
-        TRACE("saImmOiClassImplementerSet OpenSafLogConfig failed %s",
-              saf_error(rc));
-        goto done;
-      }
-    }
-
-    rc = saImmOiClassImplementerSet(*immOiHandle, streamConfig_str);
-    while (((rc == SA_AIS_ERR_TRY_AGAIN) || (rc == SA_AIS_ERR_EXIST)) &&
-           (msecs_waited < max_waiting_time_60s)) {
-      usleep(sleep_delay_ms * 1000);
-      msecs_waited += sleep_delay_ms;
-      rc = saImmOiClassImplementerSet(*immOiHandle, streamConfig_str);
-    }
-    if (rc == SA_AIS_ERR_BAD_HANDLE || rc == SA_AIS_ERR_TIMEOUT) {
-      LOG_WA("saImmOiClassImplementerSet returned %s", saf_error(rc));
-      usleep(sleep_delay_ms * 1000);
-      msecs_waited += sleep_delay_ms;
-      saImmOiFinalize(*immOiHandle);
-      *immOiHandle = 0;
-      *immSelectionObject = -1;
-      lgs_imm_init_OI_handle(immOiHandle, immSelectionObject);
-      continue;
-    }
-    if (rc != SA_AIS_OK) {
-      TRACE("saImmOiClassImplementerSet SaLogStreamConfig failed %s",
-            saf_error(rc));
-      goto done;
-    }
-    break;
-  }
-
-done:
-  TRACE_LEAVE2("rc: %s", saf_error(rc));
-  return rc;
-}
-
-/**
- * Set implementer name and become class implementer.
- * This function will block until done.
- *
- * @param cb
- */
-void lgs_imm_impl_set(SaImmOiHandleT *immOiHandle,
-                      SaSelectionObjectT *immSelectionObject) {
-  SaAisErrorT rc = SA_AIS_OK;
-
-  TRACE_ENTER();
-
-  rc = imm_impl_set_sequence(immOiHandle, immSelectionObject);
-  if (rc != SA_AIS_OK) {
-    lgs_exit("Becoming OI implementer failed", SA_AMF_COMPONENT_RESTART);
-  }
-
-  TRACE_LEAVE();
-}
-
-/**
- * Thread
- * Restore object and class implementer/applier.
- *
- * @param _cb[in]
- */
-static void *imm_impl_init_thread(void *_cb) {
-  lgs_cb_t *cb = static_cast<lgs_cb_t *>(_cb);
-  SaSelectionObjectT immSelectionObject = 0;
-  SaImmOiHandleT immOiHandle = 0;
-  SaAisErrorT rc = SA_AIS_OK;
-
-  TRACE_ENTER();
-
-  /* Initialize handles and become implementer */
-  lgs_imm_init_OI_handle(&immOiHandle, &immSelectionObject);
-  rc = imm_impl_set_sequence(&immOiHandle, &immSelectionObject);
-  if (rc != SA_AIS_OK) {
-    lgs_exit("Becoming OI implementer failed", SA_AMF_COMPONENT_RESTART);
-  }
-
-  /* Store handle and selection object.
-   * Protect if the poll loop in main is released during the storage
-   * sequence.
-   */
-  osaf_mutex_lock_ordie(&lgs_OI_init_mutex);
-  cb->immSelectionObject = immSelectionObject;
-  cb->immOiHandle = immOiHandle;
-  osaf_mutex_unlock_ordie(&lgs_OI_init_mutex);
-
-  /* Activate the poll loop in main()
-   * This will reinstall IMM poll event handling
-   */
-  lgsv_lgs_evt_t *lgsv_evt;
-  lgsv_evt = static_cast<lgsv_lgs_evt_t *>(calloc(1, sizeof(lgsv_lgs_evt_t)));
-  osafassert(lgsv_evt);
-  lgsv_evt->evt_type = LGSV_EVT_NO_OP;
-  if (m_NCS_IPC_SEND(&lgs_mbx, lgsv_evt, LGS_IPC_PRIO_CTRL_MSGS) !=
-      NCSCC_RC_SUCCESS) {
-    LOG_WA("imm_reinit_thread failed to send IPC message to main thread");
-    /*
-     * Se no reason why this would happen. But if it does at least there
-     * is something in the syslog. The main thread should still pick up
-     * the new imm FD when there is a healthcheck, but it could take
-     *minutes.
-     */
-    free(lgsv_evt);
-  }
-
-  TRACE_LEAVE();
-  return NULL;
-}
-
-/**
- * In a separate thread:
- * Initiate IMM OI handle and selection object
- * Create imm implementer for log IMM objects
- * When complete:
- * Store the new handle and selection object in the cb store.
- * Activate the poll loop in main() by sending an empty mailbox message
- *
- * @param cb[out]
- */
-void lgs_imm_impl_reinit_nonblocking(lgs_cb_t *cb) {
-  pthread_t thread;
-  pthread_attr_t attr;
-
-  TRACE_ENTER();
-
-  pthread_attr_init(&attr);
-  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-
-  if (pthread_create(&thread, &attr, imm_impl_init_thread, cb) != 0) {
-    LOG_ER("pthread_create FAILED: %s", strerror(errno));
-    exit(EXIT_FAILURE);
-  }
-
-  pthread_attr_destroy(&attr);
-
-  TRACE_LEAVE();
 }
 
 /******************************************************************************
@@ -3403,12 +3146,16 @@ void lgs_delete_one_stream_object(const std::string &name_str) {
   osaf_extended_name_lend(name_str.c_str(), &object_name);
 
   /* and delete the object */
-  ais_rc = immutil_saImmOiRtObjectDelete(lgs_cb->immOiHandle, &object_name);
+  ais_rc = immutil_saImmOiRtObjectDelete(lgsGetOiHandle(), &object_name);
   if (ais_rc == SA_AIS_OK) {
     TRACE("%s Object \"%s\" deleted", __FUNCTION__, name_str.c_str());
+  } else if (ais_rc == SA_AIS_ERR_BAD_HANDLE) {
+    LOG_NO("%s: saImmOiRtObjectDelete() Fail, %s", __FUNCTION__,
+           saf_error(ais_rc));
+    lgsOiCreateBackground();
   } else {
-    LOG_WA("%s saImmOiRtObjectDelete for \"%s\" FAILED %d", __FUNCTION__,
-           name_str.c_str(), ais_rc);
+    LOG_WA("%s saImmOiRtObjectDelete for \"%s\" FAILED %s", __FUNCTION__,
+           name_str.c_str(), saf_error(ais_rc));
   }
 }
 
@@ -3444,12 +3191,16 @@ void lgs_cleanup_abandoned_streams() {
       /* Copy name to a SaNameT */
       osaf_extended_name_lend(name_str, &object_name);
       /* and delete the object */
-      ais_rc = immutil_saImmOiRtObjectDelete(lgs_cb->immOiHandle, &object_name);
+      ais_rc = immutil_saImmOiRtObjectDelete(lgsGetOiHandle(), &object_name);
       if (ais_rc == SA_AIS_OK) {
         TRACE("\tObject \"%s\" deleted", name_str);
+      } else if (ais_rc == SA_AIS_ERR_BAD_HANDLE) {
+        LOG_WA("%s saImmOiRtObjectDelete for \"%s\" FAILED %s", __FUNCTION__,
+               name_str, saf_error(ais_rc));
+        lgsOiCreateBackground();
       } else {
-        LOG_WA("%s saImmOiRtObjectDelete for \"%s\" FAILED %d", __FUNCTION__,
-               name_str, ais_rc);
+        LOG_WA("%s saImmOiRtObjectDelete for \"%s\" FAILED %s", __FUNCTION__,
+               name_str, saf_error(ais_rc));
       }
     } else {
       /* Should never happen! */

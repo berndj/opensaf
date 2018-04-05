@@ -15,9 +15,11 @@
  *
  */
 
-#include "lgs_recov.h"
+#include "log/logd/lgs_recov.h"
+
 #include "log/logd/lgs_file.h"
 #include "log/logd/lgs_filehdl.h"
+#include "log/logd/lgs_imm.h"
 
 /***
  * The following functions are used to handle a list of runtime stream objects

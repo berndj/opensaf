@@ -135,7 +135,7 @@ typedef struct config_chkpt {
  * Read the log service configuration data verify and update configuration
  * data structure
  */
-void lgs_cfg_init(SaImmOiHandleT immOiHandle, SaAmfHAStateT ha_state);
+void lgs_cfg_init();
 
 /**
  * Get value of log service configuration parameter from the configuration data
@@ -316,8 +316,9 @@ void lgs_groupnameconf_set(const char *data_groupname_str);
  * Handle runtime object for showing actual configuration and configuration
  * related information
  */
+
 void conf_runtime_obj_create(SaImmOiHandleT immOiHandle);
-void conf_runtime_obj_hdl(SaImmOiHandleT immOiHandle,
+void conf_runtime_obj_handler(SaImmOiHandleT immOiHandle,
                           const SaImmAttrNameT *attributeNames);
 
 /*

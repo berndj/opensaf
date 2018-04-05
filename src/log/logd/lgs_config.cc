@@ -41,6 +41,7 @@
 #include "log/logd/lgs_file.h"
 #include "log/logd/lgs.h"
 #include "log/logd/lgs_common.h"
+#include "log/logd/lgs_oi_admin.h"
 
 
 /* Mutex for making read and write of configuration data thread safe */
@@ -1338,8 +1339,8 @@ static void read_log_config_environ_var_2() {
  * Public functions for handling configuration information
  ******************************************************************************/
 
-void lgs_cfg_init(SaImmOiHandleT immOiHandle, SaAmfHAStateT ha_state) {
-  TRACE_ENTER2("immOiHandle = %lld", immOiHandle);
+void lgs_cfg_init() {
+  TRACE_ENTER();
 
   /* Read configuration step 1
    * Read all values from the log service configuration object
@@ -1585,6 +1586,10 @@ void conf_runtime_obj_create(SaImmOiHandleT immOiHandle) {
 
   if (rc == SA_AIS_ERR_EXIST) {
     TRACE("Server runtime configuration object already exist");
+  } else if (rc == SA_AIS_ERR_BAD_HANDLE) {
+    LOG_NO("%s: saImmOiRtObjectCreate_2 BAD_HANDLE, start re-create",
+           __FUNCTION__);
+    lgsOiCreateBackground();
   } else if (rc != SA_AIS_OK) {
     LOG_NO("%s: Cannot create config runtime object %s", __FUNCTION__,
            saf_error(rc));
@@ -1667,6 +1672,10 @@ static SaAisErrorT update_runtime_attrValues(
   attrMod.modAttr.attrValueType = attrValueType;
   attrMod.modAttr.attrValues = values_array;
   ais_rc = immutil_saImmOiRtObjectUpdate_2(immOiHandle, &objectName, attrMods);
+  if (ais_rc != SA_AIS_OK) {
+    LOG_NO("%s: saImmOiRtObjectUpdate_2() Fail, %s", __FUNCTION__,
+           saf_error(ais_rc));
+  }
   free(values_array);
   TRACE_LEAVE();
   return ais_rc;
@@ -1692,8 +1701,7 @@ static SaAisErrorT update_lgs_cfg_runtime_multivalue(
       immOiHandle, LGS_CFG_RUNTIME_OBJECT, attributeName, valueType,
       attrValuesNumber, attrValues);
   if (ais_rc != SA_AIS_OK) {
-    LOG_NO("%s: update_runtime_attrValues Fail %s", __FUNCTION__,
-           saf_error(ais_rc));
+    LOG_NO("%s: update_runtime_attrValues Fail", __FUNCTION__);
   }
 
   // Free the memory allocated by vector_of_strings_to_attrValues()
@@ -1712,7 +1720,7 @@ static SaAisErrorT update_lgs_cfg_runtime_multivalue(
  * @param immOiHandle[in]
  * @param attributeNames[in]
  */
-void conf_runtime_obj_hdl(SaImmOiHandleT immOiHandle,
+void conf_runtime_obj_handler(SaImmOiHandleT immOiHandle,
                           const SaImmAttrNameT *attributeNames) {
   SaImmAttrNameT attributeName;
   int i = 0;
@@ -1799,9 +1807,9 @@ void conf_runtime_obj_hdl(SaImmOiHandleT immOiHandle,
       TRACE("%s: unknown attribute %s", __FUNCTION__, attributeName);
     }
 
-    if (ais_rc != SA_AIS_OK) {
-      LOG_ER("immutil_update_one_rattr (%s) failed: %s", attributeName,
-             saf_error(ais_rc));
+  if (ais_rc != SA_AIS_OK) {
+      LOG_ER("%s: immutil_update_one_rattr (%s) failed: %s", __FUNCTION__,
+             attributeName, saf_error(ais_rc));
       osaf_abort(0);
     }
   }

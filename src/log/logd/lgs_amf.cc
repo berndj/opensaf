@@ -23,6 +23,7 @@
 #include "osaf/immutil/immutil.h"
 #include "log/logd/lgs.h"
 #include "log/logd/lgs_config.h"
+#include "log/logd/lgs_oi_admin.h"
 
 static void close_all_files() {
   log_stream_t *stream;
@@ -63,8 +64,7 @@ static SaAisErrorT amf_active_state_handler(lgs_cb_t *cb,
     goto done;
   }
 
-  lgs_imm_impl_set(&cb->immOiHandle, &cb->immSelectionObject);
-  conf_runtime_obj_create(cb->immOiHandle);
+  lgsOiStart();
   lgs_start_gcfg_applier();
 
   // Iterate all existing log streams in cluster.
@@ -127,12 +127,8 @@ static SaAisErrorT amf_quiescing_state_handler(lgs_cb_t *cb,
   TRACE_ENTER2("HA QUIESCING request");
   close_all_files();
 
-  /* Give up our IMM OI implementer role */
-  SaAisErrorT ais_rc = immutil_saImmOiImplementerClear(cb->immOiHandle);
-  if (ais_rc != SA_AIS_OK) {
-    LOG_WA("immutil_saImmOiImplementerClear failed: %s", saf_error(ais_rc));
-  }
-
+  // Give up our IMM OI implementer role and the OpensafConfig class applier
+  lgsOiStop();
   lgs_stop_gcfg_applier();
 
   return saAmfCSIQuiescingComplete(cb->amf_hdl, invocation, SA_AIS_OK);
@@ -158,11 +154,7 @@ static SaAisErrorT amf_quiesced_state_handler(lgs_cb_t *cb,
   close_all_files();
 
   /* Give up our IMM OI implementer role */
-  SaAisErrorT rc = immutil_saImmOiImplementerClear(cb->immOiHandle);
-  if (rc != SA_AIS_OK) {
-    LOG_WA("immutil_saImmOiImplementerClear failed: %s", saf_error(rc));
-  }
-
+  lgsOiStop();
   lgs_stop_gcfg_applier();
 
   /*
@@ -173,9 +165,10 @@ static SaAisErrorT amf_quiesced_state_handler(lgs_cb_t *cb,
 
   mds_role = cb->mds_role;
   cb->mds_role = V_DEST_RL_QUIESCED;
+  SaAisErrorT ais_rc = SA_AIS_OK;
   if (lgs_mds_change_role(cb) != NCSCC_RC_SUCCESS) {
     LOG_ER("lgs_mds_change_role FAILED");
-    rc = SA_AIS_ERR_FAILED_OPERATION;
+    ais_rc = SA_AIS_ERR_FAILED_OPERATION;
     cb->mds_role = mds_role;
     goto done;
   }
@@ -183,8 +176,9 @@ static SaAisErrorT amf_quiesced_state_handler(lgs_cb_t *cb,
   cb->amf_invocation_id = invocation;
   cb->is_quiesced_set = true;
 done:
-  return rc;
+  return ais_rc;
 }
+
 /****************************************************************************
  * Name          : amf_health_chk_callback
  *
@@ -207,6 +201,7 @@ static void amf_health_chk_callback(SaInvocationT invocation,
                                     SaAmfHealthcheckKeyT *checkType) {
   saAmfResponse(lgs_cb->amf_hdl, invocation, SA_AIS_OK);
 }
+
 /****************************************************************************
  * Name          : amf_csi_set_callback
  *

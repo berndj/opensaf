@@ -33,16 +33,18 @@
 #include "nid/agent/nid_api.h"
 #include "base/ncs_main_papi.h"
 #include "base/osaf_time.h"
+#include "base/osaf_utility.h"
+#include "base/hash.h"
+#include "osaf/immutil/immutil.h"
 
 #include "log/logd/lgs.h"
 #include "log/logd/lgs_file.h"
-#include "base/osaf_utility.h"
-#include "base/hash.h"
-#include "lgs_recov.h"
-#include "osaf/immutil/immutil.h"
+#include "log/logd/lgs_recov.h"
 #include "lgs_clm.h"
 #include "log/logd/lgs_dest.h"
 #include "log/logd/lgs_amf.h"
+#include "log/logd/lgs_oi_admin.h"
+#include "log/logd/lgs_imm.h"
 
 
 /* ========================================================================
@@ -383,26 +385,21 @@ uint32_t initialize_for_assignment(lgs_cb_t *cb, SaAmfHAStateT ha_state) {
   if (cb->fully_initialized || ha_state == SA_AMF_HA_QUIESCED) goto done;
   cb->ha_state = ha_state;
 
-  /* Initialize IMM OI handle and selection object */
-  lgs_imm_init_OI_handle(&cb->immOiHandle, &cb->immSelectionObject);
-
-  TRACE("IMM init done: cb->immOiHandle = %lld", cb->immOiHandle);
-
   /* Initialize log configuration
    * Must be done after IMM OI is initialized
    */
-  lgs_cfg_init(cb->immOiHandle, cb->ha_state);
+  lgs_cfg_init();
   lgs_trace_config(); /* Show all configuration in TRACE */
 
-  /* Show some configurtion info in sysylog */
-  logsv_root_dir =
-      static_cast<const char *>(lgs_cfg_get(LGS_IMM_LOG_ROOT_DIRECTORY));
-  logsv_data_groupname =
-      static_cast<const char *>(lgs_cfg_get(LGS_IMM_DATA_GROUPNAME));
+  /* Show some configuration info in sysylog */
+  logsv_root_dir = static_cast<const char *>
+                   (lgs_cfg_get(LGS_IMM_LOG_ROOT_DIRECTORY));
+  logsv_data_groupname = static_cast<const char *>
+                         (lgs_cfg_get(LGS_IMM_DATA_GROUPNAME));
   LOG_NO("LOG root directory is: \"%s\"", logsv_root_dir);
   LOG_NO("LOG data group is: \"%s\"", logsv_data_groupname);
-  vdest = reinterpret_cast<const std::vector<std::string> *>(
-      lgs_cfg_get(LGS_IMM_LOG_RECORD_DESTINATION_CONFIGURATION));
+  vdest = reinterpret_cast<const std::vector<std::string> *>
+          (lgs_cfg_get(LGS_IMM_LOG_RECORD_DESTINATION_CONFIGURATION));
   osafassert(vdest != nullptr);
   if (vdest->size() > 0) {
     CfgDestination(*vdest, ModifyType::kAdd);
@@ -445,20 +442,15 @@ uint32_t initialize_for_assignment(lgs_cb_t *cb, SaAmfHAStateT ha_state) {
   }
 
   if (ha_state == SA_AMF_HA_ACTIVE) {
-    /* Become OI. We will be blocked here until done */
-    lgs_imm_impl_set(&cb->immOiHandle, &cb->immSelectionObject);
-    conf_runtime_obj_create(cb->immOiHandle);
+    // Request an Object Implementer, a configuration object handler and
+    // an applier for opensafNetworkName change surveillance
+    lgsOiCreateSynchronous();
+    conf_runtime_obj_create(lgsGetOiHandle());
     lgs_start_gcfg_applier();
 
-    /* Create streams that has configuration objects and become
-     * class implementer for the SaLogStreamConfig class
-     */
-
-    /* Note1: cb->immOiHandle is set in lgs_imm_init()
-     * Note2: cb->logsv_root_dir must be set
-     */
+    // Create streams that has configuration objects
     if (lgs_imm_init_configStreams(cb) != SA_AIS_OK) {
-      LOG_ER("lgs_imm_create_configStream FAILED");
+      LOG_ER("lgs_imm_create_configStreams FAILED");
       rc = NCSCC_RC_FAILURE;
       goto done;
     }
@@ -479,7 +471,7 @@ done:
  */
 int main(int argc, char *argv[]) {
   NCS_SEL_OBJ mbx_fd;
-  SaAisErrorT error = SA_AIS_OK;
+  SaAisErrorT ais_rc = SA_AIS_OK;
   uint32_t rc;
   int term_fd;
 
@@ -519,7 +511,7 @@ int main(int argc, char *argv[]) {
   fds[FD_AMF].events = POLLIN;
   fds[FD_MBX].fd = mbx_fd.rmv_obj;
   fds[FD_MBX].events = POLLIN;
-  fds[FD_IMM].fd = lgs_cb->immSelectionObject;
+  fds[FD_IMM].fd = lgsGetOiSelectionObject();
   fds[FD_IMM].events = POLLIN;
 
   lgs_cb->clmSelectionObject = lgs_cb->clm_init_sel_obj.rmv_obj;
@@ -539,18 +531,16 @@ int main(int argc, char *argv[]) {
     fds[FD_CLM].fd = lgs_cb->clmSelectionObject;
     fds[FD_CLM].events = POLLIN;
 
-    /* Protect since the reinit thread may be in the process of
-     * changing the values
-     */
-    osaf_mutex_lock_ordie(&lgs_OI_init_mutex);
-    if (lgs_cb->immOiHandle != 0) {
-      fds[FD_IMM].fd = lgs_cb->immSelectionObject;
+    // Adds or removes the IMM fd depending on if there is an OI or not
+    SaImmOiHandleT oi_handle;
+    SaSelectionObjectT oi_selection_object = lgsGetOiFdsParams(&oi_handle);
+    if (oi_handle != 0) {
+      fds[FD_IMM].fd = oi_selection_object;
       fds[FD_IMM].events = POLLIN;
       nfds = FD_IMM + 1;
     } else {
       nfds = FD_IMM;
     }
-    osaf_mutex_unlock_ordie(&lgs_OI_init_mutex);
 
     int ret = poll(fds, nfds, -1);
 
@@ -567,9 +557,9 @@ int main(int argc, char *argv[]) {
 
     if (fds[FD_AMF].revents & POLLIN) {
       if (lgs_cb->amf_hdl != 0) {
-        if ((error = saAmfDispatch(lgs_cb->amf_hdl, SA_DISPATCH_ALL)) !=
+        if ((ais_rc = saAmfDispatch(lgs_cb->amf_hdl, SA_DISPATCH_ALL)) !=
             SA_AIS_OK) {
-          LOG_ER("saAmfDispatch failed: %u", error);
+          LOG_ER("saAmfDispatch failed: %u", ais_rc);
           break;
         }
       } else {
@@ -593,9 +583,9 @@ int main(int argc, char *argv[]) {
 
     if (fds[FD_CLM].revents & POLLIN) {
       if (lgs_cb->clm_hdl != 0) {
-        if ((error = saClmDispatch(lgs_cb->clm_hdl, SA_DISPATCH_ALL)) !=
+        if ((ais_rc = saClmDispatch(lgs_cb->clm_hdl, SA_DISPATCH_ALL)) !=
             SA_AIS_OK) {
-          LOG_ER("saClmDispatch failed: %u", error);
+          LOG_ER("saClmDispatch failed: %u", ais_rc);
           break;
         }
       } else {
@@ -629,40 +619,16 @@ int main(int argc, char *argv[]) {
 
     if (fds[FD_MBX].revents & POLLIN) lgs_process_mbx(&lgs_mbx);
 
-    if (lgs_cb->immOiHandle && fds[FD_IMM].revents & POLLIN) {
-      error = saImmOiDispatch(lgs_cb->immOiHandle, SA_DISPATCH_ALL);
+    if (fds[FD_IMM].revents & POLLIN) {
+      ais_rc = saImmOiDispatch(lgsGetOiHandle(), SA_DISPATCH_ALL);
 
-      /*
-       * BAD_HANDLE is interpreted as an IMM service restart. Try
-       * reinitialize the IMM OI API in a background thread and let
-       * this thread do business as usual especially handling write
-       * requests.
-       *
-       * All other errors are treated as non-recoverable (fatal) and will
-       * cause an exit of the process.
-       */
-      if (error == SA_AIS_ERR_BAD_HANDLE) {
-        TRACE("saImmOiDispatch returned BAD_HANDLE");
+      if (ais_rc == SA_AIS_ERR_BAD_HANDLE) {
+        LOG_NO("saImmOiDispatch returned BAD_HANDLE");
 
-        /*
-         * Invalidate the IMM OI handle, this info is used in other
-         * locations. E.g. giving TRY_AGAIN responses to a create and
-         * close app stream requests. That is needed since the IMM OI
-         * is used in context of these functions.
-         *
-         * Also closing the handle. Finalize is ok with a bad handle
-         * that is bad because it is stale and this actually clears
-         * the handle from internal agent structures.  In any case
-         * we ignore the return value from Finalize here.
-         */
-        saImmOiFinalize(lgs_cb->immOiHandle);
-        lgs_cb->immOiHandle = 0;
-        lgs_cb->immSelectionObject = -1;
-
-        /* Initiate IMM reinitializtion in the background */
-        lgs_imm_impl_reinit_nonblocking(lgs_cb);
-      } else if (error != SA_AIS_OK) {
-        LOG_ER("saImmOiDispatch FAILED: %u", error);
+        // Request creation of a new OI
+        lgsOiCreateBackground();
+      } else if (ais_rc != SA_AIS_OK) {
+        LOG_ER("saImmOiDispatch FAILED: %u", ais_rc);
         break;
       }
     }

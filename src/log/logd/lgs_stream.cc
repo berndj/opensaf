@@ -30,14 +30,16 @@
 #include "log/logd/lgs_stream.h"
 #include <algorithm>
 
+#include "base/osaf_time.h"
+#include "osaf/immutil/immutil.h"
+
 #include "log/logd/lgs.h"
 #include "log/logd/lgs_config.h"
 #include "log/logd/lgs_file.h"
 #include "log/logd/lgs_filehdl.h"
 #include "log/logd/lgs_mbcsv_v1.h"
 #include "log/logd/lgs_mbcsv_v2.h"
-#include "base/osaf_time.h"
-#include "osaf/immutil/immutil.h"
+#include "log/logd/lgs_oi_admin.h"
 
 #define DEFAULT_NUM_APP_LOG_STREAMS 64
 
@@ -444,15 +446,18 @@ void log_stream_delete(log_stream_t **s) {
 
   if (lgs_cb->ha_state == SA_AMF_HA_ACTIVE) {
     if (stream->isRtStream == SA_TRUE) {
-      SaAisErrorT rv;
+      SaAisErrorT ais_rc;
       TRACE("Stream is closed, I am HA active so remove IMM object");
       SaNameT objectName;
       osaf_extended_name_lend(stream->name.c_str(), &objectName);
-      rv = saImmOiRtObjectDelete(lgs_cb->immOiHandle, &objectName);
-      if (rv != SA_AIS_OK) {
+      ais_rc = saImmOiRtObjectDelete(lgsGetOiHandle(), &objectName);
+      if (ais_rc != SA_AIS_OK) {
+        if (ais_rc == SA_AIS_ERR_BAD_HANDLE) {
+          lgsOiCreateBackground();
+        }
         /* no retry; avoid blocking LOG service #1886 */
-        LOG_WA("saImmOiRtObjectDelete returned %u for %s", rv,
-               stream->name.c_str());
+        LOG_WA("%s: saImmOiRtObjectDelete returned %s for %s",
+               __FUNCTION__, saf_error(ais_rc), stream->name.c_str());
       }
     }
   }
@@ -514,6 +519,53 @@ int lgs_populate_log_stream(
   return rc;
 }
 
+// Wrap creation of a runtime object. Handle try again ERR_EXIST
+// If the object already exist it is deleted and then the new object is created
+// Note: This is a help function to be used in createRtObject() only
+// Note: immutil is used
+// The first 4 parameters are the same as for immutil_saImmOiRtObjectCreate_2
+// The last parameter is the same as object name used with
+// immutil_saImmOiRtObjectDelete()
+static SaAisErrorT createRtObject(const SaImmOiHandleT oi_handle,
+                                  const SaImmClassNameT class_name,
+                                  const SaNameT* parent_name,
+                                  const SaImmAttrValuesT_2** attribute_values,
+                                  const SaNameT *object_name) {
+SaAisErrorT ais_rc = SA_AIS_OK;
+
+  for (int i = 0; i <= 2; i++) {
+    ais_rc = immutil_saImmOiRtObjectCreate_2(oi_handle,
+                                             class_name,
+                                             parent_name,
+                                             attribute_values);
+    if (ais_rc == SA_AIS_ERR_EXIST) {
+      SaAisErrorT del_rc = immutil_saImmOiRtObjectDelete(oi_handle, object_name);
+      if (del_rc == SA_AIS_ERR_BAD_HANDLE) {
+        LOG_NO("%s: saImmOiRtObjectDelete() Fail, %s", __FUNCTION__,
+               saf_error(del_rc));
+        lgsOiCreateBackground();
+      } else if (del_rc != SA_AIS_OK) {
+        LOG_NO("%s: saImmOiRtObjectDelete() Fail, %s", __FUNCTION__,
+               saf_error(del_rc));
+        break;
+      } else {
+        // The existing object is deleted. Try again to create a new one
+        continue;
+      }
+    } else if (ais_rc == SA_AIS_ERR_BAD_HANDLE) {
+      LOG_NO("%s: saImmOiRtObjectCreate_2() Fail, %s",
+             __FUNCTION__, saf_error(ais_rc));
+      lgsOiCreateBackground();
+      break;
+    } else {
+      break;
+    }
+  }
+
+  // saImmOiRtObjectCreate_2() return code
+  return ais_rc;
+}
+
 /**
  * Create a new rt app stream object.
  *
@@ -536,8 +588,9 @@ SaAisErrorT lgs_create_appstream_rt_object(log_stream_t *const stream) {
       parent_name++; /* FIX, vulnerable for malformed DNs */
       parentName = &parent;
       osaf_extended_name_lend(parent_name, &parent);
-    } else
+    } else {
       rdnstr = const_cast<char *>(stream->name.c_str());
+    }
 
     void *arr1[] = {&rdnstr};
     const SaImmAttrValuesT_2 attr_safLgStr = {
@@ -622,14 +675,20 @@ SaAisErrorT lgs_create_appstream_rt_object(log_stream_t *const stream) {
         &attr_saLogStreamCreationTimestamp,
         NULL};
 
-    rc = immutil_saImmOiRtObjectCreate_2(
-        lgs_cb->immOiHandle, const_cast<SaImmClassNameT>("SaLogStream"),
-        parentName, attrValues);
+    SaNameT object_name;
+    osaf_extended_name_lend(stream->name.c_str(), &object_name);
+    SaImmOiHandleT oi_handle = lgsGetOiHandle();
+    rc = createRtObject(oi_handle,
+                        const_cast<SaImmClassNameT>("SaLogStream"),
+                        parentName,
+                        attrValues,
+                        &object_name);
     free(dndup);
 
     if (rc != SA_AIS_OK) {
-      LOG_WA("saImmOiRtObjectCreate_2 returned %u for %s, parent %s", rc,
-             stream->name.c_str(), parent_name);
+      LOG_WA("%s: createRtObject() returned %s for %s, "
+             "parent %s", __FUNCTION__, saf_error(rc), stream->name.c_str(),
+             parent_name);
     }
   }
 
