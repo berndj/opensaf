@@ -161,6 +161,8 @@ uint32_t avnd_mon_req_del(AVND_CB *cb, SaUint64T pid) {
 
   mon_rec = (AVND_MON_REQ *)m_NCS_DBLIST_FIND_FIRST(pid_mon_list);
 
+  m_NCS_UNLOCK(&cb->mon_lock, NCS_LOCK_WRITE);
+
   /* No more PIDs exists in the pid_mon_list for monitoring */
   if (!mon_rec) {
     /* destroy the task */
@@ -172,8 +174,6 @@ uint32_t avnd_mon_req_del(AVND_CB *cb, SaUint64T pid) {
       TRACE_1("Passive Monitoring thread was released");
     }
   }
-
-  m_NCS_UNLOCK(&cb->mon_lock, NCS_LOCK_WRITE);
 
   return rc;
 }
