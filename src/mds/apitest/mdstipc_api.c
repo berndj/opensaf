@@ -8541,7 +8541,7 @@ void tet_direct_send_all_tp_1()
 		/*SNDRSP*/
 		printf("\nDirect send with rsp\n");
 		if (tet_create_task((NCS_OS_CB)tet_Dvdest_rcvr_all_thread,
-				    gl_tet_vdest[1].svc[1].task.t_handle) ==
+				    gl_tet_vdest[1].svc[0].task.t_handle) ==
 		    NCSCC_RC_SUCCESS) {
 			printf("\nTask has been Created\n");
 			fflush(stdout);
@@ -8549,7 +8549,7 @@ void tet_direct_send_all_tp_1()
 		/*Sender*/
 		if (mds_direct_send_message(
 			gl_tet_adest.mds_pwe1_hdl, NCSMDS_SVC_ID_EXTERNAL_MIN,
-			NCSMDS_SVC_ID_EXTERNAL_MIN, gl_set_msg_fmt_ver,
+			NCSMDS_SVC_ID_INTERNAL_MIN, gl_set_msg_fmt_ver,
 			MDS_SENDTYPE_SNDRSP, gl_tet_vdest[1].vdest, 0,
 			MDS_SEND_PRIORITY_LOW, message) != NCSCC_RC_SUCCESS) {
 			printf("\nFail\n");
@@ -8557,7 +8557,7 @@ void tet_direct_send_all_tp_1()
 		} else
 			printf("\nSuccess\n");
 		/*Now Stop and Release the Receiver Thread*/
-		if (tet_release_task(gl_tet_vdest[1].svc[1].task.t_handle) ==
+		if (tet_release_task(gl_tet_vdest[1].svc[0].task.t_handle) ==
 		    NCSCC_RC_SUCCESS)
 			printf("\nTASK is released\n");
 
@@ -8565,7 +8565,7 @@ void tet_direct_send_all_tp_1()
 		/*SNDRACK*/
 		printf("\n Direct send with response ack\n");
 		if (tet_create_task((NCS_OS_CB)tet_Dvdest_rcvr_all_rack_thread,
-				    gl_tet_vdest[1].svc[1].task.t_handle) ==
+				    gl_tet_vdest[1].svc[0].task.t_handle) ==
 		    NCSCC_RC_SUCCESS) {
 			printf("\nTask has been Created\n");
 			fflush(stdout);
@@ -8573,7 +8573,7 @@ void tet_direct_send_all_tp_1()
 		/*Sender */
 		if (mds_direct_send_message(
 			gl_tet_adest.mds_pwe1_hdl, NCSMDS_SVC_ID_EXTERNAL_MIN,
-			NCSMDS_SVC_ID_EXTERNAL_MIN, gl_set_msg_fmt_ver,
+			NCSMDS_SVC_ID_INTERNAL_MIN, gl_set_msg_fmt_ver,
 			MDS_SENDTYPE_SNDRSP, gl_tet_vdest[1].vdest, 0,
 			MDS_SEND_PRIORITY_LOW, message) == NCSCC_RC_FAILURE) {
 			printf("\nFail\n");
@@ -8581,7 +8581,7 @@ void tet_direct_send_all_tp_1()
 		} else
 			printf("\nSuccess\n");
 		/*Now Stop and Release the Receiver Thread*/
-		if (tet_release_task(gl_tet_vdest[1].svc[1].task.t_handle) ==
+		if (tet_release_task(gl_tet_vdest[1].svc[0].task.t_handle) ==
 		    NCSCC_RC_SUCCESS)
 			printf("\nTASK is released\n");
 
@@ -8656,7 +8656,7 @@ void tet_direct_send_all_tp_2()
 		/*SNDRSP*/
 		printf("\nDirect send with rsp\n");
 		if (tet_create_task((NCS_OS_CB)tet_Dvdest_rcvr_all_thread,
-				    gl_tet_vdest[1].svc[1].task.t_handle) ==
+				    gl_tet_vdest[1].svc[0].task.t_handle) ==
 		    NCSCC_RC_SUCCESS) {
 			printf("\nTask has been Created\n");
 			fflush(stdout);
@@ -8664,7 +8664,7 @@ void tet_direct_send_all_tp_2()
 		/*Sender*/
 		if (mds_direct_send_message(
 			gl_tet_adest.mds_pwe1_hdl, NCSMDS_SVC_ID_EXTERNAL_MIN,
-			NCSMDS_SVC_ID_EXTERNAL_MIN, gl_set_msg_fmt_ver,
+			NCSMDS_SVC_ID_INTERNAL_MIN, gl_set_msg_fmt_ver,
 			MDS_SENDTYPE_SNDRSP, gl_tet_vdest[1].vdest, 0,
 			MDS_SEND_PRIORITY_LOW, message) != NCSCC_RC_SUCCESS) {
 			printf("\nFail\n");
@@ -8672,14 +8672,14 @@ void tet_direct_send_all_tp_2()
 		} else
 			printf("\nSuccess\n");
 		/*Now Stop and Release the Receiver Thread*/
-		if (tet_release_task(gl_tet_vdest[1].svc[1].task.t_handle) ==
+		if (tet_release_task(gl_tet_vdest[1].svc[0].task.t_handle) ==
 		    NCSCC_RC_SUCCESS)
 			printf("\nTASK is released\n");
 		fflush(stdout);
 		/*SNDRACK*/
 		printf("\n Direct send with response ack\n");
 		if (tet_create_task((NCS_OS_CB)tet_Dvdest_rcvr_all_rack_thread,
-				    gl_tet_vdest[1].svc[1].task.t_handle) ==
+				    gl_tet_vdest[1].svc[0].task.t_handle) ==
 		    NCSCC_RC_SUCCESS) {
 			printf("\nTask has been Created\n");
 			fflush(stdout);
@@ -8687,7 +8687,7 @@ void tet_direct_send_all_tp_2()
 		/*Sender */
 		if (mds_direct_send_message(
 			gl_tet_adest.mds_pwe1_hdl, NCSMDS_SVC_ID_EXTERNAL_MIN,
-			NCSMDS_SVC_ID_EXTERNAL_MIN, gl_set_msg_fmt_ver,
+			NCSMDS_SVC_ID_INTERNAL_MIN, gl_set_msg_fmt_ver,
 			MDS_SENDTYPE_SNDRSP, gl_tet_vdest[1].vdest, 0,
 			MDS_SEND_PRIORITY_LOW, message) == NCSCC_RC_FAILURE) {
 			printf("\nFail\n");
@@ -8695,7 +8695,7 @@ void tet_direct_send_all_tp_2()
 		} else
 			printf("\nSuccess\n");
 		/*Now Stop and Release the Receiver Thread*/
-		if (tet_release_task(gl_tet_vdest[1].svc[1].task.t_handle) ==
+		if (tet_release_task(gl_tet_vdest[1].svc[0].task.t_handle) ==
 		    NCSCC_RC_SUCCESS)
 			printf("\nTASK is released\n");
 		fflush(stdout);
@@ -8770,7 +8770,7 @@ void tet_direct_send_all_tp_3()
 		/*SNDRSP*/
 		printf("\nDirect send with rsp\n");
 		if (tet_create_task((NCS_OS_CB)tet_Dvdest_rcvr_all_thread,
-				    gl_tet_vdest[1].svc[1].task.t_handle) ==
+				    gl_tet_vdest[1].svc[0].task.t_handle) ==
 		    NCSCC_RC_SUCCESS) {
 			printf("\nTask has been Created\n");
 			fflush(stdout);
@@ -8778,7 +8778,7 @@ void tet_direct_send_all_tp_3()
 		/*Sender*/
 		if (mds_direct_send_message(
 			gl_tet_adest.mds_pwe1_hdl, NCSMDS_SVC_ID_EXTERNAL_MIN,
-			NCSMDS_SVC_ID_EXTERNAL_MIN, gl_set_msg_fmt_ver,
+			NCSMDS_SVC_ID_INTERNAL_MIN, gl_set_msg_fmt_ver,
 			MDS_SENDTYPE_SNDRSP, gl_tet_vdest[1].vdest, 0,
 			MDS_SEND_PRIORITY_LOW, message) != NCSCC_RC_SUCCESS) {
 			printf("\nFail\n");
@@ -8786,14 +8786,14 @@ void tet_direct_send_all_tp_3()
 		} else
 			printf("\nSuccess\n");
 		/*Now Stop and Release the Receiver Thread*/
-		if (tet_release_task(gl_tet_vdest[1].svc[1].task.t_handle) ==
+		if (tet_release_task(gl_tet_vdest[1].svc[0].task.t_handle) ==
 		    NCSCC_RC_SUCCESS)
 			printf("\nTASK is released\n");
 		fflush(stdout);
 		/*SNDRACK*/
 		printf("\n Direct send with response ack\n");
 		if (tet_create_task((NCS_OS_CB)tet_Dvdest_rcvr_all_rack_thread,
-				    gl_tet_vdest[1].svc[1].task.t_handle) ==
+				    gl_tet_vdest[1].svc[0].task.t_handle) ==
 		    NCSCC_RC_SUCCESS) {
 			printf("\nTask has been Created\n");
 			fflush(stdout);
@@ -8801,7 +8801,7 @@ void tet_direct_send_all_tp_3()
 		/*Sender */
 		if (mds_direct_send_message(
 			gl_tet_adest.mds_pwe1_hdl, NCSMDS_SVC_ID_EXTERNAL_MIN,
-			NCSMDS_SVC_ID_EXTERNAL_MIN, gl_set_msg_fmt_ver,
+			NCSMDS_SVC_ID_INTERNAL_MIN, gl_set_msg_fmt_ver,
 			MDS_SENDTYPE_SNDRSP, gl_tet_vdest[1].vdest, 0,
 			MDS_SEND_PRIORITY_LOW, message) == NCSCC_RC_FAILURE) {
 			printf("\nFail\n");
@@ -8809,7 +8809,7 @@ void tet_direct_send_all_tp_3()
 		} else
 			printf("\nSuccess\n");
 		/*Now Stop and Release the Receiver Thread*/
-		if (tet_release_task(gl_tet_vdest[1].svc[1].task.t_handle) ==
+		if (tet_release_task(gl_tet_vdest[1].svc[0].task.t_handle) ==
 		    NCSCC_RC_SUCCESS)
 			printf("\nTASK is released\n");
 		fflush(stdout);
@@ -8884,7 +8884,7 @@ void tet_direct_send_all_tp_4()
 		/*SNDRSP*/
 		printf("\nDirect send with rsp\n");
 		if (tet_create_task((NCS_OS_CB)tet_Dvdest_rcvr_all_thread,
-				    gl_tet_vdest[1].svc[1].task.t_handle) ==
+				    gl_tet_vdest[1].svc[0].task.t_handle) ==
 		    NCSCC_RC_SUCCESS) {
 			printf("\nTask has been Created\n");
 			fflush(stdout);
@@ -8892,7 +8892,7 @@ void tet_direct_send_all_tp_4()
 		/*Sender*/
 		if (mds_direct_send_message(
 			gl_tet_adest.mds_pwe1_hdl, NCSMDS_SVC_ID_EXTERNAL_MIN,
-			NCSMDS_SVC_ID_EXTERNAL_MIN, gl_set_msg_fmt_ver,
+			NCSMDS_SVC_ID_INTERNAL_MIN, gl_set_msg_fmt_ver,
 			MDS_SENDTYPE_SNDRSP, gl_tet_vdest[1].vdest, 0,
 			MDS_SEND_PRIORITY_LOW, message) != NCSCC_RC_SUCCESS) {
 			printf("\nFail\n");
@@ -8900,14 +8900,14 @@ void tet_direct_send_all_tp_4()
 		} else
 			printf("\nSuccess\n");
 		/*Now Stop and Release the Receiver Thread*/
-		if (tet_release_task(gl_tet_vdest[1].svc[1].task.t_handle) ==
+		if (tet_release_task(gl_tet_vdest[1].svc[0].task.t_handle) ==
 		    NCSCC_RC_SUCCESS)
 			printf("\nTASK is released\n");
 		fflush(stdout);
 		/*SNDRACK*/
 		printf("\n Direct send with response ack\n");
 		if (tet_create_task((NCS_OS_CB)tet_Dvdest_rcvr_all_rack_thread,
-				    gl_tet_vdest[1].svc[1].task.t_handle) ==
+				    gl_tet_vdest[1].svc[0].task.t_handle) ==
 		    NCSCC_RC_SUCCESS) {
 			printf("\nTask has been Created\n");
 			fflush(stdout);
@@ -8915,7 +8915,7 @@ void tet_direct_send_all_tp_4()
 		/*Sender */
 		if (mds_direct_send_message(
 			gl_tet_adest.mds_pwe1_hdl, NCSMDS_SVC_ID_EXTERNAL_MIN,
-			NCSMDS_SVC_ID_EXTERNAL_MIN, gl_set_msg_fmt_ver,
+			NCSMDS_SVC_ID_INTERNAL_MIN, gl_set_msg_fmt_ver,
 			MDS_SENDTYPE_SNDRSP, gl_tet_vdest[1].vdest, 0,
 			MDS_SEND_PRIORITY_LOW, message) == NCSCC_RC_FAILURE) {
 			printf("\nFail\n");
@@ -8923,7 +8923,7 @@ void tet_direct_send_all_tp_4()
 		} else
 			printf("\nSuccess\n");
 		/*Now Stop and Release the Receiver Thread*/
-		if (tet_release_task(gl_tet_vdest[1].svc[1].task.t_handle) ==
+		if (tet_release_task(gl_tet_vdest[1].svc[0].task.t_handle) ==
 		    NCSCC_RC_SUCCESS)
 			printf("\nTASK is released\n");
 		fflush(stdout);
@@ -10347,9 +10347,9 @@ void tet_Dvdest_rcvr_all_rack_thread()
 	bool rsp_reqd = false;
 	printf("\nInside Receiver Thread\n");
 	fflush(stdout);
-	if ((svc_id = is_vdest_sel_obj_found(1, 1))) {
+	if ((svc_id = is_vdest_sel_obj_found(1, 0))) {
 		if (mds_service_retrieve(gl_tet_vdest[1].mds_pwe1_hdl,
-					 NCSMDS_SVC_ID_EXTERNAL_MIN,
+					 NCSMDS_SVC_ID_INTERNAL_MIN,
 					 SA_DISPATCH_ALL) != NCSCC_RC_SUCCESS) {
 			printf("Fail mds_service_retrieve\n");
 		}
@@ -10376,9 +10376,9 @@ void tet_Dvdest_rcvr_all_thread()
 	bool rsp_reqd = false;
 	printf("\nInside Receiver Thread\n");
 	fflush(stdout);
-	if ((svc_id = is_vdest_sel_obj_found(1, 1))) {
+	if ((svc_id = is_vdest_sel_obj_found(1, 0))) {
 		if (mds_service_retrieve(gl_tet_vdest[1].mds_pwe1_hdl,
-					 NCSMDS_SVC_ID_EXTERNAL_MIN,
+					 NCSMDS_SVC_ID_INTERNAL_MIN,
 					 SA_DISPATCH_ALL) != NCSCC_RC_SUCCESS) {
 			printf("Fail mds_service_retrieve\n");
 		}
