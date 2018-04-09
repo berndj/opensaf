@@ -56,7 +56,12 @@ uint32_t nid_create_ipc(char *strbuf)
 	mode_t mask;
 
 	/* Lets Remove any such file if it already exists */
-	unlink(NID_FIFO);
+	if (unlink(NID_FIFO) == -1 && errno != ENOENT) {
+		sprintf(strbuf,
+			"FAILURE: Unable To Delete FIFO Error: %s\n",
+			strerror(errno));
+		return NCSCC_RC_FAILURE;
+	}
 
 	mask = umask(0);
 
