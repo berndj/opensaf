@@ -6,6 +6,7 @@
 #include <queue>
 #include <thread>
 #include <sys/poll.h>
+#include "msg/agent/mqa.h"
 #include "msg/apitest/msgtest.h"
 #include "msg/apitest/tet_mqsv.h"
 #include <saMsg.h>
@@ -65,12 +66,14 @@ static void metaDataSize_05(void) {
 
   SaUint32T metaDataSize;
   rc = saMsgMetadataSizeGet(msgHandle, &metaDataSize);
+  if(rc == SA_AIS_OK){
+      if (metaDataSize != sizeof(MQSV_MESSAGE) +
+                         sizeof(NCS_OS_MQ_MSG_LL_HDR))
+          rc = SA_AIS_ERR_MESSAGE_ERROR;
+  }
+  if (rc == SA_AIS_OK)
+      rc = saMsgFinalize(msgHandle);
   aisrc_validate(rc, SA_AIS_OK);
-
-  assert(metaDataSize == 344);
-
-  rc = saMsgFinalize(msgHandle);
-  assert(rc == SA_AIS_OK);
 }
 
 __attribute__((constructor)) static void metaDataSize_constructor(void) {
