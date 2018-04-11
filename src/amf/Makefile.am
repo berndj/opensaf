@@ -194,7 +194,8 @@ bin_testamfd_CXXFLAGS =$(AM_CXXFLAGS)
 bin_testamfd_CPPFLAGS = \
 	-DSA_CLM_B01=1 -DSA_EXTENDED_NAME_SOURCE \
 	$(AM_CPPFLAGS) \
-	-I$(GTEST_DIR)/include
+	-I$(GTEST_DIR)/include \
+	-I$(GMOCK_DIR)/include
 
 bin_testamfd_LDFLAGS = \
 	$(AM_LDFLAGS) \
@@ -264,7 +265,9 @@ bin_testamfd_LDADD = \
 	lib/libSaNtf.la \
 	lib/libopensaf_core.la \
 	$(GTEST_DIR)/lib/libgtest.la \
-	$(GTEST_DIR)/lib/libgtest_main.la
+	$(GTEST_DIR)/lib/libgtest_main.la \
+	$(GMOCK_DIR)/lib/libgmock.la \
+	$(GMOCK_DIR)/lib/libgmock_main.la
 
 bin_amfpm_CPPFLAGS = \
 	-DSA_EXTENDED_NAME_SOURCE \

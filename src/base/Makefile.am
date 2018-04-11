@@ -163,7 +163,8 @@ bin_testleap_CXXFLAGS =$(AM_CXXFLAGS)
 bin_testleap_CPPFLAGS = \
 	-DSA_CLM_B01=1 \
 	$(AM_CPPFLAGS) \
-	-I$(GTEST_DIR)/include
+	-I$(GTEST_DIR)/include \
+	-I$(GMOCK_DIR)/include
 
 bin_testleap_LDFLAGS = \
 	$(AM_LDFLAGS)
@@ -175,6 +176,8 @@ bin_testleap_SOURCES = \
 bin_testleap_LDADD = \
 	$(GTEST_DIR)/lib/libgtest.la \
 	$(GTEST_DIR)/lib/libgtest_main.la \
+	$(GMOCK_DIR)/lib/libgmock.la \
+	$(GMOCK_DIR)/lib/libgmock_main.la \
 	lib/libosaf_common.la \
 	lib/libopensaf_core.la \
 	lib/libamf_common.la \
@@ -188,7 +191,8 @@ bin_libbase_test_CXXFLAGS =$(AM_CXXFLAGS)
 
 bin_libbase_test_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
-	-I$(GTEST_DIR)/include
+	-I$(GTEST_DIR)/include \
+	-I$(GMOCK_DIR)/include
 
 bin_libbase_test_LDFLAGS = \
 	$(AM_LDFLAGS) \
@@ -218,13 +222,17 @@ bin_libbase_test_SOURCES = \
 bin_libbase_test_LDADD = \
 	$(GTEST_DIR)/lib/libgtest.la \
 	$(GTEST_DIR)/lib/libgtest_main.la \
+	$(GMOCK_DIR)/lib/libgmock.la \
+	$(GMOCK_DIR)/lib/libgmock_main.la \
 	lib/libopensaf_core.la
 
 bin_core_common_test_CXXFLAGS =$(AM_CXXFLAGS)
 
 bin_core_common_test_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
-	-I$(GTEST_DIR)/include
+	-I$(GTEST_DIR)/include \
+	-I$(GMOCK_DIR)/include
+
 
 bin_core_common_test_LDFLAGS = \
 	$(AM_LDFLAGS) \
@@ -247,4 +255,6 @@ bin_core_common_test_SOURCES = \
 
 bin_core_common_test_LDADD = \
 	$(GTEST_DIR)/lib/libgtest.la \
-	$(GTEST_DIR)/lib/libgtest_main.la
+	$(GTEST_DIR)/lib/libgtest_main.la \
+	$(GMOCK_DIR)/lib/libgmock.la \
+	$(GMOCK_DIR)/lib/libgmock_main.la

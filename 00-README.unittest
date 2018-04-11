@@ -1,22 +1,25 @@
-Support for using google unit test in openSAF. Using unit test during e.g. refactoring
+Support for using google unit test and google mock in openSAF. Using unit test and mocking during e.g. refactoring
 to identify units and make code unit testable should improve the overall code quality and robustness.
 Regarding google unit test, see:
 https://code.google.com/p/googletest/
 
 To get and install google test do the following:
 
-wget https://googletest.googlecode.com/files/gtest-1.7.0.zip
-unzip gtest-1.7.0.zip
-cd gtest-1.7.0
-./configure
-make
-export GTEST_DIR=`pwd`
+git clone https://github.com/google/googletest.git
+cd googletest
+
+autoreconf -vi
+./configure --with-pthreads
+make -j 4
+
+export GTEST_DIR=`pwd`/googletest
+export GMOCK_DIR=`pwd`/googlemock
 
 configure openSAF as usual, for example:
 ./bootstrap.ch
 ./configure CFLAGS="-DRUNASROOT -O2" CXXFLAGS="-DRUNASROOT -O2" --enable-tipc
 
-make -j
+make -j 4
 
 To build and run the unit tests
 make check
@@ -40,8 +43,9 @@ services/saf/amf/
 └── config
 
 The test code to have the following naming convention as below:
-tests will be in file test_xxxx.cc, where xxxx is the name of the unit test case,
-e.g test_amfdb.cc. No need to call the RUN_ALL_TESTS() macro, it is included in gtest_main 
+tests will be in file xxxx_test.cc, where xxxx is the name of the unit test case,
+mocks will be in file mock_xxxx.cc, where xxxx is the name of the mock.
+No need to call the RUN_ALL_TESTS() macro, it is included in gtest_main and gmock_main
 and are automatically linked with the unit test cases.
 
 

@@ -116,7 +116,8 @@ bin_testimmcpp_CXXFLAGS =$(AM_CXXFLAGS)
 bin_testimmcpp_CPPFLAGS = \
 	-DSA_EXTENDED_NAME_SOURCE \
 	$(AM_CPPFLAGS) \
-	-I$(GTEST_DIR)/include
+	-I$(GTEST_DIR)/include \
+	-I$(GMOCK_DIR)/include
 
 bin_testimmcpp_LDFLAGS = \
 	$(AM_LDFLAGS)
@@ -139,6 +140,8 @@ bin_testimmcpp_SOURCES = \
 bin_testimmcpp_LDADD = \
 	$(GTEST_DIR)/lib/libgtest.la \
 	$(GTEST_DIR)/lib/libgtest_main.la \
+	$(GMOCK_DIR)/lib/libgmock.la \
+	$(GMOCK_DIR)/lib/libgmock_main.la \
 	lib/libopensaf_core.la \
 	lib/libopensaf_immoi.la \
 	lib/libopensaf_immom.la

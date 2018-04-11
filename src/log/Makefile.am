@@ -247,7 +247,8 @@ bin_testlogd_CXXFLAGS =$(AM_CXXFLAGS)
 bin_testlogd_CPPFLAGS = \
 	-DSA_EXTENDED_NAME_SOURCE \
 	$(AM_CPPFLAGS) \
-	-I$(GTEST_DIR)/include
+	-I$(GTEST_DIR)/include \
+	-I$(GMOCK_DIR)/include
 
 bin_testlogd_LDFLAGS = \
 	$(AM_LDFLAGS)
@@ -261,6 +262,8 @@ bin_testlogd_LDADD = \
 	lib/libopensaf_core.la \
 	$(GTEST_DIR)/lib/libgtest.la \
 	$(GTEST_DIR)/lib/libgtest_main.la \
+	$(GMOCK_DIR)/lib/libgmock.la \
+	$(GMOCK_DIR)/lib/libgmock_main.la \
 	src/log/logd/bin_osaflogd-lgs_unixsock_dest.o \
 	src/log/logd/bin_osaflogd-lgs_dest.o \
 	src/log/logd/bin_osaflogd-lgs_nildest.o

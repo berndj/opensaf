@@ -101,7 +101,8 @@ bin_transport_test_CXXFLAGS =$(AM_CXXFLAGS)
 
 bin_transport_test_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
-	-I$(GTEST_DIR)/include
+	-I$(GTEST_DIR)/include \
+	-I$(GMOCK_DIR)/include
 
 bin_transport_test_LDFLAGS = \
 	$(AM_LDFLAGS) \
@@ -118,4 +119,6 @@ bin_transport_test_SOURCES = \
 bin_transport_test_LDADD = \
 	$(GTEST_DIR)/lib/libgtest.la \
 	$(GTEST_DIR)/lib/libgtest_main.la \
+	$(GMOCK_DIR)/lib/libgmock.la \
+	$(GMOCK_DIR)/lib/libgmock_main.la \
 	lib/libopensaf_core.la

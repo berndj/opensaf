@@ -23,15 +23,26 @@ fi
 test -d "$OSAF_TEST_WORKDIR" || mkdir -p "$OSAF_TEST_WORKDIR"
 test -d "$OSAF_TEST_WORKDIR/good_revisions" || mkdir -p "$OSAF_TEST_WORKDIR/good_revisions"
 
-if ! test -f "$OSAF_TEST_WORKDIR/googletest/googletest/lib/libgtest.la"; then
+if [[ ! -f "$OSAF_TEST_WORKDIR/googletest/googlemock/lib/libgmock.la" ||
+      ! -f "$OSAF_TEST_WORKDIR/googletest/googletest/lib/libgtest.la" ]]; then
     cd "$OSAF_TEST_WORKDIR"
-    "$GIT" clone https://github.com/google/googletest.git
-    cd "$OSAF_TEST_WORKDIR/googletest/googletest"
+
+    # remove googletest if it is too old
+    if [ ! -f "$OSAF_TEST_WORKDIR/googletest/configure.ac" ]; then
+      rm -rf "$OSAF_TEST_WORKDIR/googletest"
+    fi
+
+    if [ ! -d "$OSAF_TEST_WORKDIR/googletest" ]; then
+      "$GIT" clone https://github.com/google/googletest.git
+    fi
+
+    cd "$OSAF_TEST_WORKDIR/googletest"
     autoreconf -vi
     ./configure --with-pthreads
     make -j "$no_of_processors"
 fi
 export GTEST_DIR="$OSAF_TEST_WORKDIR/googletest/googletest"
+export GMOCK_DIR="$OSAF_TEST_WORKDIR/googletest/googlemock"
 
 rm -rf "$OSAF_TEST_WORKDIR/repo" "$OSAF_TEST_WORKDIR/srcdir" "$OSAF_TEST_WORKDIR/objdir"
 mkdir "$OSAF_TEST_WORKDIR/repo" "$OSAF_TEST_WORKDIR/srcdir" "$OSAF_TEST_WORKDIR/objdir"
