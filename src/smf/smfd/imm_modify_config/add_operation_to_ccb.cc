@@ -56,7 +56,7 @@ bool IsResorceAbort(const SaImmCcbHandleT& ccbHandle) {
   const SaStringT *errString = nullptr;
   SaAisErrorT ais_rc = saImmOmCcbGetErrorStrings(ccbHandle, &errString);
   if ((ais_rc == SA_AIS_OK) && (errString != nullptr)) {
-    TRACE("%s: Error string: '%s'", __FUNCTION__, errString[0]);
+    LOG_NO("%s: Error string: '%s'", __FUNCTION__, errString[0]);
     std::string err_str(errString[0]);
     if (err_str.find("IMM: Resource abort: ") != std::string::npos) {
       // Is Resource Abort

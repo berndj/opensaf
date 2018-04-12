@@ -558,7 +558,11 @@ bool SmfAdminStateHandler::adminOperationNodeGroup(
         LOG_NO("%s: setNodeGroupAdminState() Fail %s", __FUNCTION__,
                saf_error(ais_errno));
       }
-      (void)deleteNodeGroup();
+      if (deleteNodeGroup() == false) {
+        LOG_NO("%s: deleteNodeGroup(), Fail. "
+            "Changing state did not fail. %s Return code is not set to Fail",
+               __FUNCTION__, __FUNCTION__);
+      }
     }
   } else {
     TRACE("\t m_nodelist is empty!");
