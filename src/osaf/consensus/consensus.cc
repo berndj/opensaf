@@ -25,7 +25,7 @@
 const std::string Consensus::kTakeoverRequestKeyname = "takeover_request";
 
 SaAisErrorT Consensus::PromoteThisNode(const bool graceful_takeover,
-    const uint64_t cluster_size) {
+                                       const uint64_t cluster_size) {
   TRACE_ENTER();
   SaAisErrorT rc;
 
@@ -89,18 +89,8 @@ SaAisErrorT Consensus::PromoteThisNode(const bool graceful_takeover,
     }
 
     if (take_over_request_created == true) {
-      SaAisErrorT rc1;
-
-      // remove takeover request
-      rc1 = KeyValue::Erase(kTakeoverRequestKeyname);
-      retries = 0;
-      while (rc1 != SA_AIS_OK && retries < kMaxRetry) {
-        ++retries;
-        std::this_thread::sleep_for(kSleepInterval);
-        rc1 = KeyValue::Erase(kTakeoverRequestKeyname);
-      }
-
-      if (rc1 != SA_AIS_OK) {
+      rc = RemoveTakeoverRequest();
+      if (rc != SA_AIS_OK) {
         LOG_WA("Could not remove takeover request");
       }
     }
@@ -110,6 +100,23 @@ SaAisErrorT Consensus::PromoteThisNode(const bool graceful_takeover,
     LOG_NO("Active controller set to %s", base::Conf::NodeName().c_str());
   } else {
     LOG_ER("Failed to promote this node (%u)", rc);
+  }
+
+  return rc;
+}
+
+SaAisErrorT Consensus::RemoveTakeoverRequest() {
+  TRACE_ENTER();
+  SaAisErrorT rc;
+  uint32_t retries = 0;
+
+  // remove takeover request
+  rc = KeyValue::Erase(kTakeoverRequestKeyname);
+  retries = 0;
+  while (rc != SA_AIS_OK && retries < kMaxRetry) {
+    ++retries;
+    std::this_thread::sleep_for(kSleepInterval);
+    rc = KeyValue::Erase(kTakeoverRequestKeyname);
   }
 
   return rc;
@@ -273,6 +280,8 @@ void Consensus::MonitorTakeoverRequest(ConsensusCallback callback,
 }
 
 void Consensus::CheckForExistingTakeoverRequest() {
+  TRACE_ENTER();
+
   SaAisErrorT rc;
   std::vector<std::string> tokens;
   rc = ReadTakeoverRequest(tokens);
@@ -281,22 +290,17 @@ void Consensus::CheckForExistingTakeoverRequest() {
     return;
   }
 
-  // get expiration
-  const uint64_t expiration_timestamp = strtoull(
-      tokens[static_cast<std::uint8_t>(TakeoverElements::TIMESTAMP)].c_str(),
-      0, 10);
+  LOG_NO("A takeover request is in progress");
 
-  // wait until expiration is over
-  int64_t expiration = expiration_timestamp - CurrentTime();
-  if (expiration > 0 && expiration <= kTakeoverValidTime) {
-    // @todo check if the takeover request has been deleted already?
-    LOG_NO("A takeover request is in progress"
-           " (expiring in %" PRId64 " seconds)",
-           expiration);
-    std::chrono::seconds sleep_duration(expiration);
-    std::this_thread::sleep_for(sleep_duration);
-  } else {
-    LOG_WA("Invalid expiration time (%" PRIu64 ")", expiration_timestamp);
+  uint32_t retries = 0;
+  // wait up to approximately 10 seconds, or until the takeover request is gone
+  rc = ReadTakeoverRequest(tokens);
+  while (rc == SA_AIS_OK &&
+         retries < kMaxTakeoverRetry) {
+    ++retries;
+    TRACE("Takeover request still present");
+    std::this_thread::sleep_for(kSleepInterval);
+    rc = ReadTakeoverRequest(tokens);
   }
 }
 
@@ -306,24 +310,23 @@ SaAisErrorT Consensus::CreateTakeoverRequest(const std::string& current_owner,
   TRACE_ENTER();
 
   // Format of takeover request:
-  // "expiration_time<space>current_owner<space>proposed_owner<space>
+  // "current_owner<space>proposed_owner<space>
   // proposed_owner_cluster_size<space>status"
   // status := [UNDEFINED, NEW, REJECTED, ACCEPTED]
 
   std::string takeover_request;
-  // request to expire in 20 seconds
-  uint64_t timestamp = CurrentTime() + kTakeoverValidTime;
 
   takeover_request =
-      std::to_string(timestamp) + " " + current_owner + " " +
-      base::Conf::NodeName() + " " + std::to_string(cluster_size) + " " +
+      current_owner + " " + base::Conf::NodeName() + " " +
+      std::to_string(cluster_size) + " " +
       TakeoverStateStr[static_cast<std::uint8_t>(TakeoverState::NEW)];
 
   TRACE("Takeover request: \"%s\"", takeover_request.c_str());
 
   SaAisErrorT rc;
   uint32_t retries = 0;
-  rc = KeyValue::Create(kTakeoverRequestKeyname, takeover_request);
+  rc = KeyValue::Create(kTakeoverRequestKeyname, takeover_request,
+                        kTakeoverValidTime);
   while (rc == SA_AIS_ERR_FAILED_OPERATION && retries < kMaxRetry) {
     ++retries;
     std::this_thread::sleep_for(kSleepInterval);
@@ -336,49 +339,29 @@ SaAisErrorT Consensus::CreateTakeoverRequest(const std::string& current_owner,
     // retrieve takeover request
     std::vector<std::string> tokens;
     retries = 0;
+    // wait up to approximately 10 seconds, or until the takeover request is
+    // gone
     rc = ReadTakeoverRequest(tokens);
-    while (rc == SA_AIS_ERR_FAILED_OPERATION && retries < kMaxRetry) {
+    while (rc == SA_AIS_OK &&
+           retries < kMaxTakeoverRetry) {
       ++retries;
+      TRACE("Takeover request still present");
       std::this_thread::sleep_for(kSleepInterval);
       rc = ReadTakeoverRequest(tokens);
     }
 
     if (rc == SA_AIS_OK) {
-      // get expiration
-      const uint64_t expiration_timestamp = strtoull(
-        tokens[static_cast<std::uint8_t>(TakeoverElements::TIMESTAMP)].c_str(),
-        0, 10);
-
-      // wait until expiration is over
-      int64_t expiration = expiration_timestamp - CurrentTime();
-      if (expiration > 0 && expiration <= kTakeoverValidTime) {
-        LOG_NO("A takeover request is in progress"
-               " (expiring in %" PRId64 " seconds)",
-               expiration);
-        std::chrono::seconds sleep_duration(expiration);
-        std::this_thread::sleep_for(sleep_duration);
-      } else {
-        LOG_WA("Invalid expiration time (%" PRIu64 ")", expiration_timestamp);
-      }
-    }  // else remove it anyway
-
-    LOG_NO("Remove expired takeover request");
-
-    // remove expired request
-    retries = 0;
-    rc = KeyValue::Erase(kTakeoverRequestKeyname);
-    while (rc != SA_AIS_OK && retries < kMaxRetry) {
-      ++retries;
-      std::this_thread::sleep_for(kSleepInterval);
+      // still there? We need to forcibly remove it
+      retries = 0;
       rc = KeyValue::Erase(kTakeoverRequestKeyname);
+      while (rc != SA_AIS_OK && retries < kMaxRetry) {
+        rc = KeyValue::Erase(kTakeoverRequestKeyname);
+      }
     }
 
-    if (rc == SA_AIS_OK) {
-      return CreateTakeoverRequest(current_owner, proposed_owner, cluster_size);
-    } else {
-      LOG_ER("Could not remove existing takeover request");
-      return SA_AIS_ERR_EXIST;
-    }
+    LOG_NO("Takeover request expired or removed");
+
+    return CreateTakeoverRequest(current_owner, proposed_owner, cluster_size);
   }
 
   // wait up to 10s for request to be answered
@@ -421,24 +404,21 @@ SaAisErrorT Consensus::CreateTakeoverRequest(const std::string& current_owner,
     std::this_thread::sleep_for(kSleepInterval);
   }
 
-  LOG_NO("Result: %d", rc);
+  TRACE("Result: %d", rc);
   return rc;
 }
 
 SaAisErrorT Consensus::WriteTakeoverResult(
-    const std::string& timestamp, const std::string& current_owner,
-    const std::string& proposed_owner, const std::string& proposed_cluster_size,
-    const TakeoverState result) {
+    const std::string& current_owner, const std::string& proposed_owner,
+    const std::string& proposed_cluster_size, const TakeoverState result) {
   TRACE_ENTER();
 
   const std::string takeover_request =
-      timestamp + " " + current_owner + " " + proposed_owner + " " +
-      proposed_cluster_size + " " +
+      current_owner + " " + proposed_owner + " " + proposed_cluster_size + " " +
       TakeoverStateStr[static_cast<std::uint8_t>(TakeoverState::NEW)];
 
   const std::string takeover_result =
-      timestamp + " " + current_owner + " " + proposed_owner + " " +
-      proposed_cluster_size + " " +
+      current_owner + " " + proposed_owner + " " + proposed_cluster_size + " " +
       TakeoverStateStr[static_cast<std::uint8_t>(result)];
 
   LOG_NO("TakeoverResult: %s", takeover_result.c_str());
@@ -461,7 +441,7 @@ SaAisErrorT Consensus::ReadTakeoverRequest(std::vector<std::string>& tokens) {
   rc = KeyValue::Get(kTakeoverRequestKeyname, request);
   if (rc != SA_AIS_OK) {
     // it doesn't always exist, don't log an error
-    LOG_NO("Could not read takeover request (%d)", rc);
+    TRACE("Could not read takeover request (%d)", rc);
     return SA_AIS_ERR_FAILED_OPERATION;
   }
 
@@ -470,12 +450,14 @@ SaAisErrorT Consensus::ReadTakeoverRequest(std::vector<std::string>& tokens) {
     return SA_AIS_ERR_UNAVAILABLE;
   }
 
+  tokens.clear();
   Split(request, tokens);
-  if (tokens.size() != 5) {
-    LOG_ER("Invalid takeover request");
+  if (tokens.size() != 4) {
+    LOG_ER("Invalid takeover request: '%s'", request.c_str());
     return SA_AIS_ERR_LIBRARY;
   }
 
+  TRACE("Found '%s'", request.c_str());
   return SA_AIS_OK;
 }
 
@@ -503,19 +485,15 @@ Consensus::TakeoverState Consensus::HandleTakeoverRequest(
     return TakeoverState::UNDEFINED;
   }
 
-  // request is a space delimited string with 5 elements
-  osafassert(tokens.size() == 5);
+  // request is a space delimited string with 4 elements
+  osafassert(tokens.size() == 4);
 
   // check the owner is this node
-  if (tokens[1] != base::Conf::NodeName()) {
+  if (tokens[static_cast<std::uint8_t>(TakeoverElements::CURRENT_OWNER)] !=
+      base::Conf::NodeName()) {
     LOG_ER("We do not own the lock. Ignoring takeover request");
     return TakeoverState::UNDEFINED;
   }
-
-  // expiration timestamp
-  const uint64_t expiration = strtoull(
-      tokens[static_cast<std::uint8_t>(TakeoverElements::TIMESTAMP)].c_str(), 0,
-      10);
 
   // size of the other network partition
   const uint64_t proposed_cluster_size = strtoull(
@@ -527,14 +505,13 @@ Consensus::TakeoverState Consensus::HandleTakeoverRequest(
          proposed_cluster_size, cluster_size);
 
   TakeoverState result;
-  if (CurrentTime() <= expiration && proposed_cluster_size > cluster_size) {
+  if (proposed_cluster_size > cluster_size) {
     result = TakeoverState::ACCEPTED;
   } else {
     result = TakeoverState::REJECTED;
   }
 
   rc = WriteTakeoverResult(
-      tokens[static_cast<std::uint8_t>(TakeoverElements::TIMESTAMP)],
       tokens[static_cast<std::uint8_t>(TakeoverElements::CURRENT_OWNER)],
       tokens[static_cast<std::uint8_t>(TakeoverElements::PROPOSED_OWNER)],
       tokens[static_cast<std::uint8_t>(
@@ -557,16 +534,4 @@ void Consensus::Split(const std::string& str,
   while (stream >> buffer) {
     tokens.push_back(buffer);
   }
-}
-
-// seconds after epoch
-uint64_t Consensus::CurrentTime() const {
-  auto now = std::chrono::system_clock::now();
-
-  // seconds since epoch
-  auto timestamp =
-      std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch())
-          .count();
-
-  return timestamp;
 }

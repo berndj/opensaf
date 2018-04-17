@@ -26,7 +26,7 @@ class Consensus {
  public:
   // Set active controller to this node
   SaAisErrorT PromoteThisNode(const bool graceful_takeover,
-    const uint64_t cluster_size);
+                              const uint64_t cluster_size);
 
   // Clear current active controller by releasing lock
   SaAisErrorT DemoteCurrentActive();
@@ -67,11 +67,10 @@ class Consensus {
   };
 
   enum class TakeoverElements : std::uint8_t {
-    TIMESTAMP = 0,
-    CURRENT_OWNER = 1,
-    PROPOSED_OWNER = 2,
-    PROPOSED_NETWORK_SIZE = 3,
-    STATE = 4
+    CURRENT_OWNER = 0,
+    PROPOSED_OWNER = 1,
+    PROPOSED_NETWORK_SIZE = 2,
+    STATE = 3
   };
 
   const std::string TakeoverStateStr[4] = {"UNDEFINED", "NEW", "ACCEPTED",
@@ -84,11 +83,11 @@ class Consensus {
   bool use_remote_fencing_ = false;
   const std::string kTestKeyname = "opensaf_write_test";
   const std::chrono::milliseconds kSleepInterval =
-    std::chrono::milliseconds(500);  // in ms
+      std::chrono::milliseconds(500);  // in ms
   static constexpr uint32_t kLockTimeout = 0;  // lock is persistent by default
   static constexpr uint32_t kMaxTakeoverRetry = 20;
   static constexpr uint32_t kMaxRetry = 60;
-  static constexpr uint32_t kTakeoverValidTime = 20;  // in seconds
+  static constexpr uint32_t kTakeoverValidTime = 15;  // in seconds
 
   void CheckForExistingTakeoverRequest();
 
@@ -98,17 +97,17 @@ class Consensus {
 
   SaAisErrorT ReadTakeoverRequest(std::vector<std::string>& tokens);
 
-  SaAisErrorT WriteTakeoverResult(const std::string& timestamp,
-                                  const std::string& current_owner,
+  SaAisErrorT WriteTakeoverResult(const std::string& current_owner,
                                   const std::string& proposed_owner,
                                   const std::string& proposed_cluster_size,
                                   const TakeoverState result);
+
+  SaAisErrorT RemoveTakeoverRequest();
 
   SaAisErrorT Demote(const std::string& node);
   bool FenceNode(const std::string& node);
 
   void Split(const std::string& str, std::vector<std::string>& tokens) const;
-  uint64_t CurrentTime() const;
 
   DELETE_COPY_AND_MOVE_OPERATORS(Consensus);
 };

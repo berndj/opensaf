@@ -91,13 +91,14 @@ SaAisErrorT KeyValue::Set(const std::string& key, const std::string& value,
   }
 }
 
-SaAisErrorT KeyValue::Create(const std::string& key, const std::string& value) {
+SaAisErrorT KeyValue::Create(const std::string& key, const std::string& value,
+                             const unsigned int timeout) {
   TRACE_ENTER();
 
   const std::string kv_store_cmd =
       base::GetEnv("FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
   const std::string command(kv_store_cmd + " create \"" + key + "\" \"" +
-                            value + "\"");
+                            value + "\" " + std::to_string(timeout));
   std::string output;
   int rc = KeyValue::Execute(command, output);
 

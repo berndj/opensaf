@@ -37,7 +37,8 @@ class KeyValue {
                          const std::string& prev_value);
 
   // Create key, and set to value. Fails if key already exists.
-  static SaAisErrorT Create(const std::string& key, const std::string& value);
+  static SaAisErrorT Create(const std::string& key, const std::string& value,
+                            const unsigned int timeout = 0);
 
   // Erase key
   static SaAisErrorT Erase(const std::string& key);

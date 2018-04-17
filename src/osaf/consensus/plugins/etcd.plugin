@@ -67,6 +67,7 @@ setkey() {
 # params:
 #   $1 - <key>
 #   $2 - <value>
+#   $3 - <timeout>
 # returns:
 #   0 - success
 #   1 - already exists
@@ -74,9 +75,10 @@ setkey() {
 create_key() {
   readonly key="$1"
   readonly value="$2"
+  readonly timeout="$3"
 
   if output=$(etcdctl $etcd_options --timeout $etcd_timeout mk "$directory$key" \
-    "$value" 2>&1)
+    "$value" --ttl "$timeout" 2>&1)
   then
     return 0
   else
@@ -277,11 +279,11 @@ case "$1" in
     exit $?
     ;;
   create)
-    if [ "$#" -ne 3 ]; then
-      echo "Usage: $0 create <key> <value>"
-      exit 1
+    if [ "$#" -ne 4 ]; then
+      echo "Usage: $0 create <key> <value> <timeout>"
+      exit 125
     fi
-    create_key "$2" "$3"
+    create_key "$2" "$3" "$4"
     exit $?
     ;;
   erase)

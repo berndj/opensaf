@@ -33,10 +33,17 @@ export ETCDCTL_API=3
 get() {
   readonly key="$1"
 
-  if value=$(etcdctl $etcd_options --dial-timeout $etcd_timeout get "$directory$key" | tail -n1)
+  if output=$(etcdctl $etcd_options --dial-timeout $etcd_timeout get "$directory$key" 2>&1)
   then
-    echo "$value"
-    return 0
+    key_=$(echo "$output" | tail -n2 | head -n1)
+    value=$(echo "$output" | tail -n1)
+    if [ "$key_" = "$directory$key" ]; then
+      echo "$value"
+      return 0
+    else
+      # key missing!
+      return 1
+    fi
   else
     return 1
   fi
@@ -69,6 +76,7 @@ setkey() {
 # params:
 #   $1 - <key>
 #   $2 - <value>
+#   $3 - <timeout>
 # returns:
 #   0 - success
 #   1 - already exists
@@ -76,10 +84,25 @@ setkey() {
 create_key() {
   readonly key="$1"
   readonly value="$2"
+  readonly timeout="$3"
+
+  if [ $timeout -gt 0 ]; then
+    # create lease
+    if output=$(etcdctl $etcd_options --dial-timeout $etcd_timeout lease grant $timeout)
+    then
+      lease_id=$(echo $output | awk '{print $2}')
+      lease_param="--lease="$lease_id""
+    else
+      return 2
+    fi
+  else
+    lease_param=""
+  fi
+
   # first try to create the key
   transaction="create(\""$directory$key"\") = \"0\"
 
-    put \""$directory$key"\" \""$value"\"
+    put \""$directory$key"\" \""$value"\" "$lease_param"
 
   "
   output=$(etcdctl $etcd_options --dial-timeout $etcd_timeout txn <<< "$transaction")
@@ -299,11 +322,11 @@ case "$1" in
     exit $?
     ;;
   create)
-    if [ "$#" -ne 3 ]; then
-      echo "Usage: $0 create <key> <value>"
-      exit 1
+    if [ "$#" -ne 4 ]; then
+      echo "Usage: $0 create <key> <value> <timeout>"
+      exit 125
     fi
-    create_key "$2" "$3"
+    create_key "$2" "$3" "$4"
     exit $?
     ;;
   erase)
