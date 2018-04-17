@@ -373,6 +373,7 @@ static uint32_t fm_mds_node_evt(FM_CB *cb,
     case NCSMDS_NODE_DOWN:
       if (cb->cluster_size != 0) {
         --cb->cluster_size;
+        TRACE("cluster_size %llu", (unsigned long long)cb->cluster_size);
         TRACE("Node down event for node id %x, cluster size is now: %llu",
               node_evt->node_id, (unsigned long long)cb->cluster_size);
         check_for_node_isolation(cb);
@@ -397,6 +398,7 @@ static uint32_t fm_mds_node_evt(FM_CB *cb,
 
     case NCSMDS_NODE_UP:
       ++cb->cluster_size;
+      TRACE("cluster_size %llu", (unsigned long long)cb->cluster_size);
       TRACE("Node up event for node id %x, cluster size is now: %llu",
             node_evt->node_id, (unsigned long long)cb->cluster_size);
       check_for_node_isolation(cb);

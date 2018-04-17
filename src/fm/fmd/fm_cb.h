@@ -100,7 +100,7 @@ struct FM_CB {
 
   std::atomic<bool> peer_sc_up{false};
   bool well_connected{false};
-  uint64_t cluster_size{};
+  std::atomic<uint64_t> cluster_size{};
   struct timespec last_well_connected{};
   struct timespec node_isolation_timeout{};
   SaClmHandleT clm_hdl{};

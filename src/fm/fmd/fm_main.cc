@@ -551,21 +551,12 @@ static void fm_mbx_msg_handler(FM_CB *fm_cb, FM_EVT *fm_mbx_evt) {
            * trigerred quicker than the node_down event
            * has been received.
            */
-          if (fm_cb->role == PCS_RDA_STANDBY) {
-            const std::string current_active =
-                consensus_service.CurrentActive();
-            if (current_active.compare(osaf_extended_name_borrow(
-                    &fm_cb->peer_clm_node_name)) == 0) {
-              // update consensus service, before fencing old active controller
-              consensus_service.DemoteCurrentActive();
-            }
-          }
 
           if (fm_cb->use_remote_fencing) {
             if (fm_cb->peer_node_terminated == false) {
               // if peer_sc_up is true then
               // the node has come up already
-              if (fm_cb->peer_sc_up == false && fm_cb->immnd_down == true) {
+              if (consensus_service.IsEnabled() == false) {
                 opensaf_reboot(fm_cb->peer_node_id,
                                (char *)fm_cb->peer_clm_node_name.value,
                                "Received Node Down for peer controller");
@@ -580,8 +571,7 @@ static void fm_mbx_msg_handler(FM_CB *fm_cb, FM_EVT *fm_mbx_evt) {
             fm_cb->mutex_.Lock();
             peer_node_name = fm_cb->peer_node_name;
             fm_cb->mutex_.Unlock();
-            opensaf_reboot(fm_cb->peer_node_id,
-                           peer_node_name.c_str(),
+            opensaf_reboot(fm_cb->peer_node_id, peer_node_name.c_str(),
                            "Received Node Down for peer controller");
           }
           if (!((fm_cb->role == PCS_RDA_ACTIVE) &&
@@ -632,12 +622,6 @@ static void fm_mbx_msg_handler(FM_CB *fm_cb, FM_EVT *fm_mbx_evt) {
         }
 
         Consensus consensus_service;
-        const std::string current_active = consensus_service.CurrentActive();
-        if (current_active.compare(
-                osaf_extended_name_borrow(&fm_cb->peer_clm_node_name)) == 0) {
-          // update consensus service, before fencing old active controller
-          consensus_service.DemoteCurrentActive();
-        }
 
         /* Now. Try resetting other blade */
         fm_cb->role = PCS_RDA_ACTIVE;
@@ -645,7 +629,8 @@ static void fm_mbx_msg_handler(FM_CB *fm_cb, FM_EVT *fm_mbx_evt) {
         LOG_NO("Reseting peer controller node id: %x",
                unsigned(fm_cb->peer_node_id));
         if (fm_cb->use_remote_fencing) {
-          if (fm_cb->peer_node_terminated == false) {
+          if (fm_cb->peer_node_terminated == false &&
+              consensus_service.IsEnabled() == false) {
             opensaf_reboot(fm_cb->peer_node_id,
                            (char *)fm_cb->peer_clm_node_name.value,
                            "Received Node Down for peer controller");
@@ -658,8 +643,7 @@ static void fm_mbx_msg_handler(FM_CB *fm_cb, FM_EVT *fm_mbx_evt) {
           fm_cb->mutex_.Lock();
           peer_node_name = fm_cb->peer_node_name;
           fm_cb->mutex_.Unlock();
-          opensaf_reboot(fm_cb->peer_node_id,
-                         peer_node_name.c_str(),
+          opensaf_reboot(fm_cb->peer_node_id, peer_node_name.c_str(),
                          "Received Node Down for Active peer");
         }
         fm_rda_set_role(fm_cb, PCS_RDA_ACTIVE);
