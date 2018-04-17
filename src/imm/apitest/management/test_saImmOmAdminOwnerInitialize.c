@@ -23,12 +23,12 @@ void saImmOmAdminOwnerInitialize_01(void)
 	    (SaImmAdminOwnerNameT) __FUNCTION__;
 	SaImmAdminOwnerHandleT adminOwnerHandle;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName, SA_TRUE,
+	rc = immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName, SA_TRUE,
 					 &adminOwnerHandle);
 	test_validate(rc, SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmAdminOwnerInitialize_02(void)
@@ -37,12 +37,12 @@ void saImmOmAdminOwnerInitialize_02(void)
 	    (SaImmAdminOwnerNameT) __FUNCTION__;
 	SaImmAdminOwnerHandleT adminOwnerHandle;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmAdminOwnerInitialize(-1, adminOwnerName, SA_TRUE,
+	rc = immutil_saImmOmAdminOwnerInitialize(-1, adminOwnerName, SA_TRUE,
 					 &adminOwnerHandle);
 	test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmAdminOwnerInitialize_03(void)
@@ -51,13 +51,13 @@ void saImmOmAdminOwnerInitialize_03(void)
 	    (SaImmAdminOwnerNameT) __FUNCTION__;
 	SaImmAdminOwnerHandleT adminOwnerHandle;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 	/* invalid releaseOwnershipOnFinalize */
-	rc = saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName, -1,
+	rc = immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName, -1,
 					 &adminOwnerHandle);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmAdminOwnerInitialize_04(void)
@@ -75,21 +75,21 @@ void saImmOmAdminOwnerInitialize_04(void)
 	const SaImmAdminOperationParamsT_2 *params[] = {&param, NULL};
 
 	safassert(
-	    saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immOlderVersion),
+	    immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immOlderVersion),
 	    SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &adminOwnerHandle),
 		  SA_AIS_OK);
 
-	/* Ignoring return code*/ saImmOmAdminOwnerSet(adminOwnerHandle, aNames,
+	/* Ignoring return code*/ immutil_saImmOmAdminOwnerSet(adminOwnerHandle, aNames,
 						       SA_IMM_ONE);
 
-	rc = saImmOmAdminOperationInvoke_o2(adminOwnerHandle, &aName, 0LL, 1,
+	rc = immutil_saImmOmAdminOperationInvoke_o2(adminOwnerHandle, &aName, 0LL, 1,
 					    params, &retVal, 0LL, NULL);
 
 	test_validate(rc, SA_AIS_ERR_VERSION);
-	safassert(saImmOmAdminOwnerFinalize(adminOwnerHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(adminOwnerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmAdminOwnerInitialize_05(void)
@@ -98,12 +98,12 @@ void saImmOmAdminOwnerInitialize_05(void)
 	    (SaImmAdminOwnerNameT) "\001\002\003";
 	SaImmAdminOwnerHandleT adminOwnerHandle;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName, SA_TRUE,
+	rc = immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName, SA_TRUE,
 					 &adminOwnerHandle);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 extern void saImmOmAdminOwnerSet_01(void);

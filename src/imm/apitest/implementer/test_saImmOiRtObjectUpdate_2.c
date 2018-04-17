@@ -79,23 +79,23 @@ void saImmOiRtObjectUpdate_2_01(void)
 	    (SaImmOiImplementerNameT) __FUNCTION__;
 
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
-	safassert(saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
+	safassert(immutil_saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
 					  attrValues),
 		  SA_AIS_OK);
-	safassert(saImmOiRtObjectUpdate_2(immOiHandle, &dn, NULL),
+	safassert(immutil_saImmOiRtObjectUpdate_2(immOiHandle, &dn, NULL),
 		  SA_AIS_ERR_INVALID_PARAM);
 
 	int1Value = 0xbadbabe;
-	rc = saImmOiRtObjectUpdate_2(
+	rc = immutil_saImmOiRtObjectUpdate_2(
 	    immOiHandle, &dn, (const SaImmAttrModificationT_2 **)attrMods);
 	test_validate(rc, SA_AIS_OK);
 
-	safassert(saImmOiRtObjectDelete(immOiHandle, &dn), SA_AIS_OK);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiRtObjectDelete(immOiHandle, &dn), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 }
 
 void saImmOiRtObjectUpdate_2_02(void)
@@ -104,20 +104,20 @@ void saImmOiRtObjectUpdate_2_02(void)
 	    (SaImmOiImplementerNameT) __FUNCTION__;
 
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
-	safassert(saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
+	safassert(immutil_saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
 					  attrValues),
 		  SA_AIS_OK);
 
-	rc = saImmOiRtObjectUpdate_2(
+	rc = immutil_saImmOiRtObjectUpdate_2(
 	    -1, &dn, (const SaImmAttrModificationT_2 **)attrMods);
 	test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 
-	safassert(saImmOiRtObjectDelete(immOiHandle, &dn), SA_AIS_OK);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiRtObjectDelete(immOiHandle, &dn), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 }
 
 void saImmOiRtObjectUpdate_2_03(void)
@@ -126,23 +126,23 @@ void saImmOiRtObjectUpdate_2_03(void)
 	    (SaImmOiImplementerNameT) __FUNCTION__;
 
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
-	safassert(saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
+	safassert(immutil_saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
 					  attrValues),
 		  SA_AIS_OK);
-	safassert(saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
 
-	rc = saImmOiRtObjectUpdate_2(
+	rc = immutil_saImmOiRtObjectUpdate_2(
 	    immOiHandle, &dn, (const SaImmAttrModificationT_2 **)attrMods);
 	test_validate(rc, SA_AIS_ERR_BAD_OPERATION);
 
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
-	safassert(saImmOiRtObjectDelete(immOiHandle, &dn), SA_AIS_OK);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiRtObjectDelete(immOiHandle, &dn), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 }
 
 void saImmOiRtObjectUpdate_2_04(void)
@@ -151,16 +151,16 @@ void saImmOiRtObjectUpdate_2_04(void)
 	    (SaImmOiImplementerNameT) __FUNCTION__;
 
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
 
-	rc = saImmOiRtObjectUpdate_2(
+	rc = immutil_saImmOiRtObjectUpdate_2(
 	    immOiHandle, &rootObj, (const SaImmAttrModificationT_2 **)attrMods);
 	test_validate(rc, SA_AIS_ERR_BAD_OPERATION);
 
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 }
 
 void saImmOiRtObjectUpdate_2_05(void)
@@ -180,20 +180,20 @@ void saImmOiRtObjectUpdate_2_05(void)
 	SaImmAttrModificationT_2 *attrMods_5[] = {&attrMod_5, NULL};
 
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
-	safassert(saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
+	safassert(immutil_saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
 					  attrValues),
 		  SA_AIS_OK);
 
-	rc = saImmOiRtObjectUpdate_2(
+	rc = immutil_saImmOiRtObjectUpdate_2(
 	    immOiHandle, &dn, (const SaImmAttrModificationT_2 **)attrMods_5);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 
-	safassert(saImmOiRtObjectDelete(immOiHandle, &dn), SA_AIS_OK);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiRtObjectDelete(immOiHandle, &dn), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 }
 
 static const SaNameT rdn = {
@@ -232,38 +232,38 @@ void saImmOiRtObjectUpdate_2_06(void)
 	SaImmAttrValuesT_2 v1 = {"attr1", SA_IMM_ATTR_SAUINT32T, 1,
 				 (void **)int1Values};
 	const SaImmAttrValuesT_2 *attrValues[] = {&v1, &v2, NULL};
-	safassert(saImmOmInitialize(&immOmHandle, NULL, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, NULL, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
 	/* Create test object under root */
-	safassert(saImmOmCcbObjectCreate_2(ccbHandle, "TestClassConfig", NULL,
+	safassert(immutil_saImmOmCcbObjectCreate_2(ccbHandle, "TestClassConfig", NULL,
 					   attrValues),
 		  SA_AIS_OK);
-	safassert(saImmOmCcbApply(ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbApply(ccbHandle), SA_AIS_OK);
 
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
-	safassert(saImmOiObjectImplementerSet(immOiHandle, &rdn, SA_IMM_ONE),
+	safassert(immutil_saImmOiObjectImplementerSet(immOiHandle, &rdn, SA_IMM_ONE),
 		  SA_AIS_OK);
 
-	rc = saImmOiRtObjectUpdate_2(
+	rc = immutil_saImmOiRtObjectUpdate_2(
 	    immOiHandle, &rdn, (const SaImmAttrModificationT_2 **)attrMods_6);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 
 	safassert(
-	    saImmOiObjectImplementerRelease(immOiHandle, &rdn, SA_IMM_ONE),
+	    immutil_saImmOiObjectImplementerRelease(immOiHandle, &rdn, SA_IMM_ONE),
 	    SA_AIS_OK);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
-	safassert(saImmOmCcbObjectDelete(ccbHandle, &rdn), SA_AIS_OK);
-	safassert(saImmOmCcbApply(ccbHandle), SA_AIS_OK);
-	safassert(saImmOmCcbFinalize(ccbHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbObjectDelete(ccbHandle, &rdn), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbApply(ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbFinalize(ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOiRtObjectUpdate_2_07(void)
@@ -273,7 +273,7 @@ void saImmOiRtObjectUpdate_2_07(void)
 	 */
 
 	/* Create class */
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
 	SaImmAttrDefinitionT_2 rdn = {
@@ -286,7 +286,7 @@ void saImmOiRtObjectUpdate_2_07(void)
 					   SA_IMM_ATTR_STRONG_DEFAULT,
 				       &defaultVal};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, &attr, NULL};
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_RUNTIME, attrDefinitions),
 		  SA_AIS_OK);
 
@@ -304,19 +304,19 @@ void saImmOiRtObjectUpdate_2_07(void)
 	const SaImmAttrValuesT_2 *attrValues[] = {&rdnValue, &createValue,
 						  NULL};
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
 	safassert(
-	    saImmOiRtObjectCreate_2(immOiHandle, className, NULL, attrValues),
+	    immutil_saImmOiRtObjectCreate_2(immOiHandle, className, NULL, attrValues),
 	    SA_AIS_OK);
 
 	/* Set the strong default attribute to NULL */
 	SaImmAttrValuesT_2 value = {"attr", SA_IMM_ATTR_SAUINT32T, 0, NULL};
 	SaImmAttrModificationT_2 attrMod = {SA_IMM_ATTR_VALUES_REPLACE, value};
 	const SaImmAttrModificationT_2 *attrMods[] = {&attrMod, NULL};
-	safassert(saImmOiRtObjectUpdate_2(immOiHandle, &obj, attrMods),
+	safassert(immutil_saImmOiRtObjectUpdate_2(immOiHandle, &obj, attrMods),
 		  SA_AIS_OK);
 
 	/* Check value of the attribute */
@@ -324,10 +324,10 @@ void saImmOiRtObjectUpdate_2_07(void)
 	const SaImmAttrNameT attName = "attr";
 	SaImmAttrNameT attNames[] = {attName, NULL};
 	SaImmAttrValuesT_2 **resultAttrs;
-	safassert(saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
+	safassert(immutil_saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
 		  SA_AIS_OK);
 	safassert(
-	    saImmOmAccessorGet_2(accessorHandle, &obj, attNames, &resultAttrs),
+	    immutil_saImmOmAccessorGet_2(accessorHandle, &obj, attNames, &resultAttrs),
 	    SA_AIS_OK);
 	assert(resultAttrs[0] &&
 	       (resultAttrs[0]->attrValueType == SA_IMM_ATTR_SAUINT32T));
@@ -336,13 +336,13 @@ void saImmOiRtObjectUpdate_2_07(void)
 		      defaultVal);
 
 	/* Delete Object */
-	safassert(saImmOiRtObjectDelete(immOiHandle, &obj), SA_AIS_OK);
-	safassert(saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiRtObjectDelete(immOiHandle, &obj), SA_AIS_OK);
+	safassert(immutil_saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 
 	/* Delete class */
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOiRtObjectUpdate_2_08(void)
@@ -352,7 +352,7 @@ void saImmOiRtObjectUpdate_2_08(void)
 	 */
 
 	/* Create class */
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
 	SaImmAttrDefinitionT_2 rdn = {
@@ -365,7 +365,7 @@ void saImmOiRtObjectUpdate_2_08(void)
 		SA_IMM_ATTR_STRONG_DEFAULT | SA_IMM_ATTR_MULTI_VALUE,
 	    &defaultVal};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, &attr, NULL};
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_RUNTIME, attrDefinitions),
 		  SA_AIS_OK);
 
@@ -384,19 +384,19 @@ void saImmOiRtObjectUpdate_2_08(void)
 	const SaImmAttrValuesT_2 *attrValues[] = {&rdnValue, &createValue,
 						  NULL};
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
 	safassert(
-	    saImmOiRtObjectCreate_2(immOiHandle, className, NULL, attrValues),
+	    immutil_saImmOiRtObjectCreate_2(immOiHandle, className, NULL, attrValues),
 	    SA_AIS_OK);
 
 	/* Set the strong default attribute to NULL */
 	SaImmAttrValuesT_2 value = {"attr", SA_IMM_ATTR_SAUINT32T, 0, NULL};
 	SaImmAttrModificationT_2 attrMod = {SA_IMM_ATTR_VALUES_REPLACE, value};
 	const SaImmAttrModificationT_2 *attrMods[] = {&attrMod, NULL};
-	safassert(saImmOiRtObjectUpdate_2(immOiHandle, &obj, attrMods),
+	safassert(immutil_saImmOiRtObjectUpdate_2(immOiHandle, &obj, attrMods),
 		  SA_AIS_OK);
 
 	/* Check value of the attribute */
@@ -404,10 +404,10 @@ void saImmOiRtObjectUpdate_2_08(void)
 	const SaImmAttrNameT attName = "attr";
 	SaImmAttrNameT attNames[] = {attName, NULL};
 	SaImmAttrValuesT_2 **resultAttrs;
-	safassert(saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
+	safassert(immutil_saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
 		  SA_AIS_OK);
 	safassert(
-	    saImmOmAccessorGet_2(accessorHandle, &obj, attNames, &resultAttrs),
+	    immutil_saImmOmAccessorGet_2(accessorHandle, &obj, attNames, &resultAttrs),
 	    SA_AIS_OK);
 	assert(resultAttrs[0] &&
 	       (resultAttrs[0]->attrValueType == SA_IMM_ATTR_SAUINT32T));
@@ -416,13 +416,13 @@ void saImmOiRtObjectUpdate_2_08(void)
 		      defaultVal);
 
 	/* Delete Object */
-	safassert(saImmOiRtObjectDelete(immOiHandle, &obj), SA_AIS_OK);
-	safassert(saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiRtObjectDelete(immOiHandle, &obj), SA_AIS_OK);
+	safassert(immutil_saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 
 	/* Delete class */
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOiRtObjectUpdate_2_09(void)
@@ -432,7 +432,7 @@ void saImmOiRtObjectUpdate_2_09(void)
 	 */
 
 	/* Create class */
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
 	SaImmAttrDefinitionT_2 rdn = {
@@ -445,7 +445,7 @@ void saImmOiRtObjectUpdate_2_09(void)
 		SA_IMM_ATTR_STRONG_DEFAULT | SA_IMM_ATTR_MULTI_VALUE,
 	    &defaultVal};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, &attr, NULL};
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_RUNTIME, attrDefinitions),
 		  SA_AIS_OK);
 
@@ -464,19 +464,19 @@ void saImmOiRtObjectUpdate_2_09(void)
 	const SaImmAttrValuesT_2 *attrValues[] = {&rdnValue, &createValue,
 						  NULL};
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
 	safassert(
-	    saImmOiRtObjectCreate_2(immOiHandle, className, NULL, attrValues),
+	    immutil_saImmOiRtObjectCreate_2(immOiHandle, className, NULL, attrValues),
 	    SA_AIS_OK);
 
 	/* Set the strong default attribute to NULL */
 	SaImmAttrValuesT_2 value = {"attr", SA_IMM_ATTR_SAUINT32T, 2, valArray};
 	SaImmAttrModificationT_2 attrMod = {SA_IMM_ATTR_VALUES_DELETE, value};
 	const SaImmAttrModificationT_2 *attrMods[] = {&attrMod, NULL};
-	safassert(saImmOiRtObjectUpdate_2(immOiHandle, &obj, attrMods),
+	safassert(immutil_saImmOiRtObjectUpdate_2(immOiHandle, &obj, attrMods),
 		  SA_AIS_OK);
 
 	/* Check value of the attribute */
@@ -484,10 +484,10 @@ void saImmOiRtObjectUpdate_2_09(void)
 	const SaImmAttrNameT attName = "attr";
 	SaImmAttrNameT attNames[] = {attName, NULL};
 	SaImmAttrValuesT_2 **resultAttrs;
-	safassert(saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
+	safassert(immutil_saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
 		  SA_AIS_OK);
 	safassert(
-	    saImmOmAccessorGet_2(accessorHandle, &obj, attNames, &resultAttrs),
+	    immutil_saImmOmAccessorGet_2(accessorHandle, &obj, attNames, &resultAttrs),
 	    SA_AIS_OK);
 	assert(resultAttrs[0] &&
 	       (resultAttrs[0]->attrValueType == SA_IMM_ATTR_SAUINT32T));
@@ -496,11 +496,11 @@ void saImmOiRtObjectUpdate_2_09(void)
 		      defaultVal);
 
 	/* Delete Object */
-	safassert(saImmOiRtObjectDelete(immOiHandle, &obj), SA_AIS_OK);
-	safassert(saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiRtObjectDelete(immOiHandle, &obj), SA_AIS_OK);
+	safassert(immutil_saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 
 	/* Delete class */
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }

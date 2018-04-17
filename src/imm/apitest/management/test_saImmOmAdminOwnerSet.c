@@ -24,16 +24,16 @@ void saImmOmAdminOwnerSet_01(void)
 	SaImmAdminOwnerHandleT ownerHandle;
 	const SaNameT *objectNames[] = {&rootObj, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
 	test_validate(
-	    saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_ONE),
+	    immutil_saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_ONE),
 	    SA_AIS_OK);
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmAdminOwnerSet_02(void)
@@ -43,15 +43,15 @@ void saImmOmAdminOwnerSet_02(void)
 	SaImmAdminOwnerHandleT ownerHandle;
 	const SaNameT *objectNames[] = {&rootObj, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
-	test_validate(saImmOmAdminOwnerSet(-1, objectNames, SA_IMM_ONE),
+	test_validate(immutil_saImmOmAdminOwnerSet(-1, objectNames, SA_IMM_ONE),
 		      SA_AIS_ERR_BAD_HANDLE);
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmAdminOwnerSet_03(void)
@@ -61,16 +61,16 @@ void saImmOmAdminOwnerSet_03(void)
 	SaImmAdminOwnerHandleT ownerHandle;
 	const SaNameT *objectNames[] = {&rootObj, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
 	/* Invalid scope */
-	test_validate(saImmOmAdminOwnerSet(ownerHandle, objectNames, -1),
+	test_validate(immutil_saImmOmAdminOwnerSet(ownerHandle, objectNames, -1),
 		      SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmAdminOwnerSet_04(void)
@@ -80,17 +80,17 @@ void saImmOmAdminOwnerSet_04(void)
 	SaImmAdminOwnerHandleT ownerHandle;
 	const SaNameT *objectNames[] = {NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
 	/* No object names */
 	test_validate(
-	    saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_ONE),
+	    immutil_saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_ONE),
 	    SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmAdminOwnerSet_05(void)
@@ -104,31 +104,31 @@ void saImmOmAdminOwnerSet_05(void)
 	const SaNameT *objectNames2[] = {&rootObj, &objectName, NULL};
 	const SaNameT *objectNames3[] = {&objectName, &rootObj, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
 
-	rc = saImmOmAdminOwnerSet(ownerHandle, objectNames1, SA_IMM_ONE);
+	rc = immutil_saImmOmAdminOwnerSet(ownerHandle, objectNames1, SA_IMM_ONE);
 	if (rc != SA_AIS_ERR_NOT_EXIST) {
 		TRACE_ENTER();
 		goto done;
 	}
 
 	/* Check some permutations */
-	rc = saImmOmAdminOwnerSet(ownerHandle, objectNames2, SA_IMM_ONE);
+	rc = immutil_saImmOmAdminOwnerSet(ownerHandle, objectNames2, SA_IMM_ONE);
 	if (rc != SA_AIS_ERR_NOT_EXIST) {
 		TRACE_ENTER();
 		goto done;
 	}
 
-	rc = saImmOmAdminOwnerSet(ownerHandle, objectNames3, SA_IMM_ONE);
+	rc = immutil_saImmOmAdminOwnerSet(ownerHandle, objectNames3, SA_IMM_ONE);
 
 done:
 	test_validate(rc, SA_AIS_ERR_NOT_EXIST);
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmAdminOwnerSet_06(void)
@@ -145,45 +145,45 @@ void saImmOmAdminOwnerSet_06(void)
 	const SaNameT *objectNames2[] = {&rootObj, &objectName, NULL};
 	const SaNameT *objectNames3[] = {&objectName, &rootObj, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName1,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName1,
 					      SA_TRUE, &ownerHandle1),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName2,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName2,
 					      SA_TRUE, &ownerHandle2),
 		  SA_AIS_OK);
 
-	safassert(saImmOmAdminOwnerSet(ownerHandle1, objectNames1, SA_IMM_ONE),
+	safassert(immutil_saImmOmAdminOwnerSet(ownerHandle1, objectNames1, SA_IMM_ONE),
 		  SA_AIS_OK);
-	rc = saImmOmAdminOwnerSet(ownerHandle2, objectNames1, SA_IMM_ONE);
+	rc = immutil_saImmOmAdminOwnerSet(ownerHandle2, objectNames1, SA_IMM_ONE);
 	if (rc != SA_AIS_ERR_EXIST)
 		goto done;
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle1), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle1), SA_AIS_OK);
 
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName1,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName1,
 					      SA_TRUE, &ownerHandle1),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerSet(ownerHandle1, objectNames2, SA_IMM_ONE),
+	safassert(immutil_saImmOmAdminOwnerSet(ownerHandle1, objectNames2, SA_IMM_ONE),
 		  SA_AIS_OK);
-	rc = saImmOmAdminOwnerSet(ownerHandle2, objectNames2, SA_IMM_ONE);
+	rc = immutil_saImmOmAdminOwnerSet(ownerHandle2, objectNames2, SA_IMM_ONE);
 	if (rc != SA_AIS_ERR_EXIST)
 		goto done;
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle1), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle1), SA_AIS_OK);
 
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName1,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName1,
 					      SA_TRUE, &ownerHandle1),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerSet(ownerHandle1, objectNames3, SA_IMM_ONE),
+	safassert(immutil_saImmOmAdminOwnerSet(ownerHandle1, objectNames3, SA_IMM_ONE),
 		  SA_AIS_OK);
-	rc = saImmOmAdminOwnerSet(ownerHandle2, objectNames3, SA_IMM_ONE);
+	rc = immutil_saImmOmAdminOwnerSet(ownerHandle2, objectNames3, SA_IMM_ONE);
 	if (rc != SA_AIS_ERR_EXIST)
 		goto done;
 
 done:
 	test_validate(rc, SA_AIS_ERR_EXIST);
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle1), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle1), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmAdminOwnerSet_07(void)
@@ -198,19 +198,19 @@ void saImmOmAdminOwnerSet_07(void)
 	const SaImmAdminOperationParamsT_2 *params[1] = {NULL};
 
 	safassert(
-	    saImmOmInitialize_o2(&immOmHandle, &immOmA2bCallbacks, &immVersion),
+	    immutil_saImmOmInitialize_o2(&immOmHandle, &immOmA2bCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_ONE),
+	safassert(immutil_saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_ONE),
 		  SA_AIS_OK);
 
-	rc = saImmOmAdminOperationInvokeAsync_2(ownerHandle, inv, &rootObj,
+	rc = immutil_saImmOmAdminOperationInvokeAsync_2(ownerHandle, inv, &rootObj,
 						cont, opId, params);
 
 	test_validate(rc, SA_AIS_ERR_INIT);
 
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }

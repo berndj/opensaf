@@ -196,7 +196,7 @@ saImmOiRtAttrUpdateCallback(SaImmOiHandleT handle, const SaNameT *objectName,
 	assert(objectName != NULL);
 	assert(attributeNames != NULL);
 
-	//    return saImmOiRtObjectUpdate_2(handle, objectName, (const
+	//    return immutil_saImmOiRtObjectUpdate_2(handle, objectName, (const
 	//    SaImmAttrModificationT_2**) attrMods);
 	return SA_AIS_OK;
 }
@@ -211,7 +211,7 @@ static void saImmOiAdminOperationCallback(
 	    implName, (char *)osaf_extended_name_borrow(objectName),
 	    operationId, invocation);
 	SaAisErrorT err =
-	    saImmOiAdminOperationResult(immOiHandle, invocation, SA_AIS_OK);
+	    immutil_saImmOiAdminOperationResult(immOiHandle, invocation, SA_AIS_OK);
 	if (err != SA_AIS_OK) {
 		fprintf(stderr, "Reply on admin operation failed, err:%u\n",
 			err);
@@ -284,18 +284,18 @@ int main(int argc, char *argv[])
 	}
 
 	printf("Implementer: %s\n", implName);
-	error = saImmOiInitialize_2(&immOiHandle, &callbacks, &immVersion);
+	error = immutil_saImmOiInitialize_2(&immOiHandle, &callbacks, &immVersion);
 	if (error != SA_AIS_OK) {
-		fprintf(stderr, "error - saImmOiInitialize FAILED: %s\n",
+		fprintf(stderr, "error - immutil_saImmOiInitialize FAILED: %s\n",
 			saf_error(error));
 		exit(EXIT_FAILURE);
 	}
 	printf("ImmVersion: %c %u %u\n", immVersion.releaseCode,
 	       immVersion.majorVersion, immVersion.minorVersion);
 
-	error = saImmOiImplementerSet(immOiHandle, implName);
+	error = immutil_saImmOiImplementerSet(immOiHandle, implName);
 	if (error != SA_AIS_OK) {
-		fprintf(stderr, "error - saImmOiImplementerSet FAILED: %s\n",
+		fprintf(stderr, "error - immutil_saImmOiImplementerSet FAILED: %s\n",
 			saf_error(error));
 		exit(EXIT_FAILURE);
 	}
@@ -324,7 +324,7 @@ int main(int argc, char *argv[])
 						 (void **)strValues};
 			const SaImmAttrValuesT_2 *attrValues[] = {&v1, NULL};
 
-			error = saImmOiRtObjectCreate_2(
+			error = immutil_saImmOiRtObjectCreate_2(
 			    immOiHandle,
 			    (SaImmClassNameT)osaf_extended_name_borrow(
 				&objectName),
@@ -332,7 +332,7 @@ int main(int argc, char *argv[])
 			if (error != SA_AIS_OK && error != SA_AIS_ERR_EXIST) {
 				fprintf(
 				    stderr,
-				    "error - saImmOiClassImplementerSet FAILED: %s\n",
+				    "error - immutil_saImmOiClassImplementerSet FAILED: %s\n",
 				    saf_error(error));
 				exit(EXIT_FAILURE);
 			}
@@ -342,14 +342,14 @@ int main(int argc, char *argv[])
 				printf("Runtime object: %s exists\n", str1);
 			}
 		} else {
-			error = saImmOiClassImplementerSet(
+			error = immutil_saImmOiClassImplementerSet(
 			    immOiHandle,
 			    (SaImmClassNameT)osaf_extended_name_borrow(
 				&objectName));
 			if (error != SA_AIS_OK) {
 				fprintf(
 				    stderr,
-				    "error - saImmOiClassImplementerSet FAILED: %s\n",
+				    "error - immutil_saImmOiClassImplementerSet FAILED: %s\n",
 				    saf_error(error));
 				exit(EXIT_FAILURE);
 			}
@@ -358,10 +358,10 @@ int main(int argc, char *argv[])
 		optind++;
 	}
 
-	error = saImmOiSelectionObjectGet(immOiHandle, &immOiSelectionObject);
+	error = immutil_saImmOiSelectionObjectGet(immOiHandle, &immOiSelectionObject);
 	if (error != SA_AIS_OK) {
 		fprintf(stderr,
-			"error - saImmOiSelectionObjectGet FAILED: %s\n",
+			"error - immutil_saImmOiSelectionObjectGet FAILED: %s\n",
 			saf_error(error));
 		exit(EXIT_FAILURE);
 	}

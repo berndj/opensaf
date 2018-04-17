@@ -23,13 +23,13 @@ void saImmOmAdminOwnerFinalize_01(void)
 	    (SaImmAdminOwnerNameT) __FUNCTION__;
 	SaImmAdminOwnerHandleT ownerHandle;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
-	test_validate(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	test_validate(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmAdminOwnerFinalize_02(void)
@@ -38,21 +38,21 @@ void saImmOmAdminOwnerFinalize_02(void)
 	    (SaImmAdminOwnerNameT) __FUNCTION__;
 	SaImmAdminOwnerHandleT ownerHandle;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	/* handle corrupted or uninitialized */
-	rc = saImmOmAdminOwnerFinalize(-1);
+	rc = immutil_saImmOmAdminOwnerFinalize(-1);
 	if (rc != SA_AIS_ERR_BAD_HANDLE)
 		goto done;
 
 	/* handle already finalized */
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
-	rc = saImmOmAdminOwnerFinalize(ownerHandle);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	rc = immutil_saImmOmAdminOwnerFinalize(ownerHandle);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 done:
 	test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }
@@ -69,27 +69,27 @@ void saImmOmAdminOwnerFinalize_03(void)
 	const SaNameT *objectNames[] = {&rootObj, NULL};
 
 	/* setup */
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_ONE),
+	safassert(immutil_saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_ONE),
 		  SA_AIS_OK);
 
 	/* rude guy interferes */
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName2,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName2,
 					      SA_TRUE, &rudeGuyHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerClear(immOmHandle, objectNames, SA_IMM_ONE),
+	safassert(immutil_saImmOmAdminOwnerClear(immOmHandle, objectNames, SA_IMM_ONE),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerSet(rudeGuyHandle, objectNames, SA_IMM_ONE),
+	safassert(immutil_saImmOmAdminOwnerSet(rudeGuyHandle, objectNames, SA_IMM_ONE),
 		  SA_AIS_OK);
 
 	/* Now test finalizing the original users handle. */
-	test_validate(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	test_validate(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
 
 	/* Cleanup */
-	safassert(saImmOmAdminOwnerFinalize(rudeGuyHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(rudeGuyHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }

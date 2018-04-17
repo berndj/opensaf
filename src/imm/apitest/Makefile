@@ -14,8 +14,6 @@
 # Author(s): Ericsson AB
 #
 
-check:
-	$(MAKE) -C ../../.. lib/libimmtest.la bin/immoitest bin/immapplier bin/immomtest bin/immpopulate
-	../../../immoitest
-	../../../immomtest
-
+all:
+	$(MAKE) -C ../../.. lib/libimmtest.la bin/immoitest bin/immomtest \
+		bin/immapplier bin/immpopulate

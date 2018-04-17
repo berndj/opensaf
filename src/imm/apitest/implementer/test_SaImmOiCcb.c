@@ -148,15 +148,15 @@ static SaAisErrorT config_object_create(SaImmAdminOwnerHandleT ownerHandle,
 	TRACE_ENTER2("'%s'\n", rdn->value);
 
 	nameValues[0] = rdn;
-	safassert(saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
-	if (saImmOmCcbObjectCreate_2(ccbHandle, configClassName, pName,
+	safassert(immutil_saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
+	if (immutil_saImmOmCcbObjectCreate_2(ccbHandle, configClassName, pName,
 				     attrValues) == SA_AIS_ERR_EXIST)
 		goto done;
 
-	safassert(saImmOmCcbApply(ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbApply(ccbHandle), SA_AIS_OK);
 
 done:
-	return saImmOmCcbFinalize(ccbHandle);
+	return immutil_saImmOmCcbFinalize(ccbHandle);
 }
 
 static SaAisErrorT config_object_delete(SaImmAdminOwnerHandleT ownerHandle,
@@ -166,14 +166,14 @@ static SaAisErrorT config_object_delete(SaImmAdminOwnerHandleT ownerHandle,
 
 	TRACE_ENTER2("'%s'\n", dn->value);
 
-	safassert(saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
-	if (saImmOmCcbObjectDelete(ccbHandle, dn) == SA_AIS_ERR_NOT_EXIST)
+	safassert(immutil_saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
+	if (immutil_saImmOmCcbObjectDelete(ccbHandle, dn) == SA_AIS_ERR_NOT_EXIST)
 		goto done;
 
-	safassert(saImmOmCcbApply(ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbApply(ccbHandle), SA_AIS_OK);
 
 done:
-	return saImmOmCcbFinalize(ccbHandle);
+	return immutil_saImmOmCcbFinalize(ccbHandle);
 }
 
 /**
@@ -195,12 +195,12 @@ static void *objectImplementerThreadMain(void *arg)
 	TRACE_ENTER();
 
 	snprintf(buf, sizeof(buf), "%s_%s", __FUNCTION__, objectName->value);
-	safassert(saImmOiInitialize_2(&handle, &callbacks, &immVersion),
+	safassert(immutil_saImmOiInitialize_2(&handle, &callbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOiImplementerSet(handle, implementerName), SA_AIS_OK);
-	safassert(saImmOiObjectImplementerSet(handle, objectName, SA_IMM_ONE),
+	safassert(immutil_saImmOiImplementerSet(handle, implementerName), SA_AIS_OK);
+	safassert(immutil_saImmOiObjectImplementerSet(handle, objectName, SA_IMM_ONE),
 		  SA_AIS_OK);
-	safassert(saImmOiSelectionObjectGet(handle, &selObj), SA_AIS_OK);
+	safassert(immutil_saImmOiSelectionObjectGet(handle, &selObj), SA_AIS_OK);
 
 	fds[0].fd = (int)selObj;
 	fds[0].events = POLLIN;
@@ -222,12 +222,12 @@ static void *objectImplementerThreadMain(void *arg)
 			break;
 	}
 
-	if (saImmOiObjectImplementerRelease(handle, objectName, SA_IMM_ONE) ==
+	if (immutil_saImmOiObjectImplementerRelease(handle, objectName, SA_IMM_ONE) ==
 	    SA_AIS_ERR_NOT_EXIST)
 		TRACE("Cannot release object implementer for '%s'",
 		      objectName->value);
 
-	safassert(saImmOiFinalize(handle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(handle), SA_AIS_OK);
 
 	TRACE_LEAVE();
 
@@ -252,11 +252,11 @@ static void *classImplementerThreadMain(void *arg)
 
 	TRACE_ENTER();
 
-	safassert(saImmOiInitialize_2(&handle, &callbacks, &immVersion),
+	safassert(immutil_saImmOiInitialize_2(&handle, &callbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOiImplementerSet(handle, implementerName), SA_AIS_OK);
-	safassert(saImmOiClassImplementerSet(handle, className), SA_AIS_OK);
-	safassert(saImmOiSelectionObjectGet(handle, &selObj), SA_AIS_OK);
+	safassert(immutil_saImmOiImplementerSet(handle, implementerName), SA_AIS_OK);
+	safassert(immutil_saImmOiClassImplementerSet(handle, className), SA_AIS_OK);
+	safassert(immutil_saImmOiSelectionObjectGet(handle, &selObj), SA_AIS_OK);
 
 	fds[0].fd = (int)selObj;
 	fds[0].events = POLLIN;
@@ -276,8 +276,8 @@ static void *classImplementerThreadMain(void *arg)
 			break;
 	}
 
-	safassert(saImmOiClassImplementerRelease(handle, className), SA_AIS_OK);
-	safassert(saImmOiFinalize(handle), SA_AIS_OK);
+	safassert(immutil_saImmOiClassImplementerRelease(handle, className), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(handle), SA_AIS_OK);
 
 	TRACE_LEAVE();
 
@@ -306,46 +306,46 @@ static SaAisErrorT om_ccb_exec(unsigned int control)
 	SaStringT *errorStrings = NULL;
 
 	TRACE_ENTER();
-	safassert(saImmOmInitialize(&handle, NULL, &immVersion), SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(handle, adminOwnerName, SA_TRUE,
+	safassert(immutil_saImmOmInitialize(&handle, NULL, &immVersion), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerInitialize(handle, adminOwnerName, SA_TRUE,
 					      &ownerHandle),
 		  SA_AIS_OK);
 	safassert(
-	    saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_SUBTREE),
+	    immutil_saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_SUBTREE),
 	    SA_AIS_OK);
-	safassert(saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
 
-	if ((rc = saImmOmCcbObjectDelete(ccbHandle, &dnObj1)) != SA_AIS_OK)
+	if ((rc = immutil_saImmOmCcbObjectDelete(ccbHandle, &dnObj1)) != SA_AIS_OK)
 		goto done;
 
-	if ((rc = saImmOmCcbObjectModify_2(ccbHandle, &dnObj2, attrMods)) !=
+	if ((rc = immutil_saImmOmCcbObjectModify_2(ccbHandle, &dnObj2, attrMods)) !=
 	    SA_AIS_OK)
 		goto done;
 
-	if ((rc = saImmOmCcbObjectCreate_2(ccbHandle, configClassName, &rootObj,
+	if ((rc = immutil_saImmOmCcbObjectCreate_2(ccbHandle, configClassName, &rootObj,
 					   attrValues)) != SA_AIS_OK)
 		goto done;
 
 	switch (control) {
 
 	case 0:
-		safassert(saImmOmCcbApply(ccbHandle), SA_AIS_OK);
+		safassert(immutil_saImmOmCcbApply(ccbHandle), SA_AIS_OK);
 		break;
 
 	case 1:
-		safassert(saImmOmCcbValidate(ccbHandle), SA_AIS_OK);
-		safassert(saImmOmCcbApply(ccbHandle), SA_AIS_OK);
+		safassert(immutil_saImmOmCcbValidate(ccbHandle), SA_AIS_OK);
+		safassert(immutil_saImmOmCcbApply(ccbHandle), SA_AIS_OK);
 		break;
 
 	case 2:
-		safassert(saImmOmCcbValidate(ccbHandle), SA_AIS_OK);
-		safassert(saImmOmCcbAbort(ccbHandle), SA_AIS_OK);
+		safassert(immutil_saImmOmCcbValidate(ccbHandle), SA_AIS_OK);
+		safassert(immutil_saImmOmCcbAbort(ccbHandle), SA_AIS_OK);
 		break;
 
 	case 3:
-		safassert(saImmOmCcbValidate(ccbHandle),
+		safassert(immutil_saImmOmCcbValidate(ccbHandle),
 			  SA_AIS_ERR_FAILED_OPERATION);
-		safassert(saImmOmCcbAbort(ccbHandle), SA_AIS_OK);
+		safassert(immutil_saImmOmCcbAbort(ccbHandle), SA_AIS_OK);
 		break;
 
 	default:
@@ -385,9 +385,9 @@ done:
 		}
 	}
 
-	safassert(saImmOmCcbFinalize(ccbHandle), SA_AIS_OK);
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(handle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbFinalize(ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(handle), SA_AIS_OK);
 
 	TRACE_LEAVE();
 	return rc;
@@ -405,23 +405,23 @@ static void om_setup(void)
 	SaImmAdminOwnerHandleT ownerHandle;
 
 	TRACE_ENTER();
-	safassert(saImmOmInitialize(&immOmHandle, NULL, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, NULL, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
 	safassert(
-	    saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_SUBTREE),
+	    immutil_saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_SUBTREE),
 	    SA_AIS_OK);
 	safassert(config_object_create(ownerHandle, &rootObj, &rdnObj1),
 		  SA_AIS_OK);
 	safassert(config_object_create(ownerHandle, &rootObj, &rdnObj2),
 		  SA_AIS_OK);
 	safassert(
-	    saImmOmAdminOwnerRelease(ownerHandle, objectNames, SA_IMM_SUBTREE),
+	    immutil_saImmOmAdminOwnerRelease(ownerHandle, objectNames, SA_IMM_SUBTREE),
 	    SA_AIS_OK);
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	TRACE_LEAVE();
 }
 
@@ -437,13 +437,13 @@ static void om_teardown(void)
 	SaImmAdminOwnerHandleT ownerHandle;
 
 	TRACE_ENTER();
-	safassert(saImmOmInitialize(&immOmHandle, NULL, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, NULL, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
 	safassert(
-	    saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_SUBTREE),
+	    immutil_saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_SUBTREE),
 	    SA_AIS_OK);
 	if (config_object_delete(ownerHandle, &dnObj1) != SA_AIS_OK)
 		TRACE("Object '%s' cannot be deleted\n", dnObj3.value);
@@ -451,8 +451,8 @@ static void om_teardown(void)
 		TRACE("Object '%s' cannot be deleted\n", dnObj3.value);
 	if (config_object_delete(ownerHandle, &dnObj3) != SA_AIS_OK)
 		TRACE("Object '%s' cannot be deleted\n", dnObj3.value);
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	TRACE_LEAVE();
 }
 
@@ -770,16 +770,16 @@ static void saImmOiCcb_09(void)
 	saImmOiCcbCompletedCallback_response = SA_AIS_ERR_BAD_OPERATION;
 	sleep(1); /* Race condition, allow implementer threads to set up!*/
 
-	safassert(saImmOmInitialize(&omHandle, NULL, &immVersion), SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(omHandle, adminOwnerName, SA_TRUE,
+	safassert(immutil_saImmOmInitialize(&omHandle, NULL, &immVersion), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerInitialize(omHandle, adminOwnerName, SA_TRUE,
 					      &ownerHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
 	safassert(object_create_2(omHandle, ccbHandle, configClassName, &obj,
 				  NULL, NULL),
 		  SA_AIS_OK);
 
-	rc = saImmOmCcbApply(ccbHandle);
+	rc = immutil_saImmOmCcbApply(ccbHandle);
 
 	if (rc == SA_AIS_ERR_FAILED_OPERATION) {
 		safassert(saImmOmCcbGetErrorStrings(ccbHandle, &errorStrings),
@@ -804,9 +804,9 @@ static void saImmOiCcb_09(void)
 	test_validate(rc, SA_AIS_ERR_FAILED_OPERATION);
 
 	safassert(object_delete(ownerHandle, &obj, 0), SA_AIS_OK);
-	safassert(saImmOmCcbFinalize(ccbHandle), SA_AIS_OK);
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(omHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbFinalize(ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(omHandle), SA_AIS_OK);
 
 	indicate_stop_fd();
 	pthread_join(threadid, NULL);

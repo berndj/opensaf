@@ -25,13 +25,13 @@ void saImmOmClassCreate_2_01(void)
 					NULL};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_OK);
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_2_02(void)
@@ -42,13 +42,13 @@ void saImmOmClassCreate_2_02(void)
 	    SA_IMM_ATTR_RUNTIME | SA_IMM_ATTR_RDN | SA_IMM_ATTR_CACHED, NULL};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_OK);
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_2_03(void)
@@ -59,12 +59,12 @@ void saImmOmClassCreate_2_03(void)
 	    SA_IMM_ATTR_RUNTIME | SA_IMM_ATTR_RDN | SA_IMM_ATTR_CACHED, NULL};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmClassCreate_2(-1, className, SA_IMM_CLASS_RUNTIME,
+	rc = immutil_saImmOmClassCreate_2(-1, className, SA_IMM_CLASS_RUNTIME,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_2_04(void)
@@ -74,15 +74,15 @@ void saImmOmClassCreate_2_04(void)
 					NULL};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmClassCreate_2(immOmHandle, "", SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, "", SA_IMM_CLASS_CONFIG,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 	if (rc == SA_AIS_OK)
 		/* an error? */
-		safassert(saImmOmClassDelete(immOmHandle, ""), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+		safassert(immutil_saImmOmClassDelete(immOmHandle, ""), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_2_05(void)
@@ -93,12 +93,12 @@ void saImmOmClassCreate_2_05(void)
 					NULL};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_2_06(void)
@@ -108,12 +108,12 @@ void saImmOmClassCreate_2_06(void)
 	    "rdn", -1, SA_IMM_ATTR_CONFIG | SA_IMM_ATTR_RDN, NULL};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_2_07(void)
@@ -124,13 +124,13 @@ void saImmOmClassCreate_2_07(void)
 	    SA_IMM_ATTR_RUNTIME | SA_IMM_ATTR_RDN | SA_IMM_ATTR_CACHED, NULL};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 	/* mismatch classCategory vs attribute type */
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_2_08(void)
@@ -141,13 +141,13 @@ void saImmOmClassCreate_2_08(void)
 					NULL};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 	/* mismatch classCategory vs attribute type */
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_2_09(void)
@@ -158,13 +158,13 @@ void saImmOmClassCreate_2_09(void)
 					NULL};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 	/* SA_IMM_ATTR_CACHED missing */
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_2_10(void)
@@ -178,13 +178,13 @@ void saImmOmClassCreate_2_10(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, &attr2,
 							   NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 	/* config attributes in runtime class */
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_2_11(void)
@@ -195,12 +195,12 @@ void saImmOmClassCreate_2_11(void)
 	    SA_IMM_ATTR_RUNTIME | SA_IMM_ATTR_RDN | SA_IMM_ATTR_CACHED, NULL};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 	/* Illegal classCategory */
-	rc = saImmOmClassCreate_2(immOmHandle, className, 99, attrDefinitions);
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, 99, attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_2_12(void)
@@ -211,16 +211,16 @@ void saImmOmClassCreate_2_12(void)
 	    SA_IMM_ATTR_RUNTIME | SA_IMM_ATTR_RDN | SA_IMM_ATTR_CACHED, NULL};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_RUNTIME, attrDefinitions),
 		  SA_AIS_OK);
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_EXIST);
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 #define OPENSAF_IMM_OBJECT_DN "opensafImm=opensafImm,safApp=safImmService"
@@ -247,11 +247,11 @@ void saImmOmClassCreate_2_13(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions2[] = {&attr1, &attr2,
 							    NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
+	safassert(immutil_saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmAccessorGet_2(accessorHandle, &myObj, attNames,
+	safassert(immutil_saImmOmAccessorGet_2(accessorHandle, &myObj, attNames,
 				       &resultAttrs),
 		  SA_AIS_OK);
 	assert(resultAttrs[0] &&
@@ -260,10 +260,10 @@ void saImmOmClassCreate_2_13(void)
 		noStdFlags = *((SaUint32T *)resultAttrs[0]->attrValues[0]);
 	}
 
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_CONFIG, attrDefinitions),
 		  SA_AIS_OK);
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
 				  attrDefinitions2);
 	if (noStdFlags & OPENSAF_IMM_FLAG_SCHCH_ALLOW) {
 		test_validate(rc, SA_AIS_OK);
@@ -274,8 +274,8 @@ void saImmOmClassCreate_2_13(void)
 			test_validate(rc, SA_AIS_OK);
 		}
 	}
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_2_14(void)
@@ -290,14 +290,14 @@ void saImmOmClassCreate_2_14(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, &attr2,
 							   NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 	/* config attributes in runtime class */
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-	// safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	// safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_2_15(void)
@@ -312,14 +312,14 @@ void saImmOmClassCreate_2_15(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, &attr2,
 							   NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 	/* config attributes in runtime class */
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-	// safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	// safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_2_16(void)
@@ -340,13 +340,13 @@ void saImmOmClassCreate_2_16(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, &attr2,
 							   &attr3, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_OK);
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_2_17(void)
@@ -363,12 +363,12 @@ void saImmOmClassCreate_2_17(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, &attr2,
 							   NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_2_18(void)
@@ -376,7 +376,7 @@ void saImmOmClassCreate_2_18(void)
 	/*
 	 * Create a class that has STRONG_DEFAULT flag.
 	 */
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -391,12 +391,12 @@ void saImmOmClassCreate_2_18(void)
 				       &defaultVal};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, &attr, NULL};
 
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_OK);
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_2_19(void)
@@ -405,7 +405,7 @@ void saImmOmClassCreate_2_19(void)
 	 * Create a class that has STRONG_DEFAULT flag without having default
 	 * value.
 	 */
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -419,11 +419,11 @@ void saImmOmClassCreate_2_19(void)
 				       NULL};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, &attr, NULL};
 
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 /*
@@ -441,12 +441,12 @@ void saImmOmClassCreate_with_reserved_name_01(void)
 					NULL};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_with_reserved_name_02(void)
@@ -458,12 +458,12 @@ void saImmOmClassCreate_with_reserved_name_02(void)
 		NULL};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&attr1, NULL};
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 #define OPENSAF_IMM_NOSTD_FLAG_PARAM "opensafImmNostdFlags"
@@ -487,11 +487,11 @@ static int enableSchemaChange()
 	SaImmAttrNameT attNames[] = {attName, NULL};
 	SaImmAttrValuesT_2 **resultAttrs;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
+	safassert(immutil_saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmAccessorGet_2(accessorHandle, &objectName, attNames,
+	safassert(immutil_saImmOmAccessorGet_2(accessorHandle, &objectName, attNames,
 				       &resultAttrs),
 		  SA_AIS_OK);
 	assert(resultAttrs[0] &&
@@ -516,18 +516,18 @@ static int enableSchemaChange()
 	const SaImmAdminOperationParamsT_2 *params[] = {&param, NULL};
 	SaAisErrorT operation_return_value;
 
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_FALSE, &ownerHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_ONE),
+	safassert(immutil_saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_ONE),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOperationInvoke_2(
+	safassert(immutil_saImmOmAdminOperationInvoke_2(
 		      ownerHandle, &objectName, 1, OPENSAF_IMM_NOSTD_FLAG_ON,
 		      params, &operation_return_value, SA_TIME_ONE_MINUTE),
 		  SA_AIS_OK);
 
 done:
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	return rc;
 }
 
@@ -547,18 +547,18 @@ static void disableSchemaChange()
 	const SaImmAdminOperationParamsT_2 *params[] = {&param, NULL};
 	SaAisErrorT operation_return_value;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_FALSE, &ownerHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_ONE),
+	safassert(immutil_saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_ONE),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOperationInvoke_2(
+	safassert(immutil_saImmOmAdminOperationInvoke_2(
 		      ownerHandle, &objectName, 1, OPENSAF_IMM_NOSTD_FLAG_OFF,
 		      params, &operation_return_value, SA_TIME_ONE_MINUTE),
 		  SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassCreate_SchemaChange_2_01(void)
@@ -567,7 +567,7 @@ void saImmOmClassCreate_SchemaChange_2_01(void)
 	 * [CONFIG_CLASS] Remove default value by adding DEFAULT_REMOVED flag
 	 */
 	int schemaChangeEnabled = enableSchemaChange();
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -586,16 +586,16 @@ void saImmOmClassCreate_SchemaChange_2_01(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, NULL, NULL};
 
 	attrDefinitions[1] = &hasDefault;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_CONFIG, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &defaultRemoved;
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_OK);
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	if (!schemaChangeEnabled)
 		disableSchemaChange();
 }
@@ -606,7 +606,7 @@ void saImmOmClassCreate_SchemaChange_2_02(void)
 	 * [CONFIG_CLASS] Add default value to default-removed attribute
 	 */
 	int schemaChangeEnabled = enableSchemaChange();
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -625,20 +625,20 @@ void saImmOmClassCreate_SchemaChange_2_02(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, NULL, NULL};
 
 	attrDefinitions[1] = &hasDefault;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_CONFIG, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &defaultRemoved;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_CONFIG, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &hasDefault;
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_OK);
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	if (!schemaChangeEnabled)
 		disableSchemaChange();
 }
@@ -650,7 +650,7 @@ void saImmOmClassCreate_SchemaChange_2_03(void)
 	 * default value
 	 */
 	int schemaChangeEnabled = enableSchemaChange();
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -668,16 +668,16 @@ void saImmOmClassCreate_SchemaChange_2_03(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, NULL, NULL};
 
 	attrDefinitions[1] = &noDefault;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_CONFIG, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &defaultRemoved;
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_EXIST);
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	if (!schemaChangeEnabled)
 		disableSchemaChange();
 }
@@ -689,7 +689,7 @@ void saImmOmClassCreate_SchemaChange_2_04(void)
 	 * value
 	 */
 	int schemaChangeEnabled = enableSchemaChange();
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -711,20 +711,20 @@ void saImmOmClassCreate_SchemaChange_2_04(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, NULL, NULL};
 
 	attrDefinitions[1] = &hasDefault;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_CONFIG, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &defaultRemoved;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_CONFIG, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &noDefault;
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_EXIST);
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	if (!schemaChangeEnabled)
 		disableSchemaChange();
 }
@@ -735,7 +735,7 @@ void saImmOmClassCreate_SchemaChange_2_05(void)
 	 * [CONFIG_CLASS] Add new attribute with DEFAULT_REMOVED flag to a class
 	 */
 	int schemaChangeEnabled = enableSchemaChange();
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -749,16 +749,16 @@ void saImmOmClassCreate_SchemaChange_2_05(void)
 	    NULL};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, NULL, NULL};
 
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_CONFIG, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &defaultRemoved;
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_EXIST);
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	if (!schemaChangeEnabled)
 		disableSchemaChange();
 }
@@ -769,7 +769,7 @@ void saImmOmClassCreate_SchemaChange_2_06(void)
 	 * [CONFIG_CLASS] Create new class with DEFAULT_REMOVED flag
 	 */
 	int schemaChangeEnabled = enableSchemaChange();
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -784,11 +784,11 @@ void saImmOmClassCreate_SchemaChange_2_06(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {
 	    &rdn, &defaultRemoved, NULL};
 
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	if (!schemaChangeEnabled)
 		disableSchemaChange();
 }
@@ -800,7 +800,7 @@ void saImmOmClassCreate_SchemaChange_2_07(void)
 	 * creating an object
 	 */
 	int schemaChangeEnabled = enableSchemaChange();
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -819,11 +819,11 @@ void saImmOmClassCreate_SchemaChange_2_07(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, NULL, NULL};
 
 	attrDefinitions[1] = &hasDefault;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_CONFIG, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &defaultRemoved;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_CONFIG, attrDefinitions),
 		  SA_AIS_OK);
 
@@ -838,25 +838,25 @@ void saImmOmClassCreate_SchemaChange_2_07(void)
 	SaImmAttrValuesT_2 rdnValue = {"rdn", SA_IMM_ATTR_SANAMET, 1,
 				       (void **)nameValues};
 	const SaImmAttrValuesT_2 *attrValues[] = {&rdnValue, NULL};
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
 
 	/* Create object */
 	safassert(
-	    saImmOmCcbObjectCreate_2(ccbHandle, className, NULL, attrValues),
+	    immutil_saImmOmCcbObjectCreate_2(ccbHandle, className, NULL, attrValues),
 	    SA_AIS_OK);
-	safassert(saImmOmCcbApply(ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbApply(ccbHandle), SA_AIS_OK);
 
 	/* Check value of the attribute */
 	SaImmAccessorHandleT accessorHandle;
 	const SaImmAttrNameT attName = "attr";
 	SaImmAttrNameT attNames[] = {attName, NULL};
 	SaImmAttrValuesT_2 **resultAttrs;
-	safassert(saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
+	safassert(immutil_saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmAccessorGet_2(accessorHandle, &objectName, attNames,
+	safassert(immutil_saImmOmAccessorGet_2(accessorHandle, &objectName, attNames,
 				       &resultAttrs),
 		  SA_AIS_OK);
 	assert(resultAttrs[0] &&
@@ -864,15 +864,15 @@ void saImmOmClassCreate_SchemaChange_2_07(void)
 	test_validate(resultAttrs[0]->attrValuesNumber, 0);
 
 	/* Delete Object */
-	safassert(saImmOmCcbObjectDelete(ccbHandle, &objectName), SA_AIS_OK);
-	safassert(saImmOmCcbApply(ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbObjectDelete(ccbHandle, &objectName), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbApply(ccbHandle), SA_AIS_OK);
 
-	safassert(saImmOmCcbFinalize(ccbHandle), SA_AIS_OK);
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbFinalize(ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
 
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	if (!schemaChangeEnabled)
 		disableSchemaChange();
 }
@@ -884,7 +884,7 @@ void saImmOmClassCreate_SchemaChange_2_08(void)
 	 * creating an object
 	 */
 	int schemaChangeEnabled = enableSchemaChange();
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -903,15 +903,15 @@ void saImmOmClassCreate_SchemaChange_2_08(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, NULL, NULL};
 
 	attrDefinitions[1] = &hasDefault;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_CONFIG, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &defaultRemoved;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_CONFIG, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &hasDefault;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_CONFIG, attrDefinitions),
 		  SA_AIS_OK);
 
@@ -926,25 +926,25 @@ void saImmOmClassCreate_SchemaChange_2_08(void)
 	SaImmAttrValuesT_2 rdnValue = {"rdn", SA_IMM_ATTR_SANAMET, 1,
 				       (void **)nameValues};
 	const SaImmAttrValuesT_2 *attrValues[] = {&rdnValue, NULL};
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
 
 	/* Create object */
 	safassert(
-	    saImmOmCcbObjectCreate_2(ccbHandle, className, NULL, attrValues),
+	    immutil_saImmOmCcbObjectCreate_2(ccbHandle, className, NULL, attrValues),
 	    SA_AIS_OK);
-	safassert(saImmOmCcbApply(ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbApply(ccbHandle), SA_AIS_OK);
 
 	/* Check value of the attribute */
 	SaImmAccessorHandleT accessorHandle;
 	const SaImmAttrNameT attName = "attr";
 	SaImmAttrNameT attNames[] = {attName, NULL};
 	SaImmAttrValuesT_2 **resultAttrs;
-	safassert(saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
+	safassert(immutil_saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmAccessorGet_2(accessorHandle, &objectName, attNames,
+	safassert(immutil_saImmOmAccessorGet_2(accessorHandle, &objectName, attNames,
 				       &resultAttrs),
 		  SA_AIS_OK);
 	assert(resultAttrs[0] &&
@@ -954,15 +954,15 @@ void saImmOmClassCreate_SchemaChange_2_08(void)
 		      defaultVal);
 
 	/* Delete Object */
-	safassert(saImmOmCcbObjectDelete(ccbHandle, &objectName), SA_AIS_OK);
-	safassert(saImmOmCcbApply(ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbObjectDelete(ccbHandle, &objectName), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbApply(ccbHandle), SA_AIS_OK);
 
-	safassert(saImmOmCcbFinalize(ccbHandle), SA_AIS_OK);
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbFinalize(ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
 
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	if (!schemaChangeEnabled)
 		disableSchemaChange();
 }
@@ -973,7 +973,7 @@ void saImmOmClassCreate_SchemaChange_2_09(void)
 	 * [RUNTIME_CLASS] Remove default value by adding DEFAULT_REMOVED flag
 	 */
 	int schemaChangeEnabled = enableSchemaChange();
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -992,16 +992,16 @@ void saImmOmClassCreate_SchemaChange_2_09(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, NULL, NULL};
 
 	attrDefinitions[1] = &hasDefault;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_RUNTIME, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &defaultRemoved;
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_OK);
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	if (!schemaChangeEnabled)
 		disableSchemaChange();
 }
@@ -1012,7 +1012,7 @@ void saImmOmClassCreate_SchemaChange_2_10(void)
 	 * [RUNTIME_CLASS] Add default value to default-removed attribute
 	 */
 	int schemaChangeEnabled = enableSchemaChange();
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -1031,20 +1031,20 @@ void saImmOmClassCreate_SchemaChange_2_10(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, NULL, NULL};
 
 	attrDefinitions[1] = &hasDefault;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_RUNTIME, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &defaultRemoved;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_RUNTIME, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &hasDefault;
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_OK);
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	if (!schemaChangeEnabled)
 		disableSchemaChange();
 }
@@ -1056,7 +1056,7 @@ void saImmOmClassCreate_SchemaChange_2_11(void)
 	 * default value
 	 */
 	int schemaChangeEnabled = enableSchemaChange();
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -1074,16 +1074,16 @@ void saImmOmClassCreate_SchemaChange_2_11(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, NULL, NULL};
 
 	attrDefinitions[1] = &noDefault;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_RUNTIME, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &defaultRemoved;
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_EXIST);
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	if (!schemaChangeEnabled)
 		disableSchemaChange();
 }
@@ -1095,7 +1095,7 @@ void saImmOmClassCreate_SchemaChange_2_12(void)
 	 * value
 	 */
 	int schemaChangeEnabled = enableSchemaChange();
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -1117,20 +1117,20 @@ void saImmOmClassCreate_SchemaChange_2_12(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, NULL, NULL};
 
 	attrDefinitions[1] = &hasDefault;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_RUNTIME, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &defaultRemoved;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_RUNTIME, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &noDefault;
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_EXIST);
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	if (!schemaChangeEnabled)
 		disableSchemaChange();
 }
@@ -1142,7 +1142,7 @@ void saImmOmClassCreate_SchemaChange_2_13(void)
 	 * class
 	 */
 	int schemaChangeEnabled = enableSchemaChange();
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -1156,16 +1156,16 @@ void saImmOmClassCreate_SchemaChange_2_13(void)
 	    NULL};
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, NULL, NULL};
 
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_RUNTIME, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &defaultRemoved;
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_EXIST);
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	if (!schemaChangeEnabled)
 		disableSchemaChange();
 }
@@ -1176,7 +1176,7 @@ void saImmOmClassCreate_SchemaChange_2_14(void)
 	 * [RUNTIME_CLASS] Create new class with DEFAULT_REMOVED flag
 	 */
 	int schemaChangeEnabled = enableSchemaChange();
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -1191,11 +1191,11 @@ void saImmOmClassCreate_SchemaChange_2_14(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {
 	    &rdn, &defaultRemoved, NULL};
 
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_RUNTIME,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	if (!schemaChangeEnabled)
 		disableSchemaChange();
 }
@@ -1207,7 +1207,7 @@ void saImmOmClassCreate_SchemaChange_2_15(void)
 	 * creating an object
 	 */
 	int schemaChangeEnabled = enableSchemaChange();
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -1226,11 +1226,11 @@ void saImmOmClassCreate_SchemaChange_2_15(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, NULL, NULL};
 
 	attrDefinitions[1] = &hasDefault;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_RUNTIME, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &defaultRemoved;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_RUNTIME, attrDefinitions),
 		  SA_AIS_OK);
 
@@ -1244,21 +1244,21 @@ void saImmOmClassCreate_SchemaChange_2_15(void)
 				       (void **)nameValues};
 	const SaImmAttrValuesT_2 *attrValues[] = {&rdnValue, NULL};
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
 
 	/* Create object */
-	rc = saImmOiRtObjectCreate_2(immOiHandle, className, NULL, attrValues);
+	rc = immutil_saImmOiRtObjectCreate_2(immOiHandle, className, NULL, attrValues);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 
-	safassert(saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	if (!schemaChangeEnabled)
 		disableSchemaChange();
 }
@@ -1270,7 +1270,7 @@ void saImmOmClassCreate_SchemaChange_2_16(void)
 	 * creating an object
 	 */
 	int schemaChangeEnabled = enableSchemaChange();
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -1289,15 +1289,15 @@ void saImmOmClassCreate_SchemaChange_2_16(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, NULL, NULL};
 
 	attrDefinitions[1] = &hasDefault;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_RUNTIME, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &defaultRemoved;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_RUNTIME, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &hasDefault;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_RUNTIME, attrDefinitions),
 		  SA_AIS_OK);
 
@@ -1311,14 +1311,14 @@ void saImmOmClassCreate_SchemaChange_2_16(void)
 				       (void **)nameValues};
 	const SaImmAttrValuesT_2 *attrValues[] = {&rdnValue, NULL};
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
 
 	/* Create object */
 	safassert(
-	    saImmOiRtObjectCreate_2(immOiHandle, className, NULL, attrValues),
+	    immutil_saImmOiRtObjectCreate_2(immOiHandle, className, NULL, attrValues),
 	    SA_AIS_OK);
 
 	/* Check value of the attribute
@@ -1328,9 +1328,9 @@ void saImmOmClassCreate_SchemaChange_2_16(void)
 	const SaImmAttrNameT attName = "attr";
 	SaImmAttrNameT attNames[] = {attName, NULL};
 	SaImmAttrValuesT_2 **resultAttrs;
-	safassert(saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
+	safassert(immutil_saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmAccessorGet_2(accessorHandle, &objectName, attNames,
+	safassert(immutil_saImmOmAccessorGet_2(accessorHandle, &objectName, attNames,
 				       &resultAttrs),
 		  SA_AIS_OK);
 	assert(resultAttrs[0] &&
@@ -1340,14 +1340,14 @@ void saImmOmClassCreate_SchemaChange_2_16(void)
 		      defaultVal);
 
 	/* Delete Object */
-	safassert(saImmOiRtObjectDelete(immOiHandle, &objectName), SA_AIS_OK);
+	safassert(immutil_saImmOiRtObjectDelete(immOiHandle, &objectName), SA_AIS_OK);
 
-	safassert(saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	if (!schemaChangeEnabled)
 		disableSchemaChange();
 }
@@ -1358,7 +1358,7 @@ void saImmOmClassCreate_SchemaChange_2_17(void)
 	 * Add STRONG_DEFAULT flag to an attribute
 	 */
 	int schemaChangeEnabled = enableSchemaChange();
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -1377,16 +1377,16 @@ void saImmOmClassCreate_SchemaChange_2_17(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, NULL, NULL};
 
 	attrDefinitions[1] = &weak;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_CONFIG, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &strong;
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_OK);
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	if (!schemaChangeEnabled)
 		disableSchemaChange();
 }
@@ -1397,7 +1397,7 @@ void saImmOmClassCreate_SchemaChange_2_18(void)
 	 * Remove STRONG_DEFAULT flag from an attribute
 	 */
 	int schemaChangeEnabled = enableSchemaChange();
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 
 	const SaImmClassNameT className = (SaImmClassNameT) __FUNCTION__;
@@ -1416,16 +1416,16 @@ void saImmOmClassCreate_SchemaChange_2_18(void)
 	const SaImmAttrDefinitionT_2 *attrDefinitions[] = {&rdn, NULL, NULL};
 
 	attrDefinitions[1] = &strong;
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_CONFIG, attrDefinitions),
 		  SA_AIS_OK);
 	attrDefinitions[1] = &weak;
-	rc = saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
+	rc = immutil_saImmOmClassCreate_2(immOmHandle, className, SA_IMM_CLASS_CONFIG,
 				  attrDefinitions);
 	test_validate(rc, SA_AIS_OK);
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	if (!schemaChangeEnabled)
 		disableSchemaChange();
 }

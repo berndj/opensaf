@@ -37,7 +37,7 @@ static void saImmOiAdminOperationCallback(
 	isReady = 1;
 	while (!isAdminOperDone)
 		usleep(500);
-	saImmOiAdminOperationResult(immOiHandle, invocation, SA_AIS_OK);
+	immutil_saImmOiAdminOperationResult(immOiHandle, invocation, SA_AIS_OK);
 }
 
 SaImmOiCallbacksT_2 immOiCallbacks = {
@@ -51,7 +51,7 @@ static void *implementer_thread(void *arg)
 	SaAisErrorT err;
 	SaImmOiHandleT immOiHandle = *(SaImmOiHandleT *)arg;
 
-	safassert(saImmOiSelectionObjectGet(immOiHandle, &selObject),
+	safassert(immutil_saImmOiSelectionObjectGet(immOiHandle, &selObject),
 		  SA_AIS_OK);
 
 	fd[0].fd = (int)selObject;
@@ -79,7 +79,7 @@ static void *lockomhandle_thread(void *arg)
 	SaAisErrorT rc;
 
 	/* "Lock" IMM OM handle */
-	safassert(saImmOmAdminOperationInvoke_2(ownerHandle, &objectName, 0, 0,
+	safassert(immutil_saImmOmAdminOperationInvoke_2(ownerHandle, &objectName, 0, 0,
 						params, &rc, SA_TIME_ONE_HOUR),
 		  SA_AIS_OK);
 
@@ -121,17 +121,17 @@ void saImmOmThreadInterference_01(void)
 	strcpy((char *)objectName.value, "Obj1");
 
 	/* management */
-	safassert(saImmOmInitialize(&immHandle, NULL, &immVersion), SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immHandle, adminOwnerName,
+	safassert(immutil_saImmOmInitialize(&immHandle, NULL, &immVersion), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerInitialize(immHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
 	/* create test object */
-	safassert(saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
-	safassert(saImmOmCcbObjectCreate_2(ccbHandle, configClassName, NULL,
+	safassert(immutil_saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbObjectCreate_2(ccbHandle, configClassName, NULL,
 					   attrValues),
 		  SA_AIS_OK);
-	safassert(saImmOmCcbApply(ccbHandle), SA_AIS_OK);
-	safassert(saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_ONE),
+	safassert(immutil_saImmOmCcbApply(ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerSet(ownerHandle, objectNames, SA_IMM_ONE),
 		  SA_AIS_OK);
 
 	/* implementer */
@@ -139,12 +139,12 @@ void saImmOmThreadInterference_01(void)
 	isOiDone = 0;
 	isOmDone = 0;
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
 	safassert(
-	    saImmOiObjectImplementerSet(immOiHandle, &objectName, SA_IMM_ONE),
+	    immutil_saImmOiObjectImplementerSet(immOiHandle, &objectName, SA_IMM_ONE),
 	    SA_AIS_OK);
 	assert(!pthread_create(&threadid1, NULL, implementer_thread,
 			       &immOiHandle));
@@ -162,42 +162,42 @@ void saImmOmThreadInterference_01(void)
 		usleep(100);
 
 	/* OM function tests */
-	if ((rc = saImmOmFinalize(immHandle)) != SA_AIS_ERR_LIBRARY)
+	if ((rc = immutil_saImmOmFinalize(immHandle)) != SA_AIS_ERR_LIBRARY)
 		goto done;
 
-	if ((rc = saImmOmClassCreate_2(
+	if ((rc = immutil_saImmOmClassCreate_2(
 		 immHandle, (const SaImmClassNameT) "TestClass",
 		 SA_IMM_CLASS_CONFIG,
 		 (const SaImmAttrDefinitionT_2 **)attrDefs)) !=
 	    SA_AIS_ERR_LIBRARY)
 		goto done;
-	if ((rc = saImmOmClassDescriptionGet_2(
+	if ((rc = immutil_saImmOmClassDescriptionGet_2(
 		 immHandle, (const SaImmClassNameT) "TestClass", &classCategory,
 		 &attrDefinitions)) != SA_AIS_ERR_LIBRARY)
 		goto done;
-	if ((rc = saImmOmClassDelete(immHandle,
+	if ((rc = immutil_saImmOmClassDelete(immHandle,
 				     (const SaImmClassNameT) "TestClass")) !=
 	    SA_AIS_ERR_LIBRARY)
 		goto done;
 
-	if ((rc = saImmOmSearchInitialize_2(
+	if ((rc = immutil_saImmOmSearchInitialize_2(
 		 immHandle, NULL, SA_IMM_SUBTREE,
 		 SA_IMM_SEARCH_ONE_ATTR | SA_IMM_SEARCH_GET_NO_ATTR, NULL, NULL,
 		 &searchHandle)) != SA_AIS_ERR_LIBRARY)
 		goto done;
 
-	safassert(saImmOmAccessorInitialize(immHandle, &accessorHandle),
+	safassert(immutil_saImmOmAccessorInitialize(immHandle, &accessorHandle),
 		  SA_AIS_OK);
-	if ((rc = saImmOmAccessorGet_2(accessorHandle, &objectName,
+	if ((rc = immutil_saImmOmAccessorGet_2(accessorHandle, &objectName,
 				       attributeNames, &attributes)) !=
 	    SA_AIS_ERR_LIBRARY)
 		goto done;
-	safassert(saImmOmAccessorFinalize(accessorHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAccessorFinalize(accessorHandle), SA_AIS_OK);
 
-	if ((rc = saImmOmCcbObjectModify_2(ccbHandle, &objectName, attrMods)) !=
+	if ((rc = immutil_saImmOmCcbObjectModify_2(ccbHandle, &objectName, attrMods)) !=
 	    SA_AIS_ERR_LIBRARY)
 		goto done;
-	if ((rc = saImmOmCcbObjectDelete(ccbHandle, &objectName)) !=
+	if ((rc = immutil_saImmOmCcbObjectDelete(ccbHandle, &objectName)) !=
 	    SA_AIS_ERR_LIBRARY)
 		goto done;
 
@@ -209,11 +209,11 @@ done:
 	test_validate(rc, SA_AIS_ERR_LIBRARY);
 
 	/* Finalize OI handle */
-	safassert(saImmOiObjectImplementerRelease(immOiHandle, &objectName,
+	safassert(immutil_saImmOiObjectImplementerRelease(immOiHandle, &objectName,
 						  SA_IMM_ONE),
 		  SA_AIS_OK);
-	safassert(saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 
 	/* Use pthread_detach() to remove pthread_create@@GLIBC leak from
 	 * valgrind */
@@ -224,12 +224,12 @@ done:
 		usleep(200);
 
 	/* Remove test object and test class */
-	safassert(saImmOmCcbObjectDelete(ccbHandle, &objectName), SA_AIS_OK);
-	safassert(saImmOmCcbApply(ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbObjectDelete(ccbHandle, &objectName), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbApply(ccbHandle), SA_AIS_OK);
 
 	/* Finalize OM handles */
 	saImmOmCcbFinalize(ccbHandle);
-	saImmOmAdminOwnerRelease(ownerHandle, objectNames, SA_IMM_ONE);
+	immutil_saImmOmAdminOwnerRelease(ownerHandle, objectNames, SA_IMM_ONE);
 	saImmOmAdminOwnerFinalize(ownerHandle);
 	saImmOmFinalize(immHandle);
 }

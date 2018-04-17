@@ -21,30 +21,30 @@ void saImmOmSearchFinalize_01(void)
 {
 	SaImmSearchHandleT searchHandle;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmSearchInitialize_2(immOmHandle, NULL, SA_IMM_SUBTREE,
+	safassert(immutil_saImmOmSearchInitialize_2(immOmHandle, NULL, SA_IMM_SUBTREE,
 					    SA_IMM_SEARCH_ONE_ATTR |
 						SA_IMM_SEARCH_GET_NO_ATTR,
 					    NULL, NULL, &searchHandle),
 		  SA_AIS_OK);
-	rc = saImmOmSearchFinalize(searchHandle);
+	rc = immutil_saImmOmSearchFinalize(searchHandle);
 	test_validate(rc, SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmSearchFinalize_02(void)
 {
 	SaImmSearchHandleT searchHandle;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmSearchInitialize_2(immOmHandle, NULL, SA_IMM_SUBTREE,
+	safassert(immutil_saImmOmSearchInitialize_2(immOmHandle, NULL, SA_IMM_SUBTREE,
 					    SA_IMM_SEARCH_ONE_ATTR |
 						SA_IMM_SEARCH_GET_NO_ATTR,
 					    NULL, NULL, &searchHandle),
 		  SA_AIS_OK);
-	rc = saImmOmSearchFinalize(-1);
+	rc = immutil_saImmOmSearchFinalize(-1);
 	test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }

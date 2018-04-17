@@ -16,27 +16,28 @@
  */
 
 #include "imm/apitest/immtest.h"
+#include "osaf/immutil/immutil.h"
 
 void saImmOiInitialize_2_01(void)
 {
 	immOiHandle = 4711;
 	immVersion = constImmVersion;
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_ERR_BAD_HANDLE);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_ERR_BAD_HANDLE);
 
-	if ((rc = saImmOiInitialize_2(&immOiHandle, &immOiCallbacks,
+	if ((rc = immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks,
 				      &immVersion)) != SA_AIS_OK)
 		goto done;
 
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 	immVersion = constImmVersion;
-	if ((rc = saImmOiInitialize_2(&immOiHandle, NULL, &immVersion)) !=
+	if ((rc = immutil_saImmOiInitialize_2(&immOiHandle, NULL, &immVersion)) !=
 	    SA_AIS_OK)
 		goto done;
 
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 
 	immOiHandle = 4711;
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_ERR_BAD_HANDLE);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_ERR_BAD_HANDLE);
 
 done:
 	test_validate(rc, SA_AIS_OK);
@@ -48,15 +49,15 @@ void saImmOiInitialize_2_02(void)
 	SaVersionT version2 = {'B', 1, 1};
 	SaVersionT version3 = {'A', 3, 0};
 
-	if ((rc = saImmOiInitialize_2(&immOiHandle, &immOiCallbacks,
+	if ((rc = immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks,
 				      &version1)) != SA_AIS_ERR_VERSION)
 		goto done;
 
-	if ((rc = saImmOiInitialize_2(&immOiHandle, &immOiCallbacks,
+	if ((rc = immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks,
 				      &version2)) != SA_AIS_ERR_VERSION)
 		goto done;
 
-	if ((rc = saImmOiInitialize_2(&immOiHandle, &immOiCallbacks,
+	if ((rc = immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks,
 				      &version3)) != SA_AIS_ERR_VERSION)
 		goto done;
 
@@ -69,9 +70,9 @@ void saImmOiInitialize_2_03(void)
 	SaVersionT version = {'A', 2, 2};
 
 	test_validate(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &version),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &version),
 	    SA_AIS_OK);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 }
 
 extern void saImmOiSelectionObjectGet_01(void);

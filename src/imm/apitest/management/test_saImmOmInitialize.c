@@ -20,29 +20,29 @@
 void saImmOmInitialize_01(void)
 {
 	immOmHandle = 0LL;
-	rc = saImmOmFinalize(immOmHandle);
+	rc = immutil_saImmOmFinalize(immOmHandle);
 	safassert(rc, SA_AIS_ERR_BAD_HANDLE);
 
 	immVersion = constImmVersion;
-	rc = saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion);
+	rc = immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion);
 	test_validate(rc, SA_AIS_OK);
 	if (rc == SA_AIS_OK)
-		safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+		safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmInitialize_02(void)
 {
 	immVersion = constImmVersion;
-	rc = saImmOmInitialize(&immOmHandle, NULL, &immVersion);
+	rc = immutil_saImmOmInitialize(&immOmHandle, NULL, &immVersion);
 	test_validate(rc, SA_AIS_OK);
 	if (rc == SA_AIS_OK)
-		safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+		safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmInitialize_03(void)
 {
 	immVersion = constImmVersion;
-	rc = saImmOmInitialize(0, &immOmCallbacks, &immVersion);
+	rc = immutil_saImmOmInitialize(0, &immOmCallbacks, &immVersion);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
 }
 
@@ -50,7 +50,7 @@ void saImmOmInitialize_04(void)
 {
 	SaVersionT version = {0, 0, 0};
 	immVersion = constImmVersion;
-	rc = saImmOmInitialize(&immOmHandle, &immOmCallbacks, &version);
+	rc = immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &version);
 
 	// printf("000 Version out: %c %u %u\n", version.releaseCode,
 	// version.majorVersion, version.minorVersion);
@@ -82,7 +82,7 @@ void saImmOmInitialize_05(void)
 {
 	SaVersionT version = {'B', 1, 1};
 	immVersion = constImmVersion;
-	rc = saImmOmInitialize(&immOmHandle, &immOmCallbacks, &version);
+	rc = immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &version);
 
 	// printf("B11 Version out: %c %u %u\n", version.releaseCode,
 	// version.majorVersion, version.minorVersion);
@@ -113,7 +113,7 @@ void saImmOmInitialize_06(void)
 {
 	SaVersionT version = {'A', 2, 2};
 	immVersion = constImmVersion;
-	rc = saImmOmInitialize(&immOmHandle, &immOmCallbacks, &version);
+	rc = immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &version);
 
 	// printf("A22 Version out: %c %u %u\n", version.releaseCode,
 	// version.majorVersion, version.minorVersion);
@@ -140,14 +140,14 @@ void saImmOmInitialize_06(void)
 	test_validate(rc, SA_AIS_OK);
 
 	if (rc == SA_AIS_OK)
-		safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+		safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmInitialize_07(void)
 {
 	SaVersionT version = {'A', 3, 0};
 	immVersion = constImmVersion;
-	rc = saImmOmInitialize(&immOmHandle, &immOmCallbacks, &version);
+	rc = immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &version);
 
 	// printf("A30 Version out: %c %u %u\n", version.releaseCode,
 	// version.majorVersion, version.minorVersion);
@@ -178,7 +178,7 @@ void saImmOmInitialize_08(void)
 {
 	SaVersionT version = {'B', 3, 99};
 	immVersion = constImmVersion;
-	rc = saImmOmInitialize(&immOmHandle, &immOmCallbacks, &version);
+	rc = immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &version);
 
 	// printf("B399 Version out: %c %u %u\n", version.releaseCode,
 	// version.majorVersion, version.minorVersion);
@@ -209,7 +209,7 @@ void saImmOmInitialize_09(void)
 {
 	SaVersionT version = {'A', 1, 1};
 	immVersion = constImmVersion;
-	rc = saImmOmInitialize(&immOmHandle, &immOmCallbacks, &version);
+	rc = immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &version);
 
 	// printf("A11 Version out: %c %u %u\n", version.releaseCode,
 	// version.majorVersion, version.minorVersion);
@@ -241,7 +241,7 @@ void saImmOmInitialize_10(void)
 {
 	SaVersionT version = {'A', 2, 99};
 	immVersion = constImmVersion;
-	rc = saImmOmInitialize(&immOmHandle, &immOmCallbacks, &version);
+	rc = immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &version);
 
 	// printf("A.2.99 Version out: %c %u %u\n", version.releaseCode,
 	// version.majorVersion, version.minorVersion);
@@ -267,14 +267,14 @@ void saImmOmInitialize_10(void)
 
 	test_validate(rc, SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmInitialize_11(void)
 {
 	SaVersionT version = {'A', 2, 1};
 	immVersion = constImmVersion;
-	rc = saImmOmInitialize_o2(&immOmHandle, NULL, &version);
+	rc = immutil_saImmOmInitialize_o2(&immOmHandle, NULL, &version);
 
 	// printf("A.2.99 Version out: %c %u %u\n", version.releaseCode,
 	// version.majorVersion, version.minorVersion);

@@ -27,6 +27,7 @@
 #include <assert.h>
 #include "osaf/apitest/utest.h"
 #include "osaf/apitest/util.h"
+#include "osaf/immutil/immutil.h"
 
 /* Common globals */
 extern const SaVersionT constImmVersion;

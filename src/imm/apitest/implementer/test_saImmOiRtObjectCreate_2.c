@@ -70,28 +70,28 @@ void saImmOiRtObjectCreate_2_01(void)
 	    (SaImmOiImplementerNameT) __FUNCTION__;
 
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
-	safassert(saImmOiRtObjectCreate_2(immOiHandle, className, NULL, NULL),
+	safassert(immutil_saImmOiRtObjectCreate_2(immOiHandle, className, NULL, NULL),
 		  SA_AIS_ERR_INVALID_PARAM);
 	/* Create under root */
-	if ((rc = saImmOiRtObjectCreate_2(immOiHandle, className, NULL,
+	if ((rc = immutil_saImmOiRtObjectCreate_2(immOiHandle, className, NULL,
 					  attrValues)) != SA_AIS_OK)
 		goto done;
-	safassert(saImmOiRtObjectDelete(immOiHandle, &rdnObj1), SA_AIS_OK);
+	safassert(immutil_saImmOiRtObjectDelete(immOiHandle, &rdnObj1), SA_AIS_OK);
 
 	/* Create under parent */
-	if ((rc = saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
+	if ((rc = immutil_saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
 					  attrValues)) != SA_AIS_OK)
 		goto done;
 
-	safassert(saImmOiRtObjectDelete(immOiHandle, &dnObj1), SA_AIS_OK);
+	safassert(immutil_saImmOiRtObjectDelete(immOiHandle, &dnObj1), SA_AIS_OK);
 
 done:
 	test_validate(rc, SA_AIS_OK);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 }
 
 void saImmOiRtObjectCreate_2_03(void)
@@ -100,28 +100,28 @@ void saImmOiRtObjectCreate_2_03(void)
 	    (SaImmOiImplementerNameT) __FUNCTION__;
 
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
 
-	rc = saImmOiRtObjectCreate_2(-1, className, &rootObj, attrValues);
+	rc = immutil_saImmOiRtObjectCreate_2(-1, className, &rootObj, attrValues);
 	test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 }
 
 void saImmOiRtObjectCreate_2_04(void)
 {
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
 
-	rc = saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
+	rc = immutil_saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
 				     attrValues);
 	test_validate(rc, SA_AIS_ERR_BAD_OPERATION);
 
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 }
 
 void saImmOiRtObjectCreate_2_05(void)
@@ -130,15 +130,15 @@ void saImmOiRtObjectCreate_2_05(void)
 	    (SaImmOiImplementerNameT) __FUNCTION__;
 
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
 
-	rc = saImmOiRtObjectCreate_2(immOiHandle, "XXX", &rootObj, attrValues);
+	rc = immutil_saImmOiRtObjectCreate_2(immOiHandle, "XXX", &rootObj, attrValues);
 	test_validate(rc, SA_AIS_ERR_NOT_EXIST);
 
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 }
 
 void saImmOiRtObjectCreate_2_06(void)
@@ -150,27 +150,27 @@ void saImmOiRtObjectCreate_2_06(void)
 	    (SaImmOiImplementerNameT) "tet_imm_implementer2";
 
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
-	safassert(saImmOiRtObjectCreate_2(immOiHandle, "SaLogStream", &rootObj,
+	safassert(immutil_saImmOiRtObjectCreate_2(immOiHandle, "SaLogStream", &rootObj,
 					  attrValues),
 		  SA_AIS_OK);
 
 	/* try create the same object again using a new handle */
-	safassert(saImmOiInitialize_2(&newhandle, &immOiCallbacks, &immVersion),
+	safassert(immutil_saImmOiInitialize_2(&newhandle, &immOiCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOiImplementerSet(newhandle, implementerName2),
+	safassert(immutil_saImmOiImplementerSet(newhandle, implementerName2),
 		  SA_AIS_OK);
 
-	rc = saImmOiRtObjectCreate_2(newhandle, "SaLogStream", &rootObj,
+	rc = immutil_saImmOiRtObjectCreate_2(newhandle, "SaLogStream", &rootObj,
 				     attrValues);
 	test_validate(rc, SA_AIS_ERR_EXIST);
 
-	safassert(saImmOiRtObjectDelete(immOiHandle, &dnObj1), SA_AIS_OK);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
-	safassert(saImmOiFinalize(newhandle), SA_AIS_OK);
+	safassert(immutil_saImmOiRtObjectDelete(immOiHandle, &dnObj1), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(newhandle), SA_AIS_OK);
 }
 
 void saImmOiRtObjectCreate_2_07(void)
@@ -194,13 +194,13 @@ void saImmOiRtObjectCreate_2_07(void)
 	SaNameT tmpName;
 
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
 
 	/*Create first rt object. */
-	safassert(saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
+	safassert(immutil_saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
 					  attrValues27),
 		  SA_AIS_OK); /*107  (63+44)*/
 
@@ -210,7 +210,7 @@ void saImmOiRtObjectCreate_2_07(void)
 	    "123456789012345678901234567890123456789012345678901234567890123,rdn=root",
 	    107);
 	/*Create second rt object. */
-	safassert(saImmOiRtObjectCreate_2(immOiHandle, className, &tmpName,
+	safassert(immutil_saImmOiRtObjectCreate_2(immOiHandle, className, &tmpName,
 					  attrValues27),
 		  SA_AIS_OK); /* 171 (63 + 108)*/
 
@@ -221,7 +221,7 @@ void saImmOiRtObjectCreate_2_07(void)
 	    "123456789012345678901234567890123456789012345678901234567890123,rdn=root",
 	    171);
 	/*Create third rt object. */
-	safassert(saImmOiRtObjectCreate_2(immOiHandle, className, &tmpName,
+	safassert(immutil_saImmOiRtObjectCreate_2(immOiHandle, className, &tmpName,
 					  attrValues27),
 		  SA_AIS_OK); /* 235  (63 + 172) */
 
@@ -233,7 +233,7 @@ void saImmOiRtObjectCreate_2_07(void)
 	    "123456789012345678901234567890123456789012345678901234567890123,rdn=root",
 	    235);
 	/*Create of fourth rt object should fail. */
-	rc = saImmOiRtObjectCreate_2(immOiHandle, className, &tmpName,
+	rc = immutil_saImmOiRtObjectCreate_2(immOiHandle, className, &tmpName,
 				     attrValues27); /*299!!   (63 + 236)*/
 
 	if (!osaf_is_extended_names_enabled()) {
@@ -250,9 +250,9 @@ void saImmOiRtObjectCreate_2_07(void)
 	    "123456789012345678901234567890123456789012345678901234567890123,rdn=root",
 	    107);
 	/* Delete first rt object and all its subobjects! */
-	safassert(saImmOiRtObjectDelete(immOiHandle, &tmpName), SA_AIS_OK);
+	safassert(immutil_saImmOiRtObjectDelete(immOiHandle, &tmpName), SA_AIS_OK);
 
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 }
 
 extern void saImmOiRtObjectDelete_01(void);

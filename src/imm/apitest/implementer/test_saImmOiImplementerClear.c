@@ -23,30 +23,30 @@ void saImmOiImplementerClear_01(void)
 	    (SaImmOiImplementerNameT) __FUNCTION__;
 
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
-	rc = saImmOiImplementerClear(immOiHandle);
+	rc = immutil_saImmOiImplementerClear(immOiHandle);
 	test_validate(rc, SA_AIS_OK);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 }
 
 void saImmOiImplementerClear_02(void)
 {
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
 
 	/* not associated with an implementer name. */
-	if ((rc = saImmOiImplementerClear(immOiHandle)) !=
+	if ((rc = immutil_saImmOiImplementerClear(immOiHandle)) !=
 	    SA_AIS_ERR_BAD_HANDLE)
 		goto done;
 
 	/* invalid */
-	rc = saImmOiImplementerClear(-1);
+	rc = immutil_saImmOiImplementerClear(-1);
 
 done:
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 	test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 }

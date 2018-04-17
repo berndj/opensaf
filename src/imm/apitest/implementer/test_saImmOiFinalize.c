@@ -16,22 +16,23 @@
  */
 
 #include "imm/apitest/immtest.h"
+#include "osaf/immutil/immutil.h"
 
 void saImmOiFinalize_01(void)
 {
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	rc = saImmOiFinalize(immOiHandle);
+	rc = immutil_saImmOiFinalize(immOiHandle);
 	test_validate(rc, SA_AIS_OK);
 }
 
 void saImmOiFinalize_02(void)
 {
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	rc = saImmOiFinalize(-1);
+	rc = immutil_saImmOiFinalize(-1);
 	test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 }

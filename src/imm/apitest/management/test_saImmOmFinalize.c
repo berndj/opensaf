@@ -19,17 +19,17 @@
 
 void saImmOmFinalize_01(void)
 {
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmFinalize(immOmHandle);
+	rc = immutil_saImmOmFinalize(immOmHandle);
 	test_validate(rc, SA_AIS_OK);
 }
 
 void saImmOmFinalize_02(void)
 {
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmFinalize(-1);
+	rc = immutil_saImmOmFinalize(-1);
 	test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }

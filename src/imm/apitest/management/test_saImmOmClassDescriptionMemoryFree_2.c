@@ -27,20 +27,20 @@ void saImmOmClassDescriptionMemoryFree_2_01(void)
 	SaImmClassCategoryT classCategory;
 	SaImmAttrDefinitionT_2 **attrDefinitionsOut;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_RUNTIME, attrDefinitionsIn),
 		  SA_AIS_OK);
-	safassert(saImmOmClassDescriptionGet_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassDescriptionGet_2(immOmHandle, className,
 					       &classCategory,
 					       &attrDefinitionsOut),
 		  SA_AIS_OK);
-	rc = saImmOmClassDescriptionMemoryFree_2(immOmHandle,
+	rc = immutil_saImmOmClassDescriptionMemoryFree_2(immOmHandle,
 						 attrDefinitionsOut);
 	test_validate(rc, SA_AIS_OK);
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmClassDescriptionMemoryFree_2_02(void)
@@ -53,20 +53,20 @@ void saImmOmClassDescriptionMemoryFree_2_02(void)
 	SaImmClassCategoryT classCategory;
 	SaImmAttrDefinitionT_2 **attrDefinitionsOut;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmClassCreate_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassCreate_2(immOmHandle, className,
 				       SA_IMM_CLASS_RUNTIME, attrDefinitionsIn),
 		  SA_AIS_OK);
-	safassert(saImmOmClassDescriptionGet_2(immOmHandle, className,
+	safassert(immutil_saImmOmClassDescriptionGet_2(immOmHandle, className,
 					       &classCategory,
 					       &attrDefinitionsOut),
 		  SA_AIS_OK);
-	rc = saImmOmClassDescriptionMemoryFree_2(-1, attrDefinitionsOut);
+	rc = immutil_saImmOmClassDescriptionMemoryFree_2(-1, attrDefinitionsOut);
 	test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
-	safassert(saImmOmClassDescriptionMemoryFree_2(immOmHandle,
+	safassert(immutil_saImmOmClassDescriptionMemoryFree_2(immOmHandle,
 						      attrDefinitionsOut),
 		  SA_AIS_OK); /* Avoid leaking. */
-	safassert(saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmClassDelete(immOmHandle, className), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }

@@ -28,17 +28,17 @@ void saImmOmAdminOperationContinue_01(void)
 	SaImmAdminOwnerHandleT ownerHandle;
 	SaImmContinuationIdT continuationId = 666;
 	SaAisErrorT operationReturnValue = SA_AIS_OK;
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
 	test_validate(saImmOmAdminOperationContinue(ownerHandle, &rootObj,
 						    continuationId,
 						    &operationReturnValue),
 		      SA_AIS_ERR_NOT_SUPPORTED);
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	TRACE_LEAVE();
 }
 
@@ -52,17 +52,17 @@ void saImmOmAdminOperationContinue_02(void)
 	SaAisErrorT operationReturnValue = SA_AIS_OK;
 	SaImmAdminOperationParamsT_2 **returnParams;
 	safassert(
-	    saImmOmInitialize_o2(&immOmHandle, &immOmA2bCallbacks, &immVersion),
+	    immutil_saImmOmInitialize_o2(&immOmHandle, &immOmA2bCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
 	test_validate(saImmOmAdminOperationContinue_o2(
 			  ownerHandle, &rootObj, continuationId,
 			  &operationReturnValue, &returnParams),
 		      SA_AIS_ERR_NOT_SUPPORTED);
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	TRACE_LEAVE();
 }
 
@@ -74,16 +74,16 @@ void saImmOmAdminOperationContinueAsync_01(void)
 	SaImmAdminOwnerHandleT ownerHandle;
 	SaInvocationT invocation = 999;
 	SaImmContinuationIdT continuationId = 666;
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
 	test_validate(saImmOmAdminOperationContinueAsync(
 			  ownerHandle, invocation, &rootObj, continuationId),
 		      SA_AIS_ERR_NOT_SUPPORTED);
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	TRACE_LEAVE();
 }
 
@@ -94,9 +94,9 @@ void saImmOmAdminOperationContinuationClear_01(void)
 	    (SaImmAdminOwnerNameT) __FUNCTION__;
 	SaImmAdminOwnerHandleT ownerHandle;
 	SaImmContinuationIdT continuationId = 666;
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
 
@@ -104,8 +104,8 @@ void saImmOmAdminOperationContinuationClear_01(void)
 			  ownerHandle, &rootObj, continuationId),
 		      SA_AIS_ERR_NOT_SUPPORTED);
 
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 	TRACE_LEAVE();
 }
 

@@ -24,17 +24,17 @@ void saImmOmCcbInitialize_01(void)
 	SaImmAdminOwnerHandleT ownerHandle;
 	SaImmCcbHandleT ccbHandle;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
 
-	test_validate(saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle),
+	test_validate(immutil_saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle),
 		      SA_AIS_OK);
 
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmCcbInitialize_02(void)
@@ -44,24 +44,24 @@ void saImmOmCcbInitialize_02(void)
 	SaImmAdminOwnerHandleT ownerHandle;
 	SaImmCcbHandleT ccbHandle;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(ownerHandle), SA_AIS_OK);
 
 	/* already finalized ownerHandle */
-	rc = saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle);
+	rc = immutil_saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle);
 	if (rc != SA_AIS_ERR_BAD_HANDLE)
 		goto done;
 
 	/* invalid ownerHandle */
-	rc = saImmOmCcbInitialize(-1, 0, &ccbHandle);
+	rc = immutil_saImmOmCcbInitialize(-1, 0, &ccbHandle);
 
 done:
 	test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmCcbInitialize_03(void)
@@ -71,15 +71,15 @@ void saImmOmCcbInitialize_03(void)
 	SaImmAdminOwnerHandleT ownerHandle;
 	SaImmCcbHandleT ccbHandle;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
 
-	test_validate(saImmOmCcbInitialize(ownerHandle, -1, &ccbHandle),
+	test_validate(immutil_saImmOmCcbInitialize(ownerHandle, -1, &ccbHandle),
 		      SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmCcbInitialize_04(void)
@@ -89,18 +89,18 @@ void saImmOmCcbInitialize_04(void)
 	SaImmAdminOwnerHandleT ownerHandle;
 	SaImmCcbHandleT ccbHandle;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
 
-	safassert(saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
 
 	test_validate(saImmOmCcbGetErrorStrings(ccbHandle, NULL),
 		      SA_AIS_ERR_INVALID_PARAM);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmCcbInitialize_05(void)
@@ -111,18 +111,18 @@ void saImmOmCcbInitialize_05(void)
 	SaImmCcbHandleT ccbHandle;
 	const SaStringT *errorStrings;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
+	safassert(immutil_saImmOmAdminOwnerInitialize(immOmHandle, adminOwnerName,
 					      SA_TRUE, &ownerHandle),
 		  SA_AIS_OK);
 
-	safassert(saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle), SA_AIS_OK);
 
 	test_validate(saImmOmCcbGetErrorStrings(ccbHandle, &errorStrings),
 		      SA_AIS_OK);
 
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 extern void saImmOmCcbObjectCreate_01(void);

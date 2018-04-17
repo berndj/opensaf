@@ -22,93 +22,93 @@ void saImmOmSearchInitialize_2_01(void)
 {
 	SaImmSearchHandleT searchHandle;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmSearchInitialize_2(immOmHandle, NULL, SA_IMM_SUBTREE,
+	rc = immutil_saImmOmSearchInitialize_2(immOmHandle, NULL, SA_IMM_SUBTREE,
 				       SA_IMM_SEARCH_ONE_ATTR |
 					   SA_IMM_SEARCH_GET_NO_ATTR,
 				       NULL, NULL, &searchHandle);
 	test_validate(rc, SA_AIS_OK);
-	safassert(saImmOmSearchFinalize(searchHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmSearchFinalize(searchHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmSearchInitialize_2_02(void)
 {
 	SaImmSearchHandleT searchHandle;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmSearchInitialize_2(-1, NULL, SA_IMM_SUBTREE,
+	rc = immutil_saImmOmSearchInitialize_2(-1, NULL, SA_IMM_SUBTREE,
 				       SA_IMM_SEARCH_ONE_ATTR |
 					   SA_IMM_SEARCH_GET_NO_ATTR,
 				       NULL, NULL, &searchHandle);
 	test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmSearchInitialize_2_03(void)
 {
 	SaImmSearchHandleT searchHandle;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmSearchInitialize_2(immOmHandle, NULL, -1,
+	rc = immutil_saImmOmSearchInitialize_2(immOmHandle, NULL, -1,
 				       SA_IMM_SEARCH_ONE_ATTR |
 					   SA_IMM_SEARCH_GET_NO_ATTR,
 				       NULL, NULL, &searchHandle);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmSearchInitialize_2_04(void)
 {
 	SaImmSearchHandleT searchHandle;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmSearchInitialize_2(immOmHandle, NULL, SA_IMM_ONE,
+	rc = immutil_saImmOmSearchInitialize_2(immOmHandle, NULL, SA_IMM_ONE,
 				       SA_IMM_SEARCH_ONE_ATTR |
 					   SA_IMM_SEARCH_GET_NO_ATTR,
 				       NULL, NULL, &searchHandle);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmSearchInitialize_2_05(void)
 {
 	SaImmSearchHandleT searchHandle;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmSearchInitialize_2(immOmHandle, NULL, SA_IMM_ONE,
+	rc = immutil_saImmOmSearchInitialize_2(immOmHandle, NULL, SA_IMM_ONE,
 				       SA_IMM_SEARCH_ONE_ATTR |
 					   SA_IMM_SEARCH_GET_NO_ATTR |
 					   SA_IMM_SEARCH_GET_SOME_ATTR,
 				       NULL, NULL, &searchHandle);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmSearchInitialize_2_06(void)
 {
 	SaImmSearchHandleT searchHandle = 0LL;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmSearchInitialize_2(immOmHandle, NULL, SA_IMM_ONE,
+	rc = immutil_saImmOmSearchInitialize_2(immOmHandle, NULL, SA_IMM_ONE,
 				       SA_IMM_SEARCH_ONE_ATTR |
 					   SA_IMM_SEARCH_GET_NO_ATTR,
 				       NULL, NULL, &searchHandle);
 	test_validate(rc, SA_AIS_ERR_INVALID_PARAM);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmSearchInitialize_2_07(void)
 {
 	SaImmSearchHandleT searchHandle = 0LL;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 	SaImmSearchParametersT_2 searchParam;
 	searchParam.searchOneAttr.attrName = SA_IMM_ATTR_CLASS_NAME;
@@ -118,12 +118,12 @@ void saImmOmSearchInitialize_2_07(void)
 	attributeNames[0] = "safVersion";
 	attributeNames[1] = NULL;
 
-	rc = saImmOmSearchInitialize_2(
+	rc = immutil_saImmOmSearchInitialize_2(
 	    immOmHandle, NULL, SA_IMM_SUBTREE,
 	    SA_IMM_SEARCH_ONE_ATTR | SA_IMM_SEARCH_GET_SOME_ATTR, &searchParam,
 	    attributeNames, &searchHandle);
 	test_validate(rc, SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmSearchInitialize_2_08(void)
@@ -131,10 +131,10 @@ void saImmOmSearchInitialize_2_08(void)
 	SaImmSearchHandleT searchHandle;
 	int count = 0;
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 	do {
-		rc = saImmOmSearchInitialize_2(
+		rc = immutil_saImmOmSearchInitialize_2(
 		    immOmHandle, NULL, SA_IMM_SUBLEVEL,
 		    SA_IMM_SEARCH_ONE_ATTR | SA_IMM_SEARCH_GET_NO_ATTR, NULL,
 		    NULL, &searchHandle);
@@ -142,7 +142,7 @@ void saImmOmSearchInitialize_2_08(void)
 	} while (rc == SA_AIS_OK);
 	count--; // last one failed
 	test_validate(rc, SA_AIS_ERR_NO_RESOURCES);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmSearchInitialize_2_09(void)
@@ -159,22 +159,22 @@ void saImmOmSearchInitialize_2_09(void)
 			maxSearchHandles = n;
 	}
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 	for (i = 0; i < maxSearchHandles; i++)
 		safassert(
-		    saImmOmSearchInitialize_2(immOmHandle, NULL, SA_IMM_SUBTREE,
+		    immutil_saImmOmSearchInitialize_2(immOmHandle, NULL, SA_IMM_SUBTREE,
 					      SA_IMM_SEARCH_ONE_ATTR |
 						  SA_IMM_SEARCH_GET_NO_ATTR,
 					      NULL, NULL, &searchHandle),
 		    SA_AIS_OK);
-	rc = saImmOmSearchInitialize_2(
+	rc = immutil_saImmOmSearchInitialize_2(
 	    immOmHandle, NULL, SA_IMM_SUBTREE, /* Test maxSearchHandle + 1 */
 	    SA_IMM_SEARCH_ONE_ATTR | SA_IMM_SEARCH_GET_NO_ATTR, NULL, NULL,
 	    &searchHandle);
 	test_validate(rc, SA_AIS_ERR_NO_RESOURCES);
-	safassert(saImmOmSearchFinalize(searchHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmSearchFinalize(searchHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmSearchInitialize_2_10(void)
@@ -190,7 +190,7 @@ void saImmOmSearchInitialize_2_10(void)
 
 	setenv("IMMA_MAX_OPEN_SEARCHES_PER_HANDLE", "200",
 	       1); /* Increase number of open search handles to 200 */
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 	setenv("IMMA_MAX_OPEN_SEARCHES_PER_HANDLE", value,
 	       1); /* Reset to default value */
@@ -200,18 +200,18 @@ void saImmOmSearchInitialize_2_10(void)
 
 	for (i = 0; i < 200; i++)
 		safassert(
-		    saImmOmSearchInitialize_2(immOmHandle, NULL, SA_IMM_SUBTREE,
+		    immutil_saImmOmSearchInitialize_2(immOmHandle, NULL, SA_IMM_SUBTREE,
 					      SA_IMM_SEARCH_ONE_ATTR |
 						  SA_IMM_SEARCH_GET_NO_ATTR,
 					      NULL, NULL, &searchHandle),
 		    SA_AIS_OK);
-	rc = saImmOmSearchInitialize_2(
+	rc = immutil_saImmOmSearchInitialize_2(
 	    immOmHandle, NULL, SA_IMM_SUBTREE, /* Test maxSearchHandle + 1 */
 	    SA_IMM_SEARCH_ONE_ATTR | SA_IMM_SEARCH_GET_NO_ATTR, NULL, NULL,
 	    &searchHandle);
 	test_validate(rc, SA_AIS_ERR_NO_RESOURCES);
-	safassert(saImmOmSearchFinalize(searchHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmSearchFinalize(searchHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 extern void saImmOmSearchNext_2_01(void);

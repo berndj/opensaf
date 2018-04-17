@@ -16,6 +16,7 @@
  */
 
 #include "imm/apitest/immtest.h"
+#include "osaf/immutil/immutil.h"
 
 static SaNameT dn = {.value = "Test,rdn=root",
 		     .length = sizeof("Test,rdn=root")};
@@ -69,18 +70,18 @@ void saImmOiRtObjectDelete_01(void)
 	    (SaImmOiImplementerNameT) __FUNCTION__;
 
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
-	safassert(saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
+	safassert(immutil_saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
 					  attrValues),
 		  SA_AIS_OK);
 
-	rc = saImmOiRtObjectDelete(immOiHandle, &dn);
+	rc = immutil_saImmOiRtObjectDelete(immOiHandle, &dn);
 	test_validate(rc, SA_AIS_OK);
 
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 }
 
 void saImmOiRtObjectDelete_03(void)
@@ -89,19 +90,19 @@ void saImmOiRtObjectDelete_03(void)
 	    (SaImmOiImplementerNameT) __FUNCTION__;
 
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
-	safassert(saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
+	safassert(immutil_saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
 					  attrValues),
 		  SA_AIS_OK);
 
-	rc = saImmOiRtObjectDelete(-1, &dn);
+	rc = immutil_saImmOiRtObjectDelete(-1, &dn);
 	test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
 
-	safassert(saImmOiRtObjectDelete(immOiHandle, &dn), SA_AIS_OK);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiRtObjectDelete(immOiHandle, &dn), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 }
 
 void saImmOiRtObjectDelete_04(void)
@@ -110,22 +111,22 @@ void saImmOiRtObjectDelete_04(void)
 	    (SaImmOiImplementerNameT) __FUNCTION__;
 
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
-	safassert(saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
+	safassert(immutil_saImmOiRtObjectCreate_2(immOiHandle, className, &rootObj,
 					  attrValues),
 		  SA_AIS_OK);
-	safassert(saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
 
-	rc = saImmOiRtObjectDelete(immOiHandle, &dn);
+	rc = immutil_saImmOiRtObjectDelete(immOiHandle, &dn);
 	test_validate(rc, SA_AIS_ERR_BAD_OPERATION);
 
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
-	safassert(saImmOiRtObjectDelete(immOiHandle, &dn), SA_AIS_OK);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiRtObjectDelete(immOiHandle, &dn), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 }
 
 void saImmOiRtObjectDelete_05(void)
@@ -134,15 +135,15 @@ void saImmOiRtObjectDelete_05(void)
 	    (SaImmOiImplementerNameT) __FUNCTION__;
 
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
 
-	rc = saImmOiRtObjectDelete(immOiHandle, &dn2);
+	rc = immutil_saImmOiRtObjectDelete(immOiHandle, &dn2);
 	test_validate(rc, SA_AIS_ERR_NOT_EXIST);
 
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 }
 
 void saImmOiRtObjectDelete_06(void)
@@ -151,13 +152,13 @@ void saImmOiRtObjectDelete_06(void)
 	    (SaImmOiImplementerNameT) __FUNCTION__;
 
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
 
-	rc = saImmOiRtObjectDelete(immOiHandle, &rootObj);
+	rc = immutil_saImmOiRtObjectDelete(immOiHandle, &rootObj);
 	test_validate(rc, SA_AIS_ERR_BAD_OPERATION);
 
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 }

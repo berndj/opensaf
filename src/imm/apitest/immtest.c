@@ -195,7 +195,7 @@ SaAisErrorT config_class_create(SaImmHandleT immHandle)
 	    &rdn,   &attr1, &attr2, &attr3, &attr4,
 	    &attr5, &attr6, &attr7, &attr8, NULL};
 
-	err = saImmOmClassCreate_2(immHandle, configClassName,
+	err = immutil_saImmOmClassCreate_2(immHandle, configClassName,
 				   SA_IMM_CLASS_CONFIG, attributes);
 	if ((err == SA_AIS_OK) || (err == SA_AIS_ERR_EXIST)) {
 		return SA_AIS_OK;
@@ -206,7 +206,7 @@ SaAisErrorT config_class_create(SaImmHandleT immHandle)
 
 SaAisErrorT config_class_delete(SaImmHandleT immHandle)
 {
-	SaAisErrorT err = saImmOmClassDelete(immHandle, configClassName);
+	SaAisErrorT err = immutil_saImmOmClassDelete(immHandle, configClassName);
 	if ((err == SA_AIS_OK) || (err == SA_AIS_ERR_NOT_EXIST)) {
 		return SA_AIS_OK;
 	}
@@ -228,13 +228,13 @@ SaAisErrorT runtime_class_create(SaImmHandleT immHandle)
 	const SaImmAttrDefinitionT_2 *attributes[] = {&rdn, &attr1, &attr2,
 						      NULL};
 
-	return saImmOmClassCreate_2(immHandle, runtimeClassName,
+	return immutil_saImmOmClassCreate_2(immHandle, runtimeClassName,
 				    SA_IMM_CLASS_RUNTIME, attributes);
 }
 
 SaAisErrorT runtime_class_delete(SaImmHandleT immHandle)
 {
-	SaAisErrorT err = saImmOmClassDelete(immHandle, runtimeClassName);
+	SaAisErrorT err = immutil_saImmOmClassDelete(immHandle, runtimeClassName);
 	if ((err == SA_AIS_OK) || (err == SA_AIS_ERR_NOT_EXIST)) {
 		return SA_AIS_OK;
 	}
@@ -263,7 +263,7 @@ SaAisErrorT nodangling_class_create(SaImmHandleT immHandle)
 	const SaImmAttrDefinitionT_2 *attributes[] = {&rdn, &attr1, &attr2,
 						      NULL};
 
-	err = saImmOmClassCreate_2(immHandle, nodanglingClassName,
+	err = immutil_saImmOmClassCreate_2(immHandle, nodanglingClassName,
 				   SA_IMM_CLASS_CONFIG, attributes);
 	if ((err == SA_AIS_OK) || (err == SA_AIS_ERR_EXIST)) {
 		return SA_AIS_OK;
@@ -274,7 +274,7 @@ SaAisErrorT nodangling_class_create(SaImmHandleT immHandle)
 
 SaAisErrorT nodangling_class_delete(SaImmHandleT immHandle)
 {
-	SaAisErrorT err = saImmOmClassDelete(immHandle, nodanglingClassName);
+	SaAisErrorT err = immutil_saImmOmClassDelete(immHandle, nodanglingClassName);
 	if ((err == SA_AIS_OK) || (err == SA_AIS_ERR_NOT_EXIST)) {
 		return SA_AIS_OK;
 	}
@@ -295,7 +295,7 @@ SaAisErrorT object_create_2(SaImmHandleT immHandle, SaImmCcbHandleT ccbHandle,
 	SaImmClassCategoryT category;
 	SaImmAttrDefinitionT_2 **attrDefinition;
 
-	err = saImmOmClassDescriptionGet_2(immHandle, className, &category,
+	err = immutil_saImmOmClassDescriptionGet_2(immHandle, className, &category,
 					   &attrDefinition);
 	if (err != SA_AIS_OK) {
 		return err;
@@ -312,11 +312,11 @@ SaAisErrorT object_create_2(SaImmHandleT immHandle, SaImmCcbHandleT ccbHandle,
 
 	assert(attrDefinition[i]);
 
-	err = saImmOmCcbObjectCreate_2(ccbHandle, className, parentName,
+	err = immutil_saImmOmCcbObjectCreate_2(ccbHandle, className, parentName,
 				       attrValues);
 
 	safassert(
-	    saImmOmClassDescriptionMemoryFree_2(immHandle, attrDefinition),
+	    immutil_saImmOmClassDescriptionMemoryFree_2(immHandle, attrDefinition),
 	    SA_AIS_OK);
 
 	return err;
@@ -327,7 +327,7 @@ SaAisErrorT object_delete_2(SaImmCcbHandleT ccbHandle, const SaNameT *dnObj,
 {
 	SaAisErrorT err;
 
-	err = saImmOmCcbObjectDelete(ccbHandle, dnObj);
+	err = immutil_saImmOmCcbObjectDelete(ccbHandle, dnObj);
 	if (!strict && err == SA_AIS_ERR_NOT_EXIST) {
 		err = SA_AIS_OK;
 	}
@@ -344,7 +344,7 @@ SaAisErrorT object_create(SaImmHandleT immHandle,
 	SaAisErrorT err;
 	SaImmCcbHandleT ccbHandle;
 
-	err = saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle);
+	err = immutil_saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle);
 	if (err != SA_AIS_OK) {
 		return err;
 	}
@@ -352,10 +352,10 @@ SaAisErrorT object_create(SaImmHandleT immHandle,
 	err = object_create_2(immHandle, ccbHandle, className, rdnObj,
 			      parentName, value);
 	if (err == SA_AIS_OK) {
-		err = saImmOmCcbApply(ccbHandle);
+		err = immutil_saImmOmCcbApply(ccbHandle);
 	}
 
-	safassert(saImmOmCcbFinalize(ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbFinalize(ccbHandle), SA_AIS_OK);
 
 	return err;
 }
@@ -366,19 +366,19 @@ SaAisErrorT object_delete(SaImmAdminOwnerHandleT ownerHandle,
 	SaAisErrorT err;
 	SaImmCcbHandleT ccbHandle;
 
-	err = saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle);
+	err = immutil_saImmOmCcbInitialize(ownerHandle, 0, &ccbHandle);
 	if (err != SA_AIS_OK) {
 		return err;
 	}
 
 	err = object_delete_2(ccbHandle, dnObj, 1);
 	if (err == SA_AIS_OK) {
-		err = saImmOmCcbApply(ccbHandle);
+		err = immutil_saImmOmCcbApply(ccbHandle);
 	} else if (!strict && err == SA_AIS_ERR_NOT_EXIST) {
 		err = SA_AIS_OK;
 	}
 
-	safassert(saImmOmCcbFinalize(ccbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbFinalize(ccbHandle), SA_AIS_OK);
 
 	return err;
 }

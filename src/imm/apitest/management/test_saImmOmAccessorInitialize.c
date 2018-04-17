@@ -21,20 +21,20 @@ static SaImmAccessorHandleT accessorHandle;
 
 void saImmOmAccessorInitialize_01(void)
 {
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmAccessorInitialize(immOmHandle, &accessorHandle);
+	rc = immutil_saImmOmAccessorInitialize(immOmHandle, &accessorHandle);
 	test_validate(rc, SA_AIS_OK);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmAccessorInitialize_02(void)
 {
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	rc = saImmOmAccessorInitialize(-1, &accessorHandle);
+	rc = immutil_saImmOmAccessorInitialize(-1, &accessorHandle);
 	test_validate(rc, SA_AIS_ERR_BAD_HANDLE);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 void saImmOmAccessorInitialize_03(void)
@@ -50,16 +50,16 @@ void saImmOmAccessorInitialize_03(void)
 			maxSearchHandles = n;
 	}
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
 	for (i = 0; i < maxSearchHandles; i++)
 		safassert(
-		    saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
+		    immutil_saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
 		    SA_AIS_OK);
 
-	rc = saImmOmAccessorInitialize(immOmHandle, &accessorHandle);
+	rc = immutil_saImmOmAccessorInitialize(immOmHandle, &accessorHandle);
 	test_validate(rc, SA_AIS_ERR_NO_RESOURCES);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 }
 
 extern void saImmOmAccessorGet_2_01(void);

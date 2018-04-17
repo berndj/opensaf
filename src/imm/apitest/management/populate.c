@@ -202,7 +202,7 @@ static void ccb_create_obj(SaNameT *parentDn, SaNameT *rdnVal,
 	const SaImmAttrValuesT_2 *attrValues[] = {&v1, NULL};
 
 	do {
-		err = saImmOmCcbObjectCreate_2(ccbHandle, className, parentDn,
+		err = immutil_saImmOmCcbObjectCreate_2(ccbHandle, className, parentDn,
 					       attrValues);
 		if (err == SA_AIS_ERR_TRY_AGAIN) {
 			usleep(250 * 1000);
@@ -248,7 +248,7 @@ static void generate_pop(range_obj_t *rootObj, SaImmCcbHandleT ccbHandle,
 	}
 
 	do {
-		err = saImmOmCcbApply(ccbHandle);
+		err = immutil_saImmOmCcbApply(ccbHandle);
 		if (err == SA_AIS_ERR_TRY_AGAIN) {
 			usleep(250 * 1000);
 		}
@@ -272,7 +272,7 @@ static void generate_pop(range_obj_t *rootObj, SaImmCcbHandleT ccbHandle,
 			     rdnAttName, rdnAttType, ownerHandle);
 	}
 
-	err = saImmOmAdminOwnerRelease(ownerHandle, objectNames, SA_IMM_ONE);
+	err = immutil_saImmOmAdminOwnerRelease(ownerHandle, objectNames, SA_IMM_ONE);
 	if (err != SA_AIS_OK) {
 		fprintf(stderr, "error - Failed to release admo - ignoring\n");
 	}
@@ -293,11 +293,11 @@ static int populate_imm(const SaImmClassNameT className, unsigned int pop,
 	SaImmValueTypeT rdnAttType = SA_IMM_ATTR_SAANYT;
 	range_obj_t *rootObj = NULL;
 
-	if ((error = saImmOmClassDescriptionGet_2(
+	if ((error = immutil_saImmOmClassDescriptionGet_2(
 		 immHandle, className, &classCategory, &attrDefinitions)) !=
 	    SA_AIS_OK) {
 		fprintf(stderr,
-			"error - saImmOmClassDescriptionGet_2 FAILED: %s\n",
+			"error - immutil_saImmOmClassDescriptionGet_2 FAILED: %s\n",
 			saf_error(error));
 		goto done;
 	}
@@ -334,10 +334,10 @@ static int populate_imm(const SaImmClassNameT className, unsigned int pop,
 			 : (rdnAttType == SA_IMM_ATTR_SANAMET) ? "SA_NAMET"
 							       : "WRONG");
 
-	if ((error = saImmOmCcbInitialize(
+	if ((error = immutil_saImmOmCcbInitialize(
 		 ownerHandle, (ccb_safe ? SA_IMM_CCB_REGISTERED_OI : 0x0),
 		 &ccbHandle)) != SA_AIS_OK) {
-		fprintf(stderr, "error - saImmOmCcbInitialize FAILED: %s\n",
+		fprintf(stderr, "error - immutil_saImmOmCcbInitialize FAILED: %s\n",
 			saf_error(error));
 		goto done;
 	}
@@ -352,8 +352,8 @@ static int populate_imm(const SaImmClassNameT className, unsigned int pop,
 	generate_pop(rootObj, ccbHandle, className, rdnAttName, rdnAttType,
 		     ownerHandle);
 
-	if ((error = saImmOmCcbFinalize(ccbHandle)) != SA_AIS_OK) {
-		fprintf(stderr, "error - saImmOmCcbFinalize FAILED: %s\n",
+	if ((error = immutil_saImmOmCcbFinalize(ccbHandle)) != SA_AIS_OK) {
+		fprintf(stderr, "error - immutil_saImmOmCcbFinalize FAILED: %s\n",
 			saf_error(error));
 		goto done;
 	}
@@ -444,11 +444,11 @@ int main(int argc, char *argv[])
 
 	(void)immutil_saImmOmInitialize(&immHandle, NULL, &immVersion);
 
-	error = saImmOmAdminOwnerInitialize(immHandle, adminOwnerName, SA_TRUE,
+	error = immutil_saImmOmAdminOwnerInitialize(immHandle, adminOwnerName, SA_TRUE,
 					    &ownerHandle);
 	if (error != SA_AIS_OK) {
 		fprintf(stderr,
-			"error - saImmOmAdminOwnerInitialize FAILED: %s\n",
+			"error - immutil_saImmOmAdminOwnerInitialize FAILED: %s\n",
 			saf_error(error));
 		rc = EXIT_FAILURE;
 		goto done_om_finalize;
@@ -456,10 +456,10 @@ int main(int argc, char *argv[])
 
 	rc = populate_imm(className, population, ownerHandle, immHandle);
 
-	error = saImmOmAdminOwnerFinalize(ownerHandle);
+	error = immutil_saImmOmAdminOwnerFinalize(ownerHandle);
 	if (SA_AIS_OK != error) {
 		fprintf(stderr,
-			"error - saImmOmAdminOwnerFinalize FAILED: %s\n",
+			"error - immutil_saImmOmAdminOwnerFinalize FAILED: %s\n",
 			saf_error(error));
 		rc = EXIT_FAILURE;
 	}

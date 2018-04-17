@@ -70,10 +70,10 @@ static void setup(SaImmAdminOwnerNameT admoName)
 
 	const SaImmAttrValuesT_2 *attrValues[2] = {&v1, 0};
 
-	safassert(saImmOmInitialize(&localImmHandle, NULL, &immVersion),
+	safassert(immutil_saImmOmInitialize(&localImmHandle, NULL, &immVersion),
 		  SA_AIS_OK);
 
-	err = saImmOmClassCreate_2(localImmHandle, className,
+	err = immutil_saImmOmClassCreate_2(localImmHandle, className,
 				   SA_IMM_CLASS_CONFIG, attrDefs);
 	if (err == SA_AIS_OK) {
 		classCreated = true;
@@ -85,32 +85,32 @@ static void setup(SaImmAdminOwnerNameT admoName)
 
 	/* Create the test object */
 
-	safassert(saImmOmAdminOwnerInitialize(localImmHandle, admoName, SA_TRUE,
+	safassert(immutil_saImmOmAdminOwnerInitialize(localImmHandle, admoName, SA_TRUE,
 					      &localOwnerHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmCcbInitialize(localOwnerHandle, 0LL, &localCcbHandle),
+	safassert(immutil_saImmOmCcbInitialize(localOwnerHandle, 0LL, &localCcbHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmCcbObjectCreate_2(localCcbHandle, className, NULL,
+	safassert(immutil_saImmOmCcbObjectCreate_2(localCcbHandle, className, NULL,
 					   attrValues),
 		  SA_AIS_OK);
-	safassert(saImmOmCcbApply(localCcbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbApply(localCcbHandle), SA_AIS_OK);
 	sleep(1);
 }
 
 static void tearDown(void)
 {
 	sleep(1);
-	safassert(saImmOmCcbObjectDelete(localCcbHandle, &testObjectName),
+	safassert(immutil_saImmOmCcbObjectDelete(localCcbHandle, &testObjectName),
 		  SA_AIS_OK);
-	safassert(saImmOmCcbApply(localCcbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbApply(localCcbHandle), SA_AIS_OK);
 	if (classCreated) {
-		safassert(saImmOmClassDelete(localImmHandle, className),
+		safassert(immutil_saImmOmClassDelete(localImmHandle, className),
 			  SA_AIS_OK);
 	}
 
-	safassert(saImmOmCcbFinalize(localCcbHandle), SA_AIS_OK);
-	safassert(saImmOmAdminOwnerFinalize(localOwnerHandle), SA_AIS_OK);
-	safassert(saImmOmFinalize(localImmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmCcbFinalize(localCcbHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmAdminOwnerFinalize(localOwnerHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(localImmHandle), SA_AIS_OK);
 }
 
 static SaAisErrorT
@@ -123,7 +123,7 @@ saImmOiRtAttrUpdateCallback(SaImmOiHandleT handle, const SaNameT *objectName,
 
 	TRACE_ENTER();
 
-	return saImmOiRtObjectUpdate_2(
+	return immutil_saImmOiRtObjectUpdate_2(
 	    handle, objectName, (const SaImmAttrModificationT_2 **)attrMods);
 }
 
@@ -135,16 +135,16 @@ static void *test_saImmOmAccessorGet_2(void *arg)
 
 	TRACE_ENTER();
 
-	safassert(saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
+	safassert(immutil_saImmOmInitialize(&immOmHandle, &immOmCallbacks, &immVersion),
 		  SA_AIS_OK);
-	safassert(saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
+	safassert(immutil_saImmOmAccessorInitialize(immOmHandle, &accessorHandle),
 		  SA_AIS_OK);
-	safassert(saImmOmAccessorGet_2(accessorHandle, dn, attributeNames,
+	safassert(immutil_saImmOmAccessorGet_2(accessorHandle, dn, attributeNames,
 				       &attributes),
 		  SA_AIS_OK);
 	assert(attributes[0]->attrValueType == SA_IMM_ATTR_SAINT32T);
 	assert(*((SaInt32T *)attributes[0]->attrValues[0]) == int1Value);
-	safassert(saImmOmFinalize(immOmHandle), SA_AIS_OK);
+	safassert(immutil_saImmOmFinalize(immOmHandle), SA_AIS_OK);
 
 	TRACE_LEAVE();
 	return NULL;
@@ -165,13 +165,13 @@ void SaImmOiRtAttrUpdateCallbackT_01(void)
 	    saImmOiRtAttrUpdateCallback;
 
 	safassert(
-	    saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
+	    immutil_saImmOiInitialize_2(&immOiHandle, &immOiCallbacks, &immVersion),
 	    SA_AIS_OK);
-	safassert(saImmOiImplementerSet(immOiHandle, implementerName),
+	safassert(immutil_saImmOiImplementerSet(immOiHandle, implementerName),
 		  SA_AIS_OK);
-	safassert(saImmOiClassImplementerSet(immOiHandle, className),
+	safassert(immutil_saImmOiClassImplementerSet(immOiHandle, className),
 		  SA_AIS_OK);
-	safassert(saImmOiSelectionObjectGet(immOiHandle, &selectionObject),
+	safassert(immutil_saImmOiSelectionObjectGet(immOiHandle, &selectionObject),
 		  SA_AIS_OK);
 
 	ret = pthread_create(&thread, NULL, test_saImmOmAccessorGet_2,
@@ -188,10 +188,10 @@ void SaImmOiRtAttrUpdateCallbackT_01(void)
 	pthread_join(thread, NULL);
 
 	test_validate(SA_AIS_OK, SA_AIS_OK);
-	safassert(saImmOiClassImplementerRelease(immOiHandle, className),
+	safassert(immutil_saImmOiClassImplementerRelease(immOiHandle, className),
 		  SA_AIS_OK);
-	safassert(saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
-	safassert(saImmOiFinalize(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiImplementerClear(immOiHandle), SA_AIS_OK);
+	safassert(immutil_saImmOiFinalize(immOiHandle), SA_AIS_OK);
 	immOiCallbacks.saImmOiRtAttrUpdateCallback = NULL;
 	tearDown();
 
