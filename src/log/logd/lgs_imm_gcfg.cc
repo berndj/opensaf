@@ -571,6 +571,7 @@ static int read_network_name() {
   SaNameT object_name;
   SaImmAttrValuesT_2 **attributes;
   SaImmAttrValuesT_2 *attribute;
+  SaVersionT local_version = kImmVersion;
   void *value = NULL;
 
   /* Setup search initialize parameters */
@@ -589,7 +590,7 @@ static int read_network_name() {
   /*
    * Initialize an IMM object manager
    */
-  ais_rc = immutil_saImmOmInitialize(&om_handle, NULL, &kImmVersion);
+  ais_rc = immutil_saImmOmInitialize(&om_handle, NULL, &local_version);
   if (ais_rc != SA_AIS_OK) {
     TRACE("immutil_saImmOmInitialize FAIL %s", saf_error(ais_rc));
     rc = -1;
@@ -685,6 +686,7 @@ done:
 static int applier_init(SaImmOiHandleT *imm_appl_hdl,
                         SaSelectionObjectT *imm_appl_selobj) {
   SaAisErrorT ais_rc = SA_AIS_OK;
+  SaVersionT local_version = kImmVersion;
   int rc = 0;
 
   TRACE_ENTER();
@@ -705,7 +707,8 @@ static int applier_init(SaImmOiHandleT *imm_appl_hdl,
   }
 
   /* Initialize OI for applier and get OI handle */
-  ais_rc = immutil_saImmOiInitialize_2(imm_appl_hdl, &callbacks, &kImmVersion);
+  ais_rc = immutil_saImmOiInitialize_2(imm_appl_hdl, &callbacks,
+                                       &local_version);
   if (ais_rc != SA_AIS_OK) {
     LOG_WA("immutil_saImmOiInitialize_2 Failed %s", saf_error(ais_rc));
     rc = -1;

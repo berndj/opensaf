@@ -229,8 +229,9 @@ SmfImmUtils::~SmfImmUtils() { finalize(); }
 // initialize()
 // ------------------------------------------------------------------------------
 bool SmfImmUtils::initialize(void) {
+  SaVersionT local_version = s_immVersion;
   if (m_omHandle == 0) {
-    (void)immutil_saImmOmInitialize(&m_omHandle, NULL, &s_immVersion);
+    (void)immutil_saImmOmInitialize(&m_omHandle, NULL, &local_version);
   }
 
   if (m_ownerHandle == 0) {

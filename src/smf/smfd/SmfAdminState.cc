@@ -264,14 +264,16 @@ done:
 //
 bool SmfAdminStateHandler::initImmOmAndSetAdminOwnerName() {
   SaAisErrorT ais_rc = SA_AIS_ERR_TRY_AGAIN;
+  SaVersionT local_version = immVersion_;
   int timeout_try_cnt = 6;
   bool rc = true;
 
   // OM handle
   while (timeout_try_cnt > 0) {
-    ais_rc = immutil_saImmOmInitialize(&omHandle_, NULL, &immVersion_);
+    ais_rc = immutil_saImmOmInitialize(&omHandle_, NULL, &local_version);
     if (ais_rc != SA_AIS_ERR_TIMEOUT) break;
     timeout_try_cnt--;
+    local_version = immVersion_;
   }
   if (ais_rc != SA_AIS_OK) {
     LOG_NO("%s: saImmOmInitialize Fail %s", __FUNCTION__, saf_error(ais_rc));
@@ -977,4 +979,3 @@ bool SmfAdminStateHandler::adminOperation(SaAmfAdminOperationIdT adminOperation,
   TRACE_LEAVE2("rc=%d", rc);
   return rc;
 }
-

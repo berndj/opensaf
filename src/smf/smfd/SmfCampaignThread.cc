@@ -552,9 +552,11 @@ SaAisErrorT SmfCampaignThread::createImmHandle(SmfCampaign *i_campaign) {
         campOiName);
   }
 
-  rc = immutil_saImmOiInitialize_2(&m_campOiHandle, NULL, &immVersion);
+  SaVersionT local_version = immVersion;
+  rc = immutil_saImmOiInitialize_2(&m_campOiHandle, NULL, &local_version);
   while (rc == SA_AIS_ERR_TRY_AGAIN) {
     sleep(1);
+    local_version = immVersion;
     rc = immutil_saImmOiInitialize_2(&m_campOiHandle, NULL, &immVersion);
   }
   if (rc != SA_AIS_OK) {

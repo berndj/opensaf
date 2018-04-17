@@ -189,6 +189,7 @@ SaAisErrorT SmfProcedureThread::createImmHandle(void) {
   while ((rc = immutil_saImmOiInitialize_2(
               &m_procOiHandle, NULL, &immVersion)) == SA_AIS_ERR_TRY_AGAIN) {
     sleep(1);
+    immVersion = {'A', 2, 17};
   }
 
   if (rc != SA_AIS_OK) {

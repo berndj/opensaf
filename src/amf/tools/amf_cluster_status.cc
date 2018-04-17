@@ -159,8 +159,9 @@ static SaAisErrorT get_amf_nodes(void) {
   searchParam.searchOneAttr.attrValueType = SA_IMM_ATTR_SASTRINGT;
   searchParam.searchOneAttr.attrValue = &className;
 
+  SaVersionT local_version = immVersion;
   SaAisErrorT rc =
-      immutil_saImmOmInitialize(&immOmHandle, nullptr, &immVersion);
+      immutil_saImmOmInitialize(&immOmHandle, nullptr, &local_version);
   if (rc != SA_AIS_OK) {
     std::cerr << "saImmOmInitialize() failed with:" << saf_error(rc) << (rc)
               << std::endl;
@@ -227,7 +228,9 @@ static uint32_t get_clm_nodes() {
   searchParam.searchOneAttr.attrValueType = SA_IMM_ATTR_SASTRINGT;
   searchParam.searchOneAttr.attrValue = &className;
 
-  SaAisErrorT rc = immutil_saImmOmInitialize(&imm_om_hdl, nullptr, &immVersion);
+  SaVersionT local_version = immVersion;
+  SaAisErrorT rc = immutil_saImmOmInitialize(&imm_om_hdl, nullptr,
+                                             &local_version);
   if (rc != SA_AIS_OK) {
     std::cerr << "saImmOmInitialize() failed with:" << saf_error(rc) << (rc)
               << std::endl;

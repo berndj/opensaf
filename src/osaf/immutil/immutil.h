@@ -421,11 +421,11 @@ struct ImmutilWrapperProfile {
  */
 EXTERN_C SaAisErrorT immutil_saImmOiInitialize_2(
     SaImmOiHandleT *immOiHandle, const SaImmOiCallbacksT_2 *immOiCallbacks,
-    const SaVersionT *version);
+    SaVersionT *version);
 
 EXTERN_C SaAisErrorT immutil_saImmOiInitialize_o3(
     SaImmOiHandleT *immOiHandle, const SaImmOiCallbacksT_o3 *immOiCallbacks,
-    const SaVersionT *version);
+    SaVersionT *version);
 
 EXTERN_C SaAisErrorT immutil_saImmOiSelectionObjectGet(
     SaImmOiHandleT immOiHandle, SaSelectionObjectT *selectionObject);
@@ -500,7 +500,7 @@ EXTERN_C SaAisErrorT immutil_saImmOiAugmentCcbInitialize(
 
 EXTERN_C SaAisErrorT immutil_saImmOmInitialize(
     SaImmHandleT *immHandle, const SaImmCallbacksT *immCallbacks,
-    const SaVersionT *version);
+    SaVersionT *version);
 
 EXTERN_C SaAisErrorT immutil_saImmOmInitialize_o2(
     SaImmHandleT *immHandle, const SaImmCallbacksT_o2 *immCallbacks,

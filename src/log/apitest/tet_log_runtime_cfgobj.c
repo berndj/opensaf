@@ -37,13 +37,14 @@ void log_rt_cf_obj_compare(void)
 	SaNameT object_name;
 	SaImmAccessorHandleT accessorHandle;
 	SaImmAttrValuesT_2 **attributes;
+	SaVersionT local_version = kImmVersion;
 	uint32_t r_cnt = 0; /* Counter for attributes in runtime object */
 	uint32_t c_cnt = 0;
 	SaAisErrorT ais_rc = SA_AIS_OK;
 	int tst_res = 0; /* Test result: 0 = PASS */
 
 	/* NOTE: immutil will osaf_assert if error */
-	(void)immutil_saImmOmInitialize(&omHandle, NULL, &kImmVersion);
+	(void)immutil_saImmOmInitialize(&omHandle, NULL, &local_version);
 	(void)immutil_saImmOmAccessorInitialize(omHandle, &accessorHandle);
 
 	/* Count attributes in configuration object

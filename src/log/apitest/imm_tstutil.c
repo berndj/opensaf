@@ -32,6 +32,7 @@ bool get_multivalue_type_string_from_imm(SaImmHandleT *omHandle,
 {
 	SaAisErrorT om_rc = SA_AIS_OK;
 	SaImmAccessorHandleT accessorHandle;
+	SaVersionT local_version;
 	SaImmAttrValuesT_2 *attribute;
 	SaImmAttrValuesT_2 **attributes;
 	bool func_rc = true;
@@ -39,10 +40,12 @@ bool get_multivalue_type_string_from_imm(SaImmHandleT *omHandle,
 	// printf(">> get_multivalue_string_type_from_imm()\n");
 
 	do {
+		local_version = kImmVersion;
 		/* Make sure this is a NULL pointer if no values are found */
 		*multivalue_array = NULL;
 
-		om_rc = immutil_saImmOmInitialize(omHandle, NULL, &kImmVersion);
+		om_rc = immutil_saImmOmInitialize(omHandle, NULL,
+						  &local_version);
 		if (om_rc != SA_AIS_OK) {
 			printf("immutil_saImmOmInitialize Fail '%s'\n",
 			       saf_error(om_rc));

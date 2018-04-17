@@ -102,6 +102,7 @@ void init_logrootpath(void)
 	SaImmHandleT omHandle;
 	SaConstStringT config = "logConfig=1,safApp=safLogService";
 	SaNameT objectName;
+	SaVersionT local_version = kImmVersion;
 	SaImmAccessorHandleT accessorHandle;
 	SaImmAttrValuesT_2 *attribute;
 	SaImmAttrValuesT_2 **attributes;
@@ -112,7 +113,7 @@ void init_logrootpath(void)
 
 	saAisNameLend(config, &objectName);
 	/* NOTE: immutil init osaf_assert if error */
-	(void)immutil_saImmOmInitialize(&omHandle, NULL, &kImmVersion);
+	(void)immutil_saImmOmInitialize(&omHandle, NULL, &local_version);
 	(void)immutil_saImmOmAccessorInitialize(omHandle, &accessorHandle);
 
 	/* Get all attributes of the object */
@@ -140,6 +141,7 @@ int get_attr_value(SaNameT *inObjName, char *inAttr, void *outValue)
 {
 	SaImmHandleT omHandle;
 	SaImmAccessorHandleT accessorHandle;
+	SaVersionT local_version = kImmVersion;
 	SaImmAttrValuesT_2 *attribute = NULL;
 	SaImmAttrValuesT_2 **attributes;
 	SaAisErrorT ais_rc = SA_AIS_OK;
@@ -147,7 +149,7 @@ int get_attr_value(SaNameT *inObjName, char *inAttr, void *outValue)
 	int rc = 0;
 
 	/* NOTE: immutil init osaf_assert if error */
-	(void)immutil_saImmOmInitialize(&omHandle, NULL, &kImmVersion);
+	(void)immutil_saImmOmInitialize(&omHandle, NULL, &local_version);
 	(void)immutil_saImmOmAccessorInitialize(omHandle, &accessorHandle);
 
 	/* Get all attributes of the object */
@@ -286,6 +288,7 @@ int get_active_sc(void)
 	SaImmHandleT omHandle;
 	SaConstStringT objname = "safSu=SC-1,safSg=2N,safApp=OpenSAF";
 	SaNameT objectName1;
+	SaVersionT local_version = kImmVersion;
 	SaImmAccessorHandleT accessorHandle;
 	SaImmAttrValuesT_2 **attributes;
 	const char saAmfSUNumCurrActiveSIs[] = "saAmfSUNumCurrActiveSIs";
@@ -296,7 +299,7 @@ int get_active_sc(void)
 	saAisNameLend(objname, &objectName1);
 	/* NOTE: immutil init osaf_assert if error
 	 */
-	(void)immutil_saImmOmInitialize(&omHandle, NULL, &kImmVersion);
+	(void)immutil_saImmOmInitialize(&omHandle, NULL, &local_version);
 	(void)immutil_saImmOmAccessorInitialize(omHandle, &accessorHandle);
 
 	/* Get attributes of the object

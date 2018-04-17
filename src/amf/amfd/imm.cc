@@ -1461,6 +1461,7 @@ done:
 SaAisErrorT avd_imm_init(void *avd_cb) {
   SaAisErrorT error = SA_AIS_OK;
   AVD_CL_CB *cb = (AVD_CL_CB *)avd_cb;
+  SaVersionT local_version = immVersion;
 
   TRACE_ENTER();
 
@@ -1471,13 +1472,14 @@ SaAisErrorT avd_imm_init(void *avd_cb) {
 
   cb->avd_imm_status = AVD_IMM_INIT_ONGOING;
   if ((error = immutil_saImmOiInitialize_2(&cb->immOiHandle, &avd_callbacks,
-                                           &immVersion)) != SA_AIS_OK) {
+                                           &local_version)) != SA_AIS_OK) {
     LOG_ER("saImmOiInitialize failed %u", error);
     goto done;
   }
 
+  local_version = immVersion;
   if ((error = immutil_saImmOmInitialize(&cb->immOmHandle, nullptr,
-                                         &immVersion)) != SA_AIS_OK) {
+                                         &local_version)) != SA_AIS_OK) {
     LOG_ER("saImmOmInitialize failed %u", error);
     goto done;
   }
@@ -2075,6 +2077,7 @@ void avd_imm_update_runtime_attrs(void) {
  */
 static void *avd_imm_reinit_bg_thread(void *_cb) {
   SaAisErrorT rc = SA_AIS_OK;
+  SaVersionT local_version;
   AVD_CL_CB *cb = (AVD_CL_CB *)_cb;
   AVD_EVT *evt;
   uint32_t status;
@@ -2098,9 +2101,10 @@ static void *avd_imm_reinit_bg_thread(void *_cb) {
 
     avd_cb->immOiHandle = 0;
     avd_cb->is_implementer = false;
+    local_version = immVersion;
 
     if ((rc = immutil_saImmOiInitialize_2(&cb->immOiHandle, &avd_callbacks,
-                                          &immVersion)) != SA_AIS_OK) {
+                                          &local_version)) != SA_AIS_OK) {
       LOG_ER("saImmOiInitialize failed %u", rc);
       osaf_mutex_unlock_ordie(&imm_reinit_mutex);
       exit(EXIT_FAILURE);
@@ -2140,8 +2144,9 @@ static void *avd_imm_reinit_bg_thread(void *_cb) {
       }
       /* Lets re-initialize Om interface also. */
       (void)immutil_saImmOmFinalize(cb->immOmHandle);
+      local_version = immVersion;
       if ((rc = immutil_saImmOmInitialize(&cb->immOmHandle, nullptr,
-                                          &immVersion)) != SA_AIS_OK) {
+                                          &local_version)) != SA_AIS_OK) {
         LOG_ER("saImmOmInitialize failed %u", rc);
         continue;
       }

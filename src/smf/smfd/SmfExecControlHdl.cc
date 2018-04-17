@@ -373,6 +373,7 @@ bool SmfExecControlObjHandler::copyExecControlObject() {
  */
 bool SmfExecControlObjHandler::createImmOmHandles() {
   SaAisErrorT ais_rc = SA_AIS_ERR_TRY_AGAIN;
+  SaVersionT local_version = m_immVersion;
   int timeout_try_cnt = 6;
   bool rc = true;
 
@@ -382,7 +383,7 @@ bool SmfExecControlObjHandler::createImmOmHandles() {
 
   // OM handle
   while (timeout_try_cnt > 0) {
-    ais_rc = immutil_saImmOmInitialize(&m_omHandle, NULL, &m_immVersion);
+    ais_rc = immutil_saImmOmInitialize(&m_omHandle, NULL, &local_version);
     if (ais_rc != SA_AIS_ERR_TIMEOUT) break;
     timeout_try_cnt--;
   }

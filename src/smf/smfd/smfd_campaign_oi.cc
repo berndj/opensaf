@@ -737,10 +737,10 @@ uint32_t create_campaign_objects(smfd_cb_t *cb) {
   SaStringT className = campaignClassName;
   SaImmSearchParametersT_2 objectSearch;
   SmfCampaign *execCampaign = NULL;
-
+  SaVersionT local_version = immVersion;
   TRACE_ENTER();
 
-  (void)immutil_saImmOmInitialize(&omHandle, NULL, &immVersion);
+  (void)immutil_saImmOmInitialize(&omHandle, NULL, &local_version);
   (void)immutil_saImmOmAccessorInitialize(omHandle, &accessorHandle);
 
   /* Search for all objects of class Campaign */
@@ -940,10 +940,10 @@ uint32_t campaign_oi_deactivate(smfd_cb_t *cb) {
  */
 uint32_t campaign_oi_init(smfd_cb_t *cb) {
   SaAisErrorT rc;
-
+  SaVersionT local_version = immVersion;
   TRACE_ENTER();
   rc = immutil_saImmOiInitialize_2(&cb->campaignOiHandle, &callbacks,
-                                   &immVersion);
+                                   &local_version);
   if (rc != SA_AIS_OK) {
     LOG_ER("immutil_saImmOiInitialize_2 fail, rc = %d", rc);
     return NCSCC_RC_FAILURE;
@@ -1248,6 +1248,7 @@ void *smfd_coi_reinit_thread(void *_cb) {
 
   SaImmOiHandleT local_imm_oi_handle = 0;
   SaSelectionObjectT local_campaignSelectionObject = 0;
+  SaVersionT local_version = immVersion;
 
   // Do not publish the OI handle in the cb-structure before the whole
   // init sequence is done. This is in order to avoid BAD OPERATION return code
@@ -1256,7 +1257,7 @@ void *smfd_coi_reinit_thread(void *_cb) {
   //
 
   SaAisErrorT rc = immutil_saImmOiInitialize_2(&local_imm_oi_handle,
-                                               &callbacks, &immVersion);
+                                               &callbacks, &local_version);
   if (rc != SA_AIS_OK) {
     LOG_ER("saImmOiInitialize_2 failed %u", rc);
     exit(EXIT_FAILURE);

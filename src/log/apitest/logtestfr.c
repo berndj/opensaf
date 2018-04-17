@@ -91,11 +91,12 @@ static int get_active_sc(void)
 	const char saAmfSUNumCurrActiveSIs[] = "saAmfSUNumCurrActiveSIs";
 	SaImmAttrNameT attributeNames[2] = {(char *)saAmfSUNumCurrActiveSIs,
 					    NULL};
+	SaVersionT local_version = kImmVersion;
 	SaUint32T curr_act_sis = 0;
 
 	/* NOTE: immutil init osaf_assert if error
 	 */
-	(void)immutil_saImmOmInitialize(&omHandle, NULL, &kImmVersion);
+	(void)immutil_saImmOmInitialize(&omHandle, NULL, &local_version);
 	(void)immutil_saImmOmAccessorInitialize(omHandle, &accessorHandle);
 
 	/* Get attributes of the object
@@ -191,9 +192,10 @@ void get_logRootDirectory(char *path_str)
 	const char logRootDirectory_name[] = "logRootDirectory";
 	SaImmAttrNameT attributeNames[2] = {(char *)logRootDirectory_name,
 					    NULL};
+	SaVersionT local_version = kImmVersion;
 
 	/* NOTE: immutil init osaf_assert if error */
-	(void)immutil_saImmOmInitialize(&omHandle, NULL, &kImmVersion);
+	(void)immutil_saImmOmInitialize(&omHandle, NULL, &local_version);
 	(void)immutil_saImmOmAccessorInitialize(omHandle, &accessorHandle);
 
 	/* Get all attributes of the object */

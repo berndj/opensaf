@@ -709,6 +709,7 @@ static void hydra_config_get(AVND_CB *cb) {
   const std::string dn = "opensafImm=opensafImm,safApp=safImmService";
   SaImmAttrNameT attrName = const_cast<SaImmAttrNameT>("scAbsenceAllowed");
   SaImmAttrNameT attributeNames[] = {attrName, nullptr};
+  SaVersionT local_version = immVersion;
   const SaUint32T *value = nullptr;
 
   TRACE_ENTER();
@@ -716,7 +717,7 @@ static void hydra_config_get(AVND_CB *cb) {
   /* Set to default value */
   cb->scs_absence_max_duration = 0;
 
-  immutil_saImmOmInitialize(&immOmHandle, nullptr, &immVersion);
+  immutil_saImmOmInitialize(&immOmHandle, nullptr, &local_version);
   amf_saImmOmAccessorInitialize(immOmHandle, accessorHandle);
   SaAisErrorT rc =
       amf_saImmOmAccessorGet_o2(immOmHandle, accessorHandle, dn, attributeNames,

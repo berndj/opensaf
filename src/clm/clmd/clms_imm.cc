@@ -284,6 +284,7 @@ SaAisErrorT clms_node_create_config() {
   SaImmSearchParametersT_2 searchParam;
   SaNameT dn;
   SaImmAttrValuesT_2 **attributes;
+  SaVersionT local_version = immVersion;
   /*For time being changed to SaClmNode1 but shud be SaClmNode */
   const char *className = "SaClmNode";
 
@@ -291,7 +292,7 @@ SaAisErrorT clms_node_create_config() {
 
   CLMS_CLUSTER_NODE *node = nullptr;
 
-  immutil_saImmOmInitialize(&imm_om_hdl, nullptr, &immVersion);
+  immutil_saImmOmInitialize(&imm_om_hdl, nullptr, &local_version);
 
   searchParam.searchOneAttr.attrName =
       const_cast<SaImmAttrNameT>("SaImmAttrClassName");
@@ -334,12 +335,15 @@ SaAisErrorT clms_node_create_config() {
 
       // Try 10 times in a gap of 100 millisecs.
       uint16_t count = 0;
-      rc = immutil_saImmOmInitialize(&imm_om_hdl, nullptr, &immVersion);
+      local_version = immVersion;
+
+      rc = immutil_saImmOmInitialize(&imm_om_hdl, nullptr, &local_version);
       while ((rc == SA_AIS_ERR_TIMEOUT) && (count < 10)) {
         immutil_saImmOmFinalize(imm_om_hdl);
         count++;
         osaf_nanosleep(&kHundredMilliseconds);
-        rc = immutil_saImmOmInitialize(&imm_om_hdl, nullptr, &immVersion);
+        rc = immutil_saImmOmInitialize(&imm_om_hdl, nullptr, &local_version);
+        local_version = immVersion;
       }
       if (rc != SA_AIS_OK) {
         LOG_ER("saImmOmInitialize failed with '%u'", rc);
@@ -360,7 +364,8 @@ SaAisErrorT clms_node_create_config() {
         osaf_nanosleep(&kHundredMilliseconds);
 
         // Last try to both.
-        immutil_saImmOmInitialize(&imm_om_hdl, nullptr, &immVersion);
+        local_version = immVersion;
+        immutil_saImmOmInitialize(&imm_om_hdl, nullptr, &local_version);
         rc = immutil_saImmOmSearchInitialize_2(
             imm_om_hdl, nullptr, SA_IMM_SUBTREE,
             SA_IMM_SEARCH_ONE_ATTR | SA_IMM_SEARCH_GET_ALL_ATTR, &searchParam,
@@ -2214,10 +2219,12 @@ static const SaImmOiCallbacksT_2 callbacks = {
 uint32_t clms_imm_init(CLMS_CB *cb) {
   uint32_t rc = NCSCC_RC_SUCCESS;
   SaAisErrorT ais_rc = SA_AIS_OK;
+  SaVersionT local_version = immVersion;
   immutilWrapperProfile.errorsAreFatal = 0;
   TRACE_ENTER();
+
   if ((ais_rc = immutil_saImmOiInitialize_2(&cb->immOiHandle, &callbacks,
-                                            &immVersion)) != SA_AIS_OK) {
+                                            &local_version)) != SA_AIS_OK) {
     LOG_ER("saImmOiInitialize_2 failed %u", rc);
     rc = NCSCC_RC_FAILURE;
     goto done;
@@ -2683,6 +2690,7 @@ static void clms_lock_send_start_cbk(CLMS_CLUSTER_NODE *nodeop) {
  */
 static void *clm_imm_reinit_thread(void *_cb) {
   SaAisErrorT ais_rc = SA_AIS_OK;
+  SaVersionT local_version;
   CLMS_CB *cb = (CLMS_CB *)_cb;
 
   TRACE_ENTER();
@@ -2693,8 +2701,9 @@ static void *clm_imm_reinit_thread(void *_cb) {
       exit(EXIT_FAILURE);
     }
 
+    local_version = immVersion;
     if ((ais_rc = immutil_saImmOiInitialize_2(&cb->immOiHandle, &callbacks,
-                                              &immVersion)) != SA_AIS_OK) {
+                                              &local_version)) != SA_AIS_OK) {
       LOG_ER("saImmOiInitialize_2 failed %u, exiting", ais_rc);
       exit(EXIT_FAILURE);
     }

@@ -4747,7 +4747,8 @@ void objectMultiCcbTest_38(void) {
 
   SaImmAttrModificationT_2 *attrMod1[] = {&am1, &am2, NULL};
   SaImmAttrModificationT_2 *attrMod2[] = {&am3, &am4, NULL};
-  safassert(immutil_saImmOmInitialize(&omHandle, NULL, &immVersion),
+  SaVersionT local_version = immVersion;
+  safassert(immutil_saImmOmInitialize(&omHandle, NULL, &local_version),
       SA_AIS_OK);
   safassert(immutil_saImmOmAdminOwnerInitialize(
       omHandle,
@@ -4963,7 +4964,8 @@ void objectMultiCcbTest_39(void) {
   SaImmAttrModificationT_2 *attrMod2[] = {&am2, NULL};
   SaImmAttrModificationT_2 *attrMod3[] = {&am3, &am4, &am5, &am6, NULL};
 
-  safassert(immutil_saImmOmInitialize(&omHandle, NULL, &immVersion),
+  SaVersionT local_version = immVersion;
+  safassert(immutil_saImmOmInitialize(&omHandle, NULL, &local_version),
       SA_AIS_OK);
   safassert(immutil_saImmOmAdminOwnerInitialize(
       omHandle,

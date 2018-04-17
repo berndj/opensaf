@@ -610,8 +610,9 @@ SaImmClassNameT immutil_get_className(const SaNameT *objectName)
 	SaImmAccessorHandleT accessorHandle;
 	SaImmAttrValuesT_2 **attributes;
 	SaImmAttrNameT attributeNames[] = {"SaImmAttrClassName", NULL};
+	SaVersionT localVer = immVersion;
 
-	if (immutil_saImmOmInitialize(&omHandle, NULL, &immVersion) !=
+	if (immutil_saImmOmInitialize(&omHandle, NULL, &localVer) !=
 	    SA_AIS_OK)
 		goto done;
 	if (immutil_saImmOmAccessorInitialize(omHandle, &accessorHandle) !=
@@ -639,9 +640,10 @@ SaAisErrorT immutil_get_attrValueType(const SaImmClassNameT className,
 	SaImmClassCategoryT classCategory;
 	SaImmAttrDefinitionT_2 *attrDef;
 	SaImmAttrDefinitionT_2 **attrDefinitions;
+	SaVersionT localVer = immVersion;
 	int i = 0;
 
-	if ((rc = immutil_saImmOmInitialize(&omHandle, NULL, &immVersion)) !=
+	if ((rc = immutil_saImmOmInitialize(&omHandle, NULL, &localVer)) !=
 	    SA_AIS_OK) {
 		return rc;
 	}
@@ -1083,7 +1085,7 @@ struct ImmutilWrapperProfile immutilWrapperProfile = {1, 25, 400};
 SaAisErrorT
 immutil_saImmOiInitialize_2(SaImmOiHandleT *immOiHandle,
 			    const SaImmOiCallbacksT_2 *immOiCallbacks,
-			    const SaVersionT *version)
+			    SaVersionT *version)
 {
 	/* Version parameter is in/out i.e. must be mutable and should not be
 	   re-used from previous call in a retry loop. */
@@ -1100,6 +1102,8 @@ immutil_saImmOiInitialize_2(SaImmOiHandleT *immOiHandle,
 		    saImmOiInitialize_2(immOiHandle, immOiCallbacks, &localVer);
 		nTries++;
 	}
+
+	*version = localVer;
 	if (rc != SA_AIS_OK && immutilWrapperProfile.errorsAreFatal)
 		immutilError("saImmOiInitialize FAILED, rc = %d", (int)rc);
 	return rc;
@@ -1108,7 +1112,7 @@ immutil_saImmOiInitialize_2(SaImmOiHandleT *immOiHandle,
 SaAisErrorT
 immutil_saImmOiInitialize_o3(SaImmOiHandleT *immOiHandle,
 			     const SaImmOiCallbacksT_o3 *immOiCallbacks,
-			     const SaVersionT *version)
+			     SaVersionT *version)
 {
 	/* Version parameter is in/out i.e. must be mutable and should not be
 	   re-used from previous call in a retry loop. */
@@ -1125,6 +1129,8 @@ immutil_saImmOiInitialize_o3(SaImmOiHandleT *immOiHandle,
 					  &localVer);
 		nTries++;
 	}
+
+	*version = localVer;
 	if (rc != SA_AIS_OK && immutilWrapperProfile.errorsAreFatal)
 		immutilError("saImmOiInitialize_o3 FAILED, rc = %d", (int)rc);
 	return rc;
@@ -1515,7 +1521,7 @@ SaAisErrorT immutil_saImmOiAugmentCcbInitialize(
 
 SaAisErrorT immutil_saImmOmInitialize(SaImmHandleT *immHandle,
 				      const SaImmCallbacksT *immCallbacks,
-				      const SaVersionT *version)
+				      SaVersionT *version)
 {
 	/* Version parameter is in/out i.e. must be mutable and should not be
 	   re-used from previous call in a retry loop. */
@@ -1530,6 +1536,8 @@ SaAisErrorT immutil_saImmOmInitialize(SaImmHandleT *immHandle,
 		rc = saImmOmInitialize(immHandle, immCallbacks, &localVer);
 		nTries++;
 	}
+
+	*version = localVer;
 	if (rc != SA_AIS_OK && immutilWrapperProfile.errorsAreFatal)
 		immutilError("saImmOmInitialize FAILED, rc = %d", (int)rc);
 	return rc;
@@ -1553,6 +1561,8 @@ SaAisErrorT immutil_saImmOmInitialize_o2(SaImmHandleT *immHandle,
 		rc = saImmOmInitialize_o2(immHandle, immCallbacks, &localVer);
 		nTries++;
 	}
+
+	*version = localVer;
 	if (rc != SA_AIS_OK && immutilWrapperProfile.errorsAreFatal)
 		immutilError(" FAILED, rc = %d", (int)rc);
 	return rc;

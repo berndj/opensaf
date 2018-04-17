@@ -976,6 +976,7 @@ static void read_logsv_config_obj_2() {
   SaImmAccessorHandleT accessorHandle;
   SaImmAttrValuesT_2 *attribute;
   SaImmAttrValuesT_2 **attributes;
+  SaVersionT local_version = kImmVersion;
   int i = 0;
   int n;
 
@@ -983,7 +984,7 @@ static void read_logsv_config_obj_2() {
 
   /* NOTE: immutil init will osaf_assert if error */
   SaAisErrorT om_rc =
-      immutil_saImmOmInitialize(&omHandle, nullptr, &kImmVersion);
+      immutil_saImmOmInitialize(&omHandle, nullptr, &local_version);
   if (om_rc != SA_AIS_OK) {
     LOG_ER("immutil_saImmOmInitialize failed: %s", saf_error(om_rc));
     osaf_abort(0);
