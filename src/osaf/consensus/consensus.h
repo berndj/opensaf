@@ -17,14 +17,16 @@
 
 #include <chrono>
 #include <string>
-#include "saAis.h"
+#include <vector>
 #include "base/macros.h"
 #include "osaf/consensus/key_value.h"
+#include "saAis.h"
 
 class Consensus {
  public:
   // Set active controller to this node
-  SaAisErrorT PromoteThisNode();
+  SaAisErrorT PromoteThisNode(const bool graceful_takeover,
+    const uint64_t cluster_size);
 
   // Clear current active controller by releasing lock
   SaAisErrorT DemoteCurrentActive();
@@ -40,6 +42,9 @@ class Consensus {
   // in the callback
   void MonitorLock(ConsensusCallback callback, const uint32_t user_defined);
 
+  void MonitorTakeoverRequest(ConsensusCallback callback,
+                              const uint32_t user_defined);
+
   // Is consensus service enabled?
   bool IsEnabled() const;
 
@@ -52,16 +57,58 @@ class Consensus {
   Consensus();
   virtual ~Consensus();
 
+  static const std::string kTakeoverRequestKeyname;
+
+  enum class TakeoverState : std::uint8_t {
+    UNDEFINED = 0,
+    NEW = 1,
+    ACCEPTED = 2,
+    REJECTED = 3,
+  };
+
+  enum class TakeoverElements : std::uint8_t {
+    TIMESTAMP = 0,
+    CURRENT_OWNER = 1,
+    PROPOSED_OWNER = 2,
+    PROPOSED_NETWORK_SIZE = 3,
+    STATE = 4
+  };
+
+  const std::string TakeoverStateStr[4] = {"UNDEFINED", "NEW", "ACCEPTED",
+                                           "REJECTED"};
+
+  TakeoverState HandleTakeoverRequest(const uint64_t cluster_size);
+
  private:
   bool use_consensus_ = false;
   bool use_remote_fencing_ = false;
   const std::string kTestKeyname = "opensaf_write_test";
   const std::chrono::milliseconds kSleepInterval =
-    std::chrono::milliseconds(100);  // in ms
+    std::chrono::milliseconds(500);  // in ms
   static constexpr uint32_t kLockTimeout = 0;  // lock is persistent by default
-  static constexpr uint32_t kMaxRetry = 600;
+  static constexpr uint32_t kMaxTakeoverRetry = 20;
+  static constexpr uint32_t kMaxRetry = 60;
+  static constexpr uint32_t kTakeoverValidTime = 20;  // in seconds
+
+  void CheckForExistingTakeoverRequest();
+
+  SaAisErrorT CreateTakeoverRequest(const std::string& current_owner,
+                                    const std::string& proposed_owner,
+                                    const uint64_t cluster_size);
+
+  SaAisErrorT ReadTakeoverRequest(std::vector<std::string>& tokens);
+
+  SaAisErrorT WriteTakeoverResult(const std::string& timestamp,
+                                  const std::string& current_owner,
+                                  const std::string& proposed_owner,
+                                  const std::string& proposed_cluster_size,
+                                  const TakeoverState result);
+
   SaAisErrorT Demote(const std::string& node);
   bool FenceNode(const std::string& node);
+
+  void Split(const std::string& str, std::vector<std::string>& tokens) const;
+  uint64_t CurrentTime() const;
 
   DELETE_COPY_AND_MOVE_OPERATORS(Consensus);
 };

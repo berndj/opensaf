@@ -20,9 +20,9 @@
 #include <thread>
 #include "saAis.h"
 
-typedef std::function<void(const std::string& key,
-  const std::string& new_value,
-  const uint32_t user_defined)> ConsensusCallback;
+typedef std::function<void(const std::string& key, const std::string& new_value,
+                           const uint32_t user_defined)>
+    ConsensusCallback;
 
 class KeyValue {
  public:
@@ -32,13 +32,20 @@ class KeyValue {
   // Set key to value
   static SaAisErrorT Set(const std::string& key, const std::string& value);
 
+  // Set key to value only if prev value matches
+  static SaAisErrorT Set(const std::string& key, const std::string& value,
+                         const std::string& prev_value);
+
+  // Create key, and set to value. Fails if key already exists.
+  static SaAisErrorT Create(const std::string& key, const std::string& value);
+
   // Erase key
   static SaAisErrorT Erase(const std::string& key);
 
   // Obtain lock, default timeout is 0 seconds (indefinite). If lock
   // is called when already locked, the timeout is extended
   static SaAisErrorT Lock(const std::string& owner,
-    const unsigned int timeout = 0);
+                          const unsigned int timeout = 0);
 
   // Release lock
   static SaAisErrorT Unlock(const std::string& owner);
@@ -48,11 +55,11 @@ class KeyValue {
 
   // starts a thread to watch key and call callback if values changes
   static void Watch(const std::string& key, ConsensusCallback callback,
-    const uint32_t user_defined);
+                    const uint32_t user_defined);
 
   // starts a thread to watch the lock and call callback if is modified
   static void WatchLock(ConsensusCallback callback,
-    const uint32_t user_defined);
+                        const uint32_t user_defined);
 
   // internal use
   static int Execute(const std::string& command, std::string& output);

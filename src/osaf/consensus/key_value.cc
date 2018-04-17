@@ -45,9 +45,9 @@ int KeyValue::Execute(const std::string& command, std::string& output) {
 SaAisErrorT KeyValue::Get(const std::string& key, std::string& value) {
   TRACE_ENTER();
 
-  const std::string kv_store_cmd = base::GetEnv(
-    "FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
-  const std::string command(kv_store_cmd + " get " + key);
+  const std::string kv_store_cmd =
+      base::GetEnv("FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
+  const std::string command(kv_store_cmd + " get \"" + key + "\"");
   int rc = KeyValue::Execute(command, value);
   TRACE("Read '%s'", value.c_str());
 
@@ -61,9 +61,10 @@ SaAisErrorT KeyValue::Get(const std::string& key, std::string& value) {
 SaAisErrorT KeyValue::Set(const std::string& key, const std::string& value) {
   TRACE_ENTER();
 
-  const std::string kv_store_cmd = base::GetEnv(
-    "FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
-  const std::string command(kv_store_cmd + " set " + key + " " + value);
+  const std::string kv_store_cmd =
+      base::GetEnv("FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
+  const std::string command(kv_store_cmd + " set \"" + key + "\" \"" + value +
+                            "\"");
   std::string output;
   int rc = KeyValue::Execute(command, output);
 
@@ -74,12 +75,47 @@ SaAisErrorT KeyValue::Set(const std::string& key, const std::string& value) {
   }
 }
 
+SaAisErrorT KeyValue::Set(const std::string& key, const std::string& value,
+                          const std::string& prev_value) {
+  const std::string kv_store_cmd =
+      base::GetEnv("FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
+  const std::string command(kv_store_cmd + " set_if_prev \"" + key + "\" \"" +
+                            value + "\" \"" + prev_value + "\"");
+  std::string output;
+  int rc = KeyValue::Execute(command, output);
+
+  if (rc == 0) {
+    return SA_AIS_OK;
+  } else {
+    return SA_AIS_ERR_FAILED_OPERATION;
+  }
+}
+
+SaAisErrorT KeyValue::Create(const std::string& key, const std::string& value) {
+  TRACE_ENTER();
+
+  const std::string kv_store_cmd =
+      base::GetEnv("FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
+  const std::string command(kv_store_cmd + " create \"" + key + "\" \"" +
+                            value + "\"");
+  std::string output;
+  int rc = KeyValue::Execute(command, output);
+
+  if (rc == 0) {
+    return SA_AIS_OK;
+  } else if (rc == 1) {
+    return SA_AIS_ERR_EXIST;
+  } else {
+    return SA_AIS_ERR_FAILED_OPERATION;
+  }
+}
+
 SaAisErrorT KeyValue::Erase(const std::string& key) {
   TRACE_ENTER();
 
-  const std::string kv_store_cmd = base::GetEnv(
-    "FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
-  const std::string command(kv_store_cmd + " erase " + key);
+  const std::string kv_store_cmd =
+      base::GetEnv("FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
+  const std::string command(kv_store_cmd + " erase \"" + key + "\"");
   std::string output;
   int rc = KeyValue::Execute(command, output);
 
@@ -91,13 +127,13 @@ SaAisErrorT KeyValue::Erase(const std::string& key) {
 }
 
 SaAisErrorT KeyValue::Lock(const std::string& owner,
-                         const unsigned int timeout) {
+                           const unsigned int timeout) {
   TRACE_ENTER();
 
-  const std::string kv_store_cmd = base::GetEnv(
-    "FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
-  const std::string command(kv_store_cmd + " lock " + owner + " " +
-    std::to_string(timeout));
+  const std::string kv_store_cmd =
+      base::GetEnv("FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
+  const std::string command(kv_store_cmd + " lock \"" + owner + "\" " +
+                            std::to_string(timeout));
   std::string output;
   int rc = KeyValue::Execute(command, output);
 
@@ -105,8 +141,10 @@ SaAisErrorT KeyValue::Lock(const std::string& owner,
     return SA_AIS_OK;
   } else if (rc == 1) {
     // already locked
+    LOG_NO("Locked failed: %s", output.c_str());
     return SA_AIS_ERR_EXIST;
   } else {
+    LOG_NO("Locked failed: %s", output.c_str());
     return SA_AIS_ERR_TRY_AGAIN;
   }
 }
@@ -114,15 +152,16 @@ SaAisErrorT KeyValue::Lock(const std::string& owner,
 SaAisErrorT KeyValue::Unlock(const std::string& owner) {
   TRACE_ENTER();
 
-  const std::string kv_store_cmd = base::GetEnv(
-    "FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
-  const std::string command(kv_store_cmd + " unlock " + owner);
+  const std::string kv_store_cmd =
+      base::GetEnv("FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
+  const std::string command(kv_store_cmd + " unlock \"" + owner + "\"");
   std::string output;
   int rc = Execute(command, output);
 
   if (rc == 0) {
     return SA_AIS_OK;
   } else if (rc == 1) {
+    LOG_NO("Unlock failed: %s", output.c_str());
     LOG_ER("Lock is owned by another node");
     return SA_AIS_ERR_INVALID_PARAM;
   } else {
@@ -133,8 +172,8 @@ SaAisErrorT KeyValue::Unlock(const std::string& owner) {
 SaAisErrorT KeyValue::LockOwner(std::string& owner) {
   TRACE_ENTER();
 
-  const std::string kv_store_cmd = base::GetEnv(
-    "FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
+  const std::string kv_store_cmd =
+      base::GetEnv("FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
   const std::string command(kv_store_cmd + " lock_owner");
   std::string output;
   int rc = KeyValue::Execute(command, output);
@@ -145,23 +184,24 @@ SaAisErrorT KeyValue::LockOwner(std::string& owner) {
     return SA_AIS_OK;
   }
 
+  // put output in owner, for debugging purposes
+  owner = output;
   return SA_AIS_ERR_FAILED_OPERATION;
 }
 
 namespace {
 
 static constexpr std::chrono::milliseconds kSleepInterval =
-  std::chrono::milliseconds(100);  // in ms
+    std::chrono::milliseconds(100);  // in ms
 static constexpr uint32_t kMaxRetry = 100;
 
-void WatchKeyFunction(const std::string& key,
-  const ConsensusCallback& callback,
-  const uint32_t user_defined) {
+void WatchKeyFunction(const std::string& key, const ConsensusCallback& callback,
+                      const uint32_t user_defined) {
   TRACE_ENTER();
 
-  const std::string kv_store_cmd = base::GetEnv(
-    "FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
-  const std::string command(kv_store_cmd + " watch " + key);
+  const std::string kv_store_cmd =
+      base::GetEnv("FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
+  const std::string command(kv_store_cmd + " watch \"" + key + "\"");
   std::string value;
   uint32_t retries = 0;
   int rc;
@@ -183,11 +223,11 @@ void WatchKeyFunction(const std::string& key,
 }
 
 void WatchLockFunction(const ConsensusCallback& callback,
-  const uint32_t user_defined) {
+                       const uint32_t user_defined) {
   TRACE_ENTER();
 
-  const std::string kv_store_cmd = base::GetEnv(
-    "FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
+  const std::string kv_store_cmd =
+      base::GetEnv("FMS_KEYVALUE_STORE_PLUGIN_CMD", "");
   const std::string command(kv_store_cmd + " watch_lock");
   std::string value;
   uint32_t retries = 0;
@@ -211,16 +251,15 @@ void WatchLockFunction(const ConsensusCallback& callback,
 
 }  // namespace
 
-void KeyValue::Watch(const std::string& key,
-  const ConsensusCallback callback,
-  const uint32_t user_defined) {
+void KeyValue::Watch(const std::string& key, const ConsensusCallback callback,
+                     const uint32_t user_defined) {
   std::thread t(WatchKeyFunction, key, callback, user_defined);
   t.detach();
   return;
 }
 
 void KeyValue::WatchLock(const ConsensusCallback callback,
-  const uint32_t user_defined) {
+                         const uint32_t user_defined) {
   std::thread t(WatchLockFunction, callback, user_defined);
   t.detach();
   return;
