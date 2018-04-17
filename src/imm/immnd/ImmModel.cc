@@ -10910,7 +10910,6 @@ SaAisErrorT ImmModel::deleteObject(ObjectMap::iterator& oi, SaUint32T reqConn,
 void ImmModel::setCcbErrorString(CcbInfo* ccb, const char* errorString,
                                  va_list vl) {
   int errLen = strlen(errorString) + 1;
-  char* fmtError = (char*)malloc(errLen);
   int len;
   va_list args;
   int isValidationErrString = 0;
@@ -10921,6 +10920,9 @@ void ImmModel::setCcbErrorString(CcbInfo* ccb, const char* errorString,
     return;
   }
 
+  char* fmtError = (char*)malloc(errLen);
+  osafassert(fmtError);
+
   va_copy(args, vl);
   len = vsnprintf(fmtError, errLen, errorString, args);
   va_end(args);
@@ -10930,7 +10932,8 @@ void ImmModel::setCcbErrorString(CcbInfo* ccb, const char* errorString,
   if (len > errLen) {
     char* newFmtError = (char*)realloc(fmtError, len);
     if (newFmtError == nullptr) {
-      TRACE_5("realloc error ,No memory ");
+      TRACE_5("realloc error, no memory");
+      free(fmtError);
       return;
     } else {
       fmtError = newFmtError;
