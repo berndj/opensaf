@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 #      -*- OpenSAF  -*-
 #
 # (C) Copyright 2018 Ericsson AB 2018 - All Rights Reserved.
@@ -14,9 +14,14 @@
 #
 # Please note: this API is subject to change and may be modified
 # in a future version of OpenSAF. Future API versions may not be
-# backward compatible.
+# backward compatible. This plugin may need to be adapted.
 
 readonly keyname="opensaf_consensus_lock"
+readonly directory="/opensaf/"
+readonly etcd_options=""
+readonly etcd_timeout="5s"
+
+export ETCDCTL_API=3
 
 # get
 #   retrieve <value> of <key> from key-value store
@@ -27,7 +32,14 @@ readonly keyname="opensaf_consensus_lock"
 #   non-zero - failure
 get() {
   readonly key="$1"
-  ...
+
+  if value=$(etcdctl $etcd_options --dial-timeout $etcd_timeout get "$directory$key" | tail -n1)
+  then
+    echo "$value"
+    return 0
+  else
+    return 1
+  fi
 }
 
 # set
@@ -41,7 +53,14 @@ get() {
 setkey() {
   readonly key="$1"
   readonly value="$2"
-  ...
+
+  if etcdctl $etcd_options --dial-timeout $etcd_timeout put "$directory$key" \
+    "$value" >/dev/null
+  then
+    return 0
+  else
+    return 1
+  fi
 }
 
 # create
@@ -57,7 +76,23 @@ setkey() {
 create_key() {
   readonly key="$1"
   readonly value="$2"
-  ...
+  # first try to create the key
+  transaction="create(\""$directory$key"\") = \"0\"
+
+    put \""$directory$key"\" \""$value"\"
+
+  "
+  output=$(etcdctl $etcd_options --dial-timeout $etcd_timeout txn <<< "$transaction")
+  if [[ "$output" == *"OK"* ]]; then
+    return 0
+  fi
+
+  if output=$(etcdctl $etcd_options --dial-timeout $etcd_timeout get "$directory$key" | tail -n1)
+  then
+    return 1
+  else
+    return 2
+  fi
 }
 
 # set
@@ -74,7 +109,19 @@ setkey_match_prev() {
   readonly key="$1"
   readonly value="$2"
   readonly prev="$3"
-  ...
+
+  # key already exists, make sure it's empty
+  transaction="value(\""$directory$key"\") = \"$prev\"
+
+    put \""$directory$key"\" \""$value"\"
+
+  "
+  output=$(etcdctl $etcd_options --dial-timeout $etcd_timeout txn <<< "$transaction")
+  if [[ "$output" == *"OK"* ]]; then
+    return 0
+  fi
+
+  return 1
 }
 
 # erase
@@ -86,7 +133,14 @@ setkey_match_prev() {
 #   non-zero - failure
 erase() {
   readonly key="$1"
-  ...
+
+  if etcdctl $etcd_options --dial-timeout $etcd_timeout \
+    del "$directory$key" >/dev/null 2>&1
+  then
+    return 0
+  else
+    return 1
+  fi
 }
 
 # lock
@@ -95,11 +149,50 @@ erase() {
 #   $2 - <timeout>, will automatically unlock after <timeout> seconds
 # returns:
 #   0 - success
-#   non-zero - failure
+#   1 - the lock is owned by someone else
+#   2 or above - other failure
+# NOTE: if lock is already acquired by <owner>, then timeout is extended
+# TODO: timeout not yet implemented
 lock() {
   readonly owner="$1"
   readonly timeout="$2"
-  ...
+  # first try to create the key
+  transaction="create(\""$directory$keyname"\") = \"0\"
+
+    put \""$directory$keyname"\" \""$owner"\"
+
+  "
+  output=$(etcdctl $etcd_options --dial-timeout $etcd_timeout txn <<< "$transaction")
+  if [[ "$output" == *"OK"* ]]; then
+    return 0
+  fi
+
+  # key already exists, make sure it's empty
+  transaction="value(\""$directory$keyname"\") = \"\"
+
+    put \""$directory$keyname"\" \""$owner"\"
+
+  "
+  output=$(etcdctl $etcd_options --dial-timeout $etcd_timeout txn <<< "$transaction")
+  if [[ "$output" == *"OK"* ]]; then
+    return 0
+  fi
+
+  current_owner=$(etcdctl $etcd_options --dial-timeout $etcd_timeout get "$directory$keyname" | tail -n1)
+  # see if we already hold the lock
+  if [ "$current_owner" = "$owner" ]; then
+    return 0
+  fi
+
+  if [ -n "$current_owner" ]; then
+    # owned by someone else
+    echo "$current_owner"
+    return 1
+  fi
+
+  # for troubleshooting
+  echo "$output"
+  return 2
 }
 
 # get
@@ -110,7 +203,8 @@ lock() {
 #   0 - success, <owner> is echoed to stdout
 #   non-zero - failure or not locked
 lock_owner() {
-  ...
+  get "$keyname"
+  return $?
 }
 
 # unlock
@@ -123,11 +217,44 @@ lock_owner() {
 # returns:
 #   0 - success
 #   1 - the lock is owned by someone else
-#   2 or above - other failure#
+#   2 or above - other failure
+#
 unlock() {
   readonly owner="$1"
   readonly forced=${2:-false}
-  ...
+  if [ "$forced" = false ]; then
+    # unlock on succeeds if owner matches
+    transaction="value(\""$directory$keyname"\") = \""$owner"\"
+
+    put \""$directory$keyname"\" \"\"
+
+    "
+    output=$(etcdctl $etcd_options --dial-timeout $etcd_timeout txn <<< "$transaction")
+    if [[ "$output" == *"OK"* ]]; then
+      return 0
+    fi
+
+    # failed! check we own the lock
+    current_owner=lock_owner
+    if [[ "$owner" != "$current_owner" && -n "$current_owner" ]]; then
+      # for troubleshooting
+      echo "$output"
+      echo "$current_owner"
+      return 1
+    fi
+
+    # for troubleshooting
+    echo "$output"
+    return 2
+  fi
+
+  if etcdctl $etcd_options --dial-timeout $etcd_timeout \
+    del "$directory$keyname" >/dev/null 2>&1
+  then
+    return 0
+  else
+    return 2
+  fi
 }
 
 # watch
@@ -138,8 +265,11 @@ unlock() {
 #   0 - success, <new_value> is echoed to stdout
 #   non-zero - failure
 watch() {
-  readonly key="$1"
-  ..
+  readonly watch_key="$1"
+  etcdctl $etcd_options --dial-timeout $etcd_timeout \
+    watch "$directory$watch_key" | grep -m0 \"\" 2>&1
+  get "$watch_key"
+  return 0
 }
 
 # argument parsing

@@ -29,7 +29,7 @@ readonly etcd_timeout="5s"
 #   0 - success, <value> is echoed to stdout
 #   non-zero - failure
 get() {
-  readonly key=$1
+  readonly key="$1"
 
   if value=$(etcdctl $etcd_options --timeout $etcd_timeout get "$directory$key" 2>&1)
   then
@@ -49,11 +49,63 @@ get() {
 #   0 - success
 #   non-zero - failure
 setkey() {
-  readonly key=$1
-  readonly value=$2
+  readonly key="$1"
+  readonly value="$2"
 
   if etcdctl $etcd_options --timeout $etcd_timeout set "$directory$key" \
     "$value" >/dev/null
+  then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# create
+#   create <key> and set to <value> in key-value store. Fails if the key
+#   already exists
+# params:
+#   $1 - <key>
+#   $2 - <value>
+# returns:
+#   0 - success
+#   1 - already exists
+#   2 or above - other failure
+create_key() {
+  readonly key="$1"
+  readonly value="$2"
+
+  if output=$(etcdctl $etcd_options --timeout $etcd_timeout mk "$directory$key" \
+    "$value" 2>&1)
+  then
+    return 0
+  else
+    if echo $output | grep "already exists"
+    then
+      return 1
+    fi
+  fi
+
+  return 2
+}
+
+# set
+#   set <key> to <value> in key-value store, if the existing value matches
+#   <prev>
+# params:
+#   $1 - <key>
+#   $2 - <value>
+#   $3 - <prev>
+# returns:
+#   0 - success
+#   non-zero - failure
+setkey_match_prev() {
+  readonly key="$1"
+  readonly value="$2"
+  readonly prev="$3"
+
+  if etcdctl $etcd_options --timeout $etcd_timeout set "$directory$key" \
+    "$value" --swap-with-value "$prev" >/dev/null
   then
     return 0
   else
@@ -69,7 +121,7 @@ setkey() {
 #   0 - success
 #   non-zero - failure
 erase() {
-  readonly key=$1
+  readonly key="$1"
 
   if etcdctl $etcd_options --timeout $etcd_timeout \
     rm "$directory$key" >/dev/null 2>&1
@@ -90,8 +142,8 @@ erase() {
 #   2 or above - other failure
 # NOTE: if lock is already acquired by <owner>, then timeout is extended
 lock() {
-  readonly owner=$1
-  readonly timeout=$2
+  readonly owner="$1"
+  readonly timeout="$2"
 
   if etcdctl $etcd_options --timeout $etcd_timeout \
     mk "$directory$keyname" "$owner" \
@@ -145,7 +197,7 @@ lock_owner() {
 #   2 or above - other failure
 #
 unlock() {
-  readonly owner=$1
+  readonly owner="$1"
   readonly forced=${2:-false}
 
   if [ "$forced" = false ]; then
@@ -185,7 +237,7 @@ unlock() {
 #   0 - success, <new_value> is echoed to stdout
 #   non-zero - failure
 watch() {
-  readonly key=$1
+  readonly key="$1"
 
   if value=$(etcdctl $etcd_options --timeout $etcd_timeout \
     watch "$directory$key" 2>&1)
@@ -214,6 +266,22 @@ case "$1" in
       exit 1
     fi
     setkey "$2" "$3"
+    exit $?
+    ;;
+  set_if_prev)
+    if [ "$#" -ne 4 ]; then
+      echo "Usage: $0 set <key> <value> <previous_value>"
+      exit 1
+    fi
+    setkey_match_prev "$2" "$3" "$4"
+    exit $?
+    ;;
+  create)
+    if [ "$#" -ne 3 ]; then
+      echo "Usage: $0 create <key> <value>"
+      exit 1
+    fi
+    create_key "$2" "$3"
     exit $?
     ;;
   erase)
@@ -269,7 +337,7 @@ case "$1" in
     exit $?
     ;;
   *)
-    echo "Usage: $0 {get|set|erase|lock|unlock|lock_owner|watch|watch_lock}"
+    echo "Usage: $0 {get|set|create|set_if_prev|erase|lock|unlock|lock_owner|watch|watch_lock}"
     ;;
 esac
 
