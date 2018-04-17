@@ -1217,7 +1217,7 @@ uint32_t amfd_switch_stdby_actv(AVD_CL_CB *cb) {
   osaf_mutex_unlock_ordie(&imm_reinit_mutex);
 
   Consensus consensus_service;
-  rc = consensus_service.PromoteThisNode();
+  rc = consensus_service.PromoteThisNode(false, 0);
   if (rc != SA_AIS_OK) {
     LOG_ER("Unable to set active controller in consensus service");
     osafassert(false);
