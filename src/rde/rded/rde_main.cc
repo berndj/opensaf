@@ -17,6 +17,7 @@
  */
 
 #include <limits.h>
+#include <saAmf.h>
 #include <signal.h>
 #include <sys/resource.h>
 #include <sys/time.h>
@@ -28,17 +29,16 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
-#include "osaf/consensus/consensus.h"
+#include "base/conf.h"
 #include "base/daemon.h"
 #include "base/logtrace.h"
+#include "base/ncs_main_papi.h"
 #include "base/osaf_poll.h"
 #include "mds/mds_papi.h"
-#include "base/ncs_main_papi.h"
 #include "nid/agent/nid_api.h"
-#include <saAmf.h>
+#include "osaf/consensus/consensus.h"
 #include "rde/rded/rde_cb.h"
 #include "rde/rded/role.h"
-#include "base/conf.h"
 
 #define RDA_MAX_CLIENTS 32
 
@@ -47,13 +47,15 @@ enum { FD_TERM = 0, FD_AMF = 1, FD_MBX, FD_RDA_SERVER, FD_CLIENT_START };
 static void SendPeerInfoResp(MDS_DEST mds_dest);
 static void CheckForSplitBrain(const rde_msg *msg);
 
-const char *rde_msg_name[] = {
-    "-",
-    "RDE_MSG_PEER_UP(1)",
-    "RDE_MSG_PEER_DOWN(2)",
-    "RDE_MSG_PEER_INFO_REQ(3)",
-    "RDE_MSG_PEER_INFO_RESP(4)",
-};
+const char *rde_msg_name[] = {"-",
+                              "RDE_MSG_PEER_UP(1)",
+                              "RDE_MSG_PEER_DOWN(2)",
+                              "RDE_MSG_PEER_INFO_REQ(3)",
+                              "RDE_MSG_PEER_INFO_RESP(4)",
+                              "RDE_MSG_NEW_ACTIVE_CALLBACK(5)"
+                              "RDE_MSG_NODE_UP(6)",
+                              "RDE_MSG_NODE_DOWN(7)",
+                              "RDE_MSG_TAKEOVER_REQUEST_CALLBACK(8)"};
 
 static RDE_CONTROL_BLOCK _rde_cb;
 static RDE_CONTROL_BLOCK *rde_cb = &_rde_cb;
@@ -127,14 +129,16 @@ static void handle_mbx_event() {
       LOG_NO("New active controller notification from consensus service");
 
       if (role->role() == PCS_RDA_ACTIVE) {
-        if (my_node.compare(active_controller) != 0) {
+        if (my_node.compare(active_controller) != 0 &&
+            active_controller.empty() == false) {
           // we are meant to be active, but consensus service doesn't think so
           LOG_WA("Role does not match consensus service. New controller: %s",
-            active_controller.c_str());
+                 active_controller.c_str());
           if (consensus_service.IsRemoteFencingEnabled() == false) {
             LOG_ER("Probable split-brain. Rebooting this node");
+
             opensaf_reboot(0, nullptr,
-              "Split-brain detected by consensus service");
+                           "Split-brain detected by consensus service");
           }
         }
 
@@ -144,6 +148,44 @@ static void handle_mbx_event() {
       }
       break;
     }
+    case RDE_MSG_NODE_UP:
+      rde_cb->cluster_members.insert(msg->fr_node_id);
+      TRACE("cluster_size %zu", rde_cb->cluster_members.size());
+      break;
+    case RDE_MSG_NODE_DOWN:
+      rde_cb->cluster_members.erase(msg->fr_node_id);
+      TRACE("cluster_size %zu", rde_cb->cluster_members.size());
+      break;
+    case RDE_MSG_TAKEOVER_REQUEST_CALLBACK: {
+      rde_cb->monitor_takeover_req_thread_running = false;
+
+      if (role->role() == PCS_RDA_ACTIVE) {
+        LOG_NO("Received takeover request. Our network size is %zu",
+               rde_cb->cluster_members.size());
+
+        Consensus consensus_service;
+        Consensus::TakeoverState state =
+            consensus_service.HandleTakeoverRequest(
+                rde_cb->cluster_members.size());
+
+        if (state == Consensus::TakeoverState::ACCEPTED) {
+          LOG_NO("Accepted takeover request");
+          if (consensus_service.IsRemoteFencingEnabled() == false) {
+            opensaf_reboot(0, nullptr,
+                           "Another controller is taking over the active role. "
+                           "Rebooting this node");
+          }
+        } else {
+          LOG_NO("Rejected takeover request");
+
+          rde_cb->monitor_takeover_req_thread_running = true;
+          consensus_service.MonitorTakeoverRequest(Role::MonitorCallback,
+                                                   rde_cb->mbx);
+        }
+      } else {
+        LOG_WA("Received takeover request when not active");
+      }
+    } break;
     default:
       LOG_ER("%s: discarding unknown message type %u", __FUNCTION__, msg->type);
       break;
@@ -218,7 +260,10 @@ static int initialize_rde() {
     goto init_failed;
   }
 
-  rde_cb->monitor_lock_thread_running = false;
+  // normally populated through AMFND svc up, but always
+  // insert ourselves into the set on startup.
+  rde_cb->cluster_members.insert(own_node_id);
+
   rc = NCSCC_RC_SUCCESS;
 
 init_failed:

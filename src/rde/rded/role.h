@@ -40,7 +40,7 @@ class Role {
   PCS_RDA_ROLE role() const;
   static const char* to_string(PCS_RDA_ROLE role);
   static void MonitorCallback(const std::string& key,
-    const std::string& new_value, SYSF_MBX mbx);
+                              const std::string& new_value, SYSF_MBX mbx);
 
  private:
   static const uint64_t kDefaultDiscoverPeerTimeout = 2000;

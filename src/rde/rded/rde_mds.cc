@@ -125,6 +125,30 @@ static int mbx_send(RDE_MSG_TYPE type, MDS_DEST fr_dest, NODE_ID fr_node_id) {
   return rc;
 }
 
+static uint32_t process_amfnd_mds_evt(struct ncsmds_callback_info *info) {
+  uint32_t rc = NCSCC_RC_SUCCESS;
+
+  TRACE_ENTER();
+  osafassert(info->info.svc_evt.i_svc_id == NCSMDS_SVC_ID_AVND);
+
+  // process these events in the main thread to avoid
+  // synchronisation issues
+  switch (info->info.svc_evt.i_change) {
+    case NCSMDS_DOWN:
+      rc = mbx_send(RDE_MSG_NODE_DOWN, info->info.svc_evt.i_dest,
+                    info->info.svc_evt.i_node_id);
+      break;
+    case NCSMDS_UP:
+      rc = mbx_send(RDE_MSG_NODE_UP, info->info.svc_evt.i_dest,
+                    info->info.svc_evt.i_node_id);
+      break;
+    default:
+      break;
+  }
+
+  return rc;
+}
+
 static uint32_t mds_callback(struct ncsmds_callback_info *info) {
   struct rde_msg *msg;
   uint32_t rc = NCSCC_RC_SUCCESS;
@@ -148,10 +172,9 @@ static uint32_t mds_callback(struct ncsmds_callback_info *info) {
       msg = (struct rde_msg *)info->info.receive.i_msg;
       msg->fr_dest = info->info.receive.i_fr_dest;
       msg->fr_node_id = info->info.receive.i_node_id;
-      if (ncs_ipc_send(
-              &cb->mbx,
-              reinterpret_cast<NCS_IPC_MSG *>(info->info.receive.i_msg),
-              NCS_IPC_PRIORITY_NORMAL) != NCSCC_RC_SUCCESS) {
+      if (ncs_ipc_send(&cb->mbx, reinterpret_cast<NCS_IPC_MSG *>(
+                                     info->info.receive.i_msg),
+                       NCS_IPC_PRIORITY_NORMAL) != NCSCC_RC_SUCCESS) {
         LOG_ER("ncs_ipc_send FAILED");
         free(msg);
         rc = NCSCC_RC_FAILURE;
@@ -159,6 +182,10 @@ static uint32_t mds_callback(struct ncsmds_callback_info *info) {
       }
       break;
     case MDS_CALLBACK_SVC_EVENT:
+      if (info->info.svc_evt.i_svc_id == NCSMDS_SVC_ID_AVND) {
+        rc = process_amfnd_mds_evt(info);
+        break;
+      }
       if (info->info.svc_evt.i_change == NCSMDS_DOWN) {
         TRACE("MDS DOWN dest: %" PRIx64 ", node ID: %x, svc_id: %d",
               info->info.svc_evt.i_dest, info->info.svc_evt.i_node_id,
@@ -191,7 +218,7 @@ done:
 uint32_t rde_mds_register() {
   NCSADA_INFO ada_info;
   NCSMDS_INFO svc_info;
-  MDS_SVC_ID svc_id[1] = {NCSMDS_SVC_ID_RDE};
+  MDS_SVC_ID svc_id[] = {NCSMDS_SVC_ID_RDE, NCSMDS_SVC_ID_AVND};
   MDS_DEST mds_adest;
 
   TRACE_ENTER();
@@ -225,7 +252,7 @@ uint32_t rde_mds_register() {
   svc_info.i_mds_hdl = mds_hdl;
   svc_info.i_svc_id = NCSMDS_SVC_ID_RDE;
   svc_info.i_op = MDS_RED_SUBSCRIBE;
-  svc_info.info.svc_subscribe.i_num_svcs = 1;
+  svc_info.info.svc_subscribe.i_num_svcs = 2;
   svc_info.info.svc_subscribe.i_scope = NCSMDS_SCOPE_NONE;
   svc_info.info.svc_subscribe.i_svc_ids = svc_id;
 

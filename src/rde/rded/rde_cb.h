@@ -19,12 +19,13 @@
 #define RDE_RDED_RDE_CB_H_
 
 #include <cstdint>
+#include <set>
 #include "base/osaf_utility.h"
 #include "mds/mds_papi.h"
 #include "rde/agent/rda_papi.h"
+#include "rde/common/rde_rda_common.h"
 #include "rde/rded/rde_amf.h"
 #include "rde/rded/rde_rda.h"
-#include "rde/common/rde_rda_common.h"
 
 /*
  **  RDE_CONTROL_BLOCK
@@ -39,7 +40,9 @@ struct RDE_CONTROL_BLOCK {
   bool task_terminate;
   RDE_RDA_CB rde_rda_cb;
   RDE_AMF_CB rde_amf_cb;
-  bool monitor_lock_thread_running;
+  bool monitor_lock_thread_running{false};
+  bool monitor_takeover_req_thread_running{false};
+  std::set<NODE_ID> cluster_members{};
 };
 
 enum RDE_MSG_TYPE {
@@ -47,7 +50,10 @@ enum RDE_MSG_TYPE {
   RDE_MSG_PEER_DOWN = 2,
   RDE_MSG_PEER_INFO_REQ = 3,
   RDE_MSG_PEER_INFO_RESP = 4,
-  RDE_MSG_NEW_ACTIVE_CALLBACK = 5
+  RDE_MSG_NEW_ACTIVE_CALLBACK = 5,
+  RDE_MSG_NODE_UP = 6,
+  RDE_MSG_NODE_DOWN = 7,
+  RDE_MSG_TAKEOVER_REQUEST_CALLBACK = 8
 };
 
 struct rde_peer_info {

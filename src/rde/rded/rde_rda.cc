@@ -341,7 +341,7 @@ static uint32_t rde_rda_process_reg_cb(RDE_RDA_CB *rde_rda_cb, int index) {
    ** Format ACK
    */
   snprintf(msg, sizeof(msg), "%d %d", RDE_RDA_REG_CB_ACK,
-      static_cast<int>(rde_rda_cb->role->role()));
+           static_cast<int>(rde_rda_cb->role->role()));
 
   if (rde_rda_write_msg(rde_rda_cb->clients[index].fd, msg) !=
       NCSCC_RC_SUCCESS) {
