@@ -1,0 +1,37 @@
+Example etcd configuration
+==========================
+
+This document describes how to install and configure etcd on each
+node of an OpenSAF cluster. Note: it is also possible to run etcd outside
+the OpenSAF cluster, or on a subset of the cluster.
+
+etcd is generally available as a binary package in Linux distributions.
+
+For example, on Ubuntu:
+
+sudo apt-get install etcd
+
+Locate etcd.conf for your distribution. For example, it is located at
+/etc/default/etcd.conf on Ubuntu 17.10.
+
+The configuration below should help you get an initial etcd cluster running
+on a five node cluster.
+
+ETCD_LISTEN_PEER_URLS="http://0.0.0.0:2380"
+ETCD_LISTEN_CLIENT_URLS="http://localhost:2379"
+ETCD_INITIAL_ADVERTISE_PEER_URLS="http://0.0.0.0:2380"
+ETCD_INITIAL_CLUSTER="SC-1=http://x.x.x.x:2380,SC-2=http://x.x.x.x:2380,PL-3=http://x.x.x.x:2380,PL-4=http://x.x.x.x:2380,PL-5=http://x.x.x.x:2380"
+ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluster"
+ETCD_ADVERTISE_CLIENT_URLS="http://localhost:2379"
+
+Replace x.x.x.x with appropriate IP addresses.
+
+Sample plugins for etcd v2 and v3 are provided. Both plugins assume etcd is running locally.
+etcd must be started before OpenSAF.
+
+If you have configured etcd to run elsewhere,
+please add the '--endpoints' option to etcdctl in the plugin.
+
+For further information on etcd, including how to add/remove members at runtime, and
+securing etcd communication, please see the etcd documentation at
+https://coreos.com/etcd/docs/latest/

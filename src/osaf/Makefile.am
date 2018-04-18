@@ -14,6 +14,12 @@
 # Author(s): Ericsson AB
 #
 
+EXTRA_DIST += \
+	src/osaf/consensus/plugins/etcd.plugin \
+	src/osaf/consensus/plugins/etcd3.plugin \
+	src/osaf/consensus/plugins/sample.plugin \
+	src/osaf/consensus/plugins/README.etcd
+
 noinst_HEADERS += \
 	src/osaf/immutil/immutil.h \
 	src/osaf/saflog/saflog.h \
