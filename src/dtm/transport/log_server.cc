@@ -34,7 +34,8 @@ LogServer::LogServer(int term_fd)
     : term_fd_{term_fd},
       max_backups_{9},
       max_file_size_{5 * 1024 * 1024},
-      log_socket_{Osaflog::kServerSocketPath, base::UnixSocket::kNonblocking},
+      log_socket_{Osaflog::kServerSocketPath, base::UnixSocket::kNonblocking,
+                  0777},
       log_streams_{},
       current_stream_{new LogStream{"mds.log", 1, 5 * 1024 * 1024}},
       no_of_log_streams_{1} {
