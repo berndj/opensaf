@@ -18,6 +18,7 @@
 #ifndef BASE_UNIX_SERVER_SOCKET_H_
 #define BASE_UNIX_SERVER_SOCKET_H_
 
+#include <sys/stat.h>
 #include <string>
 #include "base/unix_socket.h"
 
@@ -29,11 +30,15 @@ class UnixServerSocket : public UnixSocket {
   // Set the path name for this server socket. Note that this call does not
   // create the socket - you need to call Send() or Recv() for that to happen.
   // Abstract addresses are supported by passing '\0' as the first byte in @a
-  // path.
-  UnixServerSocket(const std::string& path, Mode mode);
+  // path. If @a permissions is not zero, change the file permissions to this
+  // value after the socket has been created.
+  UnixServerSocket(const std::string& path, Mode mode, mode_t permissions = 0);
   // Set the socket address for this server socket. Note that this call does not
   // create the socket - you need to call Send() or Recv() for that to happen.
-  UnixServerSocket(const sockaddr_un& addr, socklen_t addrlen, Mode mode);
+  // If @a permissions is not zero, change the file permissions to this value
+  // after the socket has been created.
+  UnixServerSocket(const sockaddr_un& addr, socklen_t addrlen, Mode mode,
+                   mode_t permissions = 0);
   // Closes the server socket if it was open, and deletes the socket from the
   // file system.
   virtual ~UnixServerSocket();
@@ -44,6 +49,7 @@ class UnixServerSocket : public UnixSocket {
 
  private:
   void Unlink();
+  mode_t permissions_;
 };
 
 }  // namespace base

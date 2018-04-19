@@ -23,12 +23,13 @@
 
 namespace base {
 
-UnixServerSocket::UnixServerSocket(const std::string& path, Mode mode)
-    : UnixSocket{path, mode} {}
+UnixServerSocket::UnixServerSocket(const std::string& path, Mode mode,
+                                   mode_t permissions)
+    : UnixSocket{path, mode}, permissions_{permissions} {}
 
 UnixServerSocket::UnixServerSocket(const sockaddr_un& addr, socklen_t addrlen,
-                                   Mode mode)
-    : UnixSocket{addr, addrlen, mode} {}
+                                   Mode mode, mode_t permissions)
+    : UnixSocket{addr, addrlen, mode}, permissions_{permissions} {}
 
 UnixServerSocket::~UnixServerSocket() {
   if (get_fd() >= 0) Unlink();
@@ -46,7 +47,14 @@ bool UnixServerSocket::OpenHook(int sock) {
     close(tmp_sock);
     if (connect_result != 0 && connect_errno == ECONNREFUSED) Unlink();
   }
-  return bind(sock, addr(), addrlen()) == 0;
+  int bind_result = bind(sock, addr(), addrlen());
+  int chmod_result = 0;
+  if (bind_result == 0 && permissions_ != 0 && !IsAbstract()) {
+    do {
+      chmod_result = chmod(path(), permissions_);
+    } while (chmod_result == -1 && errno == EINTR);
+  }
+  return bind_result == 0 && chmod_result == 0;
 }
 
 void UnixServerSocket::CloseHook() { Unlink(); }
