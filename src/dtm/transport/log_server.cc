@@ -37,9 +37,9 @@ LogServer::LogServer(int term_fd)
       log_socket_{Osaflog::kServerSocketPath, base::UnixSocket::kNonblocking,
                   0777},
       log_streams_{},
-      current_stream_{new LogStream{"mds.log", 1, 5 * 1024 * 1024}},
+      current_stream_{new LogStream{kMdsLogStreamName, 1, 5 * 1024 * 1024}},
       no_of_log_streams_{1} {
-  log_streams_["mds.log"] = current_stream_;
+  log_streams_[kMdsLogStreamName] = current_stream_;
   }
 
 LogServer::~LogServer() {
@@ -237,6 +237,21 @@ std::string LogServer::ExecuteCommand(const std::string& command,
     uint64_t max_backups = base::StrToUint64(argument.c_str(), &success);
     if (success && max_backups <= SIZE_MAX) max_backups_ = max_backups;
     return std::string{"!max-backups " + std::to_string(max_backups_)};
+  } else if (command == "?delete") {
+    if (!ValidateLogName(argument.c_str(), argument.size()) ||
+        argument == kMdsLogStreamName) {
+      return std::string{"Invalid stream name"};
+    }
+    auto iter = log_streams_.find(argument);
+    if (iter == log_streams_.end()) {
+      return std::string{"Stream not found"};
+    }
+    LogStream* stream = iter->second;
+    log_streams_.erase(iter);
+    if (current_stream_ == stream) {
+      current_stream_ = log_streams_.begin()->second;
+    }
+    return std::string{"!delete " + argument};
   } else if (command == "?flush") {
     for (const auto& s : log_streams_) {
       LogStream* stream = s.second;

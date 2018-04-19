@@ -35,6 +35,8 @@ class LogServer {
   static constexpr size_t kMaxNoOfStreams = 32;
   static constexpr const char* kTransportdConfigFile =
                                        PKGSYSCONFDIR "/transportd.conf";
+
+  static constexpr const char* kMdsLogStreamName = "mds.log";
   // @a term_fd is a file descriptor that will become readable when the program
   // should exit because it has received the SIGTERM signal.
   explicit LogServer(int term_fd);

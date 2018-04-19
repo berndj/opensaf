@@ -47,6 +47,7 @@ bool Flush();
 base::UnixServerSocket* CreateSocket();
 uint64_t Random64Bits(uint64_t seed);
 bool PrettyPrint(const std::string& log_stream);
+bool Delete(const std::string& log_stream);
 std::list<int> OpenLogFiles(const std::string& log_stream);
 std::string PathName(const std::string& log_stream, int suffix);
 uint64_t GetInode(int fd);
@@ -61,21 +62,23 @@ int main(int argc, char** argv) {
   struct option long_options[] = {{"max-file-size", required_argument, 0, 'm'},
                                   {"max-backups", required_argument, 0, 'b'},
                                   {"flush", no_argument, 0, 'f'},
-                                  {"print", required_argument, nullptr, 'p'},
+                                  {"print", no_argument, nullptr, 'p'},
+                                  {"delete", no_argument, nullptr, 'd'},
                                   {0, 0, 0, 0}};
 
   uint64_t max_file_size = 0;
   uint64_t max_backups = 0;
-  char *pretty_print_argument = NULL;
   int option = 0;
 
   int long_index = 0;
   bool flush_result =  true;
   bool print_result =  true;
+  bool delete_result =  true;
   bool max_file_size_result = true;
   bool number_of_backups_result = true;
   bool flush_set = false;
   bool pretty_print_set = false;
+  bool delete_set = false;
   bool max_file_size_set = false;
   bool max_backups_set = false;
 
@@ -88,9 +91,11 @@ int main(int argc, char** argv) {
                    long_options, &long_index)) != -1) {
         switch (option) {
              case 'p':
-                   pretty_print_argument = optarg;
                    pretty_print_set = true;
                    flush_set = true;
+                 break;
+             case 'd':
+                   delete_set = true;
                  break;
              case 'f':
                    flush_set = true;
@@ -115,12 +120,13 @@ int main(int argc, char** argv) {
         }
   }
 
-  if (argc - optind == 1) {
-     flush_result = Flush();
-     flush_set = false;
-     print_result = PrettyPrint(argv[optind]);
-     pretty_print_set = false;
-  } else if (argc - optind > 1) {
+  if (argc > optind && !pretty_print_set && !delete_set) {
+    pretty_print_set = true;
+    flush_set = true;
+  }
+
+  if ((argc <= optind && (pretty_print_set || delete_set)) ||
+      (pretty_print_set && delete_set)) {
      PrintUsage(argv[0]);
      exit(EXIT_FAILURE);
   }
@@ -129,7 +135,14 @@ int main(int argc, char** argv) {
      flush_result = Flush();
   }
   if (pretty_print_set == true) {
-     print_result = PrettyPrint(pretty_print_argument);
+    while (print_result && optind < argc) {
+      print_result = PrettyPrint(argv[optind++]);
+    }
+  }
+  if (delete_set == true) {
+    while (delete_result && optind < argc) {
+      delete_result = Delete(argv[optind++]);
+    }
   }
   if (max_backups_set == true) {
      number_of_backups_result = NoOfBackupFiles(max_backups);
@@ -138,7 +151,7 @@ int main(int argc, char** argv) {
      max_file_size_result = MaxTraceFileSize(max_file_size);
   }
   if (flush_result && print_result && max_file_size_result &&
-                                          number_of_backups_result)
+      delete_result && number_of_backups_result)
      exit(EXIT_SUCCESS);
   exit(EXIT_FAILURE);
 }
@@ -147,7 +160,7 @@ namespace {
 
 void PrintUsage(const char* program_name) {
   fprintf(stderr,
-          "Usage: %s [OPTION] [LOGSTREAM]\n"
+          "Usage: %s [OPTION] [LOGSTREAM...]\n"
           "\n"
           "print the messages stored on disk for the specified\n"
           "LOGSTREAM. When a LOGSTREAM argument is specified, the option\n"
@@ -159,8 +172,11 @@ void PrintUsage(const char* program_name) {
           "                      server to disk even when no LOGSTREAM\n"
           "                      is specified.\n"
           "--print               print the messages stored on disk for the\n"
-          "                      specified LOGSTREAM. This option is default\n"
-          "                      when no option is specified.\n"
+          "                      specified LOGSTREAM(s). This option is the\n"
+          "                      default when no option is specified.\n"
+          "--delete              Delete the specified LOGSTREAM(s) by\n"
+          "                      removing allocated resources in the log\n"
+          "                      server. Does not delete log files from disk.\n"
           "--max-file-size=SIZE  Set the maximum size of the log file to\n"
           "                      SIZE bytes. The log file will be rotated\n"
           "                      when it exceeds this size. Suffixes k, M and\n"
@@ -295,6 +311,11 @@ bool PrettyPrint(const std::string& log_stream) {
     }
   }
   return result;
+}
+
+bool Delete(const std::string& log_stream) {
+  return SendCommand(std::string("delete ") +
+                     log_stream);
 }
 
 std::list<int> OpenLogFiles(const std::string& log_stream) {

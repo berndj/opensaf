@@ -185,8 +185,11 @@ Options:
                       server to disk even when no LOGSTREAM
                       is specified.
 --print               print the messages stored on disk for the
-                      specified LOGSTREAM. This option is default
-                      when no option is specified.
+                      specified LOGSTREAM(s). This option is the
+                      default when no option is specified.
+--delete              Delete the specified LOGSTREAM(s) by
+                      removing allocated resources in the log
+                      server. Does not delete log files from disk.
 --max-file-size=SIZE  Set the maximum size of the log file to
                       SIZE bytes. The log file will be rotated
                       when it exceeds this size. Suffixes k, M and
