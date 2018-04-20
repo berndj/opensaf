@@ -37,6 +37,9 @@ export LD_LIBRARY_PATH=$libdir:$LD_LIBRARY_PATH
 if [ -f "$pkgsysconfdir/fmd.conf" ]; then
   . "$pkgsysconfdir/fmd.conf"
 fi
+if [ -f "$pkgsysconfdir/nid.conf" ]; then
+  . "$pkgsysconfdir/nid.conf"
+fi
 
 NODE_ID_FILE=$pkglocalstatedir/node_id
 
