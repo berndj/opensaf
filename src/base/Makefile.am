@@ -50,6 +50,7 @@ lib_libopensaf_core_la_SOURCES += \
 	src/base/hj_ubaid.c \
 	src/base/log_message.cc \
 	src/base/logtrace.cc \
+	src/base/logtrace_client.cc \
 	src/base/mutex.cc \
 	src/base/ncs_main_pub.c \
 	src/base/ncs_sprr.c \
@@ -99,6 +100,7 @@ noinst_HEADERS += \
 	src/base/hash.h \
 	src/base/log_message.h \
 	src/base/logtrace.h \
+	src/base/logtrace_client.h \
 	src/base/macros.h \
 	src/base/mutex.h \
 	src/base/ncs_edu.h \
