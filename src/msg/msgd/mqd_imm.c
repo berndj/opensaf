@@ -33,8 +33,9 @@ SaImmOiCallbacksT_2 oi_cbks = {.saImmOiAdminOperationCallback = NULL,
 #define MQD_IMM_MAJOR_VERSION 0x02
 #define MQD_IMM_MINOR_VERSION 0x01
 
-static SaVersionT imm_version = {MQD_IMM_RELEASE_CODE, MQD_IMM_MAJOR_VERSION,
-				 MQD_IMM_MINOR_VERSION};
+static const SaVersionT imm_version = {
+	MQD_IMM_RELEASE_CODE, MQD_IMM_MAJOR_VERSION,
+	MQD_IMM_MINOR_VERSION};
 
 /****************************************************************************
  * Name          : mqd_create_runtime_MqGrpObj
@@ -191,9 +192,11 @@ void mqd_runtime_update_grpmembers_attr(MQD_CB *pMqd, MQD_OBJ_NODE *pObjNode)
 SaAisErrorT mqd_imm_initialize(MQD_CB *cb)
 {
 	SaAisErrorT rc;
+	SaVersionT local_version = imm_version;
+
 	immutilWrapperProfile.errorsAreFatal = 0;
 	rc = immutil_saImmOiInitialize_2(&cb->immOiHandle, &oi_cbks,
-					 &imm_version);
+					 &local_version);
 	if (rc == SA_AIS_OK) {
 		immutil_saImmOiSelectionObjectGet(cb->immOiHandle,
 						  &cb->imm_sel_obj);

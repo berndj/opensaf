@@ -37,8 +37,9 @@ SaImmOiCallbacksT_2 oi_cbks = {.saImmOiAdminOperationCallback = NULL,
 #define MQND_IMM_MAJOR_VERSION 0x02
 #define MQND_IMM_MINOR_VERSION 0x01
 
-static SaVersionT imm_version = {MQND_IMM_RELEASE_CODE, MQND_IMM_MAJOR_VERSION,
-				 MQND_IMM_MINOR_VERSION};
+static const SaVersionT imm_version = {
+	MQND_IMM_RELEASE_CODE, MQND_IMM_MAJOR_VERSION,
+	MQND_IMM_MINOR_VERSION};
 
 /****************************************************************************
  * Name          : mqnd_saImmOiRtAttrUpdateCallback
@@ -537,11 +538,13 @@ SaAisErrorT mqnd_create_runtime_MsgQPriorityobject(SaStringT rname,
 SaAisErrorT mqnd_imm_initialize(MQND_CB *cb)
 {
 	SaAisErrorT rc;
+	SaVersionT local_version = imm_version;
+
 	immutilWrapperProfile.errorsAreFatal = 0;
 	TRACE_ENTER();
 
 	rc = immutil_saImmOiInitialize_2(&cb->immOiHandle, &oi_cbks,
-					 &imm_version);
+					 &local_version);
 	if (rc == SA_AIS_OK) {
 		immutil_saImmOiSelectionObjectGet(cb->immOiHandle,
 						  &cb->imm_sel_obj);

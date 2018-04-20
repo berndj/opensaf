@@ -41,8 +41,9 @@ extern struct ImmutilWrapperProfile immutilWrapperProfile;
 #define CPSV_IMM_MAJOR_VERSION 0x02
 #define CPSV_IMM_MINOR_VERSION 0x01
 
-static SaVersionT imm_version = {CPSV_IMM_RELEASE_CODE, CPSV_IMM_MAJOR_VERSION,
-				 CPSV_IMM_MINOR_VERSION};
+static const SaVersionT imm_version = {
+	CPSV_IMM_RELEASE_CODE, CPSV_IMM_MAJOR_VERSION,
+	CPSV_IMM_MINOR_VERSION};
 
 extern uint32_t gl_read_lck;
 static void cpnd_dump_ckpt_info(CPND_CKPT_NODE *ckpt_node);
@@ -3031,6 +3032,7 @@ static SaUint32T cpnd_get_imm_attr(char **attribute_names)
 	SaImmHandleT immOmHandle;
 	SaImmAttrValuesT_2 *attribute;
 	SaImmAttrValuesT_2 **attributes;
+	SaVersionT local_version = imm_version;
 
 	TRACE_ENTER();
 
@@ -3052,7 +3054,7 @@ static SaUint32T cpnd_get_imm_attr(char **attribute_names)
 	immutilWrapperProfile.retryInterval = 1000;
 
 	/* Initialize Om API */
-	rc = immutil_saImmOmInitialize(&immOmHandle, NULL, &imm_version);
+	rc = immutil_saImmOmInitialize(&immOmHandle, NULL, &local_version);
 	if (rc != SA_AIS_OK) {
 		LOG_ER("%s saImmOmInitialize FAIL %d", __FUNCTION__, rc);
 		goto done;

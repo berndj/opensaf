@@ -41,7 +41,7 @@
 #include "base/saf_error.h"
 #include "base/osaf_extended_name.h"
 
-static SaVersionT immVersion = {'A', 2, 17};
+static const SaVersionT immVersion = {'A', 2, 17};
 extern struct ImmutilWrapperProfile immutilWrapperProfile;
 
 /* signal handler for SIGALRM */
@@ -171,7 +171,8 @@ int main(int argc, char *argv[])
 	if (optind < argc)
 		osaf_extended_name_lend(argv[optind], &rootName);
 
-	error = immutil_saImmOmInitialize(&immHandle, NULL, &immVersion);
+	SaVersionT local_version = immVersion;
+	error = immutil_saImmOmInitialize(&immHandle, NULL, &local_version);
 	if (error != SA_AIS_OK) {
 		fprintf(stderr, "error - saImmOmInitialize FAILED: %s\n",
 			saf_error(error));

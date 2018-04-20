@@ -398,7 +398,7 @@ int main(int argc, char *argv[])
 	    create_adminOwnerName(basename(argv[0]));
 	SaImmAdminOwnerHandleT ownerHandle;
 	SaImmClassNameT className = NULL;
-	static SaVersionT immVersion = {'A', 2, 11};
+	static const SaVersionT immVersion = {'A', 2, 11};
 	int population = 0;
 
 	while (1) {
@@ -442,7 +442,8 @@ int main(int argc, char *argv[])
 
 	className = strdup(argv[optind]);
 
-	(void)immutil_saImmOmInitialize(&immHandle, NULL, &immVersion);
+	SaVersionT local_version = immVersion;
+	(void)immutil_saImmOmInitialize(&immHandle, NULL, &local_version);
 
 	error = immutil_saImmOmAdminOwnerInitialize(immHandle, adminOwnerName, SA_TRUE,
 					    &ownerHandle);

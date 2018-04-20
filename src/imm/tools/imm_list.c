@@ -42,7 +42,7 @@
 #include "base/saf_error.h"
 #include "base/osaf_extended_name.h"
 
-static SaVersionT immVersion = {'A', 2, 17};
+static const SaVersionT immVersion = {'A', 2, 17};
 extern struct ImmutilWrapperProfile immutilWrapperProfile;
 
 /* signal handler for SIGALRM */
@@ -474,6 +474,7 @@ int main(int argc, char *argv[])
 	SaAisErrorT error;
 	SaImmHandleT immHandle;
 	SaImmAccessorHandleT accessorHandle;
+	SaVersionT local_version = immVersion;
 	int len = 1;
 	SaImmAttrNameT *attributeNames = NULL;
 	int pretty_print = 1;
@@ -540,7 +541,7 @@ int main(int argc, char *argv[])
 	immutilWrapperProfile.nTries = timeoutVal;
 	immutilWrapperProfile.retryInterval = 1000;
 
-	error = immutil_saImmOmInitialize(&immHandle, NULL, &immVersion);
+	error = immutil_saImmOmInitialize(&immHandle, NULL, &local_version);
 	if (error != SA_AIS_OK) {
 		fprintf(stderr, "error - saImmOmInitialize FAILED: %s\n",
 			saf_error(error));

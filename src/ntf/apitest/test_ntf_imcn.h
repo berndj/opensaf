@@ -94,7 +94,7 @@ const int POLLWAIT = 100;
 
 static const SaImmOiImplementerNameT IMPLEMENTERNAME_RT =
     const_cast<SaImmOiImplementerNameT>("Runtime_implementer");
-static SaVersionT immVersion = {'A', 0x02, 0x0c};
+static const SaVersionT immVersion = {'A', 0x02, 0x0c};
 
 static const char* const DNTESTRT = "stringRdn=TestObject";
 static const char* const DNTESTRT1 = "stringRdn1=TestObject";

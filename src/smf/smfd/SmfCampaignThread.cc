@@ -557,7 +557,7 @@ SaAisErrorT SmfCampaignThread::createImmHandle(SmfCampaign *i_campaign) {
   while (rc == SA_AIS_ERR_TRY_AGAIN) {
     sleep(1);
     local_version = immVersion;
-    rc = immutil_saImmOiInitialize_2(&m_campOiHandle, NULL, &immVersion);
+    rc = immutil_saImmOiInitialize_2(&m_campOiHandle, NULL, &local_version);
   }
   if (rc != SA_AIS_OK) {
     LOG_ER("saImmOiInitialize_2 fails rc=%s", saf_error(rc));

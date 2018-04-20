@@ -39,7 +39,7 @@ static void clms_lock_send_start_cbk(CLMS_CLUSTER_NODE *nodeop);
 static void clms_timer_ipc_send(SaNameT node_name);
 static uint32_t clms_lock_send_no_start_cbk(CLMS_CLUSTER_NODE *nodeop);
 
-static SaVersionT immVersion = {'A', 2, 1};
+static const SaVersionT immVersion = {'A', 2, 1};
 
 const unsigned int sleep_delay_ms = 500;
 const unsigned int max_waiting_time_ms = 60 * 1000; /* 60 seconds */

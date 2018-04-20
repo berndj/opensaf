@@ -125,8 +125,9 @@ static bool InitializeImmOi(SaImmOiHandleT *o_immOiHandle,
   SaAisErrorT ais_rc = SA_AIS_OK;
   bool rc = true;
 
-  SaVersionT version = *i_version;
+  SaVersionT version;
   while (adminOpTimer.is_timeout() == false) {
+    version = *i_version;
     ais_rc = saImmOiInitialize_2(o_immOiHandle, i_immOiCallbacks, &version);
     if (ais_rc == SA_AIS_ERR_TRY_AGAIN) {
       base::Sleep(base::kFiveHundredMilliseconds);

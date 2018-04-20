@@ -1496,8 +1496,9 @@ static void create_rt_test_object(
       &attr_rdnVar,    &attr_int32Var,  &attr_uint32Var, &attr_int64Var,
       &attr_uint64Var, &attr_timeVar,   &attr_nameVar,   &attr_floatVar,
       &attr_doubleVar, &attr_stringVar, &attr_anyVar,    NULL};
+  SaVersionT local_version = immVersion;
 
-  safassert(saImmOiInitialize_2(&immOiHnd, NULL, &immVersion), SA_AIS_OK);
+  safassert(saImmOiInitialize_2(&immOiHnd, NULL, &local_version), SA_AIS_OK);
   safassert(saImmOiImplementerSet(immOiHnd, IMPLEMENTERNAME_RT),
       SA_AIS_OK);
   saImmOiRtObjectCreate_2(immOiHnd, cname, NULL, attrVal);
@@ -1532,7 +1533,8 @@ static void modify_rt_test_object(
   }
   attrMod[i] = NULL;
 
-  safassert(saImmOiInitialize_2(&immOiHnd, NULL, &immVersion), SA_AIS_OK);
+  SaVersionT local_version = immVersion;
+  safassert(saImmOiInitialize_2(&immOiHnd, NULL, &local_version), SA_AIS_OK);
   safassert(saImmOiImplementerSet(immOiHnd, IMPLEMENTERNAME_RT),
       SA_AIS_OK);
   saImmOiRtObjectUpdate_2(immOiHnd, &objName,
@@ -1551,11 +1553,12 @@ static void modify_rt_test_object(
 static void delete_rt_test_object(const char *dn) {
   char *rdn = const_cast<char*>(strchr(dn, '=')) + 1;
   SaNameT objName;
+  SaVersionT local_version = immVersion;
   snprintf(reinterpret_cast<char *>(objName.value), SA_MAX_NAME_LENGTH, "%s",
            rdn);
   objName.length = strlen(rdn);
 
-  safassert(saImmOiInitialize_2(&immOiHnd, NULL, &immVersion), SA_AIS_OK);
+  safassert(saImmOiInitialize_2(&immOiHnd, NULL, &local_version), SA_AIS_OK);
   safassert(saImmOiImplementerSet(immOiHnd, IMPLEMENTERNAME_RT),
       SA_AIS_OK);
   saImmOiRtObjectDelete(immOiHnd, &objName);
@@ -1566,7 +1569,7 @@ static void delete_rt_test_object(const char *dn) {
 static int isLongDnsAllowed() {
   SaImmHandleT immHandle;
   SaImmAccessorHandleT accessorHandle;
-  SaVersionT immVersion = {'A', 2, 15};
+  SaVersionT local_version = {'A', 2, 15};
   SaImmAttrNameT attrName = const_cast<SaImmAttrNameT>(
       "longDnsAllowed");
   SaImmAttrNameT attrNames[2] = {attrName, NULL};
@@ -1575,7 +1578,7 @@ static int isLongDnsAllowed() {
   int longDnsAllowed = 0;
   int i;
 
-  safassert(saImmOmInitialize(&immHandle, NULL, &immVersion), SA_AIS_OK);
+  safassert(saImmOmInitialize(&immHandle, NULL, &local_version), SA_AIS_OK);
   safassert(saImmOmAccessorInitialize(immHandle, &accessorHandle), SA_AIS_OK);
   safassert(saImmOmAccessorGet_o3(accessorHandle, immObjectName,
         attrNames, &attributes), SA_AIS_OK);

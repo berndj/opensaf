@@ -40,8 +40,9 @@ static const SaImmOiImplementerNameT implementer_name =
 #define GLSV_IMM_MAJOR_VERSION 0x02
 #define GLSV_IMM_MINOR_VERSION 0x01
 
-static SaVersionT imm_version = {GLSV_IMM_RELEASE_CODE, GLSV_IMM_MAJOR_VERSION,
-				 GLSV_IMM_MINOR_VERSION};
+static const SaVersionT imm_version = {
+	GLSV_IMM_RELEASE_CODE, GLSV_IMM_MAJOR_VERSION,
+	GLSV_IMM_MINOR_VERSION};
 
 /****************************************************************************
  * Name          : gld_saImmOiRtAttrUpdateCallback
@@ -265,9 +266,11 @@ SaAisErrorT create_runtime_object(SaStringT rname, SaTimeT create_time,
 SaAisErrorT gld_imm_init(GLSV_GLD_CB *cb)
 {
 	SaAisErrorT rc;
+	SaVersionT local_version = imm_version;
+
 	immutilWrapperProfile.errorsAreFatal = 0;
 	rc = immutil_saImmOiInitialize_2(&cb->immOiHandle, &oi_cbks,
-					 &imm_version);
+					 &local_version);
 	if (rc == SA_AIS_OK)
 		immutil_saImmOiSelectionObjectGet(cb->immOiHandle,
 						  &cb->imm_sel_obj);

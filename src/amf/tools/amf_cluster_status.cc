@@ -44,7 +44,7 @@ class AMF_NODE {
   std::string clm_rdn;
   AMF_NODE() : amf_rdn(""), clm_rdn("") {}
 };
-static SaVersionT immVersion = {'A', 2, 1};
+static const SaVersionT immVersion = {'A', 2, 1};
 static MDS_HDL mds_hdl;
 static bool is_avd_up = false;
 static std::vector<NODE_ID> avnd_up_db;

@@ -48,7 +48,7 @@
 
 extern struct ImmutilWrapperProfile immutilWrapperProfile;
 
-static SaVersionT immVersion = {'A', 2, 17};
+static const SaVersionT immVersion = {'A', 2, 17};
 
 static void usage(const char *progname)
 {
@@ -422,7 +422,8 @@ int main(int argc, char *argv[])
 	immutilWrapperProfile.nTries = disable_tryagain ? 0 : timeoutVal;
 	immutilWrapperProfile.retryInterval = 1000;
 
-	error = immutil_saImmOmInitialize(&immHandle, NULL, &immVersion);
+	SaVersionT local_version = immVersion;
+	error = immutil_saImmOmInitialize(&immHandle, NULL, &local_version);
 	if (error != SA_AIS_OK) {
 		fprintf(stderr, "error - saImmOmInitialize FAILED: %s\n",
 			saf_error(error));

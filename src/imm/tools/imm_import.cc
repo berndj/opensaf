@@ -2582,8 +2582,10 @@ int loadImmXML(const char *xmlfile, int strictParse) {
 
   TRACE_8("Loading from %s", xmlfile);
 
+  SaVersionT local_version;
   if (!transaction_mode) {
-    errorCode = immutil_saImmOmInitialize(&(state.immHandle), NULL, &version);
+    local_version = version;
+    errorCode = immutil_saImmOmInitialize(&(state.immHandle), NULL, &local_version);
     if (SA_AIS_OK != errorCode) {
       LOG_ER("Failed to initialize the IMM OM interface (%s)",
              saf_error(errorCode));
@@ -2591,7 +2593,8 @@ int loadImmXML(const char *xmlfile, int strictParse) {
     }
   } else {
     if (!(*imm_import_immHandle)) {
-      errorCode = immutil_saImmOmInitialize(&state.immHandle, NULL, &version);
+      local_version = version;
+      errorCode = immutil_saImmOmInitialize(&state.immHandle, NULL, &local_version);
       if (SA_AIS_OK != errorCode) {
         fprintf(stderr, "Failed to initialize the IMM OM interface (%s)\n",
                 saf_error(errorCode));

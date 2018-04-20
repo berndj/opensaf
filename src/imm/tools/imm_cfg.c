@@ -45,7 +45,7 @@
 
 #include "base/osaf_extended_name.h"
 
-static SaVersionT immVersion = {'A', 2, 17};
+static const SaVersionT immVersion = {'A', 2, 17};
 int verbose = 0;
 int ccb_safe = 1;
 
@@ -309,8 +309,9 @@ static SaImmClassNameT get_class_name(const SaNameT *objectName)
 	SaImmAccessorHandleT accessorHandle;
 	SaImmAttrValuesT_2 **attributes;
 	SaImmAttrNameT attributeNames[] = {"SaImmAttrClassName", NULL};
+	SaVersionT local_version = immVersion;
 
-	if (immutil_saImmOmInitialize(&omHandle, NULL, &immVersion) !=
+	if (immutil_saImmOmInitialize(&omHandle, NULL, &local_version) !=
 	    SA_AIS_OK)
 		goto done;
 
@@ -1641,7 +1642,7 @@ static int imm_operation(int argc, char *argv[])
 	int useAdminOwner = 1;
 	SaNameT **objectNames = NULL;
 	int objectNames_len = 1;
-
+	SaVersionT local_version = immVersion;
 	SaImmClassNameT *classNames = NULL;
 	int classNames_len = 1;
 
@@ -1991,7 +1992,7 @@ static int imm_operation(int argc, char *argv[])
 
 	if (!transaction_mode) {
 		error =
-		    immutil_saImmOmInitialize(&immHandle, NULL, &immVersion);
+		    immutil_saImmOmInitialize(&immHandle, NULL, &local_version);
 		if (error != SA_AIS_OK) {
 			fprintf(stderr,
 				"error - saImmOmInitialize FAILED: %s\n",

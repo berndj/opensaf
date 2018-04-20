@@ -2134,11 +2134,13 @@ SaAisErrorT pbe_daemon_imm_init(SaImmHandleT immHandle) {
 
   pbeOmHandle = immHandle;
 
-  rc = saImmOiInitialize_2(&pbeOiHandle, &callbacks, &immVersion);
+  SaVersionT local_version = immVersion;
+  rc = saImmOiInitialize_2(&pbeOiHandle, &callbacks, &local_version);
   while ((rc == SA_AIS_ERR_TRY_AGAIN) && (msecs_waited < max_waiting_time_ms)) {
     usleep(sleep_delay_ms * 1000);
     msecs_waited += sleep_delay_ms;
-    rc = saImmOiInitialize_2(&pbeOiHandle, &callbacks, &immVersion);
+    local_version = immVersion;
+    rc = saImmOiInitialize_2(&pbeOiHandle, &callbacks, &local_version);
   }
   if (rc != SA_AIS_OK) {
     LOG_ER("saImmOiInitialize_2 failed %u", rc);
@@ -2168,13 +2170,15 @@ SaAisErrorT pbe_daemon_imm_init(SaImmHandleT immHandle) {
     return rc;
   }
 
+  local_version = immVersion;
   if (sPbe2) {
-    rc = saImmOiInitialize_2(&pbeOiRtHandle, &rtCallbacks, &immVersion);
+    rc = saImmOiInitialize_2(&pbeOiRtHandle, &rtCallbacks, &local_version);
     while ((rc == SA_AIS_ERR_TRY_AGAIN) &&
            (msecs_waited < max_waiting_time_ms)) {
       usleep(sleep_delay_ms * 1000);
       msecs_waited += sleep_delay_ms;
-      rc = saImmOiInitialize_2(&pbeOiRtHandle, &rtCallbacks, &immVersion);
+      local_version = immVersion;
+      rc = saImmOiInitialize_2(&pbeOiRtHandle, &rtCallbacks, &local_version);
     }
     if (rc != SA_AIS_OK) {
       LOG_ER("saImmOiInitialize_2 failed for RtHandle: %u", rc);

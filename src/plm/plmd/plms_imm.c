@@ -49,7 +49,7 @@ typedef enum {
 
 static const SaImmOiImplementerNameT impl_name =
     (SaImmOiImplementerNameT) "safPlmService";
-static SaVersionT imm_version = {'A', 2, 1};
+static const SaVersionT imm_version = {'A', 2, 1};
 static SaImmCallbacksT imm_om_cbks;
 
 extern PLMS_CB *plms_cb;
@@ -221,11 +221,12 @@ static void plms_reg_with_imm_as_om()
 {
 	SaAisErrorT error;
 	SaImmHandleT imm_om_hdl;
+	SaVersionT local_version = imm_version;
 
 	TRACE_ENTER();
 	imm_om_cbks.saImmOmAdminOperationInvokeCallback = NULL;
 	/* Initialise with IMM as OM */
-	error = saImmOmInitialize(&imm_om_hdl, &imm_om_cbks, &imm_version);
+	error = saImmOmInitialize(&imm_om_hdl, &imm_om_cbks, &local_version);
 	if (error != SA_AIS_OK) {
 		/* Log the error */
 		LOG_ER("ImmOmInit returned error %u", error);
@@ -316,6 +317,7 @@ static void plms_handle_om_init_try_again_err(SaImmHandleT *imm_om_hdl)
 {
 	SaUint8T retry_cnt = 0;
 	SaAisErrorT error;
+	SaVersionT local_version;
 	TRACE_ENTER();
 	do {
 		if (retry_cnt == PLMS_MAX_IMM_API_RETRY_CNT) {
@@ -325,8 +327,10 @@ static void plms_handle_om_init_try_again_err(SaImmHandleT *imm_om_hdl)
 			assert(0);
 		}
 		sleep(1);
+
+		local_version = imm_version;
 		error =
-		    saImmOmInitialize(imm_om_hdl, &imm_om_cbks, &imm_version);
+		    saImmOmInitialize(imm_om_hdl, &imm_om_cbks, &local_version);
 		if (error != SA_AIS_ERR_TRY_AGAIN) {
 			break; /* from the do while */
 		}
@@ -4386,6 +4390,7 @@ static void free_plms_group_entity_list(PLMS_GROUP_ENTITY_ROOT_LIST *grp_ent)
 SaAisErrorT plms_imm_init(void)
 {
 	SaAisErrorT rc = SA_AIS_OK;
+	SaVersionT local_version = imm_version;
 
 	extern struct ImmutilWrapperProfile immutilWrapperProfile;
 
@@ -4413,7 +4418,7 @@ SaAisErrorT plms_imm_init(void)
 		imm_oi_cbks.saImmOiRtAttrUpdateCallback = NULL;
 
 		if ((rc = immutil_saImmOiInitialize_2(
-			 &plms_cb->oi_hdl, &imm_oi_cbks, &imm_version)) !=
+			 &plms_cb->oi_hdl, &imm_oi_cbks, &local_version)) !=
 		    SA_AIS_OK) {
 			LOG_ER("saImmOiInitialize_2 failed %u", rc);
 			break;

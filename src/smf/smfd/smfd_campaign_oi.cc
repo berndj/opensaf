@@ -43,7 +43,7 @@
 #include "smf/smfd/SmfCbkUtil.h"
 #include "base/osaf_extended_name.h"
 
-static SaVersionT immVersion = {'A', 2, 17};
+static const SaVersionT immVersion = {'A', 2, 17};
 static const SaImmOiImplementerNameT implementerName =
     (SaImmOiImplementerNameT) "safSmfService";
 

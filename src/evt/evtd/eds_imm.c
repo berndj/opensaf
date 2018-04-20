@@ -17,8 +17,9 @@
 
 #include "eds.h"
 
-static SaVersionT imm_version = {EDSV_IMM_RELEASE_CODE, EDSV_IMM_MAJOR_VERSION,
-				 EDSV_IMM_MINOR_VERSION};
+static const SaVersionT imm_version = {
+	EDSV_IMM_RELEASE_CODE, EDSV_IMM_MAJOR_VERSION,
+	EDSV_IMM_MINOR_VERSION};
 
 extern struct ImmutilWrapperProfile immutilWrapperProfile;
 
@@ -190,11 +191,12 @@ SaImmOiCallbacksT_2 oi_cbks = {.saImmOiAdminOperationCallback = NULL,
 SaAisErrorT eds_imm_init(EDS_CB *cb)
 {
 	SaAisErrorT rc;
+	SaVersionT local_version = imm_version;
 	immutilWrapperProfile.errorsAreFatal = 0;
 	TRACE_ENTER();
 
 	rc = immutil_saImmOiInitialize_2(&cb->immOiHandle, &oi_cbks,
-					 &imm_version);
+					 &local_version);
 	if (rc == SA_AIS_OK) {
 		rc = immutil_saImmOiSelectionObjectGet(cb->immOiHandle,
 						       &cb->imm_sel_obj);

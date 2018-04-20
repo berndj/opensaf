@@ -32,7 +32,7 @@ const SaImmOiImplementerNameT implementer_name = CPSV_IMM_IMPLEMENTER_NAME;
 #define CPSV_IMM_MAJOR_VERSION 0x02
 #define CPSV_IMM_MINOR_VERSION 0x01
 
-static SaVersionT imm_version = {CPSV_IMM_RELEASE_CODE, CPSV_IMM_MAJOR_VERSION,
+static const SaVersionT imm_version = {CPSV_IMM_RELEASE_CODE, CPSV_IMM_MAJOR_VERSION,
 				 CPSV_IMM_MINOR_VERSION};
 
 static SaAisErrorT
@@ -783,9 +783,10 @@ SaAisErrorT cpd_imm_init(SaImmOiHandleT *immOiHandle,
 			 SaSelectionObjectT *imm_sel_obj)
 {
 	SaAisErrorT rc;
+	SaVersionT local_version = imm_version;
 	immutilWrapperProfile.errorsAreFatal = 0;
 
-	rc = immutil_saImmOiInitialize_2(immOiHandle, &oi_cbks, &imm_version);
+	rc = immutil_saImmOiInitialize_2(immOiHandle, &oi_cbks, &local_version);
 	if (rc == SA_AIS_OK) {
 		rc = immutil_saImmOiSelectionObjectGet(*immOiHandle,
 						       imm_sel_obj);
@@ -1128,6 +1129,7 @@ SaAisErrorT cpd_clean_checkpoint_objects(CPD_CB *cb)
 	SaAisErrorT rc = SA_AIS_OK;
 	SaImmHandleT immOmHandle;
 	SaImmSearchHandleT immSearchHandle;
+	SaVersionT local_version = imm_version;
 
 	TRACE_ENTER();
 
@@ -1145,7 +1147,7 @@ SaAisErrorT cpd_clean_checkpoint_objects(CPD_CB *cb)
 
 	/* Intialize Om API
 	 */
-	rc = immutil_saImmOmInitialize(&immOmHandle, NULL, &imm_version);
+	rc = immutil_saImmOmInitialize(&immOmHandle, NULL, &local_version);
 	if (rc != SA_AIS_OK) {
 		LOG_ER("%s saImmOmInitialize FAIL %d", __FUNCTION__, rc);
 		goto done;
@@ -1243,6 +1245,7 @@ SaUint32T cpd_get_scAbsenceAllowed_attr()
 	SaImmHandleT immOmHandle;
 	SaImmAttrValuesT_2 *attribute;
 	SaImmAttrValuesT_2 **attributes;
+	SaVersionT local_version = imm_version;
 
 	TRACE_ENTER();
 
@@ -1265,7 +1268,7 @@ SaUint32T cpd_get_scAbsenceAllowed_attr()
 	immutilWrapperProfile.retryInterval = 1000;
 
 	/* Initialize Om API */
-	rc = immutil_saImmOmInitialize(&immOmHandle, NULL, &imm_version);
+	rc = immutil_saImmOmInitialize(&immOmHandle, NULL, &local_version);
 	if (rc != SA_AIS_OK) {
 		LOG_ER("%s saImmOmInitialize FAIL %d", __FUNCTION__, rc);
 		goto done;
