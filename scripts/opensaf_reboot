@@ -118,7 +118,17 @@ else
 		# uncomment the following line if debugging errors that keep restarting the node
 		# exit 0
 
+                # If the application is using different interface for cluster communication, please
+                # add your application specific isolation commands here
+
 		logger -t "opensaf_reboot" "Rebooting local node; timeout=$OPENSAF_REBOOT_TIMEOUT"
+
+                # Isolate the node
+                if [ "$MDS_TRANSPORT" = "TIPC" ]; then
+                   tipc-config -bd eth:$TIPC_ETH_IF
+                else
+                   $icmd pkill -STOP osafdtmd
+                fi
 
 		# Start a reboot supervision background process. Note that a similar
 		# supervision is also done in the opensaf_reboot() function in LEAP.
