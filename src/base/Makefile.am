@@ -38,6 +38,8 @@ lib_libopensaf_core_la_SOURCES += \
 	src/base/file_notify.cc \
 	src/base/getenv.cc \
 	src/base/hash.cc \
+	src/base/handle/handle.cc \
+	src/base/handle/object_db.cc \
 	src/base/hj_dec.c \
 	src/base/hj_edp.c \
 	src/base/hj_edu.c \
@@ -52,6 +54,7 @@ lib_libopensaf_core_la_SOURCES += \
 	src/base/ncs_main_pub.c \
 	src/base/ncs_sprr.c \
 	src/base/ncsdlib.c \
+	src/base/ncssysf_tmr.cc \
 	src/base/os_defs.c \
 	src/base/osaf_extended_name.c \
 	src/base/osaf_poll.c \
@@ -70,8 +73,9 @@ lib_libopensaf_core_la_SOURCES += \
 	src/base/sysf_exc_scr.c \
 	src/base/sysf_ipc.c \
 	src/base/sysf_mem.c \
-	src/base/sysf_tmr.c \
 	src/base/sysf_tsk.c \
+	src/base/timer/saTmr.cc \
+	src/base/timer/timer_handle.cc \
 	src/base/unix_client_socket.cc \
 	src/base/unix_server_socket.cc \
 	src/base/unix_socket.cc
@@ -91,6 +95,7 @@ noinst_HEADERS += \
 	src/base/file_descriptor.h \
 	src/base/file_notify.h \
 	src/base/getenv.h \
+	src/base/handle/handle.h \
 	src/base/hash.h \
 	src/base/log_message.h \
 	src/base/logtrace.h \
@@ -126,6 +131,9 @@ noinst_HEADERS += \
 	src/base/ncssysf_tsk.h \
 	src/base/ncssysfpool.h \
 	src/base/ncsusrbuf.h \
+	src/base/handle/external_mutex.h \
+	src/base/handle/object.h \
+	src/base/handle/object_db.h \
 	src/base/os_defs.h \
 	src/base/osaf_extended_name.h \
 	src/base/osaf_gcov.h \
@@ -151,6 +159,8 @@ noinst_HEADERS += \
 	src/base/tests/mock_osafassert.h \
 	src/base/tests/mock_syslog.h \
 	src/base/time.h \
+	src/base/timer/timer.h \
+	src/base/timer/timer_handle.h \
 	src/base/unix_client_socket.h \
 	src/base/unix_server_socket.h \
 	src/base/unix_socket.h \
@@ -170,6 +180,7 @@ bin_testleap_LDFLAGS = \
 	$(AM_LDFLAGS)
 
 bin_testleap_SOURCES = \
+	src/base/tests/sa_tmr_test.cc \
 	src/base/tests/sysf_ipc_test.cc \
 	src/base/tests/sysf_tmr_test.cc
 
