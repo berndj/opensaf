@@ -264,7 +264,8 @@ static void clms_plm_readiness_track_callback(
           clms_cluster_update_rattr(osaf_cluster);
         }
         clms_send_track(clms_cb, node, static_cast<SaClmChangeStepT>(step),
-                        SA_FALSE); /*dude you need to checkpoint
+                        SA_FALSE,
+                        rootCauseEntity); /*dude you need to checkpoint
                                    admin_op admin_state when track
                                    is complete or not decide */
       }

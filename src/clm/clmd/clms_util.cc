@@ -642,7 +642,7 @@ void clms_clmresp_error_timeout(CLMS_CB *cb, CLMS_CLUSTER_NODE *node) {
   clms_admin_state_update_rattr(node);
   clms_cluster_update_rattr(osaf_cluster);
 
-  clms_send_track(clms_cb, node, SA_CLM_CHANGE_COMPLETED, false);
+  clms_send_track(clms_cb, node, SA_CLM_CHANGE_COMPLETED, false, 0);
 
   node->stat_change = SA_FALSE;
   node->admin_op = ADMIN_OP{};
@@ -1052,7 +1052,7 @@ void clms_adminop_pending() {
     if ((node->admin_op != PLM) && (node->admin_op != 0)) {
       /* force set flag to true, the node might have rebooted
        * and come up again */
-      clms_send_track(clms_cb, node, SA_CLM_CHANGE_ABORTED, true);
+      clms_send_track(clms_cb, node, SA_CLM_CHANGE_ABORTED, true, 0);
       node->admin_op = ADMIN_OP{};
     }
   }
@@ -1091,12 +1091,12 @@ uint32_t clms_send_cbk_start_sub(CLMS_CB *cb, CLMS_CLUSTER_NODE *node) {
           if (node_id == node->node_id) {
             /*Implies the change is on this
              * local node */
-            rc = clms_send_track_local(node, rec, SA_CLM_CHANGE_COMPLETED);
+            rc = clms_send_track_local(node, rec, SA_CLM_CHANGE_COMPLETED, 0);
           }
         } else {
           if (notify_changes_only != nullptr) {
             rc = clms_prep_and_send_track(cb, node, rec, step,
-                                          notify_changes_only);
+                                          notify_changes_only, 0);
           } else {
             LOG_ER(
                 "Inconsistent node db,Unable to send track callback for SA_TRACK_CHANGES_ONLY clients");
@@ -1107,11 +1107,12 @@ uint32_t clms_send_cbk_start_sub(CLMS_CB *cb, CLMS_CLUSTER_NODE *node) {
           if (node_id == node->node_id) {
             /*Implies the change is on this
              * local node */
-            rc = clms_send_track_local(node, rec, SA_CLM_CHANGE_COMPLETED);
+            rc = clms_send_track_local(node, rec, SA_CLM_CHANGE_COMPLETED, 0);
           }
         } else {
           if (notify_changes != nullptr) {
-            rc = clms_prep_and_send_track(cb, node, rec, step, notify_changes);
+            rc = clms_prep_and_send_track(cb, node, rec, step, notify_changes,
+                                          0);
           } else {
             LOG_ER(
                 "Inconsistent node db,Unable to send track callback for SA_TRACK_CHANGES clients");
