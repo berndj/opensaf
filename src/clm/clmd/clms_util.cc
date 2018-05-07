@@ -601,18 +601,18 @@ done:
 /**
  * Clear the node dependency list,made for multiple nodes in the plm callback
  */
-void clms_clear_node_dep_list(CLMS_CLUSTER_NODE *node) {
+void clms_clear_node_dep_list(CLMS_CLUSTER_NODE *node, bool checkpoint) {
   CLMS_CLUSTER_NODE *new_node = nullptr;
 
   node->admin_op = ADMIN_OP{};
   node->stat_change = SA_FALSE;
-  ckpt_node_rec(node);
+  if (checkpoint) ckpt_node_rec(node);
   while (node->dep_node_list != nullptr) {
     new_node = node->dep_node_list;
     new_node->stat_change = SA_FALSE;
     new_node->admin_op = ADMIN_OP{};
     new_node->change = SA_CLM_NODE_NO_CHANGE;
-    ckpt_node_rec(new_node);
+    if (checkpoint) ckpt_node_rec(new_node);
     node->dep_node_list = node->dep_node_list->next;
     new_node->next = nullptr;
   }
@@ -670,7 +670,7 @@ uint32_t clms_clmresp_rejected(CLMS_CB *cb, CLMS_CLUSTER_NODE *node,
       CLMS_CLIENT_INFO *client = nullptr;
       SaAisErrorT ais_er;
 
-      clms_clear_node_dep_list(node);
+      clms_clear_node_dep_list(node, true);
       client = clms_client_get_by_id(trk->client_id);
       if (client != nullptr) {
         if (client->track_flags & SA_TRACK_VALIDATE_STEP) {
@@ -775,7 +775,7 @@ uint32_t clms_clmresp_error(CLMS_CB *cb, CLMS_CLUSTER_NODE *node) {
 #ifdef ENABLE_AIS_PLM
       SaAisErrorT ais_er = SA_AIS_OK;
 
-      clms_clear_node_dep_list(node);
+      clms_clear_node_dep_list(node, true);
       ais_er = saPlmReadinessTrackResponse(cb->ent_group_hdl, node->plm_invid,
                                            SA_PLM_CALLBACK_RESPONSE_ERROR);
       if (ais_er != SA_AIS_OK) {
@@ -856,7 +856,7 @@ uint32_t clms_clmresp_ok(CLMS_CB *cb, CLMS_CLUSTER_NODE *op_node,
 
     if (ncs_patricia_tree_size(&op_node->trackresp) == 0) {
       /*Clear the node dependency list */
-      clms_clear_node_dep_list(op_node);
+      clms_clear_node_dep_list(op_node, true);
       ais_er = saPlmReadinessTrackResponse(
           cb->ent_group_hdl, op_node->plm_invid, SA_PLM_CALLBACK_RESPONSE_OK);
       if (ais_er != SA_AIS_OK) {
