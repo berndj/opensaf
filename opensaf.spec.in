@@ -1523,6 +1523,7 @@ fi
 %{_bindir}/immoitest
 %{_bindir}/immapplier
 %{_bindir}/immpopulate
+%{_bindir}/lcktest
 %{_bindir}/logtest
 %{_bindir}/saflogtest
 %{_bindir}/logtestfr
