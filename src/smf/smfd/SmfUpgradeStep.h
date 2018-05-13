@@ -1,6 +1,7 @@
 /*
  *
  * (C) Copyright 2009 The OpenSAF Foundation
+ * Copyright (C) 2018 Ericsson AB. All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -67,6 +68,10 @@ struct unitNameAndState {
   std::string name;
   SaAmfAdminStateT initState;
   SaAmfAdminStateT currentState;
+
+  bool operator==(const unitNameAndState& unit) const {
+    return name == unit.name;
+  }
 };
 
 /* ========================================================================

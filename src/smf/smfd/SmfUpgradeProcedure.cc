@@ -1,6 +1,7 @@
 /*
  *
  * (C) Copyright 2009 The OpenSAF Foundation
+ * Copyright (C) 2018 Ericsson AB. All Rights Reserved.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
@@ -1295,10 +1296,17 @@ bool SmfUpgradeProcedure::mergeStepIntoSingleStep(SmfUpgradeProcedure *i_proc,
     getCallbackList((*proc_elem).getUpgradeMethod());
   }
 
-  // Remove DU duplicates
-  LOG_NO("Remove duplicates from the merged DU list");
+  // Remove duplicates from tmpDU list
+  LOG_NO("Remove duplicates from the merged symmetric DU/AU list");
   tmpDU.sort(compare_du_part);
   tmpDU.unique(unique_du_part);
+
+  // Remove duplicates from forAddRemoveDU/AU lists
+  LOG_NO("Remove duplicates from the forAddRemoveDU/AU lists");
+  forAddRemoveDU.sort(compare_du_part);
+  forAddRemoveDU.unique(unique_du_part);
+  forAddRemoveAU.sort(compare_du_part);
+  forAddRemoveAU.unique(unique_du_part);
 
   // Reduce the DU list, check if smaller scope is within bigger scope.
   LOG_NO("Optimize AU/DU");
@@ -1382,67 +1390,43 @@ bool SmfUpgradeProcedure::mergeStepIntoSingleStep(SmfUpgradeProcedure *i_proc,
     }
   }
 
-  // For forAddRemove AU/DU the node level AU/DU will be optimized with other
-  // rolling/formodify proceduers. Because node will never be optimized away.
-  // But AU/DU at SU/Comp will not be optimized for AddRemove and will be as is,
-  // because there is a chance that Su/comp can be removed if they are in the
-  // scope of the node/Su.
+  // Compile all the optimized symmetric DU lists on Node, SU, Comp levels
+  // into one single merged symmetric DU list
+  //
+  // Copy nodeLevelDU list first, then append suLevelDU and tmpDU lists in turn
+  std::list<unitNameAndState> allSymmetricDU(nodeLevelDU);
+  allSymmetricDU.splice(allSymmetricDU.end(), suLevelDU);
+  allSymmetricDU.splice(allSymmetricDU.end(), tmpDU);  // tmpDU is compLevelDU
 
-  std::list<unitNameAndState>::iterator addRemoveUnit_iter, nodeLevel_iter;
-  for (addRemoveUnit_iter = forAddRemoveAU.begin();
-       addRemoveUnit_iter != forAddRemoveAU.end();) {
-    for (nodeLevel_iter = nodeLevelDU.begin();
-         nodeLevel_iter != nodeLevelDU.end(); ++nodeLevel_iter) {
-      if ((*addRemoveUnit_iter).name == (*nodeLevel_iter).name) {
-        // if item is already presented in nodeLevelDU, erase it from the
-        // forAddRemove list
-        LOG_NO(
-            "[%s] is already presented in the merged DU list, remove it from forAddRemoveAU list",
-            (*addRemoveUnit_iter).name.c_str());
-        addRemoveUnit_iter = forAddRemoveAU.erase(addRemoveUnit_iter);
-        break;
-      }
-    }
-    if (nodeLevel_iter == nodeLevelDU.end()) {
-      ++addRemoveUnit_iter;
-    }
-  }
+  // The following loop removes any duplicate between the forAddRemoveDU/AU
+  // lists and the merged symmetric DU list (forModify/Rolling procedures).
+  // This is to avoid campaign failure due to repeating an admin operation
+  // twice on the same DU/AU object
+  std::list<unitNameAndState>::size_type init_list_size;
+  for (auto &symmetric_du : allSymmetricDU) {
+    // Remove any duplicate from forAddRemoveDU list
+    init_list_size = forAddRemoveDU.size();
+    forAddRemoveDU.remove(symmetric_du);
+    if (forAddRemoveDU.size() < init_list_size)
+      LOG_NO("[%s] is already presented in the merged symmetric DU list, "
+             "remove it from forAddRemoveDU list", symmetric_du.name.c_str());
 
-  for (addRemoveUnit_iter = forAddRemoveDU.begin();
-       addRemoveUnit_iter != forAddRemoveDU.end();) {
-    for (nodeLevel_iter = nodeLevelDU.begin();
-         nodeLevel_iter != nodeLevelDU.end(); ++nodeLevel_iter) {
-      if ((*addRemoveUnit_iter).name == (*nodeLevel_iter).name) {
-        // if item is already presented in nodeLevelDU, erase it from the
-        // forAddRemove list
-        LOG_NO(
-            "[%s] is already presented in the merged DU list, remove it from forAddRemoveDU list",
-            (*addRemoveUnit_iter).name.c_str());
-        addRemoveUnit_iter = forAddRemoveDU.erase(addRemoveUnit_iter);
-        break;
-      }
-    }
-    if (nodeLevel_iter == nodeLevelDU.end()) {
-      ++addRemoveUnit_iter;
-    }
-  }
+    // Remove any duplicate from forAddRemoveAU list
+    init_list_size = forAddRemoveAU.size();
+    forAddRemoveAU.remove(symmetric_du);
+    if (forAddRemoveAU.size() < init_list_size)
+      LOG_NO("[%s] is already presented in the merged symmetric AU list, "
+             "remove it from forAddRemoveAU list", symmetric_du.name.c_str());
+  }  // for (auto &symmetric_du : allSymmetricDU)
 
-  newStep->addDeactivationUnits(nodeLevelDU);  // Add the node level DU
-  newStep->addDeactivationUnits(suLevelDU);    // Add the SU level DU
-  newStep->addDeactivationUnits(tmpDU);        // Add the comp level DU
-  newStep->addActivationUnits(nodeLevelDU);    // Rolling and forModify are
-                                             // symetric, add the node level DU
-  newStep->addActivationUnits(
-      suLevelDU);  // Rolling and forModify are symetric, Add the SU level DU
-  newStep->addActivationUnits(
-      tmpDU);  // Rolling and forModify are symetric, Add the comp level DU
-
-  // Copy the forAddRemove AU/DU(except the optimized nodes) into the lists as
-  // is. They must be run as specified in the campaign.
+  // Add the final DU and AU lists after the merge->optimize->de-duplicate
+  // process to the single step of the merged procedure
+  newStep->addDeactivationUnits(allSymmetricDU);
   newStep->addDeactivationUnits(forAddRemoveDU);
+  newStep->addActivationUnits(allSymmetricDU);
   newStep->addActivationUnits(forAddRemoveAU);
 
-  // Add the merged single step to the procedure if allocated in this method
+  // Add the single step to the merged procedure if allocated in this method
   if (i_newStep == 0) {
     i_proc->addProcStep(newStep);
   }
