@@ -3,6 +3,7 @@
 #include <cstring>
 #include <iostream>
 #include <poll.h>
+#include <unistd.h>
 #include "ais/include/saLck.h"
 #include "lck/apitest/lcktest.h"
 
@@ -153,6 +154,9 @@ static void saLckLimitGet_08(void)
 
   rc = saLckFinalize(lckHandle);
   assert(rc == SA_AIS_OK);
+
+  // wait for resources to clean up
+  sleep(2);
 }
 
 static void saLckLimitGet_09(void)

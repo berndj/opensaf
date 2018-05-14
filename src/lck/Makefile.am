@@ -200,7 +200,10 @@ bin_lcktest_SOURCES = \
 	src/lck/apitest/tet_glsv_util.c \
 	src/lck/apitest/tet_gla.c \
 	src/lck/apitest/tet_gla_conf.c \
-	src/lck/apitest/tet_gld.c
+	src/lck/apitest/tet_gld.c \
+	src/lck/apitest/test_ErrUnavailable.cc \
+	src/lck/apitest/test_saLckLimitGet.cc \
+	src/lck/apitest/test_saLckResourceClass.cc
 
 bin_lcktest_LDADD = \
   lib/libSaLck.la \
