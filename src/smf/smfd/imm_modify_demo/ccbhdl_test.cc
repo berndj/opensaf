@@ -99,9 +99,9 @@ void CreateOneObject(void) {
   attribute.values_as_strings.clear();
   // Add two short names
   osaf_extended_name_lend("a_name1", &a_name);
-  attribute.AddValue(SaNametToString(&a_name));
+  attribute.AddValue(modelmodify::SaNametToString(&a_name));
   osaf_extended_name_lend("a_name2", &a_name);
-  attribute.AddValue(SaNametToString(&a_name));
+  attribute.AddValue(modelmodify::SaNametToString(&a_name));
   // Add a long name and a third short name
   char long_name[300];
   for (size_t i = 0; i < 299; i++) {
@@ -109,9 +109,9 @@ void CreateOneObject(void) {
   }
   long_name[299] = '\0';
   osaf_extended_name_lend(long_name, &a_name);
-  attribute.AddValue(SaNametToString(&a_name));
+  attribute.AddValue(modelmodify::SaNametToString(&a_name));
   osaf_extended_name_lend("a_name3", &a_name);
-  attribute.AddValue(SaNametToString(&a_name));
+  attribute.AddValue(modelmodify::SaNametToString(&a_name));
   imm_object.AddAttribute(attribute);
 
   // SA_UINT32_T single-value attribute
@@ -325,7 +325,7 @@ int main() {
   osaf_extended_name_lend("a_name1", &a_name);
   attribute_descriptor.attribute_name = "SaNameTValues";
   attribute_descriptor.value_type = SA_IMM_ATTR_SANAMET;
-  attribute_descriptor.AddValue(SaNametToString(&a_name));
+  attribute_descriptor.AddValue(modelmodify::SaNametToString(&a_name));
   attribute_modify_descriptor.modification_type = SA_IMM_ATTR_VALUES_DELETE;
   attribute_modify_descriptor.attribute_descriptor = attribute_descriptor;
   modify_descriptor.AddAttributeModification(attribute_modify_descriptor);
@@ -434,9 +434,9 @@ int main() {
   attribute_descriptor.values_as_strings.clear();
   // Add two short names
   osaf_extended_name_lend("a_name11", &a_name1);
-  attribute_descriptor.AddValue(SaNametToString(&a_name1));
+  attribute_descriptor.AddValue(modelmodify::SaNametToString(&a_name1));
   osaf_extended_name_lend("a_name12", &a_name1);
-  attribute_descriptor.AddValue(SaNametToString(&a_name1));
+  attribute_descriptor.AddValue(modelmodify::SaNametToString(&a_name1));
   // Add a long name and a third short name
   char long_name[300];
   for (size_t i = 0; i < 299; i++) {
@@ -444,9 +444,9 @@ int main() {
   }
   long_name[299] = '\0';
   osaf_extended_name_lend(long_name, &a_name1);
-  attribute_descriptor.AddValue(SaNametToString(&a_name1));
+  attribute_descriptor.AddValue(modelmodify::SaNametToString(&a_name1));
   osaf_extended_name_lend("a_name13", &a_name1);
-  attribute_descriptor.AddValue(SaNametToString(&a_name1));
+  attribute_descriptor.AddValue(modelmodify::SaNametToString(&a_name1));
   create_descriptor.AddAttribute(attribute_descriptor);
 
   // SA_UINT32_T single-value attribute_descriptor
@@ -608,14 +608,48 @@ int main() {
   }
   cout << endl;
 
-  // Cleanup by deleting the test object
-  delete_descriptor.object_name = object_name + "," +
+  // Try deleting an object that does not exist; ignore_ais_err_not_exist = true
+  std::string object_name_not_exist = "Test12=100";
+  cout << "Deleting object that does not exist. Flag ignore_ais_err_not_exist "
+      "= true (default)" << endl;
+  delete_descriptor.object_name = object_name_not_exist + "," +
                                   create_descriptor.parent_name;
   ccb_descriptor.create_descriptors.clear();
   ccb_descriptor.AddDelete(delete_descriptor);
   if (modifier.DoModelModification(ccb_descriptor) == false) {
     cout << "Deleting object '" << delete_descriptor.object_name << "' FAIL"
          << endl;
+    cout << "Test FAIL" << endl;
+  } else {
+    cout << "Test SUCCESS" << endl;
+  }
+
+  // Cleanup by deleting the test object
+  delete_descriptor.object_name = object_name + "," +
+                                  create_descriptor.parent_name;
+  delete_descriptor.ignore_ais_err_not_exist = true;
+  ccb_descriptor.create_descriptors.clear();
+  ccb_descriptor.AddDelete(delete_descriptor);
+  if (modifier.DoModelModification(ccb_descriptor) == false) {
+    cout << "Deleting object '" << delete_descriptor.object_name << "' FAIL"
+         << endl;
+  }
+
+  // Try deleting an object that does not exist;
+  // ignore_ais_err_not_exist = false
+  cout << "Deleting object that does not exist. Flag ignore_ais_err_not_exist "
+      "= false" << endl;
+  delete_descriptor.object_name = object_name_not_exist + "," +
+                                  create_descriptor.parent_name;
+  delete_descriptor.ignore_ais_err_not_exist = false;
+  ccb_descriptor.create_descriptors.clear();
+  ccb_descriptor.AddDelete(delete_descriptor);
+  if (modifier.DoModelModification(ccb_descriptor) == false) {
+    cout << "Deleting object '" << delete_descriptor.object_name << "' FAIL"
+         << endl;
+    cout << "Test SUCCESS" << endl;
+  } else {
+    cout << "Test FAIL" << endl;
   }
 
   return 0;

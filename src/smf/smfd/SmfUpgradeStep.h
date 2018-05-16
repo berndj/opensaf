@@ -19,23 +19,19 @@
 #ifndef SMF_SMFD_SMFUPGRADESTEP_H_
 #define SMF_SMFD_SMFUPGRADESTEP_H_
 
-#include "base/macros.h"
-
-/* ========================================================================
- *   INCLUDE FILES
- * ========================================================================
- */
 #include <semaphore.h>
-#include "base/ncsgl_defs.h"
 
 #include <atomic>
 #include <string>
 #include <vector>
 #include <list>
 
-#include <saAmf.h>
-#include <saSmf.h>
-#include <saImmOi.h>
+#include "ais/include/saAmf.h"
+#include "ais/include/saSmf.h"
+#include "ais/include/saImmOi.h"
+#include "base/macros.h"
+#include "base/ncsgl_defs.h"
+
 #include "smf/smfd/SmfStepState.h"
 #include "smf/smfd/SmfTargetTemplate.h"
 

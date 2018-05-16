@@ -213,6 +213,17 @@ class SmfRollbackCcb {
   ///
   void addCcbData(SmfRollbackData* i_data);
 
+  // Clear the list of SmfRollbackData
+  // Note: The list consists of pointers to SmfRollbackData objects. This
+  // clear method will delete all SmfRollbackData objects and after that
+  // the list will be cleared.
+  void clearCcbData() {
+    for (auto& data : m_rollbackData) {
+      delete data;
+    }
+    m_rollbackData.clear();
+  }
+
  protected:
   std::string m_dn; /* dn to where this rollback CCB should be stored/read */
   std::list<SmfRollbackData*> m_rollbackData; /* Rollback data for this CCB */
