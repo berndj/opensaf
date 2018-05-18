@@ -39,8 +39,14 @@ extern MQDLIB_INFO gl_mqdinfo;
  *
  ******************************************************************************************/
 void mqd_clm_cluster_track_callback(
-    const SaClmClusterNotificationBufferT *notificationBuffer,
-    SaUint32T numberOfMembers, SaAisErrorT error)
+	const SaClmClusterNotificationBufferT_4 *notificationBuffer,
+	SaUint32T numberOfMembers,
+	SaInvocationT invocation,
+	const SaNameT *rootCauseEntity,
+	const SaNtfCorrelationIdsT *correlationIds,
+	SaClmChangeStepT step,
+	SaTimeT timeSupervision,
+	SaAisErrorT error)
 {
 	MQD_CB *pMqd = 0;
 	SaClmNodeIdT node_id;
@@ -48,6 +54,11 @@ void mqd_clm_cluster_track_callback(
 	uint32_t counter = 0;
 	TRACE_ENTER2("cluster change=%d",
 		     notificationBuffer->notification[counter].clusterChange);
+
+	if (error != SA_AIS_OK) {
+		LOG_ER("mqd_clm_cluster_track_callback error: %i", error);
+		goto done;
+	}
 
 	/* Get the Controll block */
 	pMqd = ncshm_take_hdl(NCS_SERVICE_ID_MQD, gl_mqdinfo.inst_hdl);
@@ -116,6 +127,8 @@ void mqd_clm_cluster_track_callback(
 		}
 	}
 	ncshm_give_hdl(pMqd->hdl);
+
+done:
 	TRACE_LEAVE();
 }
 
