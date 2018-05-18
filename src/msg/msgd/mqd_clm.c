@@ -132,84 +132,141 @@ done:
 	TRACE_LEAVE();
 }
 
-void mqd_del_node_down_info(MQD_CB *pMqd, NODE_ID nodeid)
+static void * _mqd_del_node_down_info(void *arg)
 {
-	MQD_OBJ_NODE *pNode = 0;
-	MQD_A2S_MSG msg;
-	SaImmOiHandleT immOiHandle;
+	NODE_ID nodeid = *(NODE_ID *) arg;
 	SaAisErrorT rc = SA_AIS_OK;
-	SaImmOiImplementerNameT implementer_name;
-	int retries = 5;
-	char i_name[256] = {0};
-	SaVersionT imm_version = {'A', 0x02, 0x01};
+	SaImmOiHandleT immOiHandle = 0;
+	MQD_CB *pMqd = ncshm_take_hdl(NCS_SERVICE_ID_MQD, gl_mqdinfo.inst_hdl);
+
 	TRACE_ENTER2("nodeid=%u", nodeid);
 
-	rc = immutil_saImmOiInitialize_2(&immOiHandle, NULL, &imm_version);
-	if (rc != SA_AIS_OK)
-		LOG_ER("saImmOiInitialize_2 failed with return value=%d", rc);
+	free(arg);
 
-	snprintf(i_name, SA_MAX_NAME_LENGTH, "%s%u", "MsgQueueService", nodeid);
-	implementer_name = i_name;
+	do {
+		MQD_OBJ_NODE *pNode = 0;
+		MQD_A2S_MSG msg;
+		SaImmOiImplementerNameT implementer_name;
+		int retries = 5;
+		char i_name[256] = {0};
+		SaVersionT imm_version = {'A', 0x02, 0x01};
 
-	while (retries--) {
-		rc = immutil_saImmOiImplementerSet(immOiHandle,
+		if (!pMqd) {
+			LOG_ER("%s:%u: Instance Doesn't Exist", __FILE__,
+					__LINE__);
+			break;
+		}
+
+		rc = immutil_saImmOiInitialize_2(&immOiHandle, NULL,
+				&imm_version);
+		if (rc != SA_AIS_OK) {
+			LOG_ER("saImmOiInitialize_2 failed with return value="
+					"%d", rc);
+			break;
+		}
+
+		snprintf(i_name, SA_MAX_NAME_LENGTH, "%s%u", "MsgQueueService",
+				nodeid);
+		implementer_name = i_name;
+
+		while (retries--) {
+			rc = immutil_saImmOiImplementerSet(immOiHandle,
 							implementer_name);
-		if (rc == SA_AIS_OK)
-			break;
-		else if (rc == SA_AIS_ERR_EXIST) {
-			/*
-			 * imm has not yet removed implementer for remote node.
-			 * try again.
-			 */
-			osaf_nanosleep(&kOneSecond);
-			continue;
+			if (rc == SA_AIS_OK)
+				break;
+			else if (rc == SA_AIS_ERR_EXIST) {
+				/*
+				 * imm has not yet removed implementer for
+				 * remote node. try again.
+				 */
+				osaf_nanosleep(&kOneSecond);
+				continue;
+			}
+			else {
+				LOG_ER("saImmOiImplementerSet failed with "
+						"return value=%d", rc);
+				break;
+			}
 		}
-		else {
-			LOG_ER("saImmOiImplementerSet failed with return value="
-				"%d",
-				rc);
+
+		if (rc != SA_AIS_OK) {
+			LOG_ER("immutil_saImmOiImplementerSet failed: %i", rc);
 			break;
 		}
+
+		m_NCS_LOCK(&pMqd->mqd_cb_lock, NCS_LOCK_WRITE);
+
+		pNode = (MQD_OBJ_NODE *)ncs_patricia_tree_getnext(&pMqd->qdb,
+				(uint8_t *)0);
+		while (pNode) {
+			SaNameT name;
+			name = pNode->oinfo.name;
+			if (m_NCS_NODE_ID_FROM_MDS_DEST(
+						pNode->oinfo.info.q.dest) ==
+					nodeid) {
+				ASAPi_DEREG_INFO dereg;
+				memset(&dereg, 0, sizeof(ASAPi_DEREG_INFO));
+				dereg.objtype = ASAPi_OBJ_QUEUE;
+				dereg.queue = pNode->oinfo.name;
+
+				rc = immutil_saImmOiRtObjectDelete(immOiHandle,
+						&dereg.queue);
+				if (rc != SA_AIS_OK)
+					LOG_ER("Deleting MsgQGrp object %s "
+							"FAILED with return "
+							"value=%d",
+							dereg.queue.value, rc);
+				if (mqd_asapi_dereg_hdlr(pMqd, &dereg, NULL) !=
+						NCSCC_RC_SUCCESS)
+					LOG_ER("mqd_asapi_dereg_hdlr failed");
+			}
+			pNode = (MQD_OBJ_NODE *)ncs_patricia_tree_getnext(
+					&pMqd->qdb, (uint8_t *)&name);
+		}
+
+		m_NCS_UNLOCK(&pMqd->mqd_cb_lock, NCS_LOCK_WRITE);
+
+		/* Send an async Update to the standby */
+		memset(&msg, 0, sizeof(MQD_A2S_MSG));
+		msg.type = MQD_A2S_MSG_TYPE_MQND_TIMER_EXPEVT;
+		msg.info.nd_tmr_exp_evt.nodeid = nodeid;
+
+		/* Send async update to the standby for MQD redundancy */
+		mqd_a2s_async_update(pMqd, MQD_A2S_MSG_TYPE_MQND_TIMER_EXPEVT,
+				(void *)(&msg.info.nd_tmr_exp_evt));
+
+	} while (false);
+
+	if (immOiHandle) {
+		rc = immutil_saImmOiFinalize(immOiHandle);
+		if (rc != SA_AIS_OK)
+			LOG_ER("saImmOiFinalize failed with return value=%d",
+					rc);
 	}
 
-	pNode =
-	    (MQD_OBJ_NODE *)ncs_patricia_tree_getnext(&pMqd->qdb, (uint8_t *)0);
-	while (pNode) {
-		SaNameT name;
-		name = pNode->oinfo.name;
-		if (m_NCS_NODE_ID_FROM_MDS_DEST(pNode->oinfo.info.q.dest) ==
-		    nodeid) {
-			ASAPi_DEREG_INFO dereg;
-			memset(&dereg, 0, sizeof(ASAPi_DEREG_INFO));
-			dereg.objtype = ASAPi_OBJ_QUEUE;
-			dereg.queue = pNode->oinfo.name;
-
-			rc = immutil_saImmOiRtObjectDelete(immOiHandle,
-							   &dereg.queue);
-			if (rc != SA_AIS_OK)
-				LOG_ER(
-				    "Deleting MsgQGrp object %s FAILED with return value=%d",
-				    dereg.queue.value, rc);
-			if (mqd_asapi_dereg_hdlr(pMqd, &dereg, NULL) !=
-			    NCSCC_RC_SUCCESS)
-				LOG_ER("mqd_asapi_dereg_hdlr failed");
-		}
-		pNode = (MQD_OBJ_NODE *)ncs_patricia_tree_getnext(
-		    &pMqd->qdb, (uint8_t *)&name);
-	}
-	rc = immutil_saImmOiFinalize(immOiHandle);
-	if (rc != SA_AIS_OK)
-		LOG_ER("saImmOiFinalize failed with return value=%d", rc);
-
-	/* Send an async Update to the standby */
-	memset(&msg, 0, sizeof(MQD_A2S_MSG));
-	msg.type = MQD_A2S_MSG_TYPE_MQND_TIMER_EXPEVT;
-	msg.info.nd_tmr_exp_evt.nodeid = nodeid;
-
-	/* Send async update to the standby for MQD redundancy */
-	mqd_a2s_async_update(pMqd, MQD_A2S_MSG_TYPE_MQND_TIMER_EXPEVT,
-			     (void *)(&msg.info.nd_tmr_exp_evt));
+	if (pMqd)
+		ncshm_give_hdl(pMqd->hdl);
 
 	TRACE_LEAVE();
-	return;
+	return 0;
+}
+
+void mqd_del_node_down_info(MQD_CB *pMqd, NODE_ID nodeid)
+{
+	pthread_t thread;
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	TRACE_ENTER();
+
+	NODE_ID *arg = malloc(sizeof(NODE_ID));
+	*arg = nodeid;
+
+	if (pthread_create(&thread, &attr, _mqd_del_node_down_info, arg) != 0) {
+		LOG_CR("pthread_create FAILED: %s", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	pthread_attr_destroy(&attr);
+	TRACE_LEAVE();
 }

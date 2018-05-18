@@ -282,6 +282,8 @@ uint32_t mqd_timer_expiry_evt_process(MQD_CB *pMqd, NODE_ID *nodeid)
 			pNdNode->info.timer.tmr_id = TMR_T_NULL;
 		}
 
+		m_NCS_LOCK(&pMqd->mqd_cb_lock, NCS_LOCK_WRITE);
+
 		pNode = (MQD_OBJ_NODE *)ncs_patricia_tree_getnext(&pMqd->qdb,
 								  (uint8_t *)0);
 		while (pNode) {
@@ -309,6 +311,9 @@ uint32_t mqd_timer_expiry_evt_process(MQD_CB *pMqd, NODE_ID *nodeid)
 			pNode = (MQD_OBJ_NODE *)ncs_patricia_tree_getnext(
 			    &pMqd->qdb, (uint8_t *)&name);
 		}
+
+		m_NCS_UNLOCK(&pMqd->mqd_cb_lock, NCS_LOCK_WRITE);
+
 		rc = immutil_saImmOiFinalize(immOiHandle);
 		if (rc != NCSCC_RC_SUCCESS)
 			LOG_ER("saImmOiFinalize failed with return value=%d",
