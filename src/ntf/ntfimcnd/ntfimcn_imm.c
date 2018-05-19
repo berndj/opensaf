@@ -449,7 +449,7 @@ done:
 		/* If we fail to send a notification we exit. This will signal
 		 * that a notification is missing.
 		 */
-		LOG_ER("saImmOiCcbObjectCreateCallback Fail, internal_rc=%d",
+		LOG_ER("saImmOiCcbObjectDeleteCallback Fail, internal_rc=%d",
 		       internal_rc);
 		imcn_exit(EXIT_FAILURE);
 	}
@@ -592,7 +592,7 @@ done:
 		/* If we fail to send a notification we exit. This will signal
 		 * that a notification is missing.
 		 */
-		LOG_ER("saImmOiCcbObjectCreateCallback Fail, internal_rc=%d",
+		LOG_ER("saImmOiCcbObjectModifyCallback Fail, internal_rc=%d",
 		       internal_rc);
 		imcn_exit(EXIT_FAILURE);
 	}
