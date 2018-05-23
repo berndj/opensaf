@@ -55,8 +55,7 @@ const char *rde_msg_name[] = {"-",
                               "RDE_MSG_NEW_ACTIVE_CALLBACK(5)"
                               "RDE_MSG_NODE_UP(6)",
                               "RDE_MSG_NODE_DOWN(7)",
-                              "RDE_MSG_TAKEOVER_REQUEST_CALLBACK(8)",
-                              "RDE_MSG_ACTIVE_PROMOTION_SUCCESS(9)"};
+                              "RDE_MSG_TAKEOVER_REQUEST_CALLBACK(8)"};
 
 static RDE_CONTROL_BLOCK _rde_cb;
 static RDE_CONTROL_BLOCK *rde_cb = &_rde_cb;
@@ -187,9 +186,6 @@ static void handle_mbx_event() {
         LOG_WA("Received takeover request when not active");
       }
     } break;
-    case RDE_MSG_ACTIVE_PROMOTION_SUCCESS:
-      role->NodePromoted();
-      break;
     default:
       LOG_ER("%s: discarding unknown message type %u", __FUNCTION__, msg->type);
       break;
