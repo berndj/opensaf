@@ -18,6 +18,7 @@
  */
 
 #include "base/logtrace.h"
+#include <mutex>
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
@@ -45,6 +46,7 @@ bool enable_osaf_log = false;
 
 TraceLog* gl_trace = nullptr;
 TraceLog* gl_osaflog = nullptr;
+std::once_flag init_flag;
 
 static pid_t gettid() { return syscall(SYS_gettid); }
 
@@ -159,9 +161,12 @@ void logtrace_trace(const char *file, unsigned line, unsigned category,
   va_end(ap);
 }
 
-int logtrace_init(const char *, const char *pathname, unsigned mask) {
-  if (global::msg_id != nullptr) return -1;
-  char *tmp = strdup(pathname);
+static void logtrace_init_interal(const char *pathname, unsigned mask,
+    int* result_init) {
+  bool result = false;
+  char *tmp = nullptr;
+  if (global::msg_id != nullptr) goto done;
+  tmp = strdup(pathname);
   if (tmp != nullptr) {
     global::msg_id = strdup(basename(tmp));
     free(tmp);
@@ -170,11 +175,8 @@ int logtrace_init(const char *, const char *pathname, unsigned mask) {
 
   tzset();
 
-  bool result = global::msg_id != nullptr;
-  if (!result) {
-    free(global::msg_id);
-    global::msg_id = nullptr;
-  }
+  result = global::msg_id != nullptr;
+
   if (result && mask != 0) {
     if (!gl_trace) gl_trace = new TraceLog();
     result = gl_trace->Init(global::msg_id, TraceLog::kBlocking);
@@ -182,7 +184,7 @@ int logtrace_init(const char *, const char *pathname, unsigned mask) {
   if (base::GetEnv("OSAF_LOCAL_NODE_LOG", uint32_t{0}) == 1) {
     global::enable_osaf_log = true;
     if (!gl_osaflog) gl_osaflog = new TraceLog();
-    gl_osaflog->Init(global::osaf_log_file, TraceLog::kBlocking);
+    result = gl_osaflog->Init(global::osaf_log_file, TraceLog::kBlocking);
   }
   if (result) {
     syslog(LOG_INFO, "logtrace: trace enabled to file '%s', mask=0x%x",
@@ -192,8 +194,14 @@ int logtrace_init(const char *, const char *pathname, unsigned mask) {
            "logtrace: failed to enable logtrace to file '%s', mask=0x%x",
            global::msg_id, global::category_mask);
   }
+done:
+  *result_init = result ? 0 : -1;
+}
 
-  return result ? 0 : -1;
+int logtrace_init(const char *, const char *pathname, unsigned mask) {
+  int result = 0;
+  std::call_once(init_flag, logtrace_init_interal, pathname, mask, &result);
+  return result;
 }
 
 int logtrace_init_daemon(const char *ident, const char *pathname,
