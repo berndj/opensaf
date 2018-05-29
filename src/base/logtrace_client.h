@@ -32,6 +32,8 @@ class TraceLog {
     kNonblocking = base::UnixSocket::Mode::kNonblocking,
   };
   bool Init(const char *msg_id, WriteMode mode);
+  static void Log(TraceLog* tracelog, base::LogMessage::Severity severity,
+      const char *fmt, va_list ap);
   void Log(base::LogMessage::Severity severity, const char *fmt,
                   va_list ap);
   TraceLog();

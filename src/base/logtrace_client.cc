@@ -81,6 +81,11 @@ bool TraceLog::Init(const char *msg_id, WriteMode mode) {
   return true;
 }
 
+void TraceLog::Log(TraceLog* tracelog, base::LogMessage::Severity severity,
+      const char *fmt, va_list ap) {
+  if (tracelog != nullptr) tracelog->Log(severity, fmt, ap);
+}
+
 void TraceLog::Log(base::LogMessage::Severity severity, const char *fmt,
                    va_list ap) {
   if (log_socket_ != nullptr && mutex_ != nullptr) {

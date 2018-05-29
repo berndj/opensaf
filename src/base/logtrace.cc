@@ -43,8 +43,8 @@ bool enable_osaf_log = false;
 
 }  // namespace global
 
-static TraceLog gl_trace;
-static TraceLog gl_osaflog;
+TraceLog* gl_trace = nullptr;
+TraceLog* gl_osaflog = nullptr;
 
 static pid_t gettid() { return syscall(SYS_gettid); }
 
@@ -88,8 +88,8 @@ void trace_output(const char *file, unsigned line, unsigned priority,
   if (strncmp(file, "src/", 4) == 0) file += 4;
   snprintf(preamble, sizeof(preamble), "%d:%s:%u %s %s", gettid(), file, line,
            global::prefix_name[priority + category], format);
-  gl_trace.Log(static_cast<base::LogMessage::Severity>(priority), preamble,
-                  ap);
+  TraceLog::Log(gl_trace, static_cast<base::LogMessage::Severity>(priority),
+      preamble, ap);
 }
 
 void log_output(const char *file, unsigned line, unsigned priority,
@@ -101,8 +101,8 @@ void log_output(const char *file, unsigned line, unsigned priority,
   if (strncmp(file, "src/", 4) == 0) file += 4;
   snprintf(preamble, sizeof(preamble), "%d:%s:%u %s %s", gettid(), file, line,
            global::prefix_name[priority + category], format);
-  gl_osaflog.Log(static_cast<base::LogMessage::Severity>(priority), preamble,
-                  ap);
+  TraceLog::Log(gl_osaflog, static_cast<base::LogMessage::Severity>(priority),
+      preamble, ap);
 }
 
 void logtrace_log(const char *file, unsigned line, int priority,
@@ -176,11 +176,13 @@ int logtrace_init(const char *, const char *pathname, unsigned mask) {
     global::msg_id = nullptr;
   }
   if (result && mask != 0) {
-    result = gl_trace.Init(global::msg_id, TraceLog::kBlocking);
+    if (!gl_trace) gl_trace = new TraceLog();
+    result = gl_trace->Init(global::msg_id, TraceLog::kBlocking);
   }
   if (base::GetEnv("OSAF_LOCAL_NODE_LOG", uint32_t{0}) == 1) {
     global::enable_osaf_log = true;
-    gl_osaflog.Init(global::osaf_log_file, TraceLog::kBlocking);
+    if (!gl_osaflog) gl_osaflog = new TraceLog();
+    gl_osaflog->Init(global::osaf_log_file, TraceLog::kBlocking);
   }
   if (result) {
     syslog(LOG_INFO, "logtrace: trace enabled to file '%s', mask=0x%x",
@@ -221,7 +223,8 @@ int trace_category_set(unsigned mask) {
   if (global::category_mask == 0) {
     syslog(LOG_INFO, "logtrace: trace disabled");
   } else {
-    gl_trace.Init(global::msg_id, TraceLog::kBlocking);
+    if (!gl_trace) gl_trace = new TraceLog();
+    gl_trace->Init(global::msg_id, TraceLog::kBlocking);
     syslog(LOG_INFO, "logtrace: trace enabled to file %s, mask=0x%x",
            global::msg_id, global::category_mask);
   }
