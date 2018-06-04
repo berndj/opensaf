@@ -694,6 +694,20 @@ static void saImmOiCcbApplyCallback(SaImmOiHandleT immOiHandle,
 
 		case CCBUTIL_DELETE:
 			invoke_name_ptr = (SaNameT *)ccbUtilCcbData->userData;
+			if (invoke_name_ptr == NULL) {
+				/* Fix for ticket #2859.
+				 * If ntfimcnd was restarted during a CCB, it
+				 * might receive ObjectDelete operation as the
+				 * first event. The ccbUtilCcbData, which was
+				 * initialized in this case, does not contain
+				 * the operation invoker name.
+				 */
+				LOG_NO("%s send_object_delete_notification "
+						"fail, missing operation "
+						"invoker name",__FUNCTION__);
+				internal_rc = (-1);
+				goto done;
+			}
 			internal_rc = ntfimcn_send_object_delete_notification(
 			    ccbUtilOperationData, invoke_name_ptr, ccbLast);
 			if (internal_rc != 0) {
