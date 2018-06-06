@@ -1267,6 +1267,8 @@ SaAisErrorT LogAgent::saLogWriteLogAsync(SaLogStreamHandleT logStreamHandle,
     if (client->is_recovery_failed() == true) {
       ScopeLock critical_section(get_delete_obj_sync_mutex_);
       RemoveLogClient(&client);
+      // To avoid ScopeData restore ref counter for already deleted stream
+      stream = nullptr;
       ais_rc = SA_AIS_ERR_BAD_HANDLE;
       return ais_rc;
     }
@@ -1388,6 +1390,8 @@ SaAisErrorT LogAgent::saLogStreamClose(SaLogStreamHandleT logStreamHandle) {
     if (client->is_recovery_failed() == true) {
       ScopeLock critical_section(get_delete_obj_sync_mutex_);
       RemoveLogClient(&client);
+      // To avoid ScopeData restore ref counter for already deleted stream
+      stream = nullptr;
       ais_rc = SA_AIS_ERR_BAD_HANDLE;
       return ais_rc;
     }
