@@ -104,10 +104,16 @@ static bool StringToNumericValue(const std::string& str_value,
 
 bool AttributeHandler::AddAttributesForObjectCreate(const CreateDescriptor&
                                      create_descriptor) {
+  TRACE_ENTER();
   bool rc = true;
   for (auto& attribute_descriptor : create_descriptor.attributes) {
     rc = AddAttribute(attribute_descriptor, Request::kCreate);
+    if (rc == false) {
+      LOG_NO("%s: AddAttribute() Fail", __FUNCTION__);
+      break;
+    }
   }
+
   return rc;
 }
 

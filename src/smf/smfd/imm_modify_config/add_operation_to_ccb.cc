@@ -94,7 +94,7 @@ int AddCreateToCcb(const SaImmCcbHandleT& ccb_handle,
   if(attributes.AddAttributesForObjectCreate(create_descriptor) == false) {
     LOG_NO("%s: SetAttributeValues() Fail", __FUNCTION__);
     recovery_info = kFail;
-    api_name_ = "";
+    api_name_.clear();
     ais_error_ = SA_AIS_OK;
   }
 
@@ -124,9 +124,10 @@ int AddCreateToCcb(const SaImmCcbHandleT& ccb_handle,
           recovery_info = kContinue;
         } else {
           recovery_info = kFail;
-          api_name_ = "saImmOmCcbObjectCreate_2";
-          ais_error_ = ais_rc;
         }
+        // Note: This information is always needed also if we do not fail
+        api_name_ = "saImmOmCcbObjectCreate_2";
+        ais_error_ = ais_rc;
       } else {
         // Unrecoverable Fail
         LOG_NO("%s: ObjectCreateCcbAdd(), %s, kFail",

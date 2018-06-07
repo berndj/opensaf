@@ -133,12 +133,24 @@ static inline SaImmAttrModificationTypeT StringToImmAttrModType(const
 struct AttributeDescriptor {
   std::string attribute_name;
   SaImmValueTypeT value_type;
+  std::vector<std::string> values_as_strings;
 
   void AddValue(std::string value_as_string) {
     values_as_strings.push_back(value_as_string);
+    // To make it possible to compare
+    std::sort(values_as_strings.begin(), values_as_strings.end());
   }
 
-  std::vector<std::string> values_as_strings;
+  bool operator==(const AttributeDescriptor& as) const {
+    return ((as.attribute_name == attribute_name) &&
+            (as.value_type == value_type) &&
+            (as.values_as_strings == values_as_strings));
+  }
+
+  // Compares attribute name only
+  bool operator<(const AttributeDescriptor& as) const {
+    return attribute_name < as.attribute_name;
+  }
 };
 
 // AttributeModifyDescriptor: Describes one attribute to modify
@@ -207,6 +219,19 @@ struct CreateDescriptor {
   std::vector<AttributeDescriptor> attributes;
   void AddAttribute(AttributeDescriptor one_attribute) {
     attributes.push_back(one_attribute);
+    // To make it possible to compare (sorted on attribute name)
+    std::sort(attributes.begin(), attributes.end());
+  }
+
+  // Compare all variables. All equal is true.
+  // Note: The vectors are compared using vector operator ==. This means that
+  // not only the content must be the same but also the order.
+  // TBD() could be handled by sorting
+  bool operator==(const CreateDescriptor& cd) {
+    return ((cd.ignore_ais_err_exist == ignore_ais_err_exist) &&
+            (cd.class_name == class_name) &&
+            (cd.parent_name == parent_name) &&
+            (cd.attributes == attributes));
   }
 };
 
@@ -248,14 +273,28 @@ struct CcbDescriptor {
   std::vector<ModifyDescriptor> modify_descriptors;
 
   // Use these methods to add the modifications
-  void AddCreate(CreateDescriptor one_create_descriptor) {
-    create_descriptors.push_back(one_create_descriptor);
+
+  // Duplicate descriptors cannot be added. If a duplicate
+  // create descriptor is given as input it will not be added.
+  // Returns false if duplicate
+  bool AddCreate(CreateDescriptor new_create_descriptor) {
+    bool is_added = true;
+    for (auto& stored_create_descriptor : create_descriptors) {
+      if (stored_create_descriptor == new_create_descriptor) {
+        is_added = false;
+        break;
+      }
+    }
+    if (is_added == true)
+      create_descriptors.push_back(new_create_descriptor);
+    return is_added;
   }
-  void AddDelete(DeleteDescriptor one_delete_descriptor) {
-    delete_descriptors.push_back(one_delete_descriptor);
+
+  void AddDelete(DeleteDescriptor new_delete_descriptor) {
+    delete_descriptors.push_back(new_delete_descriptor);
   }
-  void AddModify(ModifyDescriptor one_modify_descriptor) {
-    modify_descriptors.push_back(one_modify_descriptor);
+  void AddModify(ModifyDescriptor new_modify_descriptor) {
+    modify_descriptors.push_back(new_modify_descriptor);
   }
 };
 
