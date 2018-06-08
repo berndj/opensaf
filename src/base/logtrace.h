@@ -175,7 +175,11 @@ extern void log_output(const char *file, unsigned line, unsigned priority,
 
 class Trace {
  public:
-  Trace() {}
+  Trace() = delete;
+  Trace(const char *file, const char *function) {
+    file_ = file;
+    function_ = function;
+  }
   ~Trace() {
     if (!trace_leave_called && is_logtrace_enabled(CAT_TRACE_LEAVE)) {
       va_list ap{};
@@ -212,11 +216,11 @@ class Trace {
 };
 
 #define TRACE_ENTER()                                                \
-  Trace t_;                                                          \
+  Trace t_(__FILE__, __FUNCTION__); \
   t_.trace(__FILE__, __FUNCTION__, __LINE__, CAT_TRACE_ENTER, "%s ", \
            __FUNCTION__)
 #define TRACE_ENTER2(format, args...)                                        \
-  Trace t_;                                                                  \
+  Trace t_(__FILE__, __FUNCTION__); \
   t_.trace(__FILE__, __FUNCTION__, __LINE__, CAT_TRACE_ENTER, "%s: " format, \
            __FUNCTION__, ##args)
 
