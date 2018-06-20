@@ -49,7 +49,8 @@ class SmfImmAttribute {
   // Note: More than one value can be added (multi-value)
   void AddAttributeValue(const std::string& i_value) {
     m_values.push_back(i_value);
-    attribute_.AddValue(i_value);
+    if (i_value.compare("<_empty_>") != 0)
+      attribute_.AddValue(i_value);
   }
 
   // Note: This is the legacy function that returns a list of strings. Is kept

@@ -275,9 +275,8 @@ SaAisErrorT SmfImmDeleteOperation::PrepareRollback(
 
     if (saveAttribute == true) {
       if (attr->attrValuesNumber == 0) {
-        o_rollbackData->addAttrValue(attr->attrName,
-                                     smf_immTypeToString(attr->attrValueType),
-                                     "<_empty_>");
+        // No need to re-create originally empty attribute
+        continue;
       } else {
         for (unsigned int j = 0; j < attr->attrValuesNumber; j++) {
           o_rollbackData->addAttrValue(

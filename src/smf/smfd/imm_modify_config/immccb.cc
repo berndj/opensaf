@@ -189,9 +189,9 @@ int ModelModification::CreateHandles() {
   if (recovery_info == kContinue) {
     recovery_info = CreateCcb();
     if (recovery_info == kFail) {
-      LOG_NO("%s: CreateAdminOwner() Fail", __FUNCTION__);
+      LOG_NO("%s: CreateCcb() Fail", __FUNCTION__);
     } else if (recovery_info == kRestartOm) {
-      TRACE("%s: CreateAdminOwner() Restart", __FUNCTION__);
+      TRACE("%s: CreateCcb() Restart", __FUNCTION__);
     }
   }
   TRACE_LEAVE();

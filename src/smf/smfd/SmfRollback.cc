@@ -408,7 +408,7 @@ SaAisErrorT SmfRollbackData::rollbackModifyOperation(
   SmfImmModifyOperation* immOp = new (std::nothrow) SmfImmModifyOperation();
   if (immOp == NULL) {
     LOG_ER(
-        "SmfRollbackData::rollbackModifyOperation, could not create SmfImmCreateOperation");
+        "SmfRollbackData::rollbackModifyOperation, could not create SmfImmModifyOperation");
     return SA_AIS_ERR_FAILED_OPERATION;
   }
 

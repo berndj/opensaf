@@ -284,12 +284,15 @@ int AddModifyToCcb(const SaImmCcbHandleT& ccb_handle,
             ais_error_ = ais_rc;
             break;
           }
+        } else {
+            // Unrecoverable Fail
+            LOG_NO("%s: AddObjectModifyToCcb() Fail, %s", __FUNCTION__,
+                   saf_error(ais_rc));
+            recovery_info = kFail;
+            api_name_ = "saImmOmCcbObjectModify_2";
+            ais_error_ = ais_rc;
+            break;
         }
-      } else {
-        // Unrecoverable Fail
-        recovery_info = kFail;
-        api_name_ = "saImmOmCcbObjectModify_2";
-        ais_error_ = ais_rc;
       }
 
       // Add Modify to CCB Success
