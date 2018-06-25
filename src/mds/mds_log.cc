@@ -29,7 +29,7 @@
 #include "mds/mds_papi.h"
 
 int gl_mds_log_level = 3;
-TraceLog* gl_mds_log = nullptr;
+LogTraceClient* gl_mds_log = nullptr;
 
 /*******************************************************************************
  * Funtion Name   :    mds_log_init
@@ -40,9 +40,9 @@ TraceLog* gl_mds_log = nullptr;
  *
  *******************************************************************************/
 uint32_t mds_log_init(const char *) {
-  if (!gl_mds_log) gl_mds_log = new TraceLog();
-  if (!gl_mds_log->Init("mds.log", TraceLog::kNonblocking)) {
-    return NCSCC_RC_FAILURE;
+  if (!gl_mds_log) {
+    gl_mds_log = new LogTraceClient("mds.log",
+        LogTraceClient::kRemoteNonblocking);
   }
   tzset();
   log_mds_notify("BEGIN MDS LOGGING| ARCHW=%x|64bit=%zu\n", MDS_SELF_ARCHWORD,
@@ -62,7 +62,7 @@ void log_mds_critical(const char *fmt, ...) {
   if (gl_mds_log_level < NCSMDS_LC_CRITICAL) return;
   va_list ap;
   va_start(ap, fmt);
-  TraceLog::Log(gl_mds_log, base::LogMessage::Severity::kCrit, fmt, ap);
+  LogTraceClient::Log(gl_mds_log, base::LogMessage::Severity::kCrit, fmt, ap);
   va_end(ap);
 }
 
@@ -78,7 +78,7 @@ void log_mds_err(const char *fmt, ...) {
   if (gl_mds_log_level < NCSMDS_LC_ERR) return;
   va_list ap;
   va_start(ap, fmt);
-  TraceLog::Log(gl_mds_log, base::LogMessage::Severity::kErr, fmt, ap);
+  LogTraceClient::Log(gl_mds_log, base::LogMessage::Severity::kErr, fmt, ap);
   va_end(ap);
 }
 
@@ -94,7 +94,7 @@ void log_mds_notify(const char *fmt, ...) {
   if (gl_mds_log_level < NCSMDS_LC_NOTIFY) return;
   va_list ap;
   va_start(ap, fmt);
-  TraceLog::Log(gl_mds_log, base::LogMessage::Severity::kNotice, fmt, ap);
+  LogTraceClient::Log(gl_mds_log, base::LogMessage::Severity::kNotice, fmt, ap);
   va_end(ap);
 }
 
@@ -110,7 +110,7 @@ void log_mds_info(const char *fmt, ...) {
   if (gl_mds_log_level < NCSMDS_LC_INFO) return;
   va_list ap;
   va_start(ap, fmt);
-  TraceLog::Log(gl_mds_log, base::LogMessage::Severity::kInfo, fmt, ap);
+  LogTraceClient::Log(gl_mds_log, base::LogMessage::Severity::kInfo, fmt, ap);
   va_end(ap);
 }
 
@@ -127,6 +127,6 @@ void log_mds_dbg(const char *fmt, ...) {
   if (gl_mds_log_level < NCSMDS_LC_DBG) return;
   va_list ap;
   va_start(ap, fmt);
-  TraceLog::Log(gl_mds_log, base::LogMessage::Severity::kDebug, fmt, ap);
+  LogTraceClient::Log(gl_mds_log, base::LogMessage::Severity::kDebug, fmt, ap);
   va_end(ap);
 }

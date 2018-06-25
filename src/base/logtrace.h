@@ -96,6 +96,12 @@ extern int logtrace_init(const char *ident, const char *pathname,
 extern int logtrace_init_daemon(const char *ident, const char *pathname,
                                 unsigned tracemask, int logmask);
 
+/*
+ * logtrace_exit_daemon
+ * This should be called when a daemon exit
+ */
+extern int logtrace_exit_daemon();
+
 /**
  * trace_category_set - Set the mask used for trace filtering.
  *

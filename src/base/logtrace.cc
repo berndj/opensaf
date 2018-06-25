@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include "base/getenv.h"
 #include "base/logtrace_client.h"
+#include "base/logtrace_buffer.h"
 #include "base/ncsgl_defs.h"
 
 namespace global {
@@ -41,12 +42,21 @@ char *msg_id;
 int logmask;
 const char* osaf_log_file = "osaf.log";
 bool enable_osaf_log = false;
+bool enable_thread_trace_buffer = false;
 
 }  // namespace global
 
-TraceLog* gl_trace = nullptr;
-TraceLog* gl_osaflog = nullptr;
+// legacy tracing, trace is written by osaftransportd
+LogTraceClient* gl_remote_trace = nullptr;
+// direct osaf services logging to a configured file
+LogTraceClient* gl_remote_osaflog = nullptr;
+// local thread trace buffering
+LogTraceClient* gl_local_thread_trace = nullptr;
+
 std::once_flag init_flag;
+
+thread_local LogTraceBuffer gl_thread_buffer{gl_local_thread_trace,
+  LogTraceBuffer::kBufferSize_10K};
 
 static pid_t gettid() { return syscall(SYS_gettid); }
 
@@ -84,14 +94,29 @@ static void sighup_handler(int sig) {
 void trace_output(const char *file, unsigned line, unsigned priority,
                      unsigned category, const char *format, va_list ap) {
   char preamble[288];
+  const char* entry = nullptr;
 
   assert(priority <= LOG_DEBUG && category < CAT_MAX);
 
   if (strncmp(file, "src/", 4) == 0) file += 4;
   snprintf(preamble, sizeof(preamble), "%d:%s:%u %s %s", gettid(), file, line,
            global::prefix_name[priority + category], format);
-  TraceLog::Log(gl_trace, static_cast<base::LogMessage::Severity>(priority),
-      preamble, ap);
+  // legacy trace
+  if (is_logtrace_enabled(category)) {
+    entry = LogTraceClient::Log(gl_remote_trace,
+        static_cast<base::LogMessage::Severity>(priority), preamble, ap);
+  }
+  // thread trace
+  if (global::enable_thread_trace_buffer == true &&
+      (category == CAT_TRACE_ENTER || category == CAT_TRACE_LEAVE)) {
+    // reuse @entry if legacy trace is enabled
+    if (!entry) {
+      entry = gl_local_thread_trace->CreateLogEntry(
+          static_cast<base::LogMessage::Severity>(priority),
+          preamble, ap);
+    }
+    gl_thread_buffer.WriteToBuffer(entry);
+  }
 }
 
 void log_output(const char *file, unsigned line, unsigned priority,
@@ -103,8 +128,15 @@ void log_output(const char *file, unsigned line, unsigned priority,
   if (strncmp(file, "src/", 4) == 0) file += 4;
   snprintf(preamble, sizeof(preamble), "%d:%s:%u %s %s", gettid(), file, line,
            global::prefix_name[priority + category], format);
-  TraceLog::Log(gl_osaflog, static_cast<base::LogMessage::Severity>(priority),
-      preamble, ap);
+  LogTraceClient::Log(gl_remote_osaflog,
+      static_cast<base::LogMessage::Severity>(priority), preamble, ap);
+  // Flush the thread buffer for logging error or lower
+  if (global::enable_thread_trace_buffer == true && gl_local_thread_trace &&
+      static_cast<base::LogMessage::Severity>(priority) <=
+      base::LogMessage::Severity::kErr) {
+    gl_thread_buffer.RequestFlush();
+    gl_thread_buffer.FlushBuffer();
+  }
 }
 
 void logtrace_log(const char *file, unsigned line, int priority,
@@ -154,7 +186,8 @@ void logtrace_trace(const char *file, unsigned line, unsigned category,
                     const char *format, ...) {
   va_list ap;
 
-  if (is_logtrace_enabled(category) == false) return;
+  if (is_logtrace_enabled(category) == false &&
+      global::enable_thread_trace_buffer == false) return;
 
   va_start(ap, format);
   trace_output(file, line, LOG_DEBUG, category, format, ap);
@@ -177,14 +210,27 @@ static void logtrace_init_interal(const char *pathname, unsigned mask,
 
   result = global::msg_id != nullptr;
 
+  // Initialize various type of logging instances based on
+  // environment variables
   if (result && mask != 0) {
-    if (!gl_trace) gl_trace = new TraceLog();
-    result = gl_trace->Init(global::msg_id, TraceLog::kBlocking);
+    if (!gl_remote_trace) {
+      gl_remote_trace = new LogTraceClient(global::msg_id,
+          LogTraceClient::kRemoteBlocking);
+    }
+  }
+  if (base::GetEnv("THREAD_TRACE_BUFFER", uint32_t{0}) == 1) {
+    global::enable_thread_trace_buffer = true;
+    if (!gl_local_thread_trace) {
+      gl_local_thread_trace = new LogTraceClient(global::msg_id,
+          LogTraceClient::kLocalBuffer);
+    }
   }
   if (base::GetEnv("OSAF_LOCAL_NODE_LOG", uint32_t{0}) == 1) {
     global::enable_osaf_log = true;
-    if (!gl_osaflog) gl_osaflog = new TraceLog();
-    result = gl_osaflog->Init(global::osaf_log_file, TraceLog::kBlocking);
+    if (!gl_remote_osaflog) {
+      gl_remote_osaflog = new LogTraceClient(global::osaf_log_file,
+          LogTraceClient::kRemoteBlocking);
+    }
   }
   if (result) {
     syslog(LOG_INFO, "logtrace: trace enabled to file '%s', mask=0x%x",
@@ -202,6 +248,11 @@ int logtrace_init(const char *, const char *pathname, unsigned mask) {
   int result = 0;
   std::call_once(init_flag, logtrace_init_interal, pathname, mask, &result);
   return result;
+}
+
+int logtrace_exit_daemon() {
+  if (gl_local_thread_trace) gl_local_thread_trace->FlushExternalBuffer();
+  return 0;
 }
 
 int logtrace_init_daemon(const char *ident, const char *pathname,
@@ -231,8 +282,10 @@ int trace_category_set(unsigned mask) {
   if (global::category_mask == 0) {
     syslog(LOG_INFO, "logtrace: trace disabled");
   } else {
-    if (!gl_trace) gl_trace = new TraceLog();
-    gl_trace->Init(global::msg_id, TraceLog::kBlocking);
+    if (!gl_remote_trace) {
+      gl_remote_trace = new LogTraceClient(global::msg_id,
+        LogTraceClient::kRemoteBlocking);
+    }
     syslog(LOG_INFO, "logtrace: trace enabled to file %s, mask=0x%x",
            global::msg_id, global::category_mask);
   }

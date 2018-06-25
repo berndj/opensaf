@@ -16,31 +16,34 @@
 #include "base/logtrace_client.h"
 #include <limits.h>
 #include <unistd.h>
-#include <cstring>
+#include <utility>
+#include <string>
 #include "base/getenv.h"
 #include "base/ncsgl_defs.h"
 #include "base/osaf_utility.h"
 #include "dtm/common/osaflog_protocol.h"
 
-TraceLog::TraceLog()
+
+LogTraceClient::LogTraceClient(const char *msg_id, WriteMode mode)
     : sequence_id_{1}, buffer_{} {
-  mutex_ = nullptr;
+  log_mutex_ = nullptr;
+  ext_buffer_mutex_ = nullptr;
   log_socket_ = nullptr;
+  Init(msg_id, mode);
 }
 
-TraceLog::~TraceLog() {
-  if (mutex_) delete mutex_;
+LogTraceClient::~LogTraceClient() {
+  if (log_mutex_) delete log_mutex_;
+  if (ext_buffer_mutex_) delete ext_buffer_mutex_;
   if (log_socket_) delete log_socket_;
 }
 
-bool TraceLog::Init(const char *msg_id, WriteMode mode) {
+bool LogTraceClient::Init(const char *msg_id, WriteMode mode) {
   char app_name[NAME_MAX];
   char pid_path[PATH_MAX];
   uint32_t process_id;
   char *token, *saveptr;
   char *pid_name = nullptr;
-
-  if (log_socket_ != nullptr && mutex_ != nullptr) return true;
 
   memset(app_name, 0, NAME_MAX);
   memset(pid_path, 0, PATH_MAX);
@@ -74,28 +77,46 @@ bool TraceLog::Init(const char *msg_id, WriteMode mode) {
   app_name_ = base::LogMessage::AppName(app_name);
   proc_id_ = base::LogMessage::ProcId{std::to_string(process_id)};
   msg_id_ = base::LogMessage::MsgId{msg_id};
-  log_socket_ = new base::UnixClientSocket{Osaflog::kServerSocketPath,
-    static_cast<base::UnixSocket::Mode>(mode)};
-  mutex_ = new base::Mutex{};
 
+  if (mode == kRemoteBlocking || mode == kRemoteNonblocking) {
+    log_socket_ = new base::UnixClientSocket{Osaflog::kServerSocketPath,
+      static_cast<base::UnixSocket::Mode>(mode)};
+  }
+  log_mutex_ = new base::Mutex{};
+  ext_buffer_mutex_ = new base::Mutex{};
   return true;
 }
 
-void TraceLog::Log(TraceLog* tracelog, base::LogMessage::Severity severity,
-      const char *fmt, va_list ap) {
-  if (tracelog != nullptr) tracelog->Log(severity, fmt, ap);
+const char* LogTraceClient::Log(LogTraceClient* tracelog,
+    base::LogMessage::Severity severity, const char *fmt, va_list ap) {
+  if (tracelog != nullptr) return tracelog->Log(severity, fmt, ap);
+  return nullptr;
 }
 
-void TraceLog::Log(base::LogMessage::Severity severity, const char *fmt,
-                   va_list ap) {
-  if (log_socket_ != nullptr && mutex_ != nullptr) {
-    LogInternal(severity, fmt, ap);
+const char* LogTraceClient::Log(base::LogMessage::Severity severity,
+    const char *fmt, va_list ap) {
+  if (log_socket_ != nullptr && log_mutex_ != nullptr) {
+    return LogInternal(severity, fmt, ap);
   }
+  return nullptr;
 }
 
-void TraceLog::LogInternal(base::LogMessage::Severity severity, const char *fmt,
-                           va_list ap) {
-  base::Lock lock(*mutex_);
+const char* LogTraceClient::LogInternal(base::LogMessage::Severity severity,
+    const char *fmt, va_list ap) {
+  base::Lock lock(*log_mutex_);
+  CreateLogEntryInternal(severity, fmt, ap);
+  log_socket_->Send(buffer_.data(), buffer_.size());
+  return buffer_.data();
+}
+
+const char* LogTraceClient::CreateLogEntry(base::LogMessage::Severity severity,
+    const char *fmt, va_list ap) {
+  base::Lock lock(*log_mutex_);
+  return CreateLogEntryInternal(severity, fmt, ap);
+}
+
+const char* LogTraceClient::CreateLogEntryInternal(
+    base::LogMessage::Severity severity, const char *fmt, va_list ap) {
   uint32_t id = sequence_id_;
   sequence_id_ = id < kMaxSequenceId ? id + 1 : 1;
   buffer_.clear();
@@ -106,5 +127,31 @@ void TraceLog::LogInternal(base::LogMessage::Severity severity, const char *fmt,
         {base::LogMessage::Parameter{base::LogMessage::SdName{"sequenceId"},
                                      std::to_string(id)}}}},
       fmt, ap, &buffer_);
-  log_socket_->Send(buffer_.data(), buffer_.size());
+  return buffer_.data();
 }
+
+void LogTraceClient::AddExternalBuffer(int64_t tid, LogTraceBuffer* buffer) {
+  base::Lock lock(*ext_buffer_mutex_);
+  ext_buffer_map_.insert(std::pair<int64_t, LogTraceBuffer*>(tid, buffer));
+}
+
+void LogTraceClient::RemoveExternalBuffer(int64_t tid) {
+  base::Lock lock(*ext_buffer_mutex_);
+  ext_buffer_map_.erase(tid);
+}
+
+void LogTraceClient::RequestFlushExternalBuffer() {
+  base::Lock lock(*ext_buffer_mutex_);
+  for (auto &buff : ext_buffer_map_) {
+    buff.second->SetFlush(true);
+  }
+}
+
+bool LogTraceClient::FlushExternalBuffer() {
+  base::Lock lock(*ext_buffer_mutex_);
+  for (auto &buff : ext_buffer_map_) {
+    buff.second->FlushBuffer();
+  }
+  return true;
+}
+

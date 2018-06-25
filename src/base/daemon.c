@@ -549,6 +549,9 @@ void daemon_exit(void)
 	unlink(fifo_file);
 	unlink(__pidfile);
 
+	/* flush the logtrace */
+	logtrace_exit_daemon();
+
 	_Exit(0);
 }
 
